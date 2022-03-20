@@ -27,6 +27,5 @@ How Shit Works:
         - 
     - Expander / VERONICA:
         -
-    - AI / Claire:
+    - AI / CLAIRE:
         - 
-        
