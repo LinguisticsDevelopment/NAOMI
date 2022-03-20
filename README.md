@@ -1,8 +1,6 @@
 # NAOMI
 NAOMI: Nominalistic Analysis of Ontological Meaning Intelligence
 
-~~~~~~~~~~~~~~~~~~~~~~~
-
 Made up of Client, Commons, and Server:
     - Client does the proccessing and handling of Information
     - Commons are the Structures for which Meaning, Ideas, and Thoughts are stores, along with their basic functions
