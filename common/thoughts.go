@@ -14,7 +14,7 @@ const ( //The Default Parts of a Thought
 	//Inclusion
 	COMPONENT int = iota
 	//Exclusion
-	ALTERNATIVE
+	POSSIBILITIES
 	//Change
 	SUBJECT
 	OBJECT
@@ -33,9 +33,14 @@ const ( //The Default Parts of a Thought
 	RELATED
 )
 
+type Ident int
+
 type Thought struct {
-	Form    int          //Determines how this thought is used by other thoughts
-	Aspects [][]*Thought //Different forms of thoughts have different keyed usages of the other thoughts referenced inside the lists
-	Negated bool
-	Concept Idea
+	ID          Ident        //used to reference the other thoughts inside the thoughts
+	Form        int          //Determines how this thought is used by other thoughts
+	Aspects     [][]*Thought //Different forms of thoughts have different keyed usages of the other thoughts referenced inside the lists
+	Parameter   *Thought
+	Alternative *Thought
+	Negated     bool
+	Concept     Idea
 }

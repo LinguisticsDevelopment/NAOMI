@@ -12,7 +12,7 @@ func thoughtProccess(root common.Thought) []common.Thought {
 		hasExclusion := false
 		for _, thisThought := range rootThoughts {
 			if thisThought.Form == common.EXCLUSION {
-				for _, alt := range thisThought.Aspects[common.ALTERNATIVE] {
+				for _, alt := range thisThought.Aspects[common.POSSIBILITIES] {
 					newThoughts = append(newThoughts, *alt)
 				}
 				hasExclusion = true
@@ -56,7 +56,7 @@ func thoughtProccess(root common.Thought) []common.Thought {
 func splitOrs(current common.Thought, root common.Thought, aspect int, index int) ([]common.Thought, bool) {
 	multipleThoughts := []common.Thought{}
 	if current.Form == common.EXCLUSION {
-		for _, alt := range current.Aspects[common.ALTERNATIVE] {
+		for _, alt := range current.Aspects[common.POSSIBILITIES] {
 			root.Aspects[aspect][index] = alt
 			multipleThoughts = append(multipleThoughts, root)
 		}
@@ -104,19 +104,14 @@ func doThought(current *common.Thought) *common.Thought {
 	switch current.Form {
 	case common.INCLUSION:
 		doInclusions(current)
-		//Multiply the meanings across each other
 	case common.CHANGE:
 		doChanges(current)
-		//Multiply the meanings across each other
 	case common.STATE:
 		doStates(current)
-		//Multiply the meanings across each other
 	case common.CONDITION:
 		doConditions(current)
-		//Multiply the meanings across each other
 	case common.CONCEPT:
 		doConcepts(current)
-		//Multiply the meanings across each other
 	case common.CONNECTION:
 		doConnections(current)
 		//I have no idea how and when to implement these now
@@ -126,19 +121,11 @@ func doThought(current *common.Thought) *common.Thought {
 
 func doInclusions(current *common.Thought) *common.Thought {
 	for _, part := range current.Aspects[common.COMPONENT] { //remember, all parts should be proccessed by now
-		switch part.Form {
-		case common.INCLUSION:
-			//idk
-		case common.CHANGE:
-			//idk
-		case common.STATE:
-			//idk
-		case common.CONDITION:
-			//idk
-		case common.CONCEPT:
-			//idk
-		case common.CONNECTION:
-			//idk
+		if part.Form == common.INCLUSION {
+			for _, subPart := range part.Aspects[common.COMPONENT] {
+				current.Aspects[common.COMPONENT] = append(current.Aspects[common.COMPONENT], subPart)
+				//Takes all parts within the parts of part if the part is another "Inclusion" and adds them to current
+			}
 		}
 	}
 	return current
@@ -149,15 +136,7 @@ func doChanges(current *common.Thought) *common.Thought {
 		switch part.Form {
 		case common.INCLUSION:
 			//idk
-		case common.CHANGE:
-			//idk
-		case common.STATE:
-			//idk
-		case common.CONDITION:
-			//idk
 		case common.CONCEPT:
-			//idk
-		case common.CONNECTION:
 			//idk
 		}
 	}
@@ -165,15 +144,7 @@ func doChanges(current *common.Thought) *common.Thought {
 		switch part.Form {
 		case common.INCLUSION:
 			//idk
-		case common.CHANGE:
-			//idk
-		case common.STATE:
-			//idk
-		case common.CONDITION:
-			//idk
 		case common.CONCEPT:
-			//idk
-		case common.CONNECTION:
 			//idk
 		}
 	}
@@ -181,15 +152,7 @@ func doChanges(current *common.Thought) *common.Thought {
 		switch part.Form {
 		case common.INCLUSION:
 			//idk
-		case common.CHANGE:
-			//idk
-		case common.STATE:
-			//idk
-		case common.CONDITION:
-			//idk
 		case common.CONCEPT:
-			//idk
-		case common.CONNECTION:
 			//idk
 		}
 	}
@@ -201,31 +164,17 @@ func doStates(current *common.Thought) *common.Thought {
 		switch part.Form {
 		case common.INCLUSION:
 			//idk
-		case common.CHANGE:
-			//idk
-		case common.STATE:
-			//idk
-		case common.CONDITION:
-			//idk
 		case common.CONCEPT:
-			//idk
-		case common.CONNECTION:
 			//idk
 		}
 	}
 	for _, part := range current.Aspects[common.COMPLEMENT] { //remember, all parts should be proccessed by now
 		switch part.Form {
-		case common.INCLUSION:
+		case common.INCLUSION: //Multiple Adverbs, Adjectives, and Prepositions
 			//idk
-		case common.CHANGE:
+		case common.CONCEPT: //Should be Adverbs and Adjectives
 			//idk
-		case common.STATE:
-			//idk
-		case common.CONDITION:
-			//idk
-		case common.CONCEPT:
-			//idk
-		case common.CONNECTION:
+		case common.CONNECTION: //Prepositions
 			//idk
 		}
 	}
@@ -289,12 +238,6 @@ func doConcepts(current *common.Thought) *common.Thought {
 		switch part.Form {
 		case common.INCLUSION:
 			//idk
-		case common.CHANGE:
-			//idk
-		case common.STATE:
-			//idk
-		case common.CONDITION:
-			//idk
 		case common.CONCEPT:
 			//idk
 		case common.CONNECTION:
@@ -304,12 +247,6 @@ func doConcepts(current *common.Thought) *common.Thought {
 	for _, part := range current.Aspects[common.ADDITIVES] { //remember, all parts should be proccessed by now
 		switch part.Form {
 		case common.INCLUSION:
-			//idk
-		case common.CHANGE:
-			//idk
-		case common.STATE:
-			//idk
-		case common.CONDITION:
 			//idk
 		case common.CONCEPT:
 			//idk
