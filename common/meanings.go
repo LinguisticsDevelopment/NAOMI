@@ -11,3 +11,5 @@ type Meaning struct {
 	Relevant   bool            //If it is used by the idea it is in
 	Dimensions map[string]Axis //The actual Axises assigned to their keys
 }
+
+
