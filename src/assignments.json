@@ -1,0 +1,229 @@
+{
+     "adv":{
+        "before":{
+            "clause":"",
+            "coord":"Complements",
+            "suboord":"",
+            "verb":"Specifiers",
+            "nominal":"",
+            "noun":"",
+            "adj":"Specifiers",
+            "adv":"Specifiers",
+            "prep":"Relater",
+            "adjPrep":"",
+            "advPrep":"",
+            "mixPrep":"",
+            "normPP":"",
+            "adjPP":"",
+            "advPP":"",
+            "mixPP":"",
+            "nounPP":""
+        },
+        "after":{
+            "clause":"",
+            "coord":"Complements",
+            "suboord":"",
+            "verb":"Specifiers",
+            "nominal":"",
+            "noun":"",
+            "adj":"",
+            "adv":"",
+            "prep":"",
+            "adjPrep":"",
+            "advPrep":"",
+            "mixPrep":"",
+            "normPP":"",
+            "adjPP":"",
+            "advPP":"",
+            "mixPP":"",
+            "nounPP":""
+    }
+    },
+    
+    "advPrep":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements"       
+        }
+    },
+    
+    "adj":{
+        "before":{
+            "coord":"Complements",
+            "verb":"Subject",
+            "noun":"Descriptors",
+            "prep":"Relater"
+        },
+        "after":{
+            "coord":"Complements",
+            "verb":"SubjectComplement",
+            "noun":"Descriptors",
+            "adjPrep":"Connected"
+        }
+    },
+    
+    "adjPrep":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements"
+        }
+    },
+    
+    "prep":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements"
+        }
+    },
+    
+    "mixPrep":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements"
+        }
+    },
+
+    "normPP":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements",
+            "verb":"Connections",
+            "noun":"Connections"
+        }
+    },
+
+    "mixPP":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements",
+            "verb":"Connections",
+            "noun":"Connections"
+        }
+    },
+    
+    "adjPP":{
+        "before":{
+
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements",
+            "verb":"Connections",
+            "noun":"Connections"
+        }
+    },
+    
+    "advPP":{
+        "before":{
+
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements",
+            "verb":"Connections",
+            "noun":"Connections"
+        }
+    },
+    
+    "verbPP":{
+        "before":{
+
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements",
+            "verb":"Connections",
+            "noun":"Connections"
+        }
+    },
+    
+    "noun":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "advPrep":"Connected",
+            "adjPrep":"Connected",
+            "prep":"Connected",
+            "mixPrep":"Connected",
+            "verb":"Objects",
+            "coord":"Complements"
+        }
+    },
+    
+    "nominal":{
+        "before":{
+            "coord":"Complements",
+            "verb":"Subject",
+            "predicate":"Subject"
+            
+        },
+        "after":{
+            "coord":"Complements",
+            "verb":"Objects",
+            "prep":"Connected",
+            "adjPrep":"Connected",
+            "advPrep":"Connected",
+            "mixPrep":"Connected"
+
+
+        }
+    },
+    
+    "verb":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements",
+            "advPrep":"Connected"
+            
+        }
+    },
+
+    "clause":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements",
+            "suboord":"Suboordinations"
+            
+        }
+    },
+    "predicate":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements",
+            "suboord":"Suboordinations"
+            
+        }
+    },
+
+    "suboordClause":{
+        "before":{
+            "coord":"Complements"
+        },
+        "after":{
+            "coord":"Complements",
+            "noun":"Descriptors",
+            "adj":"Specifiers",
+            "suboord":"Suboordinations"
+            
+        }
+    }
+}

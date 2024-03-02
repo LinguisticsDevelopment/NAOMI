@@ -1,0 +1,183 @@
+{   "order":{
+    "0":"adv1 adv2 advPrep1 advPrep2 adj1 adj2 adjPrep1 adjPrep2 mixPrep noun1 noun2 normPP1 adjPP1 advPP1 verbPP1 normPP2 adjPP2 advPP2 verbPP2 mixPP2 noun3 nominal1 nominal2 verb1 verb2 predicate1 predicate2 clause1 clause2"
+},
+    "adv1":{
+        "0":"adv",
+        "1":"R adv > adv ?"
+    },
+
+    "adv2":{
+        "0":"adv",
+        "1":"N % adv * >  coordinate ? adv <"
+    },
+
+    "advPrep1":{
+        "0":"advPrep",
+        "1":"N adv.comp > prep ?"
+    },
+
+    "advPrep2":{
+        "0":"advPrep",
+        "1":"N % advPrep * >  coordinate ? advPrep <"
+    },
+
+    "adj1":{
+        "0":"adj",
+        "1":"N adv > adj ?",
+        "2":"N adj ? suboordClause <"
+    },
+
+    "adj2":{
+        "0":"adj",
+        "1":"N % adj * > coordinate ? adj <"
+    },
+    
+    "adjPrep1":{
+        "0":"adjPrep",
+        "1":"N adj.comp > prep ?"
+
+    },
+
+    "adjPrep2":{
+        "0":"adjPrep",
+        "1":"N % adjPrep * >  coordinate ? adjPrep <"
+    },
+
+    "mixPrep":{
+        "0":"mixPrep",
+        "1":"N % advPrep * >  coordinate ? prep <",
+        "2":"N % advPrep * >  coordinate ? adjPrep <",
+        "3":"N % advPrep * >  coordinate ? mixPrep <",
+        "4":"N % adjPrep * >  coordinate ? prep <",
+        "5":"N % adjPrep * >  coordinate ? advPrep <",
+        "6":"N % adjPrep * >  coordinate ? mixPrep <",
+        "7":"N % prep * >  coordinate ? advPrep <",
+        "8":"N % prep * >  coordinate ? adjPrep <",
+        "9":"N % prep * >  coordinate ? mixPrep <",
+        "10":"N % mixPrep * >  coordinate ? prep <",
+        "11":"N % mixPrep * >  coordinate ? adjPrep <",
+        "12":"N % mixPrep * >  coordinate ? advPrep <"
+    },
+
+    "noun1":{
+        "0":"noun",
+        "1":"R adj * > noun ?",
+        "2":"R noun ? suboordClause <"
+
+    },
+
+    "noun2":{
+        "0":"noun",
+        "1":"N % noun * > coord ? noun <"
+    },
+
+    "normPP1":{
+        "0":"normPP",
+        "1":"N prep ? noun <"
+        
+    },
+
+    "mixPP1":{
+        "0":"mixPP",
+        "1":"N mixPrep ? noun <"
+        
+    },
+    
+    "adjPP1":{
+        "0":"adjPP",
+        "1":"N adjPrep ? noun <",
+        "2":"N adjPrep ? adj <"
+
+    },
+
+    "advPP1":{
+        "0":"advPP",
+        "1":"N advPrep ? noun <"
+    },
+
+    "verbPP1":{
+        "0":"verbPP",
+        "1":"N advPrep ? verb <"
+
+    },
+
+    "normPP2":{
+        "0":"normPP",
+        "1":"N % normPP * > coord ? normPP <"       
+    },
+
+    "adjPP2":{
+        "0":"adjPP",
+        "1":"N % adjPP * > coord ? adjPP <"
+    },
+
+    "advPP2":{
+        "0":"advPP",
+        "1":"N % advPP * > coord ? advPP <"
+    },
+
+    "verbPP2":{
+        "0":"verbPP",
+        "1":"N % verbPP * > coord ? verbPP <"
+    },
+
+    "mixPP2":{
+        "0":"mixPP",
+        "1":"N % mixPP * > coord ? mixPP <"
+    },
+
+    "noun3":{
+        "0":"noun",
+        "1":"R noun ? normPP <",
+        "2":"R noun ? adjPP <",
+        "3":"R noun ? advPP <",
+        "4":"R noun ? mixPP <"
+ 
+    },
+    "nominal1":{
+        "0":"nominal",
+        "1":"N verb.nominal ?",
+        "2":"N noun ?"
+
+    },
+    "nominal2":{
+        "0":"nominal",
+        "1":"N nominal * > coord ? nominal <"
+        
+
+    },
+    "verb1":{
+        "0":"verb",
+        "1":"R verb ? adv <",
+        "2":"R adv > verb ?",
+        "3":"R verb ? normPP <",
+        "4":"R verb ? advPP <",
+        "5":"R verb ? verbPP <",
+        "6":"R verb ? suboordClause <"
+
+    },
+    "verb2":{
+        "0":"verb",
+        "1":"N % verb * > coord ? verb <"
+    },
+    "predicate1":{
+        "0":"predicate",
+        "1":"N verb ? nominal < nominal <",
+        "2":"N verb ? normPP <",
+        "3":"N verb ? nominal <",
+        "4":"N verb ? adj <"
+    },
+    "predicate2":{
+        "0":"predicate",
+        "1":"N predicate * > coord ? predicate <"
+    },
+    "clause1":{
+        "0":"clause",
+        "1":"N nominal > predicate ?"
+    },
+    "clause2":{
+        "0":"clause",
+        "1":"N clause * > coord ? clause <"
+    }
+    
+}

@@ -1,0 +1,81 @@
+{   "order":{
+    "0":"adv advPrep prep adj adjPrep normPrep noun normPP adjPP advPP verbPP nounP nominal verb"
+},
+    "adv":{
+        "0":"R % adv * >  coordinate ? adv / <",
+        "1":"R adv > adv ?",
+        "2":"N adv ?"
+    },
+    "advPrep":{
+        "0":"N adv.comp > prep ?"
+    },
+    "adj":{
+        "0":"R % adj * > coordinate ? adj <",
+        "1":"N adv > adj ?",
+        "2":"N adj ?"
+    },
+    
+    "adjPrep":{
+        "0":"N adj.comp > prep ?"
+    },
+    "normPrep":{
+        "0":"N prep ?"
+    },
+    "noun":{
+        "0":"R adj * > noun ?",
+        "1":"N noun ?"
+    },
+    "normPP":{
+        "0":"N normPrep ? noun <"
+        
+    },
+    "adjPP":{
+        "0":"N adjPrep ? noun <",
+        "1":"N adjPrep ? adj <"
+    },
+    "advPP":{
+        "0":"N advPrep ? noun <"
+    },
+    "verbPP":{
+        "0":"N advPrep ? verb <"
+    },
+    "nounP":{
+        "0":"R noun ? suboordClause <",
+        "1":"R noun ? NormPP <",
+        "2":"R noun ? adjPP <",
+        "3":"R noun ? advPP <",
+        "4":"R nounP ? suboordClause <",
+        "5":"R nounP ? NormPP <",
+        "6":"R nounP ? adjPP <",
+        "7":"R nounP ? advPP <",
+        "8":"N noun ?",
+        "9":"N nounP ?"
+    },
+    "nominal":{
+        "0":"R % nounP * > coord ? nounP <",
+        "1":"R nominal * > coord ? nounP <",
+        "2":"R nominal * > coord ? verb.nominal <",
+        "3":"R nounP * > coord ? nominal <",
+        "4":"R verb.nominal * > coord ? nominal <",
+        "5":"R  nounP * > coord ? verb.nominal <", 
+        "6":"R % verb.nominal * > coord ? nounP <",
+        "7":"R verb.nominal * > coord ? verb.nominal <",
+        "8":"N verb.nominal ?",
+        "9":"N nounP ?"
+
+    },
+    "verb":{
+        "0":"R % verb * > coord ? verb <",
+        "1":"R verb ? adv <",
+        "2":"R adv > verb ?",
+        "3":"R verb ? normPP <",
+        "4":"R verb * ? advPP <",
+        "5":"R verb ? verbPP <",
+        "6":"R verb ? suboord <",
+        "7":"N nominal > verb ? nominal < normPP <",
+        "8":"N nominal > verb ? nominal < nominal <",
+        "9":"N nominal > verb ? nominal <",
+        "10":"N nominal > verb ? adj <",
+        "11":"N nominal > verb ?"
+    }
+}

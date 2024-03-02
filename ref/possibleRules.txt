@@ -1,0 +1,64 @@
+Order is Important
++ = new
+all parts right of = become consumed
+" = skip
+. = subclass = 
+\ = Overwriting
+@ = index of
+> = if next word is a 
+>> = next uncomsumed word is
+< = last word is
+<< = last uncomsumed word is
+! = not is
+*... = get/check *Type until param
+
+
+D = Adv
+J = Adj
+C = Coord 
+S = Suboord
+N = Noun
+V = Verb
+
+suboord: suboord + verb
+
+noun: noun
+    | noun* + coordinate + *noun /RR
+    | adj + noun //RR
+    | noun + (normPrep | relatePrep | advPrep) + noun //RR
+    | noun + adjPrep + (noun | adj) //RR
+    | noun + suboord //RR
+
+verb: verb
+    | verb* + coordinate + *verb //RR
+    | verb + adv //RR
+    | adv + verb //RR
+    | verb + advPrep + (noun | verb | adv) //RR
+    | noun + verb + noun
+    | noun + verb + noun + noun
+    | noun + verb + adj
+    | noun + verb + noun + normPrep
+
+
+adj: adj
+    | adj* + coordinate + *adv
+    | adj + adv
+
+adv: adv
+    | adv* + coordinate + *adv
+    | adv + adv
+
+
+adjPrep: adjComp + Prep
+    | adjPrep + Prep
+
+advPrep: advComp + Prep
+    | Prep + Prep
+
+normPrep: Prep
+    | Prep + Prep
+
+relatePrep: Prep.relater
+    | relatePrep + Prep
+
+NounPrepPhrase: Prep + Noun
