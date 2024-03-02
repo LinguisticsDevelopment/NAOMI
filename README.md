@@ -1,22 +1,22 @@
-#NAOMI
-##I forgot what this thing stands for
+# NAOMI
+##  forgot what this thing stands for
 
 welcome back to the never-ending project everybody, were back at it
 
 ---
 
-##ORDERS OF BUSINESS FOR THE CURRENT PHASE: (Simple tree/detree)
+## ORDERS OF BUSINESS FOR THE CURRENT PHASE: (Simple tree/detree)
 - Tokenize the words and automatically make the word objects, and assign the standard values. See TODOS in main
 - Extremely simple sentence generator from Tree. See TODOS in main
 - Refactor the entire tree-ifier. It's genius, and it (somehow) works but is HEAVILY redundant
 
-##ORDERS OF BUSINESS FOR THE NEXT PHASE: (Orginizational Stuff)
+## ORDERS OF BUSINESS FOR THE NEXT PHASE: (Orginizational Stuff)
 - Neural Net to generate the "meaning-axises" (need a new name) for the vectors in the starter Lexicon [The general idea is to do this by making it attempt to make all words unique using as few axises as possible]
 - Decide how vector math works. Likely the multidimensional stuff
 
 ---
 
-##PHASES:
+## PHASES:
 1. Tree/DeTree
 2. Determine Vectors and Database
 3. Tree->Vector->Sentence
