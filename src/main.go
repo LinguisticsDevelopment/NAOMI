@@ -9,6 +9,10 @@ import (
 	. "NAOMI/src/cores/words"
 )
 
+//TODO: Tokenize Sentences to make words automatically, as well as assign standard meaning values to nouns/verbs (tense, number, ect)
+//TODO: Turn a tree back into a sentence with fully tokenized words (extremely simply, i.e. if we have run(plural), I WANT it to output runed instead of ran)
+//TODO: This would mostly complete Phase 1 honestly. Then onto refactoring this shit heavily, and then the hard part of making the lexicon database and vector system
+
 func main() {
 	bob := BuildWord("bob", "noun")
 	jim := BuildWord("jim", "noun")
