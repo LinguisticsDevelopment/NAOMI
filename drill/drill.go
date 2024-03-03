@@ -82,7 +82,7 @@ func Store(word Word) {
 		elemental[word.Key()] += 1
 	} else {
 		elemental[word.Key()] = 1
-		fmt.Println(word.word, word.pos)
+		// fmt.Println(word.word, word.pos)
 	}
 }
 
@@ -118,15 +118,17 @@ func Drill(word Word) {
 		return
 	}
 
-	output := outputs[0]
-	def := strings.Split(output.Gloss, ";")[0]
+	// output := outputs[0]
+	for _, output := range outputs {
+		def := strings.Split(output.Gloss, ";")[0]
 
-	toks := ParseDefinition(def)
-	// PrintDefinition(toks)
+		toks := ParseDefinition(def)
+		// PrintDefinition(toks)
 
-	for _, tok := range toks {
-		w := Word{tok.word, tok.pos}
-		Drill(w)
+		for _, tok := range toks {
+			w := Word{tok.word, tok.pos}
+			Drill(w)
+		}
 	}
 }
 
@@ -144,10 +146,9 @@ func main() {
 
 		w := Word{word, pos}
 		Drill(w)
-		break
 	}
 
-	fmt.Println()
+	// fmt.Println()
 
 	for k, v := range elemental {
 		fmt.Println(k, v)
