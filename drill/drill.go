@@ -91,9 +91,9 @@ func Drill(word Word) {
 		return
 	}
 
-	if count > 100 {
-		return
-	}
+	// if count > 100 {
+	// 	return
+	// }
 
 	count += 1
 
