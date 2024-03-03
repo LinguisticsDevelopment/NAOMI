@@ -2,10 +2,10 @@
 package cores
 
 import (
-	. "NAOMI/src/cores/words"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	. "naomi/parser/cores/words"
 	"os"
 
 	"github.com/oleiade/reflections"

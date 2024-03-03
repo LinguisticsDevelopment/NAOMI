@@ -1,4 +1,4 @@
-# NAOMI
+# naomi
 ##  NGL I forgot what this thing stands for
 
 welcome back to the never-ending project everybody, were back at it

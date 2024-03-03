@@ -1,8 +1,8 @@
 package cores
 
 import (
-	. "NAOMI/src/cores/words"
 	"fmt"
+	. "naomi/parser/cores/words"
 )
 
 func TotalParse(sentence []Word) {

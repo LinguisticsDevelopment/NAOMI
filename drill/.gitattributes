@@ -1,1 +1,4 @@
 dict.txt filter=lfs diff=lfs merge=lfs -text
+words.db filter=lfs diff=lfs merge=lfs -text
+test.txt filter=lfs diff=lfs merge=lfs -text
+wordnet20-from-prolog-all-3.sql filter=lfs diff=lfs merge=lfs -text

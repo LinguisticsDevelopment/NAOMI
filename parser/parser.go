@@ -5,8 +5,8 @@
 package main
 
 import (
-	"NAOMI/src/cores"
-	. "NAOMI/src/cores/words"
+	"naomi/parser/cores"
+	. "naomi/parser/cores/words"
 )
 
 //TODO: Tokenize Sentences to make words automatically, as well as assign standard meaning values to nouns/verbs (tense, number, ect)

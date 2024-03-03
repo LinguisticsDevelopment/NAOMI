@@ -2,7 +2,7 @@
 package cores
 
 import (
-	. "NAOMI/src/cores/words"
+	. "naomi/parser/cores/words"
 	"sort"
 	//"fmt"
 )

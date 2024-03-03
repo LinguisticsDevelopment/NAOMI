@@ -1,0 +1,110 @@
+package main
+
+import (
+	"database/sql"
+	"fmt"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	"github.com/fluhus/gostuff/nlp/wordnet"
+	"github.com/jdkato/prose/v2"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/smileart/lemmingo"
+)
+
+type Word struct {
+	Id    int
+	Word  string
+	Pos   string
+	Gloss []string
+}
+
+func main() {
+	toks := ParseDefinition("The boy jumped over the car")
+
+	for _, tok := range toks {
+		fmt.Println(tok)
+	}
+
+	fmt.Println()
+
+	outputs := wn.SearchRanked("jump")["v"]
+
+	for _, noun := range outputs {
+		fmt.Println(strings.Split(noun.Gloss, ";")[0])
+	}
+
+	return
+
+	doc, _ := prose.NewDocument("The animals ran from the lion.")
+
+	for _, tok := range doc.Tokens() {
+		fmt.Println(tok.Text, tok.Tag)
+	}
+	return
+
+	dictAbsPath, err := filepath.Abs("/home/will/Downloads/dict/en.lmm")
+	if err != nil {
+		panic(err)
+	}
+
+	lem, err := lemmingo.New(dictAbsPath, "", "", false, false, false)
+	if err != nil {
+		panic(err)
+	}
+
+	l, ok, err := lem.Lemma("stranger", "NN")
+	fmt.Println(l, ok, err)
+
+	l, ok, err = lem.Lemma("stranger", "JJR")
+	fmt.Println(l, ok, err)
+
+	l, ok, err = lem.Lemma("runs", "VBZ")
+	fmt.Println(l, ok, err)
+
+	return
+
+	wn, _ := wordnet.Parse("/home/will/Downloads/dict")
+	outputs := wn.Search("run")["v"]
+
+	for _, noun := range outputs {
+		fmt.Println(noun)
+	}
+
+	return
+	doc, _ := prose.NewDocument("The animals ran from the lion.")
+
+	for _, tok := range doc.Tokens() {
+		fmt.Println(tok.Text, tok.Tag)
+	}
+
+	return
+	db, _ := sql.Open("sqlite3", "./words.db")
+	defer db.Close()
+
+	rows, _ := db.Query("select word, ss_type from wn_synset")
+	defer rows.Close()
+
+	var words []Word
+
+	for rows.Next() {
+		var synset_id int
+		var word string
+		var ss_type string
+
+		_ = rows.Scan(&synset_id, &word, &ss_type)
+		words = append(words, Word{synset_id, word, ss_type, nil})
+	}
+
+	for _, word := range words {
+		rows, _ := db.Query("select gloss from wn_gloss where synset_id = " + strconv.Itoa(word.Id))
+		defer rows.Close()
+
+		for rows.Next() {
+			var gloss string
+			_ = rows.Scan(&gloss)
+			word.Gloss = strings.Fields(gloss)
+		}
+	}
+}
