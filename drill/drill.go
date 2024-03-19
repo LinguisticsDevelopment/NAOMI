@@ -17,7 +17,8 @@ var lem *lemmingo.Lemmingo
 var wn *wordnet.WordNet
 
 func Init() {
-	path, _ := filepath.Abs("/home/will/Downloads/dict/en.lmm")
+	// path, _ := filepath.Abs("/home/will/Downloads/dict/en.lmm")
+	path, _ := filepath.Abs("en.lmm")
 	lem, _ = lemmingo.New(path, "", "", false, false, false)
 
 	wn, _ = wordnet.Parse("/home/will/Downloads/dict")
