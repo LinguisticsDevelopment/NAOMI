@@ -5,59 +5,93 @@
 package main
 
 import (
+	"fmt"
 	"naomi/parser/cores"
 	. "naomi/parser/cores/words"
+	"path/filepath"
+	"strings"
+
+	//"github.com/fluhus/gostuff/nlp/wordnet"
+	"github.com/jdkato/prose/v2"
+
+	//"github.com/mattn/go-sqlite3"
+	"github.com/smileart/lemmingo"
 )
+
+var lem *lemmingo.Lemmingo
+
+//var wn *wordnet.WordNet
+
+func Init() {
+	// path, _ := filepath.Abs("/home/will/Downloads/dict/en.lmm")
+	path, _ := filepath.Abs("en.lmm")
+	lem, _ = lemmingo.New(path, "", "", false, false, false)
+
+	//wn, _ = wordnet.Parse("/home/will/Downloads/dict")
+}
 
 //TODO: Tokenize Sentences to make words automatically, as well as assign standard meaning values to nouns/verbs (tense, number, ect)
 //TODO: Turn a tree back into a sentence with fully tokenized words (extremely simply, i.e. if we have run(plural), I WANT it to output runed instead of ran)
 //TODO: This would mostly complete Phase 1 honestly. Then onto refactoring this shit heavily, and then the hard part of making the lexicon database and vector system
 
+type Token struct {
+	word string
+	part string
+}
+
+func ComplexTagToSimple(tag string) string {
+	switch res := strings.ToLower(tag)[0]; res {
+	case 'n':
+		return "noun"
+	case 'v':
+		return "verb"
+	case 'r':
+		return "adv"
+	case 'a':
+		return "adj"
+	case 'c':
+		return "coord"
+	case 'i':
+		return "suboord"
+	case 'p':
+		return "prep"
+	}
+
+	return "unknown"
+}
+
 func main() {
-	bob := BuildWord("bob", "noun")
-	jim := BuildWord("jim", "noun")
-	//geoff := BuildWord("geoff", "noun")
-	//shirt := BuildWord("shirt", "noun")
-	//pants := BuildWord("pants", "noun")
-	//sea := BuildWord("sea", "noun")
-	//stars := BuildWord("stars", "noun")
-	//children := BuildWord("children", "noun")
-	//he := BuildWord("he", "noun")
-	//she := BuildWord("she", "noun")
+	Init()
 
-	//runs := BuildWord("runs", "verb")
-	//are := BuildWord("are", "verb")
-	//is := BuildWord("is", "verb")
-	kills := BuildWord("kills", "verb")
-	//slaps := BuildWord("slaps", "verb")
-	//murders := BuildWord("murders", "verb")
-	//wears := BuildWord("wears", "verb")
-	//sits := BuildWord("sits", "verb")
+	fmt.Println("Enter Sentence (no punctuation plz): ")
+	var sentenceString string
 
-	//bright := BuildWord("bright", "adj")
-	//big := BuildWord("big", "adj")
-	//red := BuildWord("red", "adj")
-	//sad := BuildWord("sad", "adj")
-	//upsetting := BuildWord("upsetting", "adj")
-	//worse := BuildWord("worse", "adj")
-	//worse.SubType = "comp"
-	//the := BuildWord("the", "adj")
-	//bad := BuildWord("bad", "adj")
-	green := BuildWord("green", "adj")
-	//blue := BuildWord("blue", "adj")
-	//gay := BuildWord("gay", "adj")
+	// Taking input from user
+	fmt.Scanln(&sentenceString)
 
-	//very := BuildWord("very", "adv")
-	//slightly := BuildWord("slightly", "adv")
+	//sentenceList := strings.Split(sentenceString, " ")
+	doc, _ := prose.NewDocument(sentenceString)
+
+	var sentence []Word
+
+	for _, tok := range doc.Tokens() {
+		l, _, _ := lem.Lemma(tok.Text, tok.Tag)
+		//Token{l, ComplexTagToSimple(tok.Tag)
+		sentence = append(sentence, BuildWord(l, ComplexTagToSimple(tok.Tag)))
+	}
+
+	//bob := BuildWord("bob", "noun")
+	//jim := BuildWord("jim", "noun")
+
+	//kills := BuildWord("kills", "verb")
+	///green := BuildWord("green", "adj")
 	//extremely := BuildWord("extremely", "adv")
-
 	//under := BuildWord("under", "prep")
-	//than := BuildWord("than", "prep")
 	//and := BuildWord("and", "coord")
 	//who := BuildWord("who", "suboord")
-	//which := BuildWord("which", "suboord")
 
-	sentence := []Word{green, bob, kills, jim}
+	//sentence := []Word{green, bob, kills, jim}
 	//sentence := []Word{bob, kills, jim, under, the, sea}
+
 	cores.TotalParse(sentence)
 }
