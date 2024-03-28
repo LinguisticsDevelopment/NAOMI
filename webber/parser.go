@@ -46,18 +46,18 @@ func iterativeParse(rules []parser.Rule) {
 	}
 }
 
-func build_connection(frame ConFrame) {
+func buildConnection(frame ConFrame) {
 
 }
 
-func get_unconsumed(dir int, part Tag, index int) int {
+func getUnconsumed(dir int, part Tag, index int) int {
 	next := dir + index
-	if next < 0 || next > length {
+	if next < 0 || next >= length {
 		return -1
 	}
 	for consumption[next] {
 		next += dir
-		if next+dir < 0 || next+dir > length {
+		if next+dir < 0 || next+dir >= length {
 			return -1
 		}
 	}
@@ -69,18 +69,18 @@ func get_unconsumed(dir int, part Tag, index int) int {
 	return next
 }
 
-func get_all(dir int, part Tag, index int) []int {
+func getAll(dir int, part Tag, index int) []int {
 	indices := []int{}
-	next := get_unconsumed(dir, part, index)
+	next := getUnconsumed(dir, part, index)
 	for next != -1 {
 		indices = append(indices, next)
-		next = get_unconsumed(dir, part, next)
+		next = getUnconsumed(dir, part, next)
 	}
 
 	return indices
 }
 
-func get_amount(amount int, dir int, gap int, part Tag, index int) []int {
+func getAmount(amount int, dir int, gap int, part Tag, index int) []int {
 	//This is a super helper function. If you want the next unconsumed,
 	//you can input 1. If you want all of the unconsumed in that direction,
 	//you can put -1. Plan to implement ability to shift over start point for
