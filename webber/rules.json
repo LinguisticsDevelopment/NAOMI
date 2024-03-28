@@ -1,6 +1,7 @@
-{   "order":{
-    "0":"adv1 adv2 advPrep1 advPrep2 adj1 adj2 adjPrep1 adjPrep2 mixPrep noun1 noun2 normPP1 adjPP1 advPP1 verbPP1 normPP2 adjPP2 advPP2 verbPP2 mixPP2 noun3 nominal1 nominal2 verb1 verb2 predicate1 predicate2 clause1 clause2"
-},
+{
+    "order":{
+        "0":"adv1 adv2 advPrep1 advPrep2 adj1 adj2 adjPrep1 adjPrep2 mixPrep noun1 noun2 normPP1 adjPP1 advPP1 verbPP1 normPP2 adjPP2 advPP2 verbPP2 mixPP2 noun3 nominal1 nominal2 verb1 verb2 predicate1 predicate2 clause1 clause2"
+    },
     "adv1":{
         "0":"adv",
         "1":"R adv > adv ?"

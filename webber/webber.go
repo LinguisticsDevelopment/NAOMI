@@ -24,7 +24,7 @@ func main() {
 	Connect(C_COORDINATION, and, trains)
 
 	root := likes
-	graph := Graph{nil, root}
+	graph := Web{nil, root}
 
 	PrintGraph(graph)
 }

@@ -230,12 +230,12 @@ func Connect(tp ConnectionType, a *Node, b *Node) {
 	b.AddConnection(c1)
 }
 
-type Graph struct {
+type Web struct {
 	Sentence []*Word
 	Root     *Node
 }
 
-func NewGraph(sentence string) (Graph, error) {
+func NewGraph(sentence string) (Web, error) {
 	doc, _ := prose.NewDocument(sentence)
 
 	var words []*Word
@@ -248,10 +248,10 @@ func NewGraph(sentence string) (Graph, error) {
 
 	root, err := Parse(words)
 	if err != nil {
-		return Graph{words, nil}, err
+		return Web{words, nil}, err
 	}
 
-	return Graph{words, root}, nil
+	return Web{words, root}, nil
 }
 
 func Parse(sentence []*Word) (*Node, error) {
@@ -259,7 +259,7 @@ func Parse(sentence []*Word) (*Node, error) {
 	return nil, errors.New("not implemented")
 }
 
-func PrintGraph(web Graph) {
+func PrintGraph(web Web) {
 	g := graphviz.New()
 	graph, _ := g.Graph()
 
