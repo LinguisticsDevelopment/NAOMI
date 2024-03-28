@@ -80,12 +80,12 @@ func get_all(dir int, part Tag, index int) []int {
 	return indices
 }
 
-func get_amount(amount int, dir int, part Tag, index int) []int {
+func get_amount(amount int, dir int, gap int, part Tag, index int) []int {
 	//This is a super helper function. If you want the next unconsumed,
 	//you can input 1. If you want all of the unconsumed in that direction,
 	//you can put -1. Plan to implement ability to shift over start point for
 	//gap searches (think verbs and various types of objects)
 
-	indices = get_all(dir, part, index)
-	return
+	indices := get_all(dir, part, index+gap)
+	return indices //slice of indices depending on distance from start and number in chain
 }
