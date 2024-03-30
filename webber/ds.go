@@ -66,45 +66,24 @@ var StringToTag = map[string]Tag{
 	"X":     POS_X,
 }
 
-func TagToString(tag Tag) string {
-	switch tag {
-	case POS_ADJ:
-		return "ADJ"
-	case POS_ADP:
-		return "ADP"
-	case POS_ADV:
-		return "ADV"
-	case POS_AUX:
-		return "AUX"
-	case POS_CCONJ:
-		return "CCONJ"
-	case POS_DET:
-		return "DET"
-	case POS_INTJ:
-		return "INTJ"
-	case POS_NOUN:
-		return "NOUN"
-	case POS_NUM:
-		return "NUM"
-	case POS_PART:
-		return "PART"
-	case POS_PRON:
-		return "PRON"
-	case POS_PROPN:
-		return "PROPN"
-	case POS_PUNCT:
-		return "PUNCT"
-	case POS_SCONJ:
-		return "SCONJ"
-	case POS_SYM:
-		return "SYM"
-	case POS_VERB:
-		return "VERB"
-	case POS_X:
-		return "X"
-	}
-
-	panic("Not a valid tag")
+var TagToString = map[Tag]string{
+	POS_ADJ:   "ADJ",
+	POS_ADP:   "ADP",
+	POS_ADV:   "ADV",
+	POS_AUX:   "AUX",
+	POS_CCONJ: "CCONJ",
+	POS_DET:   "DET",
+	POS_INTJ:  "INT",
+	POS_NOUN:  "NOUN",
+	POS_NUM:   "NUM",
+	POS_PART:  "PART",
+	POS_PRON:  "PRON",
+	POS_PROPN: "PROPN",
+	POS_PUNCT: "PUNCT",
+	POS_SCONJ: "SCONJ",
+	POS_SYM:   "SYM",
+	POS_VERB:  "VERB",
+	POS_X:     "X",
 }
 
 const ( //Nodes
@@ -159,23 +138,27 @@ var StringToNodeType = map[string]NodeType{
 	"PP_VERB":   N_PP_VERB,
 }
 
-func NodeTypeToString(nodeType NodeType) string {
-	switch nodeType {
-	case N_NOMINAL:
-		return "NOMINAL"
-	case N_VERBAL:
-		return "VERBAL"
-	case N_SPECIFIER:
-		return "SPECIFIER"
-	case N_DESCRIPTOR:
-		return "DESCRIPTOR"
-	case N_MODIFIER:
-		return "MODIFIER"
-	case N_PREP:
-		return "PREP"
-	}
+var NodeTypeToString = map[NodeType]string{
+	N_NOUN:       "NOUN",
+	N_VERBAL:     "VERBAL",
+	N_NOMINAL:    "NOMINAL",
+	N_PREDICATE:  "PREDICATE",
+	N_CLAUSE:     "CLAUSE",
+	N_SPECIFIER:  "SPECIFIER",
+	N_DESCRIPTOR: "DESCRIPTOR",
+	N_MODIFIER:   "MODIFIER",
+	N_COORD:      "COORD",
+	N_SUBOORD:    "SUBOORD",
 
-	panic("Not a node type")
+	N_PREP:      "PREP",
+	N_PREP_SPEC: "PREP_SPEC",
+	N_PREP_DESC: "PREP_DESC",
+	N_PREP_MIX:  "PREP_MIX",
+	N_PP_NOUN:   "PP_NOUN",
+	N_PP_MIX:    "PP_MIX",
+	N_PP_DESC:   "PP_DESC",
+	N_PP_SPEC:   "PP_SPEC",
+	N_PP_VERB:   "PP_VERB",
 }
 
 const (
@@ -236,6 +219,24 @@ var StringToSubType = map[string]SubType{
 	"PLURAL":       S_PLURAL,
 }
 
+var SubTypeToString = map[SubType]string{
+	S_SUBOORDINATE: "SUBOORDINATE",
+	S_INDEPENDENT:  "INDEPENDENT",
+	S_NOMINAL:      "NOMINAL",
+	S_MODAL:        "MODAL",
+	S_COMPARATIVE:  "COMPARATIVE",
+	S_SUPERLATIVE:  "SUPERLATIVE",
+	S_P_MIX:        "P_MIX",
+	S_P_DESC:       "P_DESC",
+	S_P_SPEC:       "P_SPEC",
+	S_P_VERB:       "P_VERB",
+	S_P_NORM:       "P_NORM",
+	S_MASCULINE:    "MASCULINE",
+	S_FEMININE:     "FEMININE",
+	S_SINGULAR:     "SINGULAR",
+	S_PLURAL:       "PLURAL",
+}
+
 type Word struct {
 	Text string
 	POS  Tag
@@ -294,39 +295,38 @@ const (
 
 type ConnectionType int32
 
-func ConnectionTypeToString(connectionType ConnectionType) string {
-	switch connectionType {
-	case C_SUBJECT:
-		return "SUBJECT"
-	case C_PREDICATE:
-		return "PREDICATE"
-	case C_OBJECT:
-		return "OBJECT"
-	case C_INDIRECT_OBJECT:
-		return "INDIRECT_OBJECT"
-	case C_SUBJECT_COMPLEMENT:
-		return "SUBJECT_COMPLEMENT"
-	case C_OBJECT_COMPLEMENT:
-		return "OBJECT_COMPLEMENT"
-	case C_SPECIFICATION:
-		return "SPECIFICATION"
-	case C_DESCRIPTION:
-		return "DESCRIPTION"
-	case C_MODIFICATION:
-		return "MODIFICATION"
-	case C_COORDINATION:
-		return "COORDINATION"
-	case C_SUBOORDINATION_FROM:
-		return "SUBOORDINATION_FROM"
-	case C_SUBOORDINATION_TO:
-		return "SUBOORDINATION_TO"
-	case C_PREPOSITION_FROM:
-		return "PREPOSITION_FROM"
-	case C_PREPOSITION_TO:
-		return "PREPOSITION_TO"
-	}
+var StringToConnectionType = map[string]ConnectionType{
+	"SUBJECT":             C_SUBJECT,
+	"PREDICATE":           C_PREDICATE,
+	"OBJECT":              C_OBJECT,
+	"INDIRECT_OBJECT":     C_INDIRECT_OBJECT,
+	"SUBJECT_COMPLEMENT":  C_SUBJECT_COMPLEMENT,
+	"OBJECT_COMPLEMENT":   C_OBJECT_COMPLEMENT,
+	"SPECIFICATION":       C_SPECIFICATION,
+	"DESCRIPTION":         C_DESCRIPTION,
+	"MODIFICATION":        C_MODIFICATION,
+	"COORDINATION":        C_COORDINATION,
+	"SUBOORDINATION_FROM": C_SUBOORDINATION_FROM,
+	"SUBOORDINATION_TO":   C_SUBOORDINATION_TO,
+	"PREPOSITION_FROM":    C_PREPOSITION_FROM,
+	"PREPOSITION_TO":      C_PREPOSITION_TO,
+}
 
-	panic("Not a valid connection type")
+var ConnectionTypeToString = map[ConnectionType]string{
+	C_SUBJECT:             "SUBJECT",
+	C_PREDICATE:           "PREDICATE",
+	C_OBJECT:              "OBJECT",
+	C_INDIRECT_OBJECT:     "INDIRECT_OBJECT",
+	C_SUBJECT_COMPLEMENT:  "SUBJECT_COMPLEMENT",
+	C_OBJECT_COMPLEMENT:   "OBJECT_COMPLEMENT",
+	C_SPECIFICATION:       "SPECIFICATION",
+	C_DESCRIPTION:         "DESCRIPTION",
+	C_MODIFICATION:        "MODIFICATION",
+	C_COORDINATION:        "COORDINATION",
+	C_SUBOORDINATION_FROM: "SUBOORDINATION_FROM",
+	C_SUBOORDINATION_TO:   "SUBOORDINATION_TO",
+	C_PREPOSITION_FROM:    "PREPOSITION_FROM",
+	C_PREPOSITION_TO:      "PREPOSITION_TO",
 }
 
 type Connection struct {
@@ -396,13 +396,13 @@ func PrintGraph(web Web) {
 			if connection.A != root && connection.A != parent {
 				m, _ := graph.CreateNode(connection.A.Value.Text)
 				e, _ := graph.CreateEdge(uuid.New().String(), n, m)
-				e.SetLabel(ConnectionTypeToString(connection.Type))
+				e.SetLabel(ConnectionTypeToString[connection.Type])
 				AddNode(connection.A, root)
 			}
 			if connection.B != root && connection.B != parent {
 				m, _ := graph.CreateNode(connection.B.Value.Text)
 				e, _ := graph.CreateEdge(uuid.New().String(), n, m)
-				e.SetLabel(ConnectionTypeToString(connection.Type))
+				e.SetLabel(ConnectionTypeToString[connection.Type])
 				AddNode(connection.B, root)
 			}
 		}

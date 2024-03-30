@@ -1,9 +1,5 @@
 package main
 
-import (
-	"naomi/webber/parser"
-)
-
 var consumption []bool
 var words []*Node
 var length int
@@ -24,7 +20,7 @@ func SentenceParse(w []*Node) {
 
 }
 
-func iterativeParse(rules []parser.Rule) {
+func iterativeParse(rules []Rule) {
 	index := 0
 	var connectionQueue []ConFrame
 	for wordIndex := 0; wordIndex < length; wordIndex++ {
@@ -38,7 +34,7 @@ func iterativeParse(rules []parser.Rule) {
 			//Check rule, if -1 then continue
 			//add parts
 			if rule.RootType == currentWord.Type {
-				for _, part := range rule.before {
+				for _, part := range rule.Before {
 					newBefores := getAmount(part, -1, wordIndex)
 					//add new connection to queue
 					if newBefores[0] == -1 {
@@ -49,7 +45,7 @@ func iterativeParse(rules []parser.Rule) {
 				if fail {
 					continue
 				}
-				for _, part := range rule.after {
+				for _, part := range rule.After {
 					newAfters := getAmount(part, 1, wordIndex)
 					//add new connection to queue
 					if newAfters[0] == -1 {
