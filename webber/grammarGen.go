@@ -9,20 +9,20 @@ import (
 )
 
 type Part struct {
-	Distance        int    //Absolute Value away from the root
-	ApplyInChain    bool   // "/"
-	FindAllinDir    bool   // "*"
-	SkipConsumption bool   // "_"
-	TypeKind        string // Part BEFORE the "."
-	SubType         string // Part AFTER the "."
+	Distance        int      //Absolute Value away from the root
+	ApplyInChain    bool     // "/"
+	FindAllinDir    bool     // "*"
+	SkipConsumption bool     // "_"
+	TypeKind        NodeType // Part BEFORE the "." TURN INTO
+	SubType         SubType  // Part AFTER the "."
 }
 
 type Rule struct {
 	IsRecursive   bool // "N" or "R"
 	NeedsMatching bool // "%"
-	Resultant     string
-	RootType      string
-	RootSubType   string
+	Resultant     NodeType
+	RootType      NodeType
+	RootSubType   SubType
 	Before        []Part
 	After         []Part
 }
@@ -76,11 +76,11 @@ func parseRule(input string, result string) Rule {
 				newPart.SkipConsumption = true
 			} else {
 				div := strings.Split(aspect, ".")
-				newPart.TypeKind = div[0]
+				newPart.TypeKind = StringToNodeType[div[0]]
 				if len(div) > 1 {
-					newPart.SubType = div[1]
+					newPart.SubType = StringToSubType[div[1]]
 				} else {
-					newPart.SubType = ""
+					//newPart.SubType = ""
 				}
 			}
 		}
@@ -98,24 +98,24 @@ func parseRule(input string, result string) Rule {
 				newPart.SkipConsumption = true
 			} else {
 				div := strings.Split(aspect, ".")
-				newPart.TypeKind = div[0]
+				newPart.TypeKind = StringToNodeType[div[0]]
 				if len(div) > 1 {
-					newPart.SubType = div[1]
+					newPart.SubType = StringToSubType[div[1]]
 				} else {
-					newPart.SubType = ""
+					//newPart.SubType = ""
 				}
 			}
 		}
 		afterParts = append(afterParts, newPart)
 	}
 	root = strings.TrimSpace(root)
-	newRule := Rule{IsRecursive: isRec, Before: beforeParts, After: afterParts, Resultant: result, NeedsMatching: needsMatching}
+	newRule := Rule{IsRecursive: isRec, Before: beforeParts, After: afterParts, Resultant: StringToNodeType[result], NeedsMatching: needsMatching}
 	div := strings.Split(root, ".")
-	newRule.RootType = div[0]
+	newRule.RootType = StringToNodeType[div[0]]
 	if len(div) > 1 {
-		newRule.RootSubType = div[1]
+		newRule.RootSubType = StringToSubType[div[1]]
 	} else {
-		newRule.RootSubType = ""
+		//newRule.RootSubType = ""
 	}
 	return newRule
 }

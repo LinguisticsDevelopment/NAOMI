@@ -46,6 +46,26 @@ const ( //Parts of Speech
 
 type Tag int32
 
+var StringToTag = map[string]Tag{
+	"ADJ":   POS_ADJ,
+	"ADP":   POS_ADP,
+	"ADV":   POS_ADV,
+	"AUX":   POS_AUX,
+	"CCONJ": POS_CCONJ,
+	"DET":   POS_DET,
+	"INT":   POS_INTJ,
+	"NOUN":  POS_NOUN,
+	"NUM":   POS_NUM,
+	"PART":  POS_PART,
+	"PRON":  POS_PRON,
+	"PROPN": POS_PROPN,
+	"PUNCT": POS_PUNCT,
+	"SCONJ": POS_SCONJ,
+	"SYM":   POS_SYM,
+	"VERB":  POS_VERB,
+	"X":     POS_X,
+}
+
 func TagToString(tag Tag) string {
 	switch tag {
 	case POS_ADJ:
@@ -87,24 +107,57 @@ func TagToString(tag Tag) string {
 	panic("Not a valid tag")
 }
 
-type Word struct {
-	Text string
-	POS  Tag
-	//Eventually Light Meaning Vector
-}
-
 const ( //Nodes
-	N_NOMINAL = iota
-	N_VERBAL  = iota
+	N_NOUN   = iota
+	N_VERBAL = iota
+
+	N_PREDICATE = iota
+	N_NOMINAL   = iota
+	N_CLAUSE    = iota
 
 	N_SPECIFIER  = iota
 	N_DESCRIPTOR = iota
 	N_MODIFIER   = iota
 
-	N_PREP = iota
+	N_COORD   = iota
+	N_SUBOORD = iota
+
+	N_PREP      = iota
+	N_PREP_SPEC = iota //this should eventually use the subtype format in the grammar file and in the generator and parser
+	N_PREP_DESC = iota
+	N_PREP_MIX  = iota
+
+	N_PP_NOUN = iota
+	N_PP_MIX  = iota
+	N_PP_DESC = iota
+	N_PP_SPEC = iota
+	N_PP_VERB = iota
 )
 
 type NodeType int32
+
+var StringToNodeType = map[string]NodeType{
+	"NOUN":       N_NOUN,
+	"VERBAL":     N_VERBAL,
+	"NOMINAL":    N_NOMINAL,
+	"PREDICATE":  N_PREDICATE,
+	"CLAUSE":     N_CLAUSE,
+	"SPECIFIER":  N_SPECIFIER,
+	"DESCRIPTOR": N_DESCRIPTOR,
+	"MODIFIER":   N_MODIFIER,
+	"COORD":      N_COORD,
+	"SUBOORD":    N_SUBOORD,
+
+	"PREP":      N_PREP,
+	"PREP_SPEC": N_PREP_SPEC,
+	"PREP_DESC": N_PREP_DESC,
+	"PREP_MIX":  N_PREP_MIX,
+	"PP_NOUN":   N_PP_NOUN,
+	"PP_MIX":    N_PP_MIX,
+	"PP_DESC":   N_PP_DESC,
+	"PP_SPEC":   N_PP_SPEC,
+	"PP_VERB":   N_PP_VERB,
+}
 
 func NodeTypeToString(nodeType NodeType) string {
 	switch nodeType {
@@ -123,6 +176,70 @@ func NodeTypeToString(nodeType NodeType) string {
 	}
 
 	panic("Not a node type")
+}
+
+const (
+	//clause types
+	S_SUBOORDINATE = iota
+	S_INDEPENDENT  = iota
+
+	//verb forms
+	S_NOMINAL = iota
+	S_MODAL   = iota
+
+	//Descriptor/Specifier forms
+	S_COMPARATIVE = iota
+	S_SUPERLATIVE = iota
+
+	//Preposition/Prepositional Phrase forms TODO: IMPLEMENT THESE PLEASE FOR THE LOVE OF GOD
+	S_P_MIX  = iota
+	S_P_DESC = iota
+	S_P_SPEC = iota
+	S_P_VERB = iota
+	S_P_NORM = iota
+
+	//gender
+	S_MASCULINE = iota
+	S_FEMININE  = iota
+
+	//number
+	S_SINGULAR = iota
+	S_PLURAL   = iota
+)
+
+type SubType int32
+
+//This is being partially implemented to help with clauses and with verbs
+//But can eventually be used to implement other languages (think romantic languages)
+//To allow for gender/number/case implementation
+//Still need to modify the parser and grammar generator
+//to allow for this to be compared correctly
+//but this is a start
+//PROBABLY have each language grammar file initially denote what subTypes are present
+//Point is this eventually allows it to not be only reliant on order for other good langauges lol
+
+var StringToSubType = map[string]SubType{
+	"SUBOORDINATE": S_SUBOORDINATE,
+	"INDEPENDENT":  S_INDEPENDENT,
+	"NOMINAL":      S_NOMINAL,
+	"MODAL":        S_MODAL,
+	"COMPARATIVE":  S_COMPARATIVE,
+	"SUPERLATIVE":  S_SUPERLATIVE,
+	"P_MIX":        S_P_MIX,
+	"P_DESC":       S_P_DESC,
+	"P_SPEC":       S_P_SPEC,
+	"P_VERB":       S_P_VERB,
+	"P_NORM":       S_P_NORM,
+	"MASCULINE":    S_MASCULINE,
+	"FEMININE":     S_FEMININE,
+	"SINGULAR":     S_SINGULAR,
+	"PLURAL":       S_PLURAL,
+}
+
+type Word struct {
+	Text string
+	POS  Tag
+	//Eventually Light Meaning Vector
 }
 
 type Node struct {
