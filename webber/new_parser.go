@@ -1,5 +1,7 @@
 package main
 
+import "errors"
+
 var consumption []bool
 var words []*Node
 var length int
@@ -13,11 +15,23 @@ type ConFrame struct {
 	consume    bool
 }
 
-func SentenceParse(w []*Node) {
+func SentenceParse(w []*Node) (*Node, error) {
 	words = w
 	consumption = make([]bool, len(words))
 	length = len(words)
 
+	ruleSet := ruleSetParse("new_rules.json")
+	for _, rule := range ruleSet {
+		iterativeParse(rule)
+	}
+
+	for index, _ := range words {
+		if !consumption[index] {
+			return words[index], nil
+		}
+	}
+
+	return nil, errors.New("Could not find root node in SentenceParse")
 }
 
 func iterativeParse(rules []Rule) {
@@ -28,7 +42,9 @@ func iterativeParse(rules []Rule) {
 		}
 		currentWord := words[wordIndex]
 		connectionQueue = []ConFrame{}
-		for _, rule := range rules {
+		//for _, rule := range rules {
+		for ruleNum := 0; ruleNum < len(rules); ruleNum++ {
+			rule := rules[ruleNum]
 			fail := false
 			//Check rule, if -1 then continue
 			//add parts
@@ -39,6 +55,10 @@ func iterativeParse(rules []Rule) {
 					if newBefores[0] == -1 {
 						fail = true
 						break
+					}
+					for _, before := range newBefores {
+						connection := ConFrame{currentWord, words[before], before, C_SUBJECT, !part.SkipConsumption}
+						connectionQueue = append(connectionQueue, connection)
 					}
 				}
 				if fail {
@@ -51,11 +71,18 @@ func iterativeParse(rules []Rule) {
 						fail = true
 						break
 					}
+					for _, after := range newAfters {
+						connection := ConFrame{currentWord, words[after], after, C_SUBJECT, !part.SkipConsumption}
+						connectionQueue = append(connectionQueue, connection)
+					}
 				}
 				if fail {
 					continue
 				}
 			} else {
+				continue
+			}
+			if fail {
 				continue
 			}
 			for _, connection := range connectionQueue {
@@ -66,13 +93,16 @@ func iterativeParse(rules []Rule) {
 				}
 
 			}
+			if rule.IsRecursive {
+				ruleNum = 0
+			} else {
+				break
+			}
+
 		}
+
 		//if recursive, wordIndex-1
 	}
-}
-
-func buildConnection(frame ConFrame) {
-
 }
 
 func getUnconsumed(dir int, part NodeType, index int) int {

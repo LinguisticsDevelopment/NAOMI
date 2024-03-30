@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
 	"github.com/jdkato/prose/v2"
 
@@ -87,6 +85,8 @@ var TagToString = map[Tag]string{
 }
 
 const ( //Nodes
+	N_NIL = -1
+
 	N_NOUN   = iota
 	N_VERBAL = iota
 
@@ -111,11 +111,35 @@ const ( //Nodes
 	N_PP_DESC = iota
 	N_PP_SPEC = iota
 	N_PP_VERB = iota
+
+	N_INTJ = iota
 )
 
 type NodeType int32
 
+var TagToNodeType = map[Tag]NodeType{
+	POS_ADJ:   N_DESCRIPTOR,
+	POS_ADP:   N_PREP,
+	POS_ADV:   N_SPECIFIER,
+	POS_AUX:   N_MODIFIER,
+	POS_CCONJ: N_COORD,
+	POS_DET:   N_DESCRIPTOR,
+	POS_INTJ:  N_INTJ,
+	POS_NOUN:  N_NOUN,
+	POS_NUM:   N_DESCRIPTOR,
+	POS_PART:  N_MODIFIER,
+	POS_PRON:  N_NOUN,
+	POS_PROPN: N_NOUN,
+	POS_PUNCT: N_NIL,
+	POS_SCONJ: N_SUBOORD,
+	POS_SYM:   N_NIL,
+	POS_VERB:  N_VERBAL,
+	POS_X:     N_NIL,
+}
+
 var StringToNodeType = map[string]NodeType{
+	"NIL": N_NIL,
+
 	"NOUN":       N_NOUN,
 	"VERBAL":     N_VERBAL,
 	"NOMINAL":    N_NOMINAL,
@@ -136,9 +160,13 @@ var StringToNodeType = map[string]NodeType{
 	"PP_DESC":   N_PP_DESC,
 	"PP_SPEC":   N_PP_SPEC,
 	"PP_VERB":   N_PP_VERB,
+
+	"INTJ": N_INTJ,
 }
 
 var NodeTypeToString = map[NodeType]string{
+	N_NIL: "NIL",
+
 	N_NOUN:       "NOUN",
 	N_VERBAL:     "VERBAL",
 	N_NOMINAL:    "NOMINAL",
@@ -159,6 +187,8 @@ var NodeTypeToString = map[NodeType]string{
 	N_PP_DESC:   "PP_DESC",
 	N_PP_SPEC:   "PP_SPEC",
 	N_PP_VERB:   "PP_VERB",
+
+	N_INTJ: "INTJ",
 }
 
 const (
@@ -245,14 +275,14 @@ type Word struct {
 
 type Node struct {
 	Type  NodeType
-	Value Word
+	Value *Word
 	POS   Tag
 
 	Connections []*Connection
 }
 
 func NewNode(tp NodeType, text string, POS Tag) *Node {
-	return &Node{tp, Word{text, POS}, POS, []*Connection{}}
+	return &Node{tp, &Word{text, POS}, POS, []*Connection{}}
 }
 
 func (n *Node) AddConnection(connection *Connection) {
@@ -352,7 +382,7 @@ type Web struct {
 	Root     *Node
 }
 
-func NewGraph(sentence string) (Web, error) {
+func NewWeb(sentence string) (Web, error) {
 	doc, _ := prose.NewDocument(sentence)
 
 	var words []*Word
@@ -360,7 +390,9 @@ func NewGraph(sentence string) (Web, error) {
 	for _, tok := range doc.Tokens() {
 		l, _, _ := Lem.Lemma(tok.Text, tok.Tag)
 
-		words = append(words, &Word{l, PennToUniv(tok.Tag)})
+		if tok.Tag != "PUNCT" {
+			words = append(words, &Word{l, PennToUniv(tok.Tag)})
+		}
 	}
 
 	root, err := Parse(words)
@@ -372,8 +404,13 @@ func NewGraph(sentence string) (Web, error) {
 }
 
 func Parse(sentence []*Word) (*Node, error) {
-	//TODO: This is where we plug my parser
-	return nil, errors.New("not implemented")
+	nodes := make([]*Node, 0, len(sentence))
+	for _, word := range sentence {
+		nodes = append(nodes, &Node{TagToNodeType[word.POS], word, word.POS, []*Connection{}})
+	}
+
+	root, err := SentenceParse(nodes)
+	return root, err
 }
 
 func PrintGraph(web Web) {

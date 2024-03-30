@@ -15,6 +15,7 @@ type Part struct {
 	SkipConsumption bool     // "_"
 	TypeKind        NodeType // Part BEFORE the "." TURN INTO
 	SubType         SubType  // Part AFTER the "."
+
 }
 
 type Rule struct {

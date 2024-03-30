@@ -1,6 +1,13 @@
 package main
 
 func main() {
+
+	web, _ := NewWeb("the tall boy likes likes trucks, cars, and trains.")
+
+	PrintGraph(web)
+}
+
+/*
 	likes := NewNode(N_VERBAL, "like", POS_VERB)
 	boy := NewNode(N_NOMINAL, "boy", POS_NOUN)
 	the := NewNode(N_DESCRIPTOR, "the", POS_DET)
@@ -27,4 +34,5 @@ func main() {
 	graph := Web{nil, root}
 
 	PrintGraph(graph)
-}
+
+*/
