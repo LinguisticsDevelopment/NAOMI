@@ -1,11 +1,32 @@
 package main
 
-import "errors"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
+)
 
 var consumption []bool
 var words []*Node
 var length int
 var edges []*Connection
+
+var assignments map[string]map[string]map[string]string
+
+func ParserInit() {
+	jsonFile, err := os.Open("assignments.json")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	json.Unmarshal(byteValue, &assignments)
+}
 
 type ConFrame struct {
 	parent     *Node
@@ -22,16 +43,34 @@ func SentenceParse(w []*Node) (*Node, error) {
 
 	ruleSet := ruleSetParse("new_rules.json")
 	for _, rule := range ruleSet {
+		for i, word := range words {
+			fmt.Fprintf(os.Stderr, "%s %s %t, ", word.Value.Text, NodeTypeToString[word.Type], consumption[i])
+		}
+		fmt.Fprintf(os.Stderr, "\n")
 		iterativeParse(rule)
 	}
 
+	func() {}()
+
+	first := -1
+	count := 0
+
 	for index, _ := range words {
 		if !consumption[index] {
-			return words[index], nil
+			first = index
+			PrintGraph(Web{nil, words[index]})
+			count += 1
 		}
 	}
 
-	return nil, errors.New("Could not find root node in SentenceParse")
+	if count == 0 {
+		return nil, errors.New("Could not find root node in SentenceParse")
+	}
+	if count > 1 {
+		return nil, errors.New("Multiple root nodes in SentenceParse")
+	}
+
+	return words[first], nil
 }
 
 func iterativeParse(rules []Rule) {
@@ -57,7 +96,8 @@ func iterativeParse(rules []Rule) {
 						break
 					}
 					for _, before := range newBefores {
-						connection := ConFrame{currentWord, words[before], before, C_SUBJECT, !part.SkipConsumption}
+						connType := StringToConnectionType[assignments[NodeTypeToString[words[before].Type]]["before"][NodeTypeToString[currentWord.Type]]]
+						connection := ConFrame{currentWord, words[before], before, connType, !part.SkipConsumption}
 						connectionQueue = append(connectionQueue, connection)
 					}
 				}
@@ -72,7 +112,8 @@ func iterativeParse(rules []Rule) {
 						break
 					}
 					for _, after := range newAfters {
-						connection := ConFrame{currentWord, words[after], after, C_SUBJECT, !part.SkipConsumption}
+						connType := StringToConnectionType[assignments[NodeTypeToString[words[after].Type]]["after"][NodeTypeToString[currentWord.Type]]]
+						connection := ConFrame{currentWord, words[after], after, connType, !part.SkipConsumption}
 						connectionQueue = append(connectionQueue, connection)
 					}
 				}
@@ -86,13 +127,22 @@ func iterativeParse(rules []Rule) {
 				continue
 			}
 			for _, connection := range connectionQueue {
-				Connect(connection.conType, connection.parent, connection.child)
+				skip := false
+				for _, edge := range edges {
+					if edge.Type == connection.conType && edge.A == connection.parent && edge.B == connection.child {
+						skip = true
+					}
+				}
+				if !skip {
+					c := Connect(connection.conType, connection.parent, connection.child)
+					edges = append(edges, c)
+				}
 				//if consumption is true:
 				if connection.consume {
 					consumption[connection.childIndex] = true
 				}
-
 			}
+			currentWord.Type = rule.Resultant
 			if rule.IsRecursive {
 				ruleNum = 0
 			} else {
@@ -106,13 +156,16 @@ func iterativeParse(rules []Rule) {
 }
 
 func getUnconsumed(dir int, part NodeType, index int) int {
-	next := dir + index
+	next := index + dir
 	if next < 0 || next >= length {
 		return -1
 	}
 	for consumption[next] {
 		next += dir
-		if next+dir < 0 || next+dir >= length {
+		// if next+dir < 0 || next+dir >= length {
+		// 	return -1
+		// }
+		if next < 0 || next >= length {
 			return -1
 		}
 	}
@@ -127,6 +180,9 @@ func getUnconsumed(dir int, part NodeType, index int) int {
 func getAll(dir int, part NodeType, index int) []int {
 	indices := []int{}
 	next := getUnconsumed(dir, part, index)
+	if next == -1 {
+		return []int{-1}
+	}
 	for next != -1 {
 		indices = append(indices, next)
 		next = getUnconsumed(dir, part, next)
@@ -142,8 +198,9 @@ func getAmount(part Part, dir, index int) []int {
 	//you can put -1. Plan to implement ability to shift over start point for
 	//gap searches (think verbs and various types of objects)
 	match := part.TypeKind
-	gap := part.Distance
-	indices := getAll(dir, match, index+gap)
+	// gap := part.Distance
+	// indices := getAll(dir, match, index+gap)
+	indices := getAll(dir, match, index)
 	if part.FindAllinDir {
 		return indices
 	} else {

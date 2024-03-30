@@ -1,10 +1,38 @@
 package main
 
+import (
+	"fmt"
+	"os"
+)
+
 func main() {
 
-	web, _ := NewWeb("the tall boy likes likes trucks, cars, and trains.")
+	// web, err := NewWeb("")
+	// web, err := NewWeb("The tall boy is trucks, cars, and trains.")
+	// web, err := NewWeb("The tall boy is trucks, cars, and trains.")
+	// web, err := NewWeb("Bob likes Jane.")
+	// web, err := NewWeb("The car is red.")
+	// web, err := NewWeb("Luke and Will play basketball and code.")
+	// web, err := NewWeb("Luke and Will code and play basketball.")
+	// web, err := NewWeb("Bob and Carl kill and rob.")
+	web, err := NewWeb("Taking the derivative of a function is easy.")
+	// web, err := NewWeb("The boy goes under the table.")
+	// web, err := NewWeb("Bob is short, fat, dumb, evil, and french.")
+	// web, err := NewWeb("Bob is short, fat, dumb, evil, and french.")
 
-	PrintGraph(web)
+	// web, err := NewWeb("The tree is green and the cat is orange.")
+	// NewWeb("The tree is green and the cat is orange.")
+
+	// web, err := NewWeb("The tree is green, the cat is orange, and the ocean is blue.")
+	// NewWeb("The tree is green, the cat is orange, and the ocean is blue.")
+
+	// web, err := NewWeb("The house of the duke of the shire of the mannor of the country.")
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+	} else {
+		PrintGraph(web)
+	}
 }
 
 /*

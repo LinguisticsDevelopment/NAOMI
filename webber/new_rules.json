@@ -105,12 +105,12 @@
         "1": "R NOUN ? PP_NOUN <",
         "2": "R NOUN ? PP_DESC <",
         "3": "R NOUN ? PP_SPEC <",
-        "4": "R NOUN ? PP_MIX <"
+        "4": "R NOUN ? PP_MIX <",
+        "5": "N NOUN ? NOUN <"
     },
     "nominal1": {
         "0": "NOMINAL",
-        "1": "N VERB.NOMINAL ?",
-        "2": "N NOUN ?"
+        "1": "N NOUN ?"
     },
     "nominal2": {
         "0": "NOMINAL",

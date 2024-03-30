@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+	"unicode"
+
 	"github.com/google/uuid"
 	"github.com/jdkato/prose/v2"
 
@@ -371,10 +374,12 @@ func NewConnection(tp ConnectionType, a *Node, b *Node) *Connection {
 	return &Connection{tp, a, b}
 }
 
-func Connect(tp ConnectionType, a *Node, b *Node) {
+func Connect(tp ConnectionType, a *Node, b *Node) *Connection {
 	c1 := NewConnection(tp, a, b)
 	a.AddConnection(c1)
 	b.AddConnection(c1)
+
+	return c1
 }
 
 type Web struct {
@@ -387,10 +392,13 @@ func NewWeb(sentence string) (Web, error) {
 
 	var words []*Word
 
-	for _, tok := range doc.Tokens() {
-		l, _, _ := Lem.Lemma(tok.Text, tok.Tag)
+	for i, tok := range doc.Tokens() {
+		// l, _, _ := Lem.Lemma(tok.Text, tok.Tag)
+		l := tok.Text
+		l += fmt.Sprintf(" (%d)", i)
+		fmt.Fprintf(os.Stderr, "%s %s\n", tok.Text, tok.Tag)
 
-		if tok.Tag != "PUNCT" {
+		if !unicode.IsPunct([]rune(tok.Tag)[0]) {
 			words = append(words, &Word{l, PennToUniv(tok.Tag)})
 		}
 	}
@@ -404,6 +412,8 @@ func NewWeb(sentence string) (Web, error) {
 }
 
 func Parse(sentence []*Word) (*Node, error) {
+	ParserInit()
+
 	nodes := make([]*Node, 0, len(sentence))
 	for _, word := range sentence {
 		nodes = append(nodes, &Node{TagToNodeType[word.POS], word, word.POS, []*Connection{}})
@@ -429,15 +439,21 @@ func PrintGraph(web Web) {
 	var AddNode func(root *Node, parent *Node)
 	AddNode = func(root *Node, parent *Node) {
 		n, _ := graph.CreateNode(root.Value.Text)
+		// n, _ := graph.CreateNode(uuid.New().String())
+		// n.SetLabel(root.Value.Text)
 		for _, connection := range root.Connections {
 			if connection.A != root && connection.A != parent {
 				m, _ := graph.CreateNode(connection.A.Value.Text)
+				// m, _ := graph.CreateNode(uuid.New().String())
+				// m.SetLabel(connection.A.Value.Text)
 				e, _ := graph.CreateEdge(uuid.New().String(), n, m)
 				e.SetLabel(ConnectionTypeToString[connection.Type])
 				AddNode(connection.A, root)
 			}
 			if connection.B != root && connection.B != parent {
 				m, _ := graph.CreateNode(connection.B.Value.Text)
+				// m, _ := graph.CreateNode(uuid.New().String())
+				// m.SetLabel(connection.B.Value.Text)
 				e, _ := graph.CreateEdge(uuid.New().String(), n, m)
 				e.SetLabel(ConnectionTypeToString[connection.Type])
 				AddNode(connection.B, root)
