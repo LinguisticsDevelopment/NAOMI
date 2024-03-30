@@ -21,7 +21,6 @@ func SentenceParse(w []*Node) {
 }
 
 func iterativeParse(rules []Rule) {
-	index := 0
 	var connectionQueue []ConFrame
 	for wordIndex := 0; wordIndex < length; wordIndex++ {
 		if consumption[wordIndex] {
