@@ -58,7 +58,7 @@ func SentenceParse(w []*Node) (*Node, error) {
 	for index, _ := range words {
 		if !consumption[index] {
 			first = index
-			PrintGraph(Web{nil, words[index]})
+			// PrintGraph(Web{nil, words[index]})
 			count += 1
 		}
 	}
