@@ -221,6 +221,9 @@ const (
 	//number
 	S_SINGULAR = iota
 	S_PLURAL   = iota
+
+	//questions
+	S_QUESTION = iota //TODO NEED TO ADD TO CONVERSION TABLES
 )
 
 type SubType int32
@@ -250,6 +253,7 @@ var StringToSubType = map[string]SubType{
 	"FEMININE":     S_FEMININE,
 	"SINGULAR":     S_SINGULAR,
 	"PLURAL":       S_PLURAL,
+	"QUESTION":     S_QUESTION,
 }
 
 var SubTypeToString = map[SubType]string{
@@ -268,12 +272,13 @@ var SubTypeToString = map[SubType]string{
 	S_FEMININE:     "FEMININE",
 	S_SINGULAR:     "SINGULAR",
 	S_PLURAL:       "PLURAL",
+	S_QUESTION:     "QUESTION",
 }
 
 type Word struct {
-	Text string
-	POS  Tag
-	//Eventually Light Meaning Vector
+	Text  string
+	POS   Tag
+	Bonus []SubType
 }
 
 type Node struct {
@@ -285,11 +290,40 @@ type Node struct {
 }
 
 func NewNode(tp NodeType, text string, POS Tag) *Node {
-	return &Node{tp, &Word{text, POS}, POS, []*Connection{}}
+	return &Node{tp, &Word{text, POS, []SubType{}}, POS, []*Connection{}}
 }
 
 func (n *Node) AddConnection(connection *Connection) {
 	n.Connections = append(n.Connections, connection)
+}
+
+func NodesEqual(a *Node, b *Node) bool {
+	if a.Type != b.Type {
+		return false
+	}
+
+	if a.Value.Text != b.Value.Text {
+		return false
+	}
+
+	if a.POS != b.POS {
+		return false
+	}
+
+	matches := 0
+	for _, ac := range a.Connections {
+		for _, bc := range b.Connections {
+			if ConnectionsEqual(ac, bc) {
+				matches += 1
+			}
+		}
+	}
+
+	if matches != len(a.Connections) {
+		return false
+	}
+
+	return true
 }
 
 //Connections:
@@ -382,7 +416,26 @@ func Connect(tp ConnectionType, a *Node, b *Node) *Connection {
 	return c1
 }
 
+func ConnectionsEqual(a *Connection, b *Connection) bool {
+	if a.Type != b.Type {
+		return false
+	}
+
+	// TODO: make sure that A -> B for both
+	if a.A.Value != b.A.Value {
+		return false
+	}
+
+	if a.B.Value != b.B.Value {
+		return false
+	}
+
+	return true
+}
+
 type Web struct {
+	// TODO: this should be nuked maybe???? idk???
+	// lol
 	Sentence []*Word
 	Root     *Node
 }
@@ -399,7 +452,11 @@ func NewWeb(sentence string) (Web, error) {
 		fmt.Fprintf(os.Stderr, "%s %s\n", tok.Text, tok.Tag)
 
 		if !unicode.IsPunct([]rune(tok.Tag)[0]) {
-			words = append(words, &Word{l, PennToUniv(tok.Tag)})
+			newWord := &Word{l, PennToUniv(tok.Tag), []SubType{}}
+			if newWord.Text == "what" {
+				newWord.Bonus = append(newWord.Bonus, S_QUESTION)
+			}
+			words = append(words, newWord)
 		}
 	}
 
@@ -423,7 +480,7 @@ func Parse(sentence []*Word) (*Node, error) {
 	return root, err
 }
 
-func PrintGraph(web Web) {
+func PrintWeb(web Web) {
 	g := graphviz.New()
 	graph, _ := g.Graph()
 
@@ -472,4 +529,172 @@ func PrintGraph(web Web) {
 		log.Fatal(err)
 	}
 	fmt.Println(buf.String())
+}
+
+func SimplePrintWeb(web *Web) {
+	var drill func(node *Node)
+	drill = func(node *Node) {
+		fmt.Fprintf(os.Stderr, "(%s, %s),", node.Value.Text, TagToString[node.POS])
+		for _, c := range node.Connections {
+			if c.B.Value == node.Value {
+				continue
+			}
+			drill(c.B)
+		}
+	}
+
+	drill(web.Root)
+	fmt.Println()
+}
+
+func DeepCopyNode(n *Node, into *Node) *Node {
+	var newNode *Node = nil
+	if into == nil {
+		newNode = &Node{n.Type, n.Value, n.POS, []*Connection{}}
+	} else {
+		newNode = into
+	}
+
+	for _, c := range n.Connections {
+		skip := false
+		for _, o := range newNode.Connections {
+			if ConnectionsEqual(c, o) {
+				skip = true
+			}
+		}
+
+		if skip {
+			continue
+		}
+
+		nextNode := &Node{c.B.Type, c.B.Value, c.B.POS, []*Connection{}}
+
+		newConn := &Connection{c.Type, newNode, nextNode}
+
+		newNode.Connections = append(newNode.Connections, newConn)
+		nextNode.Connections = append(nextNode.Connections, newConn)
+
+		DeepCopyNode(c.B, nextNode)
+	}
+
+	return newNode
+}
+
+func DeepCopyWeb(w *Web) *Web {
+	oldRoot := w.Root
+
+	root := DeepCopyNode(oldRoot, nil)
+
+	return &Web{w.Sentence, root}
+}
+
+func findNodeOfType(root *Node, tp Tag) *Node {
+	if root.Value.POS == POS_CCONJ {
+		return root
+	}
+
+	for _, c := range root.Connections {
+		res := findNodeOfType(c.B, tp)
+		if res != nil {
+			return c.B
+		}
+	}
+
+	return nil
+}
+
+func SplitWebAtCoord(w Web) []*Web {
+	res := []*Web{}
+
+	node := findNodeOfType(w.Root, POS_CCONJ)
+
+	for i := range len(node.Connections) - 1 {
+		copy := DeepCopyWeb(&w)
+		cnode := findNodeOfType(copy.Root, POS_CCONJ)
+
+		var parentConn *Connection = nil
+		for _, c := range cnode.Connections {
+			if c.B == cnode {
+				parentConn = c
+			}
+		}
+
+		correctCons := []*Connection{parentConn}
+		k := i
+		for _, c := range cnode.Connections {
+			if c == parentConn {
+				continue
+			}
+			if k > 0 {
+				k -= 1
+				continue
+			}
+
+			parentConn.B = c.B
+			c.A = parentConn.A
+			correctCons = append(correctCons, c)
+			break
+		}
+		cnode.Connections = correctCons
+
+		res = append(res, copy)
+	}
+
+	return res
+}
+
+func compareWebInternal(a *Node, b *Node, visited *[]*Node) bool {
+	for _, node := range *visited {
+		if NodesEqual(a, node) {
+			return true
+		}
+
+		if NodesEqual(b, node) {
+			return true
+		}
+	}
+
+	if a.Value.Text != b.Value.Text {
+		return false
+	}
+
+	*visited = append(*visited, a)
+	*visited = append(*visited, b)
+
+	for _, ac := range a.Connections {
+		for _, bc := range b.Connections {
+			// if ConnectionsEqual(ac, bc) {
+			if ac.Type == bc.Type {
+				res := compareWebInternal(ac.B, bc.B, visited)
+
+				if !res {
+					return false
+				}
+			}
+		}
+	}
+
+	return true
+}
+
+func (w *Web) CompareWeb(context *Web) bool {
+	visited := []*Node{}
+	return compareWebInternal(w.Root, context.Root, &visited)
+}
+
+func (w *Web) CompareWebs(context []*Web) bool {
+	for _, c := range context {
+		fmt.Fprintf(os.Stderr, "Comparing ")
+		SimplePrintWeb(w)
+		fmt.Fprintf(os.Stderr, " with     ")
+		SimplePrintWeb(c)
+
+		res := w.CompareWeb(c)
+		if res {
+			SimplePrintWeb(c)
+			return true
+		}
+	}
+
+	return false
 }
