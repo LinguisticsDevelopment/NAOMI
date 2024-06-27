@@ -1,0 +1,20 @@
+N - non recursive, will move to next ruleset on a completed rule
+R - will restart rule on a completed rule
+
+? - Root Word to search before and after
+< - everything after
+> - everything before
+
+* - find all unconsumed in a row
+
+% - ????? TODO: kill, deprecated
+
+. - needs x subtype
+: - match x category
+TODO: match all together, not to root with ;
+
++ - add new subtype
+- - remove new subType
+^ - pull category up
+v - pop category off
+

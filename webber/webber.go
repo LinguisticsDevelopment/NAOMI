@@ -81,13 +81,38 @@ func main() {
 	// }
 
 	// ---------------------------------------- CompareWebsTest
-	web, err := NewWeb("The tall boy is trucks.")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-	}
+	// web, err := NewWeb("The tall boy is trucks.")
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "%v\n", err)
+	// }
 
-	context, err := NewWeb("The tall boy is trucks, cars, and trains.")
-	res := SplitWebAtCoord(context)
+	// context, err := NewWeb("The tall boy is trucks, cars, and trains.")
+	// res := SplitWebAtCoord(context)
+
+	// result := web.CompareWebs(res)
+	// fmt.Fprintf(os.Stderr, "Result %t\n", result)
+
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "%v\n", err)
+	// } else {
+	// 	PrintWeb(web)
+	// }
+
+	azul := Word{"azul", POS_ADJ, []SubType{S_MASCULINE, S_SINGULAR}}
+	hombre := Word{"hombre", POS_NOUN, []SubType{S_MASCULINE, S_SINGULAR}}
+	y := Word{"y", POS_CCONJ, []SubType{}}
+	rojo := Word{"rojo", POS_ADJ, []SubType{S_MASCULINE, S_SINGULAR}}
+
+	words := []*Word{&hombre, &azul}
+	context := []*Word{&hombre, &azul, &y, &rojo}
+	contextRoot, _ := Parse(context)
+	contextWeb := Web{context, contextRoot}
+
+	res := SplitWebAtCoord(contextWeb)
+
+	root, err := Parse(words)
+
+	web := Web{words, root}
 
 	result := web.CompareWebs(res)
 	fmt.Fprintf(os.Stderr, "Result %t\n", result)
@@ -95,8 +120,11 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 	} else {
-		PrintWeb(web)
+		PrintWeb(contextWeb)
 	}
+
+	// PrintWeb(web)
+
 }
 
 /*

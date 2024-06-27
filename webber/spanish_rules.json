@@ -1,0 +1,151 @@
+{
+    "order": {
+        "0": "adv1 adv2 advPrep1 advPrep2 adj1 adj2 adjPrep1 adjPrep2 PREP_MIX noun1 noun2 normPP1 adjPP1 advPP1 verbPP1 normPP2 adjPP2 advPP2 verbPP2 mixPP2 noun3 nominal1 nominal2 verb1 verb2 predicate1 predicate2 clause1 clause2"
+    },
+    "adv1": {
+        "0": "SPECIFIER",
+        "1": "R SPECIFIER > SPECIFIER ?"
+    },
+    "adv2": {
+        "0": "SPECIFIER",
+        "1": "N % SPECIFIER * >  COORD ? SPECIFIER <"
+    },
+    "advPrep1": {
+        "0": "PREP_SPEC",
+        "1": "N SPECIFIER.COMPARATIVE > PREP ?"
+    },
+    "advPrep2": {
+        "0": "PREP_SPEC",
+        "1": "N % PREP_SPEC * >  COORD ? PREP_SPEC <"
+    },
+    "adj1": {
+        "0": "DESCRIPTOR",
+        "1": "N SPECIFIER > DESCRIPTOR ?",
+        "2": "N DESCRIPTOR ? CLAUSE.SUBOORDINATE <"
+    },
+    "adj2": {
+        "0": "DESCRIPTOR",
+        "1": "N % DESCRIPTOR * > COORD^GENDER^NUMBER ? DESCRIPTOR <"
+    },
+    "adjPrep1": {
+        "0": "PREP_DESC",
+        "1": "N DESCRIPTOR.COMPARATIVE > PREP ?"
+    },
+    "adjPrep2": {
+        "0": "PREP_DESC",
+        "1": "N % PREP_DESC * >  COORD ? PREP_DESC <"
+    },
+    "mixPrep": {
+        "0": "PREP_MIX",
+        "1": "N % PREP_SPEC * >  COORD ? PREP <",
+        "2": "N % PREP_SPEC * >  COORD ? PREP_DESC <",
+        "3": "N % PREP_SPEC * >  COORD ? PREP_MIX <",
+        "4": "N % PREP_DESC * >  COORD ? PREP <",
+        "5": "N % PREP_DESC * >  COORD ? PREP_SPEC <",
+        "6": "N % PREP_DESC * >  COORD ? PREP_MIX <",
+        "7": "N % PREP * >  COORD ? PREP_SPEC <",
+        "8": "N % PREP * >  COORD ? PREP_DESC <",
+        "9": "N % PREP * >  COORD ? PREP_MIX <",
+        "10": "N % PREP_MIX * >  COORD ? PREP <",
+        "11": "N % PREP_MIX * >  COORD ? PREP_DESC <",
+        "12": "N % PREP_MIX * >  COORD ? PREP_SPEC <"
+    },
+    "noun1": {
+        "0": "NOUN",
+        "1": "R NOUN ? DESCRIPTOR:GENDER:NUMBER * < ",
+        "2": "R NOUN ? CLAUSE.SUBOORDINATE <"
+    },
+    "noun2": {
+        "0": "NOUN",
+        "1": "N % NOUN * > COORD ? NOUN <"
+    },
+    "normPP1": {
+        "0": "PP_NOUN",
+        "1": "N PREP ? NOUN <"
+    },
+    "mixPP1": {
+        "0": "PP_MIX",
+        "1": "N PREP_MIX ? NOUN <"
+    },
+    "adjPP1": {
+        "0": "PP_DESC",
+        "1": "N PREP_DESC ? NOUN <",
+        "2": "N PREP_DESC ? DESCRIPTOR <"
+    },
+    "advPP1": {
+        "0": "PP_SPEC",
+        "1": "N PREP_SPEC ? NOUN <"
+    },
+    "verbPP1": {
+        "0": "PP_VERB",
+        "1": "N PREP_SPEC ? VERBAL <"
+    },
+    "normPP2": {
+        "0": "PP_NOUN",
+        "1": "N % PP_NOUN * > COORD ? PP_NOUN <"
+    },
+    "adjPP2": {
+        "0": "PP_DESC",
+        "1": "N % PP_DESC * > COORD ? PP_DESC <"
+    },
+    "advPP2": {
+        "0": "PP_SPEC",
+        "1": "N % PP_SPEC * > COORD ? PP_SPEC <"
+    },
+    "verbPP2": {
+        "0": "PP_VERB",
+        "1": "N % PP_VERB * > COORD ? PP_VERB <"
+    },
+    "mixPP2": {
+        "0": "PP_MIX",
+        "1": "N % PP_MIX * > COORD ? PP_MIX <"
+    },
+    "noun3": {
+        "0": "NOUN",
+        "1": "R NOUN ? PP_NOUN <",
+        "2": "R NOUN ? PP_DESC <",
+        "3": "R NOUN ? PP_SPEC <",
+        "4": "R NOUN ? PP_MIX <",
+        "5": "N NOUN ? NOUN <"
+    },
+    "nominal1": {
+        "0": "NOMINAL",
+        "1": "N NOUN ?"
+    },
+    "nominal2": {
+        "0": "NOMINAL",
+        "1": "N NOMINAL * > COORD ? NOMINAL <"
+    },
+    "verb1": {
+        "0": "VERBAL",
+        "1": "R VERBAL ? SPECIFIER <",
+        "2": "R SPECIFIER > VERBAL ?",
+        "3": "R VERBAL ? PP_NOUN <",
+        "4": "R VERBAL ? PP_SPEC <",
+        "5": "R VERBAL ? PP_VERB <",
+        "6": "R VERBAL ? CLAUSE.SUBOORDINATE <"
+    },
+    "verb2": {
+        "0": "VERBAL",
+        "1": "N % VERBAL * > COORD ? VERBAL <"
+    },
+    "predicate1": {
+        "0": "PREDICATE",
+        "1": "N VERBAL ? NOMINAL < NOMINAL <",
+        "2": "N VERBAL ? PP_NOUN <",
+        "3": "N VERBAL ? NOMINAL <",
+        "4": "N VERBAL ? DESCRIPTOR <"
+    },
+    "predicate2": {
+        "0": "PREDICATE",
+        "1": "N PREDICATE * > COORD ? PREDICATE <"
+    },
+    "clause1": {
+        "0": "CLAUSE",
+        "1": "N NOMINAL > PREDICATE ?"
+    },
+    "clause2": {
+        "0": "CLAUSE",
+        "1": "N CLAUSE * > COORD ? CLAUSE <"
+    }
+}

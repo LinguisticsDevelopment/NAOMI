@@ -182,35 +182,35 @@ var NodeTypeToString = map[NodeType]string{
 
 // SubTypeTypes
 const (
-	ST_CLAUSE      = iota
-	ST_VERB        = iota
-	ST_DESCRIPTOR  = iota
-	ST_PREPOSITION = iota
-	ST_GENDER      = iota
-	ST_NUMBER      = iota
-	ST_QUESTIONS   = iota
+	SC_CLAUSE      = iota
+	SC_VERB        = iota
+	SC_DESCRIPTOR  = iota
+	SC_PREPOSITION = iota
+	SC_GENDER      = iota
+	SC_NUMBER      = iota
+	SC_QUESTIONS   = iota
 )
 
-type SubTypeType int32
+type SubCat int32
 
-var StringToSubTypeType = map[string]SubTypeType{
-	"CLAUSE":      ST_CLAUSE,
-	"VERB":        ST_VERB,
-	"DESCRIPTOR":  ST_DESCRIPTOR,
-	"PREPOSITION": ST_PREPOSITION,
-	"GENDER":      ST_GENDER,
-	"NUMBER":      ST_NUMBER,
-	"QUESTIONS":   ST_QUESTIONS,
+var StringToSubCat = map[string]SubCat{
+	"CLAUSE":      SC_CLAUSE,
+	"VERB":        SC_VERB,
+	"DESCRIPTOR":  SC_DESCRIPTOR,
+	"PREPOSITION": SC_PREPOSITION,
+	"GENDER":      SC_GENDER,
+	"NUMBER":      SC_NUMBER,
+	"QUESTIONS":   SC_QUESTIONS,
 }
 
-var SubTypeTypeToString = map[SubTypeType]string{
-	ST_CLAUSE:      "CLAUSE",
-	ST_VERB:        "VERB",
-	ST_DESCRIPTOR:  "DESCRIPTOR",
-	ST_PREPOSITION: "PREPOSITION",
-	ST_GENDER:      "GENDER",
-	ST_NUMBER:      "NUMBER",
-	ST_QUESTIONS:   "QUESTIONS",
+var SubCatToString = map[SubCat]string{
+	SC_CLAUSE:      "CLAUSE",
+	SC_VERB:        "VERB",
+	SC_DESCRIPTOR:  "DESCRIPTOR",
+	SC_PREPOSITION: "PREPOSITION",
+	SC_GENDER:      "GENDER",
+	SC_NUMBER:      "NUMBER",
+	SC_QUESTIONS:   "QUESTIONS",
 }
 
 const (
@@ -247,34 +247,31 @@ const (
 
 type SubType int32
 
-var SubTypeToSubTypeType = map[SubType]SubTypeType{
-	S_SUBOORDINATE: ST_CLAUSE,
-	S_INDEPENDENT:  ST_CLAUSE,
+var SubTypeToSubCat = map[SubType]SubCat{
+	S_SUBOORDINATE: SC_CLAUSE,
+	S_INDEPENDENT:  SC_CLAUSE,
 
-	S_NOMINAL: ST_VERB,
-	S_MODAL:   ST_VERB,
+	S_NOMINAL: SC_VERB,
+	S_MODAL:   SC_VERB,
 
 	//Descriptor/Specifier forms
-	S_COMPARATIVE: ST_DESCRIPTOR,
-	S_SUPERLATIVE: ST_DESCRIPTOR,
+	S_COMPARATIVE: SC_DESCRIPTOR,
+	S_SUPERLATIVE: SC_DESCRIPTOR,
 
 	//Preposition/Prepositional Phrase forms TODO: IMPLEMENT THESE PLEASE FOR THE LOVE OF GOD
-	S_P_MIX:  ST_PREPOSITION,
-	S_P_DESC: ST_PREPOSITION,
-	S_P_SPEC: ST_PREPOSITION,
-	S_P_VERB: ST_PREPOSITION,
-	S_P_NORM: ST_PREPOSITION,
+	S_P_MIX:  SC_PREPOSITION,
+	S_P_DESC: SC_PREPOSITION,
 
 	//gender
-	S_MASCULINE: ST_GENDER,
-	S_FEMININE:  ST_GENDER,
+	S_MASCULINE: SC_GENDER,
+	S_FEMININE:  SC_GENDER,
 
 	//number
-	S_SINGULAR: ST_NUMBER,
-	S_PLURAL:   ST_NUMBER,
+	S_SINGULAR: SC_NUMBER,
+	S_PLURAL:   SC_NUMBER,
 
 	//questions
-	S_QUESTION: ST_QUESTIONS, //TODO NEED TO ADD TO CONVERSION TABLES
+	S_QUESTION: SC_QUESTIONS, //TODO NEED TO ADD TO CONVERSION TABLES
 }
 
 //This is being partially implemented to help with clauses and with verbs

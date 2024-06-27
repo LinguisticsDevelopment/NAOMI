@@ -9,13 +9,14 @@ import (
 )
 
 type Part struct {
-	Distance        int      //Absolute Value away from the root
-	ApplyInChain    bool     // "/"
-	FindAllinDir    bool     // "*"
-	SkipConsumption bool     // "_"
-	TypeKind        NodeType // Part BEFORE the "." TURN INTO
-	SubType         SubType  // Part AFTER the "."
-
+	Distance        int       //Absolute Value away from the root
+	ApplyInChain    bool      // "/"
+	FindAllinDir    bool      // "*"
+	SkipConsumption bool      // "_"
+	TypeKind        NodeType  // Part BEFORE the "." TURN INTO
+	SubTypes        []SubType // Part AFTER the "."
+	//TODO: make SubType a list
+	SubCats []SubCat
 }
 
 type Rule struct {
@@ -23,7 +24,9 @@ type Rule struct {
 	NeedsMatching bool // "%"
 	Resultant     NodeType
 	RootType      NodeType
-	RootSubType   SubType
+	PullCats      []SubCat
+	PopCats       []SubCat
+	RootSubTypes  []SubType
 	Before        []Part
 	After         []Part
 }
@@ -54,6 +57,7 @@ func parseRule(input string, result string) Rule {
 	befores := []string{}
 	root := ""
 	afters := []string{}
+
 	for _, rule := range totals {
 		if strings.HasSuffix(rule, ">") {
 			befores = append(befores, rule[:len(rule)-2])
@@ -61,6 +65,7 @@ func parseRule(input string, result string) Rule {
 			afters = append(afters, rule[:len(rule)-2])
 		} else if strings.HasSuffix(rule, "?") {
 			root = rule[:len(rule)-2]
+
 		}
 	}
 	beforeParts := []Part{}
@@ -76,10 +81,29 @@ func parseRule(input string, result string) Rule {
 			} else if aspect == "_" {
 				newPart.SkipConsumption = true
 			} else {
-				div := strings.Split(aspect, ".")
+				// R DESCRIPTOR:GENDER.QUESTION * > NOUN ?
+				// div := strings.Split(aspect, ".")
+				splitter := func(r rune) bool {
+					return r == ':' || r == '.'
+				}
+				div := strings.FieldsFunc(aspect, splitter)
 				newPart.TypeKind = StringToNodeType[div[0]]
 				if len(div) > 1 {
-					newPart.SubType = StringToSubType[div[1]]
+					i := 1
+					for _, r := range aspect {
+						if r == '.' {
+							newPart.SubTypes = append(newPart.SubTypes, StringToSubType[div[i]])
+							i++
+						}
+						if r == ':' {
+							newPart.SubCats = append(newPart.SubCats, StringToSubCat[div[i]])
+							i++
+						}
+					}
+					// for i := 1; i < len(div); i++ {
+					// 	newPart.SubTypes = append(newPart.SubTypes, StringToSubType[div[i]])
+					// }
+
 				} else {
 					//newPart.SubType = ""
 				}
@@ -98,10 +122,29 @@ func parseRule(input string, result string) Rule {
 			} else if aspect == "_" {
 				newPart.SkipConsumption = true
 			} else {
-				div := strings.Split(aspect, ".")
+				// R DESCRIPTOR:GENDER.QUESTION * > NOUN ?
+				// div := strings.Split(aspect, ".")
+				splitter := func(r rune) bool {
+					return r == ':' || r == '.'
+				}
+				div := strings.FieldsFunc(aspect, splitter)
 				newPart.TypeKind = StringToNodeType[div[0]]
 				if len(div) > 1 {
-					newPart.SubType = StringToSubType[div[1]]
+					i := 1
+					for _, r := range aspect {
+						if r == '.' {
+							newPart.SubTypes = append(newPart.SubTypes, StringToSubType[div[i]])
+							i++
+						}
+						if r == ':' {
+							newPart.SubCats = append(newPart.SubCats, StringToSubCat[div[i]])
+							i++
+						}
+					}
+					// for i := 1; i < len(div); i++ {
+					// 	newPart.SubTypes = append(newPart.SubTypes, StringToSubType[div[i]])
+					// }
+
 				} else {
 					//newPart.SubType = ""
 				}
@@ -111,13 +154,30 @@ func parseRule(input string, result string) Rule {
 	}
 	root = strings.TrimSpace(root)
 	newRule := Rule{IsRecursive: isRec, Before: beforeParts, After: afterParts, Resultant: StringToNodeType[result], NeedsMatching: needsMatching}
-	div := strings.Split(root, ".")
+	// div := strings.Split(root, ".")
+	// newRule.RootType = StringToNodeType[div[0]]
+	// if len(div) > 1 {
+	// 	newRule.RootSubType = StringToSubType[div[1]]
+	// } else {
+	// 	//newRule.RootSubType = ""
+	// }
+
+	splitter := func(r rune) bool {
+		return r == '.' || r == '^' || r == 'v'
+	}
+	div := strings.FieldsFunc(root, splitter)
 	newRule.RootType = StringToNodeType[div[0]]
 	if len(div) > 1 {
-		newRule.RootSubType = StringToSubType[div[1]]
-	} else {
-		//newRule.RootSubType = ""
+		i := 1
+		for _, r := range root {
+			if r == '^' {
+				newRule.PullCats = append(newRule.PullCats, StringToSubCat[div[i]])
+				i++
+			}
+			// TODO: account for 'v' from grammer json
+		}
 	}
+
 	return newRule
 }
 
