@@ -41,7 +41,7 @@ func SentenceParse(w []*Node) (*Node, error) {
 	consumption = make([]bool, len(words))
 	length = len(words)
 
-	ruleSet := ruleSetParse("spanish_rules.json") //TODO: THIS IS WHERE LANGUAGE IS CHOSEN
+	ruleSet := ruleSetParse("english_rules.json") //TODO: THIS IS WHERE LANGUAGE IS CHOSEN
 	for _, rule := range ruleSet {
 		for i, word := range words {
 			fmt.Fprintf(os.Stderr, "%s %s %t, ", word.Value.Text, NodeTypeToString[word.Type], consumption[i])
@@ -165,7 +165,7 @@ func iterativeParse(rules []Rule) {
 	}
 }
 
-func getUnconsumed(dir int, part NodeType, subs []SubType, cats []SubCat, index int, root int, pull []SubCat) int {
+func getUnconsumed(dir int, part NodeType, subs []SubType, cats []SubCat, index int, root int, pull []SubCat, og bool) int {
 	next := index + dir
 	if next < 0 || next >= length {
 		return -1
@@ -180,7 +180,9 @@ func getUnconsumed(dir int, part NodeType, subs []SubType, cats []SubCat, index 
 		}
 	}
 
-	if words[next].Type != part {
+	if (words[next].Type != part) && !og {
+		return -1
+	} else if (words[next].OG != part) && og {
 		return -1
 	}
 
@@ -213,15 +215,15 @@ func getUnconsumed(dir int, part NodeType, subs []SubType, cats []SubCat, index 
 	return next
 }
 
-func getAll(dir int, part NodeType, subs []SubType, cats []SubCat, index int, pull []SubCat) []int {
+func getAll(dir int, part NodeType, subs []SubType, cats []SubCat, index int, pull []SubCat, og bool) []int {
 	indices := []int{}
-	next := getUnconsumed(dir, part, subs, cats, index, index, pull)
+	next := getUnconsumed(dir, part, subs, cats, index, index, pull, og)
 	if next == -1 { /*  */
 		return []int{-1}
 	}
 	for next != -1 {
 		indices = append(indices, next)
-		next = getUnconsumed(dir, part, subs, cats, next, index, pull)
+		next = getUnconsumed(dir, part, subs, cats, next, index, pull, og)
 	}
 
 	return indices
@@ -236,9 +238,10 @@ func getAmount(part Part, dir, index int, pull []SubCat) []int {
 	match := part.TypeKind
 	subs := part.SubTypes
 	cats := part.SubCats
+	og := part.CheckOG
 	// gap := part.Distance
 	// indices := getAll(dir, match, index+gap)
-	indices := getAll(dir, match, subs, cats, index, pull)
+	indices := getAll(dir, match, subs, cats, index, pull, og)
 	if part.FindAllinDir {
 		return indices
 	} else {

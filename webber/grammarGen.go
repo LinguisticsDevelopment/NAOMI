@@ -13,6 +13,7 @@ type Part struct {
 	ApplyInChain    bool      // "/"
 	FindAllinDir    bool      // "*"
 	SkipConsumption bool      // "_"
+	CheckOG         bool      //"#"
 	TypeKind        NodeType  // Part BEFORE the "." TURN INTO
 	SubTypes        []SubType // Part AFTER the "."
 	//TODO: make SubType a list
@@ -22,13 +23,14 @@ type Part struct {
 type Rule struct {
 	IsRecursive   bool // "N" or "R"
 	NeedsMatching bool // "%"
-	Resultant     NodeType
-	RootType      NodeType
-	PullCats      []SubCat
-	PopCats       []SubCat
-	RootSubTypes  []SubType
-	Before        []Part
-	After         []Part
+	//TODO: Deprecated ^
+	Resultant    NodeType
+	RootType     NodeType
+	PullCats     []SubCat
+	PopCats      []SubCat
+	RootSubTypes []SubType
+	Before       []Part
+	After        []Part
 }
 
 func parseRule(input string, result string) Rule {
@@ -80,6 +82,8 @@ func parseRule(input string, result string) Rule {
 				newPart.ApplyInChain = true
 			} else if aspect == "_" {
 				newPart.SkipConsumption = true
+			} else if aspect == "#" {
+				newPart.CheckOG = true
 			} else {
 				// R DESCRIPTOR:GENDER.QUESTION * > NOUN ?
 				// div := strings.Split(aspect, ".")
@@ -121,6 +125,8 @@ func parseRule(input string, result string) Rule {
 				newPart.ApplyInChain = true
 			} else if aspect == "_" {
 				newPart.SkipConsumption = true
+			} else if aspect == "#" {
+				newPart.CheckOG = true
 			} else {
 				// R DESCRIPTOR:GENDER.QUESTION * > NOUN ?
 				// div := strings.Split(aspect, ".")

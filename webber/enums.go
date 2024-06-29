@@ -29,6 +29,7 @@ const ( //Parts of Speech
 	POS_SYM   = iota
 	POS_VERB  = iota
 	POS_X     = iota
+	POS_LOG   = iota
 )
 
 type Tag int32
@@ -51,6 +52,7 @@ var StringToTag = map[string]Tag{
 	"SYM":   POS_SYM,
 	"VERB":  POS_VERB,
 	"X":     POS_X,
+	"LOG":   POS_LOG,
 }
 
 var TagToString = map[Tag]string{
@@ -71,6 +73,7 @@ var TagToString = map[Tag]string{
 	POS_SYM:   "SYM",
 	POS_VERB:  "VERB",
 	POS_X:     "X",
+	POS_LOG:   "LOG",
 }
 
 const ( //Nodes
@@ -189,6 +192,7 @@ const (
 	SC_GENDER      = iota
 	SC_NUMBER      = iota
 	SC_QUESTIONS   = iota
+	SC_LOGIC       = iota
 )
 
 type SubCat int32
@@ -201,6 +205,7 @@ var StringToSubCat = map[string]SubCat{
 	"GENDER":      SC_GENDER,
 	"NUMBER":      SC_NUMBER,
 	"QUESTIONS":   SC_QUESTIONS,
+	"LOGIC":       SC_LOGIC,
 }
 
 var SubCatToString = map[SubCat]string{
@@ -211,6 +216,7 @@ var SubCatToString = map[SubCat]string{
 	SC_GENDER:      "GENDER",
 	SC_NUMBER:      "NUMBER",
 	SC_QUESTIONS:   "QUESTIONS",
+	SC_LOGIC:       "LOGIC",
 }
 
 const (
@@ -243,6 +249,17 @@ const (
 
 	//questions
 	S_QUESTION = iota //TODO NEED TO ADD TO CONVERSION TABLES
+
+	//Logic
+	SL_AND  = iota
+	SL_OR   = iota
+	SL_NAND = iota
+	SL_XIF  = iota
+	SL_XOR  = iota
+	SL_XNOR = iota
+	SL_IF   = iota
+	SL_NOT  = iota
+	SL_NOR  = iota
 )
 
 type SubType int32
@@ -272,6 +289,17 @@ var SubTypeToSubCat = map[SubType]SubCat{
 
 	//questions
 	S_QUESTION: SC_QUESTIONS, //TODO NEED TO ADD TO CONVERSION TABLES
+
+	//logic
+	SL_AND:  SC_LOGIC,
+	SL_OR:   SC_LOGIC,
+	SL_XOR:  SC_LOGIC,
+	SL_NAND: SC_LOGIC,
+	SL_IF:   SC_LOGIC,
+	SL_XIF:  SC_LOGIC,
+	SL_NOR:  SC_LOGIC,
+	SL_NOT:  SC_LOGIC,
+	SL_XNOR: SC_LOGIC,
 }
 
 //This is being partially implemented to help with clauses and with verbs
@@ -300,6 +328,15 @@ var StringToSubType = map[string]SubType{
 	"SINGULAR":     S_SINGULAR,
 	"PLURAL":       S_PLURAL,
 	"QUESTION":     S_QUESTION,
+	"AND":          SL_AND,
+	"OR":           SL_OR,
+	"NAND":         SL_NAND,
+	"XIF":          SL_XIF,
+	"XOR":          SL_XOR,
+	"XNOR":         SL_XNOR,
+	"IF":           SL_IF,
+	"NOT":          SL_NOT,
+	"NOR":          SL_NOR,
 }
 
 var SubTypeToString = map[SubType]string{
@@ -319,6 +356,15 @@ var SubTypeToString = map[SubType]string{
 	S_SINGULAR:     "SINGULAR",
 	S_PLURAL:       "PLURAL",
 	S_QUESTION:     "QUESTION",
+	SL_AND:         "AND",
+	SL_OR:          "OR",
+	SL_NAND:        "NAND",
+	SL_XIF:         "XIF",
+	SL_XOR:         "XOR",
+	SL_XNOR:        "XNOR",
+	SL_IF:          "IF",
+	SL_NOT:         "NOT",
+	SL_NOR:         "NOR",
 }
 
 //Connections:

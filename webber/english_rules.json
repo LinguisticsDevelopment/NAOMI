@@ -8,7 +8,8 @@
     },
     "adv2": {
         "0": "SPECIFIER",
-        "1": "N % SPECIFIER * >  COORD ? SPECIFIER <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % SPECIFIER * >  COORD ? SPECIFIER <"
     },
     "advPrep1": {
         "0": "PREP_SPEC",
@@ -16,7 +17,8 @@
     },
     "advPrep2": {
         "0": "PREP_SPEC",
-        "1": "N % PREP_SPEC * >  COORD ? PREP_SPEC <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % PREP_SPEC * >  COORD ? PREP_SPEC <"
     },
     "adj1": {
         "0": "DESCRIPTOR",
@@ -25,7 +27,8 @@
     },
     "adj2": {
         "0": "DESCRIPTOR",
-        "1": "N % DESCRIPTOR * > COORD ? DESCRIPTOR <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % DESCRIPTOR * > COORD ? DESCRIPTOR <"
     },
     "adjPrep1": {
         "0": "PREP_DESC",
@@ -33,7 +36,8 @@
     },
     "adjPrep2": {
         "0": "PREP_DESC",
-        "1": "N % PREP_DESC * >  COORD ? PREP_DESC <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % PREP_DESC * >  COORD ? PREP_DESC <"
     },
     "mixPrep": {
         "0": "PREP_MIX",
@@ -57,7 +61,8 @@
     },
     "noun2": {
         "0": "NOUN",
-        "1": "N % NOUN * > COORD ? NOUN <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % NOUN * > COORD ? NOUN <"
     },
     "normPP1": {
         "0": "PP_NOUN",
@@ -82,23 +87,28 @@
     },
     "normPP2": {
         "0": "PP_NOUN",
-        "1": "N % PP_NOUN * > COORD ? PP_NOUN <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % PP_NOUN * > COORD ? PP_NOUN <"
     },
     "adjPP2": {
         "0": "PP_DESC",
-        "1": "N % PP_DESC * > COORD ? PP_DESC <"
+        "1": "N COORD ? COORD # <",
+        "2": "N % PP_DESC * > COORD ? PP_DESC <"
     },
     "advPP2": {
         "0": "PP_SPEC",
-        "1": "N % PP_SPEC * > COORD ? PP_SPEC <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % PP_SPEC * > COORD ? PP_SPEC <"
     },
     "verbPP2": {
         "0": "PP_VERB",
-        "1": "N % PP_VERB * > COORD ? PP_VERB <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % PP_VERB * > COORD ? PP_VERB <"
     },
     "mixPP2": {
         "0": "PP_MIX",
-        "1": "N % PP_MIX * > COORD ? PP_MIX <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % PP_MIX * > COORD ? PP_MIX <"
     },
     "noun3": {
         "0": "NOUN",
@@ -114,7 +124,8 @@
     },
     "nominal2": {
         "0": "NOMINAL",
-        "1": "N NOMINAL * > COORD ? NOMINAL <"
+        "1": "N COORD ? COORD # <",
+        "2": "R NOMINAL * > COORD ? NOMINAL <"
     },
     "verb1": {
         "0": "VERBAL",
@@ -127,7 +138,8 @@
     },
     "verb2": {
         "0": "VERBAL",
-        "1": "N % VERBAL * > COORD ? VERBAL <"
+        "1": "N COORD ? COORD # <",
+        "2": "R % VERBAL * > COORD ? VERBAL <"
     },
     "predicate1": {
         "0": "PREDICATE",
@@ -138,7 +150,8 @@
     },
     "predicate2": {
         "0": "PREDICATE",
-        "1": "N PREDICATE * > COORD ? PREDICATE <"
+        "1": "N COORD ? COORD # <",
+        "2": "R PREDICATE * > COORD ? PREDICATE <"
     },
     "clause1": {
         "0": "CLAUSE",
@@ -146,6 +159,7 @@
     },
     "clause2": {
         "0": "CLAUSE",
-        "1": "N CLAUSE * > COORD ? CLAUSE <"
+        "1": "N COORD ? COORD # <",
+        "2": "R CLAUSE * > COORD ? CLAUSE <"
     }
 }

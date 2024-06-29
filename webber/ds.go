@@ -22,6 +22,7 @@ type Word struct {
 
 type Node struct {
 	Type  NodeType
+	OG    NodeType
 	Value *Word
 	POS   Tag
 	Flags []SubType
@@ -30,7 +31,7 @@ type Node struct {
 }
 
 func NewNode(tp NodeType, text string, POS Tag) *Node {
-	return &Node{tp, &Word{text, POS, []SubType{}}, POS, []SubType{}, []*Connection{}}
+	return &Node{tp, tp, &Word{text, POS, []SubType{}}, POS, []SubType{}, []*Connection{}}
 }
 
 func (n *Node) AddConnection(connection *Connection) {
@@ -143,7 +144,10 @@ func Parse(sentence []*Word) (*Node, error) {
 
 	nodes := make([]*Node, 0, len(sentence))
 	for _, word := range sentence {
-		nodes = append(nodes, &Node{TagToNodeType[word.POS], word, word.POS, word.SubTypes, []*Connection{}})
+		if word.Text == "either" {
+			nodes = append(nodes, &Node{TagToNodeType[word.POS], TagToNodeType[word.POS], word, word.POS, word.SubTypes, []*Connection{}}) //TODO: bad hack
+		}
+		nodes = append(nodes, &Node{TagToNodeType[word.POS], TagToNodeType[word.POS], word, word.POS, word.SubTypes, []*Connection{}})
 	}
 
 	root, err := SentenceParse(nodes)
@@ -220,7 +224,7 @@ func SimplePrintWeb(web *Web) {
 func DeepCopyNode(n *Node, into *Node) *Node {
 	var newNode *Node = nil
 	if into == nil {
-		newNode = &Node{n.Type, n.Value, n.POS, n.Flags, []*Connection{}}
+		newNode = &Node{n.Type, n.Type, n.Value, n.POS, n.Flags, []*Connection{}}
 	} else {
 		newNode = into
 	}
@@ -237,7 +241,7 @@ func DeepCopyNode(n *Node, into *Node) *Node {
 			continue
 		}
 
-		nextNode := &Node{c.B.Type, c.B.Value, c.B.POS, c.B.Flags, []*Connection{}}
+		nextNode := &Node{c.B.Type, c.B.Type, c.B.Value, c.B.POS, c.B.Flags, []*Connection{}}
 
 		newConn := &Connection{c.Type, newNode, nextNode}
 

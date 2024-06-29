@@ -31,13 +31,21 @@ func main() {
 
 	// web, err := NewWeb("The house of the duke of the shire of the mannor of the country.")
 
-	// web, err := NewWeb("The boy is tall and red.")
+	either := Word{"Either", POS_CCONJ, []SubType{}}
+	car := Word{"car", POS_NOUN, []SubType{}}
+	or := Word{"or", POS_CCONJ, []SubType{}}
+	truck := Word{"truck", POS_NOUN, []SubType{}}
+	words := []*Word{&either, &car, &or, &truck}
 
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "%v\n", err)
-	// } else {
-	// 	PrintWeb(web)
-	// }
+	root, err := Parse(words)
+
+	web := Web{words, root}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+	} else {
+		PrintWeb(web)
+	}
 
 	// ---------------------------------------- DeepCopyTest
 	// web, err := NewWeb("The tall boy is trucks, cars, and trains.")
@@ -98,30 +106,30 @@ func main() {
 	// 	PrintWeb(web)
 	// }
 
-	azul := Word{"azul", POS_ADJ, []SubType{S_MASCULINE, S_SINGULAR}}
-	hombre := Word{"hombre", POS_NOUN, []SubType{S_MASCULINE, S_SINGULAR}}
-	y := Word{"y", POS_CCONJ, []SubType{}}
-	rojo := Word{"rojo", POS_ADJ, []SubType{S_MASCULINE, S_SINGULAR}}
+	// azul := Word{"azul", POS_ADJ, []SubType{S_MASCULINE, S_SINGULAR}}
+	// hombre := Word{"hombre", POS_NOUN, []SubType{S_MASCULINE, S_SINGULAR}}
+	// y := Word{"y", POS_CCONJ, []SubType{}}
+	// rojo := Word{"rojo", POS_ADJ, []SubType{S_MASCULINE, S_SINGULAR}}
 
-	words := []*Word{&hombre, &azul}
-	context := []*Word{&hombre, &azul, &y, &rojo}
-	contextRoot, _ := Parse(context)
-	contextWeb := Web{context, contextRoot}
+	// words := []*Word{&hombre, &azul}
+	// context := []*Word{&hombre, &azul, &y, &rojo}
+	// contextRoot, _ := Parse(context)
+	// contextWeb := Web{context, contextRoot}
 
-	res := SplitWebAtCoord(contextWeb)
+	// res := SplitWebAtCoord(contextWeb)
 
-	root, err := Parse(words)
+	// root, err := Parse(words)
 
-	web := Web{words, root}
+	// web := Web{words, root}
 
-	result := web.CompareWebs(res)
-	fmt.Fprintf(os.Stderr, "Result %t\n", result)
+	// result := web.CompareWebs(res)
+	// fmt.Fprintf(os.Stderr, "Result %t\n", result)
 
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-	} else {
-		PrintWeb(contextWeb)
-	}
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "%v\n", err)
+	// } else {
+	// 	PrintWeb(contextWeb)
+	// }
 
 	// PrintWeb(web)
 

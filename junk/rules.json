@@ -1,0 +1,22 @@
+[
+    {
+        "prev": [
+            "VERB"
+        ],
+        "curr": [
+            "ADJ"
+        ],
+        "next": [],
+        "resolve": "ADJ"
+    },
+    {
+        "prev": [
+            "DET"
+        ],
+        "curr": [
+            "NOUN"
+        ],
+        "next": [],
+        "resolve": "NOUN"
+    }
+]

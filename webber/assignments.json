@@ -1,229 +1,210 @@
 {
-     "SPECIFIER":{
-        "before":{
-            "CLAUSE":"",
-            "COORD":"SUBJECT_COMPLEMENT",
-            "SUBOORD":"",
-            "VERBAL":"SPECIFICATION",
-            "NOMINAL":"",
-            "NOUN":"",
-            "DESCRIPTOR":"SPECIFICATION",
-            "SPECIFIER":"SPECIFICATION",
-            "PREP":"PREPOSITION_FROM",
-            "PREP_DESC":"",
-            "PREP_SPEC":"",
-            "PREP_MIX":"",
-            "PP_NOUN":"",
-            "DESCRIPTORPP":"",
-            "SPECIFIERPP":"",
-            "PP_MIX":"",
-            "NOUNPP":""
+    "SPECIFIER": {
+        "before": {
+            "CLAUSE": "",
+            "COORD": "SUBJECT_COMPLEMENT",
+            "SUBOORD": "",
+            "VERBAL": "SPECIFICATION",
+            "NOMINAL": "",
+            "NOUN": "",
+            "DESCRIPTOR": "SPECIFICATION",
+            "SPECIFIER": "SPECIFICATION",
+            "PREP": "PREPOSITION_FROM",
+            "PREP_DESC": "",
+            "PREP_SPEC": "",
+            "PREP_MIX": "",
+            "PP_NOUN": "",
+            "DESCRIPTORPP": "",
+            "SPECIFIERPP": "",
+            "PP_MIX": "",
+            "NOUNPP": ""
         },
-        "after":{
-            "CLAUSE":"",
-            "COORD":"SUBJECT_COMPLEMENT",
-            "SUBOORD":"",
-            "VERBAL":"SPECIFICATION",
-            "NOMINAL":"",
-            "NOUN":"",
-            "DESCRIPTOR":"",
-            "SPECIFIER":"",
-            "PREP":"",
-            "PREP_DESC":"",
-            "PREP_SPEC":"",
-            "PREP_MIX":"",
-            "PP_NOUN":"",
-            "DESCRIPTORPP":"",
-            "SPECIFIERPP":"",
-            "PP_MIX":"",
-            "NOUNPP":""
-    }
-    },
-    
-    "PREP_SPEC":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
-        },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT"       
+        "after": {
+            "CLAUSE": "",
+            "COORD": "SUBJECT_COMPLEMENT",
+            "SUBOORD": "",
+            "VERBAL": "SPECIFICATION",
+            "NOMINAL": "",
+            "NOUN": "",
+            "DESCRIPTOR": "",
+            "SPECIFIER": "",
+            "PREP": "",
+            "PREP_DESC": "",
+            "PREP_SPEC": "",
+            "PREP_MIX": "",
+            "PP_NOUN": "",
+            "DESCRIPTORPP": "",
+            "SPECIFIERPP": "",
+            "PP_MIX": "",
+            "NOUNPP": ""
         }
     },
-    
-    "DESCRIPTOR":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "VERBAL":"SUBJECT",
-            "NOUN":"DESCRIPTION",
-            "PREP":"PREPOSITION_FROM"
+    "PREP_SPEC": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "VERBAL":"SUBJECT_COMPLEMENT",
-            "NOUN":"DESCRIPTION",
-            "PREP_DESC":"PREPOSITION_TO"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT"
         }
     },
-    
-    "PREP_DESC":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "DESCRIPTOR": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "VERBAL": "SUBJECT",
+            "NOUN": "DESCRIPTION",
+            "PREP": "PREPOSITION_FROM"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "VERBAL": "SUBJECT_COMPLEMENT",
+            "NOUN": "DESCRIPTION",
+            "PREP_DESC": "PREPOSITION_TO"
         }
     },
-    
-    "PREP":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "PREP_DESC": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT"
         }
     },
-    
-    "PREP_MIX":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "PREP": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT"
         }
     },
-
-    "PP_NOUN":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "PREP_MIX": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "VERBAL":"PREPOSITION_TO",
-            "NOUN":"PREPOSITION_TO"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT"
         }
     },
-
-    "PP_MIX":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "PP_NOUN": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "VERBAL":"PREPOSITION_TO",
-            "NOUN":"PREPOSITION_TO"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "VERBAL": "PREPOSITION_TO",
+            "NOUN": "PREPOSITION_TO"
         }
     },
-    
-    "DESCRIPTORPP":{
-        "before":{
-
-            "COORD":"SUBJECT_COMPLEMENT"
+    "PP_MIX": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "VERBAL":"PREPOSITION_TO",
-            "NOUN":"PREPOSITION_TO"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "VERBAL": "PREPOSITION_TO",
+            "NOUN": "PREPOSITION_TO"
         }
     },
-    
-    "SPECIFIERPP":{
-        "before":{
-
-            "COORD":"SUBJECT_COMPLEMENT"
+    "DESCRIPTORPP": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "VERBAL":"PREPOSITION_TO",
-            "NOUN":"PREPOSITION_TO"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "VERBAL": "PREPOSITION_TO",
+            "NOUN": "PREPOSITION_TO"
         }
     },
-    
-    "VERBALPP":{
-        "before":{
-
-            "COORD":"SUBJECT_COMPLEMENT"
+    "SPECIFIERPP": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "VERBAL":"PREPOSITION_TO",
-            "NOUN":"PREPOSITION_TO"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "VERBAL": "PREPOSITION_TO",
+            "NOUN": "PREPOSITION_TO"
         }
     },
-    
-    "NOUN":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "VERBALPP": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "PREP_SPEC":"PREPOSITION_TO",
-            "PREP_DESC":"PREPOSITION_TO",
-            "PREP":"PREPOSITION_TO",
-            "PREP_MIX":"PREPOSITION_TO",
-            "VERBAL":"OBJECT",
-            "COORD":"SUBJECT_COMPLEMENT"
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "VERBAL": "PREPOSITION_TO",
+            "NOUN": "PREPOSITION_TO"
         }
     },
-    
-    "NOMINAL":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "VERBAL":"SUBJECT",
-            "PREDICATE":"SUBJECT"
-            
+    "NOUN": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "VERBAL":"OBJECT",
-            "PREP":"PREPOSITION_TO",
-            "PREP_DESC":"PREPOSITION_TO",
-            "PREP_SPEC":"PREPOSITION_TO",
-            "PREP_MIX":"PREPOSITION_TO"
-
-
+        "after": {
+            "PREP_SPEC": "PREPOSITION_TO",
+            "PREP_DESC": "PREPOSITION_TO",
+            "PREP": "PREPOSITION_TO",
+            "PREP_MIX": "PREPOSITION_TO",
+            "VERBAL": "OBJECT",
+            "COORD": "SUBJECT_COMPLEMENT"
         }
     },
-    
-    "VERBAL":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "NOMINAL": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "VERBAL": "SUBJECT",
+            "PREDICATE": "SUBJECT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "PREP_SPEC":"PREPOSITION_TO"
-            
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "VERBAL": "OBJECT",
+            "PREP": "PREPOSITION_TO",
+            "PREP_DESC": "PREPOSITION_TO",
+            "PREP_SPEC": "PREPOSITION_TO",
+            "PREP_MIX": "PREPOSITION_TO"
         }
     },
-
-    "CLAUSE":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "VERBAL": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "SUBOORD":"SUBOORDINATION_TO"
-            
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "PREP_SPEC": "PREPOSITION_TO"
         }
     },
-    "PREDICATE":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "CLAUSE": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "SUBOORD":"SUBOORDINATION_TO"
-            
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "SUBOORD": "SUBOORDINATION_TO"
         }
     },
-
-    "SUBOORDCLAUSE":{
-        "before":{
-            "COORD":"SUBJECT_COMPLEMENT"
+    "PREDICATE": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
         },
-        "after":{
-            "COORD":"SUBJECT_COMPLEMENT",
-            "NOUN":"DESCRIPTION",
-            "DESCRIPTOR":"SPECIFICATION",
-            "SUBOORD":"SUBOORDINATION_TO"
-            
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "SUBOORD": "SUBOORDINATION_TO"
+        }
+    },
+    "SUBOORDCLAUSE": {
+        "before": {
+            "COORD": "SUBJECT_COMPLEMENT"
+        },
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT",
+            "NOUN": "DESCRIPTION",
+            "DESCRIPTOR": "SPECIFICATION",
+            "SUBOORD": "SUBOORDINATION_TO"
+        }
+    },
+    "COORD": {
+        "before": {},
+        "after": {
+            "COORD": "SUBJECT_COMPLEMENT"
         }
     }
 }
