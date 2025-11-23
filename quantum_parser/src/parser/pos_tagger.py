@@ -17,6 +17,7 @@ WORD_TAG_DICT = {
     "this": Tag.DET, "that": Tag.DET, "these": Tag.DET, "those": Tag.DET,
     "my": Tag.DET, "your": Tag.DET, "his": Tag.DET, "her": Tag.DET,
     "its": Tag.DET, "our": Tag.DET, "their": Tag.DET,
+    "no": Tag.DET, "neither": Tag.DET, "either": Tag.DET,
 
     # Coordinating conjunctions
     "and": Tag.CCONJ, "or": Tag.CCONJ, "but": Tag.CCONJ,
@@ -36,7 +37,13 @@ WORD_TAG_DICT = {
     "extremely": Tag.ADV, "really": Tag.ADV, "quite": Tag.ADV,
     "too": Tag.ADV, "also": Tag.ADV, "always": Tag.ADV,
     "never": Tag.ADV, "often": Tag.ADV, "sometimes": Tag.ADV,
+    "hardly": Tag.ADV, "rarely": Tag.ADV, "seldom": Tag.ADV,
     "here": Tag.ADV, "there": Tag.ADV, "now": Tag.ADV,
+    "where": Tag.ADV, "when": Tag.ADV, "why": Tag.ADV, "how": Tag.ADV,
+
+    #  Pronouns (including relative pronouns)
+    "who": Tag.PRON, "whom": Tag.PRON, "whose": Tag.PRON,
+    "which": Tag.PRON, "that": Tag.PRON, "what": Tag.PRON,
 
     # Common adjectives
     "big": Tag.ADJ, "small": Tag.ADJ, "red": Tag.ADJ,
@@ -72,6 +79,9 @@ WORD_TAG_DICT = {
     "chase": Tag.VERB, "chases": Tag.VERB, "chased": Tag.VERB,
     "catch": Tag.VERB, "catches": Tag.VERB, "caught": Tag.VERB,
     "jump": Tag.VERB, "jumps": Tag.VERB, "jumped": Tag.VERB,
+
+    # Particles (negation, infinitive marker, possession, etc.)
+    "not": Tag.PART, "n't": Tag.PART, "to": Tag.PART, "'s": Tag.PART,
 
     # Common nouns
     "dog": Tag.NOUN, "dogs": Tag.NOUN, "cat": Tag.NOUN, "cats": Tag.NOUN,

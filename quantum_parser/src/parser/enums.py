@@ -153,6 +153,11 @@ class SubType(Enum):
     # Descriptor/Specifier forms
     COMPARATIVE = auto()
     SUPERLATIVE = auto()
+    POSSESSIVE = auto()    # Possessive marking
+    RELATIVE = auto()      # Relative pronouns/adverbs
+    NEGATIVE = auto()      # Negation marking
+    INFINITIVE = auto()    # Infinitive marker
+    PARTICIPLE = auto()    # Present/past participle
 
     # Adjective position (for Spanish)
     POST_NOMINAL = auto()   # Adjective comes after noun
@@ -205,6 +210,11 @@ SUBTYPE_TO_SUBCAT = {
     # Descriptor
     SubType.COMPARATIVE: SubCat.DESCRIPTOR,
     SubType.SUPERLATIVE: SubCat.DESCRIPTOR,
+    SubType.POSSESSIVE: SubCat.DESCRIPTOR,
+    SubType.NEGATIVE: SubCat.DESCRIPTOR,
+    SubType.RELATIVE: SubCat.DESCRIPTOR,
+    SubType.INFINITIVE: SubCat.DESCRIPTOR,
+    SubType.PARTICIPLE: SubCat.DESCRIPTOR,
 
     # Preposition
     SubType.P_MIX: SubCat.PREPOSITION,

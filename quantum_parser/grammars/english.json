@@ -15,6 +15,11 @@
         "normPP2", "adjPP2", "advPP2", "verbPP2", "mixPP2",
         "noun3",
         "nominal1", "nominal2",
+        "inf1", "ger1", "part1",
+        "poss1", "poss2",
+        "neg1", "neg2",
+        "rel1", "rel2",
+        "aux1", "aux2",
         "verb1", "verb2",
         "predicate1", "predicate2",
         "clause1", "clause2"
@@ -1606,6 +1611,274 @@
                     ],
                     "consume": ["before", "after"],
                     "note": "Example: cats and dogs"
+                }
+            ]
+        },
+
+        "inf1": {
+            "description": "Infinitive phrases (to + verb → nominal)",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER"},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["anchor", "after"],
+                    "note": "Infinitive: to run, to see"
+                }
+            ]
+        },
+
+        "ger1": {
+            "description": "Gerunds (verbal -ing as nominal)",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL"},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "pull_categories": ["NOMINAL"],
+                    "note": "Gerund as nominal: running is fun"
+                }
+            ]
+        },
+
+        "part1": {
+            "description": "Present participles as descriptors",
+            "result": "DESCRIPTOR",
+            "rules": [
+                {
+                    "result": "DESCRIPTOR",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL"},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "pull_categories": ["PARTICIPLE"],
+                    "note": "Participle as adjective: running water"
+                }
+            ]
+        },
+
+        "poss1": {
+            "description": "Possessive marking (noun + 's)",
+            "result": "NOUN",
+            "rules": [
+                {
+                    "result": "NOUN",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOUN"},
+                        "before": [],
+                        "after": [{"type": "MODIFIER", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "after[0]", "to": "anchor"}
+                    ],
+                    "consume": ["after"],
+                    "pull_categories": ["POSSESSIVE"],
+                    "note": "Possessive: John's, dog's"
+                }
+            ]
+        },
+
+        "poss2": {
+            "description": "Possessive constructions",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOUN", "subtypes": ["POSSESSIVE"]},
+                        "before": [],
+                        "after": [{"type": "NOMINAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["anchor"],
+                    "note": "Possession: John's book"
+                }
+            ]
+        },
+
+        "neg1": {
+            "description": "Negation with particles",
+            "result": "VERBAL",
+            "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL"},
+                        "before": [{"type": "MODIFIER", "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "before[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "pull_categories": ["NEGATIVE"],
+                    "note": "Negation: not run, n't go"
+                }
+            ]
+        },
+
+        "neg2": {
+            "description": "Negative adverbs and determiners",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [{"type": "DESCRIPTOR", "subtypes": ["NEGATIVE"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "DESCRIPTION", "from": "before[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Negative determiner: no dogs"
+                }
+            ]
+        },
+
+        "rel1": {
+            "description": "Relative clauses with pronouns",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "NOUN", "subtypes": ["RELATIVE"], "quantifier": "one"},
+                            {"type": "CLAUSE", "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "SUBORDINATION", "from": "after[1]", "to": "anchor"},
+                        {"type": "MODIFICATION", "from": "after[0]", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Relative clause: the dog that chased"
+                }
+            ]
+        },
+
+        "rel2": {
+            "description": "Relative clauses with adverbs",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "SPECIFIER", "subtypes": ["RELATIVE"], "quantifier": "one"},
+                            {"type": "CLAUSE", "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "SUBORDINATION", "from": "after[1]", "to": "anchor"},
+                        {"type": "MODIFICATION", "from": "after[0]", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Relative adverb: the place where I live"
+                }
+            ]
+        },
+
+        "aux1": {
+            "description": "Auxiliary verbs modify main verbs (modals, perfect, progressive)",
+            "result": "VERBAL",
+            "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["MODAL"]},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["anchor"],
+                    "note": "Modal + verb: can run, should go"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER"},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["anchor"],
+                    "pull_categories": ["PERFECT", "PROGRESSIVE", "PASSIVE"],
+                    "note": "Auxiliary + verb: has run, is running, was seen"
+                }
+            ]
+        },
+
+        "aux2": {
+            "description": "Stack auxiliary verbs",
+            "result": "VERBAL",
+            "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL", "subtypes": ["PERFECT"]},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "subtypes": ["PROGRESSIVE"], "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": [],
+                    "note": "Perfect + progressive: has been running"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL", "subtypes": ["MODAL"]},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "subtypes": ["PERFECT"], "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": [],
+                    "note": "Modal + perfect: will have seen"
                 }
             ]
         },
