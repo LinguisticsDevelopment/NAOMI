@@ -1,0 +1,79 @@
+{
+    "metadata": {
+        "language": "test",
+        "version": "1.0",
+        "author": "Test",
+        "description": "Simple test grammar"
+    },
+
+    "order": [
+        "adj1",
+        "noun1"
+    ],
+
+    "rulesets": {
+        "adj1": {
+            "description": "Attach specifier to descriptor",
+            "result": "DESCRIPTOR",
+            "rules": [
+                {
+                    "result": "DESCRIPTOR",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "DESCRIPTOR"
+                        },
+                        "before": [
+                            {
+                                "type": "SPECIFIER",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "SPECIFICATION",
+                            "from": "before[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Example: very big -> DESCRIPTOR(big) with child SPECIFIER(very)"
+                }
+            ]
+        },
+
+        "noun1": {
+            "description": "Build nominal from noun + descriptors",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [
+                            {
+                                "type": "DESCRIPTOR",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "DESCRIPTION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "English: big red dog -> NOMINAL(dog) with DESCRIPTOR children"
+                }
+            ]
+        }
+    }
+}

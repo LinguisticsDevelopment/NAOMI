@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python tests/test_english.py:*)",
+      "Bash(python tests/test_comprehensive.py:*)",
+      "Bash(python tests/test_spanish.py:*)",
+      "Bash(python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

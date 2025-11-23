@@ -1,0 +1,2119 @@
+{
+    "metadata": {
+        "language": "english",
+        "version": "1.0",
+        "author": "Converted from webber",
+        "description": "Comprehensive English grammar with coordination, prepositional phrases, and subordinate clauses"
+    },
+
+    "order": [
+        "adv1", "adv2", "advPrep1", "advPrep2",
+        "adj1", "adj2", "adjPrep1", "adjPrep2",
+        "mixPrep",
+        "noun1", "noun2",
+        "normPP1", "mixPP1", "adjPP1", "advPP1", "verbPP1",
+        "normPP2", "adjPP2", "advPP2", "verbPP2", "mixPP2",
+        "noun3",
+        "nominal1", "nominal2",
+        "verb1", "verb2",
+        "predicate1", "predicate2",
+        "clause1", "clause2"
+    ],
+
+    "rulesets": {
+        "adv1": {
+            "description": "Build adverbial specifiers recursively",
+            "result": "SPECIFIER",
+            "rules": [
+                {
+                    "result": "SPECIFIER",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "SPECIFIER"
+                        },
+                        "before": [
+                            {
+                                "type": "SPECIFIER",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "SPECIFICATION",
+                            "from": "before[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Example: very quickly -> SPECIFIER(quickly) with child SPECIFIER(very)"
+                }
+            ]
+        },
+
+        "adv2": {
+            "description": "Coordinate adverbial specifiers",
+            "result": "SPECIFIER",
+            "rules": [
+                {
+                    "result": "SPECIFIER",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD token"
+                },
+                {
+                    "result": "SPECIFIER",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "SPECIFIER",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "SPECIFIER",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Example: quickly and smoothly"
+                }
+            ]
+        },
+
+        "advPrep1": {
+            "description": "Comparative adverb + preposition",
+            "result": "PREP_SPEC",
+            "rules": [
+                {
+                    "result": "PREP_SPEC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP"
+                        },
+                        "before": [
+                            {
+                                "type": "SPECIFIER",
+                                "quantifier": "one",
+                                "subtypes": ["COMPARATIVE"]
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "SPECIFICATION",
+                            "from": "before[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Example: more than"
+                }
+            ]
+        },
+
+        "advPrep2": {
+            "description": "Coordinate prepositional specifiers",
+            "result": "PREP_SPEC",
+            "rules": [
+                {
+                    "result": "PREP_SPEC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "PREP_SPEC",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_SPEC",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "PREP_SPEC",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Coordinate prepositional specifiers"
+                }
+            ]
+        },
+
+        "adj1": {
+            "description": "Build descriptors with specifiers and subordinate clauses",
+            "result": "DESCRIPTOR",
+            "rules": [
+                {
+                    "result": "DESCRIPTOR",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "DESCRIPTOR"
+                        },
+                        "before": [
+                            {
+                                "type": "SPECIFIER",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "SPECIFICATION",
+                            "from": "before[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Example: very big"
+                },
+                {
+                    "result": "DESCRIPTOR",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "DESCRIPTOR"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "CLAUSE",
+                                "quantifier": "one",
+                                "subtypes": ["SUBORDINATE"]
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "SUBORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: happy that he arrived"
+                }
+            ]
+        },
+
+        "adj2": {
+            "description": "Coordinate descriptors",
+            "result": "DESCRIPTOR",
+            "rules": [
+                {
+                    "result": "DESCRIPTOR",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "DESCRIPTOR",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "DESCRIPTOR",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "DESCRIPTOR",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Example: big and red"
+                }
+            ]
+        },
+
+        "adjPrep1": {
+            "description": "Comparative adjective + preposition",
+            "result": "PREP_DESC",
+            "rules": [
+                {
+                    "result": "PREP_DESC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP"
+                        },
+                        "before": [
+                            {
+                                "type": "DESCRIPTOR",
+                                "quantifier": "one",
+                                "subtypes": ["COMPARATIVE"]
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "SPECIFICATION",
+                            "from": "before[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Example: bigger than"
+                }
+            ]
+        },
+
+        "adjPrep2": {
+            "description": "Coordinate prepositional descriptors",
+            "result": "PREP_DESC",
+            "rules": [
+                {
+                    "result": "PREP_DESC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "PREP_DESC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_DESC",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "PREP_DESC",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Coordinate prepositional descriptors"
+                }
+            ]
+        },
+
+        "mixPrep": {
+            "description": "Mix different prepositional types via coordination",
+            "result": "PREP_MIX",
+            "rules": [
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_SPEC",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP_SPEC + COORD + PREP"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_DESC"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_SPEC",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP_SPEC + COORD + PREP_DESC"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_MIX"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_SPEC",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP_SPEC + COORD + PREP_MIX"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_DESC",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP_DESC + COORD + PREP"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_SPEC"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_DESC",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP_DESC + COORD + PREP_SPEC"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_MIX"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_DESC",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP_DESC + COORD + PREP_MIX"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_SPEC"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP + COORD + PREP_SPEC"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_DESC"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP + COORD + PREP_DESC"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_MIX"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP + COORD + PREP_MIX"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_MIX",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP_MIX + COORD + PREP"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_DESC"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_MIX",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP_MIX + COORD + PREP_DESC"
+                },
+                {
+                    "result": "PREP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_SPEC"
+                        },
+                        "before": [
+                            {
+                                "type": "PREP_MIX",
+                                "quantifier": "all"
+                            },
+                            {
+                                "type": "COORD",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "PREP_MIX + COORD + PREP_SPEC"
+                }
+            ]
+        },
+
+        "noun1": {
+            "description": "Build nouns with descriptors and subordinate clauses",
+            "result": "NOUN",
+            "rules": [
+                {
+                    "result": "NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [
+                            {
+                                "type": "DESCRIPTOR",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "DESCRIPTION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Example: big red dog"
+                },
+                {
+                    "result": "NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "CLAUSE",
+                                "quantifier": "one",
+                                "subtypes": ["SUBORDINATE"]
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "SUBORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: dog that barked"
+                }
+            ]
+        },
+
+        "noun2": {
+            "description": "Coordinate nouns",
+            "result": "NOUN",
+            "rules": [
+                {
+                    "result": "NOUN",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Example: cats and dogs -> COORD becomes NOUN"
+                }
+            ]
+        },
+
+        "normPP1": {
+            "description": "Build normal prepositional phrases (PREP + NOUN)",
+            "result": "PP_NOUN",
+            "rules": [
+                {
+                    "result": "PP_NOUN",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "PREPOSITION",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: on table"
+                }
+            ]
+        },
+
+        "mixPP1": {
+            "description": "Build mixed prepositional phrases",
+            "result": "PP_MIX",
+            "rules": [
+                {
+                    "result": "PP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_MIX"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "PREPOSITION",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Mixed prep + noun"
+                }
+            ]
+        },
+
+        "adjPP1": {
+            "description": "Build adjectival prepositional phrases",
+            "result": "PP_DESC",
+            "rules": [
+                {
+                    "result": "PP_DESC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_DESC"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "PREPOSITION",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: bigger than John"
+                },
+                {
+                    "result": "PP_DESC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_DESC"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "DESCRIPTOR",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "PREPOSITION",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: bigger than tall"
+                }
+            ]
+        },
+
+        "advPP1": {
+            "description": "Build adverbial prepositional phrases",
+            "result": "PP_SPEC",
+            "rules": [
+                {
+                    "result": "PP_SPEC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_SPEC"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "PREPOSITION",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Adverbial prep phrase"
+                }
+            ]
+        },
+
+        "verbPP1": {
+            "description": "Build verbal prepositional phrases",
+            "result": "PP_VERB",
+            "rules": [
+                {
+                    "result": "PP_VERB",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREP_SPEC"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "VERBAL",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "PREPOSITION",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: for running"
+                }
+            ]
+        },
+
+        "normPP2": {
+            "description": "Coordinate normal prepositional phrases",
+            "result": "PP_NOUN",
+            "rules": [
+                {
+                    "result": "PP_NOUN",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "PP_NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "PP_NOUN",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "PP_NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Example: on table and under chair"
+                }
+            ]
+        },
+
+        "adjPP2": {
+            "description": "Coordinate adjectival prepositional phrases",
+            "result": "PP_DESC",
+            "rules": [
+                {
+                    "result": "PP_DESC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "PP_DESC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "PP_DESC",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "PP_DESC",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Coordinate adjectival prep phrases"
+                }
+            ]
+        },
+
+        "advPP2": {
+            "description": "Coordinate adverbial prepositional phrases",
+            "result": "PP_SPEC",
+            "rules": [
+                {
+                    "result": "PP_SPEC",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "PP_SPEC",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "PP_SPEC",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "PP_SPEC",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Coordinate adverbial prep phrases"
+                }
+            ]
+        },
+
+        "verbPP2": {
+            "description": "Coordinate verbal prepositional phrases",
+            "result": "PP_VERB",
+            "rules": [
+                {
+                    "result": "PP_VERB",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "PP_VERB",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "PP_VERB",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "PP_VERB",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Coordinate verbal prep phrases"
+                }
+            ]
+        },
+
+        "mixPP2": {
+            "description": "Coordinate mixed prepositional phrases",
+            "result": "PP_MIX",
+            "rules": [
+                {
+                    "result": "PP_MIX",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "PP_MIX",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "PP_MIX",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "PP_MIX",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Coordinate mixed prep phrases"
+                }
+            ]
+        },
+
+        "noun3": {
+            "description": "Attach prepositional phrases to nouns",
+            "result": "NOUN",
+            "rules": [
+                {
+                    "result": "NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "PP_NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "MODIFICATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: dog on table"
+                },
+                {
+                    "result": "NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "PP_DESC",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "MODIFICATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Adjectival PP modifying noun"
+                },
+                {
+                    "result": "NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "PP_SPEC",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "MODIFICATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Adverbial PP modifying noun"
+                },
+                {
+                    "result": "NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "PP_MIX",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "MODIFICATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Mixed PP modifying noun"
+                },
+                {
+                    "result": "NOUN",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "APPOSITION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Noun-noun apposition"
+                }
+            ]
+        },
+
+        "nominal1": {
+            "description": "Convert noun to nominal",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Simple noun to nominal conversion"
+                }
+            ]
+        },
+
+        "nominal2": {
+            "description": "Coordinate nominals",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "NOMINAL",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "NOMINAL",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Example: cats and dogs"
+                }
+            ]
+        },
+
+        "verb1": {
+            "description": "Build verbal phrases with modifiers",
+            "result": "VERBAL",
+            "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "SPECIFIER",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "SPECIFICATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: runs quickly"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [
+                            {
+                                "type": "SPECIFIER",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "SPECIFICATION",
+                            "from": "before[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Example: quickly runs"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "PP_NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "MODIFICATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: runs on table"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "PP_SPEC",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "MODIFICATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Adverbial PP modifying verb"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "PP_VERB",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "MODIFICATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Verbal PP modifying verb"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "CLAUSE",
+                                "quantifier": "one",
+                                "subtypes": ["SUBORDINATE"]
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "SUBORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: said that he left"
+                }
+            ]
+        },
+
+        "verb2": {
+            "description": "Coordinate verbal phrases",
+            "result": "VERBAL",
+            "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "VERBAL",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "VERBAL",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Example: runs and jumps"
+                }
+            ]
+        },
+
+        "predicate1": {
+            "description": "Build predicates from verbal + arguments",
+            "result": "PREDICATE",
+            "rules": [
+                {
+                    "result": "PREDICATE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Intransitive verb becomes predicate"
+                },
+                {
+                    "result": "PREDICATE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "NOMINAL",
+                                "quantifier": "one"
+                            },
+                            {
+                                "type": "NOMINAL",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "INDIRECT_OBJECT",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        },
+                        {
+                            "type": "OBJECT",
+                            "from": "anchor",
+                            "to": "after[1]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: gave him book (ditransitive)"
+                },
+                {
+                    "result": "PREDICATE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "PP_NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "MODIFICATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Intransitive with PP"
+                },
+                {
+                    "result": "PREDICATE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "NOMINAL",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "OBJECT",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: chased cat (transitive)"
+                },
+                {
+                    "result": "PREDICATE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "DESCRIPTOR",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COMPLEMENT",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Example: is happy (copula)"
+                }
+            ]
+        },
+
+        "predicate2": {
+            "description": "Coordinate predicates",
+            "result": "PREDICATE",
+            "rules": [
+                {
+                    "result": "PREDICATE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "PREDICATE",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "PREDICATE",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "PREDICATE",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Coordinate predicates"
+                }
+            ]
+        },
+
+        "clause1": {
+            "description": "Build clauses from subject + predicate",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREDICATE"
+                        },
+                        "before": [
+                            {
+                                "type": "NOMINAL",
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "SUBJECT",
+                            "from": "anchor",
+                            "to": "before[0]"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Example: dog runs"
+                }
+            ]
+        },
+
+        "clause2": {
+            "description": "Coordinate clauses",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "COORD",
+                                "quantifier": "one",
+                                "check_original": true
+                            }
+                        ]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "COORD"
+                        },
+                        "before": [
+                            {
+                                "type": "CLAUSE",
+                                "quantifier": "all"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "CLAUSE",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "COORDINATION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        },
+                        {
+                            "type": "COORDINATION",
+                            "from": "after[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Example: dog runs and cat sleeps"
+                }
+            ]
+        }
+    }
+}
