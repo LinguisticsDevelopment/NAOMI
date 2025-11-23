@@ -136,6 +136,11 @@ class QuantumParser:
         # Final sort by score
         chart.sort_hypotheses()
 
+        # Filter for complete parses only (exactly 1 unconsumed root node)
+        complete_hypotheses = [h for h in chart.hypotheses if len(h.get_unconsumed()) == 1]
+        if complete_hypotheses:
+            chart.hypotheses = complete_hypotheses
+
         return chart
 
 

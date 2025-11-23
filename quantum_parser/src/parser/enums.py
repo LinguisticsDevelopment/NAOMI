@@ -146,6 +146,9 @@ class SubType(Enum):
     # Verb forms
     NOMINAL = auto()
     MODAL = auto()
+    PERFECT = auto()       # Perfect aspect (have + past participle)
+    PROGRESSIVE = auto()   # Progressive aspect (be + present participle)
+    PASSIVE = auto()       # Passive voice (be + past participle)
 
     # Descriptor/Specifier forms
     COMPARATIVE = auto()
@@ -195,6 +198,9 @@ SUBTYPE_TO_SUBCAT = {
     # Verb
     SubType.NOMINAL: SubCat.VERB,
     SubType.MODAL: SubCat.VERB,
+    SubType.PERFECT: SubCat.VERB,
+    SubType.PROGRESSIVE: SubCat.VERB,
+    SubType.PASSIVE: SubCat.VERB,
 
     # Descriptor
     SubType.COMPARATIVE: SubCat.DESCRIPTOR,

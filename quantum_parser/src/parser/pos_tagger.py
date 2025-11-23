@@ -47,11 +47,20 @@ WORD_TAG_DICT = {
     "tall": Tag.ADJ, "short": Tag.ADJ, "long": Tag.ADJ,
     "shiny": Tag.ADJ, "beautiful": Tag.ADJ, "ugly": Tag.ADJ,
 
+    # Auxiliary verbs (be, have, do as auxiliaries)
+    "be": Tag.AUX, "am": Tag.AUX, "is": Tag.AUX, "are": Tag.AUX,
+    "was": Tag.AUX, "were": Tag.AUX, "been": Tag.AUX, "being": Tag.AUX,
+    "have": Tag.AUX, "has": Tag.AUX, "had": Tag.AUX, "having": Tag.AUX,
+    "do": Tag.AUX, "does": Tag.AUX, "did": Tag.AUX,
+
+    # Modal verbs
+    "can": Tag.AUX, "could": Tag.AUX,
+    "may": Tag.AUX, "might": Tag.AUX,
+    "must": Tag.AUX,
+    "shall": Tag.AUX, "should": Tag.AUX,
+    "will": Tag.AUX, "would": Tag.AUX,
+
     # Common verbs (infinitive/base form)
-    "be": Tag.VERB, "is": Tag.VERB, "am": Tag.VERB, "are": Tag.VERB,
-    "was": Tag.VERB, "were": Tag.VERB, "been": Tag.VERB,
-    "have": Tag.VERB, "has": Tag.VERB, "had": Tag.VERB,
-    "do": Tag.VERB, "does": Tag.VERB, "did": Tag.VERB,
     "run": Tag.VERB, "runs": Tag.VERB, "running": Tag.VERB, "ran": Tag.VERB,
     "walk": Tag.VERB, "walks": Tag.VERB, "walked": Tag.VERB,
     "see": Tag.VERB, "sees": Tag.VERB, "saw": Tag.VERB, "seen": Tag.VERB,
@@ -95,9 +104,25 @@ AMBIGUOUS_WORDS = {
     "fly": [Tag.VERB, Tag.NOUN],
     "flies": [Tag.VERB, Tag.NOUN],
     "fish": [Tag.VERB, Tag.NOUN],
-    "can": [Tag.VERB, Tag.NOUN, Tag.AUX],
-    "will": [Tag.VERB, Tag.NOUN, Tag.AUX],
-    "may": [Tag.VERB, Tag.NOUN, Tag.AUX],
+    "can": [Tag.AUX, Tag.NOUN],  # Modal or noun (can of soup)
+    "will": [Tag.AUX, Tag.NOUN],  # Modal or noun (last will)
+    "may": [Tag.AUX, Tag.NOUN],  # Modal or noun (month of May)
+
+    # Be/have/do can be main verbs or auxiliaries
+    "be": [Tag.AUX, Tag.VERB],
+    "am": [Tag.AUX, Tag.VERB],
+    "is": [Tag.AUX, Tag.VERB],
+    "are": [Tag.AUX, Tag.VERB],
+    "was": [Tag.AUX, Tag.VERB],
+    "were": [Tag.AUX, Tag.VERB],
+    "been": [Tag.AUX, Tag.VERB],
+    "being": [Tag.AUX, Tag.VERB],
+    "have": [Tag.AUX, Tag.VERB],
+    "has": [Tag.AUX, Tag.VERB],
+    "had": [Tag.AUX, Tag.VERB],
+    "do": [Tag.AUX, Tag.VERB],
+    "does": [Tag.AUX, Tag.VERB],
+    "did": [Tag.AUX, Tag.VERB],
 
     # Verb/Adjective ambiguity
     "close": [Tag.VERB, Tag.ADJ],
