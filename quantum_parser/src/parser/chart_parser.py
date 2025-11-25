@@ -167,12 +167,26 @@ class ChartParser:
 
                 # Apply smart branching logic (same as quantum parser)
                 if len(all_matches) > 1:
-                    # Ambiguity: create hypothesis for each match
-                    for match in all_matches:
-                        new_hyp = apply_rule(current_hyp, match)
-                        if match.rule.recursive:
-                            new_hyp = apply_ruleset_recursively(new_hyp, ruleset)
+                    # Check if matches are independent (different anchors) or conflicting
+                    anchor_indices = [m.anchor_idx for m in all_matches]
+
+                    if len(set(anchor_indices)) == len(anchor_indices):
+                        # ALL DIFFERENT ANCHORS: Independent transformations
+                        # Apply all matches to create a single hypothesis
+                        new_hyp = current_hyp
+                        for match in all_matches:
+                            new_hyp = apply_rule(new_hyp, match)
+                            if match.rule.recursive:
+                                new_hyp = apply_ruleset_recursively(new_hyp, ruleset)
                         new_hypotheses.append(new_hyp)
+                    else:
+                        # CONFLICTING ANCHORS: True ambiguity
+                        # Create hypothesis for each match
+                        for match in all_matches:
+                            new_hyp = apply_rule(current_hyp, match)
+                            if match.rule.recursive:
+                                new_hyp = apply_ruleset_recursively(new_hyp, ruleset)
+                            new_hypotheses.append(new_hyp)
                 elif len(all_matches) == 1:
                     # Single match: transform in-place
                     match = all_matches[0]

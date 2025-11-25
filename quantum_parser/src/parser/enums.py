@@ -179,6 +179,11 @@ class SubType(Enum):
     SINGULAR = auto()
     PLURAL = auto()
 
+    # Verb person (for conjugation and implied subjects)
+    FIRST_PERSON = auto()   # I/we (yo/nosotros)
+    SECOND_PERSON = auto()  # you (tú/vosotros/usted)
+    THIRD_PERSON = auto()   # he/she/it/they (él/ella/ellos)
+
     # Questions
     QUESTION = auto()
 

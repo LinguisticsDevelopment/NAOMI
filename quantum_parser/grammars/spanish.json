@@ -850,7 +850,7 @@
         },
 
         "noun3": {
-            "description": "Attach POST-NOMINAL adjectives with gender/number agreement (perro grande, casa blanca)",
+            "description": "Attach POST-NOMINAL adjectives and participles with gender/number agreement (perro grande, casa blanca, libro leído)",
             "result": "NOUN",
             "rules": [
                 {
@@ -912,6 +912,66 @@
                     ],
                     "consume": ["before"],
                     "note": "Example: gran perro (great dog) - some adjectives come BEFORE noun with agreement"
+                },
+                {
+                    "result": "NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "VERBAL",
+                                "quantifier": "all",
+                                "subtypes": ["PARTICIPLE"],
+                                "agreement": {
+                                    "GENDER": "anchor.GENDER",
+                                    "NUMBER": "anchor.NUMBER"
+                                }
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "DESCRIPTION",
+                            "from": "after[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Participle as adjective: libro leído (read book), casa construida (built house) - AFTER noun with agreement"
+                },
+                {
+                    "result": "NOUN",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [
+                            {
+                                "type": "VERBAL",
+                                "quantifier": "all",
+                                "subtypes": ["PARTICIPLE"],
+                                "agreement": {
+                                    "GENDER": "anchor.GENDER",
+                                    "NUMBER": "anchor.NUMBER"
+                                }
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "DESCRIPTION",
+                            "from": "before[*]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Participle as adjective: esperado resultado (expected result) - BEFORE noun with agreement"
                 }
             ]
         },
@@ -1627,9 +1687,39 @@
         },
 
         "verb1": {
-            "description": "Build verbal phrases with modifiers (corre rapidamente, corrió en la mesa)",
+            "description": "Build verbal phrases with modifiers (corre rapidamente, corrió en la mesa, se lava)",
             "result": "VERBAL",
             "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "VERBAL"
+                        },
+                        "before": [
+                            {
+                                "type": "SPECIFIER",
+                                "quantifier": "one",
+                                "pos": "PRON",
+                                "agreement": {
+                                    "PERSON": "anchor.PERSON",
+                                    "NUMBER": "anchor.NUMBER"
+                                }
+                            }
+                        ],
+                        "after": []
+                    },
+                    "connections": [
+                        {
+                            "type": "SPECIFICATION",
+                            "from": "before[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before"],
+                    "note": "Reflexive pronoun: me lavo (I wash myself), se lava (he/she washes himself/herself)"
+                },
                 {
                     "result": "VERBAL",
                     "recursive": true,
@@ -2039,9 +2129,23 @@
         },
 
         "clause1": {
-            "description": "Build clauses from subject + predicate (el perro corre)",
+            "description": "Build clauses from subject + predicate (el perro corre) or implied subject (corro)",
             "result": "CLAUSE",
             "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "PREDICATE"
+                        },
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Implied subject: corro (I run), comes (you eat) - Spanish verbs conjugate for person/number"
+                },
                 {
                     "result": "CLAUSE",
                     "recursive": false,

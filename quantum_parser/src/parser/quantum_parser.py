@@ -79,16 +79,32 @@ class QuantumParser:
 
                 # SMARTER QUANTUM BRANCHING: Only branch on actual ambiguity
                 if len(all_matches) > 1:
-                    # TRUE AMBIGUITY: Multiple valid rule applications
-                    # Create a hypothesis for each match (parallel exploration)
-                    for match in all_matches:
-                        new_hyp = apply_rule(current_hyp, match)
+                    # Check if matches are independent (different anchors) or conflicting
+                    anchor_indices = [m.anchor_idx for m in all_matches]
 
-                        # If recursive rule, keep applying until no more matches
-                        if match.rule.recursive:
-                            new_hyp = apply_ruleset_recursively(new_hyp, ruleset)
+                    if len(set(anchor_indices)) == len(anchor_indices):
+                        # ALL DIFFERENT ANCHORS: Independent transformations
+                        # Apply all matches to create a single hypothesis
+                        new_hyp = current_hyp
+                        for match in all_matches:
+                            new_hyp = apply_rule(new_hyp, match)
+
+                            # If recursive rule, keep applying until no more matches
+                            if match.rule.recursive:
+                                new_hyp = apply_ruleset_recursively(new_hyp, ruleset)
 
                         new_hypotheses.append(new_hyp)
+                    else:
+                        # CONFLICTING ANCHORS: True ambiguity (multiple ways to parse same anchor)
+                        # Create a hypothesis for each match (parallel exploration)
+                        for match in all_matches:
+                            new_hyp = apply_rule(current_hyp, match)
+
+                            # If recursive rule, keep applying until no more matches
+                            if match.rule.recursive:
+                                new_hyp = apply_ruleset_recursively(new_hyp, ruleset)
+
+                            new_hypotheses.append(new_hyp)
 
                 elif len(all_matches) == 1:
                     # SINGLE MATCH: No ambiguity, just transform in-place

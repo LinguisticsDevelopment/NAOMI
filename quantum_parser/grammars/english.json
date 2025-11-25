@@ -1630,8 +1630,8 @@
                     "connections": [
                         {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
                     ],
-                    "consume": ["anchor", "after"],
-                    "note": "Infinitive: to run, to see"
+                    "consume": ["after"],
+                    "note": "Infinitive: to run, to see (anchor becomes NOMINAL result)"
                 }
             ]
         },
@@ -1644,14 +1644,13 @@
                     "result": "NOMINAL",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "VERBAL"},
+                        "anchor": {"type": "VERBAL", "subtypes": ["PARTICIPLE"]},
                         "before": [],
                         "after": []
                     },
                     "connections": [],
                     "consume": [],
-                    "pull_categories": ["NOMINAL"],
-                    "note": "Gerund as nominal: running is fun"
+                    "note": "Gerund as nominal: running is fun (PARTICIPLE → NOMINAL)"
                 }
             ]
         },
@@ -1664,14 +1663,13 @@
                     "result": "DESCRIPTOR",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "VERBAL"},
+                        "anchor": {"type": "VERBAL", "subtypes": ["PARTICIPLE"]},
                         "before": [],
                         "after": []
                     },
                     "connections": [],
                     "consume": [],
-                    "pull_categories": ["PARTICIPLE"],
-                    "note": "Participle as adjective: running water"
+                    "note": "Participle as adjective: running water (PARTICIPLE → DESCRIPTOR)"
                 }
             ]
         },
@@ -1828,13 +1826,14 @@
                         {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
                     ],
                     "consume": ["anchor"],
+                    "pull_categories": ["MODAL"],
                     "note": "Modal + verb: can run, should go"
                 },
                 {
                     "result": "VERBAL",
                     "recursive": true,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER"},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PERFECT"]},
                         "before": [],
                         "after": [{"type": "VERBAL", "quantifier": "one"}]
                     },
@@ -1842,8 +1841,23 @@
                         {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
                     ],
                     "consume": ["anchor"],
-                    "pull_categories": ["PERFECT", "PROGRESSIVE", "PASSIVE"],
-                    "note": "Auxiliary + verb: has run, is running, was seen"
+                    "pull_categories": ["PERFECT"],
+                    "note": "Perfect auxiliary + verb: has run, had eaten"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["anchor"],
+                    "pull_categories": ["PROGRESSIVE"],
+                    "note": "Progressive auxiliary + verb: is running, was walking"
                 }
             ]
         },
