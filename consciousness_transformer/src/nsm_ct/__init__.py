@@ -60,6 +60,15 @@ from .model import (
 from .nsm_primes import NUM_PRIMES, PRIMES, PRIME_NAMES, NSMPrime, PrimeCategory
 from .parser_interface import AbstractParser, MockNaomiParser
 from .tokenizer import SimpleTokenizer
+from .wsd import (
+    IterativeSenseResolver,
+    MockSenseInventory,
+    Sense,
+    SenseInventory,
+    SenseResolver,
+    WordNetSenseInventory,
+    WSDModule,
+)
 
 __all__ = [
     "Config", "ModelConfig", "TrainConfig", "DataConfig", "load_config",
@@ -75,6 +84,8 @@ __all__ = [
     "ParseTree", "ParseNode", "CausalTable", "CausalRelation", "ConsciousnessState",
     "AbstractParser", "MockNaomiParser",
     "PRIMES", "PRIME_NAMES", "NUM_PRIMES", "NSMPrime", "PrimeCategory",
+    "Sense", "SenseInventory", "MockSenseInventory", "WordNetSenseInventory",
+    "WSDModule", "SenseResolver", "IterativeSenseResolver",
     "Stack", "build_default_stack",
 ]
 
@@ -107,7 +118,7 @@ def build_default_stack(config: Config, episodes) -> Stack:
     encoder = make_input_encoder(config.input_encoder, tokenizer)
     model = ConsciousnessTransformer(tokenizer.vocab_size, len(answer_vocab), config.model)
     memory = WorkingMemory(config.model.memory_dim, config.model.consciousness_dim)
-    mind = Mind(model, memory, config.data.answer_mode)
+    mind = Mind(model, memory, config.data.answer_mode, reasoning_hops=config.model.reasoning_hops)
     return Stack(
         tokenizer=tokenizer,
         answer_vocab=answer_vocab,

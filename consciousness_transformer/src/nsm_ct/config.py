@@ -30,6 +30,7 @@ class ModelConfig:
     dim_feedforward: int = 128
     dropout: float = 0.1
     max_sentence_len: int = 24      # max tokens per input sentence (and option/question)
+    reasoning_hops: int = 1         # passes over memory at the question (1 = no multi-hop)
 
 
 @dataclass

@@ -38,6 +38,28 @@ carries no meaning. NAOMI already has a *designed but unbuilt* geometric encoder
 operators). Open: how meaning is represented over the ~65 NSM primes, how
 composition (negation/quantifiers/scope) works, and how it is supervised.
 
+**WSD is a tractable first slice of this** (`wsd.py`). Instead of composing
+meaning, it picks among a *finite* candidate set (each sense an NSM-prime
+signature), disambiguating with a memory/state context. It is **coherence-driven
+and self-correcting**: a learned coherence head asks "does this interpretation
+make sense given the state?"; if not, the state updates and all senses are
+re-evaluated (the chosen sense can flip across hops). No gold sense labels — the
+coherence signal drives it. Currently the inventory and the sense→prime
+signatures are **mocked** (`MockSenseInventory`); the real inventory is WordNet
+(`WordNetSenseInventory` hook, which is itself this same mapping problem). Open
+next: real WordNet senses, learning the coherence signal from self-supervised
+"surprise"/contradiction rather than synthetic labels, and **wiring WSD into the
+Mind loop** so sense-resolved representations (not raw tokens) are what get
+written to memory.
+
+### 2b. Multi-hop reasoning and adaptive halting
+`agent.Mind` now supports fixed `reasoning_hops` passes over memory at the
+question ("reason with states"). Open: make halting **adaptive** (ACT-style) —
+stop reasoning when a coherence/confidence signal says the answer is settled,
+rather than a fixed hop count. The WSD coherence head is the prototype for that
+signal; unifying the two (one coherence mechanism for both WSD re-evaluation and
+reasoning-loop halting) is the interesting direction.
+
 ### 3. Input encoding: the parser is experimental → "chained transformers"
 The rule-based parser is inconsistent, so it is **not** the spine — the default
 input encoder is plain tokenization, and `ParserInputEncoder` wraps the parser

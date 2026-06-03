@@ -74,6 +74,29 @@ and reads the state slot to produce **three heads**:
 The loop itself lives in `agent.Mind`, which unrolls an episode, threads the
 state, applies gated `WorkingMemory` writes, and answers at the question.
 
+**Multi-hop reasoning.** Set `model.reasoning_hops > 1` to make the model take
+several inference passes over memory at the question — re-reading memory and
+updating the state each pass before answering ("reason with states"). `hops = 1`
+is the default and reproduces the single-pass loop exactly.
+
+### Word sense disambiguation (`wsd.py`, draft)
+
+WSD here is a **constrained slice of the (still-mocked) semantic-mapping
+problem**: rather than composing meaning from scratch, pick among a *finite,
+known* set of candidate senses for a word, where each sense is an **NSM-prime
+signature** (a mini-explication). It is **iterative and self-correcting**:
+interpret a word with a sense given the current state; a learned **coherence**
+head asks "does this make sense?"; if not, the state is updated and *all the
+senses are re-evaluated* — so the chosen sense can change across hops. No gold
+sense labels: the coherence signal drives the loop.
+
+This is a **standalone module** (`IterativeSenseResolver`) operating on a
+context vector built from `(state, memory_read)` plus an inventory's candidates;
+it is **not wired into the Mind loop yet** (by design). The inventory and the
+sense→prime signatures are **mocked/illustrative** (`MockSenseInventory`); the
+real inventory is WordNet (`WordNetSenseInventory`, a hook), and the real
+sense→prime mapping is the unsolved semantic-mapping problem.
+
 **Loss** (`losses.compute_losses`):
 `w_answer·answer + w_action·action + w_consistency·consistency`, where
 `action` is weak supervision (statements→ABSORB, question→RESPOND) and
@@ -83,15 +106,19 @@ state, applies gated `WorkingMemory` writes, and answers at the question.
 
 All hyperparameters live in [`configs/default.yaml`](configs/default.yaml),
 loaded into typed dataclasses by `nsm_ct.config.load_config`. Configurable:
-consciousness/memory dims, transformer size, learning rate, batch size, loss
-weights, episode source, answer mode, curriculum level, and input encoder.
+consciousness/memory dims, transformer size, reasoning hops, learning rate,
+batch size, loss weights, episode source, answer mode, curriculum level, and
+input encoder.
 
 ## What's real vs. mocked
 
 | Component | Status | Where |
 |---|---|---|
 | State-transition loop + memory writes | **Real** | `model.py`, `agent.py`, `memory.py` |
+| Multi-hop reasoning over memory | **Real** (config-gated) | `agent.py` |
 | Action gating (absorb/respond) | **Real** | `model.py`, `losses.py` |
+| WSD scorer + coherence-driven re-evaluation | **Real, standalone** | `wsd.py` |
+| WSD sense inventory + sense→prime signatures | **Mocked** (WordNet hook) | `wsd.py` |
 | Multiple-choice + open-ended response | **Real** | `model.py` |
 | Curriculum reasoning episodes | **Real, synthetic** (memory-required) | `episode.py` |
 | bAbI loader | **Real** (offline fallback) | `episode.py` |
@@ -137,7 +164,8 @@ consciousness_transformer/
 │   ├── quantum_adapter.py  # experimental quantum_parser -> ParseTree (optional)
 │   ├── memory.py           # WorkingMemory: state-gated write, state-conditioned read
 │   ├── model.py            # ConsciousnessTransformer.step + 3 heads
-│   ├── agent.py            # Mind: unrolls an episode through the loop
+│   ├── agent.py            # Mind: unrolls an episode through the loop (+ multi-hop)
+│   ├── wsd.py              # NSM-grounded, coherence-driven WSD (standalone draft)
 │   ├── losses.py           # answer + action + placeholder consistency
 │   ├── metrics.py          # answer / action accuracy
 │   ├── dataset.py          # EpisodeBatch, encoding, collation, tokenizer

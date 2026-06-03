@@ -86,6 +86,27 @@ def test_loop_overfits_one_batch():
     assert answer_accuracy(out, batch) > 0.25
 
 
+def test_multihop_runs_and_default_is_single_hop():
+    cfg = _small_cfg()
+    episodes = CurriculumGenerator(max_level=3, seed=0).generate(cfg.data.num_episodes)
+
+    # default: one hop (backward compatible)
+    default_stack = build_default_stack(cfg, episodes)
+    assert default_stack.mind.reasoning_hops == 1
+
+    # multi-hop: re-process the question over the updated state several times
+    cfg.model.reasoning_hops = 3
+    stack = build_default_stack(cfg, episodes)
+    assert stack.mind.reasoning_hops == 3
+    batch = _batch(cfg, episodes, stack, cfg.train.batch_size)
+    out = stack.mind(batch)
+
+    losses = compute_losses(out, batch, 1.0, 1.0, 0.05)
+    assert torch.isfinite(losses.total)
+    losses.total.backward()
+    assert any(p.grad is not None and torch.isfinite(p.grad).all() for p in stack.mind.parameters())
+
+
 def test_trace_reports_actions_and_answers():
     cfg = _small_cfg()
     episodes = CurriculumGenerator(max_level=1, seed=0).generate(4)

@@ -31,11 +31,18 @@ class Mind(nn.Module):
         answer_mode: ``"mc"`` (score options) or ``"open"`` (classify answer).
     """
 
-    def __init__(self, model: ConsciousnessTransformer, memory: WorkingMemory, answer_mode: str = "mc") -> None:
+    def __init__(
+        self,
+        model: ConsciousnessTransformer,
+        memory: WorkingMemory,
+        answer_mode: str = "mc",
+        reasoning_hops: int = 1,
+    ) -> None:
         super().__init__()
         self.model = model
         self.memory = memory
         self.answer_mode = answer_mode
+        self.reasoning_hops = max(1, reasoning_hops)
 
     def forward(self, batch) -> Dict[str, torch.Tensor]:
         """Unroll the loop over ``batch`` and return outputs for the loss."""
@@ -61,6 +68,16 @@ class Mind(nn.Module):
         qout = self.model.step(state, batch.q_ids, batch.q_mask, mem_read_pre)
         q_state = qout.new_state
         states.append(q_state)
+
+        # Multi-hop reasoning: re-read memory and re-process the question with the
+        # updated state for `reasoning_hops - 1` extra passes ("reason with
+        # states"). hops == 1 leaves behavior identical to the single-pass loop.
+        for _ in range(self.reasoning_hops - 1):
+            mem_read_hop = self.memory.read(mem, q_state)
+            hop_out = self.model.step(q_state, batch.q_ids, batch.q_mask, mem_read_hop)
+            q_state = hop_out.new_state
+            states.append(q_state)
+
         mem_read_post = self.memory.read(mem, q_state)
 
         if self.answer_mode == "mc":
