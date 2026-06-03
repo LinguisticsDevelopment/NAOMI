@@ -47,6 +47,7 @@ from .input_encoder import (
     TokenInputEncoder,
     make_input_encoder,
 )
+from .long_term_memory import LongTermMemory
 from .losses import LossBreakdown, compute_losses
 from .memory import MemoryState, WorkingMemory
 from .model import (
@@ -77,7 +78,7 @@ __all__ = [
     "AbstractInputEncoder", "TokenInputEncoder", "ParserInputEncoder", "make_input_encoder",
     "SimpleTokenizer", "EpisodeBatch", "EpisodeDataset", "collate", "make_dataloader",
     "build_tokenizer", "build_answer_vocab", "split_episodes",
-    "WorkingMemory", "MemoryState",
+    "WorkingMemory", "MemoryState", "LongTermMemory",
     "ConsciousnessTransformer", "StepOutput",
     "ACTION_ABSORB", "ACTION_RESPOND", "ACTION_SKIP", "ACTION_NAMES",
     "Mind", "LossBreakdown", "compute_losses",
@@ -100,6 +101,7 @@ class Stack:
     model: ConsciousnessTransformer
     memory: WorkingMemory
     mind: Mind
+    long_term: object = None  # Optional[LongTermMemory]
 
 
 def build_default_stack(config: Config, episodes) -> Stack:
@@ -118,7 +120,16 @@ def build_default_stack(config: Config, episodes) -> Stack:
     encoder = make_input_encoder(config.input_encoder, tokenizer)
     model = ConsciousnessTransformer(tokenizer.vocab_size, len(answer_vocab), config.model)
     memory = WorkingMemory(config.model.memory_dim, config.model.consciousness_dim)
-    mind = Mind(model, memory, config.data.answer_mode, reasoning_hops=config.model.reasoning_hops)
+    long_term = None
+    if config.model.use_long_term:
+        long_term = LongTermMemory(
+            config.model.memory_dim, config.model.consciousness_dim,
+            max_size=config.model.ltm_max_size,
+        )
+    mind = Mind(
+        model, memory, config.data.answer_mode,
+        reasoning_hops=config.model.reasoning_hops, long_term=long_term,
+    )
     return Stack(
         tokenizer=tokenizer,
         answer_vocab=answer_vocab,
@@ -126,4 +137,5 @@ def build_default_stack(config: Config, episodes) -> Stack:
         model=model,
         memory=memory,
         mind=mind,
+        long_term=long_term,
     )

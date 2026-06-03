@@ -31,6 +31,8 @@ class ModelConfig:
     dropout: float = 0.1
     max_sentence_len: int = 24      # max tokens per input sentence (and option/question)
     reasoning_hops: int = 1         # passes over memory at the question (1 = no multi-hop)
+    use_long_term: bool = False     # enable persistent cross-episode long-term memory
+    ltm_max_size: int = 10000       # cap on long-term entries (pruning placeholder)
 
 
 @dataclass

@@ -79,6 +79,36 @@ several inference passes over memory at the question — re-reading memory and
 updating the state each pass before answering ("reason with states"). `hops = 1`
 is the default and reproduces the single-pass loop exactly.
 
+### Two-tier memory & lifelong learning
+
+There are two memories:
+
+* **Local context** — `WorkingMemory`, per-episode, resets each episode.
+* **Long-term memory** — `LongTermMemory` (`long_term_memory.py`), **persistent
+  across episodes**: a growing store of consolidated entries plus a graph of
+  **connections** between them. Reads from it are added to every memory read, so
+  accumulated knowledge conditions future reasoning. It can be saved/loaded from
+  disk.
+
+The **state controls I/O and retention**: the action head gates input intake
+(`ABSORB`/`SKIP`) and output (`RESPOND`), and a `consolidate_gate` head decides
+how strongly the local context is committed to long-term memory.
+
+`scripts/lifelong.py` runs the **lifelong loop** — many rounds of fresh episodes
+(input→response cycles). Each round both trains the weights (*parametric*) and
+consolidates what it absorbed into the long-term repo (*non-parametric*), so the
+repository of connections grows round over round ("learn more and more over
+tests"):
+
+```
+python scripts/lifelong.py --rounds 10 --episodes-per-round 32 --out runs/ltm.pt
+# round 1 ... LTM entries=43  connections=15
+# round 10 ... LTM entries=520 connections=204   (loss 2.44 -> 1.31)
+```
+
+Long-term memory is **off by default** (`model.use_long_term: false`); the
+single-episode loop is unchanged unless you enable it.
+
 ### Word sense disambiguation (`wsd.py`, draft)
 
 WSD here is a **constrained slice of the (still-mocked) semantic-mapping
@@ -106,15 +136,20 @@ sense→prime mapping is the unsolved semantic-mapping problem.
 
 All hyperparameters live in [`configs/default.yaml`](configs/default.yaml),
 loaded into typed dataclasses by `nsm_ct.config.load_config`. Configurable:
-consciousness/memory dims, transformer size, reasoning hops, learning rate,
-batch size, loss weights, episode source, answer mode, curriculum level, and
-input encoder.
+consciousness/memory dims, transformer size, reasoning hops, long-term memory
+toggle, learning rate, batch size, loss weights, episode source, answer mode,
+curriculum level, and input encoder.
 
 ## What's real vs. mocked
 
 | Component | Status | Where |
 |---|---|---|
 | State-transition loop + memory writes | **Real** | `model.py`, `agent.py`, `memory.py` |
+| Local context (per-episode working memory) | **Real** | `memory.py` |
+| Long-term memory (persistent repo + connections) | **Real** (config-gated) | `long_term_memory.py` |
+| Lifelong loop (grows the repo over tests) | **Real** | `lifelong.py`, `scripts/lifelong.py` |
+| State-controlled retention (consolidation gate) | **Real** | `model.py`, `agent.py` |
+| Memory pruning policy | **Placeholder** (FIFO cap) | `long_term_memory.py` |
 | Multi-hop reasoning over memory | **Real** (config-gated) | `agent.py` |
 | Action gating (absorb/respond) | **Real** | `model.py`, `losses.py` |
 | WSD scorer + coherence-driven re-evaluation | **Real, standalone** | `wsd.py` |
@@ -162,9 +197,11 @@ consciousness_transformer/
 │   ├── episode.py          # Episode + sources (curriculum, bAbI, textbook stub)
 │   ├── input_encoder.py    # sentence -> input object (token default, parser optional)
 │   ├── quantum_adapter.py  # experimental quantum_parser -> ParseTree (optional)
-│   ├── memory.py           # WorkingMemory: state-gated write, state-conditioned read
-│   ├── model.py            # ConsciousnessTransformer.step + 3 heads
-│   ├── agent.py            # Mind: unrolls an episode through the loop (+ multi-hop)
+│   ├── memory.py           # WorkingMemory (local context): gated write + read
+│   ├── long_term_memory.py # LongTermMemory: persistent repo + connection graph
+│   ├── lifelong.py         # lifelong loop: grow the repo over rounds of episodes
+│   ├── model.py            # ConsciousnessTransformer.step + heads (+ consolidate gate)
+│   ├── agent.py            # Mind: unrolls an episode (+ multi-hop, + long-term)
 │   ├── wsd.py              # NSM-grounded, coherence-driven WSD (standalone draft)
 │   ├── losses.py           # answer + action + placeholder consistency
 │   ├── metrics.py          # answer / action accuracy
@@ -175,7 +212,7 @@ consciousness_transformer/
 │   ├── serialization.py    # flat parse serialization (with relations)
 │   ├── parser_interface.py / semantic_mapper.py   # mocks for the research seams
 │   └── tokenizer.py
-├── scripts/{train_phase1,eval}.py
+├── scripts/{train_phase1,eval,lifelong}.py
 └── tests/{test_nsm_primes,test_data_structures,test_episode,test_memory_rw,test_agent_loop}.py
 ```
 

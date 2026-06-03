@@ -68,12 +68,22 @@ language proves too messy is **chained transformers**: a learned encoder that
 maps a sentence to the input object, implementing the same `AbstractInputEncoder`
 interface. Not built; the seam is ready.
 
-### 4. Memory: long-term persistence and pruning
-Memory is **per-episode working memory** only — it resets each episode and never
-forgets within one. Open: episodic/long-term memory that persists across
-episodes and a turn, plus a **pruning/forgetting** policy (what to keep, merge,
-discard). The current write is a soft slot at a fixed index; a real system needs
-content-addressed allocation.
+### 4. Memory: two tiers built; pruning + consolidation still open
+There are now **two tiers**: per-episode `WorkingMemory` (local context) and a
+persistent `LongTermMemory` that accumulates a growing repo of entries +
+connections across episodes (`lifelong.py` grows it). The state controls
+retention via a `consolidate_gate`. Still open:
+- **Pruning/forgetting** is a placeholder FIFO cap (`_maybe_prune`); a real
+  policy should weigh connection strength, recency, and redundancy.
+- The **connection graph** is simplistic (entries from one episode are linked);
+  real associative structure (typed relations, co-retrieval, inferred links)
+  is unbuilt — this is where the "giant repo of connections" should become a
+  genuine knowledge graph (and connects to NAOMI's WordNet/triple work).
+- Long-term contents are **non-parametric** (detached vectors); retrieval read
+  projections are learned but the store is a database, not weights. Whether/when
+  to distill the repo back into parameters is open.
+- Working-memory writes are soft slots at a fixed index; content-addressed
+  allocation is future work.
 
 ### 5. Tree serialization (flat → hierarchical)
 `serialize_parse_tree` now includes semantic-role relations but is still a flat

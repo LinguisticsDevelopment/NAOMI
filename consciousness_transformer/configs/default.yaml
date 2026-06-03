@@ -18,6 +18,8 @@ model:
   dropout: 0.0               # 0.0 is fine at this toy scale; raise with real data
   max_sentence_len: 24       # max tokens per sentence / question / option
   reasoning_hops: 1          # multi-hop reasoning passes at the question (1 = off)
+  use_long_term: false       # persistent cross-episode long-term memory (lifelong)
+  ltm_max_size: 10000        # cap on long-term entries (pruning placeholder)
 
 train:
   learning_rate: 0.001

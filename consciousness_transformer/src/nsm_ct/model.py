@@ -91,6 +91,9 @@ class ConsciousnessTransformer(nn.Module):
         )
         self.action_head = nn.Linear(d, NUM_ACTIONS)
         self.write_head = nn.Linear(d, cfg.memory_dim)
+        # State-controlled retention: how strongly to consolidate the local
+        # context into long-term memory (the state decides what to remember).
+        self.consolidate_head = nn.Linear(cfg.consciousness_dim, 1)
 
         # Response: a query built from (new_state, memory_read).
         self.response_query = nn.Sequential(
@@ -153,6 +156,14 @@ class ConsciousnessTransformer(nn.Module):
     def respond_open(self, state: torch.Tensor, mem_read: torch.Tensor) -> torch.Tensor:
         """Open-ended answer logits over the answer vocabulary. Returns ``[B, A]``."""
         return self.answer_classifier(self._query(state, mem_read))
+
+    def consolidate_gate(self, state: torch.Tensor) -> torch.Tensor:
+        """Per-example retention strength in [0, 1] (``[B]``).
+
+        The state's decision about how strongly to commit the local context into
+        long-term memory.
+        """
+        return torch.sigmoid(self.consolidate_head(state)).squeeze(-1)
 
     def initial_state(self, batch_size: int, device: torch.device) -> torch.Tensor:
         """Broadcast the learned initial state to a batch."""
