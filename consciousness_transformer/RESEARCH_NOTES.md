@@ -1,106 +1,109 @@
 # Research Notes
 
-This file separates the **research** (genuinely open, unsolved) from the
-**engineering** (built, working, boring on purpose) in the NSM Consciousness
-Transformer scaffold, and records the decisions made while building it.
+Separates the **research** (open, unsolved) from the **engineering** (built,
+working) in the NSM Consciousness Transformer, and records the design decisions.
 
 ## The research-vs-engineering boundary
 
-**Engineered and working** (don't expect novelty here — these exist to make the
-research tractable):
+**Engineered and working** — the stateful loop and its scaffolding:
+- The state-transition step, the three heads (transition / action / response),
+  the `Mind` unroll, read/write `WorkingMemory`, the loss combination, metrics,
+  config, tokenizer, the curriculum generator, the bAbI loader, and the NSM
+  prime constants. The loop demonstrably learns to absorb facts, retrieve the
+  relevant one (including recency), and answer (~95% held-out on the curriculum).
 
-- The transformer block, the two output heads, the training/eval loops, the
-  loss *combination* machinery, the tokenizer, the config system, the toy data
-  generator, and the NSM prime constants.
-- The abstract interfaces (`AbstractParser`, `AbstractSemanticMapper`,
-  `AbstractMemory`) and the `FeatureBuilder` that composes them.
-
-**Mocked / placeholder** (the actual research lives behind these seams):
-
-- Semantic composition onto NSM primes (`MockSemanticMapper`).
-- The NAOMI parser (`MockNaomiParser`).
-- Long-term / episodic memory (`MockMemoryStore`).
-- The consciousness consistency loss (`consciousness_consistency_loss`).
+**Mocked / placeholder / stubbed** — the actual research lives here:
+- What the **consciousness state means** and its real objective (currently
+  abstract + a placeholder consistency loss).
+- **Semantic composition** onto NSM primes (`MockSemanticMapper`).
+- A **consistent parser** (the rule parser is experimental; wrapped optionally).
+- **Long-term memory** (only per-episode working memory exists).
+- **Textbook ingestion** (`TextbookSource` is a stub — the north star).
 
 ## Open problems
 
-### 1. Semantic composition onto NSM primes
-**This is the central unsolved problem and we deliberately did not attempt it.**
-`MockSemanticMapper` lights up pseudo-random primes by hashing tokens; it carries
-no meaning. The real task: map a parse tree to a structured representation over
-the ~65 NSM primes (and NSM "molecules"/semantic templates) such that the
-representation actually paraphrases the sentence's meaning. Questions:
-- What is the target structure — a bag of prime activations, a prime-typed
-  graph, a sequence of NSM explications?
-- How is compositionality handled (negation, quantifiers, embedding,
-  scope)? NSM has its own grammar of primes; the mapper must respect it.
-- How is this supervised? There is no large corpus of gold NSM explications.
+### 1. What is the consciousness state? (and its real loss)
+The state is deliberately **abstract** — a learned vector with no imposed meaning
+("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
+placeholder (L2 between consecutive states, a "don't thrash" prior); note it
+*rises* as the model learns, because encoding facts legitimately moves the state.
+Open: define what the state should represent (self-model? working-memory
+summary? confidence/awareness?) and an objective that rewards *coherent* state
+evolution rather than mere stability. `TODO(consciousness-loss)` in `losses.py`.
 
-### 2. Tree serialization (flat → hierarchical)
-`serialize_parse_tree` emits a lossy flat pre-order token stream with `[NODE]`
-markers. The model cannot recover hierarchy from it. Open work:
-- Structural position encodings (e.g. path-from-root embeddings), recursive /
-  tree-LSTM-style encoders, or a graph transformer over the parse.
-- Whether to feed *syntax* at all once the semantic mapper exists, or to feed
-  the NSM semantic structure directly.
+### 2. Semantic composition onto NSM primes
+Still the central unsolved problem and explicitly out of scope. `MockSemanticMapper`
+carries no meaning. NAOMI already has a *designed but unbuilt* geometric encoder
+(`quantum_parser`'s `compose_subtree`: parse tree → vector via edge-type
+operators). Open: how meaning is represented over the ~65 NSM primes, how
+composition (negation/quantifiers/scope) works, and how it is supervised.
 
-### 3. Consciousness dimension — meaning and ablation
-`consciousness_dim` is a free hyperparameter and the state vector is currently
-**opaque**: nothing forces its dimensions to mean anything. Open work:
-- Ablate `consciousness_dim` (e.g. 8 / 32 / 128 / 512) against task performance
-  and state-transition stability. Does more capacity help, or just drift?
-- Should the state be *grounded* (e.g. tied to NSM-prime activations, mental
-  predicates like THINK/KNOW/WANT/FEEL) rather than free?
-- Does the state carry information across turns, or collapse?
+### 3. Input encoding: the parser is experimental → "chained transformers"
+The rule-based parser is inconsistent, so it is **not** the spine — the default
+input encoder is plain tokenization, and `ParserInputEncoder` wraps the parser
+optionally (degrading to tokens on any failure). The user's fallback if natural
+language proves too messy is **chained transformers**: a learned encoder that
+maps a sentence to the input object, implementing the same `AbstractInputEncoder`
+interface. Not built; the seam is ready.
 
-### 4. Memory pruning
-`MockMemoryStore` returns one fixed pseudo-random vector per query. A real
-episodic memory will grow without bound. Open work:
-- Retrieval (embedding search) and, crucially, **pruning/forgetting** policy:
-  what to keep, merge, or discard, and on what schedule.
-- How retrieved memory should interact with the consciousness state (additive
-  injection, as now, is almost certainly too weak).
+### 4. Memory: long-term persistence and pruning
+Memory is **per-episode working memory** only — it resets each episode and never
+forgets within one. Open: episodic/long-term memory that persists across
+episodes and a turn, plus a **pruning/forgetting** policy (what to keep, merge,
+discard). The current write is a soft slot at a fixed index; a real system needs
+content-addressed allocation.
 
-### 5. Coherence checking
-There is currently no mechanism that verifies the model's response is
-*consistent* with its consciousness state, the retrieved memory, and the
-evidence in the passage. Open work:
-- A coherence objective or verifier (this is what the consciousness consistency
-  loss should eventually become — see below).
-- Contradiction detection over the `CausalTable` / NSM representation.
+### 5. Tree serialization (flat → hierarchical)
+`serialize_parse_tree` now includes semantic-role relations but is still a flat
+pre-order stream; hierarchy is not recoverable. Open: structural position
+encodings / tree-aware or graph encoders. `TODO(tree-encoding)`.
 
-## Placeholder: the consciousness consistency loss
-Currently `consistency_loss = MSE(next_state, current_state)` — an *inertial*
-"don't drift" prior. This is a stand-in, not a hypothesis. The real auxiliary
-objective should reward state evolution that is *coherent* with the evidence,
-the memory, and the produced answer, and should probably allow (even require)
-large, meaningful state changes when the input warrants them. Marked
-`TODO(consciousness-loss)` in `losses.py`.
+### 6. Consciousness-dimension ablation
+`consciousness_dim` is a free knob and the state is opaque. Open: ablate it
+(8/48/128/512) against accuracy and state-transition stability; does capacity
+help or just drift?
 
-## Decisions made while building (and why)
+### 7. Coherence checking
+Nothing verifies the answer is consistent with the stored facts / state. Open: a
+coherence objective or verifier (closely related to problem 1), and
+contradiction detection over the `CausalTable` / memory.
 
-- **Self-contained subfolder + package `nsm_ct`.** Kept entirely inside
-  `consciousness_transformer/` with its own `pyproject.toml` so it installs and
-  tests independently of the Go parsers and `quantum_parser` elsewhere in NAOMI.
-- **Plain YAML config, not Hydra.** Smaller dependency surface; typed dataclasses
-  give most of the ergonomics. `TODO(config)` notes when to switch.
-- **PyTorch, CPU-friendly, tiny defaults.** The model is intentionally small so
-  `pytest` and `train_phase1.py` run in seconds on CPU.
-- **Causal-LM framing for multiple choice.** Each example expands into 4
-  causal-LM rows (one per option); answer prediction reuses the LM head by
-  scoring option likelihoods. This keeps exactly two heads while supporting the
-  three-term loss, and avoids a separate, throwaway classification head.
-- **Consciousness & memory injected at reserved token slots.** Adding their
-  projections onto `[CONSC]`/`[MEM]` embeddings keeps the sequence all-integer
-  and the label/shift bookkeeping simple. A richer fusion is future work.
-- **Deterministic mocks.** The mock parser/mapper/memory are seeded/hash-based so
-  tests and runs are reproducible.
+### 8. The textbook north star
+The goal is to **read a textbook chapter as the context stream and answer its
+(often multiple-choice) homework questions**. `TextbookSource` is a stub. Open:
+chapter → clean context stream segmentation, and homework-question extraction →
+`Episode`. Multiple choice is kept first-class precisely because it gives the
+densest training signal ("most training up").
+
+### 9. Reconciling NSM primes with NAOMI's 51 anchor dimensions
+NAOMI's existing semantic space uses 51 linguistically-motivated anchors
+(nominals/scopes/roles + grammatical + logical); this module uses the ~65 NSM
+primes. They are conceptually adjacent but distinct, and nobody has decided which
+(or how) is the basis. Open question, not yet addressed.
+
+## Decisions made while building
+
+- **Transformer as a state-transition function, not a text model.** NAOMI's
+  existing thesis is explicitly anti-transformer-for-reasoning; here the
+  transformer is the *transition operator* inside a loop, and the reasoning is
+  carried by the persistent state + external memory.
+- **Episodes expand into a per-sentence unroll**, padded to a max context length
+  with a step mask; the question is a distinct aligned final step for every
+  episode (clean batching).
+- **Memory writes are gated by the ABSORB action probability** and threaded
+  through the unroll as state (not stored on the module) for clean autograd.
+- **Multiple choice kept as first-class** (densest signal) and reuses v1's option
+  scoring; open-ended (bAbI) supported via an answer-vocab classifier.
+- **Weak action supervision** (statements→ABSORB, question→RESPOND) teaches the
+  procedure; it converges to 100% action accuracy quickly.
+- **Parser demoted to an optional input encoder** given its inconsistency; the
+  default path has zero parser dependency so install/tests stay light.
+- **Deterministic data sources**; bAbI degrades gracefully to the curriculum
+  generator when the download is blocked.
 
 ## NSM prime inventory — caveats
-The inventory in `nsm_primes.py` follows the canonical ~65-prime table
-(Goddard & Wierzbicka 2014) to the best of our knowledge. Version-dependent
-details are flagged with `TODO(canonical-list)` in that module — notably whether
-`DON'T WANT` is a distinct prime, the possession prime's exact form
-(`(IS) MINE` vs. `HAVE`), and the full set of allolexes. These should be
-verified against a primary source before any linguistic claim is made; we did
-**not** fabricate entries to fill gaps.
+`nsm_primes.py` follows the canonical ~65-prime table (Goddard & Wierzbicka 2014)
+to the best of our knowledge. Version-dependent details are flagged
+`TODO(canonical-list)` (e.g. whether `DON'T WANT` is a distinct prime, the
+possession prime's exact form `(IS) MINE` vs. `HAVE`, the allolex set). These
+should be verified against a primary source; nothing was fabricated to fill gaps.

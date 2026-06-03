@@ -1,81 +1,79 @@
-"""The Consciousness Transformer.
+"""The Consciousness Transformer as a state-transition function.
 
-A small causal Transformer with **two output heads**, per the brief:
+One **step** consumes the current consciousness state, one input object (a
+sentence's token ids), and a read from working memory, and produces:
 
-1. **Language-modeling head** — predicts response tokens (and, by scoring each
-   candidate option's likelihood, drives multiple-choice answer prediction).
-2. **Consciousness state-transition head** — reads the ``[CONSC]`` slot and
-   predicts the next consciousness state.
+* a **new state** (the transition — this is the spine of the loop),
+* an **action** over ``{ABSORB, RESPOND, SKIP}`` (the gate that decides whether
+  to write to memory and when to answer),
+* a **write vector** (the content to commit to memory if ABSORB fires), and
+* (at the question) a **response**, either by scoring multiple-choice options or
+  by classifying an open-ended answer.
 
-Inputs (assembled by :mod:`nsm_ct.features`): tokenized text + serialized parse
-trees + a consciousness vector + a retrieved-memory vector. The consciousness
-and memory vectors are injected by *adding* their linear projections onto the
-embeddings of the reserved ``[CONSC]`` and ``[MEM]`` token positions.
-
-The architecture is intentionally tiny and conventional; the *research* is in
-what the consciousness state means and how meaning is composed, not in the
-transformer block (see RESEARCH_NOTES).
+The transformer attends over a short assembly ``[state | memory | input...]``.
+It is intentionally small; the research is in the loop and the state, not the
+block (see RESEARCH_NOTES).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from .config import ModelConfig
-from .features import NUM_SEGMENTS, Batch
+
+# Action space for the gating head.
+ACTION_ABSORB = 0   # commit the input to memory
+ACTION_RESPOND = 1  # answer the question
+ACTION_SKIP = 2     # ignore the input
+NUM_ACTIONS = 3
+ACTION_NAMES = ["ABSORB", "RESPOND", "SKIP"]
 
 
 @dataclass
-class ModelOutput:
-    """Bundle of everything a forward pass produces.
+class StepOutput:
+    """Outputs of a single state-transition step.
 
     Attributes:
-        lm_logits: ``[N, T, vocab]`` next-token logits.
-        option_logits: ``[B, num_options]`` length-normalized log-likelihood of
-            each option's answer region — used for answer prediction.
-        lm_loss_per_row: ``[N]`` mean negative log-likelihood over each row's
-            answer region.
-        next_consciousness: ``[N, consciousness_dim]`` predicted next state.
-        consciousness_readout: ``[N, d_model]`` raw ``[CONSC]``-slot encoding.
+        new_state: ``[B, state_dim]`` the next consciousness state.
+        action_logits: ``[B, NUM_ACTIONS]`` logits over ABSORB/RESPOND/SKIP.
+        write_vector: ``[B, mem_dim]`` content to (gatedly) write to memory.
+        pooled: ``[B, d_model]`` the raw state-slot encoding (for reuse).
     """
 
-    lm_logits: torch.Tensor
-    option_logits: torch.Tensor
-    lm_loss_per_row: torch.Tensor
-    next_consciousness: torch.Tensor
-    consciousness_readout: torch.Tensor
+    new_state: torch.Tensor
+    action_logits: torch.Tensor
+    write_vector: torch.Tensor
+    pooled: torch.Tensor
 
 
 class ConsciousnessTransformer(nn.Module):
-    """Causal Transformer with LM and consciousness-transition heads.
+    """A transformer that maps ``(state, input, memory) -> new state + actions``.
 
     Args:
-        vocab_size: Size of the tokenizer vocabulary.
+        vocab_size: Tokenizer vocabulary size.
+        answer_vocab_size: Number of distinct open-ended answers (for the
+            open-ended response classifier). Use 1 if only MC is needed.
         cfg: Model hyperparameters.
     """
 
-    def __init__(self, vocab_size: int, cfg: ModelConfig) -> None:
+    def __init__(self, vocab_size: int, answer_vocab_size: int, cfg: ModelConfig) -> None:
         super().__init__()
         self.cfg = cfg
         self.vocab_size = vocab_size
+        d = cfg.d_model
 
-        self.token_embedding = nn.Embedding(vocab_size, cfg.d_model)
-        self.position_embedding = nn.Embedding(cfg.max_seq_len, cfg.d_model)
-        self.segment_embedding = nn.Embedding(NUM_SEGMENTS, cfg.d_model)
-
-        # Inject the consciousness/memory vectors into the [CONSC]/[MEM] slots.
-        self.consciousness_in = nn.Linear(cfg.consciousness_dim, cfg.d_model)
-        self.memory_in = nn.Linear(cfg.memory_dim, cfg.d_model)
-
+        self.token_embedding = nn.Embedding(vocab_size, d)
+        # +2 positions for the state and memory slots prepended to every input.
+        self.position_embedding = nn.Embedding(cfg.max_sentence_len + 2, d)
+        self.state_in = nn.Linear(cfg.consciousness_dim, d)
+        self.memory_in = nn.Linear(cfg.memory_dim, d)
         self.dropout = nn.Dropout(cfg.dropout)
 
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=cfg.d_model,
+            d_model=d,
             nhead=cfg.nhead,
             dim_feedforward=cfg.dim_feedforward,
             dropout=cfg.dropout,
@@ -84,79 +82,78 @@ class ConsciousnessTransformer(nn.Module):
         )
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=cfg.num_layers)
 
-        # Head 1: language modeling.
-        self.lm_head = nn.Linear(cfg.d_model, vocab_size)
-        # Head 2: consciousness state transition.
-        self.consciousness_head = nn.Sequential(
-            nn.Linear(cfg.d_model, cfg.d_model),
-            nn.GELU(),
-            nn.Linear(cfg.d_model, cfg.consciousness_dim),
+        # Learned, abstract initial state (its *meaning* is deliberately TBD).
+        self.state_init = nn.Parameter(torch.zeros(cfg.consciousness_dim))
+
+        # Heads.
+        self.state_head = nn.Sequential(
+            nn.Linear(d, d), nn.GELU(), nn.Linear(d, cfg.consciousness_dim)
+        )
+        self.action_head = nn.Linear(d, NUM_ACTIONS)
+        self.write_head = nn.Linear(d, cfg.memory_dim)
+
+        # Response: a query built from (new_state, memory_read).
+        self.response_query = nn.Sequential(
+            nn.Linear(cfg.consciousness_dim + cfg.memory_dim, d), nn.GELU(), nn.Linear(d, d)
+        )
+        self.option_proj = nn.Linear(d, d)                       # MC option embeddings
+        self.answer_classifier = nn.Linear(d, max(answer_vocab_size, 1))  # open-ended
+
+    # -- one transition step -------------------------------------------------
+    def step(
+        self,
+        state: torch.Tensor,        # [B, state_dim]
+        input_ids: torch.Tensor,    # [B, L]
+        input_mask: torch.Tensor,   # [B, L] (1 real, 0 pad)
+        mem_read: torch.Tensor,     # [B, mem_dim]
+    ) -> StepOutput:
+        """Run one state transition over a single input sentence."""
+        b, length = input_ids.shape
+        positions = torch.arange(length + 2, device=input_ids.device).unsqueeze(0).expand(b, -1)
+
+        tok = self.token_embedding(input_ids)                    # [B, L, d]
+        state_tok = self.state_in(state).unsqueeze(1)            # [B, 1, d]
+        mem_tok = self.memory_in(mem_read).unsqueeze(1)          # [B, 1, d]
+        seq = torch.cat([state_tok, mem_tok, tok], dim=1)        # [B, L+2, d]
+        seq = seq + self.position_embedding(positions)
+        seq = self.dropout(seq)
+
+        # State and memory slots are always attended; input pad positions masked.
+        prefix_mask = torch.zeros(b, 2, device=input_ids.device, dtype=torch.bool)
+        key_padding_mask = torch.cat([prefix_mask, input_mask == 0], dim=1)
+        hidden = self.encoder(seq, src_key_padding_mask=key_padding_mask)
+
+        pooled = hidden[:, 0, :]                                 # state slot output
+        return StepOutput(
+            new_state=self.state_head(pooled),
+            action_logits=self.action_head(pooled),
+            write_vector=self.write_head(pooled),
+            pooled=pooled,
         )
 
-    # -- internals -----------------------------------------------------------
-    def _embed(self, batch: Batch) -> torch.Tensor:
-        """Build the input embedding sequence with state vectors injected."""
-        n, t = batch.input_ids.shape
-        positions = torch.arange(t, device=batch.input_ids.device).unsqueeze(0).expand(n, t)
+    # -- responses -----------------------------------------------------------
+    def _query(self, state: torch.Tensor, mem_read: torch.Tensor) -> torch.Tensor:
+        return self.response_query(torch.cat([state, mem_read], dim=-1))   # [B, d]
 
-        emb = (
-            self.token_embedding(batch.input_ids)
-            + self.position_embedding(positions)
-            + self.segment_embedding(batch.segment_ids)
-        )
-        # Inject consciousness at slot 0, memory at slot 1.
-        emb[:, 0, :] = emb[:, 0, :] + self.consciousness_in(batch.consciousness)
-        emb[:, 1, :] = emb[:, 1, :] + self.memory_in(batch.memory)
-        return self.dropout(emb)
+    def respond_mc(
+        self,
+        state: torch.Tensor,        # [B, state_dim]
+        mem_read: torch.Tensor,     # [B, mem_dim]
+        option_ids: torch.Tensor,   # [B, K, Lo]
+        option_mask: torch.Tensor,  # [B, K, Lo]
+    ) -> torch.Tensor:
+        """Score each multiple-choice option. Returns ``[B, K]`` logits."""
+        query = self._query(state, mem_read)                     # [B, d]
+        emb = self.token_embedding(option_ids)                   # [B, K, Lo, d]
+        denom = option_mask.sum(-1, keepdim=True).clamp(min=1.0)  # [B, K, 1]
+        opt = (emb * option_mask.unsqueeze(-1)).sum(2) / denom    # [B, K, d] mean-pool
+        opt = self.option_proj(opt)                              # [B, K, d]
+        return (opt * query.unsqueeze(1)).sum(-1)                # [B, K]
 
-    # -- forward -------------------------------------------------------------
-    def forward(self, batch: Batch) -> ModelOutput:
-        """Run a full forward pass over a :class:`Batch`."""
-        n, t = batch.input_ids.shape
-        emb = self._embed(batch)
+    def respond_open(self, state: torch.Tensor, mem_read: torch.Tensor) -> torch.Tensor:
+        """Open-ended answer logits over the answer vocabulary. Returns ``[B, A]``."""
+        return self.answer_classifier(self._query(state, mem_read))
 
-        # Bool masks (True == "not allowed to attend"); same dtype for both so
-        # nn.Transformer does not warn about mixed mask types.
-        causal_mask = torch.triu(
-            torch.ones(t, t, dtype=torch.bool, device=emb.device), diagonal=1
-        )
-        key_padding_mask = batch.attention_mask == 0  # True where pad
-
-        hidden = self.encoder(
-            emb, mask=causal_mask, src_key_padding_mask=key_padding_mask
-        )  # [N, T, d]
-
-        lm_logits = self.lm_head(hidden)  # [N, T, V]
-
-        # Per-token log-prob of the *actual* next token (causal shift).
-        log_probs = F.log_softmax(lm_logits, dim=-1)
-        shifted_lp = log_probs[:, :-1, :]            # predicts tokens at 1..T-1
-        targets = batch.input_ids[:, 1:]             # [N, T-1]
-        token_lp = shifted_lp.gather(-1, targets.unsqueeze(-1)).squeeze(-1)  # [N, T-1]
-
-        # Restrict to the answer region (the response).
-        ans_mask = batch.answer_mask[:, 1:]          # [N, T-1]
-        denom = ans_mask.sum(dim=1).clamp(min=1.0)
-        row_lp = (token_lp * ans_mask).sum(dim=1) / denom        # mean log-prob
-        lm_loss_per_row = -row_lp                                # [N]
-
-        # Answer prediction: length-normalized option log-likelihood -> [B, opts].
-        option_logits = row_lp.view(-1, batch.num_options)       # [B, num_options]
-
-        # Consciousness transition head reads the [CONSC] slot (position 0).
-        consciousness_readout = hidden[:, 0, :]                  # [N, d]
-        next_consciousness = self.consciousness_head(consciousness_readout)  # [N, Cdim]
-
-        return ModelOutput(
-            lm_logits=lm_logits,
-            option_logits=option_logits,
-            lm_loss_per_row=lm_loss_per_row,
-            next_consciousness=next_consciousness,
-            consciousness_readout=consciousness_readout,
-        )
-
-    @torch.no_grad()
-    def predict(self, batch: Batch) -> torch.Tensor:
-        """Return the predicted option index per example: ``[B]`` long."""
-        out = self.forward(batch)
-        return out.option_logits.argmax(dim=-1)
+    def initial_state(self, batch_size: int, device: torch.device) -> torch.Tensor:
+        """Broadcast the learned initial state to a batch."""
+        return self.state_init.to(device).unsqueeze(0).expand(batch_size, -1).contiguous()

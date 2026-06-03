@@ -1,221 +1,237 @@
-"""Toy training data and dataset plumbing.
+"""Episode encoding, batching, and dataset plumbing.
 
-Phase 1 trains on a tiny **synthetic** reading-comprehension set generated
-programmatically. The examples are deliberately, obviously fake (colored
-animals, counting fruit) — they are *not* meant to resemble real elementary
-comprehension data. Their only job is to make the end-to-end training and
-evaluation loops run.
-
-Real data goes through the same :class:`ComprehensionExample` interface; the
-``load_*`` hooks at the bottom mark exactly where CommonLit / RACE-easy / etc.
-loaders should be plugged in.
+Turns :class:`~nsm_ct.episode.Episode` objects into padded tensor
+:class:`EpisodeBatch` es the :class:`~nsm_ct.agent.Mind` can unroll. The input
+encoder (token or parser) is applied to the context statements and the question;
+options/answers are plain-tokenized labels.
 """
 
 from __future__ import annotations
 
-import json
 import random
-from typing import List
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
 import torch
 from torch.utils.data import Dataset
 
 from .config import Config
-from .data_structures import ComprehensionExample
-from .features import Batch, EncodedExample, FeatureBuilder, collate
+from .episode import Episode
+from .input_encoder import AbstractInputEncoder
 from .nsm_primes import PRIME_NAMES
 from .tokenizer import SimpleTokenizer
 
-# Parse-tree labels the mock parser can emit (kept in sync with parser_interface).
-_PARSE_LABELS = ["S", "CONTENT", "FUNC", "PUNCT", "NUM"]
+# Parse-tree label vocabulary (NodeType + ConnectionType names) so the optional
+# parser encoder's serialized streams are in-vocab. Hard-coded to avoid importing
+# quantum_parser; kept loosely in sync with its enums + the mock parser labels.
+PARSE_LABELS: List[str] = [
+    # NodeTypes
+    "NIL", "NOUN", "VERBAL", "PREDICATE", "NOMINAL", "CLAUSE", "SPECIFIER",
+    "DESCRIPTOR", "MODIFIER", "COORD", "SUBOORD", "PREP", "PREP_SPEC",
+    "PREP_DESC", "PREP_MIX", "ROOT", "S", "CONTENT", "FUNC", "PUNCT", "NUM",
+    # ConnectionTypes
+    "SUBJECT", "OBJECT", "INDIRECT_OBJECT", "SUBJECT_COMPLEMENT", "DESCRIPTION",
+    "SPECIFICATION", "MODIFICATION", "COMPLEMENT", "COORDINATION", "PREPOSITION",
+    "PREPOSITION_FROM", "PREPOSITION_TO", "SUBORDINATION", "SUBORDINATION_FROM",
+    "SUBORDINATION_TO", "APPOSITION", "REL",
+]
 
 
 # ---------------------------------------------------------------------------
-# Synthetic toy-data generation
+# Tokenizer / answer vocabulary
 # ---------------------------------------------------------------------------
-def _color_example(rng: random.Random) -> ComprehensionExample:
-    animals = ["cat", "dog", "bird", "fish", "frog"]
-    colors = ["red", "blue", "green", "yellow", "purple"]
-    animal = rng.choice(animals)
-    color = rng.choice(colors)
-    distractors = rng.sample([c for c in colors if c != color], 3)
-    options = distractors + [color]
-    rng.shuffle(options)
-    passage = f"The {animal} is {color}. The {animal} likes to play."
-    question = f"What color is the {animal} ?"
-    return ComprehensionExample(
-        passage=passage,
-        question=question,
-        options=options,
-        answer_idx=options.index(color),
-        meta={"template": "color"},
-    )
+def build_tokenizer(episodes: List[Episode]) -> SimpleTokenizer:
+    """Build a tokenizer over the episodes, NSM primes, and parse labels."""
+    texts: List[str] = []
+    for ep in episodes:
+        texts.extend(ep.context)
+        texts.append(ep.question)
+        texts.append(ep.answer_text)
+        if ep.options:
+            texts.extend(ep.options)
+    extra = list(PRIME_NAMES) + PARSE_LABELS
+    return SimpleTokenizer.build(texts, extra_tokens=extra)
 
 
-def _count_example(rng: random.Random) -> ComprehensionExample:
-    fruits = ["apples", "pears", "plums", "grapes"]
-    number_words = ["one", "two", "three", "four", "five", "six"]
-    fruit = rng.choice(fruits)
-    n = rng.randint(0, len(number_words) - 1)
-    correct = number_words[n]
-    distractors = rng.sample([w for w in number_words if w != correct], 3)
-    options = distractors + [correct]
-    rng.shuffle(options)
-    passage = f"There are {correct} {fruit} on the table. Nobody ate any {fruit}."
-    question = f"How many {fruit} are there ?"
-    return ComprehensionExample(
-        passage=passage,
-        question=question,
-        options=options,
-        answer_idx=options.index(correct),
-        meta={"template": "count"},
-    )
+def build_answer_vocab(episodes: List[Episode]) -> Dict[str, int]:
+    """Map distinct open-ended answers to ids (for ``answer_mode == 'open'``)."""
+    answers = sorted({ep.answer_text for ep in episodes})
+    return {a: i for i, a in enumerate(answers)}
 
 
-def _location_example(rng: random.Random) -> ComprehensionExample:
-    objects = ["ball", "book", "cup", "hat"]
-    places = ["box", "chair", "shelf", "bed", "floor"]
-    obj = rng.choice(objects)
-    place = rng.choice(places)
-    distractors = rng.sample([p for p in places if p != place], 3)
-    options = distractors + [place]
-    rng.shuffle(options)
-    passage = f"The {obj} is on the {place}. It did not move."
-    question = f"Where is the {obj} ?"
-    return ComprehensionExample(
-        passage=passage,
-        question=question,
-        options=options,
-        answer_idx=options.index(place),
-        meta={"template": "location"},
-    )
-
-
-_TEMPLATES = [_color_example, _count_example, _location_example]
-
-
-def generate_toy_dataset(num_examples: int = 100, seed: int = 0) -> List[ComprehensionExample]:
-    """Generate ``num_examples`` obviously-synthetic comprehension examples.
-
-    Args:
-        num_examples: How many examples to generate.
-        seed: RNG seed for reproducibility.
-
-    Returns:
-        A list of :class:`ComprehensionExample`.
-    """
-    rng = random.Random(seed)
-    examples: List[ComprehensionExample] = []
-    for i in range(num_examples):
-        template = _TEMPLATES[i % len(_TEMPLATES)]
-        examples.append(template(rng))
-    return examples
-
-
-def split_examples(
-    examples: List[ComprehensionExample], val_fraction: float, seed: int = 0
-) -> tuple[List[ComprehensionExample], List[ComprehensionExample]]:
+# ---------------------------------------------------------------------------
+# Splitting
+# ---------------------------------------------------------------------------
+def split_episodes(
+    episodes: List[Episode], val_fraction: float, seed: int = 0
+) -> Tuple[List[Episode], List[Episode]]:
     """Deterministically split into (train, val)."""
     rng = random.Random(seed)
-    shuffled = list(examples)
+    shuffled = list(episodes)
     rng.shuffle(shuffled)
     n_val = int(len(shuffled) * val_fraction)
     return shuffled[n_val:], shuffled[:n_val]
 
 
 # ---------------------------------------------------------------------------
-# Tokenizer construction
+# Encoding
 # ---------------------------------------------------------------------------
-def build_tokenizer(examples: List[ComprehensionExample]) -> SimpleTokenizer:
-    """Build a tokenizer covering the examples, NSM primes, and parse labels."""
-    texts: List[str] = []
-    for ex in examples:
-        texts.append(ex.passage)
-        texts.append(ex.question)
-        texts.extend(ex.options)
-    extra = list(PRIME_NAMES) + _PARSE_LABELS
-    return SimpleTokenizer.build(texts, extra_tokens=extra)
+def _truncate(ids: List[int], max_len: int) -> List[int]:
+    return ids[:max_len] if len(ids) > max_len else ids
+
+
+def encode_episode(
+    ep: Episode,
+    encoder: AbstractInputEncoder,
+    tokenizer: SimpleTokenizer,
+    answer_vocab: Dict[str, int],
+    cfg: Config,
+) -> Dict[str, object]:
+    """Encode one episode into id lists (padding happens in :func:`collate`)."""
+    max_len = cfg.model.max_sentence_len
+    ctx_ids = [_truncate(encoder.encode(s), max_len) or [tokenizer.pad_id] for s in ep.context]
+    q_ids = _truncate(encoder.encode(ep.question), max_len) or [tokenizer.pad_id]
+
+    if cfg.data.answer_mode == "mc":
+        if not ep.options:
+            raise ValueError("answer_mode='mc' but episode has no options")
+        opt_ids = [_truncate(tokenizer.encode(o), max_len) or [tokenizer.pad_id] for o in ep.options]
+        answer_target = int(ep.answer_idx)
+    else:
+        opt_ids = []
+        answer_target = answer_vocab[ep.answer_text]
+
+    return {
+        "ctx_ids": ctx_ids,
+        "q_ids": q_ids,
+        "opt_ids": opt_ids,
+        "answer_target": answer_target,
+    }
+
+
+@dataclass
+class EpisodeBatch:
+    """A padded, tensorized batch of episodes."""
+
+    ctx_ids: torch.Tensor       # [B, T, L]
+    ctx_mask: torch.Tensor      # [B, T, L]
+    step_mask: torch.Tensor     # [B, T]  (1 = real statement)
+    q_ids: torch.Tensor         # [B, L]
+    q_mask: torch.Tensor        # [B, L]
+    opt_ids: torch.Tensor       # [B, K, Lo]
+    opt_mask: torch.Tensor      # [B, K, Lo]
+    answer_target: torch.Tensor  # [B]
+
+    def to(self, device: torch.device) -> "EpisodeBatch":
+        return EpisodeBatch(
+            ctx_ids=self.ctx_ids.to(device),
+            ctx_mask=self.ctx_mask.to(device),
+            step_mask=self.step_mask.to(device),
+            q_ids=self.q_ids.to(device),
+            q_mask=self.q_mask.to(device),
+            opt_ids=self.opt_ids.to(device),
+            opt_mask=self.opt_mask.to(device),
+            answer_target=self.answer_target.to(device),
+        )
+
+
+def _pad_2d(seqs: List[List[int]], rows: int, length: int, pad_id: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    """Pad a ragged list of id-lists into ``[rows, length]`` ids + mask."""
+    ids = torch.full((rows, length), pad_id, dtype=torch.long)
+    mask = torch.zeros((rows, length), dtype=torch.float32)
+    for i, seq in enumerate(seqs):
+        n = min(len(seq), length)
+        if n:
+            ids[i, :n] = torch.tensor(seq[:n], dtype=torch.long)
+            mask[i, :n] = 1.0
+    return ids, mask
+
+
+def collate(items: List[Dict[str, object]], pad_id: int) -> EpisodeBatch:
+    """Pad and stack encoded episodes into an :class:`EpisodeBatch`."""
+    b = len(items)
+    max_t = max(1, max(len(it["ctx_ids"]) for it in items))
+    max_l = max(
+        1,
+        max((len(s) for it in items for s in it["ctx_ids"]), default=1),
+        max(len(it["q_ids"]) for it in items),
+    )
+    is_mc = len(items[0]["opt_ids"]) > 0
+    num_opts = len(items[0]["opt_ids"]) if is_mc else 1
+    max_lo = max(
+        1,
+        max((len(o) for it in items for o in it["opt_ids"]), default=1),
+    )
+
+    ctx_ids = torch.full((b, max_t, max_l), pad_id, dtype=torch.long)
+    ctx_mask = torch.zeros((b, max_t, max_l), dtype=torch.float32)
+    step_mask = torch.zeros((b, max_t), dtype=torch.float32)
+    q_ids = torch.full((b, max_l), pad_id, dtype=torch.long)
+    q_mask = torch.zeros((b, max_l), dtype=torch.float32)
+    opt_ids = torch.full((b, num_opts, max_lo), pad_id, dtype=torch.long)
+    opt_mask = torch.zeros((b, num_opts, max_lo), dtype=torch.float32)
+    answer_target = torch.zeros((b,), dtype=torch.long)
+
+    for i, it in enumerate(items):
+        ctx = it["ctx_ids"]
+        ids, msk = _pad_2d(ctx, len(ctx), max_l, pad_id)
+        ctx_ids[i, : len(ctx)] = ids
+        ctx_mask[i, : len(ctx)] = msk
+        step_mask[i, : len(ctx)] = 1.0
+
+        qn = min(len(it["q_ids"]), max_l)
+        q_ids[i, :qn] = torch.tensor(it["q_ids"][:qn], dtype=torch.long)
+        q_mask[i, :qn] = 1.0
+
+        if is_mc:
+            oids, omsk = _pad_2d(it["opt_ids"], num_opts, max_lo, pad_id)
+            opt_ids[i] = oids
+            opt_mask[i] = omsk
+        answer_target[i] = int(it["answer_target"])
+
+    return EpisodeBatch(
+        ctx_ids=ctx_ids, ctx_mask=ctx_mask, step_mask=step_mask,
+        q_ids=q_ids, q_mask=q_mask, opt_ids=opt_ids, opt_mask=opt_mask,
+        answer_target=answer_target,
+    )
 
 
 # ---------------------------------------------------------------------------
-# Torch Dataset / DataLoader
+# Dataset / DataLoader
 # ---------------------------------------------------------------------------
-class ComprehensionDataset(Dataset):
-    """Wraps examples + a :class:`FeatureBuilder`, yielding encoded examples."""
+class EpisodeDataset(Dataset):
+    """Encodes episodes lazily via the input encoder."""
 
-    def __init__(self, examples: List[ComprehensionExample], feature_builder: FeatureBuilder) -> None:
-        self.examples = examples
-        self.feature_builder = feature_builder
+    def __init__(
+        self,
+        episodes: List[Episode],
+        encoder: AbstractInputEncoder,
+        tokenizer: SimpleTokenizer,
+        answer_vocab: Dict[str, int],
+        cfg: Config,
+    ) -> None:
+        self.episodes = episodes
+        self.encoder = encoder
+        self.tokenizer = tokenizer
+        self.answer_vocab = answer_vocab
+        self.cfg = cfg
 
     def __len__(self) -> int:
-        return len(self.examples)
+        return len(self.episodes)
 
-    def __getitem__(self, idx: int) -> EncodedExample:
-        return self.feature_builder.build(self.examples[idx])
+    def __getitem__(self, idx: int) -> Dict[str, object]:
+        return encode_episode(
+            self.episodes[idx], self.encoder, self.tokenizer, self.answer_vocab, self.cfg
+        )
 
 
 def make_dataloader(
-    dataset: ComprehensionDataset, pad_id: int, batch_size: int, shuffle: bool
+    dataset: EpisodeDataset, pad_id: int, batch_size: int, shuffle: bool
 ) -> torch.utils.data.DataLoader:
-    """Build a DataLoader whose ``collate_fn`` produces a :class:`Batch`."""
+    """DataLoader whose ``collate_fn`` produces an :class:`EpisodeBatch`."""
     return torch.utils.data.DataLoader(
         dataset,
         batch_size=batch_size,
         shuffle=shuffle,
         collate_fn=lambda items: collate(items, pad_id=pad_id),
-    )
-
-
-# ---------------------------------------------------------------------------
-# Real-data hooks (intentionally unimplemented)
-# ---------------------------------------------------------------------------
-def load_jsonl_examples(path: str) -> List[ComprehensionExample]:
-    """Load comprehension examples from a JSONL file.
-
-    Each line must be a JSON object with keys ``passage``, ``question``,
-    ``options`` (length-4 list), and ``answer_idx`` (int 0-3). This is the
-    canonical on-disk format to convert any real corpus into.
-    """
-    examples: List[ComprehensionExample] = []
-    with open(path, "r", encoding="utf-8") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            obj = json.loads(line)
-            examples.append(
-                ComprehensionExample(
-                    passage=obj["passage"],
-                    question=obj["question"],
-                    options=obj["options"],
-                    answer_idx=int(obj["answer_idx"]),
-                    meta=obj.get("meta", {}),
-                )
-            )
-    return examples
-
-
-def load_commonlit(path: str) -> List[ComprehensionExample]:
-    """HOOK: load the CommonLit corpus. Not implemented.
-
-    TODO(real-data): convert CommonLit passages + questions into
-    :class:`ComprehensionExample` (4 options, single correct index) and return
-    them. See :func:`load_jsonl_examples` for the target format.
-    """
-    raise NotImplementedError(
-        "CommonLit loader not implemented. Convert the corpus to JSONL "
-        "(passage/question/options/answer_idx) and use load_jsonl_examples, "
-        "or implement the mapping here."
-    )
-
-
-def load_race_easy(path: str) -> List[ComprehensionExample]:
-    """HOOK: load the RACE-easy corpus. Not implemented.
-
-    TODO(real-data): RACE already ships 4-option multiple choice, so the mapping
-    is mostly mechanical. Convert to JSONL or build examples directly here.
-    """
-    raise NotImplementedError(
-        "RACE-easy loader not implemented. RACE is already 4-way multiple "
-        "choice; map its fields onto ComprehensionExample here."
     )

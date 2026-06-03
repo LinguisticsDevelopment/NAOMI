@@ -1,0 +1,117 @@
+"""Pluggable "sentence -> input object" encoders.
+
+The input object is just the token-id sequence the model's step function
+consumes; the model owns the embedding table, so encoders only need to produce
+ids. This keeps the *source* of structure swappable:
+
+* :class:`TokenInputEncoder` — the **default**. Plain tokenization, no parser.
+  Chosen as the spine because the rule-based parser is experimental/inconsistent.
+* :class:`ParserInputEncoder` — **optional / unstable**. Wraps the experimental
+  ``quantum_parser`` to produce a structure-aware token stream (with semantic
+  role markers). Any failure falls back to plain tokenization, so a flaky parse
+  never breaks training.
+
+TODO(input): a third encoder — "chained transformers" — is the user's fallback
+if rule parsing proves too messy: a learned transformer that maps a sentence to
+the input object. It would implement this same interface.
+"""
+
+from __future__ import annotations
+
+import abc
+import os
+import sys
+from typing import List, Optional
+
+from .tokenizer import SimpleTokenizer
+
+
+class AbstractInputEncoder(abc.ABC):
+    """Maps a sentence to a list of token ids (the "input object")."""
+
+    @abc.abstractmethod
+    def encode(self, sentence: str) -> List[int]:
+        raise NotImplementedError
+
+
+class TokenInputEncoder(AbstractInputEncoder):
+    """Default encoder: plain tokenization. No parser, no structure."""
+
+    def __init__(self, tokenizer: SimpleTokenizer) -> None:
+        self.tokenizer = tokenizer
+
+    def encode(self, sentence: str) -> List[int]:
+        return self.tokenizer.encode(sentence)
+
+
+class ParserInputEncoder(AbstractInputEncoder):
+    """Optional encoder that runs the experimental ``quantum_parser``.
+
+    Produces a serialized, role-annotated token stream. The parser is treated as
+    untrusted: construction or parsing failures degrade gracefully to plain
+    tokenization (a logged note once), so the loop keeps running.
+
+    Args:
+        tokenizer: Vocabulary (must already include node/relation label tokens).
+        grammar_path: Path to a quantum_parser grammar JSON. If ``None``, uses
+            the repo's English grammar.
+    """
+
+    def __init__(self, tokenizer: SimpleTokenizer, grammar_path: Optional[str] = None) -> None:
+        self.tokenizer = tokenizer
+        self._fallback = TokenInputEncoder(tokenizer)
+        self._warned = False
+        self._adapter = None
+        self._grammar_path = grammar_path
+        self._init_adapter()
+
+    def _init_adapter(self) -> None:
+        try:
+            qp_root = os.path.normpath(
+                os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "..", "..", "..", "quantum_parser")
+            )
+            if qp_root not in sys.path:
+                sys.path.insert(0, qp_root)
+            from src.parser.pos_tagger import tag_sentence  # type: ignore
+            from src.parser.quantum_parser import QuantumParser  # type: ignore
+
+            grammar = self._grammar_path or os.path.join(qp_root, "grammars", "english.json")
+            self._tag = tag_sentence
+            self._parser = QuantumParser(grammar)
+        except Exception as exc:  # pragma: no cover - depends on optional deps
+            self._note(f"quantum_parser unavailable ({exc}); using plain tokenization.")
+            self._adapter = None
+
+    def _note(self, msg: str) -> None:
+        if not self._warned:
+            print(f"[ParserInputEncoder] {msg}")
+            self._warned = True
+
+    def encode(self, sentence: str) -> List[int]:
+        if getattr(self, "_parser", None) is None:
+            return self._fallback.encode(sentence)
+        try:
+            from .quantum_adapter import hypothesis_to_tree  # local import
+            from .serialization import serialize_parse_tree
+
+            words = self._tag(sentence)
+            chart = self._parser.parse(words)
+            hyp = chart.best_hypothesis()
+            if hyp is None:
+                return self._fallback.encode(sentence)
+            tree = hypothesis_to_tree(hyp, sentence)
+            return self.tokenizer.encode_tokens(serialize_parse_tree(tree))
+        except Exception as exc:  # pragma: no cover - parser is experimental
+            self._note(f"parse failed ({exc}); using plain tokenization.")
+            return self._fallback.encode(sentence)
+
+
+def make_input_encoder(name: str, tokenizer: SimpleTokenizer) -> AbstractInputEncoder:
+    """Factory: build an input encoder by config name."""
+    name = name.lower()
+    if name == "token":
+        return TokenInputEncoder(tokenizer)
+    if name == "parser":
+        return ParserInputEncoder(tokenizer)
+    raise ValueError(f"Unknown input encoder: {name!r}")

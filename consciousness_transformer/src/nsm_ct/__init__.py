@@ -1,98 +1,118 @@
-"""NSM Consciousness Transformer — a research scaffold.
+"""NSM Consciousness Transformer — a stateful reasoning-loop scaffold.
 
-A minimal, end-to-end-runnable skeleton for a "consciousness transformer" that
-consumes tokenized text, serialized parse trees, a consciousness vector, and
-retrieved memory, and emits both a language-model response and a consciousness
-state transition. The genuinely hard pieces (semantic mapping onto NSM primes,
-the real NAOMI parser, real memory, the real consciousness objective) are
-**mocked behind clean interfaces** and clearly marked. See README.md and
-RESEARCH_NOTES.md.
+A transformer used as a **state-transition function**: it threads an abstract
+consciousness state across a stream of input sentences, gates writes into working
+memory ("absorb facts as the state calls for it"), and — when a question arrives
+— recognizes it and answers from memory. Trained in a "kindergartener" regime on
+reasoning episodes (context stream → question → answer).
+
+The genuinely hard pieces (the real NSM/geometric semantic mapper, a consistent
+parser, what the consciousness state *means*) are mocked or stubbed behind clean
+interfaces and clearly marked. See README.md and RESEARCH_NOTES.md.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
+from .agent import Mind
 from .config import Config, DataConfig, ModelConfig, TrainConfig, load_config
 from .data_structures import (
     CausalRelation,
     CausalTable,
-    ComprehensionExample,
     ConsciousnessState,
     ParseNode,
     ParseTree,
 )
-from .features import Batch, EncodedExample, FeatureBuilder, collate
-from .memory import AbstractMemory, MockMemoryStore
-from .model import ConsciousnessTransformer, ModelOutput
+from .dataset import (
+    EpisodeBatch,
+    EpisodeDataset,
+    build_answer_vocab,
+    build_tokenizer,
+    collate,
+    make_dataloader,
+    split_episodes,
+)
+from .episode import (
+    AbstractEpisodeSource,
+    BabiSource,
+    CurriculumGenerator,
+    Episode,
+    TextbookSource,
+    make_source,
+)
+from .input_encoder import (
+    AbstractInputEncoder,
+    ParserInputEncoder,
+    TokenInputEncoder,
+    make_input_encoder,
+)
+from .losses import LossBreakdown, compute_losses
+from .memory import MemoryState, WorkingMemory
+from .model import (
+    ACTION_ABSORB,
+    ACTION_NAMES,
+    ACTION_RESPOND,
+    ACTION_SKIP,
+    ConsciousnessTransformer,
+    StepOutput,
+)
 from .nsm_primes import NUM_PRIMES, PRIMES, PRIME_NAMES, NSMPrime, PrimeCategory
 from .parser_interface import AbstractParser, MockNaomiParser
-from .semantic_mapper import (
-    AbstractSemanticMapper,
-    MockSemanticMapper,
-    SemanticRepresentation,
-)
 from .tokenizer import SimpleTokenizer
 
 __all__ = [
-    "Config",
-    "ModelConfig",
-    "TrainConfig",
-    "DataConfig",
-    "load_config",
-    "ParseTree",
-    "ParseNode",
-    "CausalTable",
-    "CausalRelation",
-    "ConsciousnessState",
-    "ComprehensionExample",
-    "SimpleTokenizer",
-    "AbstractParser",
-    "MockNaomiParser",
-    "AbstractSemanticMapper",
-    "MockSemanticMapper",
-    "SemanticRepresentation",
-    "AbstractMemory",
-    "MockMemoryStore",
-    "FeatureBuilder",
-    "EncodedExample",
-    "Batch",
-    "collate",
-    "ConsciousnessTransformer",
-    "ModelOutput",
-    "PRIMES",
-    "PRIME_NAMES",
-    "NUM_PRIMES",
-    "NSMPrime",
-    "PrimeCategory",
-    "build_default_stack",
+    "Config", "ModelConfig", "TrainConfig", "DataConfig", "load_config",
+    "Episode", "AbstractEpisodeSource", "CurriculumGenerator", "BabiSource",
+    "TextbookSource", "make_source",
+    "AbstractInputEncoder", "TokenInputEncoder", "ParserInputEncoder", "make_input_encoder",
+    "SimpleTokenizer", "EpisodeBatch", "EpisodeDataset", "collate", "make_dataloader",
+    "build_tokenizer", "build_answer_vocab", "split_episodes",
+    "WorkingMemory", "MemoryState",
+    "ConsciousnessTransformer", "StepOutput",
+    "ACTION_ABSORB", "ACTION_RESPOND", "ACTION_SKIP", "ACTION_NAMES",
+    "Mind", "LossBreakdown", "compute_losses",
+    "ParseTree", "ParseNode", "CausalTable", "CausalRelation", "ConsciousnessState",
+    "AbstractParser", "MockNaomiParser",
+    "PRIMES", "PRIME_NAMES", "NUM_PRIMES", "NSMPrime", "PrimeCategory",
+    "Stack", "build_default_stack",
 ]
 
 
-def build_default_stack(config: "Config", examples):
-    """Convenience: build a tokenizer + the mock NLP stack + a FeatureBuilder.
+@dataclass
+class Stack:
+    """A fully wired training/inference stack."""
 
-    This wires together the default *mock* parser, semantic mapper, and memory
-    store. Swap any argument for a real implementation of the matching abstract
-    interface to graduate from scaffold to system.
+    tokenizer: SimpleTokenizer
+    answer_vocab: dict
+    encoder: AbstractInputEncoder
+    model: ConsciousnessTransformer
+    memory: WorkingMemory
+    mind: Mind
+
+
+def build_default_stack(config: Config, episodes) -> Stack:
+    """Assemble tokenizer + input encoder + model + memory + :class:`Mind`.
+
+    Swap ``config.input_encoder`` to ``"parser"`` to feed the experimental
+    parser's structure; everything else is unchanged. The hard semantic mapper
+    remains out of scope (mocked).
 
     Args:
         config: Loaded :class:`Config`.
-        examples: Examples used to build the tokenizer vocabulary.
-
-    Returns:
-        ``(tokenizer, feature_builder)``.
+        episodes: Episodes used to build the tokenizer and answer vocabulary.
     """
-    # Imported here to avoid a heavy import at package load time.
-    from .dataset import build_tokenizer
-
-    tokenizer = build_tokenizer(examples)
-    parser = MockNaomiParser()
-    mapper = MockSemanticMapper()
-    memory = MockMemoryStore(dim=config.model.memory_dim)
-    feature_builder = FeatureBuilder(
+    tokenizer = build_tokenizer(episodes)
+    answer_vocab = build_answer_vocab(episodes)
+    encoder = make_input_encoder(config.input_encoder, tokenizer)
+    model = ConsciousnessTransformer(tokenizer.vocab_size, len(answer_vocab), config.model)
+    memory = WorkingMemory(config.model.memory_dim, config.model.consciousness_dim)
+    mind = Mind(model, memory, config.data.answer_mode)
+    return Stack(
         tokenizer=tokenizer,
-        parser=parser,
-        semantic_mapper=mapper,
+        answer_vocab=answer_vocab,
+        encoder=encoder,
+        model=model,
         memory=memory,
-        config=config,
+        mind=mind,
     )
-    return tokenizer, feature_builder

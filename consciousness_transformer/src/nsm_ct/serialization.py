@@ -21,10 +21,13 @@ from .tokenizer import NODE, TREE, TREE_END
 def serialize_parse_tree(tree: ParseTree) -> List[str]:
     """Serialize a parse tree to a flat list of string tokens.
 
-    Format (pre-order): ``[TREE] [NODE] <label> <token?> [NODE] <label> ... [/TREE]``
+    Format (pre-order), per node: ``[NODE] <relation?> <label> <token?>`` where
+    ``relation`` is the semantic role linking the node to its parent (e.g.
+    SUBJECT, DESCRIPTION) when the parser provides one. Including the relation
+    lets the model see structure/roles, not just surface words.
 
-    Leaf nodes contribute their label followed by their surface token; internal
-    nodes contribute just their label. The structure is intentionally lossy.
+    The structure is still flat (hierarchy is not recoverable). TODO(tree-encoding):
+    replace with a hierarchical / tree-aware encoding.
 
     Args:
         tree: The parse tree to serialize.
@@ -35,6 +38,8 @@ def serialize_parse_tree(tree: ParseTree) -> List[str]:
     out: List[str] = [TREE]
     for node in tree.iter_preorder():
         out.append(NODE)
+        if node.relation is not None:
+            out.append(node.relation)
         out.append(node.label)
         if node.token is not None:
             out.append(node.token)

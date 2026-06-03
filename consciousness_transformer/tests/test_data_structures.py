@@ -5,7 +5,6 @@ import pytest
 
 from nsm_ct.data_structures import (
     CausalTable,
-    ComprehensionExample,
     ConsciousnessState,
     ParseNode,
     ParseTree,
@@ -84,13 +83,9 @@ def test_consciousness_state_dim_mismatch_raises():
         a.distance(b)
 
 
-# -- comprehension example ---------------------------------------------------
-def test_comprehension_example_validation():
-    ex = ComprehensionExample("p.", "q?", ["a", "b", "c", "d"], answer_idx=2)
-    assert ex.answer_text == "c"
-    assert "p." in ex.context and "q?" in ex.context
-
-    with pytest.raises(ValueError):
-        ComprehensionExample("p", "q", ["a", "b", "c"], answer_idx=0)  # wrong option count
-    with pytest.raises(ValueError):
-        ComprehensionExample("p", "q", ["a", "b", "c", "d"], answer_idx=9)  # bad index
+# -- parse node relation -----------------------------------------------------
+def test_parse_node_relation_field():
+    child = ParseNode("NOMINAL", relation="SUBJECT")
+    root = ParseNode("PREDICATE", token="runs", children=[child])
+    assert root.relation is None  # root has no incoming relation
+    assert root.children[0].relation == "SUBJECT"

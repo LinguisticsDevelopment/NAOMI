@@ -1,11 +1,13 @@
-"""Phase 1 training: fit the Consciousness Transformer on toy comprehension data.
+"""Phase 1 training: teach the reasoning loop on episodes (kindergartener regime).
 
 Run:
-    python scripts/train_phase1.py [--config configs/default.yaml] [--out runs/phase1.pt]
+    python scripts/train_phase1.py [--config configs/default.yaml]
+                                   [--source curriculum|babi] [--out runs/phase1.pt]
 
-This trains the tiny model on the synthetic toy dataset and saves a checkpoint
-(plus the tokenizer vocabulary) so ``eval.py`` can load it. Everything upstream
-of the transformer (parser, semantic mapper, memory) is mocked — see the README.
+Each episode is a context stream + a question. The model unrolls the stream
+(absorbing facts into memory under its own action gating) and answers at the
+question. We report answer accuracy AND action-gating accuracy (does it ABSORB
+statements and RESPOND to questions?).
 """
 
 from __future__ import annotations
@@ -16,91 +18,94 @@ import sys
 
 import torch
 
-# Allow running as a plain script without installing the package.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 
 from nsm_ct import build_default_stack, load_config  # noqa: E402
-from nsm_ct.dataset import (  # noqa: E402
-    ComprehensionDataset,
-    generate_toy_dataset,
-    make_dataloader,
-    split_examples,
-)
+from nsm_ct.dataset import EpisodeDataset, make_dataloader, split_episodes  # noqa: E402
+from nsm_ct.episode import make_source  # noqa: E402
 from nsm_ct.losses import compute_losses  # noqa: E402
-from nsm_ct.model import ConsciousnessTransformer  # noqa: E402
+from nsm_ct.metrics import action_accuracy, answer_accuracy  # noqa: E402
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Phase 1 training")
-    parser.add_argument("--config", default=None, help="Path to YAML config")
-    parser.add_argument("--out", default="runs/phase1.pt", help="Checkpoint output path")
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser(description="Phase 1 training (reasoning loop)")
+    ap.add_argument("--config", default=None)
+    ap.add_argument("--source", default=None, help="Override data.source (curriculum|babi)")
+    ap.add_argument("--out", default="runs/phase1.pt")
+    args = ap.parse_args()
 
     cfg = load_config(args.config)
+    if args.source:
+        cfg.data.source = args.source
     torch.manual_seed(cfg.train.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # --- data + mock NLP stack ---------------------------------------------
-    examples = generate_toy_dataset(cfg.data.num_examples, seed=cfg.data.seed)
-    train_examples, val_examples = split_examples(examples, cfg.data.val_fraction, seed=cfg.data.seed)
-    tokenizer, feature_builder = build_default_stack(cfg, examples)
-
-    train_ds = ComprehensionDataset(train_examples, feature_builder)
-    train_loader = make_dataloader(
-        train_ds, pad_id=tokenizer.pad_id, batch_size=cfg.train.batch_size, shuffle=True
+    # --- episodes + stack --------------------------------------------------
+    source = make_source(
+        cfg.data.source, seed=cfg.data.seed, max_level=cfg.data.max_level,
+        babi_task=cfg.data.babi_task, babi_path=cfg.data.babi_path,
     )
+    episodes = source.generate(cfg.data.num_episodes)
+    train_eps, val_eps = split_episodes(episodes, cfg.data.val_fraction, seed=cfg.data.seed)
+    stack = build_default_stack(cfg, episodes)
 
-    # --- model -------------------------------------------------------------
-    model = ConsciousnessTransformer(tokenizer.vocab_size, cfg.model).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.train.learning_rate)
+    train_ds = EpisodeDataset(train_eps, stack.encoder, stack.tokenizer, stack.answer_vocab, cfg)
+    loader = make_dataloader(train_ds, stack.tokenizer.pad_id, cfg.train.batch_size, shuffle=True)
+
+    mind = stack.mind.to(device)
+    optimizer = torch.optim.AdamW(mind.parameters(), lr=cfg.train.learning_rate)
 
     print(
-        f"Phase {cfg.curriculum_phase} | vocab={tokenizer.vocab_size} "
-        f"| train={len(train_examples)} val={len(val_examples)} "
-        f"| params={sum(p.numel() for p in model.parameters()):,}"
+        f"source={cfg.data.source} mode={cfg.data.answer_mode} encoder={cfg.input_encoder} "
+        f"| vocab={stack.tokenizer.vocab_size} answers={len(stack.answer_vocab)} "
+        f"| train={len(train_eps)} val={len(val_eps)} "
+        f"| params={sum(p.numel() for p in mind.parameters()):,}"
     )
 
     # --- training loop -----------------------------------------------------
-    model.train()
+    mind.train()
     for epoch in range(cfg.train.epochs):
-        running = {"total": 0.0, "lm": 0.0, "answer": 0.0, "consistency": 0.0}
-        n_batches = 0
-        for batch in train_loader:
+        agg = {"total": 0.0, "answer": 0.0, "action": 0.0, "consistency": 0.0, "ans_acc": 0.0, "act_acc": 0.0}
+        n = 0
+        for batch in loader:
             batch = batch.to(device)
-            output = model(batch)
+            out = mind(batch)
             losses = compute_losses(
-                output,
-                batch,
-                weight_lm=cfg.train.weight_lm,
+                out, batch,
                 weight_answer=cfg.train.weight_answer,
+                weight_action=cfg.train.weight_action,
                 weight_consistency=cfg.train.weight_consistency,
             )
             optimizer.zero_grad()
             losses.total.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.train.grad_clip)
+            torch.nn.utils.clip_grad_norm_(mind.parameters(), cfg.train.grad_clip)
             optimizer.step()
 
-            running["total"] += float(losses.total.detach())
-            running["lm"] += float(losses.lm.detach())
-            running["answer"] += float(losses.answer.detach())
-            running["consistency"] += float(losses.consistency.detach())
-            n_batches += 1
+            agg["total"] += float(losses.total.detach())
+            agg["answer"] += float(losses.answer.detach())
+            agg["action"] += float(losses.action.detach())
+            agg["consistency"] += float(losses.consistency.detach())
+            agg["ans_acc"] += answer_accuracy(out, batch)
+            agg["act_acc"] += action_accuracy(out, batch)
+            n += 1
 
-        avg = {k: v / max(n_batches, 1) for k, v in running.items()}
+        avg = {k: v / max(n, 1) for k, v in agg.items()}
         print(
-            f"epoch {epoch + 1}/{cfg.train.epochs} "
-            f"| total={avg['total']:.4f} lm={avg['lm']:.4f} "
-            f"answer={avg['answer']:.4f} consistency={avg['consistency']:.4f}"
+            f"epoch {epoch + 1}/{cfg.train.epochs} | total={avg['total']:.4f} "
+            f"answer={avg['answer']:.4f} action={avg['action']:.4f} "
+            f"consistency={avg['consistency']:.4f} | ans_acc={avg['ans_acc']:.3f} "
+            f"act_acc={avg['act_acc']:.3f}"
         )
 
     # --- save --------------------------------------------------------------
-    out_dir = os.path.dirname(os.path.abspath(args.out))
-    os.makedirs(out_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     torch.save(
         {
-            "model_state": model.state_dict(),
-            "token_to_id": tokenizer.token_to_id,
+            "model_state": mind.state_dict(),
+            "token_to_id": stack.tokenizer.token_to_id,
+            "answer_vocab": stack.answer_vocab,
             "config_path": args.config,
+            "source": cfg.data.source,
         },
         args.out,
     )

@@ -35,14 +35,18 @@ class ParseNode:
     """A single node in a parse tree.
 
     Attributes:
-        label: Syntactic/semantic label (e.g. "S", "NP", "NOUN").
+        label: Syntactic/semantic label (e.g. "S", "NP", "PREDICATE").
         token: Surface token for leaf nodes; ``None`` for internal nodes.
         children: Ordered child nodes.
+        relation: The semantic role linking this node to its parent (e.g.
+            "SUBJECT", "DESCRIPTION"). ``None`` for the root or for parsers that
+            do not emit typed relations (the mock).
     """
 
     label: str
     token: Optional[str] = None
     children: List["ParseNode"] = field(default_factory=list)
+    relation: Optional[str] = None
 
     @property
     def is_leaf(self) -> bool:
@@ -179,43 +183,3 @@ class ConsciousnessState:
         if self.dim != other.dim:
             raise ValueError(f"Dimension mismatch: {self.dim} vs {other.dim}")
         return float(np.linalg.norm(self.vector - other.vector))
-
-
-# ---------------------------------------------------------------------------
-# Task example
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class ComprehensionExample:
-    """A single multiple-choice reading-comprehension example.
-
-    Attributes:
-        passage: 2-3 sentence passage.
-        question: The question stem.
-        options: Exactly 4 answer options.
-        answer_idx: Index (0-3) of the correct option.
-        meta: Optional free-form provenance/debug info.
-    """
-
-    passage: str
-    question: str
-    options: List[str]
-    answer_idx: int
-    meta: dict = field(default_factory=dict)
-
-    def __post_init__(self) -> None:
-        if len(self.options) != 4:
-            raise ValueError(f"Expected 4 options, got {len(self.options)}")
-        if not 0 <= self.answer_idx < 4:
-            raise ValueError(f"answer_idx out of range: {self.answer_idx}")
-
-    @property
-    def context(self) -> str:
-        """Passage and question concatenated, as fed to the text encoder."""
-        return f"{self.passage} {self.question}"
-
-    @property
-    def answer_text(self) -> str:
-        """The surface text of the correct option."""
-        return self.options[self.answer_idx]

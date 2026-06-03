@@ -1,0 +1,337 @@
+"""Reasoning episodes and the sources that produce them.
+
+An **episode** is the unit the model learns from, matching the "kindergartener"
+regime: a *context stream* of statements followed by a *question*. The model is
+meant to absorb the statements into memory one by one (gated by its state) and
+then recognize the question and answer it.
+
+Three sources sit behind one interface:
+
+* :class:`CurriculumGenerator` — offline, always-runnable, reasoning-shaped
+  episodes at escalating difficulty (one fact -> pick among facts -> recency).
+  These genuinely require storing and retrieving facts; they are not surface
+  pattern-completion.
+* :class:`BabiSource` — loads Facebook's bAbI tasks (the canonical
+  facts-then-question reasoning corpus). Falls back to the generator if the data
+  cannot be obtained in this environment.
+* :class:`TextbookSource` — a **stub** for the north star: ingest a textbook
+  chapter as the context stream and answer its (often multiple-choice) homework
+  questions. Not implemented yet.
+
+Answers are available in two forms so both training modes work: ``answer_text``
+(open-ended) and ``options`` + ``answer_idx`` (multiple choice — the densest
+training signal, kept as a first-class citizen).
+"""
+
+from __future__ import annotations
+
+import abc
+import os
+import random
+import tarfile
+import urllib.request
+from dataclasses import dataclass, field
+from typing import List, Optional
+
+
+@dataclass
+class Episode:
+    """A single reasoning episode.
+
+    Attributes:
+        context: Ordered statements (the stream to absorb into memory).
+        question: The question that should trigger a response.
+        answer_text: The correct answer as a string (open-ended supervision).
+        options: For multiple choice, the candidate answers (correct one included).
+        answer_idx: Index of the correct option in ``options`` (MC supervision).
+        level: Curriculum difficulty (0 = easiest). Provenance/debug only.
+        meta: Free-form provenance.
+    """
+
+    context: List[str]
+    question: str
+    answer_text: str
+    options: Optional[List[str]] = None
+    answer_idx: Optional[int] = None
+    level: int = 0
+    meta: dict = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if self.options is not None:
+            if self.answer_idx is None or not 0 <= self.answer_idx < len(self.options):
+                raise ValueError("answer_idx must index into options")
+            if self.options[self.answer_idx] != self.answer_text:
+                # Keep them consistent; the text is the source of truth.
+                self.answer_text = self.options[self.answer_idx]
+
+    @property
+    def is_multiple_choice(self) -> bool:
+        return self.options is not None
+
+
+class AbstractEpisodeSource(abc.ABC):
+    """Interface for anything that yields :class:`Episode` objects."""
+
+    @abc.abstractmethod
+    def generate(self, n: int) -> List[Episode]:
+        """Return ``n`` episodes."""
+        raise NotImplementedError
+
+
+# ---------------------------------------------------------------------------
+# Curriculum generator (offline default)
+# ---------------------------------------------------------------------------
+_NAMES = ["mary", "john", "sandra", "daniel", "bill", "fred"]
+_PLACES = ["kitchen", "garden", "office", "bedroom", "hallway", "bathroom"]
+
+
+class CurriculumGenerator(AbstractEpisodeSource):
+    """Generates reasoning-shaped episodes at escalating difficulty.
+
+    Levels (a mini bAbI-style curriculum):
+        1. One fact, ask it back. Requires storing and recalling a single fact.
+        2. Two facts about different people; ask about one. Requires storing
+           several facts and retrieving the *relevant* one.
+        3. A person moves; ask where they are now. Requires updating/recency.
+
+    Every episode is emitted with both multiple-choice options and an
+    open-ended answer, so either training mode can consume it.
+
+    Args:
+        max_level: Highest difficulty level to sample (1-3).
+        num_options: Number of multiple-choice options per question.
+        seed: RNG seed.
+    """
+
+    def __init__(self, max_level: int = 3, num_options: int = 4, seed: int = 0) -> None:
+        self.max_level = max(1, min(max_level, 3))
+        self.num_options = num_options
+        self.rng = random.Random(seed)
+
+    def _mc(self, answer: str) -> tuple[List[str], int]:
+        distractors = self.rng.sample([p for p in _PLACES if p != answer], self.num_options - 1)
+        options = distractors + [answer]
+        self.rng.shuffle(options)
+        return options, options.index(answer)
+
+    def _level1(self) -> Episode:
+        name = self.rng.choice(_NAMES)
+        place = self.rng.choice(_PLACES)
+        options, idx = self._mc(place)
+        return Episode(
+            context=[f"{name} is in the {place} ."],
+            question=f"where is {name} ?",
+            answer_text=place,
+            options=options,
+            answer_idx=idx,
+            level=1,
+        )
+
+    def _level2(self) -> Episode:
+        name_a, name_b = self.rng.sample(_NAMES, 2)
+        place_a, place_b = self.rng.sample(_PLACES, 2)
+        target_name, target_place = self.rng.choice([(name_a, place_a), (name_b, place_b)])
+        context = [f"{name_a} is in the {place_a} .", f"{name_b} is in the {place_b} ."]
+        self.rng.shuffle(context)
+        options, idx = self._mc(target_place)
+        return Episode(
+            context=context,
+            question=f"where is {target_name} ?",
+            answer_text=target_place,
+            options=options,
+            answer_idx=idx,
+            level=2,
+        )
+
+    def _level3(self) -> Episode:
+        name = self.rng.choice(_NAMES)
+        first, second = self.rng.sample(_PLACES, 2)
+        context = [
+            f"{name} is in the {first} .",
+            f"{name} moved to the {second} .",
+        ]
+        options, idx = self._mc(second)  # recency: answer is the most recent place
+        return Episode(
+            context=context,
+            question=f"where is {name} ?",
+            answer_text=second,
+            options=options,
+            answer_idx=idx,
+            level=3,
+        )
+
+    def generate(self, n: int) -> List[Episode]:
+        builders = [self._level1, self._level2, self._level3][: self.max_level]
+        return [builders[i % len(builders)]() for i in range(n)]
+
+
+# ---------------------------------------------------------------------------
+# bAbI source (real corpus, with offline fallback)
+# ---------------------------------------------------------------------------
+_BABI_URL = "http://www.thespermwhale.com/jaseweston/babi/tasks_1-20_v1-2.tar.gz"
+
+
+class BabiSource(AbstractEpisodeSource):
+    """Loads Facebook bAbI episodes, with a graceful fallback.
+
+    bAbI is exactly the facts-then-question format. Answers are single words;
+    we synthesize multiple-choice options from the task's answer vocabulary so
+    MC training works too.
+
+    If the data cannot be downloaded or found (common in sandboxed
+    environments), :meth:`generate` logs a warning and transparently falls back
+    to :class:`CurriculumGenerator` so training is never blocked.
+
+    Args:
+        task: bAbI task number (1 = single supporting fact).
+        path: Optional path to an already-extracted bAbI ``tasks_1-20_v1-2`` dir
+            or a single task file. If ``None``, attempts a download to a cache.
+        num_options: Number of MC options to synthesize.
+        seed: RNG seed (used for option synthesis and the fallback).
+    """
+
+    def __init__(
+        self,
+        task: int = 1,
+        path: Optional[str] = None,
+        num_options: int = 4,
+        seed: int = 0,
+    ) -> None:
+        self.task = task
+        self.path = path
+        self.num_options = num_options
+        self.seed = seed
+        self.rng = random.Random(seed)
+
+    # -- parsing ------------------------------------------------------------
+    @staticmethod
+    def parse_babi(lines: List[str]) -> List[Episode]:
+        """Parse bAbI-format lines into :class:`Episode` objects (open-ended)."""
+        episodes: List[Episode] = []
+        context: List[str] = []
+        for raw in lines:
+            line = raw.strip()
+            if not line:
+                continue
+            num, _, rest = line.partition(" ")
+            if num == "1":
+                context = []  # new story
+            if "\t" in rest:
+                question, answer, *_ = rest.split("\t")
+                episodes.append(
+                    Episode(
+                        context=list(context),
+                        question=question.strip().lower(),
+                        answer_text=answer.strip().lower(),
+                        level=0,
+                        meta={"source": "babi", "task": "loaded"},
+                    )
+                )
+            else:
+                context.append(rest.strip().lower())
+        return episodes
+
+    def _add_options(self, episodes: List[Episode]) -> List[Episode]:
+        """Synthesize MC options from the corpus answer vocabulary."""
+        vocab = sorted({ep.answer_text for ep in episodes})
+        if len(vocab) < self.num_options:
+            return episodes  # not enough distinct answers; leave open-ended
+        for ep in episodes:
+            distractors = [a for a in vocab if a != ep.answer_text]
+            chosen = self.rng.sample(distractors, self.num_options - 1)
+            options = chosen + [ep.answer_text]
+            self.rng.shuffle(options)
+            ep.options = options
+            ep.answer_idx = options.index(ep.answer_text)
+        return episodes
+
+    # -- loading ------------------------------------------------------------
+    def _candidate_files(self, root: str) -> List[str]:
+        suffix = f"qa{self.task}_"
+        hits = []
+        for dirpath, _, filenames in os.walk(root):
+            for fn in filenames:
+                if fn.startswith(suffix) and fn.endswith("_train.txt"):
+                    hits.append(os.path.join(dirpath, fn))
+        return hits
+
+    def _load_lines(self) -> Optional[List[str]]:
+        # 1) explicit path
+        if self.path and os.path.exists(self.path):
+            if os.path.isfile(self.path):
+                with open(self.path, encoding="utf-8") as fh:
+                    return fh.readlines()
+            files = self._candidate_files(self.path)
+            if files:
+                with open(files[0], encoding="utf-8") as fh:
+                    return fh.readlines()
+        # 2) attempt download to cache
+        try:
+            cache = os.path.join(os.path.expanduser("~"), ".cache", "nsm_ct_babi.tar.gz")
+            os.makedirs(os.path.dirname(cache), exist_ok=True)
+            if not os.path.exists(cache):
+                urllib.request.urlretrieve(_BABI_URL, cache)  # may be blocked
+            with tarfile.open(cache, "r:gz") as tf:
+                member = next(
+                    m for m in tf.getmembers()
+                    if f"qa{self.task}_" in os.path.basename(m.name) and m.name.endswith("_train.txt")
+                )
+                fh = tf.extractfile(member)
+                if fh is not None:
+                    return fh.read().decode("utf-8").splitlines()
+        except Exception:
+            return None
+        return None
+
+    def generate(self, n: int) -> List[Episode]:
+        lines = self._load_lines()
+        if not lines:
+            print("[BabiSource] bAbI data unavailable; falling back to CurriculumGenerator.")
+            return CurriculumGenerator(seed=self.seed).generate(n)
+        episodes = self.parse_babi(lines)
+        if not episodes:
+            print("[BabiSource] bAbI parse produced nothing; falling back to CurriculumGenerator.")
+            return CurriculumGenerator(seed=self.seed).generate(n)
+        episodes = self._add_options(episodes)
+        # Repeat/truncate to exactly n.
+        if len(episodes) >= n:
+            return episodes[:n]
+        return [episodes[i % len(episodes)] for i in range(n)]
+
+
+# ---------------------------------------------------------------------------
+# Textbook source (north-star stub)
+# ---------------------------------------------------------------------------
+class TextbookSource(AbstractEpisodeSource):
+    """STUB: ingest a textbook chapter as context, answer its homework questions.
+
+    This is the project's north star — "read a textbook and use the homework
+    questions". It is intentionally unimplemented: turning real chapter prose
+    into a clean context stream and aligning end-of-chapter (often
+    multiple-choice) questions is a substantial effort.
+
+    TODO(textbook): implement chapter segmentation -> context stream, and
+    homework-question extraction -> Episode (prefer multiple choice).
+    """
+
+    def __init__(self, chapter_path: Optional[str] = None) -> None:
+        self.chapter_path = chapter_path
+
+    def generate(self, n: int) -> List[Episode]:
+        raise NotImplementedError(
+            "TextbookSource is a stub for the read-a-textbook / homework-questions "
+            "north star. Implement chapter -> context stream and homework -> Episode."
+        )
+
+
+def make_source(name: str, *, seed: int = 0, max_level: int = 3, babi_task: int = 1,
+                babi_path: Optional[str] = None) -> AbstractEpisodeSource:
+    """Factory: build an episode source by config name."""
+    name = name.lower()
+    if name == "curriculum":
+        return CurriculumGenerator(max_level=max_level, seed=seed)
+    if name == "babi":
+        return BabiSource(task=babi_task, path=babi_path, seed=seed)
+    if name == "textbook":
+        return TextbookSource()
+    raise ValueError(f"Unknown episode source: {name!r}")
