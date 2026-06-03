@@ -1,0 +1,32 @@
+# Default configuration for the NSM Consciousness Transformer.
+# All hyperparameters live here. Loaded by nsm_ct.config.load_config().
+# Unknown keys raise on load, so typos fail loudly.
+
+# Curriculum phase (1 = toy synthetic comprehension). Reserved for future
+# phases that introduce real data / harder objectives.
+curriculum_phase: 1
+
+model:
+  consciousness_dim: 32      # width of the consciousness state vector
+  memory_dim: 32             # width of the retrieved-memory vector
+  d_model: 64                # transformer hidden size
+  nhead: 4                   # attention heads
+  num_layers: 2              # transformer encoder layers
+  dim_feedforward: 128       # FFN inner size
+  dropout: 0.1
+  max_seq_len: 160           # max combined (text + parse + answer) length
+
+train:
+  learning_rate: 0.0003
+  batch_size: 8
+  epochs: 3
+  seed: 0
+  weight_lm: 1.0             # language-modeling loss weight
+  weight_answer: 1.0         # multiple-choice answer-prediction loss weight
+  weight_consistency: 0.1    # auxiliary consciousness consistency loss weight
+  grad_clip: 1.0
+
+data:
+  num_examples: 100          # size of the generated toy dataset
+  val_fraction: 0.2          # held-out fraction for eval
+  seed: 0
