@@ -90,13 +90,15 @@ def test_mind_consolidates_and_accumulates_across_episodes():
     batch = next(iter(loader))
 
     out = stack.mind(batch)
-    first = stack.mind.consolidate(out)
+    first = stack.mind.consolidate(out, batch)
     assert first > 0
     size_after_first = len(stack.long_term)
+    # entries carry their fact text (a readable "facts we know" repo)
+    assert any(stack.long_term.facts())
 
     # a second episode batch keeps growing the persistent repo
     out2 = stack.mind(batch)
-    stack.mind.consolidate(out2)
+    stack.mind.consolidate(out2, batch)
     assert len(stack.long_term) > size_after_first
 
 

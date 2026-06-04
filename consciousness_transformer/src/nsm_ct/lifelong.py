@@ -25,7 +25,7 @@ from .config import Config
 from .dataset import EpisodeDataset, make_dataloader
 from .episode import make_source
 from .losses import compute_losses
-from .metrics import action_accuracy, answer_accuracy
+from .metrics import answer_accuracy, mean_respond_position
 
 
 def run_lifelong(
@@ -65,6 +65,14 @@ def run_lifelong(
     stack.mind.to(device)
     optimizer = torch.optim.AdamW(stack.mind.parameters(), lr=lr or config.train.learning_rate)
 
+    # Seed long-term memory with base "facts we know about the world".
+    if hasattr(source, "base_facts"):
+        seeded = stack.mind.seed_world_facts(
+            source.base_facts(), stack.encoder, config.model.max_sentence_len
+        )
+        if verbose and seeded:
+            print(f"Seeded {seeded} base world facts into long-term memory.")
+
     history: List[dict] = []
     for r in range(num_rounds):
         episodes = source.generate(episodes_per_round)  # fresh "material"
@@ -72,7 +80,7 @@ def run_lifelong(
         loader = make_dataloader(ds, stack.tokenizer.pad_id, config.train.batch_size, shuffle=True)
 
         stack.mind.train()
-        loss_sum = acc_sum = act_sum = 0.0
+        loss_sum = acc_sum = pos_sum = 0.0
         added = nb = 0
         for batch in loader:
             batch = batch.to(device)
@@ -80,7 +88,7 @@ def run_lifelong(
             losses = compute_losses(
                 out, batch,
                 weight_answer=config.train.weight_answer,
-                weight_action=config.train.weight_action,
+                weight_novelty=config.train.weight_novelty,
                 weight_consistency=config.train.weight_consistency,
             )
             optimizer.zero_grad()
@@ -88,10 +96,10 @@ def run_lifelong(
             torch.nn.utils.clip_grad_norm_(stack.mind.parameters(), config.train.grad_clip)
             optimizer.step()
             # Non-parametric: grow the long-term repo (outside the gradient).
-            added += stack.mind.consolidate(out)
+            added += stack.mind.consolidate(out, batch)
             loss_sum += float(losses.total.detach())
             acc_sum += answer_accuracy(out, batch)
-            act_sum += action_accuracy(out, batch)
+            pos_sum += mean_respond_position(out, batch)
             nb += 1
 
         stats = stack.long_term.stats()
@@ -99,7 +107,7 @@ def run_lifelong(
             "round": r + 1,
             "loss": loss_sum / max(nb, 1),
             "ans_acc": acc_sum / max(nb, 1),
-            "act_acc": act_sum / max(nb, 1),
+            "resp_pos": pos_sum / max(nb, 1),
             "added": added,
             "ltm_entries": stats["entries"],
             "ltm_connections": stats["connections"],
@@ -108,7 +116,7 @@ def run_lifelong(
         if verbose:
             print(
                 f"round {rec['round']:>3}/{num_rounds} | loss={rec['loss']:.4f} "
-                f"ans_acc={rec['ans_acc']:.3f} act_acc={rec['act_acc']:.3f} "
+                f"ans_acc={rec['ans_acc']:.3f} resp_pos={rec['resp_pos']:.2f} "
                 f"| +{rec['added']} -> LTM entries={rec['ltm_entries']} "
                 f"connections={rec['ltm_connections']}"
             )

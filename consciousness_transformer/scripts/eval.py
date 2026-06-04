@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from nsm_ct import build_default_stack, load_config  # noqa: E402
 from nsm_ct.dataset import EpisodeDataset, make_dataloader, split_episodes  # noqa: E402
 from nsm_ct.episode import make_source  # noqa: E402
-from nsm_ct.metrics import action_accuracy, answer_accuracy  # noqa: E402
+from nsm_ct.metrics import answer_accuracy, mean_respond_position  # noqa: E402
 
 
 def main() -> None:
@@ -63,19 +63,19 @@ def main() -> None:
     val_ds = EpisodeDataset(val_eps, stack.encoder, stack.tokenizer, stack.answer_vocab, cfg)
     loader = make_dataloader(val_ds, stack.tokenizer.pad_id, cfg.train.batch_size, shuffle=False)
 
-    ans, act, n = 0.0, 0.0, 0
+    ans, pos, n = 0.0, 0.0, 0
     with torch.no_grad():
         for batch in loader:
             batch = batch.to(device)
             out = mind(batch)
             ans += answer_accuracy(out, batch)
-            act += action_accuracy(out, batch)
+            pos += mean_respond_position(out, batch)
             n += 1
 
     chance = 1.0 / (val_eps[0].options and len(val_eps[0].options) or len(stack.answer_vocab)) if val_eps else 0.0
     print(
         f"Held-out: answer_acc={ans / max(n,1):.3f} (chance≈{chance:.3f}) "
-        f"action_acc={act / max(n,1):.3f}  (n={len(val_eps)} episodes)"
+        f"resp_pos={pos / max(n,1):.2f}  (n={len(val_eps)} episodes)"
     )
 
 

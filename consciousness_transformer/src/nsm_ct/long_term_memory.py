@@ -184,3 +184,16 @@ class LongTermMemory(nn.Module):
     def stats(self) -> Dict[str, int]:
         """Quick size/connection counts for logging."""
         return {"entries": len(self), "connections": self.num_connections}
+
+    def facts(self, limit: Optional[int] = None, kind: Optional[str] = None) -> List[str]:
+        """Read the repo back as text — "facts we know about the world".
+
+        Args:
+            limit: Optionally cap how many to return.
+            kind: Optionally filter by provenance kind ("base" / "learned").
+        """
+        out = [
+            m.get("text", "") for m in self.metas
+            if m.get("text") and (kind is None or m.get("kind") == kind)
+        ]
+        return out[:limit] if limit else out

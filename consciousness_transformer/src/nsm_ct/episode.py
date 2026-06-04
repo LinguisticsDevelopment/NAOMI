@@ -54,6 +54,7 @@ class Episode:
     options: Optional[List[str]] = None
     answer_idx: Optional[int] = None
     level: int = 0
+    post_context: List[str] = field(default_factory=list)  # distractors AFTER the question
     meta: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -93,18 +94,22 @@ class CurriculumGenerator(AbstractEpisodeSource):
         2. Two facts about different people; ask about one. Requires storing
            several facts and retrieving the *relevant* one.
         3. A person moves; ask where they are now. Requires updating/recency.
+        4. A fact, the question, THEN a distractor fact (post-question). The
+           answer is fixed before the question, so the model must learn to
+           respond *at the question* — not just at the last item. This is the
+           probe for emergent response timing.
 
     Every episode is emitted with both multiple-choice options and an
     open-ended answer, so either training mode can consume it.
 
     Args:
-        max_level: Highest difficulty level to sample (1-3).
+        max_level: Highest difficulty level to sample (1-4).
         num_options: Number of multiple-choice options per question.
         seed: RNG seed.
     """
 
     def __init__(self, max_level: int = 3, num_options: int = 4, seed: int = 0) -> None:
-        self.max_level = max(1, min(max_level, 3))
+        self.max_level = max(1, min(max_level, 4))
         self.num_options = num_options
         self.rng = random.Random(seed)
 
@@ -160,8 +165,33 @@ class CurriculumGenerator(AbstractEpisodeSource):
             level=3,
         )
 
+    def _level4(self) -> Episode:
+        # A *corrupting* distractor AFTER the question: the same person "moves"
+        # afterwards. The answer is their location when asked (the first place),
+        # so absorbing the trailing item and then answering gives the WRONG
+        # (updated) place. The model must respond at/before the question rather
+        # than naively reading the final state — emergent response timing.
+        name = self.rng.choice(_NAMES)
+        first, second = self.rng.sample(_PLACES, 2)
+        options, idx = self._mc(first)
+        return Episode(
+            context=[f"{name} is in the {first} ."],
+            question=f"where is {name} ?",
+            answer_text=first,
+            options=options,
+            answer_idx=idx,
+            level=4,
+            post_context=[f"{name} moved to the {second} ."],
+        )
+
+    def base_facts(self) -> List[str]:
+        """Base 'facts we know about the world' to seed long-term memory."""
+        facts = [f"the {p} is a place ." for p in _PLACES]
+        facts += [f"{n} is a person ." for n in _NAMES]
+        return facts
+
     def generate(self, n: int) -> List[Episode]:
-        builders = [self._level1, self._level2, self._level3][: self.max_level]
+        builders = [self._level1, self._level2, self._level3, self._level4][: self.max_level]
         return [builders[i % len(builders)]() for i in range(n)]
 
 

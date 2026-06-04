@@ -52,6 +52,7 @@ from .losses import LossBreakdown, compute_losses
 from .memory import MemoryState, WorkingMemory
 from .model import (
     ACTION_ABSORB,
+    ACTION_APPEND,
     ACTION_NAMES,
     ACTION_RESPOND,
     ACTION_SKIP,
@@ -80,7 +81,7 @@ __all__ = [
     "build_tokenizer", "build_answer_vocab", "split_episodes",
     "WorkingMemory", "MemoryState", "LongTermMemory",
     "ConsciousnessTransformer", "StepOutput",
-    "ACTION_ABSORB", "ACTION_RESPOND", "ACTION_SKIP", "ACTION_NAMES",
+    "ACTION_ABSORB", "ACTION_APPEND", "ACTION_RESPOND", "ACTION_SKIP", "ACTION_NAMES",
     "Mind", "LossBreakdown", "compute_losses",
     "ParseTree", "ParseNode", "CausalTable", "CausalRelation", "ConsciousnessState",
     "AbstractParser", "MockNaomiParser",
@@ -129,6 +130,7 @@ def build_default_stack(config: Config, episodes) -> Stack:
     mind = Mind(
         model, memory, config.data.answer_mode,
         reasoning_hops=config.model.reasoning_hops, long_term=long_term,
+        pad_id=tokenizer.pad_id,
     )
     return Stack(
         tokenizer=tokenizer,

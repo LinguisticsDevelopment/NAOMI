@@ -26,8 +26,8 @@ train:
   batch_size: 16
   epochs: 25
   seed: 0
-  weight_answer: 1.0         # answer-correctness loss (main signal)
-  weight_action: 0.5         # action gating (absorb statements / respond to question)
+  weight_answer: 1.0         # answer-correctness loss (the only task signal)
+  weight_novelty: 0.1        # label-free APPEND novelty auxiliary
   weight_consistency: 0.02   # placeholder consciousness consistency loss (kept small)
   grad_clip: 1.0
 
@@ -38,6 +38,6 @@ data:
   val_fraction: 0.2
   seed: 0
   max_context: 6             # max statements per episode (padded)
-  max_level: 3               # curriculum difficulty ceiling (1-3)
+  max_level: 4               # curriculum ceiling (4 = post-question distractors)
   babi_task: 1
   babi_path: null

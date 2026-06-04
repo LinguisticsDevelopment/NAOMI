@@ -6,21 +6,39 @@ working) in the NSM Consciousness Transformer, and records the design decisions.
 ## The research-vs-engineering boundary
 
 **Engineered and working** — the stateful loop and its scaffolding:
-- The state-transition step, the three heads (transition / action / response),
-  the `Mind` unroll, read/write `WorkingMemory`, the loss combination, metrics,
+- The state-transition step, three heads (transition / action repertoire /
+  response), the `Mind` unroll, two-tier read/write memory, the loss, metrics,
   config, tokenizer, the curriculum generator, the bAbI loader, and the NSM
-  prime constants. The loop demonstrably learns to absorb facts, retrieve the
-  relevant one (including recency), and answer (~95% held-out on the curriculum).
+  prime constants. With **no action supervision**, the model chooses
+  absorb/append/respond/skip per item and learns *when* to answer purely from
+  answer correctness (~90% held-out, including the corrupting-distractor level).
 
 **Mocked / placeholder / stubbed** — the actual research lives here:
-- What the **consciousness state means** and its real objective (currently
-  abstract + a placeholder consistency loss).
+- What the **consciousness state means** and its real objective (abstract +
+  placeholder consistency loss).
 - **Semantic composition** onto NSM primes (`MockSemanticMapper`).
 - A **consistent parser** (the rule parser is experimental; wrapped optionally).
-- **Long-term memory** (only per-episode working memory exists).
+- **Cross-episode credit assignment** for the APPEND action (uses a novelty aux).
 - **Textbook ingestion** (`TextbookSource` is a stub — the north star).
 
 ## Open problems
+
+### 0. Emergent actions: what still has a non-outcome signal
+The action repertoire {ABSORB, APPEND, RESPOND, SKIP} is **not** supervised by
+position/label — ABSORB and RESPOND are shaped only by the answer loss (the
+answer is a RESPOND-probability-weighted aggregate, so "when to respond" emerges).
+Two honest caveats remain:
+- **APPEND** only pays off in *future* episodes, so it has no within-episode
+  answer gradient. It currently uses a small **label-free novelty** auxiliary
+  (append what's novel vs. the long-term repo). The principled version needs
+  cross-episode credit assignment (RL / a value over future retrieval), which is
+  unbuilt. A visible symptom: the model will APPEND novel *questions* ("where is
+  bill ?"), not just declarative facts — nothing yet teaches it that questions
+  aren't world facts.
+- **Response timing is under-determined** on easy episodes (a single fact answers
+  the question), so the model answers as soon as it has the fact rather than "at
+  the question". The corrupting-distractor level (level 4) is where timing
+  genuinely matters; `mean_respond_position` is a neutral diagnostic, not a target.
 
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning

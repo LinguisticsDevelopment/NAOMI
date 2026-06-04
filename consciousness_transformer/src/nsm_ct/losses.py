@@ -1,17 +1,21 @@
-"""Losses for the stateful reasoning loop.
+"""Losses for the emergent reasoning loop.
 
-The objective is a weighted sum of three terms:
+No positional action labels: the action choice (absorb / append / respond / skip)
+is **not** supervised. It is shaped only by:
 
-    total = w_answer * answer + w_action * action + w_consistency * consistency
+    total = w_answer * answer + w_novelty * novelty + w_consistency * consistency
 
-* ``answer`` — did it answer correctly? Cross-entropy over multiple-choice
-  options, or over the open-ended answer vocabulary. This is the main signal.
-* ``action`` — weak supervision that teaches the *procedure*: each context
-  statement should be ABSORBed, and the question should trigger RESPOND. This is
-  what makes the model "know it needs to respond."
-* ``consistency`` — the **placeholder** auxiliary consciousness term (L2 between
-  consecutive states; a "don't thrash" prior). TODO(consciousness-loss): replace
-  with the real formulation.
+* ``answer`` — cross-entropy of the RESPOND-weighted answer against the gold
+  answer. This is the sole task signal; it teaches both *what* to answer and,
+  via the RESPOND gate, *when* (the model learns to put response mass on the
+  step after the question, with nothing telling it which item that is).
+* ``novelty`` — a small **label-free** auxiliary for the APPEND action: commit to
+  long-term memory in proportion to how novel an item is vs. what the repo
+  already knows. APPEND only pays off in *future* episodes, so it gets no
+  within-episode answer gradient; this stands in until cross-episode credit
+  assignment (RL) is built. See RESEARCH_NOTES.
+* ``consistency`` — the placeholder consciousness consistency term (L2 between
+  consecutive states). TODO(consciousness-loss).
 """
 
 from __future__ import annotations
@@ -21,8 +25,6 @@ from dataclasses import dataclass
 import torch
 import torch.nn.functional as F
 
-from .model import ACTION_ABSORB, ACTION_RESPOND
-
 
 @dataclass
 class LossBreakdown:
@@ -30,66 +32,44 @@ class LossBreakdown:
 
     total: torch.Tensor
     answer: torch.Tensor
-    action: torch.Tensor
+    novelty: torch.Tensor
     consistency: torch.Tensor
 
 
 def consciousness_consistency_loss(states: torch.Tensor) -> torch.Tensor:
-    """Mean L2 between consecutive consciousness states (placeholder).
-
-    Args:
-        states: ``[B, S, dim]`` the state trajectory across an episode.
-    """
+    """Mean L2 between consecutive consciousness states (placeholder)."""
     if states.shape[1] < 2:
         return states.new_zeros(())
     diffs = states[:, 1:, :] - states[:, :-1, :]
     return diffs.pow(2).mean()
 
 
+def novelty_append_loss(append_gates: torch.Tensor, novelty_target: torch.Tensor,
+                        step_mask: torch.Tensor) -> torch.Tensor:
+    """Push the APPEND gate toward item novelty (masked MSE over real items)."""
+    denom = step_mask.sum().clamp(min=1.0)
+    return ((append_gates - novelty_target) ** 2 * step_mask).sum() / denom
+
+
 def compute_losses(
     out: dict,
     batch,
     weight_answer: float,
-    weight_action: float,
+    weight_novelty: float,
     weight_consistency: float,
 ) -> LossBreakdown:
-    """Combine answer, action, and consistency objectives.
-
-    Args:
-        out: Output dict from :meth:`nsm_ct.agent.Mind.forward`.
-        batch: The :class:`~nsm_ct.dataset.EpisodeBatch` that produced ``out``.
-        weight_*: Term weights.
-    """
-    answer_logits = out["answer_logits"]
-    answer_loss = F.cross_entropy(answer_logits, batch.answer_target)
-
-    # Action supervision: context steps -> ABSORB (masked by real steps),
-    # question step -> RESPOND.
-    ctx_logits = out["ctx_action_logits"]            # [B, T, A]
-    b, t, a = ctx_logits.shape
-    if t > 0:
-        targets = torch.full((b, t), ACTION_ABSORB, dtype=torch.long, device=ctx_logits.device)
-        ce = F.cross_entropy(
-            ctx_logits.reshape(b * t, a), targets.reshape(b * t), reduction="none"
-        ).reshape(b, t)
-        step_mask = batch.step_mask
-        ctx_action_loss = (ce * step_mask).sum() / step_mask.sum().clamp(min=1.0)
-    else:
-        ctx_action_loss = ctx_logits.new_zeros(())
-
-    q_targets = torch.full(
-        (b,), ACTION_RESPOND, dtype=torch.long, device=ctx_logits.device
+    """Combine the answer, novelty, and consistency objectives."""
+    answer_loss = F.cross_entropy(out["answer_logits"], batch.answer_target)
+    novelty_loss = novelty_append_loss(
+        out["append_gates"], out["novelty_target"], batch.step_mask
     )
-    q_action_loss = F.cross_entropy(out["q_action_logits"], q_targets)
-    action_loss = ctx_action_loss + q_action_loss
-
     consistency_loss = consciousness_consistency_loss(out["states"])
 
     total = (
         weight_answer * answer_loss
-        + weight_action * action_loss
+        + weight_novelty * novelty_loss
         + weight_consistency * consistency_loss
     )
     return LossBreakdown(
-        total=total, answer=answer_loss, action=action_loss, consistency=consistency_loss
+        total=total, answer=answer_loss, novelty=novelty_loss, consistency=consistency_loss
     )

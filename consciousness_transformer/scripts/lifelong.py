@@ -33,7 +33,7 @@ def main() -> None:
     cfg = load_config(args.config)
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
 
-    _stack, history = run_lifelong(
+    stack, history = run_lifelong(
         cfg,
         num_rounds=args.rounds,
         episodes_per_round=args.episodes_per_round,
@@ -46,6 +46,13 @@ def main() -> None:
         f"| long-term memory grew to {last['ltm_entries']} entries, "
         f"{last['ltm_connections']} connections."
     )
+    if stack.long_term is not None:
+        base = stack.long_term.facts(kind="base", limit=4)
+        learned = stack.long_term.facts(kind="learned", limit=4)
+        if base:
+            print("  base world facts (sample):   " + " | ".join(base))
+        if learned:
+            print("  learned facts (sample):      " + " | ".join(learned))
 
 
 if __name__ == "__main__":
