@@ -208,7 +208,7 @@ curriculum level, and input encoder.
 | Emergent trust (corroboration vs contradiction, no labels) | **Real** (in write content, not gates) | `model.py`, `agent.py`, `episode.py` |
 | Memory-bottleneck readout (answer recoverable from memory alone) | **Real** | `agent.py`, `losses.py` |
 | Overwrite-not-forget memory (content-addressed + LTM overwrite) | **Real** | `memory.py`, `long_term_memory.py` |
-| Chained-question answering in one unreset run | **Real** (trained; held-out acc lags single-Q) | `agent.py`, `losses.py`, `scripts/probe_consistency.py` |
+| Chained-question answering in one unreset run | **Real** (trained: ~0.9 held-out acc + consistency) | `agent.py`, `losses.py`, `scripts/probe_consistency.py` |
 | Cross-episode credit assignment for APPEND | **Not built** (next step) | RESEARCH_NOTES |
 | Discrete (RL) input-pull control | **Not built** (next rung) | RESEARCH_NOTES |
 | WSD scorer + coherence-driven re-evaluation | **Real, standalone** | `wsd.py` |

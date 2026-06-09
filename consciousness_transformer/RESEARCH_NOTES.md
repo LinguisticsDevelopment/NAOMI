@@ -99,12 +99,14 @@ per-question loss (`weight_multi`) trains it; `chained_question_episode` /
 `scripts/probe_consistency.py` trains with and without the loss on identical data
 and reports held-out consistency (Q1 vs Q1') and per-question accuracy
 (`answer_at_positions` remains the hard readout for untrained diagnostics).
-Honest state: the per-question loss accelerates consistency markedly at short
-training and both regimes converge to high consistency, but **held-out
-per-question accuracy (~0.5–0.6 vs 0.25 chance) lags the single-question number
-(~0.9)** — answering *at the right moment inside a longer stream* is genuinely
-harder than answering once at the end. Closing that gap (longer training,
-window sharpening, a calibrated "answer now" signal) is the open follow-up.
+Result (held-out, n=64, one unreset run each, 2500 steps): with 96 chained
+training episodes per-question accuracy sits at ~0.5; with 384 it reaches
+**0.84/0.92/0.92 (Q1/Q2/Q1') with consistency 0.89** — on par with the
+single-question ~0.9. Without the per-question loss, the same 384 episodes leave
+accuracy at ~0.5 (consistency 0.84, partly "consistently wrong"): the loss, not
+just the data, converts chained streams into the capability. Remaining open: a
+calibrated "answer now" signal instead of the fixed soft window, and longer
+chains / more questions per stream.
 
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
