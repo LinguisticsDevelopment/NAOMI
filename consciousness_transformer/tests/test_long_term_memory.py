@@ -86,6 +86,7 @@ def _small_cfg():
     cfg.model.nhead = 2
     cfg.model.dim_feedforward = 32
     cfg.model.loop_mode = "sequential"  # clean per-item consolidation for these tests
+    cfg.input_encoder = "token"
     cfg.model.use_long_term = True
     cfg.data.num_episodes = 16
     cfg.train.batch_size = 8

@@ -47,6 +47,7 @@ class ParseNode:
     token: Optional[str] = None
     children: List["ParseNode"] = field(default_factory=list)
     relation: Optional[str] = None
+    index: Optional[int] = None  # source word position (for aligning structure to tokens)
 
     @property
     def is_leaf(self) -> bool:

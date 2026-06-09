@@ -113,6 +113,17 @@ input-pull control is an RL problem and is the next rung (RESEARCH_NOTES).
 `model.loop_mode: sequential` selects the legacy one-tick-per-item loop (with
 `reasoning_hops > 1` for extra post-stream reasoning passes), kept as a baseline.
 
+**Structured "thoughts" as input (default).** Each sentence is parsed by
+`quantum_parser`; its structure — every token's syntactic **role** (SUBJECT,
+OBJECT, …) and **tree depth** — is aligned back onto the full token stream and fed
+as *additive* embeddings (`structure.py`, `model.step`). It's **lossless** (the
+words are always there, so a dropped/mis-attached parse can't corrupt the input)
+and **zero-initialized** (structure starts as a no-op and is used only once it
+helps). On the curriculum it lifts held-out accuracy ~0.90 → ~0.92.
+`input_encoder: token` turns it off. Honest limits: the rule parser is solid on
+controlled sentences but lexicon-bounded — it won't survive open-domain prose,
+which is exactly why the **learned tree-builder** (Stage 2) is next.
+
 **Chained questions, one unreset run.** Streams can contain **several questions**
 (`facts, Q1, Q2, Q1-repeated`); the controlled loop reads out a per-question
 answer through a soft pointer window (`question_logits`), trained by the
@@ -217,7 +228,10 @@ curriculum level, and input encoder.
 | Curriculum reasoning episodes | **Real, synthetic** (memory-required) | `episode.py` |
 | bAbI loader | **Real** (offline fallback) | `episode.py` |
 | NSM prime inventory (~65) | **Real constants** | `nsm_primes.py` |
-| Input encoder (token) | **Real default** | `input_encoder.py` |
+| Tree-aware structured input (parse role + depth fed alongside words) | **Real, default** (additive, zero-init safe) | `structure.py`, `input_encoder.py`, `model.py` |
+| Rule-based parser (`quantum_parser`) producing the structure | **Real** (controlled text; weak on open-domain) | `quantum_parser/`, `quantum_adapter.py` |
+| Learned tree-builder (model induces its own structure) | **Not built** (Stage 2, scaffolded on the rule parser) | RESEARCH_NOTES |
+| Semantic mapping onto NSM primes ("meaning") | **Mocked** | `semantic_mapper.py` |
 | Parser input encoder | **Optional / experimental** (quantum_parser) | `input_encoder.py`, `quantum_adapter.py` |
 | Semantic mapping → NSM meaning | **Mocked** | `semantic_mapper.py` |
 | Consciousness state *meaning* + real consistency loss | **Placeholder** | `losses.py`, RESEARCH_NOTES |

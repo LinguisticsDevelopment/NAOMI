@@ -4,9 +4,10 @@
 # Curriculum phase (reserved for staging harder regimes over time).
 curriculum_phase: 1
 
-# Sentence -> input-object encoder: "token" (plain, default) or "parser"
-# (wraps the experimental quantum_parser; falls back to tokens on failure).
-input_encoder: token
+# Sentence -> input-object encoder: "parser" (default) feeds the quantum_parser's
+# structure (per-token role + tree depth) alongside the words; "token" is plain
+# tokenization. Structure is additive + zero-init, so a flaky parse never hurts.
+input_encoder: parser
 
 model:
   consciousness_dim: 48      # width of the abstract state vector

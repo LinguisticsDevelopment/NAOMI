@@ -75,7 +75,7 @@ class Config:
     """Top-level configuration."""
 
     curriculum_phase: int = 1
-    input_encoder: str = "token"     # token | parser
+    input_encoder: str = "parser"    # parser (feed parse structure) | token (plain)
     model: ModelConfig = field(default_factory=ModelConfig)
     train: TrainConfig = field(default_factory=TrainConfig)
     data: DataConfig = field(default_factory=DataConfig)

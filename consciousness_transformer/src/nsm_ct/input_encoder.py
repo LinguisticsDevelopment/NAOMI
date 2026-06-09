@@ -21,9 +21,14 @@ from __future__ import annotations
 import abc
 import os
 import sys
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
+from .structure import align_structure, role_id
 from .tokenizer import SimpleTokenizer
+
+# A structured encoding: aligned (token ids, role ids, depths) of equal length.
+# Role ids index the dedicated structure vocab (see structure.py), not the tokens.
+Structured = Tuple[List[int], List[int], List[int]]
 
 
 class AbstractInputEncoder(abc.ABC):
@@ -32,6 +37,11 @@ class AbstractInputEncoder(abc.ABC):
     @abc.abstractmethod
     def encode(self, sentence: str) -> List[int]:
         raise NotImplementedError
+
+    def encode_structured(self, sentence: str) -> Structured:
+        """Tokens plus per-token (role, depth) structure. Default: no structure."""
+        ids = self.encode(sentence)
+        return ids, [0] * len(ids), [0] * len(ids)  # role 0 = NOROLE, depth 0
 
 
 class TokenInputEncoder(AbstractInputEncoder):
@@ -89,22 +99,29 @@ class ParserInputEncoder(AbstractInputEncoder):
             self._warned = True
 
     def encode(self, sentence: str) -> List[int]:
+        # Plain token ids (the words the model embeds). Structure rides alongside
+        # via encode_structured; this keeps `encode` lossless and consistent.
+        return self.tokenizer.encode(sentence)
+
+    def _parse_tree(self, sentence: str):
+        """Best-effort parse tree, or None on any failure (parser is untrusted)."""
         if getattr(self, "_parser", None) is None:
-            return self._fallback.encode(sentence)
+            return None
         try:
             from .quantum_adapter import hypothesis_to_tree  # local import
-            from .serialization import serialize_parse_tree
 
             words = self._tag(sentence)
-            chart = self._parser.parse(words)
-            hyp = chart.best_hypothesis()
-            if hyp is None:
-                return self._fallback.encode(sentence)
-            tree = hypothesis_to_tree(hyp, sentence)
-            return self.tokenizer.encode_tokens(serialize_parse_tree(tree))
+            hyp = self._parser.parse(words).best_hypothesis()
+            return hypothesis_to_tree(hyp, sentence) if hyp is not None else None
         except Exception as exc:  # pragma: no cover - parser is experimental
-            self._note(f"parse failed ({exc}); using plain tokenization.")
-            return self._fallback.encode(sentence)
+            self._note(f"parse failed ({exc}); feeding tokens without structure.")
+            return None
+
+    def encode_structured(self, sentence: str) -> Structured:
+        tree = self._parse_tree(sentence)
+        tokens, roles, depths = align_structure(sentence, tree)
+        return (self.tokenizer.encode_tokens(tokens),
+                [role_id(r) for r in roles], depths)
 
 
 def make_input_encoder(name: str, tokenizer: SimpleTokenizer) -> AbstractInputEncoder:

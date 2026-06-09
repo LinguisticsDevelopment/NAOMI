@@ -137,9 +137,11 @@ class Psyche(nn.Module):
             past = (p >= n_real).float()                        # [B] 1 = nothing left
             cur_ids = batch.item_ids[rows, idx]                 # [B, L]
             cur_mask = batch.item_mask[rows, idx] * (1.0 - past).unsqueeze(-1)
+            cur_roles = batch.item_roles[rows, idx]
+            cur_depths = batch.item_depths[rows, idx]
 
             mem_read = self._read(mem, state)
-            out = self.model.step(state, cur_ids, cur_mask, mem_read)
+            out = self.model.step(state, cur_ids, cur_mask, mem_read, cur_roles, cur_depths)
             new_state = out.new_state
             trust = self.model.trust_gate(new_state, mem_read)  # [B]
             probs = F.softmax(out.action_logits, dim=-1)
@@ -249,7 +251,10 @@ class Psyche(nn.Module):
         for t in range(num_items):
             real = batch.step_mask[:, t]
             mem_read = self._read(mem, state)
-            out = self.model.step(state, batch.item_ids[:, t], batch.item_mask[:, t], mem_read)
+            out = self.model.step(
+                state, batch.item_ids[:, t], batch.item_mask[:, t], mem_read,
+                batch.item_roles[:, t], batch.item_depths[:, t],
+            )
             probs = F.softmax(out.action_logits, dim=-1)
             new_state = out.new_state
             trust = self.model.trust_gate(new_state, mem_read)

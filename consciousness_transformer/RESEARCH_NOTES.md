@@ -108,6 +108,29 @@ just the data, converts chained streams into the capability. Remaining open: a
 calibrated "answer now" signal instead of the fixed soft window, and longer
 chains / more questions per stream.
 
+### 0e. Structured "thoughts" as input — Stage 1 done, Stage 2 next
+The goal is to feed the model **parsed structure** (not just words) and ultimately
+let it **build its own trees**. Status, scaffolded:
+- **Stage 1 (built, default).** `quantum_parser` parses each sentence; per-token
+  **role** + **tree depth** are aligned onto the full token stream
+  (`structure.align_structure`) and added as embeddings (`model.step`). The design
+  is deliberately *additive + zero-init*: words are never replaced (a lossy parse
+  can't corrupt input) and structure starts as a no-op, learned only if it helps.
+  On the curriculum it lifts held-out ~0.90 → ~0.92. The encoding is **flat per
+  token** (role + depth), a lightweight stand-in for true hierarchy — real
+  structural attention / tree position encodings are still open.
+- **Honest parser limit.** The rule parser is good on *controlled* sentences
+  (curriculum, simple textbook prose) but lexicon-bounded (~224 words + suffix
+  fallback) and hand-authored (85 rules); it degrades to NOROLE on open-domain
+  text. So "feed structure" and "real open-domain corpus" are in tension — which
+  is the case for Stage 2.
+- **Stage 2 (next): the model builds its own trees.** A learned structure module
+  that predicts the parse (supervised/distilled from the rule parser on controlled
+  text, then free to improve and generalize past the lexicon). This is the bridge
+  to real corpora and the "build its own trees" half of the goal.
+- **Still mocked:** semantic mapping onto NSM primes (`MockSemanticMapper`) — the
+  *meaning* layer — is not wired into the loop; only syntactic structure is.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a

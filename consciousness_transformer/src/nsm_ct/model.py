@@ -24,6 +24,7 @@ import torch
 import torch.nn as nn
 
 from .config import ModelConfig
+from .structure import MAX_DEPTH, NUM_ROLES
 
 # Action repertoire for the gating head. The model CHOOSES among these per item;
 # nothing supervises the choice positionally (see losses.py / RESEARCH_NOTES).
@@ -125,6 +126,15 @@ class ConsciousnessTransformer(nn.Module):
         self.option_proj = nn.Linear(d, d)                       # MC option embeddings
         self.answer_classifier = nn.Linear(d, max(answer_vocab_size, 1))  # open-ended
 
+        # Tree-aware structure (created LAST so token-mode init is unchanged):
+        # per-token parse role + depth, added onto word embeddings. Zero-init, so
+        # structure starts as a no-op and is learned only if it helps — and a
+        # lossy/noisy parse can never corrupt the word stream.
+        self.role_embedding = nn.Embedding(NUM_ROLES, d)
+        self.depth_embedding = nn.Embedding(MAX_DEPTH, d)
+        nn.init.zeros_(self.role_embedding.weight)
+        nn.init.zeros_(self.depth_embedding.weight)
+
     # -- one transition step -------------------------------------------------
     def _transition(
         self,
@@ -162,9 +172,16 @@ class ConsciousnessTransformer(nn.Module):
         input_ids: torch.Tensor,    # [B, L]
         input_mask: torch.Tensor,   # [B, L] (1 real, 0 pad)
         mem_read: torch.Tensor,     # [B, mem_dim]
+        input_roles: torch.Tensor = None,   # [B, L] per-token parse role id (optional)
+        input_depths: torch.Tensor = None,  # [B, L] per-token parse depth (optional)
     ) -> StepOutput:
-        """One state transition over a single input sentence (token ids)."""
-        return self._transition(state, self.token_embedding(input_ids), input_mask == 0, mem_read)
+        """One state transition over a single input sentence (tokens + structure)."""
+        tok = self.token_embedding(input_ids)
+        if input_roles is not None:
+            tok = tok + self.role_embedding(input_roles)            # parse role (zero-init)
+        if input_depths is not None:
+            tok = tok + self.depth_embedding(input_depths.clamp(max=MAX_DEPTH - 1))
+        return self._transition(state, tok, input_mask == 0, mem_read)
 
     def control_gate(self, state: torch.Tensor) -> torch.Tensor:
         """Loop-control distribution over {READ, THINK, RESPOND} (``[B, 3]``)."""

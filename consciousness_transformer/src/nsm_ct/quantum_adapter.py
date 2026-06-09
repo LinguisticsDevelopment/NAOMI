@@ -28,9 +28,17 @@ def _node_token(node: Any):
     return getattr(value, "text", None) if value is not None else None
 
 
+def _node_index(node: Any):
+    i = getattr(node, "index", None)
+    return int(i) if isinstance(i, int) and i >= 0 else None
+
+
 def _build(idx: int, nodes: list, edges: list, relation: str | None, seen: set) -> ParseNode:
     node = nodes[idx]
-    pnode = ParseNode(label=_node_label(node), token=_node_token(node), relation=relation)
+    pnode = ParseNode(
+        label=_node_label(node), token=_node_token(node),
+        relation=relation, index=_node_index(node),
+    )
     if idx in seen:  # guard against cycles in an experimental parser
         return pnode
     seen.add(idx)

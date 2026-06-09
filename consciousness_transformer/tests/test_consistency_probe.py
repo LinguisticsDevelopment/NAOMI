@@ -15,6 +15,7 @@ def test_chained_question_probe_runs_and_metric_well_defined():
     cfg.model.num_layers = 1
     cfg.model.nhead = 2
     cfg.model.dim_feedforward = 32
+    cfg.input_encoder = "token"
 
     eps, positions, pairs = [], None, None
     for i in range(6):
@@ -41,6 +42,7 @@ def test_multi_question_loss_trains_chained_answering():
     cfg.model.num_layers = 1
     cfg.model.nhead = 2
     cfg.model.dim_feedforward = 32
+    cfg.input_encoder = "token"
     torch.manual_seed(0)
 
     eps = generate_chained_episodes(12, seed=3)
