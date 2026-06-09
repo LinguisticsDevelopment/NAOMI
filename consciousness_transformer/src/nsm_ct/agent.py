@@ -123,8 +123,10 @@ class Psyche(nn.Module):
         states = [state]
         rec_w, rec_cread, rec_crespond = [], [], []
         rec_trust, rec_append, rec_write, rec_action, rec_rlog, rec_pointer = [], [], [], [], [], []
+        rec_rlog_mem, rec_wgate = [], []
         answer_num: torch.Tensor = torch.zeros(b, batch.opt_ids.shape[1], device=device)
         answer_den: torch.Tensor = torch.zeros(b, 1, device=device)
+        mem_num: torch.Tensor = torch.zeros(b, batch.opt_ids.shape[1], device=device)
 
         for _ in range(ticks):
             c = self.model.control_gate(state)                  # [B, 3] READ/THINK/RESPOND
@@ -146,20 +148,48 @@ class Psyche(nn.Module):
 
             resp_read = self._read(mem, new_state)
             rlog = self._respond(new_state, resp_read, batch)   # [B, K_opts]
+            # Memory-bottleneck readout: the same response head with the state
+            # zeroed, so the answer must be recoverable from MEMORY alone. Its
+            # loss makes the trust-gated writes load-bearing (the state can't
+            # smuggle the answer past memory).
+            rlog_mem = self._respond(torch.zeros_like(new_state), resp_read, batch)
             answer_num = answer_num + c_respond.unsqueeze(-1) * rlog
             answer_den = answer_den + c_respond.unsqueeze(-1)
+            mem_num = mem_num + c_respond.unsqueeze(-1) * rlog_mem
 
             w = eye[idx] * (1.0 - past).unsqueeze(-1)           # [B, N] one-hot read
             rec_w.append(w); rec_cread.append(c_read); rec_crespond.append(c_respond)
             rec_trust.append(trust); rec_append.append(probs[:, ACTION_APPEND])
+            rec_wgate.append(write_gate)
             rec_write.append(out.write_vector); rec_action.append(out.action_logits)
-            rec_rlog.append(rlog); rec_pointer.append(p)
+            rec_rlog.append(rlog); rec_rlog_mem.append(rlog_mem); rec_pointer.append(p)
 
             p = torch.min(p + c_read, n_real)                   # advance only when reading
             state = new_state
             states.append(state)
 
         answer_logits = answer_num / answer_den.clamp(min=1e-6)
+        answer_logits_mem = mem_num / answer_den.clamp(min=1e-6)
+
+        # Per-question readout for multi-question streams: question j's answer is
+        # the RESPOND-weighted aggregate over the ticks between reading it and
+        # reading the next question (a soft pointer window) — several questions
+        # answered in ONE unreset run, differentiably.
+        P = torch.stack(rec_pointer, dim=1)                     # [B, K]
+        CRESP = torch.stack(rec_crespond, dim=1)                # [B, K]
+        RL = torch.stack(rec_rlog, dim=1)                       # [B, K, opts]
+        qf = batch.q_positions.float()                          # [B, Q] (-1 pad)
+        big = torch.full_like(qf, 1e4)
+        nxt = torch.cat([qf[:, 1:], big[:, :1]], dim=1)
+        nxt = torch.where(nxt < 0, big, nxt)
+        sharp = 8.0
+        in_window = (
+            torch.sigmoid(sharp * (P.unsqueeze(1) - qf.unsqueeze(2) + 0.25))
+            * (1.0 - torch.sigmoid(sharp * (P.unsqueeze(1) - nxt.unsqueeze(2) + 0.25)))
+        )                                                       # [B, Q, K]
+        qw = in_window * CRESP.unsqueeze(1)                     # [B, Q, K]
+        qden = qw.sum(-1, keepdim=True).clamp(min=1e-4)
+        question_logits = (qw.unsqueeze(-1) * RL.unsqueeze(1)).sum(2) / qden  # [B, Q, opts]
 
         W = torch.stack(rec_w, dim=1)                           # [B, K, N]
         CR = torch.stack(rec_cread, dim=1)                      # [B, K]
@@ -172,6 +202,8 @@ class Psyche(nn.Module):
         denom = attn.sum(dim=1).clamp(min=1e-6)                 # [B, N]
         trust_item = (attn * TR.unsqueeze(-1)).sum(dim=1) / denom
         append_item = (attn * (AP * TR).unsqueeze(-1)).sum(dim=1) / denom * batch.step_mask
+        WG = torch.stack(rec_wgate, dim=1)                      # [B, K]
+        write_gate_item = (attn * WG.unsqueeze(-1)).sum(dim=1) / denom * batch.step_mask
         action_item = torch.einsum("bkn,bka->bna", attn, ACT) / denom.unsqueeze(-1)
         # Per-item write vector = the content written at the tick that read that
         # item most (peak read), so consolidated facts stay distinctive rather
@@ -181,15 +213,18 @@ class Psyche(nn.Module):
 
         return {
             "answer_logits": answer_logits,
+            "answer_logits_mem": answer_logits_mem,             # memory-only readout
+            "question_logits": question_logits,                 # [B, Q, opts]
             "action_logits": action_item,                       # [B, N, A]
-            "respond_gates": torch.stack(rec_crespond, dim=1),  # [B, K] (per tick)
+            "respond_gates": CRESP,                             # [B, K] (per tick)
             "append_gates": append_item,                        # [B, N]
             "write_vecs": write_item,                           # [B, N, mem]
             "trust": trust_item,                                # [B, N]
+            "write_gates": write_gate_item,                     # [B, N] effective ABSORB×trust
             "states": torch.stack(states, dim=1),               # [B, K+1, dim]
             "memory_occupancy": self.memory.occupancy(mem),
-            "pointer": torch.stack(rec_pointer, dim=1),         # [B, K] (probe)
-            "respond_logits_ticks": torch.stack(rec_rlog, dim=1),  # [B, K, opts] (probe)
+            "pointer": P,                                       # [B, K] (probe)
+            "respond_logits_ticks": RL,                         # [B, K, opts] (probe)
         }
 
     # -- sequential (legacy) loop -------------------------------------------
@@ -203,11 +238,13 @@ class Psyche(nn.Module):
         states = [state]
         action_logits_list: List[torch.Tensor] = []
         respond_logits_list: List[torch.Tensor] = []
+        respond_logits_mem_list: List[torch.Tensor] = []
         respond_gate_list: List[torch.Tensor] = []
         item_respond_gate_list: List[torch.Tensor] = []
         write_vecs_list: List[torch.Tensor] = []
         append_gate_list: List[torch.Tensor] = []
         trust_list: List[torch.Tensor] = []
+        write_gate_list: List[torch.Tensor] = []
 
         for t in range(num_items):
             real = batch.step_mask[:, t]
@@ -224,11 +261,15 @@ class Psyche(nn.Module):
 
             action_logits_list.append(out.action_logits)
             respond_logits_list.append(self._respond(new_state, resp_read, batch))
+            respond_logits_mem_list.append(
+                self._respond(torch.zeros_like(new_state), resp_read, batch)
+            )
             respond_gate_list.append(respond_gate)
             item_respond_gate_list.append(respond_gate)
             write_vecs_list.append(out.write_vector)
             append_gate_list.append(probs[:, ACTION_APPEND] * real * trust)
             trust_list.append(trust * real)
+            write_gate_list.append(absorb)
 
             state = new_state
             states.append(state)
@@ -242,22 +283,30 @@ class Psyche(nn.Module):
             new_state = out.new_state
             resp_read = self._read(mem, new_state)
             respond_logits_list.append(self._respond(new_state, resp_read, batch))
+            respond_logits_mem_list.append(
+                self._respond(torch.zeros_like(new_state), resp_read, batch)
+            )
             respond_gate_list.append(probs[:, ACTION_RESPOND])
             state = new_state
             states.append(state)
 
         gates = torch.stack(respond_gate_list, dim=1)
         rlog = torch.stack(respond_logits_list, dim=1)
+        rlog_mem = torch.stack(respond_logits_mem_list, dim=1)
         w = gates / gates.sum(dim=1, keepdim=True).clamp(min=1e-6)
         answer_logits = (w.unsqueeze(-1) * rlog).sum(dim=1)
+        answer_logits_mem = (w.unsqueeze(-1) * rlog_mem).sum(dim=1)
 
         return {
             "answer_logits": answer_logits,
+            "answer_logits_mem": answer_logits_mem,
+            "question_logits": None,  # multi-question readout is controlled-mode only
             "action_logits": torch.stack(action_logits_list, dim=1),
             "respond_gates": torch.stack(item_respond_gate_list, dim=1),
             "append_gates": torch.stack(append_gate_list, dim=1),
             "write_vecs": torch.stack(write_vecs_list, dim=1),
             "trust": torch.stack(trust_list, dim=1),
+            "write_gates": torch.stack(write_gate_list, dim=1),
             "states": torch.stack(states, dim=1),
             "memory_occupancy": self.memory.occupancy(mem),
         }

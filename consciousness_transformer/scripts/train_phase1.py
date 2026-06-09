@@ -65,7 +65,8 @@ def main() -> None:
     # --- training loop -----------------------------------------------------
     mind.train()
     for epoch in range(cfg.train.epochs):
-        agg = {"total": 0.0, "answer": 0.0, "consistency": 0.0, "ans_acc": 0.0, "resp_pos": 0.0, "trust_gap": 0.0}
+        agg = {"total": 0.0, "answer": 0.0, "mem": 0.0, "consistency": 0.0,
+               "ans_acc": 0.0, "mem_acc": 0.0, "resp_pos": 0.0, "trust_gap": 0.0}
         n = 0
         for batch in loader:
             batch = batch.to(device)
@@ -74,6 +75,8 @@ def main() -> None:
                 out, batch,
                 weight_answer=cfg.train.weight_answer,
                 weight_consistency=cfg.train.weight_consistency,
+                weight_mem_answer=cfg.train.weight_mem_answer,
+                weight_multi=cfg.train.weight_multi,
             )
             optimizer.zero_grad()
             losses.total.backward()
@@ -82,8 +85,10 @@ def main() -> None:
 
             agg["total"] += float(losses.total.detach())
             agg["answer"] += float(losses.answer.detach())
+            agg["mem"] += float(losses.mem_answer.detach())
             agg["consistency"] += float(losses.consistency.detach())
             agg["ans_acc"] += answer_accuracy(out, batch)
+            agg["mem_acc"] += answer_accuracy({"answer_logits": out["answer_logits_mem"]}, batch)
             agg["resp_pos"] += mean_respond_position(out, batch)
             agg["trust_gap"] += trust_gap(out, batch)
             n += 1
@@ -91,8 +96,9 @@ def main() -> None:
         avg = {k: v / max(n, 1) for k, v in agg.items()}
         print(
             f"epoch {epoch + 1}/{cfg.train.epochs} | total={avg['total']:.4f} "
-            f"answer={avg['answer']:.4f} consistency={avg['consistency']:.4f} "
-            f"| ans_acc={avg['ans_acc']:.3f} resp_pos={avg['resp_pos']:.2f} "
+            f"answer={avg['answer']:.4f} mem={avg['mem']:.4f} "
+            f"consistency={avg['consistency']:.4f} | ans_acc={avg['ans_acc']:.3f} "
+            f"mem_acc={avg['mem_acc']:.3f} resp_pos={avg['resp_pos']:.2f} "
             f"trust_gap={avg['trust_gap']:.3f}"
         )
 

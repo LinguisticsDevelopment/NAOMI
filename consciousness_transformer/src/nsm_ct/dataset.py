@@ -110,11 +110,20 @@ def encode_episode(
         opt_ids = []
         answer_target = answer_vocab[ep.answer_text]
 
+    # All questions in the stream + per-question option targets. Single-question
+    # episodes reduce to the main question (multi-question targets are MC-only).
+    if ep.question_positions is not None and cfg.data.answer_mode == "mc":
+        q_positions, q_targets = list(ep.question_positions), list(ep.question_targets)
+    else:
+        q_positions, q_targets = [question_index], [answer_target]
+
     return {
         "item_ids": item_ids,
         "item_texts": item_texts,
         "item_trust": item_trust,
         "question_index": question_index,
+        "q_positions": q_positions,
+        "q_targets": q_targets,
         "opt_ids": opt_ids,
         "answer_target": answer_target,
     }
@@ -132,6 +141,8 @@ class EpisodeBatch:
     opt_mask: torch.Tensor       # [B, K, Lo]
     answer_target: torch.Tensor  # [B]
     trust_label: torch.Tensor    # [B, T]  (metrics only: 1 trustworthy, 0 contradicted)
+    q_positions: torch.Tensor    # [B, Q]  item index per question (-1 = padding)
+    q_targets: torch.Tensor      # [B, Q]  option index per question (-1 = padding)
     item_texts: object = None    # List[List[str]] provenance (not moved to device)
 
     def to(self, device: torch.device) -> "EpisodeBatch":
@@ -144,6 +155,8 @@ class EpisodeBatch:
             opt_mask=self.opt_mask.to(device),
             answer_target=self.answer_target.to(device),
             trust_label=self.trust_label.to(device),
+            q_positions=self.q_positions.to(device),
+            q_targets=self.q_targets.to(device),
             item_texts=self.item_texts,
         )
 
@@ -174,6 +187,9 @@ def collate(items: List[Dict[str, object]], pad_id: int) -> EpisodeBatch:
     step_mask = torch.zeros((b, max_t), dtype=torch.float32)
     trust_label = torch.ones((b, max_t), dtype=torch.float32)
     question_index = torch.zeros((b,), dtype=torch.long)
+    max_q = max(len(it["q_positions"]) for it in items)
+    q_positions = torch.full((b, max_q), -1, dtype=torch.long)
+    q_targets = torch.full((b, max_q), -1, dtype=torch.long)
     opt_ids = torch.full((b, num_opts, max_lo), pad_id, dtype=torch.long)
     opt_mask = torch.zeros((b, num_opts, max_lo), dtype=torch.float32)
     answer_target = torch.zeros((b,), dtype=torch.long)
@@ -188,6 +204,9 @@ def collate(items: List[Dict[str, object]], pad_id: int) -> EpisodeBatch:
         trust = it["item_trust"]
         trust_label[i, : len(trust)] = torch.tensor(trust, dtype=torch.float32)
         question_index[i] = int(it["question_index"])
+        nq = len(it["q_positions"])
+        q_positions[i, :nq] = torch.tensor(it["q_positions"], dtype=torch.long)
+        q_targets[i, :nq] = torch.tensor(it["q_targets"], dtype=torch.long)
         item_texts.append(list(it["item_texts"]))
 
         if is_mc:
@@ -199,7 +218,8 @@ def collate(items: List[Dict[str, object]], pad_id: int) -> EpisodeBatch:
     return EpisodeBatch(
         item_ids=item_ids, item_mask=item_mask, step_mask=step_mask,
         question_index=question_index, opt_ids=opt_ids, opt_mask=opt_mask,
-        answer_target=answer_target, trust_label=trust_label, item_texts=item_texts,
+        answer_target=answer_target, trust_label=trust_label,
+        q_positions=q_positions, q_targets=q_targets, item_texts=item_texts,
     )
 
 

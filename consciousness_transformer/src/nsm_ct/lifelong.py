@@ -89,6 +89,7 @@ def run_lifelong(
                 out, batch,
                 weight_answer=config.train.weight_answer,
                 weight_consistency=config.train.weight_consistency,
+                weight_mem_answer=config.train.weight_mem_answer,
             )
             optimizer.zero_grad()
             losses.total.backward()

@@ -40,17 +40,22 @@ def test_one_full_unroll_and_training_step():
 
     out = stack.psyche(batch)
     assert out["answer_logits"].shape == (b, batch.opt_ids.shape[1])
+    assert out["answer_logits_mem"].shape == out["answer_logits"].shape  # memory-only readout
+    assert out["question_logits"].shape == (b, batch.q_positions.shape[1], batch.opt_ids.shape[1])
     assert out["action_logits"].shape == (b, t, NUM_ACTIONS)   # item-attributed
     assert out["append_gates"].shape == (b, t)
     assert out["trust"].shape == (b, t)
+    assert out["write_gates"].shape == (b, t)
     # respond gates are per control-tick (read/think/respond), not per item
     assert out["respond_gates"].shape == (b, t + cfg.model.control_slack)
     assert out["pointer"].shape == (b, t + cfg.model.control_slack)
     states = out["states"]
     assert (states[:, 0] - states[:, -1]).abs().sum() > 0
 
-    losses = compute_losses(out, batch, 1.0, 0.05)
+    losses = compute_losses(out, batch, 1.0, 0.05, weight_mem_answer=0.25, weight_multi=0.5)
     assert torch.isfinite(losses.total)
+    for c in (losses.answer, losses.mem_answer, losses.multi_answer, losses.consistency):
+        assert torch.isfinite(c)
     opt = torch.optim.AdamW(stack.psyche.parameters(), lr=1e-3)
     opt.zero_grad()
     losses.total.backward()
@@ -87,6 +92,25 @@ def test_controlled_overfit_learns_answer():
         loss = compute_losses(out, batch, 1.0, 0.0).total
         opt.zero_grad(); loss.backward(); opt.step()
     assert answer_accuracy(stack.psyche(batch), batch) > max(0.5, init)
+
+
+def test_memory_bottleneck_makes_memory_load_bearing():
+    """With the memory-bottleneck loss, the answer is recoverable from MEMORY
+    alone (state zeroed at readout) — trust-gated writes must carry the fact."""
+    cfg = _small_cfg()
+    torch.manual_seed(0)
+    episodes = CurriculumGenerator(max_level=2, seed=0).generate(16)
+    stack = build_default_stack(cfg, episodes)
+    batch = _batch(cfg, episodes, stack, 16)
+    init_mem = answer_accuracy({"answer_logits": stack.psyche(batch)["answer_logits_mem"]}, batch)
+    opt = torch.optim.AdamW(stack.psyche.parameters(), lr=1e-2)
+    for _ in range(250):
+        out = stack.psyche(batch)
+        loss = compute_losses(out, batch, 1.0, 0.0, weight_mem_answer=1.0).total
+        opt.zero_grad(); loss.backward(); opt.step()
+    final = stack.psyche(batch)
+    mem_acc = answer_accuracy({"answer_logits": final["answer_logits_mem"]}, batch)
+    assert mem_acc > max(0.5, init_mem)
 
 
 def test_no_action_supervision_in_loss():

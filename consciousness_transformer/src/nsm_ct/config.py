@@ -48,7 +48,9 @@ class TrainConfig:
     batch_size: int = 16
     epochs: int = 5
     seed: int = 0
-    weight_answer: float = 1.0        # answer-correctness loss (the only task signal)
+    weight_answer: float = 1.0        # answer-correctness loss (the core task signal)
+    weight_mem_answer: float = 0.25   # memory-bottleneck readout (makes trust load-bearing)
+    weight_multi: float = 0.0         # per-question loss for multi-question streams
     weight_consistency: float = 0.05  # placeholder consciousness consistency weight
     grad_clip: float = 1.0
 

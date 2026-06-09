@@ -35,14 +35,22 @@ RESPOND-probability-weighted aggregate (so "when to respond" emerges); trust
 scales how strongly each item is written to memory (so "whom to trust" emerges,
 because answering corroboration episodes correctly requires discounting the
 contradiction). Open issues:
-- **Trust is modestly leveraged** (and can go slightly *negative* in the
-  controlled loop). `trust_gap > 0` in sequential mode, but the signal is small
-  and the controlled loop tends to solve corroboration via the response head
-  instead, so nothing *forces* trust to carry the load. Making trust the necessary
-  mechanism (a bottleneck, or an explicit contradiction-detection objective) is
-  open. Distinguishing **contradiction from temporal update** ("moved to") is also
-  unsolved — both look like a memory conflict; overwrite memory (§0c) currently
-  treats them the same way (latest trusted write wins).
+- **Trust: memory is load-bearing now; the trust *gate* still isn't.** The
+  **memory-bottleneck readout** (`answer_logits_mem`: the response head with the
+  state zeroed, weighted by `weight_mem_answer`) forces the answer to be
+  recoverable from memory alone — and it works: mem-only accuracy tracks full
+  accuracy (~98% train) with no cost to the headline number. But a focused
+  diagnostic (level-5-only training, bottleneck heavy) shows both the trust-head
+  gap *and* the effective write-gate gap (`trust_gap(out, batch, key=
+  "write_gates")`) hover near zero while mem-only accuracy is high: the model
+  discounts the contradiction in **write-content space** (what it writes for the
+  false item simply doesn't match the question's read query), not in gate space.
+  So "whom to trust" demonstrably emerges *in memory*, but no scalar gate is
+  forced to carry it; the trust head and ABSORB are redundant routes. Making the
+  gate the necessary mechanism (constrain write vectors to item content only?) is
+  open, as is distinguishing **contradiction from temporal update** ("moved to")
+  — both look like a memory conflict; overwrite memory (§0c) treats them the same
+  way (latest trusted write wins).
 - **APPEND** still only pays off in *future* episodes, so it has no within-episode
   answer gradient; it is gated by trust × its action prob, a sensible proxy but
   not real **cross-episode credit assignment** (RL / a value over future
@@ -81,15 +89,22 @@ place. Open: overwrite keys on the model's write *vector* (working) or exact tex
 regardless of wording) needs structure we don't yet extract, and contradiction vs.
 temporal-update still resolve identically.
 
-### 0d. Chained-question consistency (probe)
-`Psyche.answer_at_positions` answers several questions in **one unreset run** (it
-reads out at the tick the pointer passes each question), and
-`scripts/probe_consistency.py` measures whether a repeated question (Q1 vs a later
-Q1', after an intervening Q2) gets the same answer (~0.70 consistency at light
-training). This is a **diagnostic**, not a trained capability — the model is not
-trained on multi-question streams, and per-question accuracy at arbitrary readout
-ticks is weaker than the single-question number. Training on multi-question
-episodes (and a calibrated "answer now" signal) is the open follow-up.
+### 0d. Chained-question answering (trained capability + probe)
+Multi-question streams are now **trained**, not just probed. The controlled loop
+emits `question_logits`: per question, a RESPOND-weighted readout over the ticks
+between reading that question and reading the next (a soft pointer window) — so
+several questions are answered in **one unreset run**, differentiably. The
+per-question loss (`weight_multi`) trains it; `chained_question_episode` /
+`generate_chained_episodes` supply streams (`facts, Q1, Q2(other), Q1'(repeat)`).
+`scripts/probe_consistency.py` trains with and without the loss on identical data
+and reports held-out consistency (Q1 vs Q1') and per-question accuracy
+(`answer_at_positions` remains the hard readout for untrained diagnostics).
+Honest state: the per-question loss accelerates consistency markedly at short
+training and both regimes converge to high consistency, but **held-out
+per-question accuracy (~0.5–0.6 vs 0.25 chance) lags the single-question number
+(~0.9)** — answering *at the right moment inside a longer stream* is genuinely
+harder than answering once at the end. Closing that gap (longer training,
+window sharpening, a calibrated "answer now" signal) is the open follow-up.
 
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning

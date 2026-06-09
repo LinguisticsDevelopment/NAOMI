@@ -31,7 +31,10 @@ train:
   batch_size: 16
   epochs: 25
   seed: 0
-  weight_answer: 1.0         # answer-correctness loss (the only task signal)
+  weight_answer: 1.0         # answer-correctness loss (the core task signal)
+  weight_mem_answer: 0.25    # memory-bottleneck readout: answer must be recoverable
+                             # from memory alone (makes trust-gated writes load-bearing)
+  weight_multi: 0.0          # per-question loss for multi-question streams (probe trains with it)
   weight_consistency: 0.02   # placeholder consciousness consistency loss (kept small)
   grad_clip: 1.0
 

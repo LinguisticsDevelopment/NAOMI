@@ -59,8 +59,10 @@ its own loop, choosing to **read** the next sentence, **think**, or **respond**;
 it learns *what* to remember, *whom to trust* (level 5: two sources corroborate,
 one contradicts → answer the corroborated place), and to handle *updates* by
 **overwriting** memory (level 6: "X moved to Y" → the new place; nothing is
-forgotten). `resp_pos` shows where it placed its response mass; `trust_gap` probes
-whether it trusts corroborated over contradicted items. Set
+forgotten). A **memory-bottleneck readout** (`mem_acc`) checks the answer is
+recoverable from memory alone — it tracks full accuracy, so memory (not a state
+shortcut) carries the facts. `resp_pos` shows where it placed its response mass;
+`trust_gap` probes whether it trusts corroborated over contradicted items. Set
 `model.loop_mode: sequential` for the simpler one-tick-per-item baseline.
 
 Use `--source babi` to train on Facebook bAbI (falls back to the curriculum
@@ -82,8 +84,11 @@ and reads the state slot to produce **three heads**:
 
 Plus a **trust** signal (`trust_gate`) that judges each item against what memory
 already holds and **scales how strongly it is written** — so corroborated info is
-used and contradicted info is discounted. Trust is emergent (no trust labels): it
-is learned purely because answering correctly requires discounting contradictions.
+used and contradicted info is discounted. Trust is emergent (no trust labels): a
+**memory-bottleneck readout** (`weight_mem_answer`: the response head with the
+state zeroed) requires the answer to be recoverable from memory alone, so the
+trust-gated writes must carry the facts. (Honest finding: the *discounting* ends
+up in the write **content**, not in any scalar gate — see RESEARCH_NOTES.)
 
 Plus a **control** head (`control_gate`) over `{READ, THINK, RESPOND}` that drives
 the self-controlled loop (below).
@@ -107,6 +112,13 @@ approximation (a soft-advancing pointer + READ-biased init); truly discrete
 input-pull control is an RL problem and is the next rung (RESEARCH_NOTES).
 `model.loop_mode: sequential` selects the legacy one-tick-per-item loop (with
 `reasoning_hops > 1` for extra post-stream reasoning passes), kept as a baseline.
+
+**Chained questions, one unreset run.** Streams can contain **several questions**
+(`facts, Q1, Q2, Q1-repeated`); the controlled loop reads out a per-question
+answer through a soft pointer window (`question_logits`), trained by the
+per-question loss (`weight_multi`). `scripts/probe_consistency.py` trains with and
+without it and reports whether the repeated question gets the same answer
+(consistency) plus per-question accuracy.
 
 ### Two-tier memory & lifelong learning
 
@@ -193,9 +205,10 @@ curriculum level, and input encoder.
 | Emergent action repertoire (absorb/append/respond/skip, no labels) | **Real** | `model.py`, `agent.py`, `losses.py` |
 | Self-controlled read/think/respond loop (default) | **Real** | `model.py`, `agent.py` |
 | Model-chosen response timing | **Real** | `agent.py` |
-| Emergent trust (corroboration vs contradiction, no labels) | **Real** (modest signal) | `model.py`, `agent.py`, `episode.py` |
+| Emergent trust (corroboration vs contradiction, no labels) | **Real** (in write content, not gates) | `model.py`, `agent.py`, `episode.py` |
+| Memory-bottleneck readout (answer recoverable from memory alone) | **Real** | `agent.py`, `losses.py` |
 | Overwrite-not-forget memory (content-addressed + LTM overwrite) | **Real** | `memory.py`, `long_term_memory.py` |
-| Chained-question consistency probe | **Real** (diagnostic) | `agent.py`, `scripts/probe_consistency.py` |
+| Chained-question answering in one unreset run | **Real** (trained; held-out acc lags single-Q) | `agent.py`, `losses.py`, `scripts/probe_consistency.py` |
 | Cross-episode credit assignment for APPEND | **Not built** (next step) | RESEARCH_NOTES |
 | Discrete (RL) input-pull control | **Not built** (next rung) | RESEARCH_NOTES |
 | WSD scorer + coherence-driven re-evaluation | **Real, standalone** | `wsd.py` |

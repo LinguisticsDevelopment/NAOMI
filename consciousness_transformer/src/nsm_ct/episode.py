@@ -56,6 +56,10 @@ class Episode:
     level: int = 0
     post_context: List[str] = field(default_factory=list)  # distractors AFTER the question
     trust_labels: Optional[List[float]] = None  # per-context-item: 1 trustworthy, 0 contradicted (metrics only)
+    # Multi-question episodes: item indices of ALL questions in the stream and the
+    # correct option index per question (the shared `options` list scores them all).
+    question_positions: Optional[List[int]] = None
+    question_targets: Optional[List[int]] = None
     meta: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -268,7 +272,13 @@ def chained_question_episode(seed: int = 0):
     pa, pb = rng.sample(_PLACES, 2)
     facts = [f"{a} is in the {pa} .", f"{b} is in the {pb} ."]
     rng.shuffle(facts)
-    options = list(_PLACES)  # fixed across all questions
+    # One option set scores every question: both answers + distractors (4 options,
+    # matching the curriculum so chained episodes batch with single-question ones).
+    options = [pa, pb] + rng.sample([p for p in _PLACES if p not in (pa, pb)], 2)
+    rng.shuffle(options)
+    base = len(facts)
+    positions = [base, base + 1, base + 2]                  # Q1, Q2, Q1'
+    gold = [options.index(pa), options.index(pb), options.index(pa)]
     ep = Episode(
         context=facts,
         question=f"where is {a} ?",
@@ -276,11 +286,15 @@ def chained_question_episode(seed: int = 0):
         options=options,
         answer_idx=options.index(pa),
         post_context=[f"where is {b} ?", f"where is {a} ?"],
+        question_positions=positions,
+        question_targets=gold,
     )
-    base = len(facts)
-    positions = [base, base + 1, base + 2]                  # Q1, Q2, Q1'
-    gold = [options.index(pa), options.index(pb), options.index(pa)]
     return ep, positions, gold, [(0, 2)]
+
+
+def generate_chained_episodes(n: int, seed: int = 0) -> List[Episode]:
+    """``n`` chained multi-question episodes (for training the capability)."""
+    return [chained_question_episode(seed=seed * 100_000 + i)[0] for i in range(n)]
 
 
 # ---------------------------------------------------------------------------
