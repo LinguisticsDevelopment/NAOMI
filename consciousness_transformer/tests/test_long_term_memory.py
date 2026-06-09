@@ -9,9 +9,10 @@ from nsm_ct.lifelong import run_lifelong
 from nsm_ct.long_term_memory import LongTermMemory
 
 
-def _ltm(mem_dim=8, state_dim=6, max_size=10000):
+def _ltm(mem_dim=8, state_dim=6, max_size=10000, overwrite=False):
     torch.manual_seed(0)
-    return LongTermMemory(mem_dim=mem_dim, state_dim=state_dim, max_size=max_size)
+    return LongTermMemory(mem_dim=mem_dim, state_dim=state_dim, max_size=max_size,
+                          overwrite=overwrite)
 
 
 # -- store mechanics ---------------------------------------------------------
@@ -54,6 +55,17 @@ def test_pruning_caps_size_and_reindexes_edges():
     assert all(0 <= a < 5 and 0 <= b < 5 for (a, b) in ltm.edges)
 
 
+def test_consolidate_overwrites_near_duplicate_in_place():
+    """Overwrite, not forget: a near-duplicate updates an entry in place; novel
+    content still grows the repo."""
+    ltm = _ltm(overwrite=True)  # threshold 0.9
+    a = torch.zeros(1, 8); a[0, 0] = 1.0
+    b = torch.zeros(1, 8); b[0, 1] = 1.0  # orthogonal to a
+    assert ltm.consolidate(a.clone()) == [0] and len(ltm) == 1
+    assert ltm.consolidate(a.clone()) == [0] and len(ltm) == 1  # identical -> overwrite
+    assert ltm.consolidate(b.clone()) == [1] and len(ltm) == 2  # novel -> append
+
+
 def test_save_load_roundtrip(tmp_path):
     ltm = _ltm()
     ltm.consolidate(torch.randn(5, 8))
@@ -73,32 +85,41 @@ def _small_cfg():
     cfg.model.num_layers = 1
     cfg.model.nhead = 2
     cfg.model.dim_feedforward = 32
+    cfg.model.loop_mode = "sequential"  # clean per-item consolidation for these tests
     cfg.model.use_long_term = True
     cfg.data.num_episodes = 16
     cfg.train.batch_size = 8
     return cfg
 
 
-def test_mind_consolidates_and_accumulates_across_episodes():
+def _loader_batch(cfg, episodes, stack):
+    ds = EpisodeDataset(episodes, stack.encoder, stack.tokenizer, stack.answer_vocab, cfg)
+    loader = make_dataloader(ds, stack.tokenizer.pad_id, cfg.train.batch_size, shuffle=False)
+    return next(iter(loader))
+
+
+def test_mind_consolidates_overwrites_repeats_and_grows_on_new():
     cfg = _small_cfg()
     episodes = CurriculumGenerator(max_level=2, seed=0).generate(cfg.data.num_episodes)
     stack = build_default_stack(cfg, episodes)
     assert stack.long_term is not None
+    batch = _loader_batch(cfg, episodes, stack)
 
-    ds = EpisodeDataset(episodes, stack.encoder, stack.tokenizer, stack.answer_vocab, cfg)
-    loader = make_dataloader(ds, stack.tokenizer.pad_id, cfg.train.batch_size, shuffle=False)
-    batch = next(iter(loader))
-
-    out = stack.mind(batch)
-    first = stack.mind.consolidate(out, batch)
+    out = stack.psyche(batch)
+    first = stack.psyche.consolidate(out, batch)
     assert first > 0
     size_after_first = len(stack.long_term)
     # entries carry their fact text (a readable "facts we know" repo)
     assert any(stack.long_term.facts())
 
-    # a second episode batch keeps growing the persistent repo
-    out2 = stack.mind(batch)
-    stack.mind.consolidate(out2, batch)
+    # Re-consolidating the SAME facts overwrites in place — no growth (not forgotten).
+    stack.psyche.consolidate(stack.psyche(batch), batch)
+    assert len(stack.long_term) == size_after_first
+
+    # A genuinely different batch grows the persistent repo.
+    new_eps = CurriculumGenerator(max_level=3, seed=7).generate(cfg.data.num_episodes)
+    new_batch = _loader_batch(cfg, new_eps, stack)
+    stack.psyche.consolidate(stack.psyche(new_batch), new_batch)
     assert len(stack.long_term) > size_after_first
 
 

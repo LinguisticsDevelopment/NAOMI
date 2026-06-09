@@ -6,19 +6,24 @@ working) in the NSM Consciousness Transformer, and records the design decisions.
 ## The research-vs-engineering boundary
 
 **Engineered and working** — the stateful loop and its scaffolding:
-- The state-transition step, three heads (transition / action repertoire /
-  response), the `Mind` unroll, two-tier read/write memory, the loss, metrics,
-  config, tokenizer, the curriculum generator, the bAbI loader, and the NSM
-  prime constants. With **no action supervision**, the model chooses
-  absorb/append/respond/skip per item and learns *when* to answer purely from
-  answer correctness (~90% held-out, including the corrupting-distractor level).
+- The state-transition step, the heads (transition / action repertoire / control /
+  response / trust), the `Psyche` unroll (self-controlled loop by default,
+  sequential as a baseline), content-addressed overwrite-not-forget memory across
+  both tiers, the loss, metrics, config, tokenizer, the curriculum generator, the
+  bAbI loader, and the NSM prime constants. With **no action and no trust labels**,
+  the model chooses read/think/respond and absorb/append/skip per item and learns
+  *when* to answer and *whom* to trust purely from answer correctness (~90%
+  held-out, including the corrupting-distractor, corroboration, and update levels).
 
 **Mocked / placeholder / stubbed** — the actual research lives here:
 - What the **consciousness state means** and its real objective (abstract +
   placeholder consistency loss).
 - **Semantic composition** onto NSM primes (`MockSemanticMapper`).
 - A **consistent parser** (the rule parser is experimental; wrapped optionally).
-- **Cross-episode credit assignment** for the APPEND action (uses a novelty aux).
+- **Cross-episode credit assignment** for the APPEND action (uses trust × action
+  prob as a proxy).
+- **Discrete input-pull control** (the controlled loop is a differentiable
+  approximation; true RL control is unbuilt).
 - **Textbook ingestion** (`TextbookSource` is a stub — the north star).
 
 ## Open problems
@@ -30,32 +35,61 @@ RESPOND-probability-weighted aggregate (so "when to respond" emerges); trust
 scales how strongly each item is written to memory (so "whom to trust" emerges,
 because answering corroboration episodes correctly requires discounting the
 contradiction). Open issues:
-- **Trust is modestly leveraged.** `trust_gap > 0` (it trusts corroborated items
-  more), but the signal is small: the task can also be solved inside the response
-  head, so nothing *forces* trust to carry the load. Making trust the necessary
-  mechanism (e.g. a bottleneck, or an explicit contradiction-detection objective)
-  is open. Distinguishing **contradiction from temporal update** ("moved to")
-  is also unsolved — both look like a memory conflict.
+- **Trust is modestly leveraged** (and can go slightly *negative* in the
+  controlled loop). `trust_gap > 0` in sequential mode, but the signal is small
+  and the controlled loop tends to solve corroboration via the response head
+  instead, so nothing *forces* trust to carry the load. Making trust the necessary
+  mechanism (a bottleneck, or an explicit contradiction-detection objective) is
+  open. Distinguishing **contradiction from temporal update** ("moved to") is also
+  unsolved — both look like a memory conflict; overwrite memory (§0c) currently
+  treats them the same way (latest trusted write wins).
 - **APPEND** still only pays off in *future* episodes, so it has no within-episode
-  answer gradient; it is now gated by trust × its action prob, which is a sensible
-  proxy but not real **cross-episode credit assignment** (RL / a value over future
-  retrieval). Symptom: the model still APPENDs novel *questions* as "world facts".
-- **Forgetting/decay**: trust should let contradicted info *decay* out of
-  long-term memory, giving the FIFO pruning placeholder a real policy. Unbuilt.
+  answer gradient; it is gated by trust × its action prob, a sensible proxy but
+  not real **cross-episode credit assignment** (RL / a value over future
+  retrieval). Symptom: the model still APPENDs novel *questions* as "world facts"
+  (LTM overwrite-by-text dedups them, but doesn't stop them).
 - **Response timing is under-determined** on easy episodes (one fact answers the
   question); `mean_respond_position` is a neutral diagnostic, not a target.
 
-### 0b. The self-controlled read / think / respond loop (next step)
-Today the loop iterates once per item with a fixed number of internal reasoning
-passes (`reasoning_hops`), and a response is always aggregated. The intended
-architecture lets **the model control its own loop**: each tick it chooses to
-**read** the next input, **think** internally (reason over memory without new
-input), or **respond** — so not every input needs a response and it can process
-and *wait*. The differentiable approximation here (per-item processing + sparse
-soft response + fixed think steps) is a stand-in; true learned control over
-read/think/respond is a discrete-control / RL problem and is the next rung. The
-WSD coherence head and a confidence/halting signal are the natural trigger for
-"I'm ready to answer now."
+### 0b. The self-controlled read / think / respond loop (BUILT — default)
+`agent.Psyche._forward_controlled` is now the default loop. Each tick a
+`control_gate` over `{READ, THINK, RESPOND}` decides whether to advance a read
+pointer and ingest the next sentence (its **full token sequence** — mean-pooling
+the sentence destroyed the word-level detail the MC head needs and would not
+train), reason internally with no new input, or contribute to the answer
+(RESPOND-weighted aggregate). So responses are sparse and it can process and
+*wait*. Tick-level quantities are attributed back to items, so the loss / metrics
+/ consolidation paths are unchanged. ~90% held-out, on par with sequential.
+Honest caveats / next rungs:
+- It is a **differentiable approximation**: a soft-advancing pointer (`p += P(READ)`)
+  with a **READ-biased init** so it ingests input before learning to think/respond.
+  Truly discrete **input-pull control** ("decide, then fetch the next sentence") is
+  an RL / discrete-control problem — the next rung. A confidence/halting signal
+  (and the WSD coherence head) is the natural "I'm ready to answer now" trigger.
+- "THINK" is implicit (ticks where the model neither advances much nor responds),
+  not a hard no-input mode; sharpening it is open.
+
+### 0c. Overwrite, not forget (BUILT)
+Memory **overwrites**, it does not decay. Working memory is content-addressed
+(`WorkingMemory.write_content`): a write goes to the best-matching filled slot
+(updating that fact in place) or a fresh slot for novel content, so a later
+trusted fact about the same subject supersedes the earlier one while unrelated
+slots are untouched. Long-term memory overwrites by **fact identity** (matching
+entry text) so distinct facts still grow the repo while re-statements update in
+place. Open: overwrite keys on the model's write *vector* (working) or exact text
+(LTM); **subject-level** update ("mary moved" should overwrite mary's location
+regardless of wording) needs structure we don't yet extract, and contradiction vs.
+temporal-update still resolve identically.
+
+### 0d. Chained-question consistency (probe)
+`Psyche.answer_at_positions` answers several questions in **one unreset run** (it
+reads out at the tick the pointer passes each question), and
+`scripts/probe_consistency.py` measures whether a repeated question (Q1 vs a later
+Q1', after an intervening Q2) gets the same answer (~0.70 consistency at light
+training). This is a **diagnostic**, not a trained capability — the model is not
+trained on multi-question streams, and per-question accuracy at arbitrary readout
+ticks is weaker than the single-question number. Training on multi-question
+episodes (and a calibrated "answer now" signal) is the open follow-up.
 
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning

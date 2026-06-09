@@ -52,16 +52,16 @@ python scripts/train_phase1.py   # trains the loop on reasoning episodes
 python scripts/eval.py           # held-out answer accuracy + response position
 ```
 
-With the default config (curriculum levels 1–5, multiple-choice), training
-reaches **~85% held-out answer accuracy** in seconds on CPU — with **no action
-supervision and no trust labels**. The model chooses absorb/append/respond/skip
-per item, learns *when* to answer (level 4 puts a corrupting "X moved to Y" after
-the question, so it can't just read the final state), and learns *whom to trust*
-(level 5 has two sources corroborate and one contradict; the answer is the
-corroborated place). `resp_pos` shows where it concentrated its response mass
-(0 = first item, 1 = last); `trust_gap` (>0) shows it trusts corroborated items
-more than contradicted ones — modest, since the task can also be solved via the
-response head, but emergent.
+With the default config (the self-controlled loop, curriculum levels 1–6,
+multiple-choice), training reaches **~90% held-out answer accuracy** in seconds on
+CPU — with **no action supervision and no trust labels**. Each tick Psyche drives
+its own loop, choosing to **read** the next sentence, **think**, or **respond**;
+it learns *what* to remember, *whom to trust* (level 5: two sources corroborate,
+one contradicts → answer the corroborated place), and to handle *updates* by
+**overwriting** memory (level 6: "X moved to Y" → the new place; nothing is
+forgotten). `resp_pos` shows where it placed its response mass; `trust_gap` probes
+whether it trusts corroborated over contradicted items. Set
+`model.loop_mode: sequential` for the simpler one-tick-per-item baseline.
 
 Use `--source babi` to train on Facebook bAbI (falls back to the curriculum
 generator if the data can't be downloaded in your environment).
@@ -85,33 +85,46 @@ already holds and **scales how strongly it is written** — so corroborated info
 used and contradicted info is discounted. Trust is emergent (no trust labels): it
 is learned purely because answering correctly requires discounting contradictions.
 
-**Emergent actions (no hard-coding).** The action choice is **not supervised**.
-The episode is a uniform stream of items — the model is never told which is the
-question. The answer is the RESPOND-probability-weighted aggregate of the
-per-step responses, so the model learns *when* to answer purely from answer
-correctness. (One exception: APPEND only pays off in future episodes, so it gets
-a small label-free **novelty** signal — append what's new vs. what long-term
-memory already knows. See RESEARCH_NOTES.)
+Plus a **control** head (`control_gate`) over `{READ, THINK, RESPOND}` that drives
+the self-controlled loop (below).
 
-The loop lives in `agent.Mind`, which unrolls the stream, threads the state,
-applies the soft-gated memory writes, and aggregates the response.
+**Emergent actions (no hard-coding).** Neither the action choice nor the trust
+signal is supervised. The episode is a uniform stream of items — the model is
+never told which is the question. The answer is the RESPOND-weighted aggregate of
+the per-step responses, so the model learns *when* to answer purely from answer
+correctness; trust is learned the same way (answering corroboration episodes
+requires discounting contradictions). (Honest gap: APPEND only pays off in future
+episodes, so it has no within-episode answer gradient — it's gated by trust × its
+action prob as a proxy; real cross-episode credit assignment is unbuilt. See
+RESEARCH_NOTES.)
 
-**Multi-hop reasoning.** Set `model.reasoning_hops > 1` to make the model take
-several inference passes over memory at the question — re-reading memory and
-updating the state each pass before answering ("reason with states"). `hops = 1`
-is the default and reproduces the single-pass loop exactly.
+**The self-controlled loop (default).** `agent.Psyche` runs a *self-driven* loop:
+each tick it emits the control distribution and decides whether to advance a read
+pointer and ingest the next sentence's full tokens, reason internally over memory
+with no new input, or contribute to its answer. So responses are sparse and it can
+"process and wait" — it doesn't answer every input. This is a differentiable
+approximation (a soft-advancing pointer + READ-biased init); truly discrete
+input-pull control is an RL problem and is the next rung (RESEARCH_NOTES).
+`model.loop_mode: sequential` selects the legacy one-tick-per-item loop (with
+`reasoning_hops > 1` for extra post-stream reasoning passes), kept as a baseline.
 
 ### Two-tier memory & lifelong learning
 
 There are two memories:
 
-* **Local context** — `WorkingMemory`, per-episode, resets each episode.
+* **Local context** — `WorkingMemory`, per-episode, resets each episode. Writes
+  are **content-addressed** (`memory_addressing: content`, default): a later
+  trusted fact about the same subject **overwrites** the matching slot in place,
+  so updates ("X moved to Y") and corroboration resolve as overwrites — never
+  decay. (`slot` addressing writes by item index, for the baseline.)
 * **Long-term memory** — `LongTermMemory` (`long_term_memory.py`), **persistent
   across episodes**, holding **"facts we know about the world"**: each entry
   carries its fact *text* (provenance). It is **seeded with base world facts**
   and the model's `APPEND` action adds newly-learned facts on top, alongside a
-  growing graph of **connections**. Reads from it are added to every memory read.
-  It can be saved/loaded from disk and read back as text (`LongTermMemory.facts()`).
+  growing graph of **connections**. **Overwrite, not forget**: re-stating a fact
+  updates its entry in place (keyed on fact identity) rather than duplicating, so
+  distinct facts still grow the repo. Reads are added to every memory read; it can
+  be saved/loaded and read back as text (`LongTermMemory.facts()`).
 
 The **state controls I/O and retention** through the one action repertoire:
 `ABSORB` (intake → local), `APPEND` (retain → long-term), `RESPOND` (output),
@@ -178,10 +191,13 @@ curriculum level, and input encoder.
 | Memory pruning policy | **Placeholder** (FIFO cap) | `long_term_memory.py` |
 | Multi-hop reasoning over memory | **Real** (config-gated) | `agent.py` |
 | Emergent action repertoire (absorb/append/respond/skip, no labels) | **Real** | `model.py`, `agent.py`, `losses.py` |
+| Self-controlled read/think/respond loop (default) | **Real** | `model.py`, `agent.py` |
 | Model-chosen response timing | **Real** | `agent.py` |
 | Emergent trust (corroboration vs contradiction, no labels) | **Real** (modest signal) | `model.py`, `agent.py`, `episode.py` |
-| Self-controlled read/think/respond loop | **Not built** (next step) | RESEARCH_NOTES |
+| Overwrite-not-forget memory (content-addressed + LTM overwrite) | **Real** | `memory.py`, `long_term_memory.py` |
+| Chained-question consistency probe | **Real** (diagnostic) | `agent.py`, `scripts/probe_consistency.py` |
 | Cross-episode credit assignment for APPEND | **Not built** (next step) | RESEARCH_NOTES |
+| Discrete (RL) input-pull control | **Not built** (next rung) | RESEARCH_NOTES |
 | WSD scorer + coherence-driven re-evaluation | **Real, standalone** | `wsd.py` |
 | WSD sense inventory + sense→prime signatures | **Mocked** (WordNet hook) | `wsd.py` |
 | Multiple-choice + open-ended response | **Real** | `model.py` |

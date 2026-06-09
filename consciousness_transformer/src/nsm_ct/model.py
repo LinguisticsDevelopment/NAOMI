@@ -4,11 +4,12 @@ One **step** consumes the current consciousness state, one input object (a
 sentence's token ids), and a read from working memory, and produces:
 
 * a **new state** (the transition — this is the spine of the loop),
-* an **action** over ``{ABSORB, RESPOND, SKIP}`` (the gate that decides whether
-  to write to memory and when to answer),
+* an **action** over ``{ABSORB, APPEND, RESPOND, SKIP}`` (soft gates for local
+  write / long-term commit / answer), a **control** distribution over
+  ``{READ, THINK, RESPOND}`` (the self-controlled loop), and a **trust** scalar,
 * a **write vector** (the content to commit to memory if ABSORB fires), and
-* (at the question) a **response**, either by scoring multiple-choice options or
-  by classifying an open-ended answer.
+* a **response**, either by scoring multiple-choice options or classifying an
+  open-ended answer.
 
 The transformer attends over a short assembly ``[state | memory | input...]``.
 It is intentionally small; the research is in the loop and the state, not the
@@ -32,6 +33,15 @@ ACTION_RESPOND = 2  # emit a response now
 ACTION_SKIP = 3     # ignore the item
 NUM_ACTIONS = 4
 ACTION_NAMES = ["ABSORB", "APPEND", "RESPOND", "SKIP"]
+
+# Control repertoire for the self-controlled loop. Each tick the model chooses to
+# READ the next input, THINK internally (reason over memory, no new input), or
+# RESPOND. Emergent — shaped only by the answer loss (see agent.py).
+CONTROL_READ = 0
+CONTROL_THINK = 1
+CONTROL_RESPOND = 2
+NUM_CONTROL = 3
+CONTROL_NAMES = ["READ", "THINK", "RESPOND"]
 
 
 @dataclass
@@ -92,6 +102,13 @@ class ConsciousnessTransformer(nn.Module):
             nn.Linear(d, d), nn.GELU(), nn.Linear(d, cfg.consciousness_dim)
         )
         self.action_head = nn.Linear(d, NUM_ACTIONS)
+        # Self-controlled loop: read / think / respond (from the current state).
+        # Start biased toward READ so the loop ingests its input before it learns
+        # to think/respond — this makes the controlled loop trainable, while the
+        # behavior itself stays fully emergent (the bias is just an init).
+        self.control_head = nn.Linear(cfg.consciousness_dim, NUM_CONTROL)
+        with torch.no_grad():
+            self.control_head.bias.copy_(torch.tensor([2.0, 0.0, 0.0]))
         self.write_head = nn.Linear(d, cfg.memory_dim)
         # Emergent trust: judges an item against what memory already holds. It
         # scales how strongly the item influences memory (and thus the answer),
@@ -109,27 +126,26 @@ class ConsciousnessTransformer(nn.Module):
         self.answer_classifier = nn.Linear(d, max(answer_vocab_size, 1))  # open-ended
 
     # -- one transition step -------------------------------------------------
-    def step(
+    def _transition(
         self,
-        state: torch.Tensor,        # [B, state_dim]
-        input_ids: torch.Tensor,    # [B, L]
-        input_mask: torch.Tensor,   # [B, L] (1 real, 0 pad)
-        mem_read: torch.Tensor,     # [B, mem_dim]
+        state: torch.Tensor,       # [B, state_dim]
+        input_tok: torch.Tensor,   # [B, L, d] (already embedded input tokens)
+        input_pad: torch.Tensor,   # [B, L] bool, True = pad (masked out)
+        mem_read: torch.Tensor,    # [B, mem_dim]
     ) -> StepOutput:
-        """Run one state transition over a single input sentence."""
-        b, length = input_ids.shape
-        positions = torch.arange(length + 2, device=input_ids.device).unsqueeze(0).expand(b, -1)
+        """Shared state transition over a prepared input-token assembly."""
+        b, length, _ = input_tok.shape
+        positions = torch.arange(length + 2, device=state.device).unsqueeze(0).expand(b, -1)
 
-        tok = self.token_embedding(input_ids)                    # [B, L, d]
         state_tok = self.state_in(state).unsqueeze(1)            # [B, 1, d]
         mem_tok = self.memory_in(mem_read).unsqueeze(1)          # [B, 1, d]
-        seq = torch.cat([state_tok, mem_tok, tok], dim=1)        # [B, L+2, d]
+        seq = torch.cat([state_tok, mem_tok, input_tok], dim=1)  # [B, L+2, d]
         seq = seq + self.position_embedding(positions)
         seq = self.dropout(seq)
 
         # State and memory slots are always attended; input pad positions masked.
-        prefix_mask = torch.zeros(b, 2, device=input_ids.device, dtype=torch.bool)
-        key_padding_mask = torch.cat([prefix_mask, input_mask == 0], dim=1)
+        prefix_mask = torch.zeros(b, 2, device=state.device, dtype=torch.bool)
+        key_padding_mask = torch.cat([prefix_mask, input_pad], dim=1)
         hidden = self.encoder(seq, src_key_padding_mask=key_padding_mask)
 
         pooled = hidden[:, 0, :]                                 # state slot output
@@ -139,6 +155,20 @@ class ConsciousnessTransformer(nn.Module):
             write_vector=self.write_head(pooled),
             pooled=pooled,
         )
+
+    def step(
+        self,
+        state: torch.Tensor,        # [B, state_dim]
+        input_ids: torch.Tensor,    # [B, L]
+        input_mask: torch.Tensor,   # [B, L] (1 real, 0 pad)
+        mem_read: torch.Tensor,     # [B, mem_dim]
+    ) -> StepOutput:
+        """One state transition over a single input sentence (token ids)."""
+        return self._transition(state, self.token_embedding(input_ids), input_mask == 0, mem_read)
+
+    def control_gate(self, state: torch.Tensor) -> torch.Tensor:
+        """Loop-control distribution over {READ, THINK, RESPOND} (``[B, 3]``)."""
+        return torch.softmax(self.control_head(state), dim=-1)
 
     # -- responses -----------------------------------------------------------
     def _query(self, state: torch.Tensor, mem_read: torch.Tensor) -> torch.Tensor:

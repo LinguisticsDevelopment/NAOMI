@@ -34,6 +34,7 @@ from typing import Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class LongTermMemory(nn.Module):
@@ -52,11 +53,17 @@ class LongTermMemory(nn.Module):
         state_dim: int,
         max_size: int = 10000,
         connect_within_episode: bool = True,
+        overwrite: bool = True,
+        overwrite_threshold: float = 0.9,
     ) -> None:
         super().__init__()
         self.mem_dim = mem_dim
         self.max_size = max_size
         self.connect_within_episode = connect_within_episode
+        # Overwrite, don't forget: a near-duplicate of an existing entry updates
+        # it in place rather than accumulating a duplicate (no decay).
+        self.overwrite = overwrite
+        self.overwrite_threshold = overwrite_threshold
         # Learned read projections (the contents themselves are data).
         self.query_proj = nn.Linear(state_dim, mem_dim)
         self.key_proj = nn.Linear(mem_dim, mem_dim)
@@ -105,7 +112,11 @@ class LongTermMemory(nn.Module):
         gates: Optional[torch.Tensor] = None,
         metas: Optional[List[dict]] = None,
     ) -> List[int]:
-        """Append (detached) vectors to the repo; return their new indices.
+        """Consolidate (detached) vectors into the repo; return touched indices.
+
+        With ``overwrite`` on, a candidate that closely matches an existing entry
+        **updates that entry in place** (returning its index) instead of appending
+        a duplicate; novel candidates are appended. Nothing is ever decayed.
 
         Args:
             vectors: ``[M, mem_dim]`` candidate entries.
@@ -117,19 +128,45 @@ class LongTermMemory(nn.Module):
         if gates is not None:
             vectors = vectors * gates.detach().cpu().unsqueeze(-1)
         keep = vectors.norm(dim=-1) > 1e-6
-        if metas is not None:
-            metas = [m for m, k in zip(metas, keep.tolist()) if k]
+        kept_metas = (
+            [m for m, k in zip(metas, keep.tolist()) if k] if metas is not None else None
+        )
         vectors = vectors[keep]
         if vectors.shape[0] == 0:
             return []
-        start = len(self)
-        self._slots = torch.cat([self._slots, vectors], dim=0)
-        idxs = list(range(start, len(self)))
-        self.metas.extend(metas if metas is not None else [{} for _ in idxs])
+        touched: List[int] = []
+        for i in range(vectors.shape[0]):
+            vec = vectors[i : i + 1]                          # [1, mem]
+            meta = kept_metas[i] if kept_metas is not None else {}
+            match = self._overwrite_match(vec, meta) if (self.overwrite and len(self) > 0) else None
+            if match is not None:
+                self._slots[match] = vec.squeeze(0)          # update in place
+                if meta:
+                    self.metas[match] = meta
+                touched.append(match)
+                continue
+            self._slots = torch.cat([self._slots, vec], dim=0)
+            self.metas.append(meta)
+            touched.append(len(self) - 1)
         if self.connect_within_episode:
-            self.connect_group(idxs)
+            self.connect_group(sorted(set(touched)))
         self._maybe_prune()
-        return idxs
+        return touched
+
+    def _overwrite_match(self, vec: torch.Tensor, meta: dict) -> Optional[int]:
+        """Index of the entry this candidate should overwrite, or None to append.
+
+        Keyed on fact **identity**: a stated fact with the same text updates the
+        existing entry (re-stating / correcting it), so distinct facts always
+        grow the repo. For vectors without text provenance, fall back to cosine
+        similarity above ``overwrite_threshold``.
+        """
+        text = meta.get("text") if meta else None
+        if text:
+            return next((i for i, m in enumerate(self.metas) if m.get("text") == text), None)
+        sims = F.cosine_similarity(self._slots, vec, dim=-1)
+        j = int(sims.argmax())
+        return j if float(sims[j]) >= self.overwrite_threshold else None
 
     # -- connections (the repo of connections) -------------------------------
     def connect(self, i: int, j: int, weight: float = 1.0) -> None:

@@ -21,7 +21,9 @@ def mean_respond_position(out, batch) -> float:
     shows where it chose to. (It often responds as soon as it has the answer,
     which for easy episodes is before the question — a valid emergent strategy.)
     """
-    gates = out["respond_gates"] * batch.step_mask              # [B, T]
+    gates = out["respond_gates"]                                # [B, T] or [B, K]
+    if gates.shape[1] == batch.step_mask.shape[1]:
+        gates = gates * batch.step_mask                         # sequential: mask padding
     t = gates.shape[1]
     if t <= 1:
         return 0.0
@@ -49,3 +51,26 @@ def trust_gap(out, batch) -> float:
     if contradicted.sum() == 0 or trustworthy.sum() == 0:
         return 0.0
     return float(trust[trustworthy].mean() - trust[contradicted].mean())
+
+
+@torch.no_grad()
+def answer_consistency(answers: torch.Tensor, repeat_pairs) -> float:
+    """Agreement between repeated questions answered in one unreset run.
+
+    Args:
+        answers: ``[B, Q]`` predicted answer index per question (from
+            :meth:`Psyche.answer_at_positions`).
+        repeat_pairs: list of ``(j1, j2)`` column indices that ask the same
+            question (e.g. Q1 and a later repeat Q1').
+
+    Returns:
+        Fraction of (episode, pair) cases where the two answers match.
+    """
+    if not repeat_pairs:
+        return 0.0
+    hits, total = 0, 0
+    for j1, j2 in repeat_pairs:
+        agree = answers[:, j1] == answers[:, j2]
+        hits += int(agree.sum())
+        total += answers.shape[0]
+    return hits / max(total, 1)

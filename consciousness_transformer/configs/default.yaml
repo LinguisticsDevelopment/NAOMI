@@ -17,9 +17,14 @@ model:
   dim_feedforward: 192
   dropout: 0.0               # 0.0 is fine at this toy scale; raise with real data
   max_sentence_len: 24       # max tokens per sentence / question / option
-  reasoning_hops: 1          # multi-hop reasoning passes at the question (1 = off)
+  reasoning_hops: 1          # multi-hop reasoning passes at the question (sequential mode)
+  loop_mode: controlled      # controlled (self-driven read/think/respond) | sequential
+  control_slack: 6           # extra ticks beyond #items for thinking/responding
+  memory_addressing: content # content (overwrite, never forget) | slot (by index)
   use_long_term: false       # persistent cross-episode long-term memory (lifelong)
   ltm_max_size: 10000        # cap on long-term entries (pruning placeholder)
+  ltm_overwrite: true        # update a near-duplicate in place vs. appending
+  ltm_overwrite_threshold: 0.9
 
 train:
   learning_rate: 0.001
@@ -37,6 +42,6 @@ data:
   val_fraction: 0.2
   seed: 0
   max_context: 6             # max statements per episode (padded)
-  max_level: 5               # curriculum ceiling (4 = distractors, 5 = corroboration/contradiction)
+  max_level: 6               # ceiling (4=distractors, 5=corroboration, 6=overwrite-update)
   babi_task: 1
   babi_path: null

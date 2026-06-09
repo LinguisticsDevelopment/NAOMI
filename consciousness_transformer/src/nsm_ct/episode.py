@@ -99,18 +99,22 @@ class CurriculumGenerator(AbstractEpisodeSource):
            answer is fixed before the question, so the model must learn to
            respond *at the question* — not just at the last item. This is the
            probe for emergent response timing.
+        5. Corroboration vs contradiction: two sources agree, one disagrees;
+           the answer is the corroborated place. Probes emergent trust.
+        6. Overwrite update: a person's location is updated amid an unrelated
+           fact; the answer is the new place. Probes overwrite-not-forget memory.
 
     Every episode is emitted with both multiple-choice options and an
     open-ended answer, so either training mode can consume it.
 
     Args:
-        max_level: Highest difficulty level to sample (1-4).
+        max_level: Highest difficulty level to sample (1-6).
         num_options: Number of multiple-choice options per question.
         seed: RNG seed.
     """
 
     def __init__(self, max_level: int = 3, num_options: int = 4, seed: int = 0) -> None:
-        self.max_level = max(1, min(max_level, 5))
+        self.max_level = max(1, min(max_level, 6))
         self.num_options = num_options
         self.rng = random.Random(seed)
 
@@ -210,6 +214,30 @@ class CurriculumGenerator(AbstractEpisodeSource):
             trust_labels=[lab for _, lab in stmts],
         )
 
+    def _level6(self) -> Episode:
+        # Overwrite stress: a person's location is updated amid an unrelated
+        # fact. The answer is the UPDATED place, so memory must overwrite that
+        # person's slot in place (not the distractor's, and without forgetting
+        # it). Exercises content-addressed overwrite (distinct from level 3's
+        # bare update and level 4's post-question move).
+        name_a, name_b = self.rng.sample(_NAMES, 2)
+        place_b = self.rng.choice(_PLACES)
+        first, second = self.rng.sample([p for p in _PLACES if p != place_b], 2)
+        context = [
+            f"{name_a} is in the {first} .",
+            f"{name_b} is in the {place_b} .",
+            f"{name_a} moved to the {second} .",
+        ]
+        options, idx = self._mc(second)
+        return Episode(
+            context=context,
+            question=f"where is {name_a} ?",
+            answer_text=second,
+            options=options,
+            answer_idx=idx,
+            level=6,
+        )
+
     def base_facts(self) -> List[str]:
         """Base 'facts we know about the world' to seed long-term memory."""
         facts = [f"the {p} is a place ." for p in _PLACES]
@@ -217,8 +245,42 @@ class CurriculumGenerator(AbstractEpisodeSource):
         return facts
 
     def generate(self, n: int) -> List[Episode]:
-        builders = [self._level1, self._level2, self._level3, self._level4, self._level5][: self.max_level]
+        builders = [self._level1, self._level2, self._level3, self._level4,
+                    self._level5, self._level6][: self.max_level]
         return [builders[i % len(builders)]() for i in range(n)]
+
+
+def chained_question_episode(seed: int = 0):
+    """Build a multi-question episode for the consistency probe.
+
+    Stream: two facts, then ``Q1`` (about A), ``Q2`` (about B), ``Q1'`` (A again).
+    All questions are answered in one **unreset** run; the repeat ``Q1'`` (after
+    the intervening ``Q2``) should match ``Q1``. A fixed option set (all places)
+    is shared across questions so a single batch can score every readout.
+
+    Returns:
+        ``(episode, positions, gold, repeat_pairs)`` where ``positions`` are the
+        item indices of the questions in the stream, ``gold`` the correct option
+        index per question, and ``repeat_pairs`` the (Q1, Q1') columns to compare.
+    """
+    rng = random.Random(seed)
+    a, b = rng.sample(_NAMES, 2)
+    pa, pb = rng.sample(_PLACES, 2)
+    facts = [f"{a} is in the {pa} .", f"{b} is in the {pb} ."]
+    rng.shuffle(facts)
+    options = list(_PLACES)  # fixed across all questions
+    ep = Episode(
+        context=facts,
+        question=f"where is {a} ?",
+        answer_text=pa,
+        options=options,
+        answer_idx=options.index(pa),
+        post_context=[f"where is {b} ?", f"where is {a} ?"],
+    )
+    base = len(facts)
+    positions = [base, base + 1, base + 2]                  # Q1, Q2, Q1'
+    gold = [options.index(pa), options.index(pb), options.index(pa)]
+    return ep, positions, gold, [(0, 2)]
 
 
 # ---------------------------------------------------------------------------

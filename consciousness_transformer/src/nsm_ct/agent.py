@@ -1,20 +1,22 @@
 """Psyche: the trained consciousness/reasoning entity.
 
-Psyche drives an episode through the emergent action loop. The episode is a
-**uniform stream of items** (statements … question … maybe distractors); the
-model is never told which item is the question. At each item the action head
-emits a 4-way distribution over ``{ABSORB, APPEND, RESPOND, SKIP}`` whose
-probabilities act as **soft gates**, and an emergent **trust** signal scales how
-much the item is allowed to influence memory:
+Psyche drives an episode through the emergent loop. The episode is a **uniform
+stream of items** (statements … question … maybe distractors); the model is never
+told which item is the question.
 
-* ``ABSORB`` × trust → write into local (working) memory;
-* ``APPEND`` × trust → consolidate into long-term memory;
-* ``RESPOND`` → weight this step's response in a cross-step aggregate;
-* ``SKIP`` → the residual.
+Two loop modes share the same heads, trust, and memory:
 
-Trust judges an item against what memory already holds, so corroborated info is
-used and contradicted info is discounted — learned purely from answer
-correctness, with no trust labels (see RESEARCH_NOTES).
+* **controlled** (default) — a *self-driven* loop. Each tick Psyche emits a
+  control distribution over ``{READ, THINK, RESPOND}`` and decides for itself
+  whether to advance and ingest the next sentence (a soft read-pointer), reason
+  internally over memory with no new input, or contribute to its answer. So
+  responses are sparse and it can "process and wait". Differentiable
+  approximation of true input-pull control (RL is the next rung — RESEARCH_NOTES).
+* **sequential** — the legacy one-tick-per-item loop, kept behind
+  ``loop_mode="sequential"`` as a baseline and for tests.
+
+In both modes an emergent **trust** signal scales how strongly an item influences
+memory, and writes are content-addressed (overwrite, never forget) by default.
 """
 
 from __future__ import annotations
@@ -43,9 +45,12 @@ class Psyche(nn.Module):
         model: The state-transition transformer.
         memory: The per-episode *local context* (working memory).
         answer_mode: ``"mc"`` (score options) or ``"open"`` (classify answer).
-        reasoning_hops: Extra post-stream internal reasoning steps.
+        reasoning_hops: Extra post-stream reasoning steps (sequential mode).
         long_term: Optional persistent :class:`LongTermMemory` (world facts).
         pad_id: Pad token id (for the no-input reasoning steps).
+        loop_mode: ``"controlled"`` (self-driven) or ``"sequential"`` (legacy).
+        control_slack: Extra ticks beyond #items for thinking/responding.
+        memory_addressing: ``"content"`` (overwrite) or ``"slot"`` (by index).
     """
 
     def __init__(
@@ -56,6 +61,9 @@ class Psyche(nn.Module):
         reasoning_hops: int = 1,
         long_term: Optional[LongTermMemory] = None,
         pad_id: int = 0,
+        loop_mode: str = "controlled",
+        control_slack: int = 6,
+        memory_addressing: str = "content",
     ) -> None:
         super().__init__()
         self.model = model
@@ -64,8 +72,11 @@ class Psyche(nn.Module):
         self.reasoning_hops = max(1, reasoning_hops)
         self.long_term = long_term
         self.pad_id = pad_id
+        self.loop_mode = loop_mode
+        self.control_slack = max(0, control_slack)
+        self.memory_addressing = memory_addressing
 
-    # -- reads ---------------------------------------------------------------
+    # -- reads / writes ------------------------------------------------------
     def _read(self, mem: MemoryState, state: torch.Tensor) -> torch.Tensor:
         """Read local context, plus long-term memory when present."""
         read = self.memory.read(mem, state)
@@ -73,14 +84,117 @@ class Psyche(nn.Module):
             read = read + self.long_term.read(state)
         return read
 
+    def _write(self, mem: MemoryState, slot_idx: int, content: torch.Tensor,
+               gate: torch.Tensor) -> MemoryState:
+        """Write per the configured addressing (content-overwrite or by slot)."""
+        if self.memory_addressing == "content":
+            return self.memory.write_content(mem, content, gate)
+        return self.memory.write(mem, slot_idx, content, gate)
+
     def _respond(self, state: torch.Tensor, mem_read: torch.Tensor, batch) -> torch.Tensor:
         if self.answer_mode == "mc":
             return self.model.respond_mc(state, mem_read, batch.opt_ids, batch.opt_mask)
         return self.model.respond_open(state, mem_read)
 
-    # -- forward -------------------------------------------------------------
+    # -- forward dispatch ----------------------------------------------------
     def forward(self, batch) -> Dict[str, torch.Tensor]:
-        """Unroll the uniform item stream and return outputs for the loss."""
+        if self.loop_mode == "sequential":
+            return self._forward_sequential(batch)
+        return self._forward_controlled(batch)
+
+    # -- controlled (self-driven) loop --------------------------------------
+    def _forward_controlled(self, batch) -> Dict[str, torch.Tensor]:
+        """Self-driven read/think/respond loop with a soft read-pointer.
+
+        Tick quantities are attributed back to items via the read weights, so the
+        returned tensors are item-aligned and the loss/metrics/consolidate paths
+        are identical to the sequential mode.
+        """
+        device = batch.item_ids.device
+        b, num_items, _ = batch.item_ids.shape
+        state = self.model.initial_state(b, device)
+        mem = self.memory.init_state(b, max(num_items, 1), device)
+        n_real = batch.step_mask.sum(dim=1)                                  # [B]
+        rows = torch.arange(b, device=device)
+        eye = torch.eye(num_items, device=device)                           # for one-hot read
+        p = torch.zeros(b, device=device)                                   # read pointer
+        ticks = num_items + self.control_slack
+
+        states = [state]
+        rec_w, rec_cread, rec_crespond = [], [], []
+        rec_trust, rec_append, rec_write, rec_action, rec_rlog, rec_pointer = [], [], [], [], [], []
+        answer_num: torch.Tensor = torch.zeros(b, batch.opt_ids.shape[1], device=device)
+        answer_den: torch.Tensor = torch.zeros(b, 1, device=device)
+
+        for _ in range(ticks):
+            c = self.model.control_gate(state)                  # [B, 3] READ/THINK/RESPOND
+            c_read, c_respond = c[:, 0], c[:, 2]
+            # The pointer selects which sentence to read; feed its FULL token
+            # sequence (preserving word-level detail). Past the end → no input.
+            idx = p.floor().long().clamp(max=num_items - 1)     # [B]
+            past = (p >= n_real).float()                        # [B] 1 = nothing left
+            cur_ids = batch.item_ids[rows, idx]                 # [B, L]
+            cur_mask = batch.item_mask[rows, idx] * (1.0 - past).unsqueeze(-1)
+
+            mem_read = self._read(mem, state)
+            out = self.model.step(state, cur_ids, cur_mask, mem_read)
+            new_state = out.new_state
+            trust = self.model.trust_gate(new_state, mem_read)  # [B]
+            probs = F.softmax(out.action_logits, dim=-1)
+            write_gate = probs[:, ACTION_ABSORB] * c_read * trust * (1.0 - past)
+            mem = self.memory.write_content(mem, out.write_vector, write_gate)
+
+            resp_read = self._read(mem, new_state)
+            rlog = self._respond(new_state, resp_read, batch)   # [B, K_opts]
+            answer_num = answer_num + c_respond.unsqueeze(-1) * rlog
+            answer_den = answer_den + c_respond.unsqueeze(-1)
+
+            w = eye[idx] * (1.0 - past).unsqueeze(-1)           # [B, N] one-hot read
+            rec_w.append(w); rec_cread.append(c_read); rec_crespond.append(c_respond)
+            rec_trust.append(trust); rec_append.append(probs[:, ACTION_APPEND])
+            rec_write.append(out.write_vector); rec_action.append(out.action_logits)
+            rec_rlog.append(rlog); rec_pointer.append(p)
+
+            p = torch.min(p + c_read, n_real)                   # advance only when reading
+            state = new_state
+            states.append(state)
+
+        answer_logits = answer_num / answer_den.clamp(min=1e-6)
+
+        W = torch.stack(rec_w, dim=1)                           # [B, K, N]
+        CR = torch.stack(rec_cread, dim=1)                      # [B, K]
+        TR = torch.stack(rec_trust, dim=1)                      # [B, K]
+        AP = torch.stack(rec_append, dim=1)                     # [B, K]
+        WV = torch.stack(rec_write, dim=1)                      # [B, K, mem]
+        ACT = torch.stack(rec_action, dim=1)                    # [B, K, A]
+
+        attn = W * CR.unsqueeze(-1)                             # tick→item attribution
+        denom = attn.sum(dim=1).clamp(min=1e-6)                 # [B, N]
+        trust_item = (attn * TR.unsqueeze(-1)).sum(dim=1) / denom
+        append_item = (attn * (AP * TR).unsqueeze(-1)).sum(dim=1) / denom * batch.step_mask
+        action_item = torch.einsum("bkn,bka->bna", attn, ACT) / denom.unsqueeze(-1)
+        # Per-item write vector = the content written at the tick that read that
+        # item most (peak read), so consolidated facts stay distinctive rather
+        # than blurring into one averaged vector.
+        peak = W.argmax(dim=1)                                  # [B, N] tick per item
+        write_item = torch.gather(WV, 1, peak.unsqueeze(-1).expand(-1, -1, WV.shape[-1]))
+
+        return {
+            "answer_logits": answer_logits,
+            "action_logits": action_item,                       # [B, N, A]
+            "respond_gates": torch.stack(rec_crespond, dim=1),  # [B, K] (per tick)
+            "append_gates": append_item,                        # [B, N]
+            "write_vecs": write_item,                           # [B, N, mem]
+            "trust": trust_item,                                # [B, N]
+            "states": torch.stack(states, dim=1),               # [B, K+1, dim]
+            "memory_occupancy": self.memory.occupancy(mem),
+            "pointer": torch.stack(rec_pointer, dim=1),         # [B, K] (probe)
+            "respond_logits_ticks": torch.stack(rec_rlog, dim=1),  # [B, K, opts] (probe)
+        }
+
+    # -- sequential (legacy) loop -------------------------------------------
+    def _forward_sequential(self, batch) -> Dict[str, torch.Tensor]:
+        """One tick per item, with a fixed number of post-stream reasoning steps."""
         device = batch.item_ids.device
         b, num_items, _ = batch.item_ids.shape
         state = self.model.initial_state(b, device)
@@ -96,17 +210,14 @@ class Psyche(nn.Module):
         trust_list: List[torch.Tensor] = []
 
         for t in range(num_items):
-            real = batch.step_mask[:, t]                            # [B]
-            mem_read = self._read(mem, state)                      # prior memory
+            real = batch.step_mask[:, t]
+            mem_read = self._read(mem, state)
             out = self.model.step(state, batch.item_ids[:, t], batch.item_mask[:, t], mem_read)
-            probs = F.softmax(out.action_logits, dim=-1)           # [B, A]
+            probs = F.softmax(out.action_logits, dim=-1)
             new_state = out.new_state
-
-            # Trust judges this item against prior memory; it scales how strongly
-            # the item is written (so contradicted info can't corrupt the answer).
-            trust = self.model.trust_gate(new_state, mem_read)     # [B]
+            trust = self.model.trust_gate(new_state, mem_read)
             absorb = probs[:, ACTION_ABSORB] * real * trust
-            mem = self.memory.write(mem, t, out.write_vector, absorb)
+            mem = self._write(mem, t, out.write_vector, absorb)
 
             resp_read = self._read(mem, new_state)
             respond_gate = probs[:, ACTION_RESPOND] * real
@@ -122,7 +233,6 @@ class Psyche(nn.Module):
             state = new_state
             states.append(state)
 
-        # Internal reasoning steps (no new input) — also response chances.
         pad_ids = torch.full((b, 1), self.pad_id, dtype=torch.long, device=device)
         pad_mask = torch.zeros((b, 1), dtype=torch.float32, device=device)
         for _ in range(self.reasoning_hops - 1):
@@ -136,21 +246,53 @@ class Psyche(nn.Module):
             state = new_state
             states.append(state)
 
-        gates = torch.stack(respond_gate_list, dim=1)              # [B, S]
-        rlog = torch.stack(respond_logits_list, dim=1)            # [B, S, K]
+        gates = torch.stack(respond_gate_list, dim=1)
+        rlog = torch.stack(respond_logits_list, dim=1)
         w = gates / gates.sum(dim=1, keepdim=True).clamp(min=1e-6)
-        answer_logits = (w.unsqueeze(-1) * rlog).sum(dim=1)        # [B, K]
+        answer_logits = (w.unsqueeze(-1) * rlog).sum(dim=1)
 
         return {
             "answer_logits": answer_logits,
-            "action_logits": torch.stack(action_logits_list, dim=1),  # [B, T, A]
-            "respond_gates": torch.stack(item_respond_gate_list, dim=1),  # [B, T]
-            "append_gates": torch.stack(append_gate_list, dim=1),     # [B, T] (trust-scaled)
-            "write_vecs": torch.stack(write_vecs_list, dim=1),        # [B, T, mem_dim]
-            "trust": torch.stack(trust_list, dim=1),                  # [B, T]
+            "action_logits": torch.stack(action_logits_list, dim=1),
+            "respond_gates": torch.stack(item_respond_gate_list, dim=1),
+            "append_gates": torch.stack(append_gate_list, dim=1),
+            "write_vecs": torch.stack(write_vecs_list, dim=1),
+            "trust": torch.stack(trust_list, dim=1),
             "states": torch.stack(states, dim=1),
             "memory_occupancy": self.memory.occupancy(mem),
         }
+
+    # -- chained-question consistency probe ---------------------------------
+    @torch.no_grad()
+    def answer_at_positions(self, batch, positions: torch.Tensor) -> torch.Tensor:
+        """Answer several questions within ONE unreset run (controlled loop).
+
+        For each question item index, reads out the answer at the first tick the
+        pointer passes that item — so multiple questions are answered without
+        resetting state/memory between them.
+
+        Args:
+            batch: An episode batch whose stream contains the questions.
+            positions: ``[B, Q]`` item indices of the questions (-1 = padding).
+
+        Returns:
+            ``[B, Q]`` predicted answer indices (-1 where padded).
+        """
+        out = self._forward_controlled(batch)
+        pointer = out["pointer"]                    # [B, K]
+        rlog = out["respond_logits_ticks"]          # [B, K, opts]
+        b, q = positions.shape
+        answers = torch.full((b, q), -1, dtype=torch.long, device=positions.device)
+        last = pointer.shape[1] - 1
+        for i in range(b):
+            for j in range(q):
+                qi = int(positions[i, j])
+                if qi < 0:
+                    continue
+                passed = (pointer[i] >= qi + 0.5).nonzero(as_tuple=False)
+                k = int(passed[0]) if passed.numel() > 0 else last
+                answers[i, j] = int(rlog[i, k].argmax())
+        return answers
 
     # -- long-term consolidation --------------------------------------------
     @torch.no_grad()
@@ -158,14 +300,15 @@ class Psyche(nn.Module):
         """Commit trusted items the model chose to APPEND into long-term memory.
 
         Consolidation strength = APPEND gate × trust, so only trustworthy items
-        the model elects to keep enter the world-fact base. Returns entries added.
+        the model elects to keep enter (or update) the world-fact base. Returns
+        the number of entries touched (added or overwritten in place).
         """
         if self.long_term is None:
             return 0
         write_vecs = out["write_vecs"]
         append_gates = out["append_gates"]
         step_mask = batch.step_mask
-        added = 0
+        touched = 0
         for bi in range(write_vecs.shape[0]):
             idxs_real = [t for t in range(step_mask.shape[1]) if step_mask[bi, t] > 0]
             if not idxs_real:
@@ -177,8 +320,8 @@ class Psyche(nn.Module):
                 [{"text": texts[t], "kind": "learned"} for t in idxs_real]
                 if texts is not None else None
             )
-            added += len(self.long_term.consolidate(vecs, gates=gates, metas=metas))
-        return added
+            touched += len(self.long_term.consolidate(vecs, gates=gates, metas=metas))
+        return touched
 
     @torch.no_grad()
     def seed_world_facts(self, fact_texts, encoder, max_len: int) -> int:

@@ -130,11 +130,16 @@ def build_default_stack(config: Config, episodes) -> Stack:
         long_term = LongTermMemory(
             config.model.memory_dim, config.model.consciousness_dim,
             max_size=config.model.ltm_max_size,
+            overwrite=config.model.ltm_overwrite,
+            overwrite_threshold=config.model.ltm_overwrite_threshold,
         )
     psyche = Psyche(
         model, memory, config.data.answer_mode,
         reasoning_hops=config.model.reasoning_hops, long_term=long_term,
         pad_id=tokenizer.pad_id,
+        loop_mode=config.model.loop_mode,
+        control_slack=config.model.control_slack,
+        memory_addressing=config.model.memory_addressing,
     )
     return Stack(
         tokenizer=tokenizer,

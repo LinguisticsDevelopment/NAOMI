@@ -26,6 +26,7 @@ from dataclasses import dataclass
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 @dataclass
@@ -55,6 +56,10 @@ class WorkingMemory(nn.Module):
         self.query_proj = nn.Linear(state_dim, mem_dim)
         self.key_proj = nn.Linear(mem_dim, mem_dim)
         self.value_proj = nn.Linear(mem_dim, mem_dim)
+        # Content-addressed write: how sharply similarity selects a slot to
+        # overwrite, and the bias for opening a fresh slot for novel content.
+        self.write_sharpness = nn.Parameter(torch.tensor(5.0))
+        self.alloc_bias = nn.Parameter(torch.tensor(0.0))
 
     def init_state(self, batch_size: int, num_slots: int, device: torch.device) -> MemoryState:
         """Allocate empty memory for a fresh episode batch."""
@@ -78,6 +83,38 @@ class WorkingMemory(nn.Module):
         filled = mem.filled.clone()
         slots[:, slot_idx, :] = gate.unsqueeze(-1) * content
         filled[:, slot_idx] = gate
+        return MemoryState(slots=slots, filled=filled)
+
+    def write_content(
+        self, mem: MemoryState, content: torch.Tensor, gate: torch.Tensor
+    ) -> MemoryState:
+        """Content-addressed **overwrite** write — update, never forget.
+
+        The content is written to the *best-matching* already-filled slot
+        (overwriting/updating it in place) or, if it is novel, to a fresh slot.
+        So a later trusted fact about the same subject supersedes the earlier one
+        while unrelated slots are untouched. Differentiable (a soft write over
+        slots), out-of-place.
+
+        Args:
+            mem: Current memory state.
+            content: ``[B, mem_dim]`` content to store.
+            gate: ``[B]`` write strength in [0, 1] (ABSORB × control-READ × trust).
+        """
+        slots, filled = mem.slots, mem.filled                   # [B, S, m], [B, S]
+        sims = (F.normalize(slots, dim=-1) * F.normalize(content, dim=-1).unsqueeze(1)).sum(-1)
+        neg = torch.finfo(sims.dtype).min
+        # Filled slots compete by similarity (overwrite the matching fact); the
+        # first empty slot competes via alloc_bias (allocate novel content).
+        empty = filled <= 0.5
+        first_empty = empty & (empty.cumsum(dim=1) == 1)
+        logits = torch.full_like(sims, neg)
+        logits = torch.where(filled > 0.5, sims * self.write_sharpness, logits)
+        logits = torch.where(first_empty, self.alloc_bias.expand_as(logits), logits)
+        write_w = gate.unsqueeze(1) * torch.softmax(logits, dim=1)   # [B, S]
+        ww = write_w.unsqueeze(-1)                                  # [B, S, 1]
+        slots = (1.0 - ww) * slots + ww * content.unsqueeze(1)
+        filled = (filled + write_w).clamp(max=1.0)
         return MemoryState(slots=slots, filled=filled)
 
     def read(self, mem: MemoryState, state: torch.Tensor) -> torch.Tensor:

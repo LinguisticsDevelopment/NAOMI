@@ -30,9 +30,14 @@ class ModelConfig:
     dim_feedforward: int = 128
     dropout: float = 0.1
     max_sentence_len: int = 24      # max tokens per input sentence (and option/question)
-    reasoning_hops: int = 1         # passes over memory at the question (1 = no multi-hop)
+    reasoning_hops: int = 1         # passes over memory at the question (sequential mode)
+    loop_mode: str = "controlled"   # controlled (self-driven read/think/respond) | sequential
+    control_slack: int = 6          # extra ticks beyond #items for thinking/responding
+    memory_addressing: str = "content"  # content (overwrite, never forget) | slot (by index)
     use_long_term: bool = False     # enable persistent cross-episode long-term memory
     ltm_max_size: int = 10000       # cap on long-term entries (pruning placeholder)
+    ltm_overwrite: bool = True      # update a near-duplicate in place vs. appending
+    ltm_overwrite_threshold: float = 0.9  # cosine sim above which LTM overwrites
 
 
 @dataclass
