@@ -27,7 +27,6 @@ train:
   epochs: 25
   seed: 0
   weight_answer: 1.0         # answer-correctness loss (the only task signal)
-  weight_novelty: 0.1        # label-free APPEND novelty auxiliary
   weight_consistency: 0.02   # placeholder consciousness consistency loss (kept small)
   grad_clip: 1.0
 
@@ -38,6 +37,6 @@ data:
   val_fraction: 0.2
   seed: 0
   max_context: 6             # max statements per episode (padded)
-  max_level: 4               # curriculum ceiling (4 = post-question distractors)
+  max_level: 5               # curriculum ceiling (4 = distractors, 5 = corroboration/contradiction)
   babi_task: 1
   babi_path: null

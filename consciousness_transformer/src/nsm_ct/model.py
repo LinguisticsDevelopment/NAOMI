@@ -93,6 +93,13 @@ class ConsciousnessTransformer(nn.Module):
         )
         self.action_head = nn.Linear(d, NUM_ACTIONS)
         self.write_head = nn.Linear(d, cfg.memory_dim)
+        # Emergent trust: judges an item against what memory already holds. It
+        # scales how strongly the item influences memory (and thus the answer),
+        # so trustworthy/corroborated info is used and contradicted info is
+        # discounted. Learned purely via answer correctness — no trust labels.
+        self.trust_head = nn.Sequential(
+            nn.Linear(cfg.consciousness_dim + cfg.memory_dim, d), nn.GELU(), nn.Linear(d, 1)
+        )
 
         # Response: a query built from (new_state, memory_read).
         self.response_query = nn.Sequential(
@@ -155,6 +162,15 @@ class ConsciousnessTransformer(nn.Module):
     def respond_open(self, state: torch.Tensor, mem_read: torch.Tensor) -> torch.Tensor:
         """Open-ended answer logits over the answer vocabulary. Returns ``[B, A]``."""
         return self.answer_classifier(self._query(state, mem_read))
+
+    def trust_gate(self, state: torch.Tensor, mem_read: torch.Tensor) -> torch.Tensor:
+        """How much to trust the current item given memory (``[B]`` in [0, 1]).
+
+        Compares the post-item state against what memory already holds; corroborated
+        info can be trusted, contradicted info discounted. Emergent — trained only
+        through its effect on the answer.
+        """
+        return torch.sigmoid(self.trust_head(torch.cat([state, mem_read], dim=-1))).squeeze(-1)
 
     def initial_state(self, batch_size: int, device: torch.device) -> torch.Tensor:
         """Broadcast the learned initial state to a batch."""

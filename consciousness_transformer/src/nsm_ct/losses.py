@@ -1,20 +1,15 @@
 """Losses for the emergent reasoning loop.
 
-No positional action labels: the action choice (absorb / append / respond / skip)
-is **not** supervised. It is shaped only by:
+Nothing about the action choice **or** trust is supervised:
 
-    total = w_answer * answer + w_novelty * novelty + w_consistency * consistency
+    total = w_answer * answer + w_consistency * consistency
 
 * ``answer`` — cross-entropy of the RESPOND-weighted answer against the gold
-  answer. This is the sole task signal; it teaches both *what* to answer and,
-  via the RESPOND gate, *when* (the model learns to put response mass on the
-  step after the question, with nothing telling it which item that is).
-* ``novelty`` — a small **label-free** auxiliary for the APPEND action: commit to
-  long-term memory in proportion to how novel an item is vs. what the repo
-  already knows. APPEND only pays off in *future* episodes, so it gets no
-  within-episode answer gradient; this stands in until cross-episode credit
-  assignment (RL) is built. See RESEARCH_NOTES.
-* ``consistency`` — the placeholder consciousness consistency term (L2 between
+  answer. This is the sole task signal. It teaches *what* to answer, *when* (via
+  the RESPOND gate), and — because trust scales how strongly each item is written
+  into memory — *whom to trust* (the model must discount contradicted info to
+  answer correctly). All emergent, no labels.
+* ``consistency`` — placeholder consciousness consistency term (L2 between
   consecutive states). TODO(consciousness-loss).
 """
 
@@ -32,7 +27,6 @@ class LossBreakdown:
 
     total: torch.Tensor
     answer: torch.Tensor
-    novelty: torch.Tensor
     consistency: torch.Tensor
 
 
@@ -44,32 +38,14 @@ def consciousness_consistency_loss(states: torch.Tensor) -> torch.Tensor:
     return diffs.pow(2).mean()
 
 
-def novelty_append_loss(append_gates: torch.Tensor, novelty_target: torch.Tensor,
-                        step_mask: torch.Tensor) -> torch.Tensor:
-    """Push the APPEND gate toward item novelty (masked MSE over real items)."""
-    denom = step_mask.sum().clamp(min=1.0)
-    return ((append_gates - novelty_target) ** 2 * step_mask).sum() / denom
-
-
 def compute_losses(
     out: dict,
     batch,
     weight_answer: float,
-    weight_novelty: float,
     weight_consistency: float,
 ) -> LossBreakdown:
-    """Combine the answer, novelty, and consistency objectives."""
+    """Combine the answer objective with the placeholder consistency term."""
     answer_loss = F.cross_entropy(out["answer_logits"], batch.answer_target)
-    novelty_loss = novelty_append_loss(
-        out["append_gates"], out["novelty_target"], batch.step_mask
-    )
     consistency_loss = consciousness_consistency_loss(out["states"])
-
-    total = (
-        weight_answer * answer_loss
-        + weight_novelty * novelty_loss
-        + weight_consistency * consistency_loss
-    )
-    return LossBreakdown(
-        total=total, answer=answer_loss, novelty=novelty_loss, consistency=consistency_loss
-    )
+    total = weight_answer * answer_loss + weight_consistency * consistency_loss
+    return LossBreakdown(total=total, answer=answer_loss, consistency=consistency_loss)

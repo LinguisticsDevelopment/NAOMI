@@ -24,7 +24,7 @@ from nsm_ct import build_default_stack, load_config  # noqa: E402
 from nsm_ct.dataset import EpisodeDataset, make_dataloader, split_episodes  # noqa: E402
 from nsm_ct.episode import make_source  # noqa: E402
 from nsm_ct.losses import compute_losses  # noqa: E402
-from nsm_ct.metrics import answer_accuracy, mean_respond_position  # noqa: E402
+from nsm_ct.metrics import answer_accuracy, mean_respond_position, trust_gap  # noqa: E402
 
 
 def main() -> None:
@@ -65,7 +65,7 @@ def main() -> None:
     # --- training loop -----------------------------------------------------
     mind.train()
     for epoch in range(cfg.train.epochs):
-        agg = {"total": 0.0, "answer": 0.0, "novelty": 0.0, "consistency": 0.0, "ans_acc": 0.0, "resp_pos": 0.0}
+        agg = {"total": 0.0, "answer": 0.0, "consistency": 0.0, "ans_acc": 0.0, "resp_pos": 0.0, "trust_gap": 0.0}
         n = 0
         for batch in loader:
             batch = batch.to(device)
@@ -73,7 +73,6 @@ def main() -> None:
             losses = compute_losses(
                 out, batch,
                 weight_answer=cfg.train.weight_answer,
-                weight_novelty=cfg.train.weight_novelty,
                 weight_consistency=cfg.train.weight_consistency,
             )
             optimizer.zero_grad()
@@ -83,18 +82,18 @@ def main() -> None:
 
             agg["total"] += float(losses.total.detach())
             agg["answer"] += float(losses.answer.detach())
-            agg["novelty"] += float(losses.novelty.detach())
             agg["consistency"] += float(losses.consistency.detach())
             agg["ans_acc"] += answer_accuracy(out, batch)
             agg["resp_pos"] += mean_respond_position(out, batch)
+            agg["trust_gap"] += trust_gap(out, batch)
             n += 1
 
         avg = {k: v / max(n, 1) for k, v in agg.items()}
         print(
             f"epoch {epoch + 1}/{cfg.train.epochs} | total={avg['total']:.4f} "
-            f"answer={avg['answer']:.4f} novelty={avg['novelty']:.4f} "
-            f"consistency={avg['consistency']:.4f} | ans_acc={avg['ans_acc']:.3f} "
-            f"resp_pos={avg['resp_pos']:.2f}"
+            f"answer={avg['answer']:.4f} consistency={avg['consistency']:.4f} "
+            f"| ans_acc={avg['ans_acc']:.3f} resp_pos={avg['resp_pos']:.2f} "
+            f"trust_gap={avg['trust_gap']:.3f}"
         )
 
     # --- save --------------------------------------------------------------

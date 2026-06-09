@@ -55,6 +55,7 @@ class Episode:
     answer_idx: Optional[int] = None
     level: int = 0
     post_context: List[str] = field(default_factory=list)  # distractors AFTER the question
+    trust_labels: Optional[List[float]] = None  # per-context-item: 1 trustworthy, 0 contradicted (metrics only)
     meta: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -109,7 +110,7 @@ class CurriculumGenerator(AbstractEpisodeSource):
     """
 
     def __init__(self, max_level: int = 3, num_options: int = 4, seed: int = 0) -> None:
-        self.max_level = max(1, min(max_level, 4))
+        self.max_level = max(1, min(max_level, 5))
         self.num_options = num_options
         self.rng = random.Random(seed)
 
@@ -184,6 +185,31 @@ class CurriculumGenerator(AbstractEpisodeSource):
             post_context=[f"{name} moved to the {second} ."],
         )
 
+    def _level5(self) -> Episode:
+        # Corroboration vs contradiction: two sources agree on the true place,
+        # one contradicts. The answer is the corroborated (majority) place, and
+        # the contradicting statement may come last (so recency alone fails). The
+        # model must learn to TRUST the corroborated info — emergently, since
+        # answering right requires discounting the contradiction.
+        name = self.rng.choice(_NAMES)
+        true_place, false_place = self.rng.sample(_PLACES, 2)
+        stmts = [
+            (f"{name} is in the {true_place} .", 1.0),
+            (f"{name} is in the {false_place} .", 0.0),
+            (f"{name} is in the {true_place} .", 1.0),
+        ]
+        self.rng.shuffle(stmts)
+        options, idx = self._mc(true_place)
+        return Episode(
+            context=[s for s, _ in stmts],
+            question=f"where is {name} ?",
+            answer_text=true_place,
+            options=options,
+            answer_idx=idx,
+            level=5,
+            trust_labels=[lab for _, lab in stmts],
+        )
+
     def base_facts(self) -> List[str]:
         """Base 'facts we know about the world' to seed long-term memory."""
         facts = [f"the {p} is a place ." for p in _PLACES]
@@ -191,7 +217,7 @@ class CurriculumGenerator(AbstractEpisodeSource):
         return facts
 
     def generate(self, n: int) -> List[Episode]:
-        builders = [self._level1, self._level2, self._level3, self._level4][: self.max_level]
+        builders = [self._level1, self._level2, self._level3, self._level4, self._level5][: self.max_level]
         return [builders[i % len(builders)]() for i in range(n)]
 
 

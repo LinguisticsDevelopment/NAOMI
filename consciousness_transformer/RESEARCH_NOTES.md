@@ -23,22 +23,39 @@ working) in the NSM Consciousness Transformer, and records the design decisions.
 
 ## Open problems
 
-### 0. Emergent actions: what still has a non-outcome signal
-The action repertoire {ABSORB, APPEND, RESPOND, SKIP} is **not** supervised by
-position/label — ABSORB and RESPOND are shaped only by the answer loss (the
-answer is a RESPOND-probability-weighted aggregate, so "when to respond" emerges).
-Two honest caveats remain:
-- **APPEND** only pays off in *future* episodes, so it has no within-episode
-  answer gradient. It currently uses a small **label-free novelty** auxiliary
-  (append what's novel vs. the long-term repo). The principled version needs
-  cross-episode credit assignment (RL / a value over future retrieval), which is
-  unbuilt. A visible symptom: the model will APPEND novel *questions* ("where is
-  bill ?"), not just declarative facts — nothing yet teaches it that questions
-  aren't world facts.
-- **Response timing is under-determined** on easy episodes (a single fact answers
-  the question), so the model answers as soon as it has the fact rather than "at
-  the question". The corrupting-distractor level (level 4) is where timing
-  genuinely matters; `mean_respond_position` is a neutral diagnostic, not a target.
+### 0. Emergent actions and trust: built, with honest caveats
+The action repertoire {ABSORB, APPEND, RESPOND, SKIP} and a **trust** signal are
+**not** supervised — all shaped only by the answer loss. The answer is a
+RESPOND-probability-weighted aggregate (so "when to respond" emerges); trust
+scales how strongly each item is written to memory (so "whom to trust" emerges,
+because answering corroboration episodes correctly requires discounting the
+contradiction). Open issues:
+- **Trust is modestly leveraged.** `trust_gap > 0` (it trusts corroborated items
+  more), but the signal is small: the task can also be solved inside the response
+  head, so nothing *forces* trust to carry the load. Making trust the necessary
+  mechanism (e.g. a bottleneck, or an explicit contradiction-detection objective)
+  is open. Distinguishing **contradiction from temporal update** ("moved to")
+  is also unsolved — both look like a memory conflict.
+- **APPEND** still only pays off in *future* episodes, so it has no within-episode
+  answer gradient; it is now gated by trust × its action prob, which is a sensible
+  proxy but not real **cross-episode credit assignment** (RL / a value over future
+  retrieval). Symptom: the model still APPENDs novel *questions* as "world facts".
+- **Forgetting/decay**: trust should let contradicted info *decay* out of
+  long-term memory, giving the FIFO pruning placeholder a real policy. Unbuilt.
+- **Response timing is under-determined** on easy episodes (one fact answers the
+  question); `mean_respond_position` is a neutral diagnostic, not a target.
+
+### 0b. The self-controlled read / think / respond loop (next step)
+Today the loop iterates once per item with a fixed number of internal reasoning
+passes (`reasoning_hops`), and a response is always aggregated. The intended
+architecture lets **the model control its own loop**: each tick it chooses to
+**read** the next input, **think** internally (reason over memory without new
+input), or **respond** — so not every input needs a response and it can process
+and *wait*. The differentiable approximation here (per-item processing + sparse
+soft response + fixed think steps) is a stand-in; true learned control over
+read/think/respond is a discrete-control / RL problem and is the next rung. The
+WSD coherence head and a confidence/halting signal are the natural trigger for
+"I'm ready to answer now."
 
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning

@@ -29,3 +29,23 @@ def mean_respond_position(out, batch) -> float:
     positions = torch.arange(t, device=gates.device).float()
     pos = (w * positions).sum(dim=1) / (t - 1)                  # [B]
     return float(pos.mean())
+
+
+@torch.no_grad()
+def trust_gap(out, batch) -> float:
+    """Does the model trust corroborated info more than contradicted info?
+
+    Diagnostic only (the trust labels are never used in training). Returns
+    mean(trust on trustworthy items) - mean(trust on contradicted items) over
+    real items where both groups are present; 0.0 if no contradictions in batch.
+    """
+    if not hasattr(batch, "trust_label") or batch.trust_label is None:
+        return 0.0
+    trust = out["trust"]                         # [B, T]
+    lab = batch.trust_label                      # [B, T] (1 trustworthy, 0 contradicted)
+    real = batch.step_mask > 0
+    trustworthy = (lab > 0.5) & real
+    contradicted = (lab < 0.5) & real
+    if contradicted.sum() == 0 or trustworthy.sum() == 0:
+        return 0.0
+    return float(trust[trustworthy].mean() - trust[contradicted].mean())

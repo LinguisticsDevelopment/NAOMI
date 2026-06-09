@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .agent import Mind
+from .agent import Mind, Psyche
 from .config import Config, DataConfig, ModelConfig, TrainConfig, load_config
 from .data_structures import (
     CausalRelation,
@@ -82,7 +82,7 @@ __all__ = [
     "WorkingMemory", "MemoryState", "LongTermMemory",
     "ConsciousnessTransformer", "StepOutput",
     "ACTION_ABSORB", "ACTION_APPEND", "ACTION_RESPOND", "ACTION_SKIP", "ACTION_NAMES",
-    "Mind", "LossBreakdown", "compute_losses",
+    "Psyche", "Mind", "LossBreakdown", "compute_losses",
     "ParseTree", "ParseNode", "CausalTable", "CausalRelation", "ConsciousnessState",
     "AbstractParser", "MockNaomiParser",
     "PRIMES", "PRIME_NAMES", "NUM_PRIMES", "NSMPrime", "PrimeCategory",
@@ -101,8 +101,12 @@ class Stack:
     encoder: AbstractInputEncoder
     model: ConsciousnessTransformer
     memory: WorkingMemory
-    mind: Mind
+    psyche: Psyche
     long_term: object = None  # Optional[LongTermMemory]
+
+    @property
+    def mind(self) -> Psyche:  # backward-compat alias (the loop is now "Psyche")
+        return self.psyche
 
 
 def build_default_stack(config: Config, episodes) -> Stack:
@@ -127,7 +131,7 @@ def build_default_stack(config: Config, episodes) -> Stack:
             config.model.memory_dim, config.model.consciousness_dim,
             max_size=config.model.ltm_max_size,
         )
-    mind = Mind(
+    psyche = Psyche(
         model, memory, config.data.answer_mode,
         reasoning_hops=config.model.reasoning_hops, long_term=long_term,
         pad_id=tokenizer.pad_id,
@@ -138,6 +142,6 @@ def build_default_stack(config: Config, episodes) -> Stack:
         encoder=encoder,
         model=model,
         memory=memory,
-        mind=mind,
+        psyche=psyche,
         long_term=long_term,
     )

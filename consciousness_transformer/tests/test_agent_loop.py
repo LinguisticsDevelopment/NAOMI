@@ -6,7 +6,7 @@ from nsm_ct import build_default_stack, load_config
 from nsm_ct.dataset import EpisodeDataset, make_dataloader
 from nsm_ct.episode import CurriculumGenerator
 from nsm_ct.losses import compute_losses
-from nsm_ct.metrics import answer_accuracy, mean_respond_position
+from nsm_ct.metrics import answer_accuracy, mean_respond_position, trust_gap
 from nsm_ct.model import NUM_ACTIONS
 
 
@@ -41,14 +41,14 @@ def test_one_full_unroll_and_training_step():
     assert out["action_logits"].shape == (b, t, NUM_ACTIONS)   # 4-way repertoire
     assert out["respond_gates"].shape == (b, t)
     assert out["append_gates"].shape == (b, t)
-    assert out["novelty_target"].shape == (b, t)
+    assert out["trust"].shape == (b, t)
     # state evolves across the stream
     states = out["states"]
     assert (states[:, 0] - states[:, -1]).abs().sum() > 0
 
-    losses = compute_losses(out, batch, 1.0, 0.1, 0.05)
+    losses = compute_losses(out, batch, 1.0, 0.05)
     assert torch.isfinite(losses.total)
-    for c in (losses.answer, losses.novelty, losses.consistency):
+    for c in (losses.answer, losses.consistency):
         assert torch.isfinite(c)
 
     opt = torch.optim.AdamW(stack.mind.parameters(), lr=1e-3)
@@ -78,7 +78,7 @@ def test_overfit_one_batch_learns_answer_and_timing():
     opt = torch.optim.AdamW(stack.mind.parameters(), lr=1e-2)
     for _ in range(80):
         out = stack.mind(batch)
-        losses = compute_losses(out, batch, 1.0, 0.1, 0.0)
+        losses = compute_losses(out, batch, 1.0, 0.0)
         opt.zero_grad()
         losses.total.backward()
         opt.step()
@@ -106,12 +106,39 @@ def test_emergent_timing_with_post_question_distractors():
     opt = torch.optim.AdamW(stack.mind.parameters(), lr=1e-2)
     for _ in range(150):
         out = stack.mind(batch)
-        losses = compute_losses(out, batch, 1.0, 0.0, 0.0)
+        losses = compute_losses(out, batch, 1.0, 0.0)
         opt.zero_grad()
         losses.total.backward()
         opt.step()
     # The model solves the harder task — it cannot just read the final state.
     assert answer_accuracy(stack.mind(batch), batch) > max(0.4, init_answer)
+
+
+def test_trust_emerges_on_corroboration():
+    """Trained only to answer corroboration episodes correctly (no trust labels),
+    the model learns to trust the corroborated fact over the contradiction."""
+    cfg = _small_cfg()
+    torch.manual_seed(0)
+    gen = CurriculumGenerator(max_level=5, seed=2)
+    episodes = [e for e in gen.generate(120) if e.level == 5][:16]
+    stack = build_default_stack(cfg, episodes)
+    batch = _batch(cfg, episodes, stack, len(episodes))
+    assert (batch.trust_label == 0).any()  # contradictions present
+
+    init_ans = answer_accuracy(stack.mind(batch), batch)
+    opt = torch.optim.AdamW(stack.mind.parameters(), lr=1e-2)
+    for _ in range(200):
+        out = stack.mind(batch)
+        losses = compute_losses(out, batch, 1.0, 0.0)
+        opt.zero_grad()
+        losses.total.backward()
+        opt.step()
+
+    final = stack.mind(batch)
+    assert answer_accuracy(final, batch) > max(0.4, init_ans)
+    # Trust is emergent (no labels); it should end up higher on corroborated
+    # items than on the contradicting one.
+    assert trust_gap(final, batch) > 0.0
 
 
 def test_multihop_runs_and_default_is_single_hop():
@@ -124,7 +151,7 @@ def test_multihop_runs_and_default_is_single_hop():
     assert stack.mind.reasoning_hops == 3
     batch = _batch(cfg, episodes, stack, cfg.train.batch_size)
     out = stack.mind(batch)
-    losses = compute_losses(out, batch, 1.0, 0.1, 0.05)
+    losses = compute_losses(out, batch, 1.0, 0.05)
     assert torch.isfinite(losses.total)
     losses.total.backward()
     assert any(p.grad is not None for p in stack.mind.parameters())

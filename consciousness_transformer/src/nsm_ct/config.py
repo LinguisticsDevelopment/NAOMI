@@ -44,7 +44,6 @@ class TrainConfig:
     epochs: int = 5
     seed: int = 0
     weight_answer: float = 1.0        # answer-correctness loss (the only task signal)
-    weight_novelty: float = 0.1       # label-free APPEND novelty auxiliary
     weight_consistency: float = 0.05  # placeholder consciousness consistency weight
     grad_clip: float = 1.0
 

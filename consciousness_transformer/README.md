@@ -1,20 +1,22 @@
-# NSM Consciousness Transformer
+# Psyche — NSM Consciousness Transformer
 
-A **research scaffold** — part of the NAOMI project — for a transformer used not
-as a text predictor but as a **state-transition function** inside a stateful
-reasoning loop. It threads an abstract *consciousness state* across a stream of
-input sentences, decides for itself when to commit facts to working memory, and —
-when a question arrives — recognizes it and answers from memory.
+**Psyche** is the trained consciousness/reasoning entity in this scaffold (part of
+the NAOMI project). It is a transformer used not as a text predictor but as a
+**state-transition function** inside a stateful reasoning loop: it threads an
+abstract *consciousness state* across a stream of input items, and — entirely on
+its own — chooses what to remember, **whom to trust**, and when to answer.
 
-It is trained "like a kindergartener": on **episodes** (a context stream of
-statements followed by a question), with the procedure *absorb → store →
-recognize question → respond* emerging from weak supervision plus answer
-correctness.
+Everything is **emergent**: the model is never told which item is the question or
+what action to take. From one signal (was the answer right?) it learns to absorb
+facts, discount contradicted ones, persist trustworthy knowledge to long-term
+memory, and respond when appropriate. It is trained "like a kindergartener" on
+**episodes** (a stream of statements/sources, then a question).
 
 The genuinely hard pieces — what the consciousness state *means*, real semantic
-composition onto NSM primes, a consistent parser, long-term memory — are
-**mocked or stubbed behind clean interfaces** and clearly marked. See
-[`RESEARCH_NOTES.md`](RESEARCH_NOTES.md).
+composition onto NSM primes, a consistent parser, cross-episode credit assignment
+for APPEND — are **mocked or stubbed behind clean interfaces** and clearly marked.
+See [`RESEARCH_NOTES.md`](RESEARCH_NOTES.md). The Python package is `nsm_ct`; the
+loop class is `Psyche`.
 
 ## The flow
 
@@ -50,13 +52,16 @@ python scripts/train_phase1.py   # trains the loop on reasoning episodes
 python scripts/eval.py           # held-out answer accuracy + response position
 ```
 
-With the default config (curriculum source, multiple-choice), training reaches
-**~90% held-out answer accuracy** in seconds on CPU — and it does so with **no
-action supervision at all**: the model chooses absorb/append/respond/skip per
-item and learns *when* to answer purely from answer correctness, including the
-level-4 case where a corrupting "X moved to Y" follows the question (so it can't
-just read the final state). `resp_pos` reports where it concentrated its response
-mass (0 = first item, 1 = last); it typically answers as soon as it has the fact.
+With the default config (curriculum levels 1–5, multiple-choice), training
+reaches **~85% held-out answer accuracy** in seconds on CPU — with **no action
+supervision and no trust labels**. The model chooses absorb/append/respond/skip
+per item, learns *when* to answer (level 4 puts a corrupting "X moved to Y" after
+the question, so it can't just read the final state), and learns *whom to trust*
+(level 5 has two sources corroborate and one contradict; the answer is the
+corroborated place). `resp_pos` shows where it concentrated its response mass
+(0 = first item, 1 = last); `trust_gap` (>0) shows it trusts corroborated items
+more than contradicted ones — modest, since the task can also be solved via the
+response head, but emergent.
 
 Use `--source babi` to train on Facebook bAbI (falls back to the curriculum
 generator if the data can't be downloaded in your environment).
@@ -74,6 +79,11 @@ and reads the state slot to produce **three heads**:
    weights this step's response.
 3. **Response** → multiple-choice option scoring or open-ended classification,
    computed at every step.
+
+Plus a **trust** signal (`trust_gate`) that judges each item against what memory
+already holds and **scales how strongly it is written** — so corroborated info is
+used and contradicted info is discounted. Trust is emergent (no trust labels): it
+is learned purely because answering correctly requires discounting contradictions.
 
 **Emergent actions (no hard-coding).** The action choice is **not supervised**.
 The episode is a uniform stream of items — the model is never told which is the
@@ -169,6 +179,9 @@ curriculum level, and input encoder.
 | Multi-hop reasoning over memory | **Real** (config-gated) | `agent.py` |
 | Emergent action repertoire (absorb/append/respond/skip, no labels) | **Real** | `model.py`, `agent.py`, `losses.py` |
 | Model-chosen response timing | **Real** | `agent.py` |
+| Emergent trust (corroboration vs contradiction, no labels) | **Real** (modest signal) | `model.py`, `agent.py`, `episode.py` |
+| Self-controlled read/think/respond loop | **Not built** (next step) | RESEARCH_NOTES |
+| Cross-episode credit assignment for APPEND | **Not built** (next step) | RESEARCH_NOTES |
 | WSD scorer + coherence-driven re-evaluation | **Real, standalone** | `wsd.py` |
 | WSD sense inventory + sense→prime signatures | **Mocked** (WordNet hook) | `wsd.py` |
 | Multiple-choice + open-ended response | **Real** | `model.py` |
