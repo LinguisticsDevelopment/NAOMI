@@ -87,11 +87,13 @@ def test_controlled_overfit_learns_answer():
     stack = build_default_stack(cfg, episodes)
     batch = _batch(cfg, episodes, stack, 16)
     init = answer_accuracy(stack.psyche(batch), batch)
-    opt = torch.optim.AdamW(stack.psyche.parameters(), lr=1e-2)
-    for _ in range(200):
+    opt = torch.optim.AdamW(stack.psyche.parameters(), lr=5e-3)  # 1e-2 can overshoot/collapse
+    for _ in range(300):
         out = stack.psyche(batch)
         loss = compute_losses(out, batch, 1.0, 0.0).total
-        opt.zero_grad(); loss.backward(); opt.step()
+        opt.zero_grad(); loss.backward()
+        torch.nn.utils.clip_grad_norm_(stack.psyche.parameters(), 1.0)  # match real training
+        opt.step()
     assert answer_accuracy(stack.psyche(batch), batch) > max(0.5, init)
 
 

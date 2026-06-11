@@ -48,6 +48,7 @@ class ParseNode:
     children: List["ParseNode"] = field(default_factory=list)
     relation: Optional[str] = None
     index: Optional[int] = None  # source word position (for aligning structure to tokens)
+    meaning: Optional["ParseTree"] = None  # a word-leaf's tree of NSM primes (its explication)
 
     @property
     def is_leaf(self) -> bool:

@@ -26,9 +26,11 @@ from typing import List, Optional, Tuple
 from .structure import align_structure, role_id
 from .tokenizer import SimpleTokenizer
 
-# A structured encoding: aligned (token ids, role ids, depths) of equal length.
-# Role ids index the dedicated structure vocab (see structure.py), not the tokens.
-Structured = Tuple[List[int], List[int], List[int]]
+# A structured encoding: aligned (token ids, role ids, depths, meanings) of equal
+# length. Role ids index the dedicated structure vocab (structure.py); meanings is
+# a per-token bag of NSM prime ids (the word's meaning tree). Both are structure
+# layered on top of the words — never replacing them.
+Structured = Tuple[List[int], List[int], List[int], List[List[int]]]
 
 
 class AbstractInputEncoder(abc.ABC):
@@ -39,9 +41,9 @@ class AbstractInputEncoder(abc.ABC):
         raise NotImplementedError
 
     def encode_structured(self, sentence: str) -> Structured:
-        """Tokens plus per-token (role, depth) structure. Default: no structure."""
+        """Tokens + per-token (role, depth, meaning). Default: no structure."""
         ids = self.encode(sentence)
-        return ids, [0] * len(ids), [0] * len(ids)  # role 0 = NOROLE, depth 0
+        return ids, [0] * len(ids), [0] * len(ids), [[] for _ in ids]
 
 
 class TokenInputEncoder(AbstractInputEncoder):
@@ -67,12 +69,15 @@ class ParserInputEncoder(AbstractInputEncoder):
             the repo's English grammar.
     """
 
-    def __init__(self, tokenizer: SimpleTokenizer, grammar_path: Optional[str] = None) -> None:
+    def __init__(self, tokenizer: SimpleTokenizer, grammar_path: Optional[str] = None,
+                 meaning_resolver=None) -> None:
+        from .thought import MockMeaningResolver
         self.tokenizer = tokenizer
         self._fallback = TokenInputEncoder(tokenizer)
         self._warned = False
         self._adapter = None
         self._grammar_path = grammar_path
+        self._resolver = meaning_resolver or MockMeaningResolver()
         self._init_adapter()
 
     def _init_adapter(self) -> None:
@@ -118,10 +123,13 @@ class ParserInputEncoder(AbstractInputEncoder):
             return None
 
     def encode_structured(self, sentence: str) -> Structured:
+        from .thought import build_thought  # local import (avoids cycle)
         tree = self._parse_tree(sentence)
-        tokens, roles, depths = align_structure(sentence, tree)
+        if tree is not None:
+            build_thought(sentence, tree, self._resolver)  # attach meaning trees
+        tokens, roles, depths, meanings = align_structure(sentence, tree)
         return (self.tokenizer.encode_tokens(tokens),
-                [role_id(r) for r in roles], depths)
+                [role_id(r) for r in roles], depths, meanings)
 
 
 def make_input_encoder(name: str, tokenizer: SimpleTokenizer) -> AbstractInputEncoder:

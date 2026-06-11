@@ -20,6 +20,7 @@ from .episode import Episode
 from .input_encoder import AbstractInputEncoder
 from .nsm_primes import PRIME_NAMES
 from .structure import NOROLE
+from .thought import MAX_MEANING_PRIMES
 from .tokenizer import SimpleTokenizer
 
 # Parse-tree label vocabulary (NodeType + ConnectionType names) so the optional
@@ -98,18 +99,22 @@ def encode_episode(
     item_texts = list(ep.context) + [ep.question] + list(ep.post_context)
     question_index = len(ep.context)
 
-    # Each item is tokens + aligned (role, depth) structure from the parser.
+    # Each item is tokens + aligned (role, depth, meaning) structure from the parser.
     def _enc(s: str):
-        ids, roles, depths = encoder.encode_structured(s)
+        ids, roles, depths, meanings = encoder.encode_structured(s)
         ids, roles, depths = ids[:max_len], roles[:max_len], depths[:max_len]
+        meanings = meanings[:max_len]
         if not ids:
-            ids, roles, depths = [tokenizer.pad_id], [tokenizer.id_of(NOROLE)], [0]
-        return ids, roles, depths
+            ids, roles, depths, meanings = [tokenizer.pad_id], [0], [0], [[]]
+        # pad each token's meaning bag to a fixed width
+        meanings = [(m + [0] * MAX_MEANING_PRIMES)[:MAX_MEANING_PRIMES] for m in meanings]
+        return ids, roles, depths, meanings
 
     enc = [_enc(s) for s in item_texts]
     item_ids = [e[0] for e in enc]
     item_roles = [e[1] for e in enc]
     item_depths = [e[2] for e in enc]
+    item_meaning = [e[3] for e in enc]
     # Per-item trust labels (metrics only): context labels, then 1.0 for the
     # question and any post-question items.
     ctx_trust = ep.trust_labels if ep.trust_labels is not None else [1.0] * len(ep.context)
@@ -135,6 +140,7 @@ def encode_episode(
         "item_ids": item_ids,
         "item_roles": item_roles,
         "item_depths": item_depths,
+        "item_meaning": item_meaning,
         "item_texts": item_texts,
         "item_trust": item_trust,
         "question_index": question_index,
@@ -153,6 +159,7 @@ class EpisodeBatch:
     item_mask: torch.Tensor      # [B, T, L]  (token mask per item)
     item_roles: torch.Tensor     # [B, T, L]  (per-token parse role id; structure)
     item_depths: torch.Tensor    # [B, T, L]  (per-token parse depth; structure)
+    item_meaning: torch.Tensor   # [B, T, L, M]  (per-token bag of NSM prime ids; meaning)
     step_mask: torch.Tensor      # [B, T]  (1 = real item)
     question_index: torch.Tensor  # [B]  (metrics only; never fed to the model)
     opt_ids: torch.Tensor        # [B, K, Lo]
@@ -169,6 +176,7 @@ class EpisodeBatch:
             item_mask=self.item_mask.to(device),
             item_roles=self.item_roles.to(device),
             item_depths=self.item_depths.to(device),
+            item_meaning=self.item_meaning.to(device),
             step_mask=self.step_mask.to(device),
             question_index=self.question_index.to(device),
             opt_ids=self.opt_ids.to(device),
@@ -204,8 +212,9 @@ def collate(items: List[Dict[str, object]], pad_id: int) -> EpisodeBatch:
 
     item_ids = torch.full((b, max_t, max_l), pad_id, dtype=torch.long)
     item_mask = torch.zeros((b, max_t, max_l), dtype=torch.float32)
-    item_roles = torch.full((b, max_t, max_l), pad_id, dtype=torch.long)  # masked positions ignored
+    item_roles = torch.zeros((b, max_t, max_l), dtype=torch.long)  # 0 = NOROLE; masked positions ignored
     item_depths = torch.zeros((b, max_t, max_l), dtype=torch.long)
+    item_meaning = torch.zeros((b, max_t, max_l, MAX_MEANING_PRIMES), dtype=torch.long)
     step_mask = torch.zeros((b, max_t), dtype=torch.float32)
     trust_label = torch.ones((b, max_t), dtype=torch.float32)
     question_index = torch.zeros((b,), dtype=torch.long)
@@ -222,10 +231,15 @@ def collate(items: List[Dict[str, object]], pad_id: int) -> EpisodeBatch:
         ids, msk = _pad_2d(stream, len(stream), max_l, pad_id)
         item_ids[i, : len(stream)] = ids
         item_mask[i, : len(stream)] = msk
-        roles, _ = _pad_2d(it["item_roles"], len(stream), max_l, pad_id)
+        roles, _ = _pad_2d(it["item_roles"], len(stream), max_l, 0)  # 0 = NOROLE
         depths, _ = _pad_2d(it["item_depths"], len(stream), max_l, 0)
         item_roles[i, : len(stream)] = roles
         item_depths[i, : len(stream)] = depths
+        for ti, toks in enumerate(it["item_meaning"]):       # [L][M] per item
+            for li, mids in enumerate(toks):
+                if li >= max_l:
+                    break
+                item_meaning[i, ti, li] = torch.tensor(mids, dtype=torch.long)
         step_mask[i, : len(stream)] = 1.0
         trust = it["item_trust"]
         trust_label[i, : len(trust)] = torch.tensor(trust, dtype=torch.float32)
@@ -243,7 +257,7 @@ def collate(items: List[Dict[str, object]], pad_id: int) -> EpisodeBatch:
 
     return EpisodeBatch(
         item_ids=item_ids, item_mask=item_mask, item_roles=item_roles,
-        item_depths=item_depths, step_mask=step_mask,
+        item_depths=item_depths, item_meaning=item_meaning, step_mask=step_mask,
         question_index=question_index, opt_ids=opt_ids, opt_mask=opt_mask,
         answer_target=answer_target, trust_label=trust_label,
         q_positions=q_positions, q_targets=q_targets, item_texts=item_texts,

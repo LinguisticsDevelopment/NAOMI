@@ -25,6 +25,7 @@ import torch.nn as nn
 
 from .config import ModelConfig
 from .structure import MAX_DEPTH, NUM_ROLES
+from .thought import NUM_MEANING_IDS
 
 # Action repertoire for the gating head. The model CHOOSES among these per item;
 # nothing supervises the choice positionally (see losses.py / RESEARCH_NOTES).
@@ -126,14 +127,17 @@ class ConsciousnessTransformer(nn.Module):
         self.option_proj = nn.Linear(d, d)                       # MC option embeddings
         self.answer_classifier = nn.Linear(d, max(answer_vocab_size, 1))  # open-ended
 
-        # Tree-aware structure (created LAST so token-mode init is unchanged):
-        # per-token parse role + depth, added onto word embeddings. Zero-init, so
-        # structure starts as a no-op and is learned only if it helps — and a
-        # lossy/noisy parse can never corrupt the word stream.
+        # Thought-object structure (created LAST so token-mode init is unchanged):
+        # per-token parse role + depth + a bag of NSM-prime meaning ids, all added
+        # onto word embeddings. Zero-init, so structure/meaning starts as a no-op
+        # and is learned only if it helps — a lossy/noisy parse or meaning can
+        # never corrupt the word stream.
         self.role_embedding = nn.Embedding(NUM_ROLES, d)
         self.depth_embedding = nn.Embedding(MAX_DEPTH, d)
+        self.prime_embedding = nn.Embedding(NUM_MEANING_IDS, d, padding_idx=0)
         nn.init.zeros_(self.role_embedding.weight)
         nn.init.zeros_(self.depth_embedding.weight)
+        nn.init.zeros_(self.prime_embedding.weight)
 
     # -- one transition step -------------------------------------------------
     def _transition(
@@ -174,13 +178,16 @@ class ConsciousnessTransformer(nn.Module):
         mem_read: torch.Tensor,     # [B, mem_dim]
         input_roles: torch.Tensor = None,   # [B, L] per-token parse role id (optional)
         input_depths: torch.Tensor = None,  # [B, L] per-token parse depth (optional)
+        input_meaning: torch.Tensor = None,  # [B, L, M] per-token bag of prime ids (optional)
     ) -> StepOutput:
-        """One state transition over a single input sentence (tokens + structure)."""
+        """One state transition over a single input sentence (tokens + thought structure)."""
         tok = self.token_embedding(input_ids)
         if input_roles is not None:
             tok = tok + self.role_embedding(input_roles)            # parse role (zero-init)
         if input_depths is not None:
             tok = tok + self.depth_embedding(input_depths.clamp(max=MAX_DEPTH - 1))
+        if input_meaning is not None:
+            tok = tok + self.prime_embedding(input_meaning).sum(dim=2)  # bag of primes (zero-init)
         return self._transition(state, tok, input_mask == 0, mem_read)
 
     def control_gate(self, state: torch.Tensor) -> torch.Tensor:

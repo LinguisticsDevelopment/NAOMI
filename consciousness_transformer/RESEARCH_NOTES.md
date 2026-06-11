@@ -108,28 +108,53 @@ just the data, converts chained streams into the capability. Remaining open: a
 calibrated "answer now" signal instead of the fixed soft window, and longer
 chains / more questions per stream.
 
-### 0e. Structured "thoughts" as input — Stage 1 done, Stage 2 next
-The goal is to feed the model **parsed structure** (not just words) and ultimately
-let it **build its own trees**. Status, scaffolded:
-- **Stage 1 (built, default).** `quantum_parser` parses each sentence; per-token
-  **role** + **tree depth** are aligned onto the full token stream
-  (`structure.align_structure`) and added as embeddings (`model.step`). The design
-  is deliberately *additive + zero-init*: words are never replaced (a lossy parse
-  can't corrupt input) and structure starts as a no-op, learned only if it helps.
-  On the curriculum it lifts held-out ~0.90 → ~0.92. The encoding is **flat per
-  token** (role + depth), a lightweight stand-in for true hierarchy — real
-  structural attention / tree position encodings are still open.
-- **Honest parser limit.** The rule parser is good on *controlled* sentences
-  (curriculum, simple textbook prose) but lexicon-bounded (~224 words + suffix
-  fallback) and hand-authored (85 rules); it degrades to NOROLE on open-domain
-  text. So "feed structure" and "real open-domain corpus" are in tension — which
-  is the case for Stage 2.
-- **Stage 2 (next): the model builds its own trees.** A learned structure module
-  that predicts the parse (supervised/distilled from the rule parser on controlled
-  text, then free to improve and generalize past the lexicon). This is the bridge
-  to real corpora and the "build its own trees" half of the goal.
-- **Still mocked:** semantic mapping onto NSM primes (`MockSemanticMapper`) — the
-  *meaning* layer — is not wired into the loop; only syntactic structure is.
+### 0e. Thought objects — trees of meaning as the model's working unit
+The architecture is being reframed: the unit the model works with is a **thought
+object** = a parse tree whose word-leaves each carry a **meaning tree** — the word's
+reductive explication as a *tree of NSM primes* (an NSM "molecule"). Meaning is
+recursive *structure*, not a flat vector. The thinking model's job is to
+**manipulate** thought objects (tree + memory → tree); it does **not** build trees
+(text↔tree is the parser's / a reverse parser's job). A 3-part chicken-and-egg —
+(1) meaning (word → prime tree), (2) WSD, (3) the tree→tree thinking model —
+bootstrapped by alternating training.
+
+**Representation decision: explicit (non-embedded) first.** The I/O unit stays
+explicit structure (trees of primes), not a single opaque "meaning vector". Explicit
+trees are *verifiable* (lossless round-trip lets us read whether meaning is
+preserved); collapsing to opaque dims up front is an uninspectable lossy bottleneck.
+Vector-space "thinking" still happens *inside* the model (the continuous state +
+memory). A learned tree↔vector codec (the opaque "meaning vector") is a deferred,
+optional optimization (Stage E), supervised by the explicit representation if tree
+manipulation proves too expensive.
+
+**Stage A (built, default).** Thought-object plumbing, end-to-end, mock meanings:
+- `thought.py`: `ThoughtObject` (parse tree + per-leaf `MeaningTree`), an
+  `AbstractMeaningResolver`, and `MockMeaningResolver` (word → deterministic small
+  prime tree — meaning-free but structured, real before WordNet).
+- **Lossless serialization** (`serialization.serialize_thought` ↔
+  `deserialize_thought`) round-trips to identity — the "parser maintains meaning
+  without loss" requirement and the exact target a future tree-decoder emits.
+  `reverse_parser.thought_to_text` is the tree→text seed.
+- Fed to the model as **additive, zero-init** per-token streams (role, depth, and a
+  bag of meaning-prime ids) on top of the words — so a lossy parse/meaning can only
+  help or be ignored, never corrupt the input. No regression (~0.85–0.92 held-out).
+- Honest limits: meaning input is a **bag of primes per word** (the full meaning
+  *tree* lives on the thought object + serialization, not yet in the model input);
+  the rule parser is lexicon-bounded (drops words on open-domain text — a
+  parser-quality limit, not a serialization loss); meanings are mock.
+
+**Roadmap (staged, not built):**
+- **Stage B — real meaning.** `WordNetSenseInventory` (nltk) → senses; map each
+  synset to a prime tree (from glosses → molecules). Replace the mock; generalize
+  `wsd.Sense.primes` (flat) → a meaning tree.
+- **Stage C — WSD wired.** Wire `wsd.IterativeSenseResolver` into the loop: pick the
+  sense (→ meaning tree) from `(state, memory)` context; write the sense-resolved
+  meaning, not the surface token, into memory.
+- **Stage D — tree→tree thinking model.** Add a decoder (first seq2seq here) that
+  emits a thought object from `encoder(input thoughts) + memory`, read out via the
+  reverse parser. Pin the exact output mechanism when reached.
+- **Stage E (optional) — learned tree↔vector codec.** Only if explicit manipulation
+  is too expensive; trained against the lossless explicit representation as oracle.
 
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning

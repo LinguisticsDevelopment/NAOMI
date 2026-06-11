@@ -48,18 +48,22 @@ def role_id(name: str) -> int:
     return _ROLE_TO_ID.get(name, 0)
 
 
-def _token_annotations(tree: ParseTree) -> List[Tuple[int, str, str, int]]:
-    """``(source_index, token_text, role, depth)`` for every token-bearing node.
+def _token_annotations(tree: ParseTree) -> List[Tuple[int, str, str, int, List[int]]]:
+    """``(source_index, token, role, depth, meaning_prime_ids)`` per token node.
 
-    Sorted by source index so the result is in surface order. Nodes without a
-    source index are skipped (they can't be aligned to a token).
+    Sorted by source index (surface order). Nodes without a source index are
+    skipped (they can't be aligned to a token). ``meaning_prime_ids`` is the word's
+    meaning tree as a (capped) bag of prime ids, empty when no meaning is attached.
     """
-    out: List[Tuple[int, str, str, int]] = []
+    from .thought import meaning_prime_ids  # local import (avoids import cycle)
+
+    out: List[Tuple[int, str, str, int, List[int]]] = []
 
     def walk(node, depth: int) -> None:
         if node.token is not None and node.index is not None:
             role = node.relation or node.label or NOROLE
-            out.append((int(node.index), str(node.token).lower(), role, min(depth, MAX_DEPTH - 1)))
+            out.append((int(node.index), str(node.token).lower(), role,
+                        min(depth, MAX_DEPTH - 1), meaning_prime_ids(node.meaning)))
         for child in node.children:
             walk(child, depth + 1)
 
@@ -68,30 +72,34 @@ def _token_annotations(tree: ParseTree) -> List[Tuple[int, str, str, int]]:
     return out
 
 
-def align_structure(sentence: str, tree: Optional[ParseTree]) -> Tuple[List[str], List[str], List[int]]:
-    """Align a parse onto ``basic_tokenize(sentence)``.
+def align_structure(
+    sentence: str, tree: Optional[ParseTree]
+) -> Tuple[List[str], List[str], List[int], List[List[int]]]:
+    """Align a parse (with optional meaning) onto ``basic_tokenize(sentence)``.
 
-    Returns ``(tokens, roles, depths)`` of equal length: the surface tokens (what
-    the model actually embeds), and per-token role/depth from the parse. Tokens
-    the parser didn't cover get ``NOROLE`` / depth 0. Alignment is a greedy
-    surface-text match in source order, so a parser that drops or reorders a few
-    words degrades gracefully rather than corrupting the stream.
+    Returns ``(tokens, roles, depths, meanings)`` of equal length: the surface
+    tokens (what the model embeds), per-token role/depth, and per-token meaning
+    (a bag of NSM prime ids from the word's meaning tree, ``[]`` when absent).
+    Tokens the parser didn't cover get ``NOROLE`` / depth 0 / no meaning. Alignment
+    is a greedy surface-text match in source order, so a parser that drops or
+    reorders a few words degrades gracefully rather than corrupting the stream.
     """
     tokens = basic_tokenize(sentence)
     roles = [NOROLE] * len(tokens)
     depths = [0] * len(tokens)
+    meanings: List[List[int]] = [[] for _ in tokens]
     if tree is None:
-        return tokens, roles, depths
+        return tokens, roles, depths, meanings
 
     anns = _token_annotations(tree)
     j = 0  # cursor into annotations
     for i, tok in enumerate(tokens):
-        # advance to the next annotation whose text matches this token
         k = j
         while k < len(anns) and anns[k][1] != tok:
             k += 1
         if k < len(anns):
             roles[i] = anns[k][2]
             depths[i] = anns[k][3]
+            meanings[i] = anns[k][4]
             j = k + 1
-    return tokens, roles, depths
+    return tokens, roles, depths, meanings

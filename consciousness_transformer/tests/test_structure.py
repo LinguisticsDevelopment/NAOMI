@@ -19,24 +19,26 @@ def _tok():
 
 
 def test_align_structure_is_lossless_and_aligned():
-    """Every token is preserved; roles/depths align 1:1, even if the parser drops
-    a word (that token just gets NOROLE/0)."""
+    """Every token is preserved; roles/depths/meaning align 1:1, even if the
+    parser drops a word (that token just gets NOROLE/0/no-meaning)."""
     tok = _tok()
     enc = ParserInputEncoder(tok)
     sent = "mary is in the kitchen ."
-    ids, roles, depths = enc.encode_structured(sent)
+    ids, roles, depths, meanings = enc.encode_structured(sent)
     words = basic_tokenize(sent)
-    assert len(ids) == len(roles) == len(depths) == len(words)   # 1:1, nothing dropped
+    assert len(ids) == len(roles) == len(depths) == len(meanings) == len(words)
     assert ids == tok.encode(sent)                               # exact same tokens as plain
     assert all(0 <= r < NUM_ROLES for r in roles)
-    # at least one real syntactic role was found on a content word
-    assert any(r != role_id("NOROLE") for r in roles)
+    assert any(r != role_id("NOROLE") for r in roles)           # real syntactic role found
+    # content words carry a meaning bag (prime ids); the parse covers some of them
+    assert any(len(m) > 0 for m in meanings)
 
 
 def test_token_encoder_emits_empty_structure():
     tok = _tok()
-    ids, roles, depths = TokenInputEncoder(tok).encode_structured("mary is in the kitchen .")
+    ids, roles, depths, meanings = TokenInputEncoder(tok).encode_structured("mary is in the kitchen .")
     assert roles == [0] * len(ids) and depths == [0] * len(ids)  # NOROLE / depth 0
+    assert meanings == [[] for _ in ids]                         # no meaning
 
 
 def test_structure_is_zero_init_noop_at_start():
@@ -51,8 +53,10 @@ def test_structure_is_zero_init_noop_at_start():
     batch = next(iter(make_dataloader(ds, stack.tokenizer.pad_id, 8, False)))
 
     base = stack.psyche(batch)["answer_logits"]
-    # inject real (nonzero) structure ids; with zero-init embeddings, output is unchanged
+    # inject real (nonzero) role/depth/meaning ids; with zero-init embeddings the
+    # output is unchanged (structure + meaning are a no-op until learned).
     batch.item_roles = torch.full_like(batch.item_roles, 5)
     batch.item_depths = torch.full_like(batch.item_depths, 3)
+    batch.item_meaning = torch.full_like(batch.item_meaning, 7)
     injected = stack.psyche(batch)["answer_logits"]
     assert torch.allclose(base, injected, atol=1e-6)
