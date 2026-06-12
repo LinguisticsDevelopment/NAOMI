@@ -94,8 +94,39 @@ def build_thought(
 
 
 def meaning_prime_ids(meaning: Optional[ParseTree]) -> List[int]:
-    """The (capped) list of prime ids in a word's meaning tree (pre-order)."""
+    """The (capped) bag of prime ids in a word's meaning tree (pre-order).
+
+    Node labels may be either NSM prime names (base case) or NSM *molecule*
+    names (recursive case).  Molecule references are expanded to their
+    constituent prime names via
+    :func:`nsm_ct.nsm_molecules.flatten_molecule_to_prime_names`, with a
+    hard depth limit and cycle guard built into that helper.  Unrecognised
+    labels (neither prime nor molecule) are silently skipped so that
+    partially-constructed trees do not crash callers.
+
+    The returned list is capped at :data:`MAX_MEANING_PRIMES` ids (same
+    contract as before); prime ids are 1-based (0 = pad / no-prime).
+    """
     if meaning is None:
         return []
-    ids = [meaning_prime_id(n.label) for n in meaning.iter_preorder()]
+
+    # Lazy import to break the potential import cycle
+    # (nsm_molecules imports data_structures; thought imports nsm_primes).
+    from .nsm_molecules import MOLECULES_BY_NAME, flatten_molecule_to_prime_names
+
+    ids: List[int] = []
+    for node in meaning.iter_preorder():
+        label = node.label
+        if label in PRIME_NAMES:
+            ids.append(meaning_prime_id(label))
+        elif label in MOLECULES_BY_NAME:
+            # Expand molecule -> prime names recursively, then convert to ids.
+            prime_names = flatten_molecule_to_prime_names(label)
+            for pname in prime_names:
+                if pname in PRIME_NAMES:
+                    ids.append(meaning_prime_id(pname))
+        # else: unrecognised label — skip silently (forward-compatible)
+        if len(ids) >= MAX_MEANING_PRIMES:
+            break
+
     return ids[:MAX_MEANING_PRIMES]
