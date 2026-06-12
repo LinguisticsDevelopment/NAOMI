@@ -1858,6 +1858,42 @@
                     "consume": ["anchor"],
                     "pull_categories": ["PROGRESSIVE"],
                     "note": "Progressive auxiliary + verb: is running, was walking"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Bare progressive copula -> VERBAL (e.g. 'is' in 'mary is in the kitchen')"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PERFECT"]},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Bare perfect auxiliary -> VERBAL"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["MODAL"]},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Bare modal -> VERBAL"
                 }
             ]
         },
