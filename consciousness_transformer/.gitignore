@@ -13,7 +13,8 @@ dist/
 .venv/
 venv/
 
-# Derived data (large downloaded files — do NOT commit)
-# Script: scripts/build_explication_store.py
+# Derived data (large downloaded files — do NOT commit). The small, hand-curated
+# data/gold_explications.json IS committed; only the big DeepNSM store is ignored.
+# Rebuild the store: scripts/build_explication_store.py
 data/*.jsonl
-data/
+data/*.parquet

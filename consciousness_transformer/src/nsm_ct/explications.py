@@ -115,7 +115,10 @@ class ExplicationStore:
             with open(path, encoding="utf-8") as fh:
                 entries = json.load(fh)
             for entry in entries:
-                word = entry.get("word", "").strip().lower()
+                # Gold "word" fields may carry the NSM frame, e.g.
+                # "broke (someone X broke something Y)" — key on the bare headword.
+                raw = entry.get("word", "").strip()
+                word = raw.split("(")[0].strip().lower()
                 explication = entry.get("explication", "").strip()
                 source = entry.get("source", "unknown")
                 if word and explication:
