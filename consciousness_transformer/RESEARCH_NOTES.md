@@ -160,10 +160,43 @@ decomposition bottoms out; the model still ingests it as the additive zero-init
 bag-of-primes (full meaning *trees* aren't fed to the model yet); "john"→WordNet's
 toilet sense vs "mary"→SOMEONE shows first-sense/name handling is rough.
 
+### 0f. TPR meaning vectors — non-flattening representation (prototype, MEASURED)
+The flattening problem: meaning reaches the model as a capped 4-prime bag
+(`meaning_prime_ids`), destroying the tree. The chosen remedy is **Tensor Product
+Representations** (Smolensky 1990): bind each child (prime/molecule filler vector)
+to a structural **role** (position × relation family, role families in orthogonal
+subspaces — the "noun-axis × verb-axis" factoring) via outer product and sum;
+unbinding inverts it. Molecules stay first-class units (no eager expansion);
+vectors are **deterministic and unique** per structure. Verified against the
+literature before building (user asked for a double-check):
+- Pure TPR is exact but its dimension grows **exponentially with depth**; HRR-class
+  compression holds dimension fixed at the cost of noise + cleanup (Plate).
+- **TPR-RNN (Schlag & Schmidhuber, NeurIPS 2018)**: a fixed THIRD-ORDER TPR memory
+  (entity⊗relation⊗value), trained end-to-end by gradient descent to SOTA on
+  bAbI — our task family. "Infinite-depth thinking" = recursion **in time**
+  (the loop), not unbounded tensor order. Trainability is TPR's strength: bilinear
+  exact ops, clean gradients, no cleanup inside the training path.
+
+**Prototype results** (`tpr.py`, `scripts/probe_tpr.py`, on REAL trees):
+- **Matrix form (one exact level, d=128): 1.00 label recovery on every real
+  explication tree** (gold kill/broke/sad/happy/children + DeepNSM
+  snake/egg/water/dog/house, up to 31 children). This is the representation.
+- **Fully contracted single d-vector is measurably lossy** (0.22–1.00 at d=128;
+  0.41–1.00 at d=256 on the same trees) — a collapsed vector is NOT good enough as
+  the model input; the matrix should be fed (or a learned projection of it).
+- **Stacked contractions collapse** (depth-3 ≈ 0.05–0.23) and exact order-growth
+  explodes (d=128 depth-3 = 1.1 GB) — both confirm: per-level exact matrices +
+  depth-through-the-loop (the TPR-RNN shape) is the architecture.
+**Gate verdict: PASSED for the matrix form.** Next integration step: a word's
+meaning = its cached `encode_matrix` (d×d) of the explication tree; the thinking
+memory (Stage D) takes the TPR-RNN order-3 form. The contracted vector remains
+useful only as a cheap similarity key (e.g. LTM addressing), not as the meaning.
+
 **Roadmap (remaining):**
 - **Stage B+ — deepen meaning.** Source real molecule explications (transcribe
   verbatim, cited) to replace the coarse SOMETHING grounding; better name/person
-  handling; feed the full meaning *tree* to the model (not just the prime bag).
+  handling; feed the meaning *matrix* (TPR, §0f) to the model instead of the
+  4-prime bag.
 - **Stage C — WSD wired.** Wire `wsd.IterativeSenseResolver` into the loop: pick the
   sense (→ meaning tree) from `(state, memory)` context; write the sense-resolved
   meaning, not the surface token, into memory.
