@@ -141,20 +141,11 @@ def test_she_is_in_the_kitchen_reachable(parser):
     assert "in" in reached, f"'in' not reachable; reachable={reached}"
 
 
-@pytest.mark.xfail(
-    reason=(
-        "'to' is tagged as Tag.PART (infinitive marker) by default, not Tag.ADP, "
-        "so no PP is formed and 'to'/'office' may not be reachable. "
-        "Pass Word('to', Tag.ADP) explicitly to force PP attachment."
-    ),
-    strict=False,
-)
 def test_john_moved_to_the_office_pp_reachable_auto(parser):
     """
-    'john moved to the office' with auto-tagging: 'to' gets Tag.PART, not Tag.ADP.
-
-    This test documents the known tagging conflict and is expected to fail
-    under auto-tagging.  The explicit-ADP variant below always passes.
+    'john moved to the office' with auto-tagging now forms a PP: 'to' is treated
+    as an ambiguous ADP/PART so a prepositional reading is available, and
+    'to'/'office' are reachable from the root.
     """
     from src.parser.pos_tagger import simple_tag
     words_auto = [

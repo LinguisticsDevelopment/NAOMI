@@ -200,6 +200,12 @@ def apply_rule(hypothesis: Hypothesis, match: Match) -> Hypothesis:
                 if SUBTYPE_TO_SUBCAT.get(flag) != subcat
             ]
 
+    # Push subtypes onto result node if specified
+    if match.rule.push_subtypes:
+        for subtype in match.rule.push_subtypes:
+            if subtype not in anchor.flags:
+                anchor.flags.append(subtype)
+
     # Create connections
     for conn_spec in match.rule.connections:
         # Resolve node references

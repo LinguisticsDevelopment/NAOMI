@@ -92,8 +92,17 @@ WORD_TAG_DICT = {
     "want": Tag.VERB, "wants": Tag.VERB, "wanted": Tag.VERB,
     "live": Tag.VERB, "lives": Tag.VERB, "lived": Tag.VERB,
 
-    # Particles (negation, infinitive marker, possession, etc.)
-    "not": Tag.PART, "n't": Tag.PART, "to": Tag.PART, "'s": Tag.PART,
+    # Particles (negation, possession, etc.) — "to" is listed in
+    # AMBIGUOUS_WORDS as [ADP, PART] so the parser can branch contextually.
+    "not": Tag.PART, "n't": Tag.PART, "'s": Tag.PART,
+
+    # Subordinating conjunctions (SCONJ → NodeType.SUBOORD)
+    # "that" overrides earlier DET/PRON entries; kept in AMBIGUOUS_WORDS
+    # as [PRON, SCONJ] to preserve relative-clause behaviour.
+    "because": Tag.SCONJ, "if": Tag.SCONJ,
+    "although": Tag.SCONJ, "though": Tag.SCONJ, "while": Tag.SCONJ,
+    "since": Tag.SCONJ, "unless": Tag.SCONJ, "whether": Tag.SCONJ,
+    "said": Tag.VERB,
 
     # Common nouns
     "dog": Tag.NOUN, "dogs": Tag.NOUN, "cat": Tag.NOUN, "cats": Tag.NOUN,
@@ -166,6 +175,15 @@ AMBIGUOUS_WORDS = {
     "up": [Tag.ADP, Tag.ADV],
     "down": [Tag.ADP, Tag.ADV],
     "out": [Tag.ADP, Tag.ADV],
+
+    # "to": infinitive marker (PART) or preposition (ADP)
+    # ADP first so PP-attachment is preferred when followed by a noun phrase;
+    # the parser branches and picks the reading that yields a complete parse.
+    "to": [Tag.ADP, Tag.PART],
+
+    # "that": relative/subordinating conjunction (SCONJ→SUBOORD) or pronoun/DET
+    # SCONJ listed first so subordinate-clause reading is tried first.
+    "that": [Tag.SCONJ, Tag.PRON],
 
     # Common pronoun "her" - DET or PRON
     "her": [Tag.DET, Tag.PRON],
