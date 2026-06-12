@@ -34,6 +34,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from .data_structures import ParseTree
 from .nsm_primes import NUM_PRIMES, prime_index
 
 
@@ -52,6 +53,7 @@ class Sense:
     sense_id: str
     gloss: str
     primes: Dict[str, float] = field(default_factory=dict)
+    meaning: Optional[ParseTree] = field(default=None, compare=False)
 
     def prime_vector(self) -> np.ndarray:
         """Dense weight vector over the canonical prime inventory."""
@@ -122,18 +124,35 @@ class MockSenseInventory(SenseInventory):
 
 
 class WordNetSenseInventory(SenseInventory):
-    """HOOK: real sense inventory from WordNet. Not implemented.
+    """Real sense inventory backed by WordNet synsets.
 
-    TODO(wsd-inventory): use WordNet synsets as the candidate senses (NAOMI
-    already depends on WordNet for sense discovery), and map each synset to an
-    NSM-prime signature (the hard part — the semantic-mapping problem).
+    Each synset becomes a :class:`Sense` with:
+    - ``sense_id``: the canonical synset name (e.g. ``"bank.n.01"``)
+    - ``gloss``: the synset definition string
+    - ``primes``: empty dict — grounding into NSM primes is a later stage
+    - ``meaning``: None — the explication tree is a later stage
+
+    If WordNet is unavailable (corpus not installed / nltk missing) the
+    inventory falls back to a single generic sense so nothing crashes.
     """
 
-    def senses(self, word: str) -> List[Sense]:  # pragma: no cover - stub
-        raise NotImplementedError(
-            "WordNetSenseInventory is a hook. Map WordNet synsets -> Sense with "
-            "NSM-prime signatures; see RESEARCH_NOTES (semantic mapping)."
-        )
+    def senses(self, word: str) -> List[Sense]:
+        from . import wordnet as _wordnet_mod
+
+        raw = _wordnet_mod.senses(word.lower())
+        if raw:
+            return [
+                Sense(
+                    word=word.lower(),
+                    sense_id=entry["sense_id"],
+                    gloss=entry["gloss"],
+                    primes={},
+                    meaning=None,
+                )
+                for entry in raw
+            ]
+        # Graceful fallback: single generic sense (mirrors MockSenseInventory).
+        return [Sense(word.lower(), f"{word.lower()}.0", "generic sense", {})]
 
 
 # ---------------------------------------------------------------------------
