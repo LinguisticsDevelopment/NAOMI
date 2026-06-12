@@ -9,6 +9,7 @@ Every assertion here is grounded in real data:
 import pytest
 
 from nsm_ct.data_structures import ParseNode, ParseTree
+from nsm_ct.explications import ExplicationStore
 from nsm_ct.meaning import NSMMeaningResolver
 from nsm_ct.thought import meaning_prime_ids
 
@@ -19,8 +20,13 @@ from nsm_ct.thought import meaning_prime_ids
 
 @pytest.fixture(scope="module")
 def resolver():
-    """A single shared resolver so the cache is exercised across tests."""
-    return NSMMeaningResolver()
+    """A single shared resolver so the cache is exercised across tests.
+
+    Uses an empty ExplicationStore so these tests exercise exclusively the
+    prime / molecule / WordNet resolution paths, independent of whether the
+    DeepNSM JSONL is present on disk.
+    """
+    return NSMMeaningResolver(explication_store=ExplicationStore())
 
 
 # ---------------------------------------------------------------------------

@@ -12,3 +12,8 @@ dist/
 .pytest_cache/
 .venv/
 venv/
+
+# Derived data (large downloaded files — do NOT commit)
+# Script: scripts/build_explication_store.py
+data/*.jsonl
+data/

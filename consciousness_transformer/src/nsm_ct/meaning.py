@@ -27,12 +27,15 @@ word (fallback is always SOMETHING / SOMEONE).
 
 from __future__ import annotations
 
-from typing import Dict, FrozenSet, Optional, Set
+from typing import TYPE_CHECKING, Dict, FrozenSet, Optional, Set
 
 from .data_structures import ParseNode, ParseTree
 from .nsm_molecules import MOLECULES_BY_EXPONENT
 from .nsm_primes import PRIMES
 from .thought import AbstractMeaningResolver
+
+if TYPE_CHECKING:
+    from .explications import ExplicationStore
 
 # ---------------------------------------------------------------------------
 # Stopwords / function words excluded from gloss decomposition
@@ -112,20 +115,39 @@ class NSMMeaningResolver(AbstractMeaningResolver):
     Resolution order (first match wins):
     1. Prime exponent  -> single prime leaf
     2. Molecule exponent -> molecule node (or its explication if non-None)
-    3. WordNet person sense -> SOMEONE leaf
-    4. WordNet gloss -> recursive gloss decomposition up to ``max_depth``
-    5. Fallback: SOMETHING (or SOMEONE if context indicates a proper noun)
+    3. **Explication store** — if the store has an entry for the word (or
+       synset), return ``explication_to_tree(...)`` and record provenance.
+    4. WordNet person sense -> SOMEONE leaf
+    5. WordNet gloss -> recursive gloss decomposition up to ``max_depth``
+    6. Fallback: SOMETHING (or SOMEONE if context indicates a proper noun)
+
+    When ``explication_store`` is ``None`` (default), :class:`ExplicationStore`
+    is loaded with its default ``load()`` call which is graceful if the JSONL
+    file is absent (store stays empty and resolution falls through to WordNet
+    exactly as before).
 
     All results are cached per (lower-cased) word so repeated calls are O(1).
 
     Args:
         max_depth: Maximum recursion depth for gloss decomposition (default 2).
+        explication_store: Pre-loaded :class:`ExplicationStore`, or ``None`` to
+            load the default store (graceful if data absent).
     """
 
-    def __init__(self, max_depth: int = _DEFAULT_MAX_DEPTH) -> None:
+    def __init__(
+        self,
+        max_depth: int = _DEFAULT_MAX_DEPTH,
+        explication_store: "Optional[ExplicationStore]" = None,
+    ) -> None:
         self._max_depth = max_depth
         # Cache key: (word_lower, ctx_pos_or_None) -> ParseTree
         self._cache: Dict[tuple, ParseTree] = {}
+
+        # Explication store — lazy-load default if not provided
+        if explication_store is None:
+            from .explications import ExplicationStore as _ES
+            explication_store = _ES.load()
+        self._explication_store: "ExplicationStore" = explication_store
 
     # ------------------------------------------------------------------
     # Public interface
@@ -180,7 +202,10 @@ class NSMMeaningResolver(AbstractMeaningResolver):
         depth: int,
         visited: frozenset,
     ) -> ParseTree:
-        """Core resolution logic (no caching layer here)."""
+        """Core resolution logic (no caching layer here).
+
+        Resolution order: prime -> molecule -> explication store -> WordNet -> fallback.
+        """
 
         # 1. Prime exponent?
         prime_name = _PRIME_EXPONENT_MAP.get(word)
@@ -194,7 +219,17 @@ class NSMMeaningResolver(AbstractMeaningResolver):
                 return molecule.explication
             return ParseTree(root=ParseNode(label=molecule.name))
 
-        # 3. WordNet
+        # 3. Explication store (DeepNSM / gold)
+        if not self._explication_store.is_empty():
+            entry = self._explication_store.get(word)
+            if entry is not None:
+                tree = self._explication_store.explication_to_tree(entry["explication"])
+                # Attach provenance as a custom attribute on the tree for callers
+                # that want to inspect it (tree.text carries provenance string).
+                tree.text = entry["provenance"]
+                return tree
+
+        # 4. WordNet
         from .wordnet import senses, wordnet_available  # local import — graceful
 
         if wordnet_available():
@@ -202,11 +237,11 @@ class NSMMeaningResolver(AbstractMeaningResolver):
             if word_senses:
                 first = word_senses[0]
 
-                # 3a. Person sense?
+                # 4a. Person sense?
                 if self._is_person_sense(first):
                     return ParseTree(root=ParseNode(label="SOMEONE"))
 
-                # 3b. Gloss decomposition (depth-limited)
+                # 4b. Gloss decomposition (depth-limited)
                 if depth < self._max_depth:
                     tree = self._gloss_decompose(
                         word, first["gloss"], depth=depth, visited=visited
@@ -217,7 +252,7 @@ class NSMMeaningResolver(AbstractMeaningResolver):
                 # No decomposition possible at this depth — return SOMETHING
                 return ParseTree(root=ParseNode(label="SOMETHING"))
 
-        # 4. Fallback
+        # 5. Fallback
         return self._fallback(context)
 
     def _is_person_sense(self, sense_dict: dict) -> bool:
