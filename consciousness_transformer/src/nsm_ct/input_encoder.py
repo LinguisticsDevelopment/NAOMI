@@ -71,13 +71,13 @@ class ParserInputEncoder(AbstractInputEncoder):
 
     def __init__(self, tokenizer: SimpleTokenizer, grammar_path: Optional[str] = None,
                  meaning_resolver=None) -> None:
-        from .thought import MockMeaningResolver
+        from .meaning import NSMMeaningResolver
         self.tokenizer = tokenizer
         self._fallback = TokenInputEncoder(tokenizer)
         self._warned = False
         self._adapter = None
         self._grammar_path = grammar_path
-        self._resolver = meaning_resolver or MockMeaningResolver()
+        self._resolver = meaning_resolver or NSMMeaningResolver()
         self._init_adapter()
 
     def _init_adapter(self) -> None:
