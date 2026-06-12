@@ -125,9 +125,18 @@ no-op until it's learned to help (curriculum ~0.90 → ~0.92). The full thought 
 also serializes **losslessly** (`serialization.serialize_thought` ↔
 `deserialize_thought`, round-trips to identity — the "meaning without loss"
 property), with a reverse-parser seed (`reverse_parser.thought_to_text`) for
-tree→text. Today meaning is a deterministic **mock** (`MockMeaningResolver`); real
-WordNet-grounded prime explications + WSD + a tree→tree thinking model are the
-staged roadmap (RESEARCH_NOTES). `input_encoder: token` turns structure off.
+tree→text. Meaning is now **real** (`meaning.NSMMeaningResolver`, the default):
+each word resolves by precedence **prime → cited NSM molecule → WordNet-gloss
+decomposition → SOMEONE/SOMETHING** (e.g. *mary*→SOMEONE, *moved*→MOVE,
+*office*→WHERE). It is **never hallucinated** — molecule mappings come from a cited
+registry (`nsm_molecules.py`, 37 sourced entries, zero fabricated explications),
+gloss decomposition derives only from real WordNet definitions, and unknowns fall
+back to SOMEONE/SOMETHING rather than inventing a prime. The meaning is coarse today
+(much collapses to SOMETHING until molecule explications are sourced). The same
+semantic web (primes + molecules + groundings) also seeds **bootstrap long-term
+memory** (`bootstrap_memory.py`) — innate knowledge the model starts with that
+APPEND grows. WSD-in-the-loop and a tree→tree thinking model remain the roadmap
+(RESEARCH_NOTES). `input_encoder: token` turns structure/meaning off.
 
 **Chained questions, one unreset run.** Streams can contain **several questions**
 (`facts, Q1, Q2, Q1-repeated`); the controlled loop reads out a per-question
@@ -236,7 +245,10 @@ curriculum level, and input encoder.
 | Thought objects (parse tree + per-word meaning tree of primes) as the I/O unit | **Real, default** (additive, zero-init safe) | `thought.py`, `structure.py`, `model.py` |
 | Lossless thought serialization + reverse-parser seed | **Real** (round-trips to identity) | `serialization.py`, `reverse_parser.py` |
 | Rule-based parser (`quantum_parser`) producing the structure | **Real** (controlled text; weak on open-domain) | `quantum_parser/`, `quantum_adapter.py` |
-| Meaning = word → tree of NSM primes (explication / molecule) | **Mocked** (`MockMeaningResolver`; WordNet next) | `thought.py`, `wsd.py` |
+| Word meaning = prime / cited molecule / WordNet-gloss decomposition | **Real** (default; coarse, never hallucinated) | `meaning.py`, `nsm_molecules.py`, `wordnet.py` |
+| NSM molecule registry (cited; no fabricated explications) | **Real** (37 molecules, every entry sourced) | `nsm_molecules.py` |
+| WordNet senses / glosses / hyper-hyponym relations | **Real** (nltk) | `wordnet.py`, `wsd.py` |
+| Bootstrap long-term memory (innate prime+molecule graph; APPEND grows it) | **Real** (config-gated) | `bootstrap_memory.py` |
 | WSD wired into the loop; tree+memory→tree thinking model | **Not built** (staged roadmap) | RESEARCH_NOTES |
 | Parser input encoder | **Optional / experimental** (quantum_parser) | `input_encoder.py`, `quantum_adapter.py` |
 | Semantic mapping → NSM meaning | **Mocked** | `semantic_mapper.py` |

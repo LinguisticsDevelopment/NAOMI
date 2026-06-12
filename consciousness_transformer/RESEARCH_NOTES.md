@@ -143,10 +143,27 @@ manipulation proves too expensive.
   the rule parser is lexicon-bounded (drops words on open-domain text — a
   parser-quality limit, not a serialization loss); meanings are mock.
 
-**Roadmap (staged, not built):**
-- **Stage B — real meaning.** `WordNetSenseInventory` (nltk) → senses; map each
-  synset to a prime tree (from glosses → molecules). Replace the mock; generalize
-  `wsd.Sense.primes` (flat) → a meaning tree.
+**Stage B — real meaning (BUILT, default).** Words now resolve to real meaning
+(`meaning.NSMMeaningResolver`): **prime → cited NSM molecule → WordNet-gloss
+decomposition → SOMEONE/SOMETHING**. The parser was fixed first (PP/modifier
+"pointer" edge-direction + subordinate/relative-clause + "to" disambiguation), so
+content words stop dropping. Anti-hallucination is structural: `nsm_molecules.py`
+holds 37 *cited* molecules with a `source` invariant and **zero fabricated
+explications** (Goddard's explication papers were paywalled, so none were invented);
+`wordnet.py`/`WordNetSenseInventory` give real senses/glosses/hyper-hyponym relations
+(nltk); gloss decomposition derives only from real definitions; unknowns never
+invent a prime. The semantic web also seeds **bootstrap LTM** (`bootstrap_memory.py`,
+65 primes + 37 molecules + edges) that APPEND grows. No training regression
+(held-out ~0.96 with real meanings). **Honest limits:** meaning is *coarse* — much
+collapses to SOMETHING because molecules lack sourced explications and gloss
+decomposition bottoms out; the model still ingests it as the additive zero-init
+bag-of-primes (full meaning *trees* aren't fed to the model yet); "john"→WordNet's
+toilet sense vs "mary"→SOMEONE shows first-sense/name handling is rough.
+
+**Roadmap (remaining):**
+- **Stage B+ — deepen meaning.** Source real molecule explications (transcribe
+  verbatim, cited) to replace the coarse SOMETHING grounding; better name/person
+  handling; feed the full meaning *tree* to the model (not just the prime bag).
 - **Stage C — WSD wired.** Wire `wsd.IterativeSenseResolver` into the loop: pick the
   sense (→ meaning tree) from `(state, memory)` context; write the sense-resolved
   meaning, not the surface token, into memory.
