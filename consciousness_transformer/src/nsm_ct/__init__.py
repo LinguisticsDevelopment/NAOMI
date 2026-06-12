@@ -133,6 +133,8 @@ def build_default_stack(config: Config, episodes) -> Stack:
             overwrite=config.model.ltm_overwrite,
             overwrite_threshold=config.model.ltm_overwrite_threshold,
         )
+        from .bootstrap_memory import seed_bootstrap_memory
+        seed_bootstrap_memory(long_term, config.model.memory_dim)
     psyche = Psyche(
         model, memory, config.data.answer_mode,
         reasoning_hops=config.model.reasoning_hops, long_term=long_term,
