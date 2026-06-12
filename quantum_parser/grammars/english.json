@@ -807,8 +807,8 @@
                     "connections": [
                         {
                             "type": "DESCRIPTION",
-                            "from": "before[*]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "before[*]"
                         }
                     ],
                     "consume": ["before"],
@@ -1422,8 +1422,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -1447,8 +1447,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -1472,8 +1472,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -1497,8 +1497,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -2005,8 +2005,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -2030,8 +2030,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -2055,8 +2055,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -2223,8 +2223,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],

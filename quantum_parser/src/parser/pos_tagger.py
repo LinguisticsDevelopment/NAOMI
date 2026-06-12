@@ -45,6 +45,11 @@ WORD_TAG_DICT = {
     "who": Tag.PRON, "whom": Tag.PRON, "whose": Tag.PRON,
     "which": Tag.PRON, "that": Tag.PRON, "what": Tag.PRON,
 
+    # Personal pronouns
+    "she": Tag.PRON, "he": Tag.PRON, "i": Tag.PRON, "we": Tag.PRON,
+    "they": Tag.PRON, "me": Tag.PRON, "him": Tag.PRON, "her": Tag.PRON,
+    "them": Tag.PRON, "us": Tag.PRON, "it": Tag.PRON,
+
     # Common adjectives
     "big": Tag.ADJ, "small": Tag.ADJ, "red": Tag.ADJ,
     "blue": Tag.ADJ, "green": Tag.ADJ, "yellow": Tag.ADJ,
