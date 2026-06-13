@@ -358,6 +358,55 @@ edge cleanly; only the modus-ponens reaction is unbuilt). The order-3 superposit
 lossy for >2 disjuncts (fine for the binary curriculum); the lossless path is the numpy
 buffer. Still pending from §0h: the destructive `token_embedding` removal.
 
+### 0j. ClausePsyche — a graph of meaning-objects; collapse/expand IS definition; operators are nodes (MEASURED)
+
+The successor to §0i. Memory is a **graph** (`meaning_graph.py`), not a superposition: a
+clause is a distinct node carrying a *lossy vector handle* **and** a *lossless serialized
+structure* (`serialize_thought`). The unifying operation is **collapse/expand =
+definition**: `collapse` files a structure and returns a handle; `expand` dereferences it
+back to the exact structure. Losslessness lives in the **stored structure, never in the
+vector** (fixed-dim vectors can't be invertible) — the vector only *addresses*.
+
+- **Collapse/expand (`collapse.py`, probe_collapse).** Exact round-trip **100%** at d=256
+  and d=512 (the hard gate). Vector dereference splits by kind: **CONCEPT 7/7 top-1**
+  (noise-robust at +5%), thin margins (median **0.034 @256, 0.016 @512** — recorded, not
+  assumed); **CLAUSE handles alias** on the shared `SOMEONE` variable label (entity
+  identity is a *variable token* in the structure, not in the label-based handle), so
+  clauses are addressed by graph edges + the exact path, never by handle similarity. This
+  is the honest face of the §0i cross-talk caveat: correctness is the structure, the
+  vector is a shortcut.
+- **Operators are NODES, not flags (`apply_operator`/`read_operator`, probe_operators).**
+  An operator binds its clause-argument on a reserved orthonormal role
+  (`role_vec(i, "OP_ARG")`), exactly like `tag_truth`. Deconvolution gate: NOT/MAYBE read
+  back at **score ~0.99**, clause argument recovered at **cos ~0.99**, the exact clause is
+  reachable via the `OPERATES_ON` edge, and the wrapped clause vector is **untouched**
+  (`np.allclose`) — the recoverability a flat `List[SubType]` flag (old `quantum_parser`)
+  could never give. The arg is bound *unit-normalized* (contracted handles have tiny norm
+  and would otherwise be swamped by the operator-label term).
+- **STM/LTM read-time resolution (`clause_psyche_graph.py`, probe_psyche_graph).** Distinct
+  clauses **share one referent** (co-reference, not duplication); contradictions are kept
+  and resolved at *read* time — FALSE (negated) clauses drop, an affirmed clause wins by
+  recency, an unresolved disjunction is MAYBE, a disjunction narrowed to one survivor
+  resolves. All symbolic, no training: **L8** (kitchen/office/not-office → kitchen),
+  **L3** recency "moved" → office, **L7a** unresolved → MAYBE, **L7b** narrowed → office.
+- **Neural ClausePsyche (`clause_psyche.py`, train_clause_psyche).** A sibling of the §0h
+  reactor (kept as baseline). Same fixed grounded perception; the GRU hidden is the
+  carried **consciousness state**; an op-routing head is present; response **generators**
+  emit factored fillers assembled by fixed binds into a **d×d clause matrix** — a generated
+  meaning-object, not a 1-of-4 pick. Trained by **Frobenius to the gold clause matrix +
+  decode-CE + consistency** (no MC answer head). Result (240 eps, 80 epochs, d=64): frob
+  2.87→0.08, **val clause-decode 0.77**, and the hard logical levels are solved —
+  **L8 1.00, L7-resolved 1.00, L7-maybe 1.00** (L2 0.83, L6 0.86; L1/L3 weaker on tiny val
+  counts). End-to-end probe: the generated matrix unbinds back to the correct place at
+  **0.88** on held-out L8. The genuine residual is **dereferencing margin** (thin concept
+  margins above) — mitigated by always routing correctness through the exact stored
+  structure. Tests 197→221 green; `ClauseReactor`/`train_clause.py` untouched.
+
+**Deferred:** deep recursive collapse / learned handle embeddings; full co-reference (still
+recency/explicit-name); conditionals (`if`-then); learned trust/corroboration; text surface
+realization (the deliverable is the decoded *meaning object*). LTM is minimal (consolidate
+affirmed facts; pruning deferred). Still pending from §0h: the `token_embedding` removal.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
