@@ -36,10 +36,46 @@ def _content_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarr
 
 
 def _option_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]) -> np.ndarray:
-    """An MC option's meaning-vector — the NSM MAYBE atom for 'maybe', else content."""
-    if (word or "").lower() == "maybe":
+    """An MC option's meaning-vector — MAYBE/idk atoms for those, else content."""
+    w = (word or "").lower()
+    if w == "maybe":
         return codec.filler_vec("MAYBE")
+    if w == "idk":
+        return codec.filler_vec("idk")            # the abstain atom
     return _content_vec(word, resolver, codec, cache)
+
+
+def _ent_vec(name: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]) -> np.ndarray:
+    """Ground an entity/value: a person → its variable atom; a concept → its meaning."""
+    return (codec.filler_vec("var:" + name) if name in _NAMESET
+            else _content_vec(name, resolver, codec, cache))
+
+
+def _reasoning_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]):
+    """Grounded stream for a reasoning episode (L9-L11).
+
+    Perception is a deterministic grounding of the input's *meaning* (the oracle's
+    structured premises — the same content the sentence carries; the derived answer
+    is never input). A conditional rule streams its antecedent + consequent tagged
+    with the IF atom on the ``coord`` channel; facts stream plainly; the question
+    step carries the query (entity, relation). The model must CHAIN these to answer.
+    Returns ``[(entity, relation, value, pred, coord, is_q)]`` like ``_context_steps``.
+    """
+    d = codec.dim
+    z = np.zeros(d, np.float32)
+    pred_is, pred_if = codec.filler_vec("pred:is"), codec.filler_vec("pred:if")
+    q_pred, ifv = codec.filler_vec("pred:?"), codec.filler_vec("IF")
+    steps = []
+    for (e, r, v) in (ep.meta.get("rule") or ()):       # antecedent then consequent
+        steps.append((_ent_vec(e, resolver, codec, cache), codec.filler_vec("rel:" + r),
+                      _ent_vec(v, resolver, codec, cache), pred_if, ifv, 0))
+    for (e, r, v) in ep.meta["facts"]:
+        steps.append((_ent_vec(e, resolver, codec, cache), codec.filler_vec("rel:" + r),
+                      _ent_vec(v, resolver, codec, cache), pred_is, z, 0))
+    qe, qr = ep.meta["query"]
+    steps.append((_ent_vec(qe, resolver, codec, cache), codec.filler_vec("rel:" + qr),
+                  z, q_pred, z, 1))
+    return steps
 
 
 def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]):
@@ -92,24 +128,27 @@ class ClauseBatch:
     mask: torch.Tensor      # [B, T]  1 = real step
     options: torch.Tensor   # [B, K, d]
     answer: torch.Tensor    # [B]
-    coord: Optional[torch.Tensor] = None  # [B, T, d]  OR/NOT atom (else zeros): the logical signal
+    coord: Optional[torch.Tensor] = None  # [B, T, d]  OR/NOT/IF atom (else zeros): the logical signal
+    answerable: Optional[torch.Tensor] = None  # [B]  1 = derivable, 0 = should abstain (reasoning levels)
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
 
     def to(self, device):
         coord = self.coord.to(device) if self.coord is not None else None
+        ans_ok = self.answerable.to(device) if self.answerable is not None else None
         return ClauseBatch(self.entity.to(device), self.relation.to(device),
                            self.value.to(device), self.pred.to(device),
                            self.is_q.to(device), self.mask.to(device),
-                           self.options.to(device), self.answer.to(device), coord)
+                           self.options.to(device), self.answer.to(device), coord, ans_ok)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
         coord = self.coord[idx] if self.coord is not None else None
+        ans_ok = self.answerable[idx] if self.answerable is not None else None
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
-                           self.options[idx], self.answer[idx], coord)
+                           self.options[idx], self.answer[idx], coord, ans_ok)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec) -> ClauseBatch:
@@ -126,35 +165,39 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec) -> ClauseBat
     z = np.zeros(d, np.float32)
     rows = []
     for ep in episodes:
-        steps = []
-        for sent in ep.context:
-            steps += _context_steps(sent, parser, resolver, codec, cache)
-        qent = _question_entity(ep.question)
-        if qent is None:
-            continue
-        steps.append((codec.filler_vec("var:" + qent), codec.filler_vec("rel:PLACE"),
-                      z, q_pred, z, 1))
-        for sent in getattr(ep, "post_context", []) or []:
-            steps += _context_steps(sent, parser, resolver, codec, cache)
+        if getattr(ep, "level", 0) >= 9 and ep.meta.get("query"):
+            steps = _reasoning_steps(ep, resolver, codec, cache)   # L9-L11 reasoning stream
+        else:
+            steps = []
+            for sent in ep.context:
+                steps += _context_steps(sent, parser, resolver, codec, cache)
+            qent = _question_entity(ep.question)
+            if qent is None:
+                continue
+            steps.append((codec.filler_vec("var:" + qent), codec.filler_vec("rel:PLACE"),
+                          z, q_pred, z, 1))
+            for sent in getattr(ep, "post_context", []) or []:
+                steps += _context_steps(sent, parser, resolver, codec, cache)
         opt = [_option_vec(o, resolver, codec, cache) for o in ep.options]
-        rows.append((steps, opt, ep.answer_idx))
+        rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0))
 
     b = len(rows)
-    T = max(len(s) for s, _, _ in rows)
-    K = max(len(o) for _, o, _ in rows)
+    T = max(len(s) for s, _, _, _ in rows)
+    K = max(len(o) for _, o, _, _ in rows)
     ent = torch.zeros(b, T, d); rel = torch.zeros(b, T, d); val = torch.zeros(b, T, d)
     prd = torch.zeros(b, T, d); crd = torch.zeros(b, T, d)
     is_q = torch.zeros(b, T); mask = torch.zeros(b, T)
     opts = torch.zeros(b, K, d); ans = torch.zeros(b, dtype=torch.long)
-    for i, (steps, opt, a) in enumerate(rows):
+    ans_ok = torch.zeros(b)
+    for i, (steps, opt, a, ok) in enumerate(rows):
         for t, (e, r, v, p, c, q) in enumerate(steps):
             ent[i, t] = torch.from_numpy(e); rel[i, t] = torch.from_numpy(r)
             val[i, t] = torch.from_numpy(v); prd[i, t] = torch.from_numpy(p)
             crd[i, t] = torch.from_numpy(c); is_q[i, t] = q; mask[i, t] = 1.0
         for k, ov in enumerate(opt):
             opts[i, k] = torch.from_numpy(ov)
-        ans[i] = a
-    return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans, crd)
+        ans[i] = a; ans_ok[i] = ok
+    return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans, crd, ans_ok)
 
 
 # ---------------------------------------------------------------------------

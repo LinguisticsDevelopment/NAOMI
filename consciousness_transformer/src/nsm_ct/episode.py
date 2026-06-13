@@ -358,7 +358,8 @@ class CurriculumGenerator(AbstractEpisodeSource):
             context=context, question=f"what can {name} see ?",
             answer_text=ans, options=options, answer_idx=idx, level=9,
             answerable=True, gold_chain=self._chain_tuples(chain),
-            meta={"facts": facts, "query": (name, "CAN_SEE")},
+            meta={"facts": facts, "query": (name, "CAN_SEE"),
+                  "rule": ((name, "PLACE", a), (name, "CAN_SEE", x))},
         )
 
     def _level10(self) -> Episode:
@@ -396,7 +397,8 @@ class CurriculumGenerator(AbstractEpisodeSource):
             context=context, question=f"what can {name} see ?",
             answer_text=_IDK, options=options, answer_idx=idx, level=11,
             answerable=False, gold_chain=[],
-            meta={"facts": facts, "query": (name, "CAN_SEE")},
+            meta={"facts": facts, "query": (name, "CAN_SEE"),
+                  "rule": ((name, "PLACE", a), (name, "CAN_SEE", x))},
         )
 
     def base_facts(self) -> List[str]:
