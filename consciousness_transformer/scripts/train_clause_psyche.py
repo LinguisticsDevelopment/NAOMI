@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 from nsm_ct.clause_psyche import (  # noqa: E402
     ClausePsyche,
+    abstain_prf,
     clause_decode_accuracy,
     compute_clause_psyche_losses,
 )
@@ -37,13 +38,17 @@ from nsm_ct.tpr import TPRCodec  # noqa: E402
 
 def _per_level(model, batch, episodes):
     with torch.no_grad():
-        ok = (model(batch)["answer_logits"].argmax(-1) == batch.answer).tolist()
+        out = model(batch)
+        dec = (out["answer_logits"].argmax(-1) == batch.answer).tolist()
+        abst = (out["abstain_prob"] >= 0.5).tolist()
     agg = collections.defaultdict(lambda: [0, 0])
-    for ep, hit in zip(episodes, ok):
+    for ep, hit, ab in zip(episodes, dec, abst):
         key = f"L{ep.level}"
         if ep.level == 7:
             key += "-res" if ep.meta.get("resolved") else "-may"
-        agg[key][0] += int(hit); agg[key][1] += 1
+        # an unanswerable episode is correct iff the model abstains; else iff it decodes.
+        ok = ab if not ep.answerable else (hit and not ab)
+        agg[key][0] += int(ok); agg[key][1] += 1
     return {k: tuple(v) for k, v in sorted(agg.items())}
 
 
@@ -52,7 +57,8 @@ def main() -> None:
     ap.add_argument("--episodes", type=int, default=240)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--dim", type=int, default=64)
-    ap.add_argument("--max-level", type=int, default=8)
+    ap.add_argument("--max-level", type=int, default=11)
+    ap.add_argument("--hops", type=int, default=3, help="inference hops (0 = single-pass ablation)")
     ap.add_argument("--save", type=str, default="", help="checkpoint path (optional)")
     args = ap.parse_args()
     torch.manual_seed(0)
@@ -69,9 +75,9 @@ def main() -> None:
     train = build_clause_batch(tr, parser, resolver, codec)
     val = build_clause_batch(va, parser, resolver, codec)
 
-    model = ClausePsyche(codec)
+    model = ClausePsyche(codec, hops=args.hops)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-3)
-    print(f"ClausePsyche params (reaction + generators only): "
+    print(f"ClausePsyche (hops={args.hops}) params: "
           f"{sum(p.numel() for p in model.parameters()):,}")
 
     for epoch in range(args.epochs):
@@ -83,17 +89,18 @@ def main() -> None:
             model.eval()
             with torch.no_grad():
                 vo = model(val)
+            prf = abstain_prf(vo, val)
             print(f"epoch {epoch+1:3d} | frob={float(loss['frobenius']):.2f} "
-                  f"decode={float(loss['decode']):.3f} cons={float(loss['consistency']):.4f} "
-                  f"| train_dec={clause_decode_accuracy(out, train):.3f} "
-                  f"val_dec={clause_decode_accuracy(vo, val):.3f}")
+                  f"decode={float(loss['decode']):.3f} abstain={float(loss['abstain']):.3f} "
+                  f"| val_dec={clause_decode_accuracy(vo, val):.3f} "
+                  f"abstain_P/R={prf['precision']:.2f}/{prf['recall']:.2f}")
 
     model.eval()
     levels = _per_level(model, val, va)
-    print("per-level val clause-decode:",
+    print("per-level val (decode; L11=abstain):",
           "  ".join(f"{k}={c}/{n}={c/n:.2f}" for k, (c, n) in levels.items()))
     if args.save:
-        torch.save({"state_dict": model.state_dict(), "dim": args.dim}, args.save)
+        torch.save({"state_dict": model.state_dict(), "dim": args.dim, "hops": args.hops}, args.save)
         print(f"saved checkpoint -> {args.save}")
 
 

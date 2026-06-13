@@ -1,14 +1,18 @@
-"""ClausePsyche — the learned controller that reacts and GENERATES a meaning-object.
+"""ClausePsyche — the learned controller that reacts, REASONS, and responds.
 
-A sibling of :class:`nsm_ct.clause_reactor.ClauseReactor` (kept as the baseline),
-this one does not pick a multiple-choice option: it **generates a clause** —
-factored fillers (predicate / subject / place) assembled by fixed TPR binds into
-a d×d clause matrix — scored by **Frobenius** to the gold clause matrix and by an
-exact **decode** of the generated place filler. The GRU hidden is carried as the
-**consciousness state** (the spotlight), regularized by the consistency loss.
+A sibling of :class:`nsm_ct.clause_reactor.ClauseReactor` (kept as the baseline).
+It generates a **clause meaning-object** (factored fillers assembled by fixed TPR
+binds into a d×d matrix), scored by Frobenius + decode — not a 1-of-4 pick.
 
-Perception is the same fixed grounded stream as the reactor (reuse
-``build_clause_batch``); the only learned parameters are the GRU + heads.
+Reasoning is **emergent from the loop**: after ingesting the context (base facts
+written into the order-3 ``entity_memory``, the differentiable STM), the controller
+runs ``hops`` **inference ticks**. Each tick queries the STM with a state-derived
+key, updates the **consciousness state** (the GRU hidden), and may **write a derived
+``(entity,relation,value)`` back into the STM** — a materialized intermediate belief
+the next tick re-reads. Multi-hop chaining (modus ponens, transitivity) thus emerges,
+exactly as TPR-RNN does emergent multi-hop on bAbI. The state also drives an
+**abstain** decision: respond only when it can derive, else emit "I don't know".
+``hops=0`` reduces to the original single-pass behaviour (kept for the baseline).
 """
 
 from __future__ import annotations
@@ -24,28 +28,35 @@ from .clause_reactor import ClauseBatch
 from .losses import consciousness_consistency_loss
 from .tpr import TPRCodec
 
-# op-routing vocabulary (present + shape-tested; emergent, not hard-supervised here)
 OPS = ("WRITE", "SUPERSEDE", "NEGATE", "CORROBORATE", "RESPOND")
 
 
 class ClausePsyche(nn.Module):
-    """GRU controller → op routing + a maintained consciousness state + a
-    generated clause meaning-object (assembled d×d matrix)."""
+    """GRU controller → memory reaction + K inference hops (STM write-back) + a
+    consciousness-state abstain gate + a generated clause meaning-object."""
 
-    def __init__(self, codec: TPRCodec, hidden: int = 128) -> None:
+    def __init__(self, codec: TPRCodec, hidden: int = 128, hops: int = 0) -> None:
         super().__init__()
         self.dim = d = codec.dim
+        self.hops = hops
         self.gru = nn.GRUCell(6 * d, hidden)        # (entity, rel, value, pred, coord, mem_read)
         self.write_gate = nn.Linear(hidden, 1)
         self.overwrite_gate = nn.Linear(hidden, 1)
         self.decide_truth = nn.Linear(hidden + d, 1)
-        self.op_head = nn.Linear(hidden, len(OPS))  # routing (present; emergent)
+        self.op_head = nn.Linear(hidden, len(OPS))
         self.respond = nn.Linear(hidden, 1)
+        # inference-hop heads: a state-derived query, and a derived belief to write back
+        self.q_ent = nn.Linear(hidden, d)
+        self.q_rel = nn.Linear(hidden, d)
+        self.w_ent = nn.Linear(hidden, d)
+        self.w_rel = nn.Linear(hidden, d)
+        self.w_val = nn.Linear(hidden, d)
+        self.w_gate = nn.Linear(hidden, 1)
+        self.abstain = nn.Linear(hidden, 1)         # the consciousness state's whether-to-answer
         # response generators (the meaning-object): factored fillers
         self.gen_pred = nn.Linear(hidden, d)
         self.gen_subject = nn.Linear(hidden + d, d)
         self.gen_place = nn.Linear(hidden + d, d)
-        self.gen_negate = nn.Linear(hidden, 1)
         # fixed TPR roles for assembly (buffers; not learned)
         self.register_buffer("self_role", torch.from_numpy(codec.self_role.copy()))
         self.register_buffer("subj_role", torch.from_numpy(codec.role_vec(0, "SUBJECT").copy()))
@@ -65,76 +76,113 @@ class ClausePsyche(nn.Module):
         state = torch.zeros(b, self.gru.hidden_size, device=device)
         memory = em.init_memory(b, d, device)
         coord = batch._coord()
+        zd = torch.zeros(b, d, device=device)
 
         states, resp_logits, ops = [], [], []
-        gen_pred, gen_subj, gen_place, gen_neg = [], [], [], []
-        for t in range(T):
+        gp, gs, gpl = [], [], []
+        for t in range(T):                                   # Phase 1: ingest the stream
             e, r, v = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
             p, c = batch.pred[:, t], coord[:, t]
             real, isq = batch.mask[:, t], batch.is_q[:, t]
             mem_read = em.query(memory, e, r)
             state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
             states.append(state)
-
             stmt = real * (1.0 - isq)
             gate = torch.sigmoid(self.write_gate(state)).squeeze(-1) * stmt
             owr = torch.sigmoid(self.overwrite_gate(state)).squeeze(-1) * gate
             neg = torch.sigmoid(self.decide_truth(torch.cat([state, v], dim=-1))).squeeze(-1) * stmt
             memory = em.write(memory, e, r, v, gate - neg, overwrite=owr)
-
             ops.append(self.op_head(state))
             rl = self.respond(state).squeeze(-1).masked_fill(real <= 0, float("-inf"))
             resp_logits.append(rl)
-            gen_pred.append(self.gen_pred(state))
-            gen_subj.append(self.gen_subject(torch.cat([state, e], dim=-1)))
-            gen_place.append(self.gen_place(torch.cat([state, mem_read], dim=-1)))
-            gen_neg.append(self.gen_negate(state))
+            gp.append(self.gen_pred(state))
+            gs.append(self.gen_subject(torch.cat([state, e], dim=-1)))
+            gpl.append(self.gen_place(torch.cat([state, mem_read], dim=-1)))
 
-        RL = torch.stack(resp_logits, dim=1)                  # [B, T]
-        w = torch.softmax(RL, dim=1).unsqueeze(-1)            # respond distribution
-        pred_f = (w * torch.stack(gen_pred, dim=1)).sum(1)    # [B, d]
-        subj_f = (w * torch.stack(gen_subj, dim=1)).sum(1)
-        place_f = (w * torch.stack(gen_place, dim=1)).sum(1)
-        negate = torch.sigmoid((w.squeeze(-1) * torch.stack(gen_neg, dim=1).squeeze(-1)).sum(1))
+        qent = (batch.is_q.unsqueeze(-1) * batch.entity).sum(1)     # the question's entity
+        last_read = torch.zeros(b, d, device=device)
+        for _k in range(self.hops):                          # Phase 2: emergent inference hops
+            qe, qr = self.q_ent(state), self.q_rel(state)
+            mem_read = em.query(memory, qe, qr)
+            state = self.gru(torch.cat([qe, qr, mem_read, zd, zd, mem_read], dim=-1), state)
+            wg = torch.sigmoid(self.w_gate(state)).squeeze(-1)
+            memory = em.write(memory, self.w_ent(state), self.w_rel(state), self.w_val(state), wg)
+            states.append(state)
+            last_read = mem_read
 
-        matrix = self.assemble(pred_f, subj_f, place_f)       # the generated meaning-object
+        if self.hops > 0:                                    # respond from the settled state
+            pred_f = self.gen_pred(state)
+            subj_f = self.gen_subject(torch.cat([state, qent], dim=-1))
+            place_f = self.gen_place(torch.cat([state, last_read], dim=-1))
+            w_stream = torch.softmax(torch.stack(resp_logits, dim=1), dim=1)
+        else:                                                # single-pass aggregation (baseline)
+            w = torch.softmax(torch.stack(resp_logits, dim=1), dim=1).unsqueeze(-1)
+            pred_f = (w * torch.stack(gp, dim=1)).sum(1)
+            subj_f = (w * torch.stack(gs, dim=1)).sum(1)
+            place_f = (w * torch.stack(gpl, dim=1)).sum(1)
+            w_stream = w.squeeze(-1)
 
-        # decode readout: cosine(generated place filler, option place vectors)
+        matrix = self.assemble(pred_f, subj_f, place_f)
+        abstain_logit = self.abstain(state).squeeze(-1)
         pf = F.normalize(place_f, dim=-1)
         on = F.normalize(batch.options, dim=-1)
         answer_logits = torch.einsum("bd,bkd->bk", pf, on) * 10.0
 
         return {
             "matrix": matrix, "place_filler": place_f, "subject_filler": subj_f,
-            "pred_filler": pred_f, "negate": negate,
-            "op_logits": torch.stack(ops, dim=1), "states": torch.stack(states, dim=1),
-            "answer_logits": answer_logits, "respond_gates": w.squeeze(-1),
+            "pred_filler": pred_f, "op_logits": torch.stack(ops, dim=1),
+            "states": torch.stack(states, dim=1), "answer_logits": answer_logits,
+            "respond_gates": w_stream, "abstain_logit": abstain_logit,
+            "abstain_prob": torch.sigmoid(abstain_logit),
         }
 
 
 def gold_matrix(model: ClausePsyche, batch: ClauseBatch) -> torch.Tensor:
-    """Assemble the gold clause matrix: question subject + answer place + 'is'."""
+    """Assemble the gold clause matrix: question subject + answer value + 'is'."""
     b = batch.entity.shape[0]
-    subj = (batch.is_q.unsqueeze(-1) * batch.entity).sum(1)          # var:<question entity>
-    place = batch.options[torch.arange(b), batch.answer]            # the correct place vector
+    subj = (batch.is_q.unsqueeze(-1) * batch.entity).sum(1)
+    value = batch.options[torch.arange(b), batch.answer]
     pred = model.pred_atom.expand(b, -1)
-    return model.assemble(pred, subj, place)
+    return model.assemble(pred, subj, value)
 
 
 def compute_clause_psyche_losses(
     out: Dict[str, torch.Tensor], batch: ClauseBatch, model: ClausePsyche,
-    *, w_decode: float = 1.0, w_consistency: float = 0.01,
+    *, w_decode: float = 1.0, w_consistency: float = 0.01, w_abstain: float = 1.0,
 ) -> Dict[str, torch.Tensor]:
-    """Frobenius(meaning-object, gold) + decode-CE(place) + consistency."""
+    """Frobenius + decode-CE on **answerable** episodes; abstain BCE; consistency.
+
+    Generation is supervised only where the answer is derivable; the abstain head
+    learns ``should_abstain = 1 - answerable`` — so the model is trained to respond
+    only with what it can derive (and say "I don't know" otherwise)."""
+    b = batch.entity.shape[0]
+    ok = batch.answerable if batch.answerable is not None else batch.answer.new_ones(b).float()
+    denom = ok.sum().clamp(min=1.0)
     M_gold = gold_matrix(model, batch)
-    frob = (out["matrix"] - M_gold).pow(2).sum(dim=(-1, -2)).mean()
-    decode = F.cross_entropy(out["answer_logits"], batch.answer)
+    frob = ((out["matrix"] - M_gold).pow(2).sum(dim=(-1, -2)) * ok).sum() / denom
+    decode = (F.cross_entropy(out["answer_logits"], batch.answer, reduction="none") * ok).sum() / denom
+    abstain = F.binary_cross_entropy_with_logits(out["abstain_logit"], 1.0 - ok)
     consistency = consciousness_consistency_loss(out["states"])
-    total = frob + w_decode * decode + w_consistency * consistency
-    return {"total": total, "frobenius": frob, "decode": decode, "consistency": consistency}
+    total = frob + w_decode * decode + w_abstain * abstain + w_consistency * consistency
+    return {"total": total, "frobenius": frob, "decode": decode,
+            "abstain": abstain, "consistency": consistency}
 
 
 def clause_decode_accuracy(out: Dict[str, torch.Tensor], batch: ClauseBatch) -> float:
-    """Exact place decode: generated place filler nearest the correct option."""
-    pred = out["answer_logits"].argmax(-1)
-    return float((pred == batch.answer).float().mean())
+    """Exact decode on answerable episodes: generated place nearest the correct option."""
+    b = batch.entity.shape[0]
+    ok = batch.answerable if batch.answerable is not None else batch.answer.new_ones(b).float()
+    correct = (out["answer_logits"].argmax(-1) == batch.answer).float() * ok
+    return float(correct.sum() / ok.sum().clamp(min=1.0))
+
+
+def abstain_prf(out: Dict[str, torch.Tensor], batch: ClauseBatch) -> Dict[str, float]:
+    """Precision/recall of the abstain decision vs the unanswerable flag."""
+    if batch.answerable is None:
+        return {"precision": 1.0, "recall": 1.0, "n_abstain": 0}
+    should = (1.0 - batch.answerable).bool()
+    did = out["abstain_prob"] >= 0.5
+    tp = float((did & should).sum())
+    prec = tp / max(float(did.sum()), 1.0)
+    rec = tp / max(float(should.sum()), 1.0)
+    return {"precision": prec, "recall": rec, "n_abstain": int(should.sum())}
