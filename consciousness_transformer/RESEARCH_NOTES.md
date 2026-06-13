@@ -268,6 +268,61 @@ model (~0.96), so we don't ship a regression.
 - **Stage E (optional) — learned tree↔vector codec.** Only if explicit manipulation
   is too expensive; trained against the lossless explicit representation as oracle.
 
+### 0i. Logical clause structure — coordinators relate lossless clauses; store-as-OR then decide truth (PHASE-A PROTOTYPE, MEASURED)
+The next capability: **logical structure between clauses** — keep each clause as its
+own *lossless* meaning-matrix and let the **coordinator** be what *relates* them, so a
+contradiction/disjunction is **stored as an OR** (both kept, distinguishable) and a
+later "decide truth" step resolves it, tagging the loser with a **FALSE adjective**
+rather than deleting it ("overwrite but don't forget"). Phase A is a numpy gate
+(`clause.extract_discourse` / `build_discourse_tpr` / truth-tagging / `DisjunctionBuffer`;
+`scripts/probe_discourse_tpr.py`), no training.
+
+**Parser reality (correcting the plan's premise).** The exploration assumed
+`quantum_adapter` "preserves the full tree" — it does **not** for coordination. The raw
+hypothesis represents `A or B` as two COORDINATION edges pointing *up* from the
+coordinated elements (kitchen, office) to the coordinator (`or`); the adapter's
+parent→child tree walk only descends, so the coordinated places are unreachable from the
+root and **dropped** (which is why `extract_clauses` lost the PP). The fix: read
+discourse from a new flat `quantum_adapter.HypGraph` (every node + every typed edge),
+exposed via `ParserInputEncoder._parse_graph`. The parser DOES emit what we need:
+COORDINATION edges (or/and/but), a `MODIFIER 'not'` node for negation, and SUBORDINATION
+for because. `extract_clauses` and `hypothesis_to_tree` are untouched (regression-safe;
+185→193 tests green).
+
+**Grounding.** NSM has no AND/OR exponent — disjunction *is* **MAYBE**; coordinators
+ground natively (`or→MAYBE`, `not→NOT`, `because→BECAUSE`, `if→IF`). Each disjunct is a
+verbatim `clause_tpr` d×d matrix (nothing summed across disjuncts); the coordinator
+binds `role(i,COORDINATION)⊗contract(clause[j])` plus the connective atom on a reserved
+CONNECTIVE role, so the OR is itself readable. Truth tags use a local 3-atom codebook
+{TRUE, FALSE, MAYBE}: `tag(M,v)=M+role(TRUTH)⊗filler(v)`, recovered by unbind+cleanup.
+
+**Gate result (`probe_discourse_tpr.py`, dim 256, PASS ✅).** On the real parse of
+"mary is in the kitchen or the office .": 2 distinct clauses + 1 OR link extracted; the
+OR link recovers the related clause index (j=1) and the connective reads **MAYBE (cos
+1.00)**; both disjuncts store tagged MAYBE; **unresolved query → MAYBE** (first-class
+uncertain answer). Ingesting "mary is not in the kitchen ." re-tags kitchen **FALSE** /
+office **TRUE**, and **both clauses stay recoverable** (the FALSE disjunct is not
+forgotten); **resolved query → OFFICE**.
+
+**Honest caveat (fidelity is cleanup-level, not raw-cosine).** The plan promised "clause
+matrices round-trip cos 1.0"; the operative fidelity is **unbind + nearest-neighbour
+cleanup** (exactly how `decode_clause` and the buffer already read values), which is
+correct for every disjunct at every dim. A *bare* unbind carries cross-talk — the
+codec's per-relation **±1 sign diagonals** make different-relation roles non-orthogonal
+even on distinct columns — so raw cosine is only a diagnostic (kitchen 0.68 vs runner-up
+0.66 at d=256, widening to 0.80 vs 0.79 at d=512; office 0.97). The thin kitchen margin
+is the genuine risk to carry into Phase B; mitigations are higher `d` or orthonormal
+(sign-free) clause roles. `decide_truth` itself is exact — it compares *stored* (not
+unbound) value vectors. Storage is O(#disjuncts·d²) (a buffer of matrices); fine for the
+demo, does not scale to a chapter (the contracted keys are the only scalable part; d=1024
+already OOMs the d²×d contraction matrix).
+
+**Next (Phase B).** Wire into the trainable reactor: curriculum L7a (unresolved OR →
+MAYBE answer), L7b (OR resolved by negation → the other place), L8 (negation removes a
+value); a `coord` channel + a `decide_truth` head supervised **only** by the contrastive
+answer loss (emergent, no aux truth loss); a parallel disjunction buffer beside the
+order-3 memory. Conditionals (SUBORDINATION/`if`) deferred.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a

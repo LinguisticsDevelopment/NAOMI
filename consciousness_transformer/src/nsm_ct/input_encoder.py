@@ -122,6 +122,25 @@ class ParserInputEncoder(AbstractInputEncoder):
             self._note(f"parse failed ({exc}); feeding tokens without structure.")
             return None
 
+    def _parse_graph(self, sentence: str):
+        """Best-effort flat hypothesis graph (keeps coordination/negation edges).
+
+        The tree view (:meth:`_parse_tree`) drops inter-clause structure; this
+        retains every typed edge for :func:`nsm_ct.clause.extract_discourse`.
+        Returns ``None`` on any failure (the parser is untrusted).
+        """
+        if getattr(self, "_parser", None) is None:
+            return None
+        try:
+            from .quantum_adapter import hypothesis_to_graph  # local import
+
+            words = self._tag(sentence)
+            hyp = self._parser.parse(words).best_hypothesis()
+            return hypothesis_to_graph(hyp) if hyp is not None else None
+        except Exception as exc:  # pragma: no cover - parser is experimental
+            self._note(f"graph parse failed ({exc}); no discourse structure.")
+            return None
+
     def encode_structured(self, sentence: str) -> Structured:
         from .thought import build_thought  # local import (avoids cycle)
         tree = self._parse_tree(sentence)
