@@ -33,6 +33,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from . import reasoning_oracle
+
 
 @dataclass
 class Episode:
@@ -62,6 +64,10 @@ class Episode:
     # correct option index per question (the shared `options` list scores them all).
     question_positions: Optional[List[int]] = None
     question_targets: Optional[List[int]] = None
+    # Reasoning levels (oracle-provided): the gold derivation chain and whether the
+    # query is derivable at all (False -> the gold answer is "idk"/abstain).
+    gold_chain: Optional[List] = None
+    answerable: bool = True
     meta: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -91,6 +97,12 @@ class AbstractEpisodeSource(abc.ABC):
 # ---------------------------------------------------------------------------
 _NAMES = ["mary", "john", "sandra", "daniel", "bill", "fred"]
 _PLACES = ["kitchen", "garden", "office", "bedroom", "hallway", "bathroom"]
+# Reasoning-level vocab (self-contained; no WordNet dependency).
+_OBJECTS = ["stove", "window", "painting", "mirror", "clock"]   # "can see the X"
+_ISA = [("robin", "bird", "fly"), ("trout", "fish", "swim"),
+        ("beagle", "dog", "bark"), ("oak", "tree", "grow")]       # (sub, super, ability)
+_ABILITIES = [a for _s, _p, a in _ISA]
+_IDK = "idk"  # the abstain atom (a first-class "I don't know")
 
 
 class CurriculumGenerator(AbstractEpisodeSource):
@@ -128,7 +140,7 @@ class CurriculumGenerator(AbstractEpisodeSource):
     """
 
     def __init__(self, max_level: int = 3, num_options: int = 4, seed: int = 0) -> None:
-        self.max_level = max(1, min(max_level, 8))
+        self.max_level = max(1, min(max_level, 11))
         self.num_options = num_options
         self.rng = random.Random(seed)
 
@@ -151,6 +163,20 @@ class CurriculumGenerator(AbstractEpisodeSource):
         opts = opts[: self.num_options]
         self.rng.shuffle(opts)
         return opts, opts.index(answer)
+
+    def _mc_pool(self, answer: str, pool: List[str], required: List[str] = ()) -> tuple[List[str], int]:
+        """MC options over an arbitrary ``pool`` that must contain ``answer`` + ``required``."""
+        opts = list(dict.fromkeys([answer, *required]))
+        extra = [p for p in pool if p not in opts]
+        while len(opts) < self.num_options and extra:
+            opts.append(extra.pop(self.rng.randrange(len(extra))))
+        opts = opts[: self.num_options]
+        self.rng.shuffle(opts)
+        return opts, opts.index(answer)
+
+    @staticmethod
+    def _chain_tuples(chain) -> List[tuple]:
+        return [(s.derived, s.rule, s.support) for s in chain]
 
     def _level1(self) -> Episode:
         name = self.rng.choice(_NAMES)
@@ -315,6 +341,64 @@ class CurriculumGenerator(AbstractEpisodeSource):
             truth_labels_per_disjunct=[1.0, 0.0],
         )
 
+    def _level9(self) -> Episode:
+        # Conditional (modus ponens): a rule + its antecedent fact. The answer (what
+        # they can see) is NEVER stated — only firing the rule derives it. Retrieval
+        # and recency both fail; the loop must compose rule + fact.
+        name = self.rng.choice(_NAMES)
+        a = self.rng.choice(_PLACES)
+        x = self.rng.choice(_OBJECTS)
+        facts: List[reasoning_oracle.Triple] = [(name, "PLACE", a)]
+        rules = [reasoning_oracle.conditional_rule(a, x)]
+        ans, chain = reasoning_oracle.derive(facts, rules, (name, "CAN_SEE"))
+        context = [f"if {name} is in the {a} , {name} can see the {x} .",
+                   f"{name} is in the {a} ."]
+        options, idx = self._mc_pool(ans, _OBJECTS, [_IDK])
+        return Episode(
+            context=context, question=f"what can {name} see ?",
+            answer_text=ans, options=options, answer_idx=idx, level=9,
+            answerable=True, gold_chain=self._chain_tuples(chain),
+            meta={"facts": facts, "query": (name, "CAN_SEE")},
+        )
+
+    def _level10(self) -> Episode:
+        # Transitivity / inheritance: "a robin is a bird. a bird can fly." -> a robin
+        # can fly. A 2-hop chain over an is-a edge; the ability is never asserted of
+        # the subtype directly.
+        sub, sup, act = self.rng.choice(_ISA)
+        facts: List[reasoning_oracle.Triple] = [(sub, "IS_A", sup), (sup, "CAN", act)]
+        rules = [reasoning_oracle.INHERITANCE]
+        ans, chain = reasoning_oracle.derive(facts, rules, (sub, "CAN"))
+        context = [f"a {sub} is a {sup} .", f"a {sup} can {act} ."]
+        options, idx = self._mc_pool(ans, _ABILITIES, [_IDK])
+        return Episode(
+            context=context, question=f"what can a {sub} do ?",
+            answer_text=ans, options=options, answer_idx=idx, level=10,
+            answerable=True, gold_chain=self._chain_tuples(chain),
+            meta={"facts": facts, "query": (sub, "CAN")},
+        )
+
+    def _level11(self) -> Episode:
+        # Unanswerable -> abstain. The rule is about place A but the person is in a
+        # DIFFERENT place B, so the antecedent never fires; nothing derives what they
+        # can see. The gold answer is "idk" (the tempting object X is an option).
+        name = self.rng.choice(_NAMES)
+        a, b = self.rng.sample(_PLACES, 2)
+        x = self.rng.choice(_OBJECTS)
+        facts: List[reasoning_oracle.Triple] = [(name, "PLACE", b)]
+        rules = [reasoning_oracle.conditional_rule(a, x)]
+        ans, _chain = reasoning_oracle.derive(facts, rules, (name, "CAN_SEE"))
+        assert ans is None, "level 11 must be unanswerable"
+        context = [f"if {name} is in the {a} , {name} can see the {x} .",
+                   f"{name} is in the {b} ."]
+        options, idx = self._mc_pool(_IDK, _OBJECTS, [x])
+        return Episode(
+            context=context, question=f"what can {name} see ?",
+            answer_text=_IDK, options=options, answer_idx=idx, level=11,
+            answerable=False, gold_chain=[],
+            meta={"facts": facts, "query": (name, "CAN_SEE")},
+        )
+
     def base_facts(self) -> List[str]:
         """Base 'facts we know about the world' to seed long-term memory."""
         facts = [f"the {p} is a place ." for p in _PLACES]
@@ -323,7 +407,8 @@ class CurriculumGenerator(AbstractEpisodeSource):
 
     def generate(self, n: int) -> List[Episode]:
         builders = [self._level1, self._level2, self._level3, self._level4,
-                    self._level5, self._level6, self._level7, self._level8][: self.max_level]
+                    self._level5, self._level6, self._level7, self._level8,
+                    self._level9, self._level10, self._level11][: self.max_level]
         return [builders[i % len(builders)]() for i in range(n)]
 
 
