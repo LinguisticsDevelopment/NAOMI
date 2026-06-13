@@ -56,6 +56,8 @@ class Episode:
     level: int = 0
     post_context: List[str] = field(default_factory=list)  # distractors AFTER the question
     trust_labels: Optional[List[float]] = None  # per-context-item: 1 trustworthy, 0 contradicted (metrics only)
+    disjuncts: Optional[List[str]] = None  # the OR alternatives (e.g. ["kitchen", "office"])
+    truth_labels_per_disjunct: Optional[List[float]] = None  # per-disjunct truth (metrics only)
     # Multi-question episodes: item indices of ALL questions in the stream and the
     # correct option index per question (the shared `options` list scores them all).
     question_positions: Optional[List[int]] = None
@@ -107,6 +109,14 @@ class CurriculumGenerator(AbstractEpisodeSource):
            the answer is the corroborated place. Probes emergent trust.
         6. Overwrite update: a person's location is updated amid an unrelated
            fact; the answer is the new place. Probes overwrite-not-forget memory.
+        7. Disjunction (logical OR): "X is in the A or the B." Half the time it is
+           left UNRESOLVED — the answer is **maybe** (a first-class uncertain
+           answer, the NSM MAYBE); half the time a negation ("X is not in the A")
+           RESOLVES it — the answer is the other place. Recency/majority cannot do
+           this; only storing the OR and deciding truth on the negation can.
+        8. Negation removes a value: assert A, assert B, then "X is not in the B".
+           The answer is A — the negation must *remove* B (recency alone would
+           wrongly answer B). Probes that NOT subtracts a stored value.
 
     Every episode is emitted with both multiple-choice options and an
     open-ended answer, so either training mode can consume it.
@@ -118,7 +128,7 @@ class CurriculumGenerator(AbstractEpisodeSource):
     """
 
     def __init__(self, max_level: int = 3, num_options: int = 4, seed: int = 0) -> None:
-        self.max_level = max(1, min(max_level, 6))
+        self.max_level = max(1, min(max_level, 8))
         self.num_options = num_options
         self.rng = random.Random(seed)
 
@@ -127,6 +137,20 @@ class CurriculumGenerator(AbstractEpisodeSource):
         options = distractors + [answer]
         self.rng.shuffle(options)
         return options, options.index(answer)
+
+    def _mc_with(self, answer: str, required: List[str]) -> tuple[List[str], int]:
+        """MC options that must contain ``answer`` and every string in ``required``.
+
+        Used by the logical levels so the option set always pits the answer against
+        the disjuncts and the "maybe" alternative (the model cannot win by guessing).
+        """
+        opts = list(dict.fromkeys([answer] + required))         # de-dup, keep order
+        pool = [p for p in _PLACES if p not in opts]
+        while len(opts) < self.num_options and pool:
+            opts.append(pool.pop(self.rng.randrange(len(pool))))
+        opts = opts[: self.num_options]
+        self.rng.shuffle(opts)
+        return opts, opts.index(answer)
 
     def _level1(self) -> Episode:
         name = self.rng.choice(_NAMES)
@@ -242,6 +266,55 @@ class CurriculumGenerator(AbstractEpisodeSource):
             level=6,
         )
 
+    def _level7(self) -> Episode:
+        # Disjunction. "X is in the A or the B." Either left UNRESOLVED (answer the
+        # NSM "maybe") or RESOLVED by a negation ("X is not in the A" -> answer B).
+        # The option set always includes "maybe", A and B, so the model must (a)
+        # store the OR and (b) decide truth on the negation — recency/majority fail.
+        name = self.rng.choice(_NAMES)
+        a, b = self.rng.sample(_PLACES, 2)
+        resolved = self.rng.random() < 0.5
+        if resolved:
+            context = [f"{name} is in the {a} or the {b} .",
+                       f"{name} is not in the {a} ."]
+            answer, truth = b, [0.0, 1.0]
+        else:
+            context = [f"{name} is in the {a} or the {b} ."]
+            answer, truth = "maybe", [0.5, 0.5]
+        options, idx = self._mc_with(answer, ["maybe", a, b])
+        return Episode(
+            context=context,
+            question=f"where is {name} ?",
+            answer_text=answer,
+            options=options,
+            answer_idx=idx,
+            level=7,
+            disjuncts=[a, b],
+            truth_labels_per_disjunct=truth,
+            meta={"resolved": resolved},
+        )
+
+    def _level8(self) -> Episode:
+        # Negation removes a value. Assert A, assert B, then "not in B": the answer
+        # is A. Recency would wrongly answer B (the last positive place); only NOT
+        # subtracting B from memory leaves A.
+        name = self.rng.choice(_NAMES)
+        a, b = self.rng.sample(_PLACES, 2)
+        context = [f"{name} is in the {a} .",
+                   f"{name} is in the {b} .",
+                   f"{name} is not in the {b} ."]
+        options, idx = self._mc_with(a, ["maybe", b])
+        return Episode(
+            context=context,
+            question=f"where is {name} ?",
+            answer_text=a,
+            options=options,
+            answer_idx=idx,
+            level=8,
+            disjuncts=[a, b],
+            truth_labels_per_disjunct=[1.0, 0.0],
+        )
+
     def base_facts(self) -> List[str]:
         """Base 'facts we know about the world' to seed long-term memory."""
         facts = [f"the {p} is a place ." for p in _PLACES]
@@ -250,7 +323,7 @@ class CurriculumGenerator(AbstractEpisodeSource):
 
     def generate(self, n: int) -> List[Episode]:
         builders = [self._level1, self._level2, self._level3, self._level4,
-                    self._level5, self._level6][: self.max_level]
+                    self._level5, self._level6, self._level7, self._level8][: self.max_level]
         return [builders[i % len(builders)]() for i in range(n)]
 
 

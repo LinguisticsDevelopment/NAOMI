@@ -1,10 +1,11 @@
 """Tests for the token-free clause reactor + order-3 entity memory."""
 
+import pytest
 import torch
 import torch.nn.functional as F
 
 from nsm_ct import entity_memory as em
-from nsm_ct.clause_reactor import ClauseBatch, ClauseReactor
+from nsm_ct.clause_reactor import ClauseBatch, ClauseReactor, build_clause_batch
 
 
 def test_entity_memory_gated_overwrite():
@@ -89,3 +90,57 @@ def test_reactor_learns_to_read_memory_and_answer():
     assert final > max(0.7, init)                            # learns the reaction
     # respond mass concentrates on the question step
     assert float((model(batch)["respond_gates"] * batch.is_q).sum(1).mean()) > 0.5
+
+
+def test_decide_truth_head_and_coord_channel():
+    """The reactor exposes the decide_truth head and accepts the coord channel."""
+    model = ClauseReactor(dim=16, hidden=32)
+    assert model.decide_truth.in_features == 32 + 16 and model.decide_truth.out_features == 1
+    assert model.gru.input_size == 6 * 16            # +coord channel
+    batch = _toy_batch(b=4, d=16, K=4)
+    b, T, d = batch.entity.shape
+    batch.coord = F.normalize(torch.randn(b, T, d), dim=-1)   # a non-trivial coord
+    out = model(batch)
+    assert out["answer_logits"].shape == (4, 4)      # forward consumes coord cleanly
+
+
+def _logic_env():
+    from nsm_ct.dataset import PARSE_LABELS
+    from nsm_ct.episode import CurriculumGenerator
+    from nsm_ct.input_encoder import ParserInputEncoder
+    from nsm_ct.meaning import NSMMeaningResolver
+    from nsm_ct.nsm_primes import PRIME_NAMES
+    from nsm_ct.tokenizer import SimpleTokenizer
+    from nsm_ct.tpr import TPRCodec
+
+    eps = CurriculumGenerator(max_level=8, seed=0).generate(16)
+    texts = [t for e in eps for t in e.context + [e.question] + (e.options or [])]
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        pytest.skip("quantum_parser unavailable in this environment")
+    return parser, NSMMeaningResolver(), TPRCodec(dim=48)
+
+
+def test_reactor_learns_disjunction_resolution_emergently():
+    """Answer-only supervision drives decide_truth: on "A or B" + "not A", the
+    reactor learns to SUBTRACT the refuted value and answer the survivor — no aux
+    truth loss. Overfit a few resolved-OR / negation episodes to acc 1.0."""
+    from nsm_ct.episode import CurriculumGenerator
+
+    parser, resolver, codec = _logic_env()
+    gen = CurriculumGenerator(max_level=8, seed=7)
+    # the logic-necessary episodes: resolved disjunction (L7) and negation-removal (L8)
+    pool = gen.generate(300)
+    eps = [e for e in pool if (e.level == 7 and e.meta.get("resolved")) or e.level == 8][:12]
+    assert eps
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    torch.manual_seed(0)
+    model = ClauseReactor(dim=48)
+    opt = torch.optim.AdamW(model.parameters(), lr=5e-3)
+    for _ in range(400):
+        out = model(batch)
+        loss = F.cross_entropy(out["answer_logits"], batch.answer)
+        opt.zero_grad(); loss.backward(); opt.step()
+    acc = float((model(batch)["answer_logits"].argmax(-1) == batch.answer).float().mean())
+    assert acc > 0.9          # the answer loss alone teaches the truth policy

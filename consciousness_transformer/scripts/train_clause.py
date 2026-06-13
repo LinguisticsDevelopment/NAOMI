@@ -32,12 +32,26 @@ def _acc(out, batch):
     return float((out["answer_logits"].argmax(-1) == batch.answer).float().mean())
 
 
+def _per_level(model, batch, episodes):
+    """Val accuracy broken down by curriculum level (L7 split resolved/unresolved)."""
+    import collections
+    with torch.no_grad():
+        correct = (model(batch)["answer_logits"].argmax(-1) == batch.answer).tolist()
+    agg = collections.defaultdict(lambda: [0, 0])
+    for ep, ok in zip(episodes, correct):
+        key = f"L{ep.level}"
+        if ep.level == 7:
+            key += "-res" if ep.meta.get("resolved") else "-may"
+        agg[key][0] += int(ok); agg[key][1] += 1
+    return {k: (c, n) for k, (c, n) in sorted(agg.items())}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--episodes", type=int, default=240)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--dim", type=int, default=64)
-    ap.add_argument("--max-level", type=int, default=6)
+    ap.add_argument("--max-level", type=int, default=8)
     ap.add_argument("--batch-size", type=int, default=0, help="0 = full batch")
     args = ap.parse_args()
     torch.manual_seed(0)
@@ -78,6 +92,11 @@ def main() -> None:
             print(f"epoch {epoch+1:3d} | loss={last_loss:.3f} "
                   f"train_acc={_acc(to_, train):.3f} val_acc={_acc(vo, val):.3f} "
                   f"resp@q={float(to_['respond_position'].mean()):.2f}")
+
+    model.eval()
+    levels = _per_level(model, val, va)
+    print("per-level val acc:",
+          "  ".join(f"{k}={c}/{n}={c/n:.2f}" for k, (c, n) in levels.items()))
 
 
 if __name__ == "__main__":

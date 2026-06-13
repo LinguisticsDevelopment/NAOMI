@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 
 from . import entity_memory as em
-from .clause import extract_clauses
+from .clause import extract_discourse
 from .episode import _NAMES
 from .tpr import TPRCodec
 
@@ -35,22 +35,44 @@ def _content_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarr
     return cache[word]
 
 
-def _sentence_triple(sent: str, parser) -> Optional[Tuple[str, str, str, str]]:
-    """(subject_entity, 'PLACE', place_word, predicate) for a statement, or None."""
-    tree = parser._parse_tree(sent)
-    if tree is None:
-        return None
-    clauses = extract_clauses(tree)
+def _option_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]) -> np.ndarray:
+    """An MC option's meaning-vector — the NSM MAYBE atom for 'maybe', else content."""
+    if (word or "").lower() == "maybe":
+        return codec.filler_vec("MAYBE")
+    return _content_vec(word, resolver, codec, cache)
+
+
+def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]):
+    """Grounded steps for a context sentence: one per clause.
+
+    A disjunction ("A or B") yields one step per disjunct, each carrying the OR
+    atom on the coord channel (so the controller can VOTE/superpose them); a
+    negation ("not in A") yields one step carrying the NOT atom (so it can
+    SUBTRACT). Plain facts carry a zero coord — identical to the old single-triple
+    behaviour. Returns ``[(entity, relation, value, pred, coord, is_q=0)]``.
+    """
+    d = codec.dim
+    graph = parser._parse_graph(sent) if hasattr(parser, "_parse_graph") else None
+    clauses, links = extract_discourse(graph)
     if not clauses:
-        return None
-    subj = place = None
-    pred = (clauses[0].predicate or "").lower()
-    for rel, arg in clauses[0].args:
-        if rel == "SUBJECT":
-            subj = (arg.token or "").lower()
-        elif rel == "PLACE":
-            place = (arg.token or "").lower()
-    return (subj, "PLACE", place, pred) if subj and place else None
+        return []
+    prime = links[0].prime if links else None
+    coordv = codec.filler_vec(prime) if prime else np.zeros(d, np.float32)
+    steps = []
+    for cl in clauses:
+        subj = place = None
+        pred = (cl.predicate or "").lower()
+        for rel, arg in cl.args:
+            if rel == "SUBJECT":
+                subj = (arg.token or "").lower()
+            elif rel == "PLACE":
+                place = (arg.token or "").lower()
+        if not (subj and place):
+            continue
+        steps.append((codec.filler_vec("var:" + subj), codec.filler_vec("rel:PLACE"),
+                      _content_vec(place, resolver, codec, cache),
+                      codec.filler_vec("pred:" + pred), coordv, 0))
+    return steps
 
 
 def _question_entity(question: str) -> Optional[str]:
@@ -70,65 +92,69 @@ class ClauseBatch:
     mask: torch.Tensor      # [B, T]  1 = real step
     options: torch.Tensor   # [B, K, d]
     answer: torch.Tensor    # [B]
+    coord: Optional[torch.Tensor] = None  # [B, T, d]  OR/NOT atom (else zeros): the logical signal
+
+    def _coord(self) -> torch.Tensor:
+        return self.coord if self.coord is not None else torch.zeros_like(self.entity)
 
     def to(self, device):
-        return ClauseBatch(*(t.to(device) for t in
-                             (self.entity, self.relation, self.value, self.pred,
-                              self.is_q, self.mask, self.options, self.answer)))
+        coord = self.coord.to(device) if self.coord is not None else None
+        return ClauseBatch(self.entity.to(device), self.relation.to(device),
+                           self.value.to(device), self.pred.to(device),
+                           self.is_q.to(device), self.mask.to(device),
+                           self.options.to(device), self.answer.to(device), coord)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
+        coord = self.coord[idx] if self.coord is not None else None
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
-                           self.options[idx], self.answer[idx])
+                           self.options[idx], self.answer[idx], coord)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec) -> ClauseBatch:
-    """Encode curriculum episodes into grounded clause-triple streams (fixed)."""
+    """Encode curriculum episodes into grounded clause-triple streams (fixed).
+
+    Each step is ``(entity, relation, value, pred, coord, is_q)``; ``coord`` carries
+    the OR/NOT atom for disjunction/negation steps (zeros otherwise) — the logical
+    signal the controller reacts to. Options ground to content vectors, except
+    "maybe" → the NSM MAYBE atom (so a disjunction can be answered "maybe").
+    """
     cache: Dict[str, np.ndarray] = {}
     d = codec.dim
     q_pred = codec.filler_vec("pred:?")             # the question's (unknown) predicate
+    z = np.zeros(d, np.float32)
     rows = []
     for ep in episodes:
-        steps: List[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]] = []
+        steps = []
         for sent in ep.context:
-            tri = _sentence_triple(sent, parser)
-            if tri:
-                e, r, v, p = tri
-                steps.append((codec.filler_vec("var:" + e), codec.filler_vec("rel:" + r),
-                              _content_vec(v, resolver, codec, cache),
-                              codec.filler_vec("pred:" + p), 0))
+            steps += _context_steps(sent, parser, resolver, codec, cache)
         qent = _question_entity(ep.question)
         if qent is None:
             continue
         steps.append((codec.filler_vec("var:" + qent), codec.filler_vec("rel:PLACE"),
-                      np.zeros(d, np.float32), q_pred, 1))
+                      z, q_pred, z, 1))
         for sent in getattr(ep, "post_context", []) or []:
-            tri = _sentence_triple(sent, parser)
-            if tri:
-                e, r, v, p = tri
-                steps.append((codec.filler_vec("var:" + e), codec.filler_vec("rel:" + r),
-                              _content_vec(v, resolver, codec, cache),
-                              codec.filler_vec("pred:" + p), 0))
-        opt = [_content_vec(o, resolver, codec, cache) for o in ep.options]
+            steps += _context_steps(sent, parser, resolver, codec, cache)
+        opt = [_option_vec(o, resolver, codec, cache) for o in ep.options]
         rows.append((steps, opt, ep.answer_idx))
 
     b = len(rows)
     T = max(len(s) for s, _, _ in rows)
     K = max(len(o) for _, o, _ in rows)
     ent = torch.zeros(b, T, d); rel = torch.zeros(b, T, d); val = torch.zeros(b, T, d)
-    prd = torch.zeros(b, T, d)
+    prd = torch.zeros(b, T, d); crd = torch.zeros(b, T, d)
     is_q = torch.zeros(b, T); mask = torch.zeros(b, T)
     opts = torch.zeros(b, K, d); ans = torch.zeros(b, dtype=torch.long)
     for i, (steps, opt, a) in enumerate(rows):
-        for t, (e, r, v, p, q) in enumerate(steps):
+        for t, (e, r, v, p, c, q) in enumerate(steps):
             ent[i, t] = torch.from_numpy(e); rel[i, t] = torch.from_numpy(r)
             val[i, t] = torch.from_numpy(v); prd[i, t] = torch.from_numpy(p)
-            is_q[i, t] = q; mask[i, t] = 1.0
+            crd[i, t] = torch.from_numpy(c); is_q[i, t] = q; mask[i, t] = 1.0
         for k, ov in enumerate(opt):
             opts[i, k] = torch.from_numpy(ov)
         ans[i] = a
-    return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans)
+    return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans, crd)
 
 
 # ---------------------------------------------------------------------------
@@ -144,10 +170,11 @@ class ClauseReactor(nn.Module):
     def __init__(self, dim: int, hidden: int = 128) -> None:
         super().__init__()
         self.dim = dim
-        # (entity, relation, value, predicate, mem_read)
-        self.gru = nn.GRUCell(5 * dim, hidden)
+        # (entity, relation, value, predicate, coord, mem_read)
+        self.gru = nn.GRUCell(6 * dim, hidden)
         self.write_gate = nn.Linear(hidden, 1)            # how strongly to commit value
         self.overwrite_gate = nn.Linear(hidden, 1)        # replace (update) vs add (vote)
+        self.decide_truth = nn.Linear(hidden + dim, 1)    # refute (subtract) this value? (the truth policy)
         self.respond = nn.Linear(hidden, 1)
         self.response = nn.Linear(hidden + dim, dim)      # generate the response meaning-vector
 
@@ -157,18 +184,24 @@ class ClauseReactor(nn.Module):
         state = torch.zeros(b, self.gru.hidden_size, device=device)
         memory = em.init_memory(b, d, device)
 
+        coord = batch._coord()
         resp_logits, resp_vecs = [], []
         for t in range(T):
             e, r, v = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
-            p = batch.pred[:, t]
+            p, c = batch.pred[:, t], coord[:, t]
             real, isq = batch.mask[:, t], batch.is_q[:, t]
             mem_read = em.query(memory, e, r)                          # [B, d]
-            state = self.gru(torch.cat([e, r, v, p, mem_read], dim=-1), state)
+            state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
+            stmt = real * (1.0 - isq)                                  # statement (write) step
             # write gate: statement steps only (questions carry no value)
-            gate = torch.sigmoid(self.write_gate(state)).squeeze(-1) * real * (1.0 - isq)
+            gate = torch.sigmoid(self.write_gate(state)).squeeze(-1) * stmt
             # overwrite gate: replace the old binding (update) vs accumulate (vote)
             owr = torch.sigmoid(self.overwrite_gate(state)).squeeze(-1) * gate
-            memory = em.write(memory, e, r, v, gate, overwrite=owr)
+            # decide-truth: refute (SUBTRACT) this value — the learned NOT policy. Driven
+            # by the coord=NOT signal but supervised only by the answer. value_gate may go
+            # negative, so a negated value cancels a previously-voted one (A or B, not A → B).
+            neg = torch.sigmoid(self.decide_truth(torch.cat([state, v], dim=-1))).squeeze(-1) * stmt
+            memory = em.write(memory, e, r, v, gate - neg, overwrite=owr)
             # respond weight (timing) + generated response meaning-vector
             rl = self.respond(state).squeeze(-1)
             rl = rl.masked_fill(real <= 0, float("-inf"))

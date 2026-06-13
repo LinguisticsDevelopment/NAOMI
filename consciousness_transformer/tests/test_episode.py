@@ -51,6 +51,34 @@ def test_level3_answer_is_most_recent():
     assert e.answer_text in e.context[1]
 
 
+def test_level7_disjunction_resolved_and_unresolved():
+    gen = CurriculumGenerator(max_level=7, seed=2)
+    eps = [e for e in gen.generate(80) if e.level == 7]
+    assert eps
+    res = [e for e in eps if e.meta.get("resolved")]
+    unres = [e for e in eps if not e.meta.get("resolved")]
+    assert res and unres                                  # both variants appear
+    for e in res:
+        assert "maybe" in e.options and e.answer_text != "maybe"   # resolved to a place
+        assert any("not in" in c for c in e.context)               # via a negation
+        assert e.disjuncts and e.answer_text in e.disjuncts
+    for e in unres:
+        assert e.answer_text == "maybe"                            # first-class MAYBE answer
+        assert " or " in e.context[0] and len(e.context) == 1
+        assert set(e.disjuncts) <= set(e.options)                  # both disjuncts are options
+
+
+def test_level8_negation_removes_a_value():
+    gen = CurriculumGenerator(max_level=8, seed=4)
+    eps = [e for e in gen.generate(80) if e.level == 8]
+    assert eps
+    e = eps[0]
+    a, b = e.disjuncts
+    assert e.answer_text == a                              # the NON-negated place
+    assert any(f"not in the {b}" in c for c in e.context)  # b is the one negated
+    assert "maybe" in e.options
+
+
 def test_babi_falls_back_offline():
     # Force an unreachable path so the download/lookup fails -> fallback.
     src = BabiSource(task=1, path="/nonexistent/path/for/test", seed=0)

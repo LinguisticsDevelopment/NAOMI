@@ -268,7 +268,7 @@ model (~0.96), so we don't ship a regression.
 - **Stage E (optional) — learned tree↔vector codec.** Only if explicit manipulation
   is too expensive; trained against the lossless explicit representation as oracle.
 
-### 0i. Logical clause structure — coordinators relate lossless clauses; store-as-OR then decide truth (PHASE-A PROTOTYPE, MEASURED)
+### 0i. Logical clause structure — coordinators relate clauses; store-as-OR then decide truth (PHASE A numpy gate + PHASE B trainable, MEASURED)
 The next capability: **logical structure between clauses** — keep each clause as its
 own *lossless* meaning-matrix and let the **coordinator** be what *relates* them, so a
 contradiction/disjunction is **stored as an OR** (both kept, distinguishable) and a
@@ -317,11 +317,46 @@ unbound) value vectors. Storage is O(#disjuncts·d²) (a buffer of matrices); fi
 demo, does not scale to a chapter (the contracted keys are the only scalable part; d=1024
 already OOMs the d²×d contraction matrix).
 
-**Next (Phase B).** Wire into the trainable reactor: curriculum L7a (unresolved OR →
-MAYBE answer), L7b (OR resolved by negation → the other place), L8 (negation removes a
-value); a `coord` channel + a `decide_truth` head supervised **only** by the contrastive
-answer loss (emergent, no aux truth loss); a parallel disjunction buffer beside the
-order-3 memory. Conditionals (SUBORDINATION/`if`) deferred.
+**Phase B — wired into the trainable reactor (DONE, the logic is learned emergently).**
+The capability now trains end-to-end with **no auxiliary truth loss** — only the
+contrastive answer loss, on a curriculum where the logic is *necessary*:
+- **Curriculum** (`episode.py`, max_level 6→8). L7 disjunction: half the episodes are
+  left UNRESOLVED ("X is in the A or the B." → answer **maybe**, the NSM atom — a
+  first-class uncertain answer); half are RESOLVED by a negation ("…not in the A." →
+  answer B). L8 negation-removal (assert A, assert B, "not in B" → answer A; recency
+  would wrongly say B). The option set always contains `maybe`, A and B, so guessing
+  cannot win.
+- **Perception** (`clause_reactor.build_clause_batch`) now streams through
+  `extract_discourse` on the flat graph: a disjunction emits one step per disjunct
+  (carrying the **OR/MAYBE atom** on a new `coord` channel → the controller VOTEs them
+  into the same slot, superposed), a negation emits a step carrying the **NOT atom**.
+  Plain facts carry a zero coord (identical to the old single-triple path; L1-L6 triples
+  verified unchanged, incl. "moved to"). The `maybe` option grounds to `filler_vec(MAYBE)`.
+- **Model.** A `coord` channel feeds the GRU; a **`decide_truth`** head
+  (`Linear(hidden+d,1)`) outputs a per-step *refutation* strength that makes the value
+  write **negative** (`value_gate = write − decide_truth`), so a NOT step *subtracts* a
+  previously-voted value — "A or B" superposes both, "not A" cancels A, query → B. No
+  separate buffer: the existing order-3 `entity⊗relation⊗value` memory holds the
+  disjunction as a superposition and the negate-write resolves it (simpler than a parallel
+  buffer and keeps `entity_memory` parameter-free/green; the lossless multi-matrix buffer
+  stays the numpy Phase-A artifact). Unresolved → the response generator reads an
+  *ambiguous* superposition (+ the coord-primed state) and learns to emit MAYBE.
+- **Result** (`train_clause.py`, dim 48, 480 eps, 80 epochs; emergent, answer-only):
+  overall **val ≈ 0.86** (levels 1-6 broadly hold). Per-level val: the new logic works —
+  **L7-unresolved→MAYBE 1.00, L7-resolved-by-negation 0.86, L8 negation-removal 0.70**;
+  L1 0.92, L2 0.89, **L3 0.91** (up from 0.72 — the graph perception + extra heads help),
+  L4 1.00, L5 0.80, L6 0.75 (vote/overwrite dip slightly — the negate head mildly competes;
+  an honest tradeoff, not a regression in mechanism). A unit overfit confirms the answer
+  loss *alone* teaches `decide_truth` to resolve disjunctions (acc → 1.0 on the
+  logic-necessary episodes). Tests 193→197 green.
+
+**Honest scope / next.** L8 (0.70) is the weakest — subtracting exactly the named value
+without disturbing the slot is delicate; the per-disjunct truth labels are scaffolded
+(metrics-only) as a fallback aux loss if the emergent signal needs strengthening.
+Conditionals (SUBORDINATION/`if`-then) are deferred (the parser emits the SUBORDINATION
+edge cleanly; only the modus-ponens reaction is unbuilt). The order-3 superposition is
+lossy for >2 disjuncts (fine for the binary curriculum); the lossless path is the numpy
+buffer. Still pending from §0h: the destructive `token_embedding` removal.
 
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
