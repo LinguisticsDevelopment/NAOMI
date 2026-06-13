@@ -137,6 +137,20 @@ class TPRCodec:
         """Matched-filter unbinding: exact for orthonormal same-relation roles."""
         return role @ matrix
 
+    @staticmethod
+    def bind3(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> np.ndarray:
+        """Order-3 binding a⊗b⊗c (the entity⊗relation⊗value memory cell)."""
+        return np.einsum("i,j,k->ijk", a, b, c)
+
+    @staticmethod
+    def unbind3(memory: np.ndarray, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        """Recover the third factor from an order-3 memory given two keys.
+
+        Exact when the (a, b) keys across stored cells are orthonormal; otherwise
+        the result is noisy and should be cleaned up against a value codebook.
+        """
+        return np.einsum("ijk,i,j->k", memory, a, b)
+
     def cleanup(self, vec: np.ndarray) -> Tuple[Optional[str], float]:
         """Snap a (noisy) vector to the nearest codebook label by cosine."""
         n = float(np.linalg.norm(vec))

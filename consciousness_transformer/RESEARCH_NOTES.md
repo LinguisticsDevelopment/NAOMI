@@ -192,11 +192,36 @@ meaning = its cached `encode_matrix` (d×d) of the explication tree; the thinkin
 memory (Stage D) takes the TPR-RNN order-3 form. The contracted vector remains
 useful only as a cheap similarity key (e.g. LTM addressing), not as the meaning.
 
+### 0g. Clauses as the unit; token-free TPR; entity-keyed cross-clause memory
+The model should **not embed tokens**. The only atomic vectors are the ~65 NSM
+**primes**; molecules/words/clauses are all *composed* by TPR binding (§0f). The
+unit of thought is the **clause** (predicate + arguments — the parser already emits
+it), and reasoning = **correlating clauses through shared entity-variables** (the
+TPR-RNN `entity⊗relation⊗value` memory). A clause argument is either an **entity**
+(a name/referent → a *variable*: a fresh atomic vector, NOT decomposed — NSM's
+"someone X") or a **content word** (its explication → TPR). Built + verified
+(`clause.py`, `scripts/probe_clause_tpr.py`, prototype, non-neural):
+- "mary is in the kitchen" assembles into ONE d×d TPR matrix from `variable(mary)` +
+  `TPR(kitchen)` bound to roles — **zero token embeddings** — and decodes back to
+  SUBJECT→mary (cos 1.0) + PLACE→kitchen (4/4 primes).
+- Cross-clause: "mary is in the kitchen . she went to the office ." → both clauses
+  write `(mary, PLACE, ·)` into an order-3 `EntityMemory` ("she"→mary by recency);
+  `query(mary, PLACE)` returns **office** (cos 1.0, updated) — two clauses correlated
+  purely through the shared variable.
+**Honest crux:** general **coreference** (keying entities that aren't explicit
+names) is the real hard part — only recency/explicit-name is handled. And explication
+**coverage** is now load-bearing: with no token embedding to fall back on, a content
+word lacking an explication collapses to a bare prime.
+**Decision gate PASSED.** Next = the model rebuild: replace `model.token_embedding`
+with clause-TPR input, make Psyche's working memory the order-3 `EntityMemory`
+(TPR-RNN), depth via the loop. Tokenization survives only as the parser's text reader.
+
 **Roadmap (remaining):**
-- **Stage B+ — deepen meaning.** Source real molecule explications (transcribe
-  verbatim, cited) to replace the coarse SOMETHING grounding; better name/person
-  handling; feed the meaning *matrix* (TPR, §0f) to the model instead of the
-  4-prime bag.
+- **Model rebuild (gated, next).** Remove `token_embedding`; feed clause-TPRs;
+  working memory → order-3 entity memory; train end-to-end (TPR ops are
+  differentiable — the easy-to-train property).
+- **Coreference + coverage.** Real entity-keying for pronouns/definite NPs; source
+  more molecule/word explications so content words ground richly, not to SOMETHING.
 - **Stage C — WSD wired.** Wire `wsd.IterativeSenseResolver` into the loop: pick the
   sense (→ meaning tree) from `(state, memory)` context; write the sense-resolved
   meaning, not the surface token, into memory.
