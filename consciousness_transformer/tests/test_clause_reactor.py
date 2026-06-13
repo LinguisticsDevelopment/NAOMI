@@ -25,6 +25,28 @@ def test_entity_memory_gated_overwrite():
     assert (F.cosine_similarity(q2, v2) > F.cosine_similarity(q2, v1)).all()
 
 
+def test_entity_memory_vote_vs_update():
+    """overwrite=0 accumulates (vote: majority value wins); overwrite=gate replaces."""
+    b, d = 3, 16
+    M = em.init_memory(b, d, torch.device("cpu"))
+    e = F.normalize(torch.randn(b, d), dim=-1)
+    r = F.normalize(torch.randn(b, d), dim=-1)
+    a = F.normalize(torch.randn(b, d), dim=-1)
+    z = F.normalize(torch.randn(b, d), dim=-1)
+    one, zero = torch.ones(b), torch.zeros(b)
+    # vote: write a twice, b once, all additive -> a wins
+    Mv = em.write(M, e, r, a, one, overwrite=zero)
+    Mv = em.write(Mv, e, r, a, one, overwrite=zero)
+    Mv = em.write(Mv, e, r, z, one, overwrite=zero)
+    q = em.query(Mv, e, r)
+    assert (F.cosine_similarity(q, a) > F.cosine_similarity(q, z)).all()
+    # update: write a then b with full overwrite -> b wins (recency)
+    Mu = em.write(M, e, r, a, one, overwrite=one)
+    Mu = em.write(Mu, e, r, z, one, overwrite=one)
+    qu = em.query(Mu, e, r)
+    assert (F.cosine_similarity(qu, z) > F.cosine_similarity(qu, a)).all()
+
+
 def _toy_batch(b=8, d=16, K=4, seed=0):
     """One statement + one question; the statement's value IS the gold option."""
     g = torch.Generator().manual_seed(seed)
@@ -33,12 +55,14 @@ def _toy_batch(b=8, d=16, K=4, seed=0):
     ent = F.normalize(torch.randn(b, d, generator=g), dim=-1)
     rel = F.normalize(torch.randn(b, d, generator=g), dim=-1)
     val = opts[torch.arange(b), ans]                          # statement value = answer
+    prd = F.normalize(torch.randn(b, d, generator=g), dim=-1)
     entity = torch.stack([ent, ent], dim=1)                  # same entity both steps
     relation = torch.stack([rel, rel], dim=1)
     value = torch.stack([val, torch.zeros(b, d)], dim=1)     # question carries no value
+    pred = torch.stack([prd, prd], dim=1)
     is_q = torch.tensor([[0.0, 1.0]]).repeat(b, 1)
     mask = torch.ones(b, 2)
-    return ClauseBatch(entity, relation, value, is_q, mask, opts, ans)
+    return ClauseBatch(entity, relation, value, pred, is_q, mask, opts, ans)
 
 
 def test_reactor_forward_shapes():
@@ -57,7 +81,7 @@ def test_reactor_learns_to_read_memory_and_answer():
     model = ClauseReactor(dim=24)
     opt = torch.optim.AdamW(model.parameters(), lr=5e-3)
     init = float((model(batch)["answer_logits"].argmax(-1) == batch.answer).float().mean())
-    for _ in range(150):
+    for _ in range(300):
         out = model(batch)
         loss = F.cross_entropy(out["answer_logits"], batch.answer)
         opt.zero_grad(); loss.backward(); opt.step()

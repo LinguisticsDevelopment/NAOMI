@@ -222,18 +222,36 @@ The model rebuild's core is built and trains (`entity_memory.py`, `clause_reacto
 deterministic `(entity, relation, value)` triple of TPR/prime vectors (no token
 embedding). The **only learned parameters** (a ~160k-param GRU controller + heads)
 decide *how to react*: a write **gate** into the order-3 `entity⊗relation⊗value`
-memory (`entity_memory.write` = gated overwrite — gate≈1 updates a fact, gate≈0
-ignores it), a **respond** weight (timing), and a **generated** response
-meaning-vector scored *contrastively* against the fixed option meaning-vectors.
-Result on the full curriculum (levels 1–6): **val ≈ 0.82**, respond-mass at the
-question step rising to ~0.65 — it learns to write/update and to answer at the right
-moment, entirely over fixed grounded perception. Honest gap vs the token model
-(~0.96): a generative+contrastive target over *coarse* meanings is harder, and the
-order-3 memory at d=64 limits value distinguishability; closable via explication
-coverage, larger d, and an overwrite-vs-vote op (corroboration, level 5, is recency-
-only today). **Not yet done:** the destructive removal of `token_embedding` + the
-token Psyche/dataset — gated on closing the gap / a go-ahead, so we don't ship a
-regression.
+memory, a **respond** weight (timing), and a **generated** response meaning-vector
+scored *contrastively* against the fixed option meaning-vectors.
+
+**Memory write is now two-gated** (`entity_memory.write(…, gate, overwrite)`):
+`delta = gate·value − overwrite·old`. `overwrite≈gate` → the slot becomes `value`
+(an UPDATE / recency, levels 3/6); `overwrite≈0` → `value` is *added* (a VOTE — repeated
+assertions accumulate so the corroborated majority wins, level 5). The controller also
+sees the clause **predicate** filler (`pred:is` vs `pred:moved`), the signal that
+distinguishes a vote from an update. Both gates and the predicate are the levers that
+let one shared memory serve corroboration *and* contradiction without interference.
+Probed on the canonical update ("mary is in kitchen" → "mary moved to office"): the
+trained controller fires **overwrite 0.37 on `is`** (vote) vs **0.91 on `moved`**
+(replace), and the final memory reads `cos(office)=1.00, cos(kitchen)=−0.14` — the
+two-gate works exactly as intended; the residual below is instance-level, not a
+mechanism failure.
+
+**Closing the gap (val 0.82 → ~0.88).** The dominant limiter was *not* the policy but a
+**perception bug**: gloss decomposition kept only a content-word's root *label*, which
+for store-resolved words is the generic wrapper `"EXPLICATION"`, collapsing distinct
+words (`kitchen`≡`bathroom`) to identical meaning-vectors — an **oracle ceiling of
+0.875** (58/240 episodes had a distractor >0.95 cosine to the gold). Attaching the
+content word's actual (depth-bounded) **subtree** instead of its label lifts the oracle
+ceiling to **1.000** (0 collisions, every `dim`). With that + the two-gate + predicate +
+minibatched training the reactor reaches **train ≈ 0.94 / val ≈ 0.87–0.88** (resp-mass
+at the question ≈ 0.90). Per-level val: L1 1.00, L2 0.83, L5 0.94, L6 0.93; the residual
+is **L3 0.72 / L4 0.79** (bare-update recency and respond-before-the-trailing-move
+timing) — genuine reaction-policy difficulty (parsing of "moved" → triple is verified
+clean), not perception. **Not yet done:** the destructive removal of `token_embedding`
++ the token Psyche/dataset — still gated on fully closing the last ~0.08 to the token
+model (~0.96), so we don't ship a regression.
 
 **Roadmap (remaining):**
 - **Close the gap, then hard-replace.** Improve the reactor (coverage, d, overwrite-

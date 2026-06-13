@@ -78,6 +78,29 @@ _MAX_GLOSS_CHILDREN = 3
 # Hard maximum recursion depth for gloss decomposition.
 _DEFAULT_MAX_DEPTH = 2
 
+# Bounds on a gloss content-word's resolved subtree cloned in under the SOMETHING
+# head: enough structure to distinguish words (kitchen vs bathroom) while keeping
+# the encoded tree small — the explication-store subtrees can be very wide (e.g.
+# "office" has ~18 prime children), which would bloat per-word encoding badly.
+_GLOSS_CLONE_DEPTH = 2
+_GLOSS_CLONE_BREADTH = 4
+
+
+def _clone_bounded(node: ParseNode, depth: int, breadth: int = _GLOSS_CLONE_BREADTH) -> ParseNode:
+    """Return a copy of *node*'s subtree, truncated to *depth* levels and the
+    first *breadth* children per level.
+
+    Copies ``label``/``token``/``relation`` so the shared cached node is never
+    aliased into multiple parent trees. At ``depth <= 0`` the children are
+    dropped (the node becomes a leaf); ``breadth`` caps the fan-out so a wide
+    explication can't explode the encoded tree size.
+    """
+    clone = ParseNode(label=node.label, token=node.token, relation=node.relation)
+    if depth > 0:
+        clone.children = [_clone_bounded(c, depth - 1, breadth)
+                          for c in node.children[:breadth]]
+    return clone
+
 # ---------------------------------------------------------------------------
 # Build prime exponent -> prime name map once at module load
 # ---------------------------------------------------------------------------
@@ -340,7 +363,12 @@ class NSMMeaningResolver(AbstractMeaningResolver):
                 # Cache the child resolution (no context)
                 self._cache[child_cache_key] = child_tree
                 child_root = child_tree.root
-            head.children.append(ParseNode(label=child_root.label))
+            # Attach the child's actual SUBTREE (not just its root label): the
+            # label alone is often the generic wrapper "EXPLICATION"/"SOMETHING",
+            # which would collapse distinct words (kitchen vs bathroom) to
+            # identical meaning vectors. Clone (bounded) so the shared cache node
+            # is never aliased into multiple parent trees.
+            head.children.append(_clone_bounded(child_root, _GLOSS_CLONE_DEPTH))
 
         return ParseTree(root=head)
 

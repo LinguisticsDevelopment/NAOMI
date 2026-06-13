@@ -33,17 +33,23 @@ def write(
     relation: torch.Tensor,
     value: torch.Tensor,
     gate: torch.Tensor,
+    overwrite: torch.Tensor = None,
 ) -> torch.Tensor:
-    """Gated overwrite of the (entity, relation) slot toward ``value`` (out-of-place).
+    """Write ``value`` into the (entity, relation) slot (out-of-place).
 
-    ``gate=1`` → the slot becomes ``value`` (old removed, new written: an update);
-    ``gate=0`` → unchanged. Differentiable in gate, value, and the keys.
+    Two decoupled gates let the controller choose its reaction:
+    ``delta = gate·value − overwrite·old``. ``overwrite≈gate≈1`` → the slot becomes
+    ``value`` (an UPDATE / recency); ``overwrite≈0`` → ``value`` is *added* (a vote —
+    repeated assertions accumulate so the majority wins). Differentiable throughout.
+    Defaults to the gated-overwrite (``overwrite = gate``).
 
     Args:
         memory: ``[B, d, d, d]``.
         entity, relation, value: ``[B, d]``.
-        gate: ``[B]`` write strength in [0, 1] (from the controller).
+        gate: ``[B]`` write strength in [0, 1].
+        overwrite: ``[B]`` how much of the old value to clear (default = ``gate``).
     """
     old = query(memory, entity, relation)                 # [B, d]
-    delta = gate.unsqueeze(-1) * (value - old)            # move slot toward value
+    o = gate if overwrite is None else overwrite
+    delta = gate.unsqueeze(-1) * value - o.unsqueeze(-1) * old
     return memory + torch.einsum("bi,bj,bk->bijk", entity, relation, delta)

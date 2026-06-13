@@ -38,6 +38,7 @@ def main() -> None:
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--dim", type=int, default=64)
     ap.add_argument("--max-level", type=int, default=6)
+    ap.add_argument("--batch-size", type=int, default=0, help="0 = full batch")
     args = ap.parse_args()
     torch.manual_seed(0)
 
@@ -58,18 +59,25 @@ def main() -> None:
     model = ClauseReactor(dim=args.dim)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-3)
     print(f"reactor params: {sum(p.numel() for p in model.parameters()):,}")
+    n = train.answer.shape[0]
+    bs = args.batch_size if args.batch_size > 0 else n
     for epoch in range(args.epochs):
         model.train()
-        out = model(train)
-        loss = F.cross_entropy(out["answer_logits"], train.answer)
-        opt.zero_grad(); loss.backward(); opt.step()
+        perm = torch.randperm(n)
+        last_loss = 0.0
+        for s in range(0, n, bs):
+            mb = train.subset(perm[s:s + bs])
+            out = model(mb)
+            loss = F.cross_entropy(out["answer_logits"], mb.answer)
+            opt.zero_grad(); loss.backward(); opt.step()
+            last_loss = float(loss)
         if epoch % 10 == 9 or epoch == 0:
             model.eval()
             with torch.no_grad():
-                vo = model(val)
-            print(f"epoch {epoch+1:3d} | loss={float(loss):.3f} "
-                  f"train_acc={_acc(out, train):.3f} val_acc={_acc(vo, val):.3f} "
-                  f"resp@q={float(out['respond_position'].mean()):.2f}")
+                to_, vo = model(train), model(val)
+            print(f"epoch {epoch+1:3d} | loss={last_loss:.3f} "
+                  f"train_acc={_acc(to_, train):.3f} val_acc={_acc(vo, val):.3f} "
+                  f"resp@q={float(to_['respond_position'].mean()):.2f}")
 
 
 if __name__ == "__main__":
