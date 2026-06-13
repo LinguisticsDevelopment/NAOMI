@@ -216,10 +216,29 @@ word lacking an explication collapses to a bare prime.
 with clause-TPR input, make Psyche's working memory the order-3 `EntityMemory`
 (TPR-RNN), depth via the loop. Tokenization survives only as the parser's text reader.
 
+### 0h. The token-free clause reactor — perception fixed, only REACTION learned (BUILT)
+The model rebuild's core is built and trains (`entity_memory.py`, `clause_reactor.py`,
+`scripts/train_clause.py`). **Perception is frozen/grounded** — each clause becomes a
+deterministic `(entity, relation, value)` triple of TPR/prime vectors (no token
+embedding). The **only learned parameters** (a ~160k-param GRU controller + heads)
+decide *how to react*: a write **gate** into the order-3 `entity⊗relation⊗value`
+memory (`entity_memory.write` = gated overwrite — gate≈1 updates a fact, gate≈0
+ignores it), a **respond** weight (timing), and a **generated** response
+meaning-vector scored *contrastively* against the fixed option meaning-vectors.
+Result on the full curriculum (levels 1–6): **val ≈ 0.82**, respond-mass at the
+question step rising to ~0.65 — it learns to write/update and to answer at the right
+moment, entirely over fixed grounded perception. Honest gap vs the token model
+(~0.96): a generative+contrastive target over *coarse* meanings is harder, and the
+order-3 memory at d=64 limits value distinguishability; closable via explication
+coverage, larger d, and an overwrite-vs-vote op (corroboration, level 5, is recency-
+only today). **Not yet done:** the destructive removal of `token_embedding` + the
+token Psyche/dataset — gated on closing the gap / a go-ahead, so we don't ship a
+regression.
+
 **Roadmap (remaining):**
-- **Model rebuild (gated, next).** Remove `token_embedding`; feed clause-TPRs;
-  working memory → order-3 entity memory; train end-to-end (TPR ops are
-  differentiable — the easy-to-train property).
+- **Close the gap, then hard-replace.** Improve the reactor (coverage, d, overwrite-
+  vs-vote for corroboration) to match the token baseline, then delete `token_embedding`
+  and the token path.
 - **Coreference + coverage.** Real entity-keying for pronouns/definite NPs; source
   more molecule/word explications so content words ground richly, not to SOMETHING.
 - **Stage C — WSD wired.** Wire `wsd.IterativeSenseResolver` into the loop: pick the
