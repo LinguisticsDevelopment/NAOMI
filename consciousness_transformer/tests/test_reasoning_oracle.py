@@ -3,6 +3,7 @@
 from nsm_ct.episode import CurriculumGenerator
 from nsm_ct.reasoning_oracle import (
     INHERITANCE,
+    IS_A_TRANS,
     conditional_rule,
     derive,
     forward_chain,
@@ -34,8 +35,8 @@ def test_unanswerable_returns_none():
 
 
 def _gen_level(level, n=12):
-    gen = CurriculumGenerator(max_level=11, seed=3)
-    return [e for e in gen.generate(11 * n) if e.level == level]
+    gen = CurriculumGenerator(max_level=13, seed=3)
+    return [e for e in gen.generate(13 * n) if e.level == level]
 
 
 def test_curriculum_levels_are_oracle_consistent():
@@ -52,6 +53,23 @@ def test_curriculum_levels_are_oracle_consistent():
         assert not ep.answerable
         assert ep.answer_text == "idk"
         assert "idk" in ep.options
+
+
+def test_is_a_transitivity_composes_a_deep_chain():
+    # robin -> bird -> animal -> creature, creature can move => robin can move (3 is-a hops)
+    facts = [("robin", "IS_A", "bird"), ("bird", "IS_A", "animal"),
+             ("animal", "IS_A", "creature"), ("creature", "CAN", "move")]
+    val, _ = derive(facts, [IS_A_TRANS, INHERITANCE], ("robin", "CAN"))
+    assert val == "move"
+
+
+def test_deep_levels_are_oracle_consistent():
+    for ep in _gen_level(12) + _gen_level(13):
+        assert 2 <= ep.meta["chain_len"] <= 4
+        if ep.answerable:
+            assert ep.gold_chain                      # a real derivation exists
+        else:
+            assert ep.answer_text == "idk"            # broken chain -> abstain
 
 
 def test_retrieval_baseline_cannot_answer_reasoning_levels():

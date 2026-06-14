@@ -66,9 +66,13 @@ def _reasoning_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]
     pred_is, pred_if = codec.filler_vec("pred:is"), codec.filler_vec("pred:if")
     q_pred, ifv = codec.filler_vec("pred:?"), codec.filler_vec("IF")
     steps = []
-    for (e, r, v) in (ep.meta.get("rule") or ()):       # antecedent then consequent
-        steps.append((_ent_vec(e, resolver, codec, cache), codec.filler_vec("rel:" + r),
-                      _ent_vec(v, resolver, codec, cache), pred_if, ifv, 0))
+    # one conditional rule (meta["rule"]) or a cascade of them (meta["rules"]); each rule
+    # streams its antecedent then consequent, tagged with the IF atom on the coord channel.
+    rule_list = ep.meta.get("rules") or ([ep.meta["rule"]] if ep.meta.get("rule") else [])
+    for rule in rule_list:
+        for (e, r, v) in rule:                          # antecedent then consequent
+            steps.append((_ent_vec(e, resolver, codec, cache), codec.filler_vec("rel:" + r),
+                          _ent_vec(v, resolver, codec, cache), pred_if, ifv, 0))
     for (e, r, v) in ep.meta["facts"]:
         steps.append((_ent_vec(e, resolver, codec, cache), codec.filler_vec("rel:" + r),
                       _ent_vec(v, resolver, codec, cache), pred_is, z, 0))

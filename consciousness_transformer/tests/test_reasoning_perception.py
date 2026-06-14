@@ -19,8 +19,19 @@ class StubResolver:
 
 
 def _reasoning_eps(level, n=4):
-    gen = CurriculumGenerator(max_level=11, seed=5)
-    return [e for e in gen.generate(11 * n) if e.level == level][:n]
+    gen = CurriculumGenerator(max_level=13, seed=5)
+    return [e for e in gen.generate(13 * n * 2) if e.level == level][:n]
+
+
+def test_chained_conditionals_stream_one_if_pair_per_rule():
+    codec = TPRCodec(dim=48)
+    gen = CurriculumGenerator(max_level=13, seed=5)
+    ep = next(e for e in gen.generate(200) if e.level == 13 and e.answerable)
+    batch = build_clause_batch([ep], None, StubResolver(), codec)
+    if_atom = codec.filler_vec("IF")
+    coord = batch.coord[0].numpy()
+    if_rows = sum(np.allclose(coord[t], if_atom, atol=1e-5) for t in range(coord.shape[0]))
+    assert if_rows == 2 * ep.meta["chain_len"]        # antecedent + consequent per rule
 
 
 def test_conditional_episode_streams_rule_and_carries_if_atom():

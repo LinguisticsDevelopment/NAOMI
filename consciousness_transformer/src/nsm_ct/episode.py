@@ -103,6 +103,14 @@ _ISA = [("robin", "bird", "fly"), ("trout", "fish", "swim"),
         ("beagle", "dog", "bark"), ("oak", "tree", "grow")]       # (sub, super, ability)
 _ABILITIES = [a for _s, _p, a in _ISA]
 _IDK = "idk"  # the abstain atom (a first-class "I don't know")
+# Deep variable-length chains (L12/L13). Distinct tokens per chain; depth k in 2..4.
+_CHAIN_NOUNS = ["robin", "sparrow", "beagle", "trout", "oak", "maple",
+                "sedan", "hawk", "perch", "cedar", "finch", "spaniel"]
+_LADDER_RELS = ["PLACE", "CAN_SEE", "CAN_HOLD", "CAN_OPEN", "CAN_REACH"]
+_LADDER_VALS = ["kitchen", "stove", "key", "door", "chest",
+                "lamp", "gate", "box", "drawer", "hatch"]
+_REL_PHRASE = {"PLACE": "is in", "CAN_SEE": "can see", "CAN_HOLD": "can hold",
+               "CAN_OPEN": "can open", "CAN_REACH": "can reach"}
 
 
 class CurriculumGenerator(AbstractEpisodeSource):
@@ -140,7 +148,7 @@ class CurriculumGenerator(AbstractEpisodeSource):
     """
 
     def __init__(self, max_level: int = 3, num_options: int = 4, seed: int = 0) -> None:
-        self.max_level = max(1, min(max_level, 11))
+        self.max_level = max(1, min(max_level, 13))
         self.num_options = num_options
         self.rng = random.Random(seed)
 
@@ -401,6 +409,74 @@ class CurriculumGenerator(AbstractEpisodeSource):
                   "rule": ((name, "PLACE", a), (name, "CAN_SEE", x))},
         )
 
+    def _level12(self) -> Episode:
+        # Deep transitivity, variable depth k (2..4). TWO disjoint is-a chains ending in
+        # DIFFERENT abilities; the question targets one chain's root. The distractor chain is
+        # essential: with a single ability the model could just retrieve it without chaining
+        # (the is-a links would be a red herring). Facts shuffled (no pre-chaining at ingest).
+        # Half the time the queried chain is broken -> unanswerable -> abstain.
+        k = self.rng.randint(2, 4)
+        names = self.rng.sample(_CHAIN_NOUNS, 2 * (k + 1))
+        n, m = names[: k + 1], names[k + 1:]               # queried chain n, distractor chain m
+        act, act2 = self.rng.sample(_ABILITIES, 2)
+        broken = self.rng.random() < 0.4
+        edges = [(n[i], "IS_A", n[i + 1]) for i in range(k)]
+        if broken:
+            edges.pop(self.rng.randrange(len(edges)))       # snap a link in the queried chain
+        facts = (edges + [(n[k], "CAN", act)]
+                 + [(m[i], "IS_A", m[i + 1]) for i in range(k)] + [(m[k], "CAN", act2)])
+        self.rng.shuffle(facts)
+        rules = [reasoning_oracle.IS_A_TRANS, reasoning_oracle.INHERITANCE]
+        ans, chain = reasoning_oracle.derive(facts, rules, (n[0], "CAN"))
+        ctx = [f"a {e} is a {v} ." for (e, _r, v) in facts if _r == "IS_A"]
+        ctx += [f"a {e} can {v} ." for (e, _r, v) in facts if _r == "CAN"]
+        self.rng.shuffle(ctx)
+        q = f"what can a {n[0]} do ?"
+        meta = {"facts": facts, "query": (n[0], "CAN"), "chain_len": k}
+        if ans is None:                                     # broken chain -> abstain
+            options, idx = self._mc_pool(_IDK, _ABILITIES, [act, act2])
+            return Episode(context=ctx, question=q, answer_text=_IDK, options=options,
+                           answer_idx=idx, level=12, answerable=False, gold_chain=[], meta=meta)
+        options, idx = self._mc_pool(ans, _ABILITIES, [act2, _IDK])
+        return Episode(context=ctx, question=q, answer_text=ans, options=options,
+                       answer_idx=idx, level=12, answerable=True,
+                       gold_chain=self._chain_tuples(chain), meta=meta)
+
+    def _level13(self) -> Episode:
+        # Chained modus ponens, variable depth k (2..4): cascading conditionals
+        # (if in A -> sees X; if sees X -> holds Y; ...) + the seed fact. The answer needs
+        # all k rules to fire in sequence. Half the time the seed fact is missing/wrong.
+        k = self.rng.randint(2, 4)
+        name = self.rng.choice(_NAMES)
+        rels = _LADDER_RELS[: k + 1]                        # rels[0..k]
+        vals = self.rng.sample(_LADDER_VALS, k + 1)         # vals[0..k]
+        rules_struct = [((name, rels[i], vals[i]), (name, rels[i + 1], vals[i + 1]))
+                        for i in range(k)]
+        rules = [reasoning_oracle.Rule((a,), c, name="mp") for a, c in rules_struct]
+        self.rng.shuffle(rules_struct)   # shuffle the cascade: answer isn't positionally last
+        broken = self.rng.random() < 0.4
+        facts = [] if broken else [(name, rels[0], vals[0])]
+        ans, chain = reasoning_oracle.derive(facts, rules, (name, rels[k]))
+        ctx = [f"if {name} {_REL_PHRASE[rels[i]]} the {vals[i]} , "
+               f"{name} {_REL_PHRASE[rels[i + 1]]} the {vals[i + 1]} ." for i in range(k)]
+        if not broken:
+            ctx.append(f"{name} {_REL_PHRASE[rels[0]]} the {vals[0]} .")
+        qword = _REL_PHRASE[rels[k]].split()[-1]            # "see"/"hold"/"open"/"reach"
+        question = f"what can {name} {qword} ?"
+        if ans is None:                                     # missing seed -> abstain
+            options, idx = self._mc_pool(_IDK, _LADDER_VALS, [vals[k]])
+            return Episode(context=ctx, question=question, answer_text=_IDK,
+                           options=options, answer_idx=idx, level=13, answerable=False,
+                           gold_chain=[],
+                           meta={"facts": facts, "rules": rules_struct,
+                                 "query": (name, rels[k]), "chain_len": k})
+        options, idx = self._mc_pool(ans, _LADDER_VALS, [_IDK])
+        return Episode(context=ctx, question=question, answer_text=ans,
+                       options=options, answer_idx=idx, level=13, answerable=True,
+                       gold_chain=self._chain_tuples(chain),
+                       meta={"facts": facts, "rules": rules_struct,
+                             "query": (name, rels[k]), "chain_len": k})
+
     def base_facts(self) -> List[str]:
         """Base 'facts we know about the world' to seed long-term memory."""
         facts = [f"the {p} is a place ." for p in _PLACES]
@@ -410,7 +486,8 @@ class CurriculumGenerator(AbstractEpisodeSource):
     def generate(self, n: int) -> List[Episode]:
         builders = [self._level1, self._level2, self._level3, self._level4,
                     self._level5, self._level6, self._level7, self._level8,
-                    self._level9, self._level10, self._level11][: self.max_level]
+                    self._level9, self._level10, self._level11,
+                    self._level12, self._level13][: self.max_level]
         return [builders[i % len(builders)]() for i in range(n)]
 
 

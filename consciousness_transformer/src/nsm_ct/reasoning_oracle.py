@@ -112,3 +112,7 @@ def conditional_rule(place: str, obj: str) -> Rule:
 # generic property-inheritance over an is-a edge (transitivity in one rule)
 INHERITANCE = Rule((("?x", "IS_A", "?y"), ("?y", "CAN", "?z")), ("?x", "CAN", "?z"),
                    name="inheritance")
+
+# is-a is transitive: lets is-a chains compose to any depth (robin->bird->animal)
+IS_A_TRANS = Rule((("?x", "IS_A", "?y"), ("?y", "IS_A", "?z")), ("?x", "IS_A", "?z"),
+                  name="is_a_trans")
