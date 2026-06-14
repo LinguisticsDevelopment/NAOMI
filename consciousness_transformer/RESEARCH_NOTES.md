@@ -458,6 +458,34 @@ to switch on next. **The consciousness state got its first functional job** (the
 gate) — a partial close of §1. Deferred unchanged: deeper chains, real (non-in-context)
 knowledge, min-dimension/WSD, the §0h token-path removal.
 
+### 0l. Reason-until-confident — adaptive halting (the consciousness state decides *when* to stop)
+
+Per the user: don't fix the number of thinking steps — **reason until confident it either KNOWS
+or CANNOT know**, then answer or abstain. This gives the consciousness state a second job (when
+reasoning is done) and makes *when* to answer emergent (it was previously read off the fixed last
+hop; *whether* to answer was already emergent via the abstain head).
+
+- **Mechanism (`clause_psyche.py`, `halting=True`).** ACT-style (Graves 2016): each hop the state
+  emits a halt probability `sigmoid(halt_head)`; halting mass accumulates and the loop stops when
+  confident or at a **max-hops** safety cap; the answer/abstain reads off a **halt-weighted
+  settled state** (differentiable, no hard branch). A small **ponder cost** rewards stopping as
+  soon as it is sure. "Confident it can't know" = a confident abstain.
+- **Result (d=48, max-hops 5, 110 ep, L1-L11).** val **0.67** — *below* the single-pass 0.90 and
+  the fixed-hop runs: on these short chains the halting adds optimization burden with no accuracy
+  win. L10 transitivity 1.00, L9 modus ponens **0.40** (still the weak spot), L11 abstain 0.50.
+  **Think-steps mostly collapsed to ≈2.0** (the known ACT failure mode) **but with a real, faint
+  adaptive bump on exactly the if/then conditionals: L9 = 2.4, L11 = 2.3 vs 2.0 everywhere else**
+  — it ponders longer precisely where it is uncertain (the conditionals), which is the intended
+  behaviour, weakly. e2e: it answers an L9 correctly, abstains correctly on L11, and per-example
+  step counts vary (some hit the cap).
+- **Honest verdict.** The "reason-until-confident" loop is built and functional, *when*-to-answer
+  is now emergent, and the consciousness state owns the halt/abstain decision (further §1
+  progress). But on this short curriculum it neither improves accuracy nor yields crisp
+  variable-depth (semi-collapsed). It needs **deeper tasks** (where stopping early actually
+  matters) and/or the scaffolded **aux chain-supervision** (for L9 modus ponens) to pay off — the
+  short 2-hop curriculum simply does not reward adaptive depth. Tests: +3 halting (forward ponder
+  bounds, still-learns, stops-before-cap); `halting=False` keeps the fixed/single-pass baselines.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
