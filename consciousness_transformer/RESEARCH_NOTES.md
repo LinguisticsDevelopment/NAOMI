@@ -522,6 +522,38 @@ more capacity/data — not more puzzles or halting tricks. Caveat: the diagnosti
 **Status:** the deep curriculum (L12/L13) is now a *sound* shortcut-free benchmark; the open
 problem is making the loop actually traverse it. Halting/abstain remain built and green.
 
+### 0n. "Read its own output" cracks multi-hop reasoning (held-out)
+
+§0m's bottleneck: each hop derived its query entity from the state via a `Linear`, which could
+not re-conjure an arbitrary held-out entity vector, so the chain never propagated. The fix
+(user's idea): **the value just read becomes the next entity to look up** — the loop reads its
+own output. Each hop now queries memory with `focus` (initialised to the question entity,
+updated to `mem_read` each step); only the *relation to follow* is decided from the state (a
+choice among a few fixed relation atoms — the easy part). Removed `q_ent` and the write-back
+heads (`clause_psyche.py`); traversal is now read-only focus-chaining.
+
+**Definitive held-out result** (fixed relations, fresh entities, distractor chains, d=24-32):
+
+```
+single-pass (0 hops)            depth-3 held-out acc = 0.00   (one read = one lookup)
+focus-chaining + 4 fixed hops   depth-3 held-out acc = 0.97   <- generalises to unseen entities
+```
+
+A depth-3 chain (3 is-a links + 1 "can") needs exactly 4 hops; given them, the loop **traverses
+the chain and generalises** — the core multi-hop reasoning capability, achieved, and it is the
+mechanism (0 vs 4 hops of the *same* model) that makes the difference, not init luck (single-pass
+fails depth-3 at ~0.00 across every run). The entity-conjuring problem is gone.
+
+**Remaining bottleneck — halting calibration.** When the model picks its *own* step count
+(`halting=True`), it stops at ~1 step (avg 1.1) and fails depth-3: it has not learned to stop at
+the *end* of the chain (after following "can"), which varies with depth. Because focus-chaining
+puts the answer at the exact hop that follows "can", under/over-stepping misses it — so halting
+must learn "stop when I've reached an answer/ability", e.g. direct halt-supervision toward the
+chain depth (the scaffolded Step-4 lever) or a "read matches an answer option" stop signal. The
+*reasoning* works; the *when-to-stop* is the open piece. Tests: 10 clause_psyche green
+(focus-chaining is backward-compatible). Caveat: small scale (d≤32); the relation-to-follow
+choice and halting are what remain.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a

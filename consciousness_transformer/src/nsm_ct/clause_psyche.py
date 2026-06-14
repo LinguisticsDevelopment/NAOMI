@@ -47,13 +47,10 @@ class ClausePsyche(nn.Module):
         self.decide_truth = nn.Linear(hidden + d, 1)
         self.op_head = nn.Linear(hidden, len(OPS))
         self.respond = nn.Linear(hidden, 1)
-        # inference-hop heads: a state-derived query, and a derived belief to write back
-        self.q_ent = nn.Linear(hidden, d)
+        # inference-hop head: only the RELATION to follow next is decided from the state.
+        # The entity to look up is the value just read (the loop reads its own output), so
+        # no head needs to re-conjure an arbitrary entity vector — that was the bottleneck.
         self.q_rel = nn.Linear(hidden, d)
-        self.w_ent = nn.Linear(hidden, d)
-        self.w_rel = nn.Linear(hidden, d)
-        self.w_val = nn.Linear(hidden, d)
-        self.w_gate = nn.Linear(hidden, 1)
         self.halt_head = nn.Linear(hidden, 1)       # "am I sure yet?" — when to stop reasoning
         self.abstain = nn.Linear(hidden, 1)         # the consciousness state's whether-to-answer
         # response generators (the meaning-object): factored fillers
@@ -109,13 +106,13 @@ class ClausePsyche(nn.Module):
         acc_state = torch.zeros_like(state)                        # halt-weighted settled state
         acc_read = torch.zeros(b, d, device=device)
         last_read = torch.zeros(b, d, device=device)
+        focus = qent                                         # start reasoning at the asked entity
         for _k in range(self.hops):                          # Phase 2: inference hops (think)
-            qe, qr = self.q_ent(state), self.q_rel(state)
-            mem_read = em.query(memory, qe, qr)
-            state = self.gru(torch.cat([qe, qr, mem_read, zd, zd, mem_read], dim=-1), state)
-            wg = torch.sigmoid(self.w_gate(state)).squeeze(-1)
-            memory = em.write(memory, self.w_ent(state), self.w_rel(state), self.w_val(state), wg)
-            states.append(state)
+            qr = self.q_rel(state)                           # which relation to follow (the choice)
+            mem_read = em.query(memory, focus, qr)           # look up what `focus` points to
+            state = self.gru(torch.cat([focus, qr, mem_read, zd, zd, mem_read], dim=-1), state)
+            focus = mem_read                                 # READ ITS OWN OUTPUT: the value just
+            states.append(state)                             # read becomes the next thing to look up
             last_read = mem_read
             if self.halting:                                 # think until confident (ACT-style)
                 running = (halt_cum < 1.0 - eps).float()     # [b,1] still reasoning?
