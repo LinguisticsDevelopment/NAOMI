@@ -407,6 +407,57 @@ recency/explicit-name); conditionals (`if`-then); learned trust/corroboration; t
 realization (the deliverable is the decoded *meaning object*). LTM is minimal (consolidate
 affirmed facts; pruning deferred). Still pending from §0h: the `token_embedding` removal.
 
+### 0k. Emergent reasoning in the ClausePsyche loop — modus ponens / transitivity / abstain (MEASURED; honest negative result on hops)
+
+The north star: reason so the model *believes* its answers (correct ≡ derivable from the
+in-context premises), and know *whether* to respond (abstain when it cannot derive). Built on
+the §0j ClausePsyche graph; reasoning is meant to **emerge from the neural loop**, not a
+symbolic engine (the symbolic `reasoning_oracle` only generates/grades).
+
+- **R1 curriculum + oracle (`reasoning_oracle.py`, `episode.py` L9-L11).** Self-contained
+  episodes whose answer is *never stated* — only derivation reaches it: **L9** conditional
+  (modus ponens), **L10** transitivity/inheritance (is-a chain), **L11** unanswerable →
+  abstain (`idk`). A tiny forward-chainer derives the gold answer + chain + `answerable` flag.
+  Gate: the oracle derives L9/L10, flags L11, and the gold answers are **not directly
+  retrievable** (retrieval/recency fail — derivation is necessary).
+- **R2 perception (`clause_reactor.py`).** Reasoning streams ground from the oracle's
+  *structured premises* (the same meaning the sentence carries; the derived answer is never
+  input) — a conditional streams antecedent+consequent with the **IF atom on the coord
+  channel**, is-a/CAN facts stream with a general relation vocab. This sidesteps fragile
+  parsing of "if/then" and "is-a"; L1-L8 stay on the parser path. `ClauseBatch` gains an
+  `answerable` flag; `idk` grounds to its own atom.
+- **R3 model (`clause_psyche.py`).** After ingesting the stream (facts written to the order-3
+  STM), the controller runs **K inference hops**: each queries the STM with a state-derived
+  key, updates the consciousness state, and may **write a derived `(entity,relation,value)`
+  back into the STM** (a materialized intermediate belief). A consciousness-state **ABSTAIN**
+  head gives a first-class "I don't know" — the state's first real job. `hops=0` = the
+  single-pass baseline. Loss = Frobenius + decode-CE on **answerable** episodes + an **abstain
+  BCE** (`should_abstain = 1 − answerable`) so the model is trained to respond only with what
+  it can derive.
+
+**Results (val, L1-L11, answer-only / no chain supervision).** Single-pass **hops=0** (d=64,
+140 ep): **val 0.90** — **L10 transitivity 1.00, L8 negation 1.00, L11 abstain 0.83**, but
+**L9 modus ponens 0.43**. **hops=3** (d=48, 120 ep): val 0.59, L10 1.00, L9 0.20. End-to-end
+probe: L10 answers "bark" with its justification chain, L11 abstains correctly, **L9 wrongly
+abstains**.
+
+**Honest negative result — the explicit multi-hop loop does NOT beat the single-pass on these
+short chains** (and underperforms at small scale: extra hop params, harder optimization). A
+unit 2-hop task confirms it (single-pass and hops both hit 1.0): a GRU + order-3 memory already
+*composes* a 2-hop chain in one pass. The loop's theoretical payoff is **depth**, which a
+2-hop curriculum never exercises — so emergence-via-looping is *plausible but unproven here*;
+deeper-chain curricula are the real test. The reasoning + abstain **mechanism works and emerges
+in both** variants.
+
+**The genuine crux is L9.** L9 (answerable) and L11 (unanswerable) are *structurally identical*
+conditionals — both show "if in A, can see X"; they differ only in whether the stated place
+matches the antecedent. The model conflates them and **over-abstains** (abstain precision ~0.56),
+dropping answerable L9s. Modus-ponens *antecedent-gating* is the part that does not emerge from
+the answer-only signal; the oracle's `gold_chain` is scaffolded as the aux-supervision fallback
+to switch on next. **The consciousness state got its first functional job** (the abstain/whether
+gate) — a partial close of §1. Deferred unchanged: deeper chains, real (non-in-context)
+knowledge, min-dimension/WSD, the §0h token-path removal.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
