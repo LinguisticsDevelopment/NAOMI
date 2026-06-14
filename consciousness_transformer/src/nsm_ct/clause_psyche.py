@@ -51,7 +51,10 @@ class ClausePsyche(nn.Module):
         # The entity to look up is the value just read (the loop reads its own output), so
         # no head needs to re-conjure an arbitrary entity vector — that was the bottleneck.
         self.q_rel = nn.Linear(hidden, d)
-        self.halt_head = nn.Linear(hidden, 1)       # "am I sure yet?" — when to stop reasoning
+        # the OUTPUT gate: reads the state AND the value just read, deciding "is this
+        # completed thought my answer?" — seeing the value is what lets it learn to stop
+        # once it has reached an answer (vs an intermediate entity).
+        self.out_head = nn.Linear(hidden + d, 1)
         self.abstain = nn.Linear(hidden, 1)         # the consciousness state's whether-to-answer
         # response generators (the meaning-object): factored fillers
         self.gen_pred = nn.Linear(hidden, d)
@@ -101,35 +104,31 @@ class ClausePsyche(nn.Module):
 
         qent = (batch.is_q.unsqueeze(-1) * batch.entity).sum(1)     # the question's entity
         ponder = torch.zeros(b, device=device)
-        eps = 0.01
-        halt_cum = torch.zeros(b, 1, device=device)                # cumulative "I'm sure" mass
-        acc_state = torch.zeros_like(state)                        # halt-weighted settled state
-        acc_read = torch.zeros(b, d, device=device)
         last_read = torch.zeros(b, d, device=device)
-        focus = qent                                         # start reasoning at the asked entity
-        for _k in range(self.hops):                          # Phase 2: inference hops (think)
-            qr = self.q_rel(state)                           # which relation to follow (the choice)
-            mem_read = em.query(memory, focus, qr)           # look up what `focus` points to
+        focus = qent                                         # the working thought's current subject
+        read_steps, hop_states = [], []
+        for _k in range(self.hops):                          # Phase 2: think in meaning objects
+            qr = self.q_rel(state)                           # the thought's relation (which to follow)
+            mem_read = em.query(memory, focus, qr)           # fill the thought's value from STM
             state = self.gru(torch.cat([focus, qr, mem_read, zd, zd, mem_read], dim=-1), state)
-            focus = mem_read                                 # READ ITS OWN OUTPUT: the value just
-            states.append(state)                             # read becomes the next thing to look up
+            states.append(state)
+            read_steps.append(mem_read)
+            hop_states.append(state)
             last_read = mem_read
-            if self.halting:                                 # think until confident (ACT-style)
-                running = (halt_cum < 1.0 - eps).float()     # [b,1] still reasoning?
-                h = torch.sigmoid(self.halt_head(state))     # [b,1] "am I sure now?"
-                new_cum = halt_cum + h * running
-                is_last = (new_cum >= 1.0 - eps).float() * running
-                p = running * (h * (1.0 - is_last) + (1.0 - halt_cum) * is_last)   # step weight
-                acc_state = acc_state + p * state
-                acc_read = acc_read + p * mem_read
-                ponder = ponder + running.squeeze(-1)        # count steps actually taken
-                halt_cum = new_cum
+            focus = mem_read                                 # REINPUT: the read value becomes the
+                                                             # next thought's subject (sourced, not conjured)
 
-        if self.halting and self.hops > 0:                   # respond from the halt-weighted state
-            settled = acc_state
+        if self.halting and self.hops > 0:                   # pick WHICH thought is the answer
+            R = torch.stack(read_steps, dim=1)               # [b, K, d]  the per-step thoughts
+            S = torch.stack(hop_states, dim=1)               # [b, K, h]
+            score = self.out_head(torch.cat([S, R], dim=-1)).squeeze(-1)   # "is this thought the answer?"
+            attn = torch.softmax(score, dim=1)               # attend over my own thoughts [b, K]
+            acc_val = (attn.unsqueeze(-1) * R).sum(1)         # the selected answer value
+            settled = (attn.unsqueeze(-1) * S).sum(1)
+            ponder = (attn * torch.arange(1, self.hops + 1, device=device).float()).sum(1)  # depth reached
             pred_f = self.gen_pred(settled)
             subj_f = self.gen_subject(torch.cat([settled, qent], dim=-1))
-            place_f = self.gen_place(torch.cat([settled, acc_read], dim=-1))
+            place_f = self.gen_place(torch.cat([settled, acc_val], dim=-1))
             abstain_state = settled
             w_stream = torch.softmax(torch.stack(resp_logits, dim=1), dim=1)
         elif self.hops > 0:                                  # fixed-hop: respond from final state

@@ -554,6 +554,37 @@ chain depth (the scaffolded Step-4 lever) or a "read matches an answer option" s
 (focus-chaining is backward-compatible). Caveat: small scale (d≤32); the relation-to-follow
 choice and halting are what remain.
 
+### 0o. Thinking in meaning objects + attention over thoughts (job 2: when to stop)
+
+Two upgrades, per the user: (a) the loop should think in **meaning objects** (the structured
+clause it answers with), not the bare value vector §0n fed back; (b) it needs to decide *when to
+stop* (job 2 — §0n's halting collapsed to ~1 step).
+
+- **The loop now generates a thought each step and reinputs it** (`clause_psyche.py`): the working
+  thought is `(subject, relation, value)`; `subject ← the value just read` (focus-chaining, sourced
+  not conjured), `relation ← q_rel(state)` (the choice), `value ← read from STM`.
+- **"Stop" = pick which thought is the answer.** A hard ACT halt — even after the gate was given
+  the read value — **robustly collapsed to ~1 step** (held-out depth-1/3 ≈ 0.35, ≈ chance). So the
+  hard halt was replaced by **soft attention over the model's own per-step thoughts**: `out_head`
+  scores each thought ("is this the answer?", seeing its value), a softmax selects the answer
+  thought, and the reasoning depth = where the attention lands. Differentiable; cannot collapse.
+
+**Held-out result, model choosing emergently** (fixed relations, fresh entities, distractors):
+
+```
+                       depth-1   depth-3
+hard ACT halt           0.35      0.36     (~chance; bails at step 1)
+attention over thoughts 0.84      0.56     <- emergent selection recovers reasoning
+(ceiling, fixed 4 hops)  --       0.97
+```
+
+Emergent depth-3 went from chance to **0.56** (ceiling 0.97 with hand-set hops). **Open:** the
+selected-thought depth does not yet strongly scale with chain depth (avg ~1.6 steps for both), so
+"how deep it thinks" is weak, and depth-3 trails the fixed-hop ceiling. Next lever: supervise the
+thought-selection toward "the read that matches a candidate answer" (output when the thought is
+answer-shaped) — structural, no oracle needed. The *reasoning + answer-selection* work emergently;
+*scaling depth to the chain* is the remaining piece.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
