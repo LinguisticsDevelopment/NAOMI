@@ -51,6 +51,7 @@ def main() -> None:
         pick = torch.einsum("bd,bkd->bk", torch.nn.functional.normalize(place, -1),
                             torch.nn.functional.normalize(batch.options, -1)).argmax(-1)
         abstained = (out["abstain_prob"] >= 0.5).tolist()
+        steps = out["ponder_steps"].tolist()
 
     for i, ep in enumerate(picks):
         print(f"=== L{ep.level} ===")
@@ -63,7 +64,8 @@ def main() -> None:
             verdict = f"ANSWER: {ep.options[int(pick[i])]!r}"
         correct = (abstained[i] == (not ep.answerable)) and (
             ep.answerable is False or ep.options[int(pick[i])] == ep.answer_text)
-        print(f"   model -> {verdict}   (gold {ep.answer_text!r}, {'OK' if correct else 'X'})")
+        print(f"   model -> {verdict}   (gold {ep.answer_text!r}, {'OK' if correct else 'X'}; "
+              f"thought {steps[i]:.0f} steps)")
         for derived, rule, support in (ep.gold_chain or []):
             print(f"   justification: {derived} via {rule} from {list(support)}")
         print()

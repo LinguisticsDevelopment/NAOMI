@@ -41,15 +41,16 @@ def _per_level(model, batch, episodes):
         out = model(batch)
         dec = (out["answer_logits"].argmax(-1) == batch.answer).tolist()
         abst = (out["abstain_prob"] >= 0.5).tolist()
-    agg = collections.defaultdict(lambda: [0, 0])
-    for ep, hit, ab in zip(episodes, dec, abst):
+        pon = out["ponder_steps"].tolist()
+    agg = collections.defaultdict(lambda: [0, 0, 0.0])
+    for ep, hit, ab, ps in zip(episodes, dec, abst, pon):
         key = f"L{ep.level}"
         if ep.level == 7:
             key += "-res" if ep.meta.get("resolved") else "-may"
         # an unanswerable episode is correct iff the model abstains; else iff it decodes.
         ok = ab if not ep.answerable else (hit and not ab)
-        agg[key][0] += int(ok); agg[key][1] += 1
-    return {k: tuple(v) for k, v in sorted(agg.items())}
+        agg[key][0] += int(ok); agg[key][1] += 1; agg[key][2] += ps
+    return {k: (c, n, t) for k, (c, n, t) in sorted(agg.items())}
 
 
 def main() -> None:
@@ -59,6 +60,7 @@ def main() -> None:
     ap.add_argument("--dim", type=int, default=64)
     ap.add_argument("--max-level", type=int, default=11)
     ap.add_argument("--hops", type=int, default=3, help="inference hops (0 = single-pass ablation)")
+    ap.add_argument("--halting", action="store_true", help="think until confident (adaptive hops)")
     ap.add_argument("--save", type=str, default="", help="checkpoint path (optional)")
     args = ap.parse_args()
     torch.manual_seed(0)
@@ -75,9 +77,9 @@ def main() -> None:
     train = build_clause_batch(tr, parser, resolver, codec)
     val = build_clause_batch(va, parser, resolver, codec)
 
-    model = ClausePsyche(codec, hops=args.hops)
+    model = ClausePsyche(codec, hops=args.hops, halting=args.halting)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-3)
-    print(f"ClausePsyche (hops={args.hops}) params: "
+    print(f"ClausePsyche (hops={args.hops}, halting={args.halting}) params: "
           f"{sum(p.numel() for p in model.parameters()):,}")
 
     for epoch in range(args.epochs):
@@ -98,7 +100,10 @@ def main() -> None:
     model.eval()
     levels = _per_level(model, val, va)
     print("per-level val (decode; L11=abstain):",
-          "  ".join(f"{k}={c}/{n}={c/n:.2f}" for k, (c, n) in levels.items()))
+          "  ".join(f"{k}={c}/{n}={c/n:.2f}" for k, (c, n, _t) in levels.items()))
+    if args.halting:
+        print("per-level avg think-steps:",
+              "  ".join(f"{k}={t/n:.1f}" for k, (_c, n, t) in levels.items()))
     if args.save:
         torch.save({"state_dict": model.state_dict(), "dim": args.dim, "hops": args.hops}, args.save)
         print(f"saved checkpoint -> {args.save}")

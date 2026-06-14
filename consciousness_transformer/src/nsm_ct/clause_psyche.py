@@ -35,10 +35,12 @@ class ClausePsyche(nn.Module):
     """GRU controller → memory reaction + K inference hops (STM write-back) + a
     consciousness-state abstain gate + a generated clause meaning-object."""
 
-    def __init__(self, codec: TPRCodec, hidden: int = 128, hops: int = 0) -> None:
+    def __init__(self, codec: TPRCodec, hidden: int = 128, hops: int = 0,
+                 halting: bool = False) -> None:
         super().__init__()
         self.dim = d = codec.dim
-        self.hops = hops
+        self.hops = hops                            # with halting, this is the max-hop cap
+        self.halting = halting
         self.gru = nn.GRUCell(6 * d, hidden)        # (entity, rel, value, pred, coord, mem_read)
         self.write_gate = nn.Linear(hidden, 1)
         self.overwrite_gate = nn.Linear(hidden, 1)
@@ -52,6 +54,7 @@ class ClausePsyche(nn.Module):
         self.w_rel = nn.Linear(hidden, d)
         self.w_val = nn.Linear(hidden, d)
         self.w_gate = nn.Linear(hidden, 1)
+        self.halt_head = nn.Linear(hidden, 1)       # "am I sure yet?" — when to stop reasoning
         self.abstain = nn.Linear(hidden, 1)         # the consciousness state's whether-to-answer
         # response generators (the meaning-object): factored fillers
         self.gen_pred = nn.Linear(hidden, d)
@@ -100,8 +103,13 @@ class ClausePsyche(nn.Module):
             gpl.append(self.gen_place(torch.cat([state, mem_read], dim=-1)))
 
         qent = (batch.is_q.unsqueeze(-1) * batch.entity).sum(1)     # the question's entity
+        ponder = torch.zeros(b, device=device)
+        eps = 0.01
+        halt_cum = torch.zeros(b, 1, device=device)                # cumulative "I'm sure" mass
+        acc_state = torch.zeros_like(state)                        # halt-weighted settled state
+        acc_read = torch.zeros(b, d, device=device)
         last_read = torch.zeros(b, d, device=device)
-        for _k in range(self.hops):                          # Phase 2: emergent inference hops
+        for _k in range(self.hops):                          # Phase 2: inference hops (think)
             qe, qr = self.q_ent(state), self.q_rel(state)
             mem_read = em.query(memory, qe, qr)
             state = self.gru(torch.cat([qe, qr, mem_read, zd, zd, mem_read], dim=-1), state)
@@ -109,21 +117,41 @@ class ClausePsyche(nn.Module):
             memory = em.write(memory, self.w_ent(state), self.w_rel(state), self.w_val(state), wg)
             states.append(state)
             last_read = mem_read
+            if self.halting:                                 # think until confident (ACT-style)
+                running = (halt_cum < 1.0 - eps).float()     # [b,1] still reasoning?
+                h = torch.sigmoid(self.halt_head(state))     # [b,1] "am I sure now?"
+                new_cum = halt_cum + h * running
+                is_last = (new_cum >= 1.0 - eps).float() * running
+                p = running * (h * (1.0 - is_last) + (1.0 - halt_cum) * is_last)   # step weight
+                acc_state = acc_state + p * state
+                acc_read = acc_read + p * mem_read
+                ponder = ponder + running.squeeze(-1)        # count steps actually taken
+                halt_cum = new_cum
 
-        if self.hops > 0:                                    # respond from the settled state
+        if self.halting and self.hops > 0:                   # respond from the halt-weighted state
+            settled = acc_state
+            pred_f = self.gen_pred(settled)
+            subj_f = self.gen_subject(torch.cat([settled, qent], dim=-1))
+            place_f = self.gen_place(torch.cat([settled, acc_read], dim=-1))
+            abstain_state = settled
+            w_stream = torch.softmax(torch.stack(resp_logits, dim=1), dim=1)
+        elif self.hops > 0:                                  # fixed-hop: respond from final state
             pred_f = self.gen_pred(state)
             subj_f = self.gen_subject(torch.cat([state, qent], dim=-1))
             place_f = self.gen_place(torch.cat([state, last_read], dim=-1))
+            abstain_state = state
+            ponder = ponder + float(self.hops)
             w_stream = torch.softmax(torch.stack(resp_logits, dim=1), dim=1)
         else:                                                # single-pass aggregation (baseline)
             w = torch.softmax(torch.stack(resp_logits, dim=1), dim=1).unsqueeze(-1)
             pred_f = (w * torch.stack(gp, dim=1)).sum(1)
             subj_f = (w * torch.stack(gs, dim=1)).sum(1)
             place_f = (w * torch.stack(gpl, dim=1)).sum(1)
+            abstain_state = state
             w_stream = w.squeeze(-1)
 
         matrix = self.assemble(pred_f, subj_f, place_f)
-        abstain_logit = self.abstain(state).squeeze(-1)
+        abstain_logit = self.abstain(abstain_state).squeeze(-1)
         pf = F.normalize(place_f, dim=-1)
         on = F.normalize(batch.options, dim=-1)
         answer_logits = torch.einsum("bd,bkd->bk", pf, on) * 10.0
@@ -133,7 +161,7 @@ class ClausePsyche(nn.Module):
             "pred_filler": pred_f, "op_logits": torch.stack(ops, dim=1),
             "states": torch.stack(states, dim=1), "answer_logits": answer_logits,
             "respond_gates": w_stream, "abstain_logit": abstain_logit,
-            "abstain_prob": torch.sigmoid(abstain_logit),
+            "abstain_prob": torch.sigmoid(abstain_logit), "ponder_steps": ponder,
         }
 
 
@@ -149,8 +177,10 @@ def gold_matrix(model: ClausePsyche, batch: ClauseBatch) -> torch.Tensor:
 def compute_clause_psyche_losses(
     out: Dict[str, torch.Tensor], batch: ClauseBatch, model: ClausePsyche,
     *, w_decode: float = 1.0, w_consistency: float = 0.01, w_abstain: float = 1.0,
+    w_ponder: float = 0.01,
 ) -> Dict[str, torch.Tensor]:
-    """Frobenius + decode-CE on **answerable** episodes; abstain BCE; consistency.
+    """Frobenius + decode-CE on **answerable** episodes; abstain BCE; consistency;
+    + a small **ponder cost** (reward stopping as soon as it is sure).
 
     Generation is supervised only where the answer is derivable; the abstain head
     learns ``should_abstain = 1 - answerable`` — so the model is trained to respond
@@ -163,9 +193,11 @@ def compute_clause_psyche_losses(
     decode = (F.cross_entropy(out["answer_logits"], batch.answer, reduction="none") * ok).sum() / denom
     abstain = F.binary_cross_entropy_with_logits(out["abstain_logit"], 1.0 - ok)
     consistency = consciousness_consistency_loss(out["states"])
-    total = frob + w_decode * decode + w_abstain * abstain + w_consistency * consistency
+    ponder = out["ponder_steps"].mean()
+    total = (frob + w_decode * decode + w_abstain * abstain
+             + w_consistency * consistency + w_ponder * ponder)
     return {"total": total, "frobenius": frob, "decode": decode,
-            "abstain": abstain, "consistency": consistency}
+            "abstain": abstain, "consistency": consistency, "ponder": ponder}
 
 
 def clause_decode_accuracy(out: Dict[str, torch.Tensor], batch: ClauseBatch) -> float:

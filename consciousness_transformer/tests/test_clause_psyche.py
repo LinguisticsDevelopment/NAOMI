@@ -153,6 +153,46 @@ def test_hop_loop_learns_two_hop_composition():
         assert clause_decode_accuracy(model(batch), batch) > 0.7
 
 
+def test_halting_forward_reports_bounded_ponder():
+    d = 16
+    batch = _toy_batch(b=8, d=d)
+    out = ClausePsyche(TPRCodec(dim=d), hidden=32, hops=5, halting=True)(batch)
+    ponder = out["ponder_steps"]
+    assert ponder.shape == (8,)
+    assert float(ponder.min()) >= 0.0 and float(ponder.max()) <= 5.0   # respects the cap
+
+
+def test_halting_model_still_learns_to_reason():
+    torch.manual_seed(0)
+    d = 32
+    batch = _two_hop_batch(b=64, d=d)
+    model = ClausePsyche(TPRCodec(dim=d), hidden=96, hops=5, halting=True)
+    opt = torch.optim.AdamW(model.parameters(), lr=4e-3)
+    for _ in range(600):
+        loss = compute_clause_psyche_losses(model(batch), batch, model)["total"]
+        opt.zero_grad(); loss.backward(); opt.step()
+    with torch.no_grad():
+        assert clause_decode_accuracy(model(batch), batch) > 0.7   # halting doesn't break learning
+
+
+def test_halting_learns_to_stop_before_the_cap():
+    # With a ponder cost the model should learn to HALT (stop reasoning when it is
+    # confident) rather than always burning the full hop budget. (Difficulty-adaptive
+    # *depth* is reported in train_clause_psyche; ACT-style halting can collapse to a
+    # constant step count, so it is not asserted here.)
+    torch.manual_seed(0)
+    d = 32
+    batch = _two_hop_batch(b=64, d=d)
+    model = ClausePsyche(TPRCodec(dim=d), hidden=96, hops=6, halting=True)
+    opt = torch.optim.AdamW(model.parameters(), lr=4e-3)
+    for _ in range(500):
+        loss = compute_clause_psyche_losses(model(batch), batch, model, w_ponder=0.05)["total"]
+        opt.zero_grad(); loss.backward(); opt.step()
+    with torch.no_grad():
+        steps = float(model(batch)["ponder_steps"].mean())
+    assert 0.0 < steps < 6.0                 # it stops early, not at the cap
+
+
 def test_gold_matrix_is_recovered_by_its_own_decode():
     # sanity: the gold assembly decodes (unbind place role) back to the answer option
     d = 32
