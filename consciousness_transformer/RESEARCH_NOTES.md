@@ -486,6 +486,42 @@ hop; *whether* to answer was already emergent via the abstain head).
   short 2-hop curriculum simply does not reward adaptive depth. Tests: +3 halting (forward ponder
   bounds, still-learns, stops-before-cap); `halting=False` keeps the fixed/single-pass baselines.
 
+### 0m. Held-out diagnostic — the loop is NEEDED for depth, but does not yet LEARN depth
+
+After §0l (halting collapsed on short chains), we built deep variable-length chains (L12/L13)
+and ran a clean held-out diagnostic: **fixed relation vectors, fresh held-out entity vectors,
+two distractor chains** (so neither memorization nor "grab the lone answer" can succeed). Two
+competing is-a chains end in different abilities; the question targets one chain's root; depth
+1 vs 3; train and eval entities disjoint. Result (d=28, hidden=80, ~700 it):
+
+```
+single-pass  depth-1 acc=0.60            depth-3 acc=0.01
+halting(6)   depth-1 acc=0.65 steps=2.0  depth-3 acc=0.26 steps=2.0   (chance=0.25)
+```
+
+**Two findings, both important:**
+1. **The loop is genuinely necessary for depth.** Single-pass depth-3 = **0.01** on held-out
+   (below chance) — one forward read = one memory lookup, so a 3-hop chain is unreachable in a
+   single pass. (Earlier "single-pass solves depth-3" was pure **memorization**; held-out kills
+   it.) This validates the whole premise: deep chains are real reasoning, not retrieval.
+2. **But the loop does not yet learn depth either.** Halting depth-3 = **0.26 ≈ chance** — the
+   hop loop barely beats single-pass and does not learn a *generalizable* multi-hop traversal.
+   Steps still collapsed to 2.0. The bottleneck has **moved**: it is no longer the curriculum
+   (now shortcut-free) or the halting schedule — it is the **hop mechanism itself**.
+
+**Diagnosis of the hop mechanism.** Each hop derives its query keys `(q_ent, q_rel)` from the
+GRU **state** via fresh `Linear`s. To traverse `N0 →IS N1 →IS N2 →IS N3 →CAN ans`, hop k+1 must
+query with the **entity just read at hop k** — an arbitrary held-out vector. A from-scratch
+`Linear(state)` does not learn to reproduce that read vector, so the chain does not propagate.
+This is the classic hard core of emergent multi-hop (bAbI): the loop needs an **iterative
+inference module that queries from the previous read**, not a state projection. Fix is
+**architectural** (chain the next query off the last read; cf. TPR-RNN inference hops), plus
+more capacity/data — not more puzzles or halting tricks. Caveat: the diagnostic is small
+(d28/hidden80/700it); numbers are suggestive, not definitive, but the direction is clear.
+
+**Status:** the deep curriculum (L12/L13) is now a *sound* shortcut-free benchmark; the open
+problem is making the loop actually traverse it. Halting/abstain remain built and green.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
