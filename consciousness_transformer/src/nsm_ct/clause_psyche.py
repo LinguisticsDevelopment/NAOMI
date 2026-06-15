@@ -118,19 +118,30 @@ class ClausePsyche(nn.Module):
             focus = mem_read                                 # REINPUT: the read value becomes the
                                                              # next thought's subject (sourced, not conjured)
 
-        if self.halting and self.hops > 0:                   # pick WHICH thought is the answer
+        halt_dist = p_never = step_answer_logits = None
+        if self.halting and self.hops > 0:                   # PonderNet: decide WHEN to produce
             R = torch.stack(read_steps, dim=1)               # [b, K, d]  the per-step thoughts
             S = torch.stack(hop_states, dim=1)               # [b, K, h]
-            score = self.out_head(torch.cat([S, R], dim=-1)).squeeze(-1)   # "is this thought the answer?"
-            attn = torch.softmax(score, dim=1)               # attend over my own thoughts [b, K]
-            acc_val = (attn.unsqueeze(-1) * R).sum(1)         # the selected answer value
-            settled = (attn.unsqueeze(-1) * S).sum(1)
-            ponder = (attn * torch.arange(1, self.hops + 1, device=device).float()).sum(1)  # depth reached
-            pred_f = self.gen_pred(settled)
-            subj_f = self.gen_subject(torch.cat([settled, qent], dim=-1))
-            place_f = self.gen_place(torch.cat([settled, acc_val], dim=-1))
-            abstain_state = settled
-            w_stream = torch.softmax(torch.stack(resp_logits, dim=1), dim=1)
+            qK = qent.unsqueeze(1).expand(-1, self.hops, -1)
+            place_k = self.gen_place(torch.cat([S, R], dim=-1))           # [b,K,d] candidate answers
+            subj_k = self.gen_subject(torch.cat([S, qK], dim=-1))
+            pred_k = self.gen_pred(S)
+            h = torch.sigmoid(self.out_head(torch.cat([S, R], dim=-1)).squeeze(-1))  # produce-now? [b,K]
+            # first-output halting distribution: pi_k = h_k * prod_{j<k}(1-h_j); never = prod(1-h)
+            keep = torch.cumprod(1.0 - h, dim=1)
+            excl = torch.cat([torch.ones(b, 1, device=device), keep[:, :-1]], dim=1)
+            halt_dist = h * excl                              # [b,K]  output-at-step distribution
+            p_never = keep[:, -1]                             # [b]    abstain mass
+            pred_f = (halt_dist.unsqueeze(-1) * pred_k).sum(1)            # answer = the committed step
+            subj_f = (halt_dist.unsqueeze(-1) * subj_k).sum(1)
+            place_f = (halt_dist.unsqueeze(-1) * place_k).sum(1)
+            ponder = ((halt_dist * torch.arange(1, self.hops + 1, device=device).float()).sum(1)
+                      + p_never * float(self.hops))
+            on = F.normalize(batch.options, dim=-1)
+            step_answer_logits = torch.einsum("bkd,bod->bko",
+                                              F.normalize(place_k, dim=-1), on) * 10.0
+            abstain_state = (halt_dist.unsqueeze(-1) * S).sum(1)
+            w_stream = halt_dist
         elif self.hops > 0:                                  # fixed-hop: respond from final state
             pred_f = self.gen_pred(state)
             subj_f = self.gen_subject(torch.cat([state, qent], dim=-1))
@@ -147,18 +158,30 @@ class ClausePsyche(nn.Module):
             w_stream = w.squeeze(-1)
 
         matrix = self.assemble(pred_f, subj_f, place_f)
-        abstain_logit = self.abstain(abstain_state).squeeze(-1)
         pf = F.normalize(place_f, dim=-1)
         on = F.normalize(batch.options, dim=-1)
         answer_logits = torch.einsum("bd,bkd->bk", pf, on) * 10.0
+        # abstain: for the halting model it IS the "never produced an answer" mass; else learned.
+        if p_never is not None:
+            abstain_prob = p_never
+            abstain_logit = torch.log(p_never.clamp(1e-6, 1 - 1e-6)) \
+                - torch.log((1 - p_never).clamp(1e-6, 1 - 1e-6))
+        else:
+            abstain_logit = self.abstain(abstain_state).squeeze(-1)
+            abstain_prob = torch.sigmoid(abstain_logit)
 
-        return {
+        out = {
             "matrix": matrix, "place_filler": place_f, "subject_filler": subj_f,
             "pred_filler": pred_f, "op_logits": torch.stack(ops, dim=1),
             "states": torch.stack(states, dim=1), "answer_logits": answer_logits,
             "respond_gates": w_stream, "abstain_logit": abstain_logit,
-            "abstain_prob": torch.sigmoid(abstain_logit), "ponder_steps": ponder,
+            "abstain_prob": abstain_prob, "ponder_steps": ponder,
         }
+        if halt_dist is not None:
+            out["halt_dist"] = halt_dist
+            out["p_never"] = p_never
+            out["step_answer_logits"] = step_answer_logits
+        return out
 
 
 def gold_matrix(model: ClausePsyche, batch: ClauseBatch) -> torch.Tensor:
@@ -173,22 +196,50 @@ def gold_matrix(model: ClausePsyche, batch: ClauseBatch) -> torch.Tensor:
 def compute_clause_psyche_losses(
     out: Dict[str, torch.Tensor], batch: ClauseBatch, model: ClausePsyche,
     *, w_decode: float = 1.0, w_consistency: float = 0.01, w_abstain: float = 1.0,
-    w_ponder: float = 0.01,
+    w_ponder: float = 0.01, r_correct: float = 1.0, r_wrong: float = 1.0,
+    r_abstain: float = 0.25, w_prior: float = 0.0, prior_lambda: float = 0.3,
 ) -> Dict[str, torch.Tensor]:
-    """Frobenius + decode-CE on **answerable** episodes; abstain BCE; consistency;
-    + a small **ponder cost** (reward stopping as soon as it is sure).
-
-    Generation is supervised only where the answer is derivable; the abstain head
-    learns ``should_abstain = 1 - answerable`` — so the model is trained to respond
-    only with what it can derive (and say "I don't know" otherwise)."""
+    """Two regimes. For the **halting** model (PonderNet): an asymmetric reward —
+    greatly reward a correct produced answer, greatly punish a wrong one, mildly
+    punish "I don't know" — so the model only commits when it is actually confident
+    (and otherwise keeps thinking, or abstains). For non-halting models: the original
+    Frobenius + decode-CE + abstain-BCE."""
     b = batch.entity.shape[0]
     ok = batch.answerable if batch.answerable is not None else batch.answer.new_ones(b).float()
+    consistency = consciousness_consistency_loss(out["states"])
+
+    if "halt_dist" in out:                                   # asymmetric-reward (the user's design)
+        pi = out["halt_dist"]                                # [b,K] produce-at-step distribution
+        p_never = out["p_never"]                             # [b]   abstain mass
+        pc = torch.softmax(out["step_answer_logits"], dim=-1)[
+            torch.arange(b), :, batch.answer]                # [b,K] P(correct) if produced at step k
+        # per-step reward if it produces here: answerable -> ++correct/--wrong; else any answer wrong
+        step_reward = ok.unsqueeze(1) * (r_correct * pc - r_wrong * (1.0 - pc)) \
+            + (1.0 - ok).unsqueeze(1) * (-r_wrong)
+        produce_reward = (pi * step_reward).sum(1)           # [b]
+        abstain_reward = p_never * (ok * (-r_abstain) + (1.0 - ok) * r_abstain)
+        reward = (produce_reward + abstain_reward).mean()
+        ponder = out["ponder_steps"].mean()
+        total = -reward + w_consistency * consistency + w_ponder * ponder
+        # PonderNet exploration prior: nudge the produce-step distribution toward a geometric
+        # so DEEP steps get gradient to learn the walk (escapes the step-1 cold-start collapse).
+        prior_kl = pi.new_zeros(())
+        if w_prior > 0.0:
+            K = pi.shape[1]
+            k = torch.arange(1, K + 1, device=pi.device).float()
+            prior = (1 - prior_lambda) ** (k - 1)
+            prior = prior / prior.sum()
+            pi_c = pi / (1.0 - p_never).clamp(min=1e-6).unsqueeze(1)      # conditional on producing
+            prior_kl = (pi_c * (torch.log(pi_c.clamp(min=1e-8)) - torch.log(prior))).sum(1).mean()
+            total = total + w_prior * prior_kl
+        return {"total": total, "reward": reward, "consistency": consistency,
+                "ponder": ponder, "p_abstain": p_never.mean(), "prior_kl": prior_kl}
+
     denom = ok.sum().clamp(min=1.0)
     M_gold = gold_matrix(model, batch)
     frob = ((out["matrix"] - M_gold).pow(2).sum(dim=(-1, -2)) * ok).sum() / denom
     decode = (F.cross_entropy(out["answer_logits"], batch.answer, reduction="none") * ok).sum() / denom
     abstain = F.binary_cross_entropy_with_logits(out["abstain_logit"], 1.0 - ok)
-    consistency = consciousness_consistency_loss(out["states"])
     ponder = out["ponder_steps"].mean()
     total = (frob + w_decode * decode + w_abstain * abstain
              + w_consistency * consistency + w_ponder * ponder)

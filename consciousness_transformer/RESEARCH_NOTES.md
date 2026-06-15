@@ -585,6 +585,41 @@ thought-selection toward "the read that matches a candidate answer" (output when
 answer-shaped) — structural, no oracle needed. The *reasoning + answer-selection* work emergently;
 *scaling depth to the chain* is the remaining piece.
 
+### 0p. Produce-answer decision + asymmetric reward (PonderNet), and the cold-start
+
+The §0o attention readout *blended* an answer out of every step — it never actually decided to
+*produce* an answer. Per the user, the right design: loop until confident, take a discrete
+**produce-answer** step, and **read the answer only at that step**; train it with the asymmetric
+reward **(++correct, −−wrong, −abstain)** so a cheap shallow guess (heavily punished) is worse
+than "I don't know" (mildly punished) — forcing the model to walk until confident or abstain.
+
+- **Implemented (`clause_psyche.py`):** a PonderNet halting distribution `pi_k = h_k·Π_{j<k}(1-h_j)`
+  over produce-at-step, with abstain = `Π(1-h_k)` (the "never produced" mass). The answer is the
+  halting-weighted produced thought; `compute_clause_psyche_losses` gains the asymmetric-reward
+  branch (`r_correct/r_wrong/r_abstain`) used whenever `halt_dist` is present.
+- **The asymmetric reward ALONE collapses** (held-out depth-1/3 ≈ chance, 1 step): a **cold-start**
+  — to learn to walk deep, deep steps need gradient; but the halting only sends gradient where it
+  already lands; step 1 grabs all the mass and the deep steps get *zero* gradient, so the walk
+  never starts. (Fixed-hop works precisely because every step gets full gradient.)
+- **The documented fix — a PonderNet exploration prior** (KL of the produce-distribution toward a
+  geometric) — nudges it to *sometimes* produce later, giving deep steps gradient. **This escapes
+  the collapse:** held-out accuracy climbs instead of flat-lining:
+
+```
+                          depth-1        depth-3
+asymmetric reward only    ~chance(1 step) ~chance(1 step)   <- cold-start collapse
+  + exploration prior     0.19 -> 0.52    0.24 -> 0.44      <- climbing @1500 iters, still rising
+(attention blend, 0o)     0.84            0.56              (higher, but blends — does not decide)
+```
+
+**Status, honest:** the user's reward design is sound and the *produce-answer decision* now works
+(escapes collapse, learns emergently), but it is (a) **undertrained** (still climbing at 1.5k
+iters) and (b) currently **below the attention blend's numbers**, and (c) the produced-step does
+**not yet scale with depth** (the prior pins it ~2.5). It is the *faithful* architecture (a real
+decision, not a blend); maturing it needs more training + prior annealing (strong prior early for
+exploration, decayed so the reward can shape per-example depth). Tests: 10 clause_psyche green in
+the reward+prior regime (`w_prior`).
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
