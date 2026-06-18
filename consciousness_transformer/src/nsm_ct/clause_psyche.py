@@ -106,7 +106,7 @@ class ClausePsyche(nn.Module):
         ponder = torch.zeros(b, device=device)
         last_read = torch.zeros(b, d, device=device)
         focus = qent                                         # the working thought's current subject
-        read_steps, hop_states = [], []
+        read_steps, hop_states, hop_rels = [], [], []
         for _k in range(self.hops):                          # Phase 2: think in meaning objects
             qr = self.q_rel(state)                           # the thought's relation (which to follow)
             mem_read = em.query(memory, focus, qr)           # fill the thought's value from STM
@@ -114,6 +114,7 @@ class ClausePsyche(nn.Module):
             states.append(state)
             read_steps.append(mem_read)
             hop_states.append(state)
+            hop_rels.append(qr)                              # exposed for M3 relation-to-follow supervision
             last_read = mem_read
             focus = mem_read                                 # REINPUT: the read value becomes the
                                                              # next thought's subject (sourced, not conjured)
@@ -181,6 +182,8 @@ class ClausePsyche(nn.Module):
             out["halt_dist"] = halt_dist
             out["p_never"] = p_never
             out["step_answer_logits"] = step_answer_logits
+        if self.hops > 0:
+            out["hop_rels"] = torch.stack(hop_rels, dim=1)   # [b, K, d] per-hop relation-to-follow
         return out
 
 
