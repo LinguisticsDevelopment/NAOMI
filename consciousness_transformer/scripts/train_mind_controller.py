@@ -79,7 +79,7 @@ def _train(eps_tr, eps_va, codec, hops, halting, epochs, device, supervise=True)
         opt.zero_grad(); loss["total"].backward(); opt.step()
         if epoch % 40 == 39 or epoch == 0:
             rm = relation_match(out, sup_tr["rel_targets"], codebook) if supervise else 0.0
-            print(f"  [{tag}] epoch {epoch+1:3d} loss={float(loss['total']):.3f} "
+            print(f"  [{tag}] epoch {epoch+1:3d} loss={float(loss['total'].detach()):.3f} "
                   f"train_rel_match={rm:.2f}", flush=True)
     model.eval()
     with torch.no_grad():

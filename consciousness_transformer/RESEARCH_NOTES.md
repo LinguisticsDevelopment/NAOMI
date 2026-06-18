@@ -620,6 +620,51 @@ decision, not a blend); maturing it needs more training + prior annealing (stron
 exploration, decayed so the reward can shape per-example depth). Tests: 10 clause_psyche green in
 the reward+prior regime (`w_prior`).
 
+### 0q. The `mind/` build (M0-M3): meaning-space substrate + learned controller with teacher op-trace supervision (MEASURED)
+
+A cohesive `nsm_ct/mind/` subpackage realizes `MIND_ARCHITECTURE.md` — one substrate, one controller
+family — *importing* the gate-tested primitives rather than re-implementing them. Built and gate-tested
+in four milestones:
+
+- **M0 — schema freeze.** `mind/schema.py` pins the one meaning-object contract (node kinds, typed
+  edges, the 5 operator-nodes, ~62 primes, the grammatical relations, and the *separate* reasoning-
+  relation vocabulary). Meaning-object round-trips via `collapse`/`expand`.
+- **M1 — knowledge layer.** `mind/knowledge.py` (`KnowledgeGraph`) stores facts, taxonomy, and
+  **variable-bearing Horn rules as graph data**; `mind/persistence.py` gives exact disk save/load
+  (closes the in-memory-only gap). `derive()` lifts the oracle's unifier over **graph-resident** rules
+  and reproduces the oracle's L9/L10 answers. (Caught + fixed a real bug: `rules()` collapsed rules
+  that share a name, e.g. L13's `mp` — each rule now carries a unique id.)
+- **M2 — deterministic executor (the VM).** `mind/ops.py` + `mind/executor.py`: the cognitive
+  instruction set {PERCEIVE, RECALL, INFER, CONSOLIDATE, SUPERSEDE, RESPOND, HALT} as deterministic
+  ops over a live `STM` (reusing the §0j read-resolution) + the M1 LTM. `INFER` = focus-chaining
+  realized exactly via `forward_chain` (its `DerivStep` chain *is* the unrolled traversal; the trace
+  is faithful by construction). **Gold op-traces solve L7-L11 with abstain on L11; the probe scores
+  230/230 (1.00) over generated L9-L13**, incl. deep is-a chains and chained modus ponens.
+- **M3 — learned controller + teacher op-trace supervision.** This turns on the `gold_chain`
+  aux-supervision §0k/§0n/§0p deferred. The proven focus-chaining controller (`clause_psyche.py`) is
+  surfaced as a typed op-emitter (`mind/controller.py`); `mind/teacher.py` produces, per episode, the
+  gold op-trace (replay-validated through the M2 executor → oracle answer), the gold relation-to-follow
+  path (generic **BFS over the streamed memory edges**), the gold depth, and the answerable flag;
+  `mind/controller_losses.py` adds **relation-to-follow CE + halt CE under a soft→discrete anneal**.
+  Decided runtime story: the **learned vector loop is the runtime reasoner**; the M2 symbolic executor
+  is **teacher + validator only** (never in the runtime answer path).
+
+  **Measured (small held-out, the honest caveat is scale — 30 val episodes):** the controller learns to
+  **emit the teacher's op-trace** — held-out relation-to-follow match **0.94** (fixed-hop) / **0.83**
+  (halting). Turning on **halting** (the configuration the halt-CE targets) improves exactly the pieces
+  flagged as not-emerging-from-answer-only, over the `halting=False` run: **L12 multi-hop 0.33→0.57,
+  L11 abstain 0.40→0.86, L9 modus ponens 0.00→0.50, abstain P/R 0.40/0.40 → 0.64/0.69** (L10 stays 1.00).
+  **Honest negative:** it does **not** reach the §0n 0.97 multi-hop ceiling here — `halting=False` with
+  *fixed* hops > chain depth **overshoots** the answer (focus walks past it), and the halting/reward
+  regime is undertrained + a touch unstable at this scale/iters (rel-match dipped mid-run), exactly the
+  §0p maturation profile. The **mechanism + supervision are validated** (op-trace match high; the
+  targeted levels all move the right way); reaching the ceiling is a **scale + iterations + anneal-
+  stability tuning** task (more data, more steps, prior annealing), not an architectural gap.
+
+  Unit gates green: teacher correctness (gold traces replay to oracle answers), BFS relation paths,
+  read-encoder recovery, controller forward, relation-to-follow imitation overfit (>0.9). Full CT suite
+  **262 passed** (the additive `clause_psyche.py` change does not regress `test_clause_psyche.py`).
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
