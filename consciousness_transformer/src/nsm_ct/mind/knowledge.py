@@ -47,6 +47,7 @@ class KnowledgeGraph:
     def __init__(self, codec: Optional[TPRCodec] = None, *, dim: int = 256) -> None:
         self.codec = codec or TPRCodec(dim=dim)
         self.graph = MeaningGraph(self.codec)
+        self._rule_seq = 0  # unique-id counter so rules sharing a name stay distinct
         self._predicate_nid = self._concept("is")  # shared predicate node
 
     # -- term nodes (co-reference-deduped) -----------------------------------
@@ -104,16 +105,18 @@ class KnowledgeGraph:
         name + role + order, so the rule is reconstructable from the graph alone.
         Variables (``?x``) are ordinary REFERENT nodes whose label marks them.
         """
+        uid = f"{rule.name}#{self._rule_seq}"  # distinct even when names collide (e.g. "mp")
+        self._rule_seq += 1
         nids: List[int] = []
         for i, (s, r, v) in enumerate(rule.antecedents):
             nids.append(self.add_fact(
                 s, r, v, kind=_RULE,
-                meta_extra={"rule": rule.name, "role": _ANTECEDENT, "order": i},
+                meta_extra={"rule": uid, "rule_name": rule.name, "role": _ANTECEDENT, "order": i},
             ))
         cs, cr, cv = rule.consequent
         nids.append(self.add_fact(
             cs, cr, cv, kind=_RULE,
-            meta_extra={"rule": rule.name, "role": _CONSEQUENT, "order": 0},
+            meta_extra={"rule": uid, "rule_name": rule.name, "role": _CONSEQUENT, "order": 0},
         ))
         return nids
 
@@ -175,21 +178,21 @@ class KnowledgeGraph:
         for nid, node in self.graph.nodes.items():
             if node.kind is not NodeKind.CLAUSE or node.meta.get("kind") != _RULE:
                 continue
-            name = str(node.meta.get("rule", ""))
+            uid = str(node.meta.get("rule", ""))  # the per-rule unique id (names may collide)
             t = self._triple_of(nid)
             if t is None:
                 continue
-            entry = grouped.setdefault(name, {"ants": [], "cons": None})
+            entry = grouped.setdefault(uid, {"ants": [], "cons": None, "name": node.meta.get("rule_name", uid)})
             if node.meta.get("role") == _CONSEQUENT:
                 entry["cons"] = t
             else:
                 entry["ants"].append((int(node.meta.get("order", 0)), t))  # type: ignore[union-attr]
         out: List[Rule] = []
-        for name, entry in grouped.items():
+        for entry in grouped.values():
             if entry["cons"] is None:
                 continue
             ants = tuple(t for _, t in sorted(entry["ants"]))  # type: ignore[index]
-            out.append(Rule(antecedents=ants, consequent=entry["cons"], name=name))  # type: ignore[arg-type]
+            out.append(Rule(antecedents=ants, consequent=entry["cons"], name=str(entry["name"])))  # type: ignore[arg-type]
         return out
 
     # -- reasoning (the live executor) ---------------------------------------
@@ -213,6 +216,13 @@ class KnowledgeGraph:
         obj = cls.__new__(cls)
         obj.codec = graph.codec
         obj.graph = graph
+        # Restore the rule-id counter past any existing uid so new rules stay distinct.
+        seq = 0
+        for node in graph.nodes.values():
+            uid = node.meta.get("rule")
+            if isinstance(uid, str) and "#" in uid:
+                seq = max(seq, int(uid.rsplit("#", 1)[1]) + 1)
+        obj._rule_seq = seq
         pred = graph.concept_index.get("is")
         obj._predicate_nid = pred if pred is not None else obj._concept("is")
         return obj
