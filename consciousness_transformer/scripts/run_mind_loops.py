@@ -69,6 +69,7 @@ def main() -> None:
     ap.add_argument("--total-rounds", type=int, default=24, help="anneal horizon")
     ap.add_argument("--save", type=str, default="")
     ap.add_argument("--resume", type=str, default="")
+    ap.add_argument("--talk-only", action="store_true", help="load a checkpoint and just talk")
     args = ap.parse_args()
     torch.manual_seed(0)
 
@@ -79,19 +80,21 @@ def main() -> None:
     ltm = KnowledgeGraph(codec=codec)
     controller = MindController(codec, hidden=96, hops=args.hops, halting=not args.no_halting)
     sub = SubconsciousLoop(ltm, controller, codec=codec, seed=0, total_rounds=args.total_rounds)
-    if args.resume and os.path.exists(args.resume):
-        sub.load_state_dict(torch.load(args.resume, weights_only=False))
-        print(f"resumed from {args.resume} at round {sub._round}")
+    ckpt = args.resume or (args.save if args.talk_only else "")
+    if ckpt and os.path.exists(ckpt):
+        sub.load_state_dict(torch.load(ckpt, weights_only=False))
+        print(f"loaded {ckpt} at round {sub._round}")
+
+    if args.talk_only:
+        _talk(controller, codec, val)
+        return
 
     print(f"two-loop run: {args.rounds} rounds x {args.steps} steps "
           f"(hops={args.hops}, halting={not args.no_halting}); {len(val)} held-out val")
     hist = sub.run(args.rounds, episodes_per_round=args.episodes_per_round,
-                   steps=args.steps, val=val, verbose=True)
-
+                   steps=args.steps, val=val, verbose=True, save_path=args.save)
     if args.save:
-        os.makedirs(os.path.dirname(args.save) or ".", exist_ok=True)
-        torch.save(sub.state_dict(), args.save)
-        print(f"saved checkpoint -> {args.save} (round {sub._round})")
+        print(f"checkpoint at {args.save} (round {sub._round})")
 
     first, last = hist[0], hist[-1]
     print("\n--- both loops, across rounds ---")

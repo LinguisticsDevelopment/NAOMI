@@ -132,8 +132,12 @@ class SubconsciousLoop:
 
     # -- orchestration -------------------------------------------------------
     def run(self, rounds: int, *, episodes_per_round: int = 120, steps: int = 40,
-            val=None, verbose: bool = True) -> List[Dict[str, float]]:
-        """Run ``rounds`` of self-train → offline-infer, reporting per round."""
+            val=None, verbose: bool = True, save_path: str = "") -> List[Dict[str, float]]:
+        """Run ``rounds`` of self-train → offline-infer, reporting per round.
+
+        If ``save_path`` is set, the full resume state is checkpointed **after every
+        round**, so a wall-clock-capped run never loses progress.
+        """
         history: List[Dict[str, float]] = []
         val_batch = val_sup = None
         if val is not None and self.controller is not None:
@@ -155,6 +159,10 @@ class SubconsciousLoop:
                 rec["val_optrace_match"] = relation_match(vo, val_sup["rel_targets"],
                                                           self.controller.relation_codebook)
             history.append(rec)
+            if save_path:                                  # checkpoint every round
+                import os
+                os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
+                torch.save(self.state_dict(), save_path)
             if verbose:
                 extra = (f" val_decode={rec.get('val_decode', float('nan')):.2f}"
                          f" val_optrace={rec.get('val_optrace_match', float('nan')):.2f}"
