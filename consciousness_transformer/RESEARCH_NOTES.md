@@ -684,6 +684,21 @@ in four milestones:
   offline-infer→direct-fact benefit is gated separately by unit test; this driver isolates the self-train
   trend and does not consolidate into LTM, hence `LTM facts=0` in its log.) Full CT suite **267 passed**.
 
+- **M6 — the native language membrane (talk + explain itself).** `mind/membrane.py` is a deterministic,
+  **owned, LLM-free** `text <-> meaning` membrane over the curriculum's controlled grammar: `render`
+  reproduces the exact curriculum sentences (replacing the leaf-concat `reverse_parser` seed), `parse`
+  is the template-inverse — over the existing `(subject, relation, value)` meaning objects + truth/
+  operator tags. `mind/verbalize.py` does **"respond with thinking"**: it renders the *actual* `DerivStep`
+  provenance the M2/M4 trace already carries (pruned to the answer-relevant path), so the "because ..."
+  is the real derivation, not a story. Gates (5, green, no training): render-matches-curriculum;
+  cycle-consistency both directions (meaning->text->meaning exact; >90% of curriculum text reproduces
+  verbatim, the rest — `moved to`, name-`is a` — normalize to the same meaning); faithful verbalization
+  (the stated chain == the executor's support chain). `scripts/talk_to_mind.py` demos it end-to-end —
+  e.g. "a beagle is a dog / a dog can bark / what can a beagle do?" -> "Because a beagle is a dog and a
+  dog can bark, a beagle can bark. A beagle can bark." — and a deep L12 chain verbalized as its actual
+  multi-hop path. Open: open-domain parsing (the `quantum_parser` upgrade) and a learned decoder
+  cold-started on the renderer's pairs (the renderer is the corpus). Full CT suite **272 passed**.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
