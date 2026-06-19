@@ -18,3 +18,6 @@ venv/
 # Rebuild the store: scripts/build_explication_store.py
 data/*.jsonl
 data/*.parquet
+data/**/*.jsonl
+# Downloaded ProofWriter (regenerate: scripts/fetch_proofwriter.py)
+data/proofwriter/

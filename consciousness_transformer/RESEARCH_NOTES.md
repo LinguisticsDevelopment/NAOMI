@@ -699,6 +699,27 @@ in four milestones:
   multi-hop path. Open: open-domain parsing (the `quantum_parser` upgrade) and a learned decoder
   cold-started on the renderer's pairs (the renderer is the corpus). Full CT suite **272 passed**.
 
+- **M8 — a real broad dataset (ProofWriter), step 1: the substrate reproduces its gold logic.**
+  ProofWriter (Allen AI; RuleTaker successor) is this architecture's task at scale: facts + Horn rules
+  + a query -> True/False/Unknown, open-world (Unknown = derive-or-abstain), depth 0-5, negation,
+  arbitrary predicates/entities — far broader than the 7-relation toy curriculum. `mind/datasets/
+  proofwriter.py` parses its structured `representation` form into **4-tuple literals**
+  `(subject, predicate, object, polarity)`; because `reasoning_oracle.forward_chain`/`_unify` are
+  arity-generic, the existing engine is **reused unchanged** with polarity as the 4th element (the
+  universal variable "someone"/"they" -> the oracle's `?x`). `verify()` labels a query TRUE if the asked
+  polarity is in the forward-chain closure, FALSE if the opposite is, else UNKNOWN.
+
+  **Measured (the trust anchor): forward-chain reproduces ProofWriter OWA gold at 0.989** over a
+  multi-depth sample — True 1.00, False 0.99, Unknown 0.98, and **0.98-0.99 at every depth 0-5**. So the
+  reasoning substrate is **not toy-curriculum-specific**: it matches a real, broad published dataset
+  out of the box. (One bug caught: the query carries its own polarity — ProofWriter asks both "X is kind"
+  and "X is not kind" — fixing `verify` to honor it took False from 0.07 -> 0.99.) Gates: parser + verify
+  unit tests (data-free) + a real-data parity gate (skips if the git-ignored download is absent).
+  `scripts/fetch_proofwriter.py` reproduces the data; `scripts/probe_proofwriter.py` reports parity by
+  depth. **Step 2 (open): training the learned controller on ProofWriter** needs a *verification* readout
+  (options {true,false,idk}, abstain=Unknown) + a polarity/variable-rule perception — a real adaptation
+  of the value-generation controller, not a drop-in. Full CT suite green (parity gate included).
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
