@@ -50,6 +50,7 @@ class SubconsciousLoop:
                     if controller is not None else None)
         self.total_rounds = max(total_rounds, 1)
         self._round = 0
+        self._last_fresh: List = []                  # episodes from the latest self_train
 
     # -- consolidation (STM -> LTM) ------------------------------------------
     def consolidate(self, stm) -> int:
@@ -57,6 +58,19 @@ class SubconsciousLoop:
         ex = Executor(self.ltm, codec=self.codec)
         ex.stm = stm
         return int(ex.consolidate().result)
+
+    def experience(self, episodes) -> int:
+        """Consolidate the premises the system was told this round into durable LTM
+        (dedup against what it already knows) — the conscious→subconscious memory path."""
+        existing = set(self.ltm.facts())
+        added = 0
+        for ep in episodes:
+            for triple in ep.meta.get("facts", []):
+                if tuple(triple) not in existing:
+                    self.ltm.add_fact(*triple)
+                    existing.add(tuple(triple))
+                    added += 1
+        return added
 
     # -- offline inference (derive-before-asked) -----------------------------
     def offline_infer(self) -> int:
@@ -112,6 +126,7 @@ class SubconsciousLoop:
             last = {"loss": float(loss["total"].detach()),
                     "rel_match": relation_match(out, sup["rel_targets"], codebook)}
         self.replay = (self.replay + fresh)[-replay_keep:]
+        self._last_fresh = fresh
         self._round += 1
         return {**last, "episodes": len(episodes)}
 
@@ -127,9 +142,11 @@ class SubconsciousLoop:
             val_sup = {k: torch.from_numpy(v) for k, v in vs.items()}
         for _ in range(rounds):
             m = self.self_train(episodes_per_round, steps)
-            inferred = self.offline_infer()
+            consolidated = self.experience(self._last_fresh)   # conscious intake -> LTM
+            inferred = self.offline_infer()                    # derive-before-asked over LTM
             rec = {"round": self._round, "loss": m["loss"], "train_rel_match": m["rel_match"],
-                   "ltm_facts": len(self.ltm.facts()), "offline_inferred": inferred}
+                   "ltm_facts": len(self.ltm.facts()), "consolidated": consolidated,
+                   "offline_inferred": inferred}
             if val_batch is not None:
                 self.controller.eval()
                 with torch.no_grad():
@@ -144,9 +161,32 @@ class SubconsciousLoop:
                          if val_batch is not None else "")
                 print(f"round {rec['round']:>3} | loss={rec['loss']:.3f} "
                       f"train_rel_match={rec['train_rel_match']:.2f} "
-                      f"| LTM facts={rec['ltm_facts']} +infer {rec['offline_inferred']}{extra}",
-                      flush=True)
+                      f"| LTM facts={rec['ltm_facts']} (+{rec['consolidated']} told, "
+                      f"+{rec['offline_inferred']} inferred){extra}", flush=True)
         return history
+
+    # -- checkpointing (so a long run can resume across wall-clock caps) ------
+    def state_dict(self) -> Dict:
+        """Everything needed to resume training continuously."""
+        return {
+            "controller": self.controller.state_dict() if self.controller else None,
+            "optimizer": self.opt.state_dict() if self.opt else None,
+            "round": self._round,
+            "total_rounds": self.total_rounds,
+            "rng": self.gen.rng.getstate(),
+            "replay": self.replay,
+        }
+
+    def load_state_dict(self, state: Dict) -> None:
+        if self.controller is not None and state.get("controller") is not None:
+            self.controller.load_state_dict(state["controller"])
+        if self.opt is not None and state.get("optimizer") is not None:
+            self.opt.load_state_dict(state["optimizer"])
+        self._round = state.get("round", 0)
+        self.total_rounds = state.get("total_rounds", self.total_rounds)
+        if state.get("rng") is not None:
+            self.gen.rng.setstate(state["rng"])
+        self.replay = state.get("replay", [])
 
 
 __all__ = ["SubconsciousLoop"]
