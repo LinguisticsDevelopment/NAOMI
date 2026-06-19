@@ -73,5 +73,29 @@ def test_proofwriter_gold_parity():
     assert ok / total >= 0.95, ok / total   # measured ~0.99 across depths 0-5
 
 
+# ----------------------------------------- verification-mode batch (data-free)
+def test_build_pw_batch_and_controller_forward():
+    """Step-2 perception: facts+rules+query -> a 3-way {true,false,idk} MC batch
+    the controller can score (verification = MC over the three answer atoms)."""
+    from nsm_ct.tpr import TPRCodec
+    from nsm_ct.mind.controller import MindController
+    from nsm_ct.reasoning_oracle import Rule
+
+    codec = TPRCodec(dim=32)
+    facts = [("alice", "is", "furry", "+")]
+    rules = [Rule(antecedents=(("?x", "is", "furry", "+"),),
+                  consequent=("?x", "is", "kind", "+"), name="pw")]
+    ex = pw.PWExample(facts=facts, rules=rules, questions=[
+        (("alice", "is", "kind", "+"), pw.TRUE, 1),
+        (("alice", "is", "green", "+"), pw.UNKNOWN, 0),
+    ])
+    items = pw.flatten([ex])
+    batch = pw.build_pw_batch(items, codec)
+    assert batch.options.shape == (2, 3, 32)
+    assert batch.answer.tolist() == [0, 2]            # true -> 0, Unknown -> 2
+    out = MindController(codec, hidden=32, hops=4, halting=False)(batch)
+    assert out["answer_logits"].shape == (2, 3)       # 3-way verification readout
+
+
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__, "-v"])

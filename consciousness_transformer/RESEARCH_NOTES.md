@@ -720,6 +720,26 @@ in four milestones:
   (options {true,false,idk}, abstain=Unknown) + a polarity/variable-rule perception — a real adaptation
   of the value-generation controller, not a drop-in. Full CT suite green (parity gate included).
 
+- **M8 step 2 — training the learned controller on ProofWriter (verification mode; honest baseline).**
+  Verification = 3-way MC: options are the answer atoms `{true, false, idk}` (Unknown is an option,
+  not abstain), so the controller's existing contrastive head is reused; `proofwriter.build_pw_batch`
+  streams facts + rules (IF-coord, variables as atoms) + the full query triple (polarity folded into
+  the value atom `v:+:kind` / `v:-:kind`). Trained (answer-only) on real OWA depths 0-2, minibatched.
+  Compute note: the order-3 entity memory is `[b,d,d,d]` (cost grows as d^3); d=64 was ~6.4s/minibatch
+  (intractable on CPU), d=32 ~0.8s.
+
+  **Measured (honest negative):** the small CPU-trained controller barely beats the majority-class
+  baseline — held-out **~0.50 vs 0.457 majority** (peak 0.515 @ epoch 15), roughly flat across depths
+  (d0 ~0.53, d1 ~0.45, d2 ~0.50). The **pipeline trains end-to-end on real broad data**, but the
+  *learned* controller does **not** crack ProofWriter at this scale — a stark gap from the **symbolic
+  substrate's 0.989** parity. This sharpens the M3 lesson: **answer-only supervision is insufficient**
+  (M3 needed the teacher's gold relation/op-trace to reach 0.82-0.90). Next levers, in order:
+  (1) **proof-chain teacher supervision** — ProofWriter ships gold proofs; supervising the hops with
+  them is the M3-proven fix; (2) **scale** (d/data/epochs; RuleTaker needed a fine-tuned transformer on
+  full data); (3) a dedicated verification head instead of the value-generation->cosine bottleneck.
+  Gates: parser/verify unit tests + a `build_pw_batch`->controller-forward gate (7 tests).
+  `scripts/train_proofwriter.py` (periodic depth-graded eval, checkpointed).
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a

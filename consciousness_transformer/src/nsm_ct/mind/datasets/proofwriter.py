@@ -114,7 +114,80 @@ def default_data_dir() -> str:
     return os.path.join(here, "..", "..", "..", "..", "data", "proofwriter")
 
 
+# --------------------------------------------------------------------------- #
+# Verification-mode training (M8 step 2): facts + rules + query -> {true,false,idk}
+# Reuse the controller's contrastive MC head by making the options the three
+# answer atoms; polarity is folded into the value atom so it is first-class.
+# --------------------------------------------------------------------------- #
+_ANS = (TRUE, FALSE, UNKNOWN)
+_ANS_IDX = {a: i for i, a in enumerate(_ANS)}
+
+
+def flatten(examples: List[PWExample]) -> List[Tuple[List[Literal], List[Rule], Literal, int, int]]:
+    """Flatten to ``(facts, rules, query, answer_idx, depth)`` per question."""
+    items = []
+    for ex in examples:
+        for (lit, gold, qd) in ex.questions:
+            items.append((ex.facts, ex.rules, lit, _ANS_IDX[gold], qd))
+    return items
+
+
+def build_pw_batch(items, codec):
+    """Build a verification :class:`ClauseBatch` from flattened ProofWriter items.
+
+    Each item streams its facts (statement steps) + rules (antecedents+consequent
+    on the IF coord channel, variables as their own atom) + the query triple (the
+    ``is_q`` step). Terms are atomic ``filler_vec`` s; polarity is folded into the
+    value atom (``v:+:kind`` vs ``v:-:kind``) so true/false reasoning is first-class.
+    Options are the three answer atoms; the answer is the gold label index.
+    """
+    import numpy as np
+    import torch
+    from ...clause_reactor import ClauseBatch
+
+    d = codec.dim
+    E = lambda x: codec.filler_vec("e:" + x)
+    R = lambda x: codec.filler_vec("r:" + x)
+    SV = lambda o, pol: codec.filler_vec(f"v:{pol}:{o}")
+    pred_is, pred_if, pred_q = codec.filler_vec("p:is"), codec.filler_vec("p:if"), codec.filler_vec("p:?")
+    IFv = codec.filler_vec("IF")
+    z = np.zeros(d, np.float32)
+    opts = [codec.filler_vec("ans:" + a) for a in _ANS]
+
+    rows = []
+    for (facts, rules, query, ans_idx, _qd) in items:
+        steps = []
+        for (s, p, o, pol) in facts:
+            steps.append((E(s), R(p), SV(o, pol), pred_is, z, 0))
+        for rule in rules:
+            for (s, p, o, pol) in rule.antecedents:
+                steps.append((E(s), R(p), SV(o, pol), pred_if, IFv, 0))
+            cs, cp, co, cpol = rule.consequent
+            steps.append((E(cs), R(cp), SV(co, cpol), pred_if, IFv, 0))
+        qs, qp, qo, qpol = query
+        steps.append((E(qs), R(qp), SV(qo, qpol), pred_q, z, 1))
+        rows.append((steps, ans_idx))
+
+    b = len(rows)
+    T = max(len(s) for s, _ in rows)
+    ent = torch.zeros(b, T, d); rel = torch.zeros(b, T, d); val = torch.zeros(b, T, d)
+    prd = torch.zeros(b, T, d); crd = torch.zeros(b, T, d)
+    is_q = torch.zeros(b, T); mask = torch.zeros(b, T)
+    options = torch.zeros(b, 3, d); answer = torch.zeros(b, dtype=torch.long)
+    answerable = torch.ones(b)                       # Unknown is an option, not abstain
+    for i, (steps, a) in enumerate(rows):
+        for t, (e, r, v, p, c, q) in enumerate(steps):
+            ent[i, t] = torch.from_numpy(e); rel[i, t] = torch.from_numpy(r)
+            val[i, t] = torch.from_numpy(v); prd[i, t] = torch.from_numpy(p)
+            crd[i, t] = torch.from_numpy(c); is_q[i, t] = q; mask[i, t] = 1.0
+        for k, ov in enumerate(opts):
+            options[i, k] = torch.from_numpy(ov)
+        answer[i] = a
+    return ClauseBatch(ent, rel, val, prd, is_q, mask, options, answer, crd, answerable)
+
+
 __all__ = [
     "Literal", "PWExample", "parse_literal", "parse_rule", "parse_record",
     "load_records", "verify", "TRUE", "FALSE", "UNKNOWN", "default_data_dir",
+    "flatten", "build_pw_batch",
 ]
