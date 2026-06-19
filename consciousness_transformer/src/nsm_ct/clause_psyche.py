@@ -88,7 +88,11 @@ class ClausePsyche(nn.Module):
             p, c = batch.pred[:, t], coord[:, t]
             real, isq = batch.mask[:, t], batch.is_q[:, t]
             mem_read = em.query(memory, e, r)
-            state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
+            new_state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
+            # Padding-invariant: a pad step (mask=0) must NOT drift the consciousness
+            # state, else the answer depends on trailing padding (batch T) — which breaks
+            # single-question inference. Only real steps update the state.
+            state = torch.where(real.unsqueeze(-1) > 0, new_state, state)
             states.append(state)
             stmt = real * (1.0 - isq)
             gate = torch.sigmoid(self.write_gate(state)).squeeze(-1) * stmt
