@@ -740,6 +740,35 @@ in four milestones:
   Gates: parser/verify unit tests + a `build_pw_batch`->controller-forward gate (7 tests).
   `scripts/train_proofwriter.py` (periodic depth-graded eval, checkpointed).
 
+- **M9 — proof-chain teacher supervision on ProofWriter (MEASURED; robust honest negative).**
+  Applied the M3-proven lever: our `forward_chain` (0.989 vs gold) is the proof teacher
+  (`proofwriter.proof_path`/`value_codebook`/`proof_supervision` backward-trace the chain to the query
+  for the ordered **derived-value** sequence). ProofWriter is *attribute rule-chaining* (same entity,
+  relation almost always `is`, the VALUE changes furry→kind→smart), so — unlike M3's relation-to-follow
+  — the per-hop target is the derived **value**: a `gen_derive` head scored against the value codebook
+  (`controller_losses.value_supervision_loss`), plus a `derive_chain` mode that chains the loop on its
+  own generated derived value (focus ← `gen_derive(state)`) so the supervision is **causally on the
+  answer path**.
+
+  **Measured across three configs (d=32, depths 0-2, 996 train, 30 ep, CPU):** answer-only **0.50** ·
+  decoupled-aux-head teacher **0.48** · derive-chain teacher **0.458** (peak 0.505 @ ep20, then
+  declines). **All flat at the 0.457 majority baseline.** The first negative looked like a placement
+  bug (aux head off the answer path); fixing that (derive-chain) did **not** help — so it is **not** a
+  supervision-placement issue but a **ceiling**. Diagnosis: (1) **scale** — this is a ~10^4-param model
+  on 996 examples / 30 CPU epochs; RuleTaker/ProofWriter was cracked by **fine-tuning RoBERTa-large
+  (3.5×10^8) on ~500k**; (2) **architecture fit** — the order-3 memory + focus-chaining was proven for
+  *entity traversal* (robin→bird→animal), but ProofWriter is *Horn-rule application with variable
+  binding over many predicates*, a different computation the loop doesn't express at this size, even
+  with the derivation on the answer path; (3) supervision is sparse (279/996 derivable) but the
+  supervised items don't lift either — pointing at capacity, not density. **Honest standing:** the
+  **symbolic substrate generalizes to real broad data (0.989); the learned controller does not yet**,
+  and the evidence says the remaining lever is **real scale (GPU, full data, a larger controller)** —
+  not another supervision tweak — or accepting the symbolic engine as the runtime reasoner for broad
+  combinatorial reasoning. M3's 0.82 stands for *regular, small-vocabulary* worlds; it does not transfer
+  to ProofWriter's breadth on a CPU budget. Gates: proof-teacher correctness + value-loss + `derive_chain`
+  forward (18 tests). Code lands default-off (`derive_chain=False`), so the §0n curriculum path is
+  untouched.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
