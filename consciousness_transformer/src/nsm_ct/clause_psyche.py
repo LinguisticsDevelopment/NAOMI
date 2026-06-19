@@ -41,6 +41,10 @@ class ClausePsyche(nn.Module):
         self.dim = d = codec.dim
         self.hops = hops                            # with halting, this is the max-hop cap
         self.halting = halting
+        # derive-chain mode (M9): the loop chains on its own GENERATED derived value
+        # (gen_derive) rather than the memory read — so proof-chain supervision sits
+        # causally on the answer path (the M3 lesson: supervise what drives the answer).
+        self.derive_chain = False
         self.gru = nn.GRUCell(6 * d, hidden)        # (entity, rel, value, pred, coord, mem_read)
         self.write_gate = nn.Linear(hidden, 1)
         self.overwrite_gate = nn.Linear(hidden, 1)
@@ -115,7 +119,7 @@ class ClausePsyche(nn.Module):
         ponder = torch.zeros(b, device=device)
         last_read = torch.zeros(b, d, device=device)
         focus = qent                                         # the working thought's current subject
-        read_steps, hop_states, hop_rels = [], [], []
+        read_steps, hop_states, hop_rels, derived_steps = [], [], [], []
         for _k in range(self.hops):                          # Phase 2: think in meaning objects
             qr = self.q_rel(state)                           # the thought's relation (which to follow)
             mem_read = em.query(memory, focus, qr)           # fill the thought's value from STM
@@ -124,9 +128,14 @@ class ClausePsyche(nn.Module):
             read_steps.append(mem_read)
             hop_states.append(state)
             hop_rels.append(qr)                              # exposed for M3 relation-to-follow supervision
-            last_read = mem_read
-            focus = mem_read                                 # REINPUT: the read value becomes the
-                                                             # next thought's subject (sourced, not conjured)
+            if self.derive_chain:                            # M9: chain on the GENERATED derived value
+                derived = self.gen_derive(state)             # (supervised toward the proof's k-th value)
+                derived_steps.append(derived)
+                last_read = focus = derived                  # the derivation drives the next hop + answer
+            else:
+                last_read = mem_read
+                focus = mem_read                             # §0n: the read value becomes the next
+                                                             # thought's subject (sourced, not conjured)
 
         halt_dist = p_never = step_answer_logits = None
         if self.halting and self.hops > 0:                   # PonderNet: decide WHEN to produce
@@ -196,7 +205,8 @@ class ClausePsyche(nn.Module):
             S_all = torch.stack(hop_states, dim=1)            # [b, K, h]
             out["hop_states"] = S_all
             out["hop_reads"] = torch.stack(read_steps, dim=1)  # [b, K, d] per-hop memory read
-            out["hop_derived"] = self.gen_derive(S_all)       # [b, K, d] per-hop derived VALUE (M9)
+            out["hop_derived"] = (torch.stack(derived_steps, dim=1) if self.derive_chain
+                                  else self.gen_derive(S_all))  # [b, K, d] per-hop derived VALUE (M9)
         return out
 
 

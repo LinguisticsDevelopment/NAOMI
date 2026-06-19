@@ -33,8 +33,10 @@ class MindController(ClausePsyche):
     """
 
     def __init__(self, codec: TPRCodec, hidden: int = 128, hops: int = 5,
-                 halting: bool = True, temperature: float = 1.0) -> None:
+                 halting: bool = True, temperature: float = 1.0,
+                 derive_chain: bool = False) -> None:
         super().__init__(codec, hidden=hidden, hops=hops, halting=halting)
+        self.derive_chain = derive_chain
         self.temperature = float(temperature)
         self.register_buffer("relation_codebook",
                              torch.from_numpy(teacher.relation_codebook(codec)))

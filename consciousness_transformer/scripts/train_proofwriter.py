@@ -80,7 +80,8 @@ def main() -> None:
     print(f"ProofWriter verification: {len(train_items)} train / {len(test_items)} test "
           f"questions (depths {depths}, dim={args.dim}, hops={args.hops})")
     train = pw.build_pw_batch(train_items, codec)
-    model = MindController(codec, hidden=96, hops=args.hops, halting=False)
+    model = MindController(codec, hidden=96, hops=args.hops, halting=False,
+                           derive_chain=args.teacher)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-3)
 
     sup_t = val_cb = None
