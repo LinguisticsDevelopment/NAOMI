@@ -186,8 +186,91 @@ def build_pw_batch(items, codec):
     return ClauseBatch(ent, rel, val, prd, is_q, mask, options, answer, crd, answerable)
 
 
+# --------------------------------------------------------------------------- #
+# M9 — proof-chain teacher supervision. Our forward_chain reproduces ProofWriter
+# gold at 0.989 AND returns the derivation chain, so it is the proof teacher (no
+# need to parse ProofWriter's allProofs). ProofWriter is attribute rule-chaining
+# (furry→kind→smart): the discriminative per-hop signal is the derived VALUE.
+# --------------------------------------------------------------------------- #
+def _value_atom(lit: Literal) -> str:
+    """The value atom build_pw_batch encodes for a literal — ``v:{pol}:{obj}``."""
+    _s, _p, o, pol = lit
+    return f"v:{pol}:{o}"
+
+
+def proof_path(facts, rules, query):
+    """The ordered derived literals on the proof path facts→query (excluding base
+    facts), plus the label. For TRUE the path proves the query; for FALSE it proves
+    the opposite polarity; for UNKNOWN there is no path (``[]``)."""
+    known, chain = forward_chain(list(facts), list(rules))
+    s, p, o, qpol = query
+    opp = "-" if qpol == "+" else "+"
+    if (s, p, o, qpol) in known:
+        target, label = (s, p, o, qpol), TRUE
+    elif (s, p, o, opp) in known:
+        target, label = (s, p, o, opp), FALSE
+    else:
+        return [], UNKNOWN
+    derived_by = {st.derived: st for st in chain}
+    order = {st.derived: i for i, st in enumerate(chain)}
+    needed, seen, frontier = [], set(), [target]
+    while frontier:                                   # backward trace from the query
+        lit = frontier.pop()
+        if lit in seen:
+            continue
+        seen.add(lit)
+        st = derived_by.get(lit)
+        if st is None:
+            continue                                  # a base fact, not a derivation
+        needed.append(lit)
+        frontier.extend(st.support)
+    needed.sort(key=lambda l: order.get(l, 0))        # derivation order = facts→query
+    return needed, label
+
+
+def value_codebook(items, codec):
+    """The dataset's value-atom codebook ``([V,d] float32, {atom: idx})`` — every
+    value atom appearing in facts, rule literals, and queries (covers derived
+    values, which are rule consequents). Replaces M3's fixed relation codebook."""
+    import numpy as np
+    atoms = set()
+    for (facts, rules, query, _a, _d) in items:
+        for lit in facts:
+            atoms.add(_value_atom(lit))
+        for r in rules:
+            for a in r.antecedents:
+                atoms.add(_value_atom(a))
+            atoms.add(_value_atom(r.consequent))
+        atoms.add(_value_atom(query))
+    ordered = sorted(atoms)
+    cb = np.stack([codec.filler_vec(a) for a in ordered]).astype(np.float32)
+    return cb, {a: i for i, a in enumerate(ordered)}
+
+
+def proof_supervision(items, hops: int, atom2idx):
+    """Per-hop derived-value targets ``[B,hops]`` (value-codebook index, ``-1`` pad),
+    ``depth [B]`` (proof steps; ``hops`` for Unknown so it runs the full budget), and
+    ``answer [B]`` — the M9 analog of :func:`teacher.build_supervision` (value, not
+    relation). Unknown items carry no value targets (the answer head learns ``idk``)."""
+    import numpy as np
+    b = len(items)
+    vt = np.full((b, hops), -1, np.int64)
+    depth = np.zeros(b, np.int64)
+    answer = np.zeros(b, np.int64)
+    for i, (facts, rules, query, a, _d) in enumerate(items):
+        answer[i] = a
+        needed, _label = proof_path(facts, rules, query)
+        if needed:
+            depth[i] = min(len(needed), hops)
+            for k, lit in enumerate(needed[:hops]):
+                vt[i, k] = atom2idx.get(_value_atom(lit), -1)
+        else:
+            depth[i] = hops                           # Unknown: spend the full budget
+    return {"value_targets": vt, "depth": depth, "answer": answer}
+
+
 __all__ = [
     "Literal", "PWExample", "parse_literal", "parse_rule", "parse_record",
     "load_records", "verify", "TRUE", "FALSE", "UNKNOWN", "default_data_dir",
-    "flatten", "build_pw_batch",
+    "flatten", "build_pw_batch", "proof_path", "value_codebook", "proof_supervision",
 ]

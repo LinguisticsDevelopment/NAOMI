@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 from nsm_ct.clause_psyche import compute_clause_psyche_losses  # noqa: E402
 from nsm_ct.mind.controller import MindController  # noqa: E402
+from nsm_ct.mind.controller_losses import value_supervision_loss  # noqa: E402
 from nsm_ct.mind.datasets import proofwriter as pw  # noqa: E402
 from nsm_ct.tpr import TPRCodec  # noqa: E402
 
@@ -65,6 +66,9 @@ def main() -> None:
     ap.add_argument("--hops", type=int, default=5)
     ap.add_argument("--depths", type=str, default="0,1,2,3")
     ap.add_argument("--batch-size", type=int, default=64)
+    ap.add_argument("--teacher", action="store_true",
+                    help="add M9 proof-chain (per-hop derived-value) supervision")
+    ap.add_argument("--w-value", type=float, default=1.0)
     ap.add_argument("--save", type=str, default="")
     args = ap.parse_args()
     torch.manual_seed(0)
@@ -78,6 +82,16 @@ def main() -> None:
     train = pw.build_pw_batch(train_items, codec)
     model = MindController(codec, hidden=96, hops=args.hops, halting=False)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-3)
+
+    sup_t = val_cb = None
+    if args.teacher:
+        cb, atom2idx = pw.value_codebook(train_items, codec)
+        val_cb = torch.from_numpy(cb)
+        sup = pw.proof_supervision(train_items, args.hops, atom2idx)
+        sup_t = {k: torch.from_numpy(v) for k, v in sup.items()}
+        supervised = int((sup_t["value_targets"] >= 0).any(1).sum())
+        print(f"  teacher: proof-chain supervision on {supervised}/{len(train_items)} "
+              f"items, value codebook V={cb.shape[0]}", flush=True)
 
     import collections as C
     maj = C.Counter(it[3] for it in test_items).most_common(1)[0][1]
@@ -95,11 +109,17 @@ def main() -> None:
         perm = torch.randperm(n)
         last = 0.0
         for i in range(0, n, bs):
-            mb = train.subset(perm[i:i + bs])
+            idx = perm[i:i + bs]
+            mb = train.subset(idx)
             out = model(mb)
             loss = compute_clause_psyche_losses(out, mb, model)
-            opt.zero_grad(); loss["total"].backward(); opt.step()
-            last = float(loss["total"].detach())
+            total = loss["total"]
+            if args.teacher:
+                vs = value_supervision_loss(
+                    out, sup_t["value_targets"][idx], sup_t["depth"][idx], val_cb)
+                total = total + args.w_value * vs["value"]
+            opt.zero_grad(); total.backward(); opt.step()
+            last = float(total.detach())
         if epoch % 5 == 4 or epoch == 0:           # periodic held-out eval (captured even if capped)
             print(f"  epoch {epoch+1:3d} loss={last:.3f}", flush=True)
             report(f"epoch {epoch+1}")

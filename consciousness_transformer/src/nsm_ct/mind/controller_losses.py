@@ -54,6 +54,37 @@ def supervision_loss(
             "supervision": rel_loss + halt_loss}
 
 
+def value_supervision_loss(
+    out: Dict[str, torch.Tensor], value_targets: torch.Tensor, depth: torch.Tensor,
+    codebook: torch.Tensor, *, temperature: float = 1.0,
+) -> Dict[str, torch.Tensor]:
+    """Proof-chain supervision (M9): per-hop *derived-value* CE + (optional) halt CE.
+
+    ProofWriter is attribute rule-chaining (same entity, the VALUE changes:
+    furry→kind→smart), so — unlike M3's relation-to-follow — the discriminative
+    per-hop signal is the **derived value**. ``out["hop_derived"]`` (the gen_derive
+    "show your work" head) is decoded against the dataset's value-atom ``codebook``
+    and supervised toward the proof's k-th derived value (padded hops ignored). When
+    the model halts (``halt_dist`` present), also supervise produce-at-proof-depth.
+    """
+    device = value_targets.device
+    val_loss = torch.zeros((), device=device)
+    if "hop_derived" in out and (value_targets >= 0).any():
+        logits = relation_logits(out["hop_derived"], codebook, temperature)  # [B, K, V]
+        B, K, V = logits.shape
+        val_loss = F.cross_entropy(
+            logits.reshape(B * K, V), value_targets.reshape(B * K), ignore_index=-1)
+
+    halt_loss = torch.zeros((), device=device)
+    if "halt_dist" in out:
+        halt = out["halt_dist"].clamp(min=1e-8)
+        K = halt.shape[1]
+        gold_k = (depth - 1).clamp(min=0, max=K - 1)
+        halt_loss = (-torch.log(halt.gather(1, gold_k.unsqueeze(1)).squeeze(1))).mean()
+
+    return {"value": val_loss, "halt": halt_loss, "supervision": val_loss + halt_loss}
+
+
 def combined_loss(
     out: Dict[str, torch.Tensor], batch: ClauseBatch, model: ClausePsyche,
     sup: Dict[str, torch.Tensor], codebook: torch.Tensor, *,
@@ -69,4 +100,4 @@ def combined_loss(
         k: v for k, v in ans.items() if k != "total"}}
 
 
-__all__ = ["supervision_loss", "combined_loss"]
+__all__ = ["supervision_loss", "value_supervision_loss", "combined_loss"]

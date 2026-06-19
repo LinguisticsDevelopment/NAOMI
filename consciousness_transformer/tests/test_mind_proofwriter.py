@@ -97,5 +97,45 @@ def test_build_pw_batch_and_controller_forward():
     assert out["answer_logits"].shape == (2, 3)       # 3-way verification readout
 
 
+# --------------------------------------- M9 proof-chain teacher (data-free)
+def test_proof_path_supervision_and_value_loss():
+    """Step-3 teacher: forward_chain yields the proof's derived-VALUE sequence
+    (facts→query), and the per-hop value-supervision loss runs over hop_derived."""
+    import torch
+    from nsm_ct.tpr import TPRCodec
+    from nsm_ct.reasoning_oracle import Rule
+    from nsm_ct.mind.controller import MindController
+    from nsm_ct.mind.controller_losses import value_supervision_loss
+
+    codec = TPRCodec(dim=32)
+    facts = [("alice", "is", "furry", "+")]
+    rules = [Rule((("?x", "is", "furry", "+"),), ("?x", "is", "kind", "+"), name="r1"),
+             Rule((("?x", "is", "kind", "+"),), ("?x", "is", "smart", "+"), name="r2")]
+
+    needed, label = pw.proof_path(facts, rules, ("alice", "is", "smart", "+"))
+    assert label == pw.TRUE == pw.verify(facts, rules, ("alice", "is", "smart", "+"))
+    assert [l[2] for l in needed] == ["kind", "smart"]      # derivation order facts→query
+    u_needed, u_label = pw.proof_path(facts, rules, ("alice", "is", "green", "+"))
+    assert u_label == pw.UNKNOWN and u_needed == []
+
+    ex = pw.PWExample(facts=facts, rules=rules, questions=[
+        (("alice", "is", "smart", "+"), pw.TRUE, 2),
+        (("alice", "is", "green", "+"), pw.UNKNOWN, 0)])
+    items = pw.flatten([ex])
+    cb, atom2idx = pw.value_codebook(items, codec)
+    sup = pw.proof_supervision(items, hops=4, atom2idx=atom2idx)
+    assert sup["value_targets"].shape == (2, 4)
+    assert sup["value_targets"][0, 0] == atom2idx["v:+:kind"]
+    assert sup["value_targets"][0, 1] == atom2idx["v:+:smart"]
+    assert sup["value_targets"][0, 2] == -1 and sup["depth"][0] == 2
+    assert (sup["value_targets"][1] == -1).all() and sup["depth"][1] == 4  # Unknown: full budget
+
+    out = MindController(codec, hidden=32, hops=4, halting=False)(pw.build_pw_batch(items, codec))
+    assert out["hop_derived"].shape == (2, 4, 32)          # per-hop derive head exposed
+    vs = value_supervision_loss(out, torch.from_numpy(sup["value_targets"]),
+                                torch.from_numpy(sup["depth"]), torch.from_numpy(cb))
+    assert torch.isfinite(vs["value"]) and vs["value"].item() >= 0.0
+
+
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__, "-v"])

@@ -60,6 +60,11 @@ class ClausePsyche(nn.Module):
         self.gen_pred = nn.Linear(hidden, d)
         self.gen_subject = nn.Linear(hidden + d, d)
         self.gen_place = nn.Linear(hidden + d, d)
+        # per-hop "show your work" head: the meaning-VALUE derived at each inference hop
+        # (e.g. ProofWriter's furry→kind→smart). Separate from gen_place (the final
+        # answer) so proof-chain supervision (M9) shapes the reasoning without colliding
+        # with the answer readout. Unused unless the M9 value-supervision loss reads it.
+        self.gen_derive = nn.Linear(hidden, d)
         # fixed TPR roles for assembly (buffers; not learned)
         self.register_buffer("self_role", torch.from_numpy(codec.self_role.copy()))
         self.register_buffer("subj_role", torch.from_numpy(codec.role_vec(0, "SUBJECT").copy()))
@@ -188,6 +193,10 @@ class ClausePsyche(nn.Module):
             out["step_answer_logits"] = step_answer_logits
         if self.hops > 0:
             out["hop_rels"] = torch.stack(hop_rels, dim=1)   # [b, K, d] per-hop relation-to-follow
+            S_all = torch.stack(hop_states, dim=1)            # [b, K, h]
+            out["hop_states"] = S_all
+            out["hop_reads"] = torch.stack(read_steps, dim=1)  # [b, K, d] per-hop memory read
+            out["hop_derived"] = self.gen_derive(S_all)       # [b, K, d] per-hop derived VALUE (M9)
         return out
 
 
