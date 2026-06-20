@@ -137,5 +137,54 @@ def test_proof_path_supervision_and_value_loss():
     assert torch.isfinite(vs["value"]) and vs["value"].item() >= 0.0
 
 
+# ----------------------------------- M10 executor-driven verification (data-free)
+def _verify_via_executor(facts, rules, query, executor=None):
+    """Run [INFER, RESPOND_VERIFY] through the deterministic executor."""
+    from nsm_ct.mind.executor import Executor
+    from nsm_ct.mind import ops
+    ex = executor or Executor(codec=_small_codec())
+    ex.load_theory(facts, rules)
+    s, p, o, pol = query
+    trace = [ops.Op(ops.INFER, {}),
+             ops.Op(ops.RESPOND_VERIFY, {"subject": s, "relation": p, "value": o, "polarity": pol})]
+    return ex.run_trace(trace)
+
+
+def _small_codec():
+    from nsm_ct.tpr import TPRCodec
+    return TPRCodec(dim=16)
+
+
+def test_executor_verification_path():
+    """The controller's reasoning ops, run through the executor, yield the symbolic
+    verdict — the engine does the derivation, an op-trace drives it (M10 foundation)."""
+    from nsm_ct.mind.executor import PW_TRUE, PW_UNKNOWN
+    from nsm_ct.reasoning_oracle import Rule
+    facts = [("alice", "is", "furry", "+")]
+    rules = [Rule((("?x", "is", "furry", "+"),), ("?x", "is", "kind", "+"), name="r1"),
+             Rule((("?x", "is", "kind", "+"),), ("?x", "is", "smart", "+"), name="r2")]
+    assert _verify_via_executor(facts, rules, ("alice", "is", "smart", "+"))["answer"] == PW_TRUE
+    u = _verify_via_executor(facts, rules, ("alice", "is", "green", "+"))
+    assert u["answer"] == PW_UNKNOWN and u["abstained"]
+
+
+@pytest.mark.skipif(not _data_present(), reason="ProofWriter data absent")
+def test_executor_matches_symbolic_floor():
+    """Executor-driven verdict == the 0.989 symbolic floor (same engine) across depths
+    — so the controller, driving the executor, inherits broad-data correctness."""
+    from nsm_ct.mind.executor import Executor
+    executor = Executor(codec=_small_codec())                 # reused across questions
+    ok = total = 0
+    for depth in ("0", "1", "2", "3"):
+        path = os.path.join(pw.default_data_dir(), f"owa-depth{depth}-test.jsonl")
+        for rec in pw.load_records(path, limit=15):
+            ex = pw.parse_record(rec)
+            for (lit, _gold, _qd) in ex.questions:
+                got = _verify_via_executor(ex.facts, ex.rules, lit, executor)["answer"]
+                ok += (got == pw.verify(ex.facts, ex.rules, lit))
+                total += 1
+    assert total > 200 and ok == total          # exact: same forward_chain engine
+
+
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__, "-v"])

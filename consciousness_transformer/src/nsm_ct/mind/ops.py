@@ -23,9 +23,10 @@ INFER = "INFER"              # derive new beliefs (focus-chaining / rule firing)
 CONSOLIDATE = "CONSOLIDATE"  # promote settled STM facts into durable LTM
 SUPERSEDE = "SUPERSEDE"      # resolve recency/negation for (subject, relation)
 RESPOND = "RESPOND"          # emit an answer for (subject, relation), or abstain
+RESPOND_VERIFY = "RESPOND_VERIFY"  # verify a polarized query literal → TRUE/FALSE/Unknown (ProofWriter)
 HALT = "HALT"                # stop the loop
 
-OPS = (PERCEIVE, RECALL, INFER, CONSOLIDATE, SUPERSEDE, RESPOND, HALT)
+OPS = (PERCEIVE, RECALL, INFER, CONSOLIDATE, SUPERSEDE, RESPOND, RESPOND_VERIFY, HALT)
 
 # Sentinel answer for derive-or-abstain ("I cannot derive it").
 ABSTAIN = "idk"
@@ -66,6 +67,6 @@ class TraceStep:
 
 
 __all__ = [
-    "PERCEIVE", "RECALL", "INFER", "CONSOLIDATE", "SUPERSEDE", "RESPOND", "HALT",
-    "OPS", "ABSTAIN", "Op", "TraceStep",
+    "PERCEIVE", "RECALL", "INFER", "CONSOLIDATE", "SUPERSEDE", "RESPOND",
+    "RESPOND_VERIFY", "HALT", "OPS", "ABSTAIN", "Op", "TraceStep",
 ]

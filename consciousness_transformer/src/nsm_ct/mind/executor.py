@@ -23,10 +23,14 @@ from typing import Dict, List, Optional, Tuple
 
 from ..clause_psyche_graph import MAYBE, RESOLVED, STM
 from ..data_structures import ParseNode, ParseTree
-from ..reasoning_oracle import Triple, forward_chain
+from ..reasoning_oracle import Rule, Triple, forward_chain
 from ..tpr import TPRCodec
 from . import ops
 from .knowledge import KnowledgeGraph
+
+# ProofWriter verification verdicts (match datasets.proofwriter's gold labels by value,
+# without importing the application module into the core executor).
+PW_TRUE, PW_FALSE, PW_UNKNOWN = "true", "false", "Unknown"
 
 
 class _TrivialResolver:
@@ -63,6 +67,12 @@ class Executor:
         self.codec = codec or self.ltm.codec
         self.resolver = resolver or _TrivialResolver()
         self.stm = STM(self.codec, self.resolver)
+        # ProofWriter verification mode: a polarized 4-tuple theory + its derived
+        # closure. None ⇒ the curriculum 3-tuple STM path. The closure is symbolic
+        # (forward_chain) — the controller drives WHEN to infer/verify, never the logic.
+        self.pw_rules: Optional[List[Rule]] = None
+        self.pw_facts: List[Tuple] = []
+        self.pw_closure: set = set()
 
     # -- locating clauses (for negation / disjunction) -----------------------
     def _matching_clause(self, subject: str, relation: str, value: str) -> Optional[int]:
@@ -143,6 +153,10 @@ class Executor:
         triple is written back into STM as a clause, so the conclusion is readable
         and the ``DerivStep`` chain is the faithful traversal record.
         """
+        if self.pw_rules is not None:                    # ProofWriter 4-tuple verification mode
+            known, chain = forward_chain(list(self.pw_facts), self.pw_rules, max_iters=max_iters)
+            self.pw_closure = set(known)
+            return ops.TraceStep(ops.INFER, {}, result=[s.derived for s in chain], support=list(chain))
         facts = self._stm_facts() + self.ltm.facts()
         known, chain = forward_chain(facts, self.ltm.rules(), max_iters=max_iters)
         known_now = set(self._stm_facts())
@@ -150,6 +164,39 @@ class Executor:
             if (e, r, v) not in known_now and r != "SUBJECT":
                 self.stm.add_clause(e, r, v, supersede=False)
         return ops.TraceStep(ops.INFER, {}, result=[s.derived for s in chain], support=list(chain))
+
+    # -- ProofWriter verification (polarized 4-tuple theory) -----------------
+    def load_theory(self, facts: List[Tuple], rules: List[Rule]) -> None:
+        """Enter ProofWriter mode: a polarized 4-tuple theory. The closure starts as
+        the asserted facts; ``INFER`` saturates it; ``RESPOND_VERIFY`` reads it."""
+        self.pw_rules = list(rules)
+        self.pw_facts = list(facts)
+        self.pw_closure = set(facts)
+
+    def apply_rule(self, rule: Rule) -> ops.TraceStep:
+        """Apply ONE rule to the current closure (the Step-2 single navigation move);
+        symbolic unification + materialize. Returns the newly derived literals."""
+        before = set(self.pw_closure)
+        known, chain = forward_chain(list(self.pw_closure), [rule], max_iters=1)
+        new = [d for d in known if d not in before]
+        self.pw_closure = known
+        return ops.TraceStep(ops.INFER, {"rule": rule.name}, result=new, support=list(chain))
+
+    def respond_verify(self, subject: str, relation: str, value: str,
+                       polarity: str = "+", predicate: str = "is") -> ops.TraceStep:
+        """Verify a polarized query literal against the closure → TRUE / FALSE /
+        Unknown (the OWA derive-or-abstain verdict; the symbolic floor)."""
+        opp = "-" if polarity == "+" else "+"
+        if (subject, relation, value, polarity) in self.pw_closure:
+            verdict = PW_TRUE
+        elif (subject, relation, value, opp) in self.pw_closure:
+            verdict = PW_FALSE
+        else:
+            verdict = PW_UNKNOWN
+        return ops.TraceStep(
+            ops.RESPOND_VERIFY,
+            {"subject": subject, "relation": relation, "value": value, "polarity": polarity},
+            result=verdict)
 
     def supersede(self, subject: str, relation: str) -> ops.TraceStep:
         """Resolve recency/negation for (subject, relation) (records the resolution)."""
@@ -195,6 +242,7 @@ class Executor:
         ops.CONSOLIDATE: "consolidate",
         ops.SUPERSEDE: "supersede",
         ops.RESPOND: "respond",
+        ops.RESPOND_VERIFY: "respond_verify",
         ops.HALT: "halt",
     }
 
@@ -218,11 +266,12 @@ class Executor:
             method = getattr(self, self._DISPATCH[op.op])
             step = method(**op.operands)
             steps.append(step)
-            if op.op == ops.RESPOND:
+            if op.op in (ops.RESPOND, ops.RESPOND_VERIFY):
                 answer = step.result
             if op.op == ops.HALT:
                 break
-        return {"answer": answer, "abstained": answer == ops.ABSTAIN, "trace": steps}
+        abstained = answer in (ops.ABSTAIN, PW_UNKNOWN)
+        return {"answer": answer, "abstained": abstained, "trace": steps}
 
 
 __all__ = ["Executor"]
