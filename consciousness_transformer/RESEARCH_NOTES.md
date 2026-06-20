@@ -769,6 +769,32 @@ in four milestones:
   forward (18 tests). Code lands default-off (`derive_chain=False`), so the §0n curriculum path is
   untouched.
 
+- **M10 — the controller DRIVES the symbolic engine (the decisive correction; MEASURED WIN).**
+  User-identified root cause of the M8/M9 ceiling: those made the *vector loop be the reasoner* and tried
+  to learn ProofWriter's *logic in the weights* — which the architecture forbids ("no information in
+  weights"). The fix: **the controller emits ops; the executor's `INFER` = `forward_chain` (0.989) does
+  the derivation; the controller only learns the navigation *policy*** — small, cheap to train a lot
+  (knowledge is graph data), transferable, *not a split*.
+  - **Step 1a (foundation):** `ops.RESPOND_VERIFY` + `Executor.load_theory`/4-tuple-INFER/`respond_verify`/
+    `apply_rule`. Gate: the executor-driven verdict **== the 0.989 symbolic floor exactly** across depths
+    0–3 (same engine) — so a controller driving `[INFER, RESPOND_VERIFY]` *inherits* broad-data correctness.
+  - **Step 2 (learned navigation = neural-guided proof search):** the controller **selects which rule to
+    apply next** (the proven contrastive head over `encode_rule` candidate vectors; `proof_search.ProofSearch`),
+    the executor applies that one rule **symbolically**, bounded + goal-directed; **Unknown = step-budget
+    exhaustion** (OWA abstain). Teacher = the gold proof as a rule-selection sequence
+    (`proofwriter.proof_rule_steps`, reusing `forward_chain`'s chain).
+  - **Measured (dim=32, depths 0–2, CPU, 40 ep):** train rule-select acc **0.30→0.97**; **rollout verdict
+    accuracy 0.84** (d0=1.00, **d1=1.00**, d2=0.48). **vs the M8/M9 ceiling of 0.50 (= majority) on the SAME
+    data** — the architecture, not scale, was the problem. d1=1.00 is perfect one-step navigation; the
+    engine derives, only *which move next* is learned.
+  - **Honest frontier:** d2 plateaus at 0.48 *despite* 0.97 single-step accuracy — **exposure bias**
+    (teacher-forced training vs the policy's own rollout state distribution; 2 sequential decisions
+    compound). The overall 0.84 also benefits from Unknown-via-budget being correct, so the *pure*
+    navigation signal is the provable depths (d1=1.00, d2 weak). The next lever is the known, cheap one:
+    **DAgger / rollout (on-policy) training** — still pure policy, no weight-baked logic. Gates: executor
+    parity + gold-teacher + rollout-terminates + apply_rule→proof (suite 284). `scripts/train_proofwriter.py
+    --navigate` (rollout eval by depth + steps).
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
