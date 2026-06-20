@@ -228,6 +228,45 @@ def proof_path(facts, rules, query):
     return needed, label
 
 
+def proof_rule_steps(facts, rules, query):
+    """The proof as an ordered sequence of ``(current_facts, gold_rule_index)`` steps
+    — the supervision for *learned navigation* (which rule to apply next). Rules are
+    uniquely indexed so the firing rule is identifiable; ``current_facts`` is the
+    closure just before that rule fires (teacher-forced state). Returns
+    ``(steps, label)``; ``steps == []`` for Unknown (no proof to navigate)."""
+    idx_rules = [Rule(r.antecedents, r.consequent, name=f"r{i}") for i, r in enumerate(rules)]
+    known, chain = forward_chain(list(facts), idx_rules)
+    s, p, o, qpol = query
+    opp = "-" if qpol == "+" else "+"
+    if (s, p, o, qpol) in known:
+        target, label = (s, p, o, qpol), TRUE
+    elif (s, p, o, opp) in known:
+        target, label = (s, p, o, opp), FALSE
+    else:
+        return [], UNKNOWN
+    derived_by = {st.derived: st for st in chain}
+    order = {st.derived: i for i, st in enumerate(chain)}
+    needed, seen, frontier = [], set(), [target]
+    while frontier:                                   # which derivations the proof needs
+        lit = frontier.pop()
+        if lit in seen:
+            continue
+        seen.add(lit)
+        st = derived_by.get(lit)
+        if st is None:
+            continue
+        needed.append(lit)
+        frontier.extend(st.support)
+    needed.sort(key=lambda l: order.get(l, 0))        # derivation order = facts→query
+    base = set(facts)
+    steps = []
+    for lit in needed:
+        rule_idx = int(derived_by[lit].rule[1:])      # "r{i}" → i
+        steps.append((sorted(base), rule_idx))        # state BEFORE this rule fires
+        base = base | {lit}
+    return steps, label
+
+
 def value_codebook(items, codec):
     """The dataset's value-atom codebook ``([V,d] float32, {atom: idx})`` — every
     value atom appearing in facts, rule literals, and queries (covers derived
@@ -245,6 +284,67 @@ def value_codebook(items, codec):
     ordered = sorted(atoms)
     cb = np.stack([codec.filler_vec(a) for a in ordered]).astype(np.float32)
     return cb, {a: i for i, a in enumerate(ordered)}
+
+
+def _lit_vec(codec, lit):
+    """A literal's content vector: subject + relation + signed-value atoms."""
+    s, p, o, pol = lit
+    sv = "e:?x" if s == "?x" else "e:" + s
+    return codec.filler_vec(sv) + codec.filler_vec("r:" + p) + codec.filler_vec(f"v:{pol}:{o}")
+
+
+def encode_rule(codec, rule):
+    """A rule → a unit content vector (consequent emphasized): what it NEEDS
+    (antecedents) and what it GIVES (consequent) — the signature the navigation
+    policy matches against current facts + goal to pick the next move."""
+    import numpy as np
+    v = 2.0 * _lit_vec(codec, rule.consequent)
+    for a in rule.antecedents:
+        v = v + _lit_vec(codec, a)
+    n = float(np.linalg.norm(v))
+    return (v / n).astype(np.float32) if n > 0 else v.astype(np.float32)
+
+
+def build_proofsearch_batch(examples, codec):
+    """A rule-SELECTION :class:`ClauseBatch`: stream = current facts + the goal
+    (``is_q``); options = the theory's candidate rules (encoded); answer = the gold
+    rule index for this step. Reuses the controller's contrastive head as the
+    next-rule navigation policy. ``examples`` = ``(current_facts, goal, rules, gold_idx)``."""
+    import numpy as np
+    import torch
+    from ...clause_reactor import ClauseBatch
+
+    d = codec.dim
+    E = lambda x: codec.filler_vec("e:" + x)
+    R = lambda x: codec.filler_vec("r:" + x)
+    SV = lambda o, pol: codec.filler_vec(f"v:{pol}:{o}")
+    pred_is, pred_q = codec.filler_vec("p:is"), codec.filler_vec("p:?")
+    z = np.zeros(d, np.float32)
+
+    rows = []
+    K = max(len(rules) for (_f, _g, rules, _i) in examples)
+    for (facts, goal, rules, gold) in examples:
+        steps = [(E(s), R(p), SV(o, pol), pred_is, z, 0) for (s, p, o, pol) in facts]
+        gs, gp, go, gpol = goal
+        steps.append((E(gs), R(gp), SV(go, gpol), pred_q, z, 1))
+        opts = [encode_rule(codec, r) for r in rules] + [z] * (K - len(rules))
+        rows.append((steps, opts, gold))
+
+    b = len(rows)
+    T = max(len(s) for s, _o, _g in rows)
+    ent = torch.zeros(b, T, d); rel = torch.zeros(b, T, d); val = torch.zeros(b, T, d)
+    prd = torch.zeros(b, T, d); crd = torch.zeros(b, T, d)
+    is_q = torch.zeros(b, T); mask = torch.zeros(b, T)
+    options = torch.zeros(b, K, d); answer = torch.zeros(b, dtype=torch.long)
+    for i, (steps, opts, gold) in enumerate(rows):
+        for t, (e, r, v, p, c, q) in enumerate(steps):
+            ent[i, t] = torch.from_numpy(e); rel[i, t] = torch.from_numpy(r)
+            val[i, t] = torch.from_numpy(v); prd[i, t] = torch.from_numpy(p)
+            crd[i, t] = torch.from_numpy(c); is_q[i, t] = q; mask[i, t] = 1.0
+        for k, ov in enumerate(opts):
+            options[i, k] = torch.from_numpy(ov)
+        answer[i] = gold
+    return ClauseBatch(ent, rel, val, prd, is_q, mask, options, answer, crd, torch.ones(b))
 
 
 def proof_supervision(items, hops: int, atom2idx):
@@ -269,8 +369,22 @@ def proof_supervision(items, hops: int, atom2idx):
     return {"value_targets": vt, "depth": depth, "answer": answer}
 
 
+def navigation_examples(items):
+    """Expand ProofWriter items into per-step rule-selection training examples
+    ``(current_facts, goal, rules, gold_rule_idx)`` — only provable (TRUE/FALSE)
+    items yield steps (Unknown has no proof to navigate; the rollout abstains via
+    the step budget)."""
+    out = []
+    for (facts, rules, query, _a, _d) in items:
+        steps, _label = proof_rule_steps(facts, rules, query)
+        for (current_facts, gold_idx) in steps:
+            out.append((current_facts, query, rules, gold_idx))
+    return out
+
+
 __all__ = [
     "Literal", "PWExample", "parse_literal", "parse_rule", "parse_record",
     "load_records", "verify", "TRUE", "FALSE", "UNKNOWN", "default_data_dir",
     "flatten", "build_pw_batch", "proof_path", "value_codebook", "proof_supervision",
+    "proof_rule_steps", "encode_rule", "build_proofsearch_batch", "navigation_examples",
 ]

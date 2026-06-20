@@ -57,6 +57,67 @@ def _accuracy_by_depth(model, items, codec):
     return tot, agg
 
 
+def _eval_rollout(controller, codec, test_items, max_steps, per_depth=40):
+    """Roll out the learned navigation policy → verdict accuracy + avg steps, by depth."""
+    from nsm_ct.mind.proof_search import ProofSearch
+    searcher = ProofSearch(controller, codec)
+    by_depth = collections.defaultdict(lambda: [0, 0, 0])   # [correct, n, steps]
+    seen = collections.Counter()
+    gold_labels = (pw.TRUE, pw.FALSE, pw.UNKNOWN)
+    tot = [0, 0]
+    for (facts, rules, query, ans_idx, depth) in test_items:
+        if seen[depth] >= per_depth:
+            continue
+        seen[depth] += 1
+        verdict, nsteps = searcher.run(facts, rules, query, max_steps=max_steps)
+        hit = (gold_labels.index(verdict) == ans_idx)
+        by_depth[depth][0] += hit; by_depth[depth][1] += 1; by_depth[depth][2] += nsteps
+        tot[0] += hit; tot[1] += 1
+    return tot, by_depth
+
+
+def train_navigate(args) -> None:
+    """M10 step 2 — learn the rule-selection navigation policy over the symbolic
+    engine, then measure the bounded rollout's verdict accuracy by depth."""
+    depths = args.depths.split(",")
+    codec = TPRCodec(dim=args.dim)
+    train_items = _load_items("train", depths, args.train_per_depth)
+    test_items = _load_items("test", depths, args.test_per_depth)
+    navex = pw.navigation_examples(train_items)
+    print(f"ProofWriter navigation: {len(navex)} rule-selection steps from "
+          f"{len(train_items)} train items / {len(test_items)} test (depths {depths}, "
+          f"dim={args.dim}, hops={args.hops})", flush=True)
+    if not navex:
+        print("no provable steps — nothing to learn"); return
+    model = MindController(codec, hidden=96, hops=args.hops, halting=False)
+    opt = torch.optim.AdamW(model.parameters(), lr=3e-3)
+    n, bs = len(navex), args.batch_size
+
+    for epoch in range(args.epochs):
+        model.train()
+        perm = torch.randperm(n).tolist()
+        last = sel = cnt = 0
+        for i in range(0, n, bs):
+            sub = [navex[j] for j in perm[i:i + bs]]
+            batch = pw.build_proofsearch_batch(sub, codec)
+            out = model(batch)
+            loss = compute_clause_psyche_losses(out, batch, model)
+            opt.zero_grad(); loss["total"].backward(); opt.step()
+            last = float(loss["total"].detach())
+            sel += int((out["answer_logits"].argmax(-1) == batch.answer).sum()); cnt += len(sub)
+        if epoch % 10 == 9 or epoch == 0:
+            print(f"  epoch {epoch+1:3d} loss={last:.3f} train_select_acc={sel/max(cnt,1):.2f}",
+                  flush=True)
+            tot, bd = _eval_rollout(model, codec, test_items, args.max_steps, per_depth=25)
+            line = "  ".join(f"d{d}={bd[d][0]/max(bd[d][1],1):.2f}({bd[d][2]/max(bd[d][1],1):.1f}st)"
+                             for d in sorted(bd))
+            print(f"  [rollout] verdict acc={tot[0]/max(tot[1],1):.3f} | {line}", flush=True)
+    if args.save:
+        os.makedirs(os.path.dirname(args.save) or ".", exist_ok=True)
+        torch.save({"sd": model.state_dict(), "dim": args.dim, "hops": args.hops}, args.save)
+        print(f"saved -> {args.save}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--train-per-depth", type=int, default=250)
@@ -69,9 +130,14 @@ def main() -> None:
     ap.add_argument("--teacher", action="store_true",
                     help="add M9 proof-chain (per-hop derived-value) supervision")
     ap.add_argument("--w-value", type=float, default=1.0)
+    ap.add_argument("--navigate", action="store_true",
+                    help="M10: learn the rule-SELECTION navigation policy + rollout eval")
+    ap.add_argument("--max-steps", type=int, default=8)
     ap.add_argument("--save", type=str, default="")
     args = ap.parse_args()
     torch.manual_seed(0)
+    if args.navigate:
+        return train_navigate(args)
     depths = args.depths.split(",")
 
     codec = TPRCodec(dim=args.dim)

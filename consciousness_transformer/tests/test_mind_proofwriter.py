@@ -168,6 +168,52 @@ def test_executor_verification_path():
     assert u["answer"] == PW_UNKNOWN and u["abstained"]
 
 
+# --------------------------------- M10 step 2: learned proof-search navigation
+def test_proof_rule_steps_and_proofsearch_rollout():
+    """The gold proof as a rule-selection sequence; the batch builder turns it into
+    a contrastive selection task; the rollout drives the executor and terminates."""
+    from nsm_ct.tpr import TPRCodec
+    from nsm_ct.reasoning_oracle import Rule
+    from nsm_ct.mind.controller import MindController
+    from nsm_ct.mind.proof_search import ProofSearch
+
+    facts = [("alice", "is", "furry", "+")]
+    rules = [Rule((("?x", "is", "kind", "+"),), ("?x", "is", "smart", "+"), name="a"),   # r0
+             Rule((("?x", "is", "furry", "+"),), ("?x", "is", "kind", "+"), name="b")]    # r1
+    steps, label = pw.proof_rule_steps(facts, rules, ("alice", "is", "smart", "+"))
+    assert label == pw.TRUE
+    assert [g for (_f, g) in steps] == [1, 0]          # fire r1 (furry→kind) then r0 (kind→smart)
+
+    ex = pw.PWExample(facts=facts, rules=rules,
+                      questions=[(("alice", "is", "smart", "+"), pw.TRUE, 2)])
+    navex = pw.navigation_examples(pw.flatten([ex]))
+    assert len(navex) == 2
+    codec = TPRCodec(dim=32)
+    batch = pw.build_proofsearch_batch(navex, codec)
+    assert batch.options.shape == (2, 2, 32) and batch.answer.tolist() == [1, 0]
+
+    ctrl = MindController(codec, hidden=32, hops=3, halting=False)
+    verdict, nsteps = ProofSearch(ctrl, codec).run(
+        facts, rules, ("alice", "is", "smart", "+"), max_steps=5)
+    assert verdict in (pw.TRUE, pw.FALSE, pw.UNKNOWN) and 0 <= nsteps <= 5
+
+
+def test_apply_rule_navigation_chain():
+    """Following the gold rule sequence via single-rule moves reaches the proof —
+    the executor derives each step symbolically; navigation only orders the moves."""
+    from nsm_ct.mind.executor import Executor
+    from nsm_ct.reasoning_oracle import Rule
+    facts = [("bob", "is", "furry", "+")]
+    rules = [Rule((("?x", "is", "kind", "+"),), ("?x", "is", "smart", "+"), name="a"),    # r0
+             Rule((("?x", "is", "furry", "+"),), ("?x", "is", "kind", "+"), name="b")]     # r1
+    ex = Executor(codec=_small_codec())
+    ex.load_theory(facts, rules)
+    gold = [g for (_f, g) in pw.proof_rule_steps(facts, rules, ("bob", "is", "smart", "+"))[0]]
+    for idx in gold:                                   # the gold navigation [r1, r0]
+        ex.apply_rule(rules[idx])
+    assert ("bob", "is", "smart", "+") in ex.pw_closure   # reached the proof
+
+
 @pytest.mark.skipif(not _data_present(), reason="ProofWriter data absent")
 def test_executor_matches_symbolic_floor():
     """Executor-driven verdict == the 0.989 symbolic floor (same engine) across depths
