@@ -807,6 +807,22 @@ in four milestones:
     backward navigation** — a subgoal stack or a goal-relevance signal over rules, so the controller can
     plan more than one hop. DAgger code is kept (sound infra; lifts d1→1.00; the right tool *if* the
     bottleneck were exposure bias). Suite 286.
+  - **Step 3 — goal-directed BACKWARD navigation (the fix; MEASURED WIN).** Same `MindController`, same
+    contrastive head, same executor — only the search *direction* changes. Forward training fixed the
+    `is_q` goal and varied the facts (→ the myopic shortcut); **backward fixes the facts (STM context) and
+    varies the `is_q` subgoal**, so each step is "pick the rule whose consequent matches THIS subgoal" —
+    the 1-hop skill the model already does perfectly. `proof_search.backward_step` (unify consequent↔
+    subgoal → grounded antecedents, via `reasoning_oracle.unify`/`ground`); `BackwardSearch` (subgoal-stack
+    rollout: prove query→TRUE, negation→FALSE, budget→Unknown); `proofwriter.backward_examples` (teacher =
+    `gold_plan.rule_of[subgoal]`, reusing `build_proofsearch_batch` unchanged — subgoal in the goal slot).
+    **Measured (dim=32, depths 0–2, CPU): d2 0.48→1.00 (peak ep20; 0.92 settled), overall verdict acc
+    0.827→0.963**, **and in ⅓ the steps** (d2 ≈3.4 vs forward's 6.0, bounded by the proof). The plateau
+    forward search *never* moved (0.48 flat through 40 ep + 4 DAgger rounds) breaks immediately because
+    backward chaining decomposes depth-2 into the learnable 1-hop decisions. **Honest caveats:** d1 dips
+    0.96→0.88 (the two-pass TRUE/FALSE verdict occasionally proves a spurious branch on 1-hop items — a
+    backtracking/verification gap, not a planning one); d2 oscillates 0.92–1.00 across late epochs (eval
+    n=25/depth). The win is the *direction*, exactly as the user specified: *input → build STM/context → if
+    a question, work backwards, same state machine.* `scripts/train_proofwriter.py --backward`; suite 288.
 
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
