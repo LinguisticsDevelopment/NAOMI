@@ -78,40 +78,60 @@ def _eval_rollout(controller, codec, test_items, max_steps, per_depth=40):
 
 def train_navigate(args) -> None:
     """M10 step 2 — learn the rule-selection navigation policy over the symbolic
-    engine, then measure the bounded rollout's verdict accuracy by depth."""
+    engine, then measure the bounded rollout's verdict accuracy by depth. With
+    ``--dagger`` (step 2b) it also trains on the states the policy itself visits,
+    labeled with the expert's recovery move — curing the multi-step exposure bias."""
+    import random
     depths = args.depths.split(",")
     codec = TPRCodec(dim=args.dim)
     train_items = _load_items("train", depths, args.train_per_depth)
     test_items = _load_items("test", depths, args.test_per_depth)
-    navex = pw.navigation_examples(train_items)
-    print(f"ProofWriter navigation: {len(navex)} rule-selection steps from "
+    pool = pw.navigation_examples(train_items)
+    print(f"ProofWriter navigation: {len(pool)} rule-selection steps from "
           f"{len(train_items)} train items / {len(test_items)} test (depths {depths}, "
-          f"dim={args.dim}, hops={args.hops})", flush=True)
-    if not navex:
+          f"dim={args.dim}, hops={args.hops}, dagger={args.dagger})", flush=True)
+    if not pool:
         print("no provable steps — nothing to learn"); return
     model = MindController(codec, hidden=96, hops=args.hops, halting=False)
     opt = torch.optim.AdamW(model.parameters(), lr=3e-3)
-    n, bs = len(navex), args.batch_size
+    bs = args.batch_size
 
-    for epoch in range(args.epochs):
-        model.train()
-        perm = torch.randperm(n).tolist()
-        last = sel = cnt = 0
-        for i in range(0, n, bs):
-            sub = [navex[j] for j in perm[i:i + bs]]
-            batch = pw.build_proofsearch_batch(sub, codec)
-            out = model(batch)
-            loss = compute_clause_psyche_losses(out, batch, model)
-            opt.zero_grad(); loss["total"].backward(); opt.step()
-            last = float(loss["total"].detach())
-            sel += int((out["answer_logits"].argmax(-1) == batch.answer).sum()); cnt += len(sub)
-        if epoch % 10 == 9 or epoch == 0:
-            print(f"  epoch {epoch+1:3d} loss={last:.3f} train_select_acc={sel/max(cnt,1):.2f}",
-                  flush=True)
-            tot, bd = _eval_rollout(model, codec, test_items, args.max_steps, per_depth=25)
-            line = "  ".join(f"d{d}={bd[d][0]/max(bd[d][1],1):.2f}({bd[d][2]/max(bd[d][1],1):.1f}st)"
-                             for d in sorted(bd))
-            print(f"  [rollout] verdict acc={tot[0]/max(tot[1],1):.3f} | {line}", flush=True)
+    def report(tag):
+        tot, bd = _eval_rollout(model, codec, test_items, args.max_steps, per_depth=25)
+        line = "  ".join(f"d{d}={bd[d][0]/max(bd[d][1],1):.2f}({bd[d][2]/max(bd[d][1],1):.1f}st)"
+                         for d in sorted(bd))
+        print(f"  [{tag}] verdict acc={tot[0]/max(tot[1],1):.3f} | {line}", flush=True)
+
+    def run_epochs(n_epochs, eval_every):
+        for epoch in range(n_epochs):
+            model.train()
+            perm = torch.randperm(len(pool)).tolist()
+            last = sel = cnt = 0
+            for i in range(0, len(pool), bs):
+                sub = [pool[j] for j in perm[i:i + bs]]
+                batch = pw.build_proofsearch_batch(sub, codec)
+                out = model(batch)
+                loss = compute_clause_psyche_losses(out, batch, model)
+                opt.zero_grad(); loss["total"].backward(); opt.step()
+                last = float(loss["total"].detach())
+                sel += int((out["answer_logits"].argmax(-1) == batch.answer).sum()); cnt += len(sub)
+            if epoch % eval_every == eval_every - 1 or epoch == 0:
+                print(f"  epoch {epoch+1:3d} loss={last:.3f} "
+                      f"train_select_acc={sel/max(cnt,1):.2f}", flush=True)
+                report("rollout")
+
+    run_epochs(args.epochs, 10)                           # warm start (teacher-forced)
+    if args.dagger:
+        from nsm_ct.mind.proof_search import ProofSearch
+        searcher = ProofSearch(model, codec)
+        for r in range(args.dagger_rounds):
+            new = searcher.collect_dagger(train_items, max_steps=args.max_steps)
+            pool.extend(new)
+            if len(pool) > args.dagger_cap:               # keep a teacher+on-policy mix
+                pool = random.sample(pool, args.dagger_cap)
+            print(f"[dagger round {r+1}/{args.dagger_rounds}] +{len(new)} on-policy states, "
+                  f"pool={len(pool)}", flush=True)
+            run_epochs(args.dagger_epochs, args.dagger_epochs)
     if args.save:
         os.makedirs(os.path.dirname(args.save) or ".", exist_ok=True)
         torch.save({"sd": model.state_dict(), "dim": args.dim, "hops": args.hops}, args.save)
@@ -132,6 +152,11 @@ def main() -> None:
     ap.add_argument("--w-value", type=float, default=1.0)
     ap.add_argument("--navigate", action="store_true",
                     help="M10: learn the rule-SELECTION navigation policy + rollout eval")
+    ap.add_argument("--dagger", action="store_true",
+                    help="M10 step 2b: on-policy DAgger rounds after the warm start")
+    ap.add_argument("--dagger-rounds", type=int, default=4)
+    ap.add_argument("--dagger-epochs", type=int, default=10)
+    ap.add_argument("--dagger-cap", type=int, default=6000)
     ap.add_argument("--max-steps", type=int, default=8)
     ap.add_argument("--save", type=str, default="")
     args = ap.parse_args()

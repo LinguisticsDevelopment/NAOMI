@@ -214,6 +214,58 @@ def test_apply_rule_navigation_chain():
     assert ("bob", "is", "smart", "+") in ex.pw_closure   # reached the proof
 
 
+def _two_step_theory():
+    from nsm_ct.reasoning_oracle import Rule
+    facts = [("cara", "is", "furry", "+")]
+    rules = [Rule((("?x", "is", "kind", "+"),), ("?x", "is", "smart", "+"), name="a"),   # r0
+             Rule((("?x", "is", "furry", "+"),), ("?x", "is", "kind", "+"), name="b"),   # r1
+             Rule((("?x", "is", "round", "+"),), ("?x", "is", "blue", "+"), name="c")]   # r2 (distractor)
+    return facts, rules, ("cara", "is", "smart", "+")
+
+
+def test_gold_plan_parity_and_expert_recovery():
+    """gold_plan is the single source of truth (proof_rule_steps is a wrapper), and
+    the DAgger expert returns the right move at BOTH the base state and an off-path
+    state the policy could wander into — the property that cures exposure bias."""
+    facts, rules, query = _two_step_theory()
+    needed, rule_of, label = pw.gold_plan(facts, rules, query)
+    steps, lab2 = pw.proof_rule_steps(facts, rules, query)
+    assert label == lab2 == pw.TRUE
+    assert [g for (_f, g) in steps] == [rule_of[lit] for lit in needed] == [1, 0]
+
+    # at the base state the expert picks r1 (furry→kind), the first proof move.
+    assert pw.expert_action(set(facts), needed, rule_of) == 1
+    # OFF-PATH: the policy fired the distractor r2 (adds blue); the recovery move is
+    # still r1 — the earliest needed literal (kind) is what's missing.
+    off = set(facts) | {("cara", "is", "blue", "+")}
+    assert pw.expert_action(off, needed, rule_of) == 1
+    # mid-proof (kind present): expert advances to r0 (kind→smart).
+    assert pw.expert_action(set(facts) | {("cara", "is", "kind", "+")}, needed, rule_of) == 0
+    # all needed literals present (full chain derived) → goal proved, no move.
+    proved = set(facts) | {("cara", "is", "kind", "+"), ("cara", "is", "smart", "+")}
+    assert pw.expert_action(proved, needed, rule_of) is None
+    # Unknown query has no plan to navigate.
+    assert pw.gold_plan(facts, rules, ("cara", "is", "green", "+")) == ([], {}, pw.UNKNOWN)
+
+
+def test_collect_dagger_labels_are_applicable():
+    """collect_dagger rolls out the (untrained) policy and labels each visited state
+    with an applicable expert move — examples drop straight into the trainer."""
+    from nsm_ct.tpr import TPRCodec
+    from nsm_ct.mind.controller import MindController
+    from nsm_ct.mind.proof_search import ProofSearch
+    facts, rules, query = _two_step_theory()
+    items = [(facts, rules, query, 0, 2)]              # (facts, rules, query, ans_idx, depth)
+    codec = TPRCodec(dim=32)
+    searcher = ProofSearch(MindController(codec, hidden=32, hops=3, halting=False), codec)
+    ex = searcher.collect_dagger(items, max_steps=6)
+    assert ex                                          # provable item yields states
+    needed, rule_of, _ = pw.gold_plan(facts, rules, query)
+    for (state, q, rs, expert_idx) in ex:
+        assert q == query and rs is rules
+        assert expert_idx == pw.expert_action(set(state), needed, rule_of)  # valid label
+
+
 @pytest.mark.skipif(not _data_present(), reason="ProofWriter data absent")
 def test_executor_matches_symbolic_floor():
     """Executor-driven verdict == the 0.989 symbolic floor (same engine) across depths

@@ -64,5 +64,38 @@ class ProofSearch:
             return pw.FALSE
         return pw.UNKNOWN
 
+    def collect_dagger(self, items, *, max_steps: int = 6) -> List[Tuple]:
+        """DAgger: roll out the *current* policy and, at every state it actually
+        visits, emit a training example labeled with the EXPERT's recovery move
+        (:func:`pw.expert_action`). This is what cures exposure bias — the policy
+        learns the right move from the off-gold-path states its own mistakes create.
+
+        Returns examples shaped exactly like :func:`pw.navigation_examples`
+        (``(current_facts, query, rules, expert_idx)``). Unknown items have no proof
+        plan and are skipped (the budget handles their abstention)."""
+        self.controller.eval()
+        out: List[Tuple] = []
+        for (facts, rules, query, _a, _d) in items:
+            needed, rule_of, label = pw.gold_plan(facts, rules, query)
+            if not needed:                                # Unknown — nothing to navigate
+                continue
+            ex = Executor(codec=self.codec)
+            ex.load_theory(facts, rules)
+            s, p, o, qpol = query
+            opp = "-" if qpol == "+" else "+"
+            for _step in range(max_steps):
+                if (s, p, o, qpol) in ex.pw_closure or (s, p, o, opp) in ex.pw_closure:
+                    break
+                expert = pw.expert_action(ex.pw_closure, needed, rule_of)
+                if expert is None:                        # goal's literals all present
+                    break
+                out.append((sorted(ex.pw_closure), query, rules, expert))
+                batch = pw.build_proofsearch_batch(
+                    [(sorted(ex.pw_closure), query, rules, 0)], self.codec)
+                with torch.no_grad():
+                    idx = int(self.controller(batch)["answer_logits"].argmax(-1)[0])
+                ex.apply_rule(rules[idx])                 # advance on the POLICY's move
+        return out
+
 
 __all__ = ["ProofSearch"]

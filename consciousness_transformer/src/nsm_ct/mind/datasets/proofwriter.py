@@ -228,12 +228,15 @@ def proof_path(facts, rules, query):
     return needed, label
 
 
-def proof_rule_steps(facts, rules, query):
-    """The proof as an ordered sequence of ``(current_facts, gold_rule_index)`` steps
-    — the supervision for *learned navigation* (which rule to apply next). Rules are
-    uniquely indexed so the firing rule is identifiable; ``current_facts`` is the
-    closure just before that rule fires (teacher-forced state). Returns
-    ``(steps, label)``; ``steps == []`` for Unknown (no proof to navigate)."""
+def gold_plan(facts, rules, query):
+    """The proof structure for navigation: ``(needed_ordered, rule_of, label)``.
+
+    ``needed_ordered`` is the list of derived literals the proof requires, in
+    derivation order (facts→query); ``rule_of`` maps each to the gold rule index that
+    derives it; ``label`` ∈ {TRUE, FALSE, UNKNOWN}. For Unknown there is no proof, so
+    ``needed_ordered == []``. This is the single source of truth for both the
+    teacher-forced steps (:func:`proof_rule_steps`) and the DAgger expert
+    (:func:`expert_action`)."""
     idx_rules = [Rule(r.antecedents, r.consequent, name=f"r{i}") for i, r in enumerate(rules)]
     known, chain = forward_chain(list(facts), idx_rules)
     s, p, o, qpol = query
@@ -243,7 +246,7 @@ def proof_rule_steps(facts, rules, query):
     elif (s, p, o, opp) in known:
         target, label = (s, p, o, opp), FALSE
     else:
-        return [], UNKNOWN
+        return [], {}, UNKNOWN
     derived_by = {st.derived: st for st in chain}
     order = {st.derived: i for i, st in enumerate(chain)}
     needed, seen, frontier = [], set(), [target]
@@ -258,11 +261,33 @@ def proof_rule_steps(facts, rules, query):
         needed.append(lit)
         frontier.extend(st.support)
     needed.sort(key=lambda l: order.get(l, 0))        # derivation order = facts→query
+    rule_of = {lit: int(derived_by[lit].rule[1:]) for lit in needed}   # "r{i}" → i
+    return needed, rule_of, label
+
+
+def expert_action(state_facts, needed_ordered, rule_of):
+    """The DAgger expert on ANY state (gold-path or not): the rule index that derives
+    the **earliest** needed literal still missing from ``state_facts``, or ``None`` if
+    all needed literals are present (goal proved). Recovery-capable by construction —
+    earlier needed literals are base facts or already-derived, so the move is always
+    applicable and makes proof progress."""
+    have = set(state_facts)
+    for lit in needed_ordered:
+        if lit not in have:
+            return rule_of[lit]
+    return None
+
+
+def proof_rule_steps(facts, rules, query):
+    """The proof as an ordered sequence of ``(current_facts, gold_rule_index)`` steps
+    — the teacher-forced supervision for *learned navigation* (which rule to apply
+    next). ``current_facts`` is the closure just before that rule fires. Returns
+    ``(steps, label)``; ``steps == []`` for Unknown (no proof to navigate)."""
+    needed, rule_of, label = gold_plan(facts, rules, query)
     base = set(facts)
     steps = []
     for lit in needed:
-        rule_idx = int(derived_by[lit].rule[1:])      # "r{i}" → i
-        steps.append((sorted(base), rule_idx))        # state BEFORE this rule fires
+        steps.append((sorted(base), rule_of[lit]))    # state BEFORE this rule fires
         base = base | {lit}
     return steps, label
 
