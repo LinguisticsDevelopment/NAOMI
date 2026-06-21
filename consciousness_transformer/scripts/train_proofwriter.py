@@ -125,7 +125,9 @@ def train_navigate(args) -> None:
         from nsm_ct.mind.proof_search import ProofSearch
         searcher = ProofSearch(model, codec)
         for r in range(args.dagger_rounds):
-            new = searcher.collect_dagger(train_items, max_steps=args.max_steps)
+            subset = (random.sample(train_items, args.dagger_items)
+                      if len(train_items) > args.dagger_items else train_items)
+            new = searcher.collect_dagger(subset, max_steps=args.max_steps)
             pool.extend(new)
             if len(pool) > args.dagger_cap:               # keep a teacher+on-policy mix
                 pool = random.sample(pool, args.dagger_cap)
@@ -157,6 +159,8 @@ def main() -> None:
     ap.add_argument("--dagger-rounds", type=int, default=4)
     ap.add_argument("--dagger-epochs", type=int, default=10)
     ap.add_argument("--dagger-cap", type=int, default=6000)
+    ap.add_argument("--dagger-items", type=int, default=200,
+                    help="train items to roll out per DAgger round (subsample for speed)")
     ap.add_argument("--max-steps", type=int, default=8)
     ap.add_argument("--save", type=str, default="")
     args = ap.parse_args()
