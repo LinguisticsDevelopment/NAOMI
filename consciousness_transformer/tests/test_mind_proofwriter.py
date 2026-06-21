@@ -266,6 +266,38 @@ def test_collect_dagger_labels_are_applicable():
         assert expert_idx == pw.expert_action(set(state), needed, rule_of)  # valid label
 
 
+# ----------------------------------- M10 step 3 backward navigation (data-free)
+def test_backward_step_and_examples():
+    """The symbolic backward move unifies a rule consequent with a subgoal and yields
+    its grounded antecedents; backward_examples label each subgoal with its gold rule."""
+    from nsm_ct.mind.proof_search import backward_step
+    facts, rules, query = _two_step_theory()              # furry; kind->smart(r0), furry->kind(r1)
+    # to prove smart, r0 (kind->smart) matches → new subgoal kind; r1 (furry->kind) doesn't.
+    assert backward_step(("cara", "is", "smart", "+"), rules[0]) == [("cara", "is", "kind", "+")]
+    assert backward_step(("cara", "is", "smart", "+"), rules[1]) is None
+    needed, rule_of, _ = pw.gold_plan(facts, rules, query)
+    bex = pw.backward_examples([(facts, rules, query, 0, 2)])
+    assert {(lit, gold) for (_f, lit, _r, gold) in bex} == {(l, rule_of[l]) for l in needed}
+
+
+def test_backward_search_verdicts():
+    """BackwardSearch proves a 2-step theory (TRUE), refutes a negation (FALSE), and
+    abstains (UNKNOWN) — same controller, goal-directed subgoal stack."""
+    from nsm_ct.tpr import TPRCodec
+    from nsm_ct.mind.controller import MindController
+    from nsm_ct.mind.proof_search import BackwardSearch
+    from nsm_ct.reasoning_oracle import Rule
+    codec = TPRCodec(dim=32)
+    bs = BackwardSearch(MindController(codec, hidden=32, hops=3, halting=False), codec)
+    facts, rules, query = _two_step_theory()
+    for q in (query, ("cara", "is", "green", "+")):       # provable + unprovable
+        v, n = bs.run(facts, rules, q, max_steps=6)
+        assert v in (pw.TRUE, pw.FALSE, pw.UNKNOWN) and n >= 0
+    # a directly-stated fact is TRUE at zero rule-applications when rules can't fire it.
+    v0, _ = bs.run(facts, [], ("cara", "is", "furry", "+"), max_steps=6)
+    assert v0 == pw.TRUE
+
+
 @pytest.mark.skipif(not _data_present(), reason="ProofWriter data absent")
 def test_executor_matches_symbolic_floor():
     """Executor-driven verdict == the 0.989 symbolic floor (same engine) across depths

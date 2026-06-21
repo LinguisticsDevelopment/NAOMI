@@ -57,10 +57,12 @@ def _accuracy_by_depth(model, items, codec):
     return tot, agg
 
 
-def _eval_rollout(controller, codec, test_items, max_steps, per_depth=40):
-    """Roll out the learned navigation policy → verdict accuracy + avg steps, by depth."""
-    from nsm_ct.mind.proof_search import ProofSearch
-    searcher = ProofSearch(controller, codec)
+def _eval_rollout(controller, codec, test_items, max_steps, per_depth=40, backward=False):
+    """Roll out the learned navigation policy → verdict accuracy + avg steps, by depth.
+    ``backward`` selects goal-directed :class:`BackwardSearch` over forward
+    :class:`ProofSearch`."""
+    from nsm_ct.mind.proof_search import BackwardSearch, ProofSearch
+    searcher = (BackwardSearch if backward else ProofSearch)(controller, codec)
     by_depth = collections.defaultdict(lambda: [0, 0, 0])   # [correct, n, steps]
     seen = collections.Counter()
     gold_labels = (pw.TRUE, pw.FALSE, pw.UNKNOWN)
@@ -86,8 +88,9 @@ def train_navigate(args) -> None:
     codec = TPRCodec(dim=args.dim)
     train_items = _load_items("train", depths, args.train_per_depth)
     test_items = _load_items("test", depths, args.test_per_depth)
-    pool = pw.navigation_examples(train_items)
-    print(f"ProofWriter navigation: {len(pool)} rule-selection steps from "
+    pool = (pw.backward_examples if args.backward else pw.navigation_examples)(train_items)
+    mode = "BACKWARD (goal-directed)" if args.backward else "forward"
+    print(f"ProofWriter {mode} navigation: {len(pool)} selection steps from "
           f"{len(train_items)} train items / {len(test_items)} test (depths {depths}, "
           f"dim={args.dim}, hops={args.hops}, dagger={args.dagger})", flush=True)
     if not pool:
@@ -97,7 +100,8 @@ def train_navigate(args) -> None:
     bs = args.batch_size
 
     def report(tag):
-        tot, bd = _eval_rollout(model, codec, test_items, args.max_steps, per_depth=25)
+        tot, bd = _eval_rollout(model, codec, test_items, args.max_steps, per_depth=25,
+                                backward=args.backward)
         line = "  ".join(f"d{d}={bd[d][0]/max(bd[d][1],1):.2f}({bd[d][2]/max(bd[d][1],1):.1f}st)"
                          for d in sorted(bd))
         print(f"  [{tag}] verdict acc={tot[0]/max(tot[1],1):.3f} | {line}", flush=True)
@@ -121,7 +125,7 @@ def train_navigate(args) -> None:
                 report("rollout")
 
     run_epochs(args.epochs, 10)                           # warm start (teacher-forced)
-    if args.dagger:
+    if args.dagger and not args.backward:                 # DAgger is forward-only
         from nsm_ct.mind.proof_search import ProofSearch
         searcher = ProofSearch(model, codec)
         for r in range(args.dagger_rounds):
@@ -154,6 +158,8 @@ def main() -> None:
     ap.add_argument("--w-value", type=float, default=1.0)
     ap.add_argument("--navigate", action="store_true",
                     help="M10: learn the rule-SELECTION navigation policy + rollout eval")
+    ap.add_argument("--backward", action="store_true",
+                    help="M10 step 3: goal-directed BACKWARD navigation (subgoal-driven)")
     ap.add_argument("--dagger", action="store_true",
                     help="M10 step 2b: on-policy DAgger rounds after the warm start")
     ap.add_argument("--dagger-rounds", type=int, default=4)
@@ -165,7 +171,7 @@ def main() -> None:
     ap.add_argument("--save", type=str, default="")
     args = ap.parse_args()
     torch.manual_seed(0)
-    if args.navigate:
+    if args.navigate or args.backward:
         return train_navigate(args)
     depths = args.depths.split(",")
 

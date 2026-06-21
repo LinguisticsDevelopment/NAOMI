@@ -18,10 +18,25 @@ from typing import List, Tuple
 
 import torch
 
+from ..reasoning_oracle import _is_var, ground, unify
 from ..tpr import TPRCodec
 from .controller import MindController
 from .datasets import proofwriter as pw
 from .executor import Executor
+
+
+def backward_step(subgoal, rule):
+    """The symbolic BACKWARD move: can ``rule`` prove ``subgoal``? Unify the rule's
+    consequent with the (ground) subgoal; if it matches, return the rule's antecedents
+    as the new subgoals (grounded by the binding) — else ``None``. This is the engine
+    (unification), not the weights; the controller only *chose* the rule."""
+    theta = unify(rule.consequent, subgoal)
+    if theta is None:
+        return None
+    subs = [ground(ant, theta) for ant in rule.antecedents]
+    if any(_is_var(x) for s in subs for x in s):     # v1: ground subgoals only
+        return None
+    return subs
 
 
 class ProofSearch:
@@ -98,4 +113,63 @@ class ProofSearch:
         return out
 
 
-__all__ = ["ProofSearch"]
+class BackwardSearch:
+    """Goal-directed BACKWARD navigation with the SAME controller + contrastive head.
+
+    Forward search makes the depth-2 *first* move (a non-goal-matching intermediate)
+    near-impossible for the learned 1-hop heuristic. Backward search decomposes the
+    proof into a chain of 1-hop decisions the policy already does perfectly: "to prove
+    this subgoal, pick the rule whose consequent matches it." The fixed STM facts are
+    the context; the changing **subgoal** sits in the ``is_q`` slot of the *unchanged*
+    selection batch. The engine (unification) expands each chosen rule; only *which
+    subgoal to expand next* is learned."""
+
+    def __init__(self, controller: MindController, codec: TPRCodec) -> None:
+        self.controller = controller
+        self.codec = codec
+
+    def _prove(self, facts_set, rules, goal, max_steps) -> Tuple[bool, int]:
+        """Bounded backward proof of ``goal`` → ``(proved, steps)``. A subgoal in STM
+        is discharged; otherwise the controller picks a rule and the engine expands it
+        backward. A non-matching pick (or budget exhaustion) fails the branch."""
+        stack = [goal]
+        steps = 0
+        while stack:
+            if steps >= max_steps:
+                return False, steps
+            g = stack.pop()
+            if g in facts_set:                            # known fact — discharged
+                continue
+            batch = pw.build_proofsearch_batch([(sorted(facts_set), g, rules, 0)], self.codec)
+            with torch.no_grad():
+                idx = int(self.controller(batch)["answer_logits"].argmax(-1)[0])
+            subs = backward_step(g, rules[idx])           # engine expands the chosen rule
+            steps += 1
+            if subs is None:                              # picked a rule that can't prove g
+                return False, steps
+            stack.extend(subs)
+        return True, steps                                # every subgoal reduced to facts
+
+    def run(self, facts, rules, query, *, max_steps: int = 8) -> Tuple[str, int]:
+        """Verdict by backward proof: prove the query → TRUE; else prove its negation →
+        FALSE; else UNKNOWN (budget/branch exhausted — the OWA abstain)."""
+        self.controller.eval()
+        facts_set = set(facts)
+        s, p, o, qpol = query
+        opp = "-" if qpol == "+" else "+"
+        if not rules:
+            if query in facts_set:
+                return pw.TRUE, 0
+            if (s, p, o, opp) in facts_set:
+                return pw.FALSE, 0
+            return pw.UNKNOWN, 0
+        proved, st1 = self._prove(facts_set, rules, query, max_steps)
+        if proved:
+            return pw.TRUE, st1
+        neg, st2 = self._prove(facts_set, rules, (s, p, o, opp), max_steps)
+        if neg:
+            return pw.FALSE, st1 + st2
+        return pw.UNKNOWN, st1 + st2
+
+
+__all__ = ["ProofSearch", "BackwardSearch", "backward_step"]

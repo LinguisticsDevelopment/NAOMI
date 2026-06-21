@@ -407,9 +407,26 @@ def navigation_examples(items):
     return out
 
 
+def backward_examples(items):
+    """Expand items into BACKWARD per-subgoal selection examples
+    ``(base_facts, subgoal, rules, gold_rule_idx)``: for each derived literal the proof
+    needs, "to prove this subgoal, pick the rule whose consequent yields it"
+    (``gold_plan``'s ``rule_of``). The subgoal sits in the same goal slot the forward
+    examples use — so this reuses :func:`build_proofsearch_batch` and the trainer
+    unchanged, while turning every step into the 1-hop consequent-match the policy
+    already does at d1=1.00."""
+    out = []
+    for (facts, rules, query, _a, _d) in items:
+        needed, rule_of, _label = gold_plan(facts, rules, query)
+        for lit in needed:                                # subgoal → its gold rule
+            out.append((list(facts), lit, rules, rule_of[lit]))
+    return out
+
+
 __all__ = [
     "Literal", "PWExample", "parse_literal", "parse_rule", "parse_record",
     "load_records", "verify", "TRUE", "FALSE", "UNKNOWN", "default_data_dir",
     "flatten", "build_pw_batch", "proof_path", "value_codebook", "proof_supervision",
-    "proof_rule_steps", "encode_rule", "build_proofsearch_batch", "navigation_examples",
+    "proof_rule_steps", "gold_plan", "expert_action", "encode_rule",
+    "build_proofsearch_batch", "navigation_examples", "backward_examples",
 ]

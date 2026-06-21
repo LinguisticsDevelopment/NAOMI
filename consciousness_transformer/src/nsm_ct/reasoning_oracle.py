@@ -60,6 +60,18 @@ def _ground(pattern: Triple, s: Dict[str, str]) -> Triple:
     return tuple(s.get(x, x) if _is_var(x) else x for x in pattern)  # type: ignore[return-value]
 
 
+def unify(pattern: Triple, fact: Triple, subst: Optional[Dict[str, str]] = None) -> Optional[Dict[str, str]]:
+    """Public alias for :func:`_unify` — bind ``pattern``'s variables to ``fact`` (or
+    ``None`` if they clash). Used by goal-directed backward search to match a rule's
+    consequent against a subgoal."""
+    return _unify(pattern, fact, subst or {})
+
+
+def ground(pattern: Triple, subst: Dict[str, str]) -> Triple:
+    """Public alias for :func:`_ground` — substitute bound variables into ``pattern``."""
+    return _ground(pattern, subst)
+
+
 def forward_chain(
     facts: List[Triple], rules: List[Rule], max_iters: int = 16,
 ) -> Tuple[set, List[DerivStep]]:
