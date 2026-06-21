@@ -787,13 +787,26 @@ in four milestones:
     accuracy 0.84** (d0=1.00, **d1=1.00**, d2=0.48). **vs the M8/M9 ceiling of 0.50 (= majority) on the SAME
     data** — the architecture, not scale, was the problem. d1=1.00 is perfect one-step navigation; the
     engine derives, only *which move next* is learned.
-  - **Honest frontier:** d2 plateaus at 0.48 *despite* 0.97 single-step accuracy — **exposure bias**
-    (teacher-forced training vs the policy's own rollout state distribution; 2 sequential decisions
-    compound). The overall 0.84 also benefits from Unknown-via-budget being correct, so the *pure*
-    navigation signal is the provable depths (d1=1.00, d2 weak). The next lever is the known, cheap one:
-    **DAgger / rollout (on-policy) training** — still pure policy, no weight-baked logic. Gates: executor
-    parity + gold-teacher + rollout-terminates + apply_rule→proof (suite 284). `scripts/train_proofwriter.py
-    --navigate` (rollout eval by depth + steps).
+  - **Honest frontier:** d2 plateaus at 0.48 *despite* 0.97 single-step (teacher-forced) accuracy; the
+    overall 0.84 also benefits from Unknown-via-budget being correct, so the *pure* navigation signal is the
+    provable depths (d1=1.00, d2 weak). Gates: executor parity + gold-teacher + rollout-terminates +
+    apply_rule→proof. `scripts/train_proofwriter.py --navigate`.
+  - **Step 2b — DAgger to fix d2 (MEASURED NEGATIVE + isolated root cause).** Hypothesis: d2 is exposure
+    bias (trained teacher-forced, rolled out on its own states). Built on-policy DAgger
+    (`proofwriter.gold_plan`/`expert_action` — a recovery-capable expert on ANY state;
+    `proof_search.collect_dagger`; `train_proofwriter --dagger`). **Result: d2 stayed at *exactly* 0.48**
+    across 4 rounds (d1 0.96→1.00; overall 0.827→0.840). DAgger did not move it — so the hypothesis is
+    wrong. **Diagnostic (`scripts/diagnose_d2.py`, genuine 2-step provable items): the policy fails at the
+    FIRST move — first-rule-correct 9/40 = 0.23** (vs d1=1.00), second-rule|first 0.33, fully-solved 0.05.
+    **Ablation:** oversampling the rare multi-step first-moves ×8 barely moved it (0.23→0.30, second→0.00) —
+    so it is **not data imbalance** either. **Root cause: the policy learned a myopic 1-hop heuristic**
+    ("pick the rule whose consequent = the goal") — perfect at d1, near-chance at d2, whose first move is a
+    *non-goal-matching intermediate*. The forward-facts+goal encoding **cannot represent multi-hop
+    goal-relevance** (that an intermediate rule is a precondition for a rule that yields the goal). Neither
+    exposure bias nor imbalance — it's **representational**. **Next milestone (reframed): goal-directed /
+    backward navigation** — a subgoal stack or a goal-relevance signal over rules, so the controller can
+    plan more than one hop. DAgger code is kept (sound infra; lifts d1→1.00; the right tool *if* the
+    bottleneck were exposure bias). Suite 286.
 
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
