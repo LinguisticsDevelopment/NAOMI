@@ -862,6 +862,26 @@ in four milestones:
   (context-sensitive routing, clarification). **NLP English-in (grammar-file encoders/decoders) is next** —
   the parser will emit the mood marker this learned router already consumes. `scripts/talk_feed.py`; suite 292.
 
+- **M13 (stages 1–2) — talk to it: owned controlled-language encoder/decoder with subordination.** The
+  system reasoned/routed in meaning-space but could only talk through a flat 7-relation regex. Decisions:
+  **controlled English first** (owned, deterministic, round-trip-tested; NOT the fallible open-domain
+  `quantum_parser`) but **broad subordination**, **deterministic-first** (no learned WSD/coref). Built a
+  **recursive-descent parser** `mind/grammar.py` (structural — driven by articles/prepositions/verbs, not a
+  vocab list) emitting the *same* tagged meaning objects `consume` already takes, so it drops in unchanged.
+  **Full parity:** `grammar.parse == membrane.parse` on all 429 curriculum sentences — a drop-in superset.
+  **New (subordination):** conditionals `if X, Y` → a **grounded** rule (named conditional is about that
+  entity — does NOT over-generalize to `?p`); **quantified descriptions** "everyone who is in the kitchen
+  can see the window" → a `?p` **universal** rule; restrictive relatives "the N that …" likewise; yes/no
+  questions carry polarity. The **`ConsciousLoop.converse(lines)`** door: English in → parse → `consume` →
+  English out; unparsable input abstains (no silent garbage). **End-to-end gate passes:** *"everyone who is
+  in the kitchen can see the window. mary is in the kitchen. what can mary see?"* → **"Mary can see the
+  window."** (no controller — wh + forward-chain). **Honest scope / next:** the three hard problems are
+  staged — **referentials** (pronouns via recency+agreement+salience; prepositions via a curated
+  frame→relation lexicon) and **light WSD** (POS + frame lexicon; context-overlap for residual noun
+  polysemy) are stages 3–4, not yet built; relatives drop the head-noun type (single-antecedent rules);
+  built-in reasoning schemas (INHERITANCE) have no controlled-English sentence and stay seeded knowledge.
+  `mind/grammar.py`, `scripts/talk.py`, `tests/test_mind_grammar.py`; suite 300.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a

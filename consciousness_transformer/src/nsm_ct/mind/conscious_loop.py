@@ -73,6 +73,25 @@ class ConsciousLoop:
         self.controller = controller
         self.resolver = resolver or _TrivialResolver()
 
+    # -- talk to it: English in, English out (M13) ---------------------------
+    def converse(self, lines) -> List[str]:
+        """Hold a conversation in controlled English: parse each line to a meaning
+        clause, run the whole batch through :meth:`consume`, and render each answer
+        back to English. Statements are absorbed (no reply); questions are answered.
+        Unparsable lines are skipped (the system abstains rather than guessing).
+        Returns one English answer string per question, in order.
+        """
+        from . import grammar, verbalize
+        feed = [obj for obj in (grammar.parse(ln) for ln in lines) if obj is not None]
+        replies: List[str] = []
+        for r in self.consume(feed):
+            q = r["query"]
+            if len(q) >= 4:                                   # yes/no verdict
+                replies.append(verbalize.verbalize_verdict(r["answer"]))
+            else:                                             # wh: render the value
+                replies.append(verbalize.verbalize_answer(q, r["answer"]))
+        return replies
+
     # -- THE single door: a clause feed in, self-routed responses out --------
     def consume(self, feed) -> List[Dict[str, object]]:
         """Process a feed of tagged meaning clauses through one door.

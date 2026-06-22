@@ -24,6 +24,15 @@ def verbalize_answer(query: Tuple[str, str], answer: Optional[str]) -> str:
     return _cap(membrane.render_fact(s, r, answer))
 
 
+def verbalize_verdict(answer: Optional[str]) -> str:
+    """Render a yes/no verdict (``true``/``false``/``Unknown``/abstain) as a reply."""
+    if answer == "true":
+        return "Yes."
+    if answer == "false":
+        return "No."
+    return "I don't know."
+
+
 def _relevant_steps(support: List, target) -> List:
     """The minimal sub-chain that actually derives ``target`` (backward trace).
 
@@ -78,4 +87,4 @@ def _cap(text: str) -> str:
     return text[:1].upper() + text[1:] if text else text
 
 
-__all__ = ["verbalize_answer", "verbalize_trace"]
+__all__ = ["verbalize_answer", "verbalize_verdict", "verbalize_trace"]
