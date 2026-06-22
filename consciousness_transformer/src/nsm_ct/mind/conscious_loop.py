@@ -77,41 +77,47 @@ class ConsciousLoop:
     def consume(self, feed) -> List[Dict[str, object]]:
         """Process a feed of tagged meaning clauses through one door.
 
-        Each clause is routed by its **own meaning-type** (not an external label):
-          * ``("fact", s, r, v, pol?)`` / ``("disj", …)`` → learn it into working memory
-          * ``("rule", Rule)`` / ``("rule", ants, cons)`` → learn the rule
-          * ``("query", s, r, v, pol)`` → yes/no: reason (``BackwardSearch``) → TRUE/FALSE/Unknown
-          * ``("query", s, r)``         → wh: derive the value over the accumulated theory
+        The **act** of each clause — absorb it vs answer it — is decided by the learned
+        controller (``op_head`` over the clause encoding), not a code switch: a
+        declarative clause is PERCEIVEd into working memory; an interrogative clause
+        triggers reasoning over everything accumulated. (Without a controller the loop
+        falls back to the clause's intrinsic meaning-type.) The clause *content* (fields,
+        rule shape) is read structurally for the action; only the decision is learned.
 
-        Returns one response dict per query, in order; learned facts/rules persist
-        across the feed (a later query uses what earlier clauses taught). No weights
-        are updated. ``self.facts`` / ``self.rules`` hold the accumulated theory.
+        Returns one response dict per answered query, in order. No weights are updated.
         """
+        from . import routing
         self.facts: List[Tuple[str, str, str, str]] = []
         self.rules: List[Rule] = []
         searcher = BackwardSearch(self.controller, self.codec) if self.controller else None
         responses: List[Dict[str, object]] = []
         for clause in feed:
-            tag = clause[0]
-            if tag in ("fact", "disj"):
-                self.facts.append(_norm_fact(clause))
-            elif tag == "rule":
-                self.rules.append(_norm_rule(clause))
-            elif tag == "query":
+            act = self._route(clause)
+            if act in routing.ANSWER_ACTS:                # the model says: this is a question
                 responses.append(self._answer(clause, searcher))
+            elif isinstance(clause[1], Rule) or clause[0] == "rule":
+                self.rules.append(_norm_rule(clause))     # absorb a rule
             else:
-                raise ValueError(f"unknown feed clause: {clause!r}")
+                self.facts.append(_norm_fact(clause))     # absorb a fact
         return responses
 
+    def _route(self, clause) -> int:
+        """The controller's act decision for one clause (``op_head`` argmax); falls back
+        to the clause's intrinsic meaning-type when there is no learned controller."""
+        from . import routing
+        if self.controller is None:
+            return routing.gold_act(clause)
+        return routing.predict_acts(self.controller, [clause], self.codec)[0]
+
     def _answer(self, clause, searcher) -> Dict[str, object]:
-        """Answer one query clause by reasoning over the accumulated theory."""
+        """Answer one query clause by reasoning over the accumulated theory. The reasoner
+        is chosen by the clause's content shape (yes/no literal vs wh value-slot)."""
         if len(clause) >= 5:                              # ("query", s, r, v, pol) — yes/no
             s, r, v, pol = clause[1], clause[2], clause[3], _norm_pol(clause[4])
             query = (s, r, v, pol)
             if searcher is None:
                 raise ValueError("yes/no queries need a learned controller")
-            verdict, nsteps = searcher.run(self.facts, self.rules, query,
-                                           max_steps=8)
+            verdict, nsteps = searcher.run(self.facts, self.rules, query, max_steps=8)
             return {"query": query, "answer": verdict, "steps": nsteps}
         _, s, r = clause                                  # ("query", s, r) — wh (derive a value)
         known, chain = forward_chain(list(self.facts), self.rules)

@@ -12,6 +12,7 @@ import torch
 from nsm_ct.clause_psyche_graph import STM
 from nsm_ct.episode import CurriculumGenerator
 from nsm_ct.mind import ops
+from nsm_ct.mind import routing
 from nsm_ct.mind.conscious_loop import ConsciousLoop
 from nsm_ct.mind.controller import MindController
 from nsm_ct.mind.datasets import proofwriter as pw
@@ -38,32 +39,92 @@ def test_teach_once_no_weight_update():
     assert all(torch.equal(before[k], after[k]) for k in before)  # zero weight change
 
 
+def _train_router(ctrl, codec, clauses, steps=160):
+    """Overfit the controller's act-head on a handful of clauses (the M12 router)."""
+    opt = torch.optim.Adam(ctrl.parameters(), lr=0.03)
+    tgt = routing.act_targets(clauses)
+    batch = routing.build_routing_batch(clauses, codec)
+    ctrl.train()
+    for _ in range(steps):
+        out = ctrl(batch); loss = routing.act_routing_loss(out, tgt)
+        opt.zero_grad(); loss.backward(); opt.step()
+    return ctrl
+
+
 def test_consume_one_door_learns_and_answers():
-    """The single door: a mixed clause feed is self-routed — facts/rules are learned,
-    and a yes/no query is ANSWERED by reasoning (no is_q flag, no answer options, no
-    weight update). A query with no support abstains (Unknown)."""
+    """The single door with LEARNED routing: the controller decides absorb-vs-answer
+    per clause (no is_q flag, no options). Facts/rules are learned; a yes/no query is
+    answered by reasoning; an unsupported query abstains. Weights frozen during consume."""
     codec = TPRCodec(dim=32)
     ltm = KnowledgeGraph(codec=codec)
     ctrl = MindController(codec, hidden=32, hops=3, halting=False)
-    before = {k: v.clone() for k, v in ctrl.state_dict().items()}
-    loop = ConsciousLoop(ltm, controller=ctrl)
 
     feed = [
         ("fact", "alice", "is", "furry", "+"),                 # taught
         ("rule", (("?x", "is", "furry", "+"),), ("?x", "is", "kind", "+")),
         ("rule", (("?x", "is", "kind", "+"),), ("?x", "is", "smart", "+")),
-        ("query", "alice", "is", "smart", "+"),                # a question — self-detected
+        ("query", "alice", "is", "smart", "+"),                # a question — model-detected
         ("query", "alice", "is", "green", "+"),                # unsupported → abstain
     ]
-    resp = loop.consume(feed)
-
-    assert loop.facts == [("alice", "is", "furry", "+")]       # learned the fact
-    assert len(loop.rules) == 2                                # learned the rules
-    assert len(resp) == 2                                      # answered both queries
+    _train_router(ctrl, codec, feed)                           # learn the act-routing
+    before = {k: v.clone() for k, v in ctrl.state_dict().items()}
+    loop_facts = ConsciousLoop(ltm, controller=ctrl)
+    resp = loop_facts.consume(feed)
+    assert loop_facts.facts == [("alice", "is", "furry", "+")]  # routed to memory
+    assert len(loop_facts.rules) == 2                           # rules routed to memory
+    assert len(resp) == 2                                       # both questions answered
     assert resp[0]["answer"] in (pw.TRUE, pw.FALSE, pw.UNKNOWN)
-    assert resp[1]["answer"] == pw.UNKNOWN                     # not derivable → abstain
+    assert resp[1]["answer"] == pw.UNKNOWN                      # not derivable → abstain
+    after = ctrl.state_dict()
+    assert all(torch.equal(before[k], after[k]) for k in before)  # zero weight change in consume
     after = ctrl.state_dict()
     assert all(torch.equal(before[k], after[k]) for k in before)  # zero weight change
+
+
+def test_learned_router_overfits_and_generalizes():
+    """The act-head learns absorb-vs-answer from the clause encoding (≈1.0 on its train
+    set) and GENERALIZES to unseen entities/relations — it learned 'interrogative mood →
+    answer', not a memorized lookup."""
+    codec = TPRCodec(dim=32)
+    ctrl = MindController(codec, hidden=32, hops=2, halting=False)
+    train = [
+        ("fact", "bob", "is", "tall", "+"),
+        ("rule", (("?x", "is", "tall", "+"),), ("?x", "is", "big", "+")),
+        ("query", "bob", "is", "big", "+"),
+        ("query", "bob", "CAN"),
+    ]
+    _train_router(ctrl, codec, train)
+    assert routing.predict_acts(ctrl, train, codec) == [routing.gold_act(c) for c in train]
+
+    unseen = [                                                 # different entities/relations
+        ("fact", "zara", "lives_in", "rome", "+"),
+        ("query", "zara", "lives_in", "rome", "+"),
+        ("rule", (("?x", "lives_in", "rome", "+"),), ("?x", "is", "roman", "+")),
+        ("query", "quinn", "PLACE"),
+    ]
+    got = routing.predict_acts(ctrl, unseen, codec)
+    want = [routing.gold_act(c) for c in unseen]
+    # the decisive split (answer vs absorb) generalizes from the mood marker
+    assert [a in routing.ANSWER_ACTS for a in got] == [w in routing.ANSWER_ACTS for w in want]
+
+
+def test_consume_routes_by_model_not_tag_mood_flip():
+    """consume's decision is the model's: the SAME content routes to memory when
+    declarative and to reasoning when interrogative (mood-flip)."""
+    codec = TPRCodec(dim=32)
+    ctrl = MindController(codec, hidden=32, hops=2, halting=False)
+    _train_router(ctrl, codec, [
+        ("fact", "amy", "is", "warm", "+"),
+        ("query", "amy", "is", "warm", "+"),
+    ])
+    loop = ConsciousLoop(KnowledgeGraph(codec=codec), controller=ctrl)
+
+    # declarative content → absorbed (answers nothing); interrogative content → answered
+    assert loop.consume([("fact", "amy", "is", "warm", "+")]) == []
+    assert loop.facts == [("amy", "is", "warm", "+")]
+    resp = loop.consume([("fact", "amy", "is", "warm", "+"),
+                         ("query", "amy", "is", "warm", "+")])
+    assert len(resp) == 1 and resp[0]["answer"] == pw.TRUE     # routed to reasoning → proven
 
 
 def test_consume_wh_query_derives_value():

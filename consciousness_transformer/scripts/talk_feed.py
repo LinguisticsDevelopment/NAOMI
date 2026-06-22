@@ -1,17 +1,21 @@
-"""M11 demo + gate: ONE door (`ConsciousLoop.consume`) over a clause feed.
+"""M12 demo + gate: ONE door (`ConsciousLoop.consume`) with LEARNED routing.
 
-Trains a small backward navigation policy, then (1) routes ProofWriter examples
-through `consume` as clause feeds — verifying the one-door path answers questions at
-the backward-reasoner's accuracy by depth — and (2) shows a hand-typed teach-then-ask
-feed. No `is_q` flag, no answer options: each clause is self-routed by its meaning-type.
+Trains a single controller that BOTH routes (the op-head decides, per clause, absorb
+vs answer) AND reasons (backward navigation). Then (1) routes ProofWriter examples
+through `consume` as clause feeds — the model, not a tag, decides each clause is a
+question — verifying answers at the backward-reasoner's accuracy; (2) reports routing
+accuracy on unseen test clauses; (3) a hand-typed teach-then-ask feed with the
+predicted act printed; (4) a mood-flip check (same content, declarative vs question).
 """
 import collections
+import random
 import sys
 
 sys.path.insert(0, "scripts")
 import torch
 
 from nsm_ct.tpr import TPRCodec
+from nsm_ct.mind import routing
 from nsm_ct.mind.conscious_loop import ConsciousLoop
 from nsm_ct.mind.controller import MindController
 from nsm_ct.mind.datasets import proofwriter as pw
@@ -25,18 +29,37 @@ codec = TPRCodec(dim=32)
 train_items = _load_items("train", DEPTHS, 70)
 test_items = _load_items("test", DEPTHS, 40)
 
-# --- train the backward navigation policy (the door's reasoner) ---------------
+
+def _route_clauses(items):
+    seen, out = set(), []
+    for (facts, rules, query, _a, _d) in items:
+        for c in [("fact", *f) for f in facts] + [("rule", r) for r in rules] + [("query", *query)]:
+            if repr(c) not in seen:
+                seen.add(repr(c)); out.append(c)
+    return out
+
+
+route_train, route_test = _route_clauses(train_items), _route_clauses(test_items)
+
+# --- train ONE controller: backward navigation + act-routing (M12) ------------
 pool = pw.backward_examples(train_items)
 model = MindController(codec, hidden=96, hops=3, halting=False)
 opt = torch.optim.AdamW(model.parameters(), lr=3e-3)
-print(f"training backward policy on {len(pool)} subgoal steps ...", flush=True)
+print(f"training (navigation {len(pool)} steps + routing {len(route_train)} clauses) ...", flush=True)
 for epoch in range(35):
     model.train(); perm = torch.randperm(len(pool)).tolist()
     for i in range(0, len(pool), 64):
         sub = [pool[j] for j in perm[i:i + 64]]
         b = pw.build_proofsearch_batch(sub, codec)
-        out = model(b); loss = compute_clause_psyche_losses(out, b, model)
-        opt.zero_grad(); loss["total"].backward(); opt.step()
+        out = model(b); loss = compute_clause_psyche_losses(out, b, model)["total"]
+        rc = random.sample(route_train, min(64, len(route_train)))
+        rout = model(routing.build_routing_batch(rc, codec))
+        loss = loss + 0.5 * routing.act_routing_loss(rout, routing.act_targets(rc))
+        opt.zero_grad(); loss.backward(); opt.step()
+
+racc = sum(p == routing.gold_act(c) for p, c in zip(routing.predict_acts(model, route_test, codec),
+                                                    route_test)) / max(len(route_test), 1)
+print(f"\n[LEARNED ROUTING] act accuracy on {len(route_test)} unseen test clauses = {racc:.3f}")
 
 # --- gate: answer ProofWriter through the ONE door (consume) ------------------
 GOLDS = (pw.TRUE, pw.FALSE, pw.UNKNOWN)
@@ -65,8 +88,9 @@ tot = [sum(v[0] for v in by_depth.values()), sum(v[1] for v in by_depth.values()
 line = "  ".join(f"d{d}={by_depth[d][0]/max(by_depth[d][1],1):.2f}" for d in sorted(by_depth))
 print(f"\n[ONE-DOOR consume() on ProofWriter] acc={tot[0]/max(tot[1],1):.3f} | {line}", flush=True)
 
-# --- demo: a hand-typed teach-then-ask feed -----------------------------------
-print("\n--- demo: teach three things, then ask (one feed, self-routed) ---")
+# --- demo: a hand-typed teach-then-ask feed (the model decides each act) -------
+print("\n--- demo: teach three things, then ask (the model routes each clause) ---")
+ACT = {routing.ABSORB: "absorb", routing.ANSWER: "answer"}
 demo = [
     ("fact", "alice", "is", "furry", "+"),
     ("rule", (("?x", "is", "furry", "+"),), ("?x", "is", "kind", "+")),
@@ -74,5 +98,14 @@ demo = [
     ("query", "alice", "is", "smart", "+"),
     ("query", "alice", "is", "green", "+"),
 ]
+for c, a in zip(demo, routing.predict_acts(model, demo, codec)):
+    print(f"  model routes {str(c[:4]):<46} -> {ACT.get(a, a)}")
+print()
 for r in ConsciousLoop(KnowledgeGraph(codec=codec), controller=model).consume(demo):
     print(f"  is {r['query'][0]} {r['query'][2]}?  ->  {r['answer']}  ({r.get('steps','?')} steps)")
+
+# --- mood-flip: same content, declarative vs interrogative --------------------
+print("\n--- mood-flip: identical content, the marker flips the route ---")
+pair = [("fact", "alice", "is", "furry", "+"), ("query", "alice", "is", "furry", "+")]
+for c, a in zip(pair, routing.predict_acts(model, pair, codec)):
+    print(f"  {('TELL' if c[0]=='fact' else 'ASK '):<5} alice is furry  -> {ACT.get(a, a)}")

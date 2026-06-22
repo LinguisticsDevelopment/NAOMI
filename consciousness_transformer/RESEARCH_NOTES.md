@@ -843,6 +843,25 @@ in four milestones:
   3-tuple+truth today) and making the *route itself learned* (controller emits PERCEIVE vs RESPOND) are the
   next steps. Natural-language English-in remains a separate later layer. `scripts/talk_feed.py`; suite 290.
 
+- **M12 — the routing decision itself is LEARNED (the controller emits the act).** M11 still chose
+  absorb-vs-answer with a code `if tag == "query"` switch; the user wanted the consciousness to make that
+  call. Key enabler (already present): `ClausePsyche.op_head` emits a per-clause op (`out["op_logits"]`), and
+  **`is_q` is not a GRU input** — so an act predicted from the clause encoding is honest, not a leaked flag.
+  Because a ProofWriter yes/no question is content-identical to its assertion, the interrogative mood
+  (`pred="p:?"`) is the *necessary* marker the router reads (a "?"). **`mind/routing.py`**: encodes each
+  clause as a one-step batch (mood in the predicate), gold act = WRITE (declarative→absorb) vs RESPOND
+  (interrogative→answer), CE `act_routing_loss` over `op_logits`; `predict_acts` drives **`consume`** (the
+  `if tag` switch is gone — only the absorb/answer *decision* is the model's; yes/no-vs-wh stays a content-
+  arity choice). `train_proofwriter --backward` trains ONE controller jointly (navigation + routing; disjoint
+  heads). **Measured: act accuracy 1.000 on 1,524 *unseen* test clauses** (generalizes — different entities/
+  relations); **ProofWriter through the learned door = 0.926 (d0=1.00 d1=0.88 d2=0.70)** — no regression vs
+  M11's 0.922; **mood-flip is decisive** — identical content `alice is furry` routes to *absorb* as a
+  statement and *answer* as a question. **Honest scope:** the classification is easy (mood is a clean marker)
+  — the deliverable is *architectural* (the last hand-wired control switch is gone; the decision is the
+  model's) + generalization, not a headline accuracy. Still per-clause, not yet a full workspace dynamic
+  (context-sensitive routing, clarification). **NLP English-in (grammar-file encoders/decoders) is next** —
+  the parser will emit the mood marker this learned router already consumes. `scripts/talk_feed.py`; suite 292.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a

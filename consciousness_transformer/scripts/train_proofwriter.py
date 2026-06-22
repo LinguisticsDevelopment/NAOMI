@@ -23,6 +23,7 @@ import torch
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 
 from nsm_ct.clause_psyche import compute_clause_psyche_losses  # noqa: E402
+from nsm_ct.mind import routing  # noqa: E402
 from nsm_ct.mind.controller import MindController  # noqa: E402
 from nsm_ct.mind.controller_losses import value_supervision_loss  # noqa: E402
 from nsm_ct.mind.datasets import proofwriter as pw  # noqa: E402
@@ -99,12 +100,36 @@ def train_navigate(args) -> None:
     opt = torch.optim.AdamW(model.parameters(), lr=3e-3)
     bs = args.batch_size
 
+    # M12 — the same controller also learns to ROUTE: emit each clause's act (WRITE vs
+    # RESPOND) from its encoding, so ConsciousLoop.consume dispatches on the model, not a
+    # tag. Joint with backward navigation; disjoint heads, one model.
+    def _route_clauses(items):
+        seen, out = set(), []                             # items are flattened tuples
+        for (facts, rules, query, _a, _d) in items:
+            cands = [("fact", *f) for f in facts] + [("rule", r) for r in rules]
+            cands.append(("query", *query))
+            for c in cands:
+                if repr(c) not in seen:
+                    seen.add(repr(c)); out.append(c)
+        return out
+    route_train = _route_clauses(train_items) if args.backward else []
+    route_test = _route_clauses(test_items) if args.backward else []
+    W_ROUTE = 0.5
+
+    def _route_acc(clauses):
+        if not clauses:
+            return 1.0
+        pred = routing.predict_acts(model, clauses, codec)
+        gold = [routing.gold_act(c) for c in clauses]
+        return sum(p == g for p, g in zip(pred, gold)) / len(clauses)
+
     def report(tag):
         tot, bd = _eval_rollout(model, codec, test_items, args.max_steps, per_depth=25,
                                 backward=args.backward)
         line = "  ".join(f"d{d}={bd[d][0]/max(bd[d][1],1):.2f}({bd[d][2]/max(bd[d][1],1):.1f}st)"
                          for d in sorted(bd))
-        print(f"  [{tag}] verdict acc={tot[0]/max(tot[1],1):.3f} | {line}", flush=True)
+        rt = f" | route_acc(test)={_route_acc(route_test):.2f}" if args.backward else ""
+        print(f"  [{tag}] verdict acc={tot[0]/max(tot[1],1):.3f} | {line}{rt}", flush=True)
 
     def run_epochs(n_epochs, eval_every):
         for epoch in range(n_epochs):
@@ -116,7 +141,12 @@ def train_navigate(args) -> None:
                 batch = pw.build_proofsearch_batch(sub, codec)
                 out = model(batch)
                 loss = compute_clause_psyche_losses(out, batch, model)
-                opt.zero_grad(); loss["total"].backward(); opt.step()
+                total = loss["total"]
+                if route_train:                           # joint act-routing (M12)
+                    rc = random.sample(route_train, min(bs, len(route_train)))
+                    rout = model(routing.build_routing_batch(rc, codec))
+                    total = total + W_ROUTE * routing.act_routing_loss(rout, routing.act_targets(rc))
+                opt.zero_grad(); total.backward(); opt.step()
                 last = float(loss["total"].detach())
                 sel += int((out["answer_logits"].argmax(-1) == batch.answer).sum()); cnt += len(sub)
             if epoch % eval_every == eval_every - 1 or epoch == 0:
