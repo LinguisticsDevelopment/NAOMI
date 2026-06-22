@@ -824,6 +824,25 @@ in four milestones:
     n=25/depth). The win is the *direction*, exactly as the user specified: *input → build STM/context → if
     a question, work backwards, same state machine.* `scripts/train_proofwriter.py --backward`; suite 288.
 
+- **M11 — ONE conscious door over a clause feed (self-routing; no pre-segregated question).** The user's
+  directive: stop the several entry points (`recall`, `respond(episode)` *handed* an `is_q` pointer +
+  multiple-choice `options`, ProofWriter verification only in a train script); instead **feed one stream of
+  clauses and let the system decide per-clause how to respond — never told "this is the question," and
+  deriving the answer rather than selecting from options.** Key enabler: a question is **already an intrinsic
+  meaning-type** (`membrane.parse` → `("query", …)`, parsed from the interrogative form like a "?"), so
+  routing on the clause's own type is faithful, not out-of-band instruction. **`ConsciousLoop.consume(feed)`**
+  (`mind/conscious_loop.py`) is the single door: `fact`/`disj`→learn into the accumulated working theory,
+  `rule`→learn the rule, `("query",s,r,v,pol)`→**`BackwardSearch`** (yes/no → TRUE/FALSE/Unknown),
+  `("query",s,r)`→`forward_chain` to derive the value (wh). `proofwriter.feed_from_example` adapts a theory
+  to a feed with no NL. **Measured: ProofWriter answered *through the door* at acc 0.922 (d0=1.00 d1=0.88
+  d2=0.68)** — the one-door path IS the backward reasoner, not a weaker fallback — and a hand-typed feed
+  (teach 3 clauses, then ask) self-routes: *is alice smart? → true (2 steps); is alice green? → Unknown*. No
+  `is_q`, no options, controller weights untouched (learning is graph/theory writes). **v1 scope (honest):**
+  routing is by intrinsic meaning-type and memory is the **per-feed accumulated 4-tuple theory** (= "build
+  the STM/context from the feed"); unifying that with the durable *polarity-aware* `KnowledgeGraph` (it is
+  3-tuple+truth today) and making the *route itself learned* (controller emits PERCEIVE vs RESPOND) are the
+  next steps. Natural-language English-in remains a separate later layer. `scripts/talk_feed.py`; suite 290.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a

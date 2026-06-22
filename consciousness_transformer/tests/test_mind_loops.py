@@ -14,6 +14,7 @@ from nsm_ct.episode import CurriculumGenerator
 from nsm_ct.mind import ops
 from nsm_ct.mind.conscious_loop import ConsciousLoop
 from nsm_ct.mind.controller import MindController
+from nsm_ct.mind.datasets import proofwriter as pw
 from nsm_ct.mind.executor import _TrivialResolver
 from nsm_ct.mind.knowledge import KnowledgeGraph
 from nsm_ct.mind.subconscious_loop import SubconsciousLoop
@@ -35,6 +36,47 @@ def test_teach_once_no_weight_update():
     assert value == "kitchen"                          # taught once, known forever
     after = ctrl.state_dict()
     assert all(torch.equal(before[k], after[k]) for k in before)  # zero weight change
+
+
+def test_consume_one_door_learns_and_answers():
+    """The single door: a mixed clause feed is self-routed — facts/rules are learned,
+    and a yes/no query is ANSWERED by reasoning (no is_q flag, no answer options, no
+    weight update). A query with no support abstains (Unknown)."""
+    codec = TPRCodec(dim=32)
+    ltm = KnowledgeGraph(codec=codec)
+    ctrl = MindController(codec, hidden=32, hops=3, halting=False)
+    before = {k: v.clone() for k, v in ctrl.state_dict().items()}
+    loop = ConsciousLoop(ltm, controller=ctrl)
+
+    feed = [
+        ("fact", "alice", "is", "furry", "+"),                 # taught
+        ("rule", (("?x", "is", "furry", "+"),), ("?x", "is", "kind", "+")),
+        ("rule", (("?x", "is", "kind", "+"),), ("?x", "is", "smart", "+")),
+        ("query", "alice", "is", "smart", "+"),                # a question — self-detected
+        ("query", "alice", "is", "green", "+"),                # unsupported → abstain
+    ]
+    resp = loop.consume(feed)
+
+    assert loop.facts == [("alice", "is", "furry", "+")]       # learned the fact
+    assert len(loop.rules) == 2                                # learned the rules
+    assert len(resp) == 2                                      # answered both queries
+    assert resp[0]["answer"] in (pw.TRUE, pw.FALSE, pw.UNKNOWN)
+    assert resp[1]["answer"] == pw.UNKNOWN                     # not derivable → abstain
+    after = ctrl.state_dict()
+    assert all(torch.equal(before[k], after[k]) for k in before)  # zero weight change
+
+
+def test_consume_wh_query_derives_value():
+    """A wh-query `("query", s, r)` is routed by its type and derives the value over
+    the accumulated theory (no controller needed for the forward closure)."""
+    loop = ConsciousLoop(KnowledgeGraph(dim=32))
+    feed = [
+        ("fact", "robin", "IS_A", "bird", "+"),
+        ("rule", (("?x", "IS_A", "bird"),), ("?x", "CAN", "fly")),
+        ("query", "robin", "CAN"),                             # wh: what can robin do?
+    ]
+    resp = loop.consume(feed)
+    assert resp[0]["answer"] == "fly"                          # derived, not selected
 
 
 def test_offline_infer_makes_multihop_a_direct_fact():

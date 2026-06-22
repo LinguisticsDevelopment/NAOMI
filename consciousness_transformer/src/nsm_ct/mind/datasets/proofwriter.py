@@ -394,6 +394,21 @@ def proof_supervision(items, hops: int, atom2idx):
     return {"value_targets": vt, "depth": depth, "answer": answer}
 
 
+def feed_from_example(ex):
+    """A :class:`PWExample` → a tagged clause **feed** for ``ConsciousLoop.consume``:
+    facts as ``("fact", s, r, v, pol)``, rules as ``("rule", Rule)``, and each question
+    as a yes/no ``("query", s, r, v, pol)``. The query carries no answer options and is
+    not flagged as "the question" beyond being interrogative in its own type. Returns
+    ``(feed, golds)`` where ``golds`` aligns with the query order."""
+    feed = [("fact", s, r, v, pol) for (s, r, v, pol) in ex.facts]
+    feed += [("rule", rule) for rule in ex.rules]
+    golds = []
+    for (lit, gold, _qd) in ex.questions:
+        feed.append(("query", lit[0], lit[1], lit[2], lit[3]))
+        golds.append(gold)
+    return feed, golds
+
+
 def navigation_examples(items):
     """Expand ProofWriter items into per-step rule-selection training examples
     ``(current_facts, goal, rules, gold_rule_idx)`` — only provable (TRUE/FALSE)
@@ -429,4 +444,5 @@ __all__ = [
     "flatten", "build_pw_batch", "proof_path", "value_codebook", "proof_supervision",
     "proof_rule_steps", "gold_plan", "expert_action", "encode_rule",
     "build_proofsearch_batch", "navigation_examples", "backward_examples",
+    "feed_from_example",
 ]
