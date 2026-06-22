@@ -36,6 +36,8 @@ from . import membrane
 _VERB_REL = {"see": "CAN_SEE", "hold": "CAN_HOLD", "open": "CAN_OPEN", "reach": "CAN_REACH"}
 _QUANT = {"everyone", "everything", "someone", "something", "anyone", "anything"}
 _RELPRON = {"that", "who", "which"}
+# locative/directional prepositions that all ground to the PLACE relation
+_PLACE_PREP = ("in", "on", "at", "inside", "into")
 
 
 def _tokens(text: str) -> List[str]:
@@ -67,9 +69,17 @@ class _Parser:
         return self._peek() in toks
 
     def _noun(self) -> str:
-        """A single content word in a noun slot (not a function word)."""
+        """A bare noun/name (no determiner) — must not be a function word."""
         tok = self._eat()
         if tok in {"the", "a", "is", "can", "not", "in", "or", ",", ".", "?"} | _RELPRON:
+            raise _Fail()
+        return tok
+
+    def _det_noun(self) -> str:
+        """The noun right after a determiner — **positional WSD**: a determiner means
+        the next token is a noun, even a homograph ("the can" → noun, vs modal "can")."""
+        tok = self._eat()
+        if tok in {",", ".", "?"}:
             raise _Fail()
         return tok
 
@@ -77,10 +87,10 @@ class _Parser:
     def _np(self) -> Tuple[str, Optional[Tuple[str, str, str, bool]]]:
         if self._at("a"):
             self._eat("a")
-            return self._noun(), None
+            return self._det_noun(), None
         if self._at("the"):
             self._eat("the")
-            head = self._noun()
+            head = self._det_noun()
             rel = None
             if self._at(*_RELPRON):                       # 'the N that <predicate>'
                 self._eat()
@@ -94,26 +104,27 @@ class _Parser:
             self._eat("is")
             if self._at("a"):                              # IS_A
                 self._eat("a")
-                return (subj, "IS_A", self._noun(), False)
+                return (subj, "IS_A", self._det_noun(), False)
             negate = False
             if self._at("not"):
                 self._eat("not"); negate = True
-            self._eat("in"); self._eat("the")
-            v1 = self._noun()
+            self._eat(*_PLACE_PREP)                        # in/on/at/inside → PLACE
+            self._eat("the")
+            v1 = self._det_noun()
             if self._at("or"):                             # disjunction
                 self._eat("or"); self._eat("the")
-                return ("disj", subj, "PLACE", (v1, self._noun()))
+                return ("disj", subj, "PLACE", (v1, self._det_noun()))
             return (subj, "PLACE", v1, negate)
         if self._at("can"):
             self._eat("can")
             verb = self._eat()
             if verb in _VERB_REL and self._at("the"):      # CAN_SEE the window
                 self._eat("the")
-                return (subj, _VERB_REL[verb], self._noun(), False)
+                return (subj, _VERB_REL[verb], self._det_noun(), False)
             return (subj, "CAN", verb, False)              # a bird can fly
         if self._at("moved"):                              # surface variant of 'is in'
             self._eat("moved"); self._eat("to"); self._eat("the")
-            return (subj, "PLACE", self._noun(), False)
+            return (subj, "PLACE", self._det_noun(), False)
         raise _Fail()
 
     def _end(self, *toks: str) -> None:
@@ -231,13 +242,13 @@ def _predicate_after_is(p: _Parser, subj: str):
     """Predicate for a yes/no question whose leading 'is' was already eaten."""
     if p._at("a"):
         p._eat("a")
-        return (subj, "IS_A", p._noun(), False)
+        return (subj, "IS_A", p._det_noun(), False)
     negate = False
     if p._at("not"):
         p._eat("not"); negate = True
-    if p._at("in"):
-        p._eat("in"); p._eat("the")
-        return (subj, "PLACE", p._noun(), negate)
+    if p._at(*_PLACE_PREP):
+        p._eat(*_PLACE_PREP); p._eat("the")
+        return (subj, "PLACE", p._det_noun(), negate)
     # bare adjective/value: 'is alice smart ?'  → relation 'is'
     return (subj, "is", p._noun(), negate)
 

@@ -79,3 +79,50 @@ def test_converse_abstains_and_survives_garbage():
     loop = ConsciousLoop(KnowledgeGraph(dim=32))
     assert loop.converse(["where is mary ?"]) == ["I don't know."]   # nothing taught
     assert loop.converse(["@#$ not english", "a b c d e ."]) == []    # no crash, no reply
+
+
+def test_converse_resolves_pronoun_by_recency():
+    loop = ConsciousLoop(KnowledgeGraph(dim=32))
+    assert loop.converse([
+        "mary is in the kitchen .",
+        "everyone who is in the kitchen can see the window .",
+        "what can she see ?",                                # she → mary
+    ]) == ["Mary can see the window."]
+
+
+def test_converse_pronoun_respects_gender_agreement():
+    """With two antecedents, 'she'/'he' pick the gender-matching one, not the most recent."""
+    teach = [
+        "john is in the office .",
+        "mary is in the garden .",
+        "everyone who is in the garden can hold the stove .",
+        "everyone who is in the office can hold the clock .",
+    ]
+    loop = ConsciousLoop(KnowledgeGraph(dim=32))
+    assert loop.converse(teach + ["what can she hold ?"]) == ["Mary can hold the stove."]
+    loop2 = ConsciousLoop(KnowledgeGraph(dim=32))
+    assert loop2.converse(teach + ["what can he hold ?"]) == ["John can hold the clock."]
+
+
+def test_preposition_variants_map_to_place():
+    assert grammar.parse("fred is on the table .") == ("fact", "fred", "PLACE", "table", False)
+    assert grammar.parse("fred is at the door .") == ("fact", "fred", "PLACE", "door", False)
+
+
+def test_structural_wsd_homograph_can():
+    """WSD-by-grammar: the homograph 'can' is the modal in predicate position and a
+    noun after a determiner — resolved structurally, no sense model needed."""
+    assert grammar.parse("a robin can fly .") == ("fact", "robin", "CAN", "fly", False)
+    assert grammar.parse("mary can hold the can .") == ("fact", "mary", "CAN_HOLD", "can", False)
+    assert grammar.parse("the can is in the kitchen .") == ("fact", "can", "PLACE", "kitchen", False)
+
+
+def test_coref_unit_agreement_and_salience():
+    from nsm_ct.mind.coref import Coref
+    c = Coref()
+    c.register("john", subject=True)
+    c.register("mary", subject=True)
+    assert c.resolve("she") == "mary"
+    assert c.resolve("he") == "john"
+    assert c.resolve("they") == "mary"          # number-only → most recent subject
+    assert Coref().resolve("she") is None       # nothing to resolve to

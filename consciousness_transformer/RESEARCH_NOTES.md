@@ -862,6 +862,17 @@ in four milestones:
   (context-sensitive routing, clarification). **NLP English-in (grammar-file encoders/decoders) is next** —
   the parser will emit the mood marker this learned router already consumes. `scripts/talk_feed.py`; suite 292.
 
+- **M13 (stages 3–4) — referentials + light WSD (deterministic).** **Coreference** (`mind/coref.py`):
+  resolve pronouns across the conversation by **recency + gender/number agreement + subject salience**
+  (Centering-lite, small name→gender lexicon) — `converse` threads a `Coref`, resolving a pronoun subject
+  to its antecedent and registering concrete mentions. Measured: with `john` in the office and `mary` in
+  the garden, *"what can **she** hold?"* → mary's rule, *"what can **he** hold?"* → john's — agreement beats
+  recency. **Prepositions:** in/on/at/inside/into → PLACE (curated frame map). **WSD:** done *structurally* —
+  a determiner means the next token is a noun, so the homograph "can" is the modal in predicate position
+  ("a robin **can** fly" → CAN) and a noun after a determiner ("hold the **can**" → value `can`); no sense
+  model needed. Honest: full open-domain noun WSD (bank/bat) and split-antecedent/bridging coreference stay
+  deferred. Parity with `membrane.parse` still exact (0/429). `mind/coref.py`; suite 305.
+
 - **M13 (stages 1–2) — talk to it: owned controlled-language encoder/decoder with subordination.** The
   system reasoned/routed in meaning-space but could only talk through a flat 7-relation regex. Decisions:
   **controlled English first** (owned, deterministic, round-trip-tested; NOT the fallible open-domain

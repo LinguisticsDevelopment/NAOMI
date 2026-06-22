@@ -81,8 +81,13 @@ class ConsciousLoop:
         Unparsable lines are skipped (the system abstains rather than guessing).
         Returns one English answer string per question, in order.
         """
-        from . import grammar, verbalize
-        feed = [obj for obj in (grammar.parse(ln) for ln in lines) if obj is not None]
+        from . import coref as _coref, grammar, verbalize
+        tracker = _coref.Coref()
+        feed = []
+        for ln in lines:
+            obj = grammar.parse(ln)
+            if obj is not None:
+                feed.append(self._resolve_refs(obj, tracker))
         replies: List[str] = []
         for r in self.consume(feed):
             q = r["query"]
@@ -91,6 +96,21 @@ class ConsciousLoop:
             else:                                             # wh: render the value
                 replies.append(verbalize.verbalize_answer(q, r["answer"]))
         return replies
+
+    def _resolve_refs(self, obj, tracker):
+        """Resolve a pronoun subject to its antecedent and register concrete mentions
+        (deterministic coreference across the conversation). Rules/variables pass through."""
+        from . import coref as _coref
+        tag = obj[0]
+        if tag in ("fact", "query", "disj"):
+            s = obj[1]
+            if _coref.is_pronoun(s):
+                s = tracker.resolve(s) or s               # unresolved → keep (will abstain)
+            tracker.register(s, subject=True)
+            if tag == "fact":
+                tracker.register(obj[3])                  # value as a possible 'it' antecedent
+            return (tag, s) + obj[2:]
+        return obj                                        # rules: variables / general
 
     # -- THE single door: a clause feed in, self-routed responses out --------
     def consume(self, feed) -> List[Dict[str, object]]:

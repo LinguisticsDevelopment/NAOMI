@@ -38,6 +38,13 @@ _say("a restrictive relative as a universal", [
     "what can fido reach ?",
 ])
 
+_say("pronoun resolved by gender agreement (she = mary, not john)", [
+    "john is in the office .",
+    "mary is in the garden .",
+    "everyone who is in the garden can hold the stove .",
+    "what can she hold ?",
+])
+
 _say("abstain when nothing supports it", [
     "where is sandra ?",
 ])
