@@ -114,3 +114,54 @@ def test_find_missing_premise_skips_unbound():
 def test_find_missing_premise_no_rule():
     """No rule path → no premise (the honest-abstain case)."""
     assert find_missing_premise([], [], ("sandra", "PLACE")) is None
+
+
+# -- L3 (M15): bounded volunteering — calibrated initiative over real knowledge ----
+def _kitchen_two_abilities() -> Conversation:
+    """Mary in the kitchen, where the rules derive TWO abilities (see window, reach door)."""
+    c = Conversation(ConsciousLoop(KnowledgeGraph(dim=32)), max_volunteer=1)
+    c.say("everyone who is in the kitchen can see the window .")
+    c.say("everyone who is in the kitchen can reach the door .")
+    c.say("mary is in the kitchen .")
+    return c
+
+
+def test_volunteer_one_relevant_unsaid_fact():
+    """After answering, the system surfaces exactly ONE extra true, on-topic, unsaid
+    fact — and logs it as a 'volunteered' turn outcome (the L6 telemetry)."""
+    c = _kitchen_two_abilities()
+    replies = c.say("what can mary see ?")
+    assert replies[0] == "Mary can see the window."
+    assert len(replies) == 2                                  # answer + ONE volunteer (budget)
+    assert replies[1] == "Also, mary can reach the door."
+    assert c.log[-1].kind == "volunteered"
+
+
+def test_volunteer_budget_zero_is_m14():
+    """Budget 0 ⇒ off ≡ M14: a single terse answer, no initiative."""
+    c = Conversation(ConsciousLoop(KnowledgeGraph(dim=32)), max_volunteer=0)
+    c.say("everyone who is in the kitchen can see the window .")
+    c.say("everyone who is in the kitchen can reach the door .")
+    c.say("mary is in the kitchen .")
+    assert c.say("what can mary see ?") == ["Mary can see the window."]
+
+
+def test_volunteer_is_grounded():
+    """A volunteered fact is never invented: it is in the real derivation closure and
+    was not already stated."""
+    from nsm_ct.reasoning_oracle import forward_chain
+    c = _kitchen_two_abilities()
+    cands = c._volunteer_candidates("mary", exclude=("mary", "CAN_SEE", "window"))
+    known, _ = forward_chain(list(c._facts()), c._rules())
+    said = set(c._facts())
+    for f in cands:
+        assert f in known and f not in said and f[3] == "+"
+
+
+def test_volunteer_nothing_to_add_stays_terse():
+    """With only the answered fact derivable about the subject, there is nothing useful
+    to add → no volunteer (terse), not filler."""
+    c = Conversation(ConsciousLoop(KnowledgeGraph(dim=32)), max_volunteer=1)
+    c.say("everyone who is in the kitchen can see the window .")
+    c.say("mary is in the kitchen .")
+    assert c.say("what can mary see ?") == ["Mary can see the window."]

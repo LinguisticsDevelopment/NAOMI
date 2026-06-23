@@ -27,7 +27,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Tuple
 
-from ..reasoning_oracle import Rule, find_missing_premise
+from ..reasoning_oracle import Rule, find_missing_premise, forward_chain
 from . import grammar, ops, verbalize
 from .conscious_loop import ConsciousLoop, _norm_fact, _norm_rule
 
@@ -47,6 +47,8 @@ class TurnOutcome:
     kind: str
     detail: str = ""
     knowledge_gained: int = 0
+    # ``kind`` ∈ {answered, asked, resolved, abstained, learned, volunteered, quiet}.
+    # ``volunteered``/``quiet`` are the L3/L6 initiative outcomes (M15).
 
 
 def _split_sentences(text: str) -> List[str]:
@@ -58,7 +60,7 @@ def _split_sentences(text: str) -> List[str]:
 class Conversation:
     """One stateful dialogue session over a :class:`ConsciousLoop`."""
 
-    def __init__(self, loop: ConsciousLoop) -> None:
+    def __init__(self, loop: ConsciousLoop, *, max_volunteer: int = 0, drive=None) -> None:
         self.loop = loop
         from . import coref
         self.statements: List[tuple] = []                # accumulated fact/disj/rule objects
@@ -66,6 +68,12 @@ class Conversation:
         self.topic = None                                # last subject mentioned
         self.pending: List[Tuple[tuple, tuple]] = []     # (blocked query obj, missing premise)
         self.log: List[TurnOutcome] = []                 # per-turn telemetry (L6 signal)
+        # L3/L6 calibrated initiative (M15). ``max_volunteer`` is the hard per-turn budget
+        # (0 ⇒ off ≡ M14, the anti-yappy floor). ``drive`` is an optional learned
+        # :class:`~nsm_ct.mind.drive.DrivePolicy` that decides *whether* to volunteer per
+        # turn; without one, volunteering is governed deterministically by ``max_volunteer``.
+        self.max_volunteer = max_volunteer
+        self.drive = drive
 
     # -- one turn ------------------------------------------------------------
     def say(self, text: str) -> List[str]:
@@ -81,7 +89,7 @@ class Conversation:
                 continue                                 # unparsable → abstain silently
             obj = self.loop._resolve_refs(obj, self.tracker)
             if obj[0] == "query":
-                replies.append(self._handle_query(obj))
+                replies.extend(self._handle_query(obj))
             else:                                        # fact / disj / rule
                 self.statements.append(obj)
                 if obj[0] in ("fact", "disj"):
@@ -94,20 +102,86 @@ class Conversation:
         return replies
 
     # -- answering / asking --------------------------------------------------
-    def _handle_query(self, obj) -> str:
+    def _handle_query(self, obj) -> List[str]:
         resp = self._reason(obj)
         answer, query = resp["answer"], resp["query"]
         if not self._blocked(answer):
             self.topic = query[0]
             self.log.append(TurnOutcome("answered", str(query)))
-            return self._render_answer(query, answer, resp)
+            replies = [self._render_answer(query, answer, resp)]
+            replies.extend(self._volunteer_lines(query, answer))  # L3/L6 initiative
+            return replies
         premise = find_missing_premise(self._facts(), self._rules(), query)
-        if premise is not None:                          # cooperative ASK (L2)
+        if premise is not None and self._should_ask(query, premise):   # cooperative ASK (L2)
             self.pending.append((obj, premise))
             self.log.append(TurnOutcome("asked", str(premise[:3])))
-            return verbalize.verbalize_ask(premise)
-        self.log.append(TurnOutcome("abstained", str(query)))
-        return self._render_answer(query, answer, resp)  # honest "I don't know."
+            return [verbalize.verbalize_ask(premise)]
+        if premise is not None:                          # drive (L6) chose to stay quiet
+            self.log.append(TurnOutcome("quiet", str(query)))
+        else:
+            self.log.append(TurnOutcome("abstained", str(query)))
+        return [self._render_answer(query, answer, resp)]  # honest "I don't know."
+
+    # -- bounded initiative (L3) + the learned drive gate (L6) ---------------
+    def _volunteer_lines(self, query, answer) -> List[str]:
+        """After answering, optionally surface ONE relevant, true, unsaid fact about the
+        topic. Selection is deterministic over the **real derivation closure** (grounded
+        by construction); a learned :attr:`drive` (L6), when attached, decides *whether*
+        to take the action. Returns ``[]`` (terse) or a single volunteer line — the hard
+        per-turn budget is the anti-yappy knob."""
+        answered_lit = (query[0], query[1], query[2]) if len(query) >= 4 \
+            else (query[0], query[1], answer)
+        cands = self._volunteer_candidates(query[0], exclude=answered_lit)
+        if not cands or not self._should_volunteer(query, answer, cands):
+            if self.drive is not None:                   # the drive chose to stay terse
+                self.log.append(TurnOutcome("quiet", str(query)))
+            return []
+        pick = cands[0]
+        self.log.append(TurnOutcome("volunteered", str(pick[:3])))
+        return [verbalize.verbalize_volunteer(pick)]
+
+    def _should_volunteer(self, query, answer, candidates) -> bool:
+        """Whether to spend the initiative budget this turn. The learned drive (L6)
+        decides if present; otherwise the deterministic budget governs (L3)."""
+        if self.max_volunteer <= 0:
+            return False
+        if self.drive is not None:
+            from . import drive as _drive
+            ctx = _drive.drive_features(self, query, answer, candidates, derivable=True)
+            return _drive.wants_volunteer(self.drive, ctx)
+        return True                                      # deterministic L3: always offer
+
+    def _should_ask(self, query, premise) -> bool:
+        """Whether a blocked query is worth a cooperative clarifying question (ASK) or is
+        better left as an honest abstain (QUIET). M14 always asks; a learned drive (L6),
+        when attached, calibrates it (don't nag when the premise is off-goal/overloaded)."""
+        if self.drive is None:
+            return True
+        from . import drive as _drive
+        ctx = _drive.drive_features(self, query, None, [], derivable=False,
+                                    has_premise=True, premise=premise)
+        return _drive.wants_ask(self.drive, ctx)
+
+    def _volunteer_candidates(self, subject, *, exclude=None):
+        """The volunteer pool: positive, derivable, **not-yet-stated** facts about
+        ``subject`` — i.e. things the system *derived* but never said. Ranked by
+        derivation depth (most direct first) then relation/value for determinism."""
+        facts = self._facts()
+        known, chain = forward_chain(list(facts), self._rules())
+        said = set(facts)
+        cands = []
+        for f in known:
+            if len(f) < 4:
+                continue
+            s, r, v, pol = f[0], f[1], f[2], f[3]
+            if s != subject or pol != "+" or (s, r, v, pol) in said:
+                continue
+            if exclude is not None and (s, r, v) == tuple(exclude[:3]):
+                continue
+            depth = len(verbalize._relevant_steps(chain, f))
+            cands.append((depth, r, str(v), f))
+        cands.sort(key=lambda c: (c[0], c[1], c[2]))
+        return [c[3] for c in cands]
 
     def _retry_pending(self) -> List[str]:
         """Re-attempt blocked queries now that new knowledge has arrived (L2+L4)."""

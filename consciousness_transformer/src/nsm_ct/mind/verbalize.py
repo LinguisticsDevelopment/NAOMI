@@ -87,6 +87,15 @@ def verbalize_ask(premise) -> str:
     return f"I can't tell yet — {membrane.render_polar_question(s, r, v)} If so, then yes."
 
 
+def verbalize_volunteer(clause) -> str:
+    """Bounded initiative (M15, L3): surface ONE extra true fact after the answer, in a
+    back-pointing register ("Also, …"). ``clause`` is a grounded literal ``(s, r, v[, pol])``
+    drawn from the real derivation closure — so a volunteer is faithful by construction,
+    never invented."""
+    s, r, v = clause[0], clause[1], clause[2]
+    return f"Also, {_lower(membrane.render_fact(s, r, v))}"
+
+
 def verbalize_resolution(query, answer) -> str:
     """A previously-blocked query, now derivable, resolved in a back-pointing register
     ("Then yes — …"). ``query`` is ``(s, r)`` (wh) or ``(s, r, v, pol)`` (yes/no)."""
@@ -118,4 +127,4 @@ def _cap(text: str) -> str:
 
 
 __all__ = ["verbalize_answer", "verbalize_verdict", "verbalize_trace",
-           "verbalize_ask", "verbalize_resolution"]
+           "verbalize_ask", "verbalize_resolution", "verbalize_volunteer"]
