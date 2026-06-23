@@ -102,6 +102,34 @@ def forward_chain(
     return known, chain
 
 
+def find_missing_premise(facts, rules, goal):
+    """One-hop BACKWARD: the premise a blocked ``goal`` is waiting on (or ``None``).
+
+    The cooperative-dialogue move (M14, L2): when ``goal`` cannot be derived, find a
+    rule whose consequent unifies with it, ground that rule's antecedents, and return
+    the **first ground antecedent that is not yet derivable** — i.e. the single fact to
+    ask the user for. ``goal`` is a partial/whole literal ``(s, r)`` / ``(s, r, v)`` /
+    ``(s, r, v, pol)``; ``facts``/``rules`` are in the reasoner's tuple world (3- or
+    4-tuples). One hop only — deeper chains surface premise-by-premise over turns.
+
+    An antecedent that stays variable after grounding (e.g. inheritance's free ``?y``)
+    is not a concrete question, so it is skipped rather than asked.
+    """
+    known, _ = forward_chain(list(facts), list(rules))
+    for rule in rules:
+        theta = unify(rule.consequent, goal)          # zip truncates to the goal's arity
+        if theta is None:
+            continue
+        for ant in rule.antecedents:
+            g = _ground(ant, theta)
+            if any(_is_var(x) for x in g):
+                continue                              # unbound → not askable
+            if g in known:
+                continue                              # already satisfied
+            return g                                  # the premise to ask about
+    return None
+
+
 def derive(
     facts: List[Triple], rules: List[Rule], query: Tuple[str, str],
 ) -> Tuple[Optional[str], List[DerivStep]]:

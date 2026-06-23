@@ -79,6 +79,36 @@ def verbalize_trace(query: Tuple[str, str], answer: Optional[str], support: List
     return f"{_cap(reason)}. {ans}" if lines else ans
 
 
+def verbalize_ask(premise) -> str:
+    """The cooperative ASK move (M14, L2): a blocked query becomes a question for the
+    missing premise, in a conversational register. ``premise`` is the literal to ask
+    about, ``(s, r, v[, pol])``."""
+    s, r, v = premise[0], premise[1], premise[2]
+    return f"I can't tell yet — {membrane.render_polar_question(s, r, v)} If so, then yes."
+
+
+def verbalize_resolution(query, answer) -> str:
+    """A previously-blocked query, now derivable, resolved in a back-pointing register
+    ("Then yes — …"). ``query`` is ``(s, r)`` (wh) or ``(s, r, v, pol)`` (yes/no)."""
+    if len(query) >= 4:                                  # yes/no
+        if answer == "true":
+            return f"Then yes — {_lower(membrane.render_fact(query[0], query[1], query[2]))}"
+        if answer == "false":
+            return f"Then no — {_lower(membrane.render_fact(query[0], query[1], query[2]))}"
+        return "I still can't tell."
+    if answer in (None, ops.ABSTAIN):
+        return "I still can't tell."
+    return f"Then yes — {_lower(membrane.render_fact(query[0], query[1], answer))}"
+
+
+def _lower(text: str) -> str:
+    """Tidy a rendered clause for mid-sentence use: trailing ' .' → '.', lowercase start."""
+    text = text.strip()
+    if text.endswith(" ."):
+        text = text[:-2] + "."
+    return text
+
+
 def _cap(text: str) -> str:
     """Capitalize the first letter and tidy the trailing ' .' to '.'."""
     text = text.strip()
@@ -87,4 +117,5 @@ def _cap(text: str) -> str:
     return text[:1].upper() + text[1:] if text else text
 
 
-__all__ = ["verbalize_answer", "verbalize_verdict", "verbalize_trace"]
+__all__ = ["verbalize_answer", "verbalize_verdict", "verbalize_trace",
+           "verbalize_ask", "verbalize_resolution"]

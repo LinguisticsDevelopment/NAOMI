@@ -37,6 +37,18 @@ RELATION_TEMPLATES = {
 }
 _VERB_REL = {"see": "CAN_SEE", "hold": "CAN_HOLD", "open": "CAN_OPEN", "reach": "CAN_REACH"}
 
+# relation -> polar (yes/no) question form, the inverse of the statement template.
+# Used by the cooperative ASK move (M14): turn a missing premise into a question.
+_POLAR = {
+    "PLACE":     "is {s} in the {v} ?",
+    "IS_A":      "is {s} a {v} ?",
+    "CAN":       "can {s} {v} ?",
+    "CAN_SEE":   "can {s} see the {v} ?",
+    "CAN_HOLD":  "can {s} hold the {v} ?",
+    "CAN_OPEN":  "can {s} open the {v} ?",
+    "CAN_REACH": "can {s} reach the {v} ?",
+}
+
 
 # --------------------------------------------------------------------- render ---
 def render_fact(s: str, r: str, v: str, *, negate: bool = False) -> str:
@@ -69,6 +81,11 @@ def render_query(s: str, r: str) -> str:
     if q is None:
         raise ValueError(f"relation {r} has no question form")
     return q.format(s=s)
+
+
+def render_polar_question(s: str, r: str, v: str) -> str:
+    """A literal ``(s, r, v)`` as a yes/no question (the inverse of its statement)."""
+    return _POLAR[r].format(s=s, v=v)
 
 
 def render(obj) -> str:
@@ -154,5 +171,5 @@ def parse(text: str):
 
 __all__ = [
     "RELATION_TEMPLATES", "render", "render_fact", "render_clause",
-    "render_disjunction", "render_rule", "render_query", "parse",
+    "render_disjunction", "render_rule", "render_query", "render_polar_question", "parse",
 ]

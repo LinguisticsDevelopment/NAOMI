@@ -48,3 +48,30 @@ _say("pronoun resolved by gender agreement (she = mary, not john)", [
 _say("abstain when nothing supports it", [
     "where is sandra ?",
 ])
+
+
+# -- M14: a stateful back-and-forth (ask when blocked, resolve when told) ----------
+def _session(title, turns):
+    """A multi-turn conversation: each turn is a list of user lines; replies print
+    under each turn, so memory and the ask→answer→resolve loop are visible across turns."""
+    from nsm_ct.mind.conversation import Conversation
+    conv = Conversation(ConsciousLoop(KnowledgeGraph(dim=32)))
+    print(f"\n=== {title} ===")
+    for turn in turns:
+        for ln in turn:
+            print(f"  > {ln}")
+        for reply in conv.say(" ".join(turn)):
+            print(f"  ⇒ {reply}")
+
+
+_session("it asks for the missing premise, then resolves when you tell it", [
+    ["everyone who is in the kitchen can see the window ."],
+    ["what can mary see ?"],                       # blocked → asks "is mary in the kitchen?"
+    ["mary is in the kitchen ."],                  # → "Then yes — mary can see the window."
+])
+
+_session("memory carries across turns (taught early, asked later)", [
+    ["mary is in the garden ."],
+    ["everyone who is in the garden can hold the stove ."],
+    ["what can she hold ?"],                       # 'she' = mary, across turns
+])

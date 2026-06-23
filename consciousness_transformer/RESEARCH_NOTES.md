@@ -893,6 +893,29 @@ in four milestones:
   built-in reasoning schemas (INHERITANCE) have no controlled-English sentence and stay seeded knowledge.
   `mind/grammar.py`, `scripts/talk.py`, `tests/test_mind_grammar.py`; suite 300.
 
+- **M14 — from auto-search to natural back-and-forth (substrate: L2 ask-when-blocked + L4 cross-turn
+  memory).** `converse` was stateless — one query → one terse answer or a dead-end "I don't know"; a
+  database query, not a dialogue. The brainstorm (a JARVIS/C-3PO register, grounded by construction since
+  every utterance is rendered from real derivation) named the **learned drive (L6)** as the destination
+  and chose to build the conversational *substrate* first. Built `mind/conversation.py` — a stateful
+  `Conversation` session over `ConsciousLoop`: **(L4)** facts/rules persist across turns, a persistent
+  `coref.Coref` resolves "she/it" across turns, and a `topic` tracks the last subject; **(L2)** a blocked
+  query no longer dead-ends — `reasoning_oracle.find_missing_premise` (one-hop backward unify over the
+  rule whose consequent matches the goal) computes the *exact* missing premise, the system **asks it back**
+  as an English question (`membrane.render_polar_question` + `verbalize_ask`), remembers the blocked query
+  in `pending`, and **resolves** it ("Then yes — …") once a later turn supplies the premise. Deeper chains
+  surface one premise per turn — itself natural back-and-forth. **Instrumented for L6:** every turn logs a
+  `TurnOutcome` (answered/asked/resolved/abstained/learned + knowledge-gained = pending questions this
+  statement unblocked) — the reward/telemetry a future drive optimizes; recorded, not yet consumed by any
+  policy. Grounded by construction: it asks only for a premise a rule needs and answers only what it
+  derives. **Headline gate = one LONG conversation** (`scripts/stress_converse.py`, `tests/test_converse_
+  scale.py`): a growing session to **1500 derivable facts → 750/750 answers correct vs the symbolic
+  oracle**, asks/resolves/abstains all correct *along the way*. **Honest negative:** the re-feed-accumulated
+  design is O(KB)/turn — per-query latency grows 2.4ms→18ms as the KB grows (reported; the place a learned
+  drive + incremental memory would later address). `mind/conversation.py`, `reasoning_oracle.find_missing_
+  premise`, `membrane.render_polar_question`, `verbalize.verbalize_ask/_resolution`, `scripts/talk.py`,
+  `tests/test_mind_conversation.py` + `tests/test_converse_scale.py`; suite 316.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
