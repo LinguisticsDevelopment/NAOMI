@@ -27,6 +27,7 @@ from typing import List, Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.distributions import Categorical
 
 # The action vocabulary. In an *answered* context the live choice is {ANSWER, VOLUNTEER};
 # in a *blocked* context it is {ASK, QUIET}. Feasibility masking (below) restricts the
@@ -89,20 +90,64 @@ def feasible_mask(ctx: DriveContext) -> torch.Tensor:
 class DrivePolicy(nn.Module):
     """A small MLP over the grounded feature vector → a 4-way action distribution. A new
     member of the controller family: it governs *initiative*, just as the reasoning
-    controller governs *derivation* — and it holds no facts, only the when-to-act policy."""
+    controller governs *derivation* — and it holds no facts, only the when-to-act policy.
 
-    def __init__(self, hidden: int = 16) -> None:
+    M16 splits the trunk from the action head and adds an optional **value head** (a
+    state-value baseline for the sequential-RL advantage). The split is transparent to M15:
+    ``forward`` still returns the action logits, and M15 checkpoints warm-start via
+    :func:`load_m15_into` (legacy ``net.*`` keys remap onto ``trunk``/``act_head``)."""
+
+    def __init__(self, hidden: int = 16, *, value_head: bool = False) -> None:
         super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(N_FEATURES, hidden), nn.ReLU(), nn.Linear(hidden, N_ACTS))
+        self.trunk = nn.Sequential(nn.Linear(N_FEATURES, hidden), nn.ReLU())
+        self.act_head = nn.Linear(hidden, N_ACTS)
+        self.val_head = nn.Linear(hidden, 1) if value_head else None
 
     def forward(self, feats: torch.Tensor) -> torch.Tensor:
-        return self.net(feats)                           # [..., 4] logits
+        return self.act_head(self.trunk(feats))          # [..., 4] logits (M15-compatible)
+
+    def forward_with_value(self, feats: torch.Tensor):
+        """``feats`` → ``(action logits [...,4], state value [...])`` — the RL forward."""
+        assert self.val_head is not None, "DrivePolicy was built without a value head"
+        h = self.trunk(feats)
+        return self.act_head(h), self.val_head(h).squeeze(-1)
+
+
+def _remap_legacy(state: dict) -> dict:
+    """Remap an M15 ``DrivePolicy`` state-dict (``net.0.*`` / ``net.2.*``) onto the M16
+    ``trunk``/``act_head`` layout, so a supervised checkpoint warm-starts the RL policy."""
+    out = {}
+    for k, v in state.items():
+        if k.startswith("net.0."):
+            out["trunk.0." + k[len("net.0."):]] = v
+        elif k.startswith("net.2."):
+            out["act_head." + k[len("net.2."):]] = v
+        else:
+            out[k] = v
+    return out
+
+
+def load_m15_into(policy: "DrivePolicy", state: dict) -> "DrivePolicy":
+    """Warm-start ``policy`` from an M15 (or M16) state-dict. The trunk+act_head load
+    exactly (so ``forward`` is bit-identical to M15); a fresh value head is left intact."""
+    policy.load_state_dict(_remap_legacy(state), strict=False)
+    return policy
 
 
 def _masked_logits(logits: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     """Push infeasible actions to -inf so they are never chosen / never carry loss mass."""
     return logits.masked_fill(mask < 0.5, float("-inf"))
+
+
+def _safe_entropy(masked_logits: torch.Tensor) -> torch.Tensor:
+    """Entropy of a masked categorical, NaN-safe in *both* forward and backward: masked
+    actions have ``-inf`` log-probs (prob 0). We replace those ``-inf`` with a finite 0
+    *before* the multiply, so the product is never ``0·-inf`` (which yields NaN gradients
+    even when the forward value is masked away)."""
+    lp = F.log_softmax(masked_logits, dim=-1)
+    lp_safe = lp.masked_fill(torch.isinf(lp), 0.0)       # prob is ~0 there; value is irrelevant
+    p = lp.exp()                                         # exactly 0 at masked actions
+    return -(p * lp_safe).sum(-1)
 
 
 def drive_loss(logits: torch.Tensor, gold: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
@@ -120,6 +165,61 @@ def predict_action(policy: DrivePolicy, feats: torch.Tensor, mask: torch.Tensor,
     with torch.no_grad():
         logits = _masked_logits(policy(feats) / max(temperature, 1e-6), mask)
     return int(logits.argmax(-1))
+
+
+# -- sequential RL (M16): sampling + REINFORCE-with-baseline ----------------------
+def sample_action(policy: DrivePolicy, feats: torch.Tensor, mask: torch.Tensor,
+                  *, temperature: float = 1.0):
+    """Sample an action from the masked policy (the soft→discrete temperature is the
+    exploration knob). Infeasible actions get ``-inf`` logits ⇒ exactly zero probability,
+    so sampling can never pick an ungrounded action. Returns ``(action, log_prob, entropy)``."""
+    with torch.no_grad():
+        masked = _masked_logits(policy(feats) / max(temperature, 1e-6), mask)
+        dist = Categorical(logits=masked)
+        a = dist.sample()
+    return int(a), dist.log_prob(a), _safe_entropy(masked)
+
+
+def kl_to_reference(logits: torch.Tensor, ref_logits: torch.Tensor,
+                    mask: torch.Tensor) -> torch.Tensor:
+    """KL(π ‖ π_ref) over feasible actions — the trust-region anchor to the warm-start
+    (M16's analog of clause_psyche's geometric exploration prior, anchored to the teacher)."""
+    lp = F.log_softmax(_masked_logits(logits, mask), dim=-1)
+    lq = F.log_softmax(_masked_logits(ref_logits, mask), dim=-1)
+    infeasible = torch.isinf(lp)
+    lp_safe = lp.masked_fill(infeasible, 0.0)
+    lq_safe = lq.masked_fill(infeasible, 0.0)            # same masked positions
+    p = lp.exp()                                         # 0 at masked actions
+    return (p * (lp_safe - lq_safe)).sum(-1).mean()
+
+
+def drive_rl_loss(policy: DrivePolicy, feats: torch.Tensor, mask: torch.Tensor,
+                  actions: torch.Tensor, returns: torch.Tensor, *, temperature: float = 1.0,
+                  w_value: float = 0.5, w_entropy: float = 0.01,
+                  ref_policy: "DrivePolicy" = None, w_anchor: float = 0.0):
+    """REINFORCE-with-baseline over a flattened batch of rollout transitions (mirrors the
+    clause_psyche ``-reward`` objective: minimize ``-E[return]`` via the score function,
+    plus a value baseline, an entropy exploration term, and an optional KL anchor to the
+    M15 policy). Recomputes log-probs/values/entropy with grad from the stored
+    ``(feats, mask, actions)`` — so no autograd graph is held across the rollout."""
+    logits, values = policy.forward_with_value(feats)
+    masked = _masked_logits(logits / max(temperature, 1e-6), mask)
+    dist = Categorical(logits=masked)
+    log_probs = dist.log_prob(actions)
+    advantage = (returns - values).detach()              # baseline-centered score weight
+    policy_loss = -(log_probs * advantage).mean()
+    value_loss = F.smooth_l1_loss(values, returns)
+    entropy = _safe_entropy(masked).mean()
+    total = policy_loss + w_value * value_loss - w_entropy * entropy
+    anchor = total.new_zeros(())
+    if ref_policy is not None and w_anchor > 0.0:
+        with torch.no_grad():
+            ref_logits = ref_policy(feats)
+        anchor = kl_to_reference(logits, ref_logits, mask)
+        total = total + w_anchor * anchor
+    return {"total": total, "policy": policy_loss.detach(), "value": value_loss.detach(),
+            "entropy": entropy.detach(), "anchor": anchor.detach(),
+            "mean_return": returns.mean().detach()}
 
 
 # -- live-conversation hooks (used by Conversation when a drive is attached) -----
@@ -159,4 +259,5 @@ __all__ = [
     "ANSWER", "VOLUNTEER", "ASK", "QUIET", "DRIVE_ACTS", "N_ACTS", "N_FEATURES",
     "DriveContext", "features_vec", "feasible_mask", "DrivePolicy", "drive_loss",
     "predict_action", "drive_features", "wants_volunteer", "wants_ask",
+    "load_m15_into", "sample_action", "drive_rl_loss", "kl_to_reference",
 ]

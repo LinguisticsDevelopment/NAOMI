@@ -916,6 +916,42 @@ in four milestones:
   premise`, `membrane.render_polar_question`, `verbalize.verbalize_ask/_resolution`, `scripts/talk.py`,
   `tests/test_mind_conversation.py` + `tests/test_converse_scale.py`; suite 316.
 
+### 0r. Calibrated initiative — bounded volunteering (L3) + the learned drive (L6), supervised then sequential-RL (MEASURED)
+- **M15 (supervised drive).** Added the *volunteer* action — after answering, surface ONE relevant, true,
+  unsaid fact selected over the real `forward_chain` closure, hard per-turn budget (`max_volunteer=0` ≡ the
+  M14 baseline). The **drive** (`mind/drive.py` `DrivePolicy`: a small MLP over 8 grounded features →
+  4 masked actions {ANSWER, VOLUNTEER, ASK, QUIET}) decides *when* to use it, trained by masked CE against a
+  synthetic-user teacher (`mind/drive_env.py`) whose gold is a **latent usefulness the policy never sees**
+  (`relevant(depth) AND focused(backlog)`). Genuinely learned (not a coded rule) because the policy must
+  predict the latent from grounded features. **Gate PASS:** held-out acc 0.815; learned drive beats both
+  always-on/yappy and never/Siri on volunteer F1 (0.66 vs 0.50 vs 0.00) and ask F1 (0.50 vs 0.32 vs 0.00) —
+  the quantified line between the two. Honest: the latent is deliberately noisy (Bayes-opt < 1.0).
+- **M16 (sequential RL).** The single-turn teacher is blind to *consequences*. Added the first **sampled
+  policy-gradient** in the repo (REINFORCE + value baseline, `drive.sample_action`/`drive_rl_loss`),
+  mirroring the existing `clause_psyche` PonderNet expected-reward idiom (–reward, exploration prior,
+  soft→discrete anneal) but adding multi-turn returns. A grounded hidden-goal **user simulator**
+  (`mind/drive_rollout.py`) makes the gain genuinely sequential via three symbolic couplings: a **distractor
+  stream** (separable only by `focus` — the feature the M15 teacher was trained to *ignore*), a **patience
+  budget** (off-path initiative disengages the user → goal missed), and **backlog gating** (overloaded asks
+  stall). Reward = symbolic goal-progress (the floor — no judge/reward-model). Warm-started from M15, trained
+  on a subconscious-style loop (`mind/drive_subconscious.py`). **Headline gate PASS:** on held-out dialogues
+  the RL drive reaches the user's goal **0.97 vs 0.60** for the supervised drive (= always-on; the oracle
+  ceiling is 0.97), return 4.3 vs 2.2 — and the **coupling-OFF ablation ties (1.00 = 1.00)**, the proof the
+  gain is *sequential*, not a re-tuned single-turn proxy.
+- **Three honest findings.** (1) **turns-to-goal is survivorship-confounded** — the supervised drive's lower
+  average is over only the easy 60% it solves; the gate is goal-rate + return, not turns. (2) **The RL drive's
+  single-turn calibration drops** (0.82→0.75) and that is *correct*, not a regression: it learned to use
+  `focus`, useless in the single-turn distribution but essential sequentially. (3) **Warm-start helps as an
+  *initialization* but a KL-anchor back to the teacher *hurts*** — the supervised policy is "always-act",
+  wrong on distractors, so anchoring fights the learning (`w_anchor` defaults to 0). Robust recipe (goal-rate
+  0.975 across seeds 0/1/2): lr 2e-3, init temp 1.0, entropy 0.01, value-weight 0.3, 300 episodes/round —
+  gentle enough to avoid the early "push VOLUNTEER down everywhere before `focus` is learned" collapse.
+- Files: `mind/drive.py` (value head + warm-start remap + `sample_action`/`drive_rl_loss`, mask-safe entropy/KL),
+  `mind/drive_env.py`, `mind/drive_rollout.py`, `mind/drive_subconscious.py`, `scripts/train_drive.py` +
+  `scripts/train_drive_rl.py`, `tests/test_mind_drive.py` (7) + `tests/test_mind_drive_rl.py` (9) + 4 L3 tests.
+- **Next (documented, unbuilt):** the simulator is a stand-in; a real/learned user model (and the graded judge
+  distilled to a reward model) is the frontier — but the sequential-RL machinery + the floor-as-reward now exist.
+
 ### 1. What is the consciousness state? (and its real loss)
 The state is deliberately **abstract** — a learned vector with no imposed meaning
 ("figure it out later"). The auxiliary `consciousness_consistency_loss` is a
