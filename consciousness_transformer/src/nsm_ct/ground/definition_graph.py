@@ -74,11 +74,13 @@ def naive_decompose(
     *,
     max_depth: int = DEFAULT_MAX_DEPTH,
     max_children: int = DEFAULT_MAX_CHILDREN,
+    extra_axes: FrozenSet[str] = frozenset(),
     _visited: FrozenSet[str] = frozenset(),
 ) -> ParseTree:
-    """Bounded recursive decomposition of *word* toward the NSM prime floor.
+    """Bounded recursive decomposition of *word* toward the prime floor.
 
-    Base cases: a prime exponent -> single axis leaf; a molecule -> molecule leaf.
+    Base cases: a prime exponent -> single axis leaf; a molecule -> molecule leaf;
+    a word in *extra_axes* (a basis axis promoted by M17.2) -> atomic axis leaf.
     Otherwise recurse into the first WordNet gloss's content words. When recursion
     bottoms out (depth, cycle, or no gloss) the leaf is ``UNRESOLVED`` — an honest
     marker that grounding did *not* reach a prime, not a fake SOMETHING.
@@ -90,6 +92,10 @@ def naive_decompose(
     axis = _prime_or_molecule(w)
     if axis is not None:
         return ParseTree(root=ParseNode(label=axis, token=w))
+
+    # A promoted basis axis is atomic — decomposition terminates here.
+    if w in extra_axes:
+        return ParseTree(root=ParseNode(label=w, token=w))
 
     if max_depth <= 0 or w in _visited:
         return ParseTree(root=ParseNode(label=_UNRESOLVED, token=w))
@@ -106,6 +112,7 @@ def naive_decompose(
                         c,
                         max_depth=max_depth - 1,
                         max_children=max_children,
+                        extra_axes=extra_axes,
                         _visited=nv,
                     )
                     head.children.append(child.root)
