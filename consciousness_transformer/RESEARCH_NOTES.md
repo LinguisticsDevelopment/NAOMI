@@ -1180,3 +1180,46 @@ pair (antonyms are sparse, ~2.3/word), so coverage caps the gain; values are
 per-sense (first-sense bootstrap; WSD deferred); MDL/feedback-vertex selection is
 heuristic. Gates: 19 new tests (corpus/cache 5 · polarity 4 · multisignal 5 ·
 closeness 5); full CT suite green.
+
+### 0u. The unified meaning space — reverse-engineer the minimum axes from ALL relational signal, place words, rebuild the dictionary (M19, MEASURED)
+The reframe (user): M17/M18 were partial views of *one* problem, not separate
+systems. Every lexical relationship is signal about the geometry of meaning; use
+all of it to reverse-engineer the **minimum interpretable axes**, place words in
+that one space, then **rebuild the dictionary** as geometry grounded in it.
+**Hard invariant (the user's condition): every axis is NAMED/interpretable — no
+arbitrary word2vec dimensions.**
+
+- **M19.0 unified relation store.** `wordnet.py` wrappers for the wider relations
+  (`lexname`, `attribute` bidirectional, `similar_to`, `derivational`, `meronym`,
+  `verb_group`); `RelationGraph` carries them all plus the two *feature* relations
+  that name axes (`lexname`, `attribute`). 3k coverage: lexname 1.00, synonym 0.94,
+  derivational 0.89, is_a 0.82, antonym 0.39, similar 0.31, meronym 0.28; ~16k
+  in-vocab word-word relational pairs.
+- **M19.1 interpretable axis set + dimensionality.** 234 named candidate axes
+  (65 primes + 126 attribute dimensions + 43 lexname categories). The word×axis SVD
+  (the right matrix — the synonym-affinity eigenspectrum was degenerate): intrinsic
+  dim ~46 (90% energy), effective ~17. Meaning is low-dimensional AND interpretable.
+- **M19.2 placement by constraint satisfaction.** Anchored coordinate (attribute
+  axes signed by gloss magnitude → antonyms at opposite poles on a *shared* axis,
+  non-circular) + stable relational relaxation (synonym/similar label propagation;
+  spectral radius ≤1, no learned weights). **Closes the M18 seam:** held-out
+  syn-vs-ant with PLAIN cosine 0.404→**0.693** (α=0.7), beating M18.3's
+  comparison-time penalty (0.64). Antonymy now lives in the position, not a
+  correction.
+- **M19.3 minimality.** ~**30 named axes reproduce 95%** of the relational fidelity
+  (full 0.69; K=5→0.61, K=30→0.66, K=234→0.69). The minimal set is NSM primes +
+  lexname categories (SOMETHING, ONE, PART, BODY, lex:noun.act, WHEN, PEOPLE,
+  KIND…). The empirical "minimum axes of meaning."
+- **M19.4 dictionary reconstruction.** From positions alone, held-out AUC:
+  **synonym 0.857, similar 0.734, hypernym 0.722** — the dictionary genuinely
+  reconstructs from geometry. antonym-by-distance 0.275 (honest: antonyms are
+  near-but-*opposite*, not far; the proper antonym metric is the placement
+  syn-vs-ant, 0.69).
+
+Honest boundaries: attribute coverage is 8% of words (35% of adjectives), so
+attribute-pole anchoring is partial; antonymy is near-but-opposite (distance
+predictors mis-score it); novel-pair surfacing is mostly noise at this fidelity
+(the generative payoff is weak); per-first-sense (WSD still deferred). Placement is
+deterministic label propagation; axes never rotate/mix, so every word's coordinate
+stays readable. Gates: 18 new tests (relations 5 · axes 4 · placement 4 ·
+minimality 3 · dictionary 2); full CT suite green.
