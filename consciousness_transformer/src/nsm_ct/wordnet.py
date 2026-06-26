@@ -168,3 +168,104 @@ def relations(sense_id: str) -> Optional[Dict]:
         }
     except Exception:
         return None
+
+
+# ---------------------------------------------------------------------------
+# Wider relational sources (M19) — every one named/interpretable, never opaque.
+# ---------------------------------------------------------------------------
+
+
+def _lemmas(synsets) -> List[str]:
+    return sorted({l.name() for s in synsets for l in s.lemmas()})
+
+
+def lexname(word: str) -> Optional[str]:
+    """The first sense's lexicographer-file category (e.g. ``noun.animal``,
+    ``verb.motion``, ``adj.all``) — a universal coarse semantic sort (44 of them,
+    100% synset coverage). Returns ``None`` if WordNet is unavailable / no senses."""
+    if not wordnet_available():
+        return None
+    try:
+        ss = _wn().synsets(word)
+        return ss[0].lexname() if ss else None
+    except Exception:  # pragma: no cover
+        return None
+
+
+def attributes(word: str) -> List[str]:
+    """The noun dimension(s) *word* is a value of (adjective -> attribute), e.g.
+    ``hot``/``cold`` -> ``temperature``. The shared axis antonyms differ on."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        return _lemmas([a for s in wn.synsets(word, wn.ADJ) for a in s.attributes()])
+    except Exception:  # pragma: no cover
+        return []
+
+
+def attributes_of(noun: str) -> List[str]:
+    """The adjectives that take *noun* as their attribute dimension (reverse of
+    :func:`attributes`), e.g. ``temperature`` -> ``[cold, cool, hot, warm]``."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        return _lemmas([a for s in wn.synsets(noun, wn.NOUN) for a in s.attributes()])
+    except Exception:  # pragma: no cover
+        return []
+
+
+def similar_tos(word: str) -> List[str]:
+    """Near-synonym adjective cluster lemmas (``synset.similar_tos``). Antonyms
+    have disjoint clusters, so this both pulls synonyms and separates antonyms."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        return _lemmas([t for s in wn.synsets(word, wn.ADJ) for t in s.similar_tos()])
+    except Exception:  # pragma: no cover
+        return []
+
+
+def derivationally_related(word: str) -> List[str]:
+    """Cross-POS derivational family (happy <-> happiness <-> happily)."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        out = set()
+        wl = word.lower()
+        for s in wn.synsets(word):
+            for lemma in s.lemmas():
+                for d in lemma.derivationally_related_forms():
+                    if d.name().lower() != wl:
+                        out.add(d.name())
+        return sorted(out)
+    except Exception:  # pragma: no cover
+        return []
+
+
+def meronyms(word: str) -> List[str]:
+    """Part / member / substance meronym lemmas (hand is part of body)."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        ms = []
+        for s in wn.synsets(word, wn.NOUN):
+            ms += s.part_meronyms() + s.member_meronyms() + s.substance_meronyms()
+        return _lemmas(ms)
+    except Exception:  # pragma: no cover
+        return []
+
+
+def verb_groups(word: str) -> List[str]:
+    """Coordinated-verb group lemmas (have <-> own, possess)."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        return _lemmas([g for s in wn.synsets(word, wn.VERB) for g in s.verb_groups()])
+    except Exception:  # pragma: no cover
+        return []
