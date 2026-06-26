@@ -86,6 +86,61 @@ def senses(word: str) -> List[Dict]:
         return []
 
 
+def antonyms(word: str) -> List[str]:
+    """Return lemma names that are WordNet antonyms of *word* (deduped, sorted).
+
+    Antonym edges live on lemmas, not synsets, so we walk every synset's lemmas.
+    Empty list when WordNet is unavailable or no antonym edge exists. Used by the
+    basis search (M17.2): a good basis makes an antonym pair differ on *minimal*
+    axes.
+    """
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        out = set()
+        for synset in wn.synsets(word):
+            for lemma in synset.lemmas():
+                for ant in lemma.antonyms():
+                    out.add(ant.name())
+        return sorted(out)
+    except Exception:  # pragma: no cover
+        return []
+
+
+def synonyms(word: str) -> List[str]:
+    """Return lemma names sharing a synset with *word* (excluding *word* itself)."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        out = set()
+        wl = word.lower()
+        for synset in wn.synsets(word):
+            for lemma in synset.lemmas():
+                name = lemma.name()
+                if name.lower() != wl:
+                    out.add(name)
+        return sorted(out)
+    except Exception:  # pragma: no cover
+        return []
+
+
+def hypernyms(word: str) -> List[str]:
+    """Return hypernym lemma names for *word* (one hop up the is-a hierarchy)."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        out = set()
+        for synset in wn.synsets(word):
+            for h in synset.hypernyms():
+                out.update(lemma.name() for lemma in h.lemmas())
+        return sorted(out)
+    except Exception:  # pragma: no cover
+        return []
+
+
 def relations(sense_id: str) -> Optional[Dict]:
     """Return a relation dict for the synset identified by *sense_id*.
 
