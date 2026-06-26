@@ -21,3 +21,7 @@ data/*.parquet
 data/**/*.jsonl
 # Downloaded ProofWriter (regenerate: scripts/fetch_proofwriter.py)
 data/proofwriter/
+# Generated gloss-vocabulary corpus (rebuild: ground.corpus.gloss_vocabulary)
+data/gloss_vocab.json
+# Generated decomposition caches
+data/decomp_cache*.json

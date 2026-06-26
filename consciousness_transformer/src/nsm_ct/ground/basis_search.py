@@ -40,51 +40,53 @@ _PRIME_SET = frozenset(PRIME_NAMES)
 _MOL_SET = frozenset(MOLECULES_BY_NAME)
 
 
-def _decomp(word: str, extra: FrozenSet[str], depth: int):
+def _decomp(word: str, extra: FrozenSet[str], depth: int, cache=None):
+    if cache is not None:
+        return cache.decompose(word, depth, extra)
     return naive_decompose(word, max_depth=depth, extra_axes=extra)
 
 
-def _dl_word(word: str, extra: FrozenSet[str], depth: int) -> float:
-    tree = _decomp(word, extra, depth)
+def _dl_word(word: str, extra: FrozenSet[str], depth: int, cache=None) -> float:
+    tree = _decomp(word, extra, depth, cache)
     n_nodes = tree.num_nodes()
     n_unres = sum(1 for n in tree.leaves() if n.label == "UNRESOLVED")
     return n_nodes + UNRESOLVED_PENALTY * n_unres
 
 
-def mdl(words, extra: FrozenSet[str], depth: int) -> float:
+def mdl(words, extra: FrozenSet[str], depth: int, cache=None) -> float:
     """Total description length of *words* given the promoted axis set *extra*."""
-    return AXIS_COST * len(extra) + sum(_dl_word(w, extra, depth) for w in words)
+    return AXIS_COST * len(extra) + sum(_dl_word(w, extra, depth, cache) for w in words)
 
 
-def _unresolved_counts(words, extra: FrozenSet[str], depth: int) -> Counter:
+def _unresolved_counts(words, extra: FrozenSet[str], depth: int, cache=None) -> Counter:
     c: Counter = Counter()
     for w in words:
-        for leaf in _decomp(w, extra, depth).leaves():
+        for leaf in _decomp(w, extra, depth, cache).leaves():
             if leaf.label == "UNRESOLVED" and leaf.token:
                 c[leaf.token] += 1
     return c
 
 
-def _value_vec(word: str, reg: AxisRegistry, depth: int) -> np.ndarray:
-    tree = normalize(_decomp(word, reg.extra_axes(), depth))
+def _value_vec(word: str, reg: AxisRegistry, depth: int, cache=None) -> np.ndarray:
+    tree = normalize(_decomp(word, reg.extra_axes(), depth, cache))
     return axis_vector(tree, reg.axes)
 
 
-def _grounding_rate(words, reg: AxisRegistry, depth: int) -> float:
+def _grounding_rate(words, reg: AxisRegistry, depth: int, cache=None) -> float:
     extra = reg.extra_axes()
     grounded = total = 0
     for w in words:
-        for leaf in _decomp(w, extra, depth).leaves():
+        for leaf in _decomp(w, extra, depth, cache).leaves():
             total += 1
             if canon_label(leaf.label) in _PRIME_SET or leaf.label in _MOL_SET or leaf.label in extra:
                 grounded += 1
     return grounded / total if total else 0.0
 
 
-def relational_metrics(words, reg: AxisRegistry, depth: int, graph: DefinitionGraph) -> Dict:
+def relational_metrics(words, reg: AxisRegistry, depth: int, graph: DefinitionGraph, cache=None) -> Dict:
     """Evaluate a basis against the relational signals (lower antonym, higher
     synonym/hypernym is better; grounding strictly improves with promotion)."""
-    coord = {w: _value_vec(w, reg, depth) for w in words}
+    coord = {w: _value_vec(w, reg, depth, cache) for w in words}
 
     # Antonyms: should differ on *few* axes -> high cosine (similar coordinate,
     # opposite on a minimal subset). We report mean cosine over antonym pairs.
@@ -117,7 +119,7 @@ def relational_metrics(words, reg: AxisRegistry, depth: int, graph: DefinitionGr
         return sum(xs) / len(xs) if xs else None
 
     return {
-        "grounding_rate": _grounding_rate(words, reg, depth),
+        "grounding_rate": _grounding_rate(words, reg, depth, cache),
         "antonym_cos": _mean(ant_cos),
         "n_antonym_pairs": len(ant_cos),
         "synonym_cos": _mean(syn_cos),
@@ -143,40 +145,51 @@ def search(
     max_axes: int = 20,
     min_gain: float = 1e-9,
     graph: Optional[DefinitionGraph] = None,
+    cache=None,
+    candidate_shortlist: int = 25,
 ) -> BasisResult:
-    """Greedily grow the basis from NSM-65 by MDL over *words*."""
+    """Greedily grow the basis from NSM-65 by MDL over *words*.
+
+    With a :class:`~nsm_ct.ground.cache.DecompCache` (built and warmed here if not
+    supplied), every MDL evaluation is in-memory: candidates are shortlisted by
+    unresolved-leaf frequency, then each is scored by exact cached MDL gain.
+    """
     words = [w.lower().strip() for w in words]
     if graph is None:
         graph = DefinitionGraph.build(words)
+    if cache is None:
+        from .cache import DecompCache
+        cache = DecompCache(depth=depth).warm(words)
 
     reg = AxisRegistry.seed()
     extra: set = set()
-    cur_mdl = mdl(words, frozenset(extra), depth)
+    cur_mdl = mdl(words, frozenset(extra), depth, cache)
     curve: List[Tuple[int, float]] = [(0, cur_mdl)]
     added: List[Tuple[str, int, float]] = []
 
     for _ in range(max_axes):
-        counts = _unresolved_counts(words, frozenset(extra), depth)
-        cand = None
-        freq = 0
-        for w, f in counts.most_common():
-            if w in extra or canon_label(w) in _PRIME_SET or w in _MOL_SET:
-                continue
-            cand, freq = w, f
+        counts = _unresolved_counts(words, frozenset(extra), depth, cache)
+        # Shortlist the most frequent un-grounded words, then score each by exact
+        # (cached) MDL gain — promoting an internal head collapses a whole subtree,
+        # so frequency alone undercounts; the exact cached eval is cheap.
+        shortlist = [
+            (w, f) for w, f in counts.most_common()
+            if w not in extra and canon_label(w) not in _PRIME_SET and w not in _MOL_SET
+        ][:candidate_shortlist]
+        best = None  # (gain, word, freq, new_mdl)
+        for w, f in shortlist:
+            new_mdl = mdl(words, frozenset(extra | {w}), depth, cache)
+            gain = cur_mdl - new_mdl
+            if best is None or gain > best[0]:
+                best = (gain, w, f, new_mdl)
+        if best is None or best[0] <= min_gain:
             break
-        if cand is None:
-            break
-        new_extra = frozenset(extra | {cand})
-        new_mdl = mdl(words, new_extra, depth)
-        gain = cur_mdl - new_mdl
-        if gain <= min_gain:
-            break
+        gain, cand, freq, cur_mdl = best
         extra.add(cand)
-        cur_mdl = new_mdl
         reg.add(cand, f"cycle-break:freq{freq}")
         added.append((cand, freq, gain))
         curve.append((len(extra), cur_mdl))
 
-    seed_metrics = relational_metrics(words, AxisRegistry.seed(), depth, graph)
-    final_metrics = relational_metrics(words, reg, depth, graph)
+    seed_metrics = relational_metrics(words, AxisRegistry.seed(), depth, graph, cache)
+    final_metrics = relational_metrics(words, reg, depth, graph, cache)
     return BasisResult(reg, curve, added, seed_metrics, final_metrics)
