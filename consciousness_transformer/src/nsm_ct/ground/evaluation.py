@@ -61,10 +61,17 @@ def _convergence(word: str, reg: AxisRegistry, depth: int) -> float:
     return cosine(a, b)
 
 
-def syn_ant_discrimination(words, reg: AxisRegistry, depth: int, graph: DefinitionGraph) -> Dict:
+def syn_ant_discrimination(words, reg: AxisRegistry, depth: int, graph: DefinitionGraph,
+                           coord: Optional[dict] = None) -> Dict:
     """Accuracy: for words with both a grounded synonym and antonym, is the mean
-    similarity to synonyms greater than to antonyms?"""
-    coord = {w: _value_vec(w, reg, depth) for w in words}
+    similarity to synonyms greater than to antonyms?
+
+    Pass a precomputed ``coord`` (word -> vector) to evaluate an alternative
+    coordinate (e.g. the M18.1 polarity-aware vector); otherwise the unsigned
+    basis coordinate is used.
+    """
+    if coord is None:
+        coord = {w: _value_vec(w, reg, depth) for w in words}
     correct = total = 0
     for w in words:
         syns = [s.lower() for s in graph.synonym.get(w, []) if s.lower() in coord and s.lower() != w]
