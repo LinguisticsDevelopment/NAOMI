@@ -1133,3 +1133,50 @@ built on this measured grounding rather than the dictionary.
 
 Gates: 36 new tests (canonical 6 · consistency 10 · reduction 8 · basis 7 ·
 evaluation 5); full CT suite green.
+
+### 0t. Scale + make the web do work — 10k corpus, polarity coords, multi-signal basis, graph closeness (M18, MEASURED)
+M17 left two gaps: syn>ant discrimination below chance, and everything on a
+~600-word vocab. M18 scaled to a ~10k **gloss-vocabulary** corpus (the words
+WordNet uses to define other words) and made the WordNet relational web do the
+antonym work coordinates can't. All additive under `ground/`.
+
+- **M18.0 scale + caching.** `corpus.gloss_vocabulary(n)` ranks content-word
+  frequency across all 117k WordNet glosses (offline, deterministic). `DecompCache`
+  caches base decompositions; a promoted axis reproduces
+  `naive_decompose(extra_axes=…)` by an in-memory prune+relabel (bit-equivalent),
+  so basis scoring needs no WordNet re-calls. Warm 10k ~9s; extra-aware full pass
+  ~250ms (vs ~24s uncached); full 10k basis search ~250s. The basis **converges**
+  as the corpus grows — promoted axes (act, having, relating, state, person,
+  particular, substance, things, number, cause, make …) near-identical at
+  1k/5k/10k; grounding 0.119→0.280. A real defining vocabulary, not an artefact.
+
+- **M18.1 polarity coordinates.** Signed NSM pole pairs (GOOD/BAD→±EVAL,
+  BIG/SMALL→±SIZE, MUCH_MANY/LITTLE_FEW→±QTY) + a gloss-magnitude axis (hot="high"
+  vs cold="low"; recovers the negation words decomposition drops as stopwords) +
+  morphological negation (un-/non-/dis-/-less, base-validated) flipping the base's
+  poles. Measured (3k corpus, 397 antonym pairs): syn>ant 0.413→0.466 (+0.053).
+  Honest: improves but coordinates alone stay **below chance** — antonyms share
+  definitional structure, and synonym sense-mismatch (WSD deferred) depresses it.
+
+- **M18.2 multi-signal basis selection.** MDL gates (shortlist = frequent
+  un-grounded words), relatedness steers (synonym-cosine + hypernym-containment on
+  a train split). **Honest negative:** held-out syn_cos 0.258→0.251,
+  hyp_containment 0.500→0.508 — flat/mixed. Basis-axis selection weakly controls
+  relatedness; the levers are the coordinate and the edges, not which words are
+  atomic.
+
+- **M18.3 graph-aware closeness — the antonym solution.** closeness =
+  polarity-coordinate cosine − an antonym penalty from **train-split** antonym
+  edges propagated one synonym hop. Evaluated on a held-out synonym-vs-antonym
+  discrimination (P(synonym pair closer than antonym pair); 0.5 = chance),
+  circularity-free (the held-out pair's own edge is in the test split, never the
+  train edges). Measured (3k corpus, 230 held-out antonym pairs):
+  **pure coordinate 0.333 · polarity 0.392 · graph-aware 0.638** (λ=1.0). The web
+  pushes held-out antonyms from "looks similar" (below chance) to clearly separated
+  (above chance) — the result the coordinate work pointed to all along.
+
+Honest boundaries: graph closeness needs train antonym edges near the held-out
+pair (antonyms are sparse, ~2.3/word), so coverage caps the gain; values are
+per-sense (first-sense bootstrap; WSD deferred); MDL/feedback-vertex selection is
+heuristic. Gates: 19 new tests (corpus/cache 5 · polarity 4 · multisignal 5 ·
+closeness 5); full CT suite green.
