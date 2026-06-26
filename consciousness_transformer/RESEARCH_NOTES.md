@@ -1069,3 +1069,67 @@ to the best of our knowledge. Version-dependent details are flagged
 `TODO(canonical-list)` (e.g. whether `DON'T WANT` is a distinct prime, the
 possession prime's exact form `(IS) MINE` vs. `HAVE`, the allolex set). These
 should be verified against a primary source; nothing was fabricated to fill gaps.
+
+### 0s. The word-meaning-value generator — a derived minimal basis + a deterministic clause==word reduction operator (M17, MEASURED)
+Talking about feelings exposed the real frontier: the system *looks meaning up*
+in the DeepNSM/gold explication dictionary (the "prior prime stuff") instead of
+*deriving* it, and there was **no measure of word-meaning understanding at all**
+(only task-answer accuracy). M17 builds a `ground/` subpackage that *generates* a
+word's meaning from NSM primes (the axes) + WordNet relations (the points/web),
+with DeepNSM demoted to a held-out external check. This directly answers the §9
+open question ("which / how is the basis"): the basis is **derived, not assumed.**
+
+**Model.** NSM primes = degrees of freedom (axes); WordNet = the LTM dictionary
+(points + relations). A *meaning value* is a coupled (ParseTree object + grounded
+coordinate over the basis — never flattened to a bag). The basis is found by
+**Minimum Description Length** (minimize #axes *and* decomposition depth jointly),
+seeded by NSM-65. The deterministic, learning-free **reduction operator** flattens
+a definition-clause to a prime fixpoint and **lexicalizes** a reduced clause back
+to the word it defines (exact normal-form match, then coordinate-closeness
+fallback over grounded points). Validation = **clause==word self-consistency**,
+lookup-free.
+
+**Measured.**
+- *Baseline harness (M17.0, depth 3, 31 words):* convergence 0.730, prime_grounding
+  0.567 (only ~57% of leaves reach a prime — the depth-2 truncation quantified for
+  the first time), DeepNSM-agreement 0.083.
+- *Reduction operator (M17.1):* deterministic + idempotent + confluent; exact
+  round-trip 31/31; perturbed-clause recovery (drop a definition word) 24/30 via
+  coordinate closeness.
+- *Basis discovery (M17.2, 619-word relationally-closed vocab):* 15 interpretable
+  primitives promoted (act, make, person, give, feeling, state, life … — a
+  Longman-style defining vocabulary, the predicted "more than just NSM"); MDL
+  monotonically 45669→36770; grounding 0.127→0.250.
+- *Understanding evaluation (M17.3; 319 held-out words OUTSIDE DeepNSM, 300 covered
+  for the external check), seed NSM-65 → derived basis:* grounding 0.126→**0.255**
+  · convergence 0.698→**0.769** · syn>ant discrimination 0.227→**0.455** (n=22) ·
+  hypernym containment 0.268→**0.422** (n=23) · clause==word round-trip exact 0.909,
+  perturbed 0.387 (n=319) · DeepNSM agreement 0.072→0.059 (n=300). Deriving the
+  basis improves *every* understanding metric on words the dictionary never covered.
+
+**Honest negatives / boundaries.**
+- syn>ant discrimination improves but stays **below chance (0.455 < 0.5)**: antonyms
+  share nearly all gloss structure, so coordinate-cosine rates them as *similar*.
+  Coordinates alone cannot separate antonyms — this needs explicit antonym **edges**
+  (the relational web), confirming the design's "antonyms differ on minimal axes"
+  point. Future work.
+- DeepNSM agreement is low and the derived basis slightly *lowers* it (0.072→0.059)
+  — which **demonstrates independence**: the generator never used the dictionary,
+  and gloss-decomposition ≠ curated explication.
+- Perturbed recovery drops at scale (0.933 @31 words → 0.387 @319) as the index
+  gains confusable neighbours; exact round-trip is partly by construction.
+- Molecules are grounded *points* (not axes) with no prime explication yet, so
+  molecule-grounded words have an empty prime coordinate. MDL / feedback-vertex
+  selection is heuristic (not a proven minimum). Values are per-*sense* (first-sense
+  bootstrap; WSD deferred).
+
+**Reuse (no rebuilds):** `data_structures.ParseTree`, `serialization` (lossless),
+`collapse`/`DEFINES`, `tpr` (coordinate handle), `nsm_primes` (seed axes),
+`meaning._resolve_uncached`/`_clone_bounded` patterns + WordNet glosses (as
+decomposition *material*, never the runtime answer), `wordnet` (+ new
+`antonyms`/`synonyms`/`hypernyms`). **Affect (the original M17) becomes M18:**
+valence falls out of *generated* values (does the reduced value contain GOOD/BAD),
+built on this measured grounding rather than the dictionary.
+
+Gates: 36 new tests (canonical 6 · consistency 10 · reduction 8 · basis 7 ·
+evaluation 5); full CT suite green.
