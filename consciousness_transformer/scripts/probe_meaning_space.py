@@ -66,6 +66,17 @@ def main() -> None:
     for a, b, sc in novel_synonyms(g.words(), g, placed, top=6):
         print(f"    {a} ~ {b}  ({sc:.2f})")
 
+    # [7] M20 — normalization re-audit (fix spurious overlap; the trade-off is honest)
+    from nsm_ct.ground.dictionary import evaluate_dictionary
+    print(f"\n[7] M20 normalization (dictionary reconstruction, held-out AUC):")
+    print(f"    {'norm':12s} {'synonym':>8s} {'similar':>8s} {'hypernym':>9s} {'antonym':>8s}")
+    for norm in ("raw", "standardize", "tanh"):
+        d = evaluate_dictionary(g.words(), g, ax, cache=cache, depth=3, alpha=0.7, normalization=norm)
+        print(f"    {norm:12s} {d['synonym_auc']:8.3f} {d['similar_auc']:8.3f} "
+              f"{d['hypernym_auc']:9.3f} {d['antonym_auc']:8.3f}")
+    print("    raw has spurious overlap (random-cosine 0.32); standardize keeps synonym/")
+    print("    similar and fixes overlap; tanh bounds axes to [-1,1] + best antonym, costs synonym.")
+
 
 if __name__ == "__main__":
     main()

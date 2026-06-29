@@ -50,3 +50,14 @@ def test_novel_pairs_are_ranked(setup):
     known = {tuple(sorted((w, s))) for w in g.words() for s in g.synonym.get(w, []) if s in wset}
     for a, b, _ in nov:
         assert tuple(sorted((a, b))) not in known
+
+
+@wn_required
+def test_normalization_param_fixes_antonym_and_keeps_hypernym(setup):
+    g, cache, ax = setup
+    raw = evaluate_dictionary(g.words(), g, ax, cache=cache, depth=3, normalization="raw", n_neg=1500)
+    tanh = evaluate_dictionary(g.words(), g, ax, cache=cache, depth=3, normalization="tanh", n_neg=1500)
+    # tanh removes the spurious overlap -> antonym-by-distance improves (or holds)
+    assert tanh["antonym_auc"] >= raw["antonym_auc"] - 1e-6
+    # hypernym uses binary anchored features, so the metric normalization can't change it
+    assert abs(tanh["hypernym_auc"] - raw["hypernym_auc"]) < 1e-6

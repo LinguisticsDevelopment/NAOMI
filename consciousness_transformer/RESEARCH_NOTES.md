@@ -1223,3 +1223,43 @@ predictors mis-score it); novel-pair surfacing is mostly noise at this fidelity
 deterministic label propagation; axes never rotate/mix, so every word's coordinate
 stays readable. Gates: 18 new tests (relations 5 · axes 4 · placement 4 ·
 minimality 3 · dictionary 2); full CT suite green.
+
+### 0v. The honest, normalized meaning space (M20, MEASURED)
+The user caught real rigor holes in M19.3: "30 axes seems low — are unrelated pairs
+overlapping / using different sections of an axis? should we lock axes to [-1,1]?"
+Live diagnostics confirmed the critique:
+- **Unrelated pairs overlap:** random-pair cosine **0.32** (synonym 0.75) — the placed
+  coordinate is dense (137/234 axes active/word) and absence was encoded as 0 (no
+  disagreement).
+- **Axes incommensurable:** per-axis std attribute 0.014 vs lexname 0.068.
+- **"30" was a variance-ranking artifact:** ablation showed lexname not load-bearing as
+  a block (drop → no loss) while variance-ranking kept it.
+
+- **M20.0 normalization.** `ground/normalize.py` per-axis transforms (fit on the corpus
+  coordinate, not relation labels — not circular). The user's "lock to [-1,1]" instinct
+  was right, but the literal min-max **backfires** (random 0.98 — shared min-pole
+  domination, the same failure as absence=-1). The fixes: **z-score standardize**
+  (random 0.32→**0.007**, commensurable) and **tanh(z-score)** (bounds each axis to a
+  readable **[-1,1]** — the user's intent — random 0.32→0.145, best syn>ant
+  discrimination 0.82→**0.94**).
+- **M20.1 honest minimality.** Rank axes by leave-one-out *contribution* on the
+  normalized space, not variance. Full discrimination 0.69(raw)→**0.94**(tanh). The
+  honest curve: ~30 named axes for 95%, **PEAK ~60-80 (0.95)**, then the last ~150 axes
+  *add noise* (234→0.937). The minimal set is a named **mix** (primes + lexname + a few
+  attributes). "30" wasn't a pure artifact, but the real story is the curve.
+- **M20.2 re-audit (honest trade-off).** Dictionary reconstruction (held-out AUC):
+  | norm | synonym | similar | hypernym | antonym |
+  |---|---|---|---|---|
+  | raw | 0.857 | 0.734 | 0.722 | 0.275 |
+  | standardize | 0.848 | 0.756 | 0.722 | 0.349 |
+  | tanh | 0.779 | 0.649 | 0.722 | 0.506 |
+  Normalization is **not a pure win**: standardize keeps synonym/similar AND fixes
+  overlap (best all-around); tanh maximizes the hard antonym case + bounds axes to
+  [-1,1] but costs synonym-vs-random AUC. Hypernym (binary-feature containment) is
+  metric-invariant. Default = tanh (honors the bounded-[-1,1] request + best syn>ant);
+  standardize is the all-around alternative — surfaced to the user as a choice.
+
+Honest boundaries: antonym-by-distance is the wrong predictor for antonymy
+(near-but-opposite) regardless — the proper antonym metric is syn>ant discrimination
+(tanh 0.94). Gates: 9 new tests (normalize 5 · honest-minimality 3 · dictionary param
+1); full CT suite green.

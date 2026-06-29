@@ -60,8 +60,14 @@ def evaluate_dictionary(
     iters: int = 20,
     n_neg: int = 2000,
     seed: int = 0,
+    normalization: str = "raw",
 ) -> Dict:
-    """Per-relation reconstruction of the dictionary from grounded positions."""
+    """Per-relation reconstruction of the dictionary from grounded positions.
+
+    ``normalization`` ("raw" | "tanh" | "standardize" | ...) rescales the placed
+    coordinate before scoring synonym/similar/antonym cosines (M20: tanh-z-score
+    fixes spurious overlap + incommensurable axes). Hypernym containment uses the
+    binary anchored features and is unaffected."""
     words = list(words)
     wset = set(words)
     idx = {w: i for i, w in enumerate(words)}
@@ -78,6 +84,9 @@ def evaluate_dictionary(
 
     placed = place(words, graph, axes, cache=cache, depth=depth,
                    train_pairs=train_syn + train_sim, iters=iters, alpha=alpha)
+    if normalization != "raw":
+        from .normalize import normalize_coords
+        placed = normalize_coords(placed, normalization)
     anchor = anchored_coordinate(words, graph, axes, cache=cache, depth=depth)
 
     exclude = set(syn) | set(sim) | {tuple(sorted(p)) for p in ant} | {tuple(sorted(p)) for p in isa}
