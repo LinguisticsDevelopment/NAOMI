@@ -1263,3 +1263,38 @@ Honest boundaries: antonym-by-distance is the wrong predictor for antonymy
 (near-but-opposite) regardless — the proper antonym metric is syn>ant discrimination
 (tanh 0.94). Gates: 9 new tests (normalize 5 · honest-minimality 3 · dictionary param
 1); full CT suite green.
+
+### 0w. M21 — the Null-aware bipolar representation: unrelated words made unrelated (win) + honest negative on per-word antonyms (MEASURED)
+The user's brainstorm: `0` conflates "neutral" with "doesn't apply"; pure antonyms
+(good/bad) should be ±1 on a clean axis; each axis should carry ONE meaning; and we
+should make **unrelated** words unrelated (separation), not just related words close.
+Built all three co-designed (representation + metric + contrastive objective).
+
+- `ground/sparse_value.py`: each word is `(value, mask)` — a value only on its
+  *applicable* axes (Null elsewhere). Antonym prime-pairs collapse to one signed
+  axis (GOOD/BAD→EVAL: good=+1, bad=-1, grass=Null). Metric: distinctiveness-weighted
+  (IDF) cosine — `"full"` (norm over full content → unrelated ~0) or `"masked"`
+  (shared-axes only → crisp per-pair, hot/cold=-1.0).
+- `ground/contrastive.py`: torch optimization of the values (mask/axes fixed, so
+  every axis stays interpretable) — synonym→+1, antonym→-1, random→0, anchored to
+  the principled signs.
+
+Measured (2–3k gloss corpus):
+- **WIN — unrelated separation (the user's main ask):** random-pair similarity
+  **0.32 (M19 dense) → 0.08 (sparse Null) → 0.03 (after contrastive)**. dog/justice
+  1.0→0, good/grass=0 (words sharing no applicable axes are *exactly* 0). Per-pair
+  bipolar is clean (hot/cold=-1.0 masked). Words occupy ~**2.9 applicable axes**
+  each (vs 137/234 dense) — "one meaning per axis" much closer to true.
+- **HONEST NEGATIVE — per-word antonym discrimination:** held-out syn>ant
+  **0.39 (sparse) → ~0.48 (contrastive)** — improves but stays *below chance*, far
+  short of the M19.2 relational-propagation 0.69–0.94. The free optimization is also
+  fragile on *pure* antonyms (good/bad collapses to 1.0 even anchored), because
+  good/bad share their category and the single EVAL contrast is fragile.
+
+Conclusion: the sparse **Null representation** and the **relational propagation** are
+**complementary** — the Null model wins on unrelated-separation + interpretability;
+the propagation wins on antonym discrimination. Per-word contrastive optimization
+does NOT replace propagation for antonyms — recorded honestly, not hidden. The
+sparse representation is the better answer to "make unrelated words unrelated" and
+"one meaning per axis"; antonym-aware tasks should keep using M19.2 placement. Gate:
+5 new sparse tests; full CT suite green.
