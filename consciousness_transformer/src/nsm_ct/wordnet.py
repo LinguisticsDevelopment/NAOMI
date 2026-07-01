@@ -70,7 +70,15 @@ def senses(word: str) -> List[Dict]:
     try:
         wn = _wn()
         result = []
+        wl = word.lower().replace(" ", "_")
         for synset in wn.synsets(word):
+            # per-sense antonyms + frequency come from THIS word's lemma in THIS synset
+            ants: List[str] = []
+            freq = 0
+            for lemma in synset.lemmas():
+                if lemma.name().lower() == wl:
+                    ants += [a.name() for a in lemma.antonyms()]
+                    freq += lemma.count()
             result.append(
                 {
                     "sense_id": synset.name(),
@@ -79,6 +87,8 @@ def senses(word: str) -> List[Dict]:
                     "lemmas": [lemma.name() for lemma in synset.lemmas()],
                     "hypernyms": [h.name() for h in synset.hypernyms()],
                     "hyponyms": [h.name() for h in synset.hyponyms()],
+                    "antonyms": sorted(set(ants)),   # per-sense (M22)
+                    "frequency": freq,               # lemma.count() for MFS ranking (M22)
                 }
             )
         return result

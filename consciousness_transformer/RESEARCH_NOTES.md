@@ -1298,3 +1298,37 @@ does NOT replace propagation for antonyms — recorded honestly, not hidden. The
 sparse representation is the better answer to "make unrelated words unrelated" and
 "one meaning per axis"; antonym-aware tasks should keep using M19.2 placement. Gate:
 5 new sparse tests; full CT suite green.
+
+### 0x. M22 — sense nodes (WSD by construction) + fused Null+propagation (MEASURED)
+The user's call: fuse Null+propagation, add sense WSD. Built on **sense (synset)
+nodes** so grounding is per-sense and synonymy is matched *by construction*
+(co-lemmas of a synset collapse into one node).
+
+- `wordnet.senses()` extended with per-sense `antonyms` (`lemma.antonyms()`) +
+  `frequency` (`lemma.count()`).
+- `ground/sense_graph.py`: `SenseGraph` — synset nodes, each grounded from ITS OWN
+  gloss; sense-specific relations (similar_to near-synonym clusters, per-sense
+  antonyms, hypernym, attribute, lexname). `build_sense_sparse` gives the M21 Null
+  `(value,mask)` over sense-nodes.
+- `ground/fusion.py`: `fused(a,b)` = **threshold-gated propagation** — relatedness
+  (IDF mask-overlap) gates comparability, propagation (relax over
+  similar_to + co-hyponym) supplies discrimination.
+
+Measured (1.5k gloss words → 3450 sense nodes):
+- Unrelated separation holds (random sparse-sim **0.10**); relations are sense-clean.
+- Per-representation, similar≈antonym (0.52/0.52, disc 0.44) — antonyms still
+  unsolved by the representation alone.
+- **FUSION (the win):** propagation over similar+co-hyponym gives sim>ant **0.632**
+  (above chance); the **threshold** gate (τ=0.15) cuts random overlap
+  **0.198→0.116 while preserving discrimination 0.632** — separation AND antonyms
+  *together*, which neither Null-only (0.10 / 0.44) nor propagation-only (0.198 /
+  0.63) achieved alone. A *product* gate FAILED (crushed disc to 0.495); the
+  threshold gate is the fix.
+
+Honest boundaries: sim>ant 0.63 is above chance but **below the word-graph
+propagation ceiling (0.69–0.94)** — sense-nodes rely on similar_to/co-hyponym
+(sparser than word synonymy), so absolute discrimination is lower and the plan's
+0.94 "both at once" target was NOT met (recorded, not hidden). Sense-matching gives
+correct per-sense grounding and the fusion delivers separation+discrimination
+together, but does not lift absolute antonym discrimination beyond the word-graph.
+Gate: 4 new sense/fusion tests; full CT suite green.
