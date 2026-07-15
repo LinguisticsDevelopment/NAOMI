@@ -42,11 +42,22 @@ class SenseGraph:
     similar: Dict[str, List[str]] = field(default_factory=dict)   # similar_to synset ids
     hypernym: Dict[str, List[str]] = field(default_factory=dict)
     antonym: Dict[str, List[str]] = field(default_factory=dict)   # per-sense
+    derivational: Dict[str, List[str]] = field(default_factory=dict)  # cross-POS family (M23)
+    meronym: Dict[str, List[str]] = field(default_factory=dict)       # part/member/substance + holonyms (M23)
+    gloss_overlap: Dict[str, List[str]] = field(default_factory=dict) # senses sharing >=K gloss words (M23)
     attribute: Dict[str, List[str]] = field(default_factory=dict)
     lexname: Dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def build(cls, words, *, max_senses_per_word: int = 3, cap: int = None) -> "SenseGraph":
+    def build(
+        cls,
+        words,
+        *,
+        max_senses_per_word: int = 3,
+        cap: int = None,
+        gloss_overlap_k: int = 3,
+        gloss_overlap_max_fanout: int = 25,
+    ) -> "SenseGraph":
         """Nodes = the top synsets (by frequency) of each word, capped."""
         from ..wordnet import senses as wn_senses, wordnet_available
         if not wordnet_available():
@@ -84,15 +95,62 @@ class SenseGraph:
                     if aid in nodeset:
                         ants.append(aid)
             g.antonym[sid] = sorted(set(ants))
+            # derivational: cross-POS family, target synset ids (lemma-level relation)
+            der = []
+            for lemma in syn.lemmas():
+                for d in lemma.derivationally_related_forms():
+                    did = d.synset().name()
+                    if did in nodeset and did != sid:
+                        der.append(did)
+            g.derivational[sid] = sorted(set(der))
+            # meronym / holonym: structural part-of, both directions
+            mer = []
+            for m in (
+                syn.part_meronyms() + syn.member_meronyms() + syn.substance_meronyms()
+                + syn.part_holonyms() + syn.member_holonyms() + syn.substance_holonyms()
+            ):
+                if m.name() in nodeset and m.name() != sid:
+                    mer.append(m.name())
+            g.meronym[sid] = sorted(set(mer))
             g.attribute[sid] = [a.name().split(".")[0] for a in syn.attributes()]
             g.lexname[sid] = syn.lexname()
+
+        # gloss-overlap (the "use the definitions" edge): senses sharing >=K content words.
+        # Invert content-word -> senses, then link senses that co-occur, capping fan-out.
+        posting: Dict[str, List[str]] = {}
+        content_of: Dict[str, set] = {}
+        for sid in g.senses:
+            cw = set(content_words(g.gloss.get(sid, "")))
+            content_of[sid] = cw
+            for w in cw:
+                posting.setdefault(w, []).append(sid)
+        for sid in g.senses:
+            counts: Dict[str, int] = {}
+            for w in content_of[sid]:
+                bucket = posting.get(w, ())
+                if len(bucket) > gloss_overlap_max_fanout:
+                    continue  # skip ubiquitous words (weak signal, quadratic blowup)
+                for other in bucket:
+                    if other != sid:
+                        counts[other] = counts.get(other, 0) + 1
+            g.gloss_overlap[sid] = sorted(o for o, c in counts.items() if c >= gloss_overlap_k)
         return g
 
     def words(self) -> List[str]:  # node ids (keeps the RelationGraph-like interface)
         return list(self.senses)
 
+    def _store(self, relation: str) -> Dict[str, List[str]]:
+        return {
+            "similar": self.similar,
+            "hypernym": self.hypernym,
+            "antonym": self.antonym,
+            "derivational": self.derivational,
+            "meronym": self.meronym,
+            "gloss_overlap": self.gloss_overlap,
+        }[relation]
+
     def typed_pairs(self, relation: str) -> List[tuple]:
-        store = {"similar": self.similar, "hypernym": self.hypernym, "antonym": self.antonym}[relation]
+        store = self._store(relation)
         nodeset = set(self.senses)
         pairs = set()
         for a, neigh in store.items():
@@ -100,6 +158,36 @@ class SenseGraph:
                 if b in nodeset and b != a:
                     pairs.add(tuple(sorted((a, b))) if relation != "hypernym" else (a, b))
         return sorted(pairs)
+
+    def cohyponym_pairs(self, *, max_per_group: int = 40) -> List[tuple]:
+        """Senses sharing a hypernym (the M22 baseline close signal; note: siblings
+        can include antonyms)."""
+        groups: Dict[str, List[str]] = {}
+        for sid, hs in self.hypernym.items():
+            for h in hs:
+                groups.setdefault(h, []).append(sid)
+        pairs = set()
+        for members in groups.values():
+            members = members[:max_per_group]
+            for i in range(len(members)):
+                for j in range(i + 1, len(members)):
+                    pairs.add(tuple(sorted((members[i], members[j]))))
+        return sorted(pairs)
+
+    def close_edges(self, *types: str, exclude_antonyms: bool = True) -> List[tuple]:
+        """Union the requested close-relation types into one undirected edge list,
+        dropping known antonym pairs so contamination can't leak opposites into the
+        'close' set. ``cohyponym`` is accepted as a pseudo-type."""
+        edges = set()
+        for t in types:
+            if t == "cohyponym":
+                edges.update(self.cohyponym_pairs())
+            else:
+                edges.update(tuple(sorted(p)) for p in self.typed_pairs(t))
+        if exclude_antonyms:
+            ban = {tuple(sorted(p)) for p in self.typed_pairs("antonym")}
+            edges -= ban
+        return sorted(edges)
 
 
 def build_sense_sparse(g: SenseGraph, *, depth: int = 2, min_attribute_freq: int = 2) -> SparseSpace:
