@@ -67,7 +67,6 @@ def main() -> None:
         print(f"    {a} ~ {b}  ({sc:.2f})")
 
     # [7] M20 — normalization re-audit (fix spurious overlap; the trade-off is honest)
-    from nsm_ct.ground.dictionary import evaluate_dictionary
     print(f"\n[7] M20 normalization (dictionary reconstruction, held-out AUC):")
     print(f"    {'norm':12s} {'synonym':>8s} {'similar':>8s} {'hypernym':>9s} {'antonym':>8s}")
     for norm in ("raw", "standardize", "tanh"):
@@ -76,6 +75,38 @@ def main() -> None:
               f"{d['hypernym_auc']:9.3f} {d['antonym_auc']:8.3f}")
     print("    raw has spurious overlap (random-cosine 0.32); standardize keeps synonym/")
     print("    similar and fixes overlap; tanh bounds axes to [-1,1] + best antonym, costs synonym.")
+
+    # [8] M23 — sense nodes + close-edge sweep (held-out; corrects M22's leaked sim>ant)
+    import numpy as np
+    from nsm_ct.ground.sense_graph import SenseGraph, build_sense_sparse
+    from nsm_ct.ground.fusion import propagate, fused_similarity, _cos
+    from nsm_ct.ground.closeness import split_pairs
+    sg = SenseGraph.build(gloss_vocabulary(min(args.n, 1500)), max_senses_per_word=3, cap=4000)
+    ssp = build_sense_sparse(sg, depth=2)
+    sidx = {w: i for i, w in enumerate(ssp.words)}
+    _pi = lambda ps: np.array([(sidx[a], sidx[b]) for a, b in ps if a in sidx and b in sidx and a != b])
+    _, te_s = split_pairs(sg.typed_pairs("similar"), 0.5)
+    _, te_a = split_pairs(sg.typed_pairs("antonym"), 0.5)
+    S, A = _pi(te_s), _pi(te_a)
+    tset = {tuple(sorted(p)) for p in te_s}
+    rng = np.random.RandomState(0); Rn = rng.randint(0, len(ssp.words), (4000, 2))
+    print(f"\n[8] M23 sense-node close-edge sweep (held-out; threshold gate 0.15):")
+    print(f"    (M22's 0.63 sim>ant was leaked — test pairs were also propagation edges; below is honest)")
+    print(f"    {'close-edge set':34s} {'sim>ant':>8s} {'random':>8s}")
+    for tag, edges in [
+        ("{similar+cohyponym} (M22 base)", sg.cohyponym_pairs() + sg.typed_pairs("similar")),
+        ("{similar+deriv+mero}", sg.close_edges("similar", "derivational", "meronym")),
+        ("{+gloss_overlap}", sg.close_edges("similar", "derivational", "meronym", "gloss_overlap")),
+    ]:
+        train = [p for p in edges if tuple(sorted(p)) not in tset]
+        P = propagate(ssp, train, iters=20, alpha=0.7)
+        d = float((fused_similarity(ssp, P, S, threshold=0.15)[:, None]
+                   > fused_similarity(ssp, P, A, threshold=0.15)[None, :]).mean())
+        r = float(fused_similarity(ssp, P, Rn, threshold=0.15).mean())
+        print(f"    {tag:34s} {d:8.3f} {r:8.3f}")
+    print("    deriv+mero is the best sense-node close set (beats cohyponym); gloss-overlap is noise.")
+    print("    But held-out sim>ant ~0.50 (near chance) << word-graph — propagation only helps")
+    print("    CONNECTED pairs; the generalizing win is the gate cutting random overlap (0.18->0.12).")
 
 
 if __name__ == "__main__":

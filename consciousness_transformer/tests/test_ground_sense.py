@@ -60,7 +60,23 @@ def test_unrelated_sense_pairs_are_far(sense_setup):
 
 
 @wn_required
-def test_threshold_fusion_keeps_discrimination_and_cuts_overlap(sense_setup):
+def test_m23_new_relations_and_close_edges(sense_setup):
+    g, sp = sense_setup
+    # the three new close-edge sources all build with real coverage
+    assert len(g.typed_pairs("derivational")) > 0
+    assert len(g.typed_pairs("meronym")) > 0
+    assert len(g.typed_pairs("gloss_overlap")) > 0
+    # close_edges unions types and drops antonyms (no opposite leaks into "close")
+    ant = {tuple(sorted(p)) for p in g.typed_pairs("antonym")}
+    ce = g.close_edges("similar", "derivational", "meronym", exclude_antonyms=True)
+    assert ce and not (set(ce) & ant)
+
+
+@wn_required
+def test_threshold_gate_cuts_overlap_heldout(sense_setup):
+    """The robust, GENERALIZING win: the threshold gate cuts unrelated overlap
+    without hurting discrimination — evaluated held-out (test pairs are removed from
+    the propagation edges, unlike the leaky M22 probe)."""
     g, sp = sense_setup
     idx = {n: i for i, n in enumerate(sp.words)}
 
@@ -68,17 +84,17 @@ def test_threshold_fusion_keeps_discrimination_and_cuts_overlap(sense_setup):
         return np.array([(idx[a], idx[b]) for a, b in ps if a in idx and b in idx and a != b])
 
     sim, ant = g.typed_pairs("similar"), g.typed_pairs("antonym")
-    close = sim + co_hyponym_pairs(g)
-    tr_c, _ = split_pairs(close, 0.7)
     _, te_sim = split_pairs(sim, 0.5)
     _, te_ant = split_pairs(ant, 0.5)
-    P = propagate(sp, tr_c, iters=20, alpha=0.7)
+    if not te_sim or not te_ant:
+        pytest.skip("insufficient sense relation pairs at this vocab size")
+    te_sim_set = {tuple(sorted(p)) for p in te_sim}
+    # deriv+mero close edges, held-out: test-similar pairs excluded from propagation
+    close = [p for p in g.close_edges("similar", "derivational", "meronym") if tuple(sorted(p)) not in te_sim_set]
+    P = propagate(sp, close, iters=20, alpha=0.7)
     S, A = pidx(te_sim), pidx(te_ant)
     rng = np.random.RandomState(0)
     rand = rng.randint(0, len(sp.words), (3000, 2))
-
-    if len(S) == 0 or len(A) == 0:
-        pytest.skip("insufficient sense relation pairs at this vocab size")
 
     def disc(score_fn):
         s, a = score_fn(S), score_fn(A)
@@ -89,6 +105,5 @@ def test_threshold_fusion_keeps_discrimination_and_cuts_overlap(sense_setup):
     fused_disc = disc(lambda pr: fused_similarity(sp, P, pr, threshold=0.15))
     fused_rand = fused_similarity(sp, P, rand, threshold=0.15).mean()
 
-    # the threshold gate cuts unrelated overlap while preserving discrimination
-    assert fused_rand < prop_rand
-    assert fused_disc >= prop_disc - 0.03
+    assert fused_rand < prop_rand              # gate cuts unrelated overlap
+    assert fused_disc >= prop_disc - 0.03      # without hurting discrimination

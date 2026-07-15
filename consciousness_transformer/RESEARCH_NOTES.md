@@ -1332,3 +1332,40 @@ propagation ceiling (0.69–0.94)** — sense-nodes rely on similar_to/co-hypony
 correct per-sense grounding and the fusion delivers separation+discrimination
 together, but does not lift absolute antonym discrimination beyond the word-graph.
 Gate: 4 new sense/fusion tests; full CT suite green.
+
+### 0y. M23 — denser sense-correct close edges + a leakage correction to §0x (MEASURED)
+Goal: thicken the sense graph so propagation reaches the word-graph's antonym numbers.
+Added three per-synset close-edge sources to `SenseGraph` (`ground/sense_graph.py`):
+`derivational` (`lemma.derivationally_related_forms()`, cross-POS), `meronym`
+(part/member/substance + holonyms), `gloss_overlap` (senses sharing ≥K gloss content
+words — the "use the definitions" edge), plus `close_edges(*types,
+exclude_antonyms=True)` which unions types and drops known antonym pairs.
+
+Coverage (1.5k words → 3450 sense nodes): derivational 582 pairs, meronym 161,
+gloss_overlap 229 (vs similar 154, antonym 97); `close_edges` excludes antonyms
+cleanly (0 leaked).
+
+**The leakage correction (important).** Re-running the M22 fusion held-out —
+*removing the test similar pairs from the propagation edges* — exposed that §0x's
+**sim>ant 0.632 was inflated by leakage**: the M22 probe/test propagated over the
+first 70% of `similar+cohyponym` (which contains *all* 154 similar pairs) and then
+evaluated on a subset of those same similar pairs. With test pairs held out, the
+honest numbers (threshold gate 0.15):
+
+| close-edge set | edges | held-out sim>ant | random (gated) |
+|---|---|---|---|
+| {similar+cohyponym} (M22 base) | 1878 | 0.424 | 0.115 |
+| **{similar+deriv+mero}** | 827 | **0.497** | 0.118 |
+| {+gloss_overlap} | 1006 | 0.496 | 0.120 |
+
+Findings, honest: **(1)** derivational+meronym *is* the best sense-node close set
+(0.497 vs cohyponym 0.424) and drops antonym contamination — a real, modest lift;
+gloss-overlap adds nothing and slightly raises random, so it is **dropped**. **(2)**
+But once leakage is removed, sense-node propagation barely beats chance (~0.50) and is
+**nowhere near the word-graph** — because propagation only helps pairs *connected* by
+training edges; held-out similar pairs revert to the raw representation (~0.44). The
+generalizing win is **not** antonym discrimination — it is the **threshold gate cutting
+unrelated overlap (random 0.18→0.12)**, which holds up out-of-sample. Prior word-graph
+propagation numbers (0.69–0.94) are likely similarly leakage-optimistic and want the
+same held-out re-audit before being trusted. Gate: 5 sense/fusion tests (leaky M22 test
+replaced with a held-out one); probe [8] prints the honest sweep; full CT suite green.
