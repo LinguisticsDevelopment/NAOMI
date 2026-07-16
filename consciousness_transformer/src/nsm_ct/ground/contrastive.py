@@ -9,8 +9,9 @@ content on inapplicable axes and axes are never rotated/mixed) — a word's valu
 ``EVAL`` is still its goodness, just fit to the relations.
 
 Honest contract (per the plan): if this can't push held-out syn>ant above the M20
-tanh baseline (0.94) at the per-word level, that is recorded as a negative — the
-relational propagation may remain necessary — not hidden.
+tanh baseline (0.756 held-out; originally cited as 0.94, which M24 found leaked) at
+the per-word level, that is recorded as a negative — the relational propagation may
+remain necessary — not hidden.
 """
 
 from __future__ import annotations

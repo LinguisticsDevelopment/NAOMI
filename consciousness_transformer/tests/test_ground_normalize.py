@@ -7,6 +7,7 @@ import pytest
 
 from nsm_ct.ground.axes import MeaningAxes
 from nsm_ct.ground.cache import DecompCache
+from nsm_ct.ground.closeness import split_pairs
 from nsm_ct.ground.corpus import gloss_vocabulary
 from nsm_ct.ground.normalize import (
     center,
@@ -56,14 +57,20 @@ def test_normalization_reduces_overlap_and_holds_discrimination():
     ax = MeaningAxes.assemble(g, min_attribute_freq=2)
     words = g.words()
     idx = {w: i for i, w in enumerate(words)}
-    P = np.stack([place(words, g, ax, cache=cache, depth=3, alpha=0.7)[w] for w in words])
-
     wset = set(words)
-    syn = np.array([(idx[a], idx[b]) for a, b in
-                    sorted({tuple(sorted((w, s))) for w in words for s in g.synonym.get(w, []) if s in wset})
-                    if a != b])
-    ant = np.array([(idx[a], idx[b]) for a, b in
-                    sorted({tuple(sorted(p)) for p in g.typed_pairs("antonym")}) if a != b])
+
+    # HELD-OUT (M24 leakage fix): propagate over TRAIN closeness edges, score on the
+    # disjoint test_syn / test_ant (was placing over all synonyms AND scoring on them).
+    syn_all = sorted({tuple(sorted((w, s))) for w in words for s in g.synonym.get(w, []) if s in wset and s != w})
+    sim_all = sorted({tuple(sorted((w, s))) for w in words for s in g.similar.get(w, []) if s in wset and s != w})
+    ant_all = sorted({tuple(sorted(p)) for p in g.typed_pairs("antonym")})
+    train_syn, test_syn = split_pairs(syn_all, 0.5)
+    train_sim, _ = split_pairs(sim_all, 0.5)
+    _, test_ant = split_pairs(ant_all, 0.5)
+    P = np.stack([place(words, g, ax, cache=cache, depth=3, alpha=0.7,
+                        train_pairs=train_syn + train_sim)[w] for w in words])
+    syn = np.array([(idx[a], idx[b]) for a, b in test_syn if a != b])
+    ant = np.array([(idx[a], idx[b]) for a, b in test_ant if a != b])
     rng = np.random.RandomState(0)
     rand = rng.randint(0, len(words), (2000, 2))
 

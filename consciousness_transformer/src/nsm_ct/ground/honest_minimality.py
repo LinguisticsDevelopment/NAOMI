@@ -54,14 +54,20 @@ def contribution_minimal_axes(
     the normalized space; report the fidelity-vs-#axes curve and the minimal set."""
     words = list(words)
     idx = {w: i for i, w in enumerate(words)}
-    placed = place(words, graph, axes, cache=cache, depth=depth, alpha=alpha)
-    P = tanh_standardize(np.stack([placed[w] for w in words]))
 
     wset = set(words)
     syn_pairs = sorted({tuple(sorted((w, s))) for w in words for s in graph.synonym.get(w, []) if s in wset and s != w})
+    sim_pairs = sorted({tuple(sorted((w, s))) for w in words for s in graph.similar.get(w, []) if s in wset and s != w})
     ant_pairs = sorted({tuple(sorted(p)) for p in graph.typed_pairs("antonym")})
-    _, test_syn = split_pairs(syn_pairs, train_frac)
+    train_syn, test_syn = split_pairs(syn_pairs, train_frac)
+    train_sim, _ = split_pairs(sim_pairs, train_frac)
     _, test_ant = split_pairs(ant_pairs, train_frac)
+
+    # HELD-OUT (M24 leakage fix): propagate over the TRAIN closeness edges only, so the
+    # test_syn pairs scored below were never part of the placement's propagation graph.
+    placed = place(words, graph, axes, cache=cache, depth=depth, alpha=alpha,
+                   train_pairs=train_syn + train_sim)
+    P = tanh_standardize(np.stack([placed[w] for w in words]))
     syn = np.array([(idx[a], idx[b]) for a, b in test_syn])
     ant = np.array([(idx[a], idx[b]) for a, b in test_ant])
 

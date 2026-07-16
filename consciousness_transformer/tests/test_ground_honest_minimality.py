@@ -27,8 +27,9 @@ def setup():
 def test_normalized_discrimination_beats_raw_space(setup):
     g, cache, ax = setup
     r = contribution_minimal_axes(g.words(), g, ax, cache=cache, depth=3, alpha=0.7)
-    # the normalized space discriminates far better than M19.3's raw ~0.69
-    assert r["full_discrimination"] > 0.80
+    # HELD-OUT (M24 leakage fix): tanh-normalized space beats the raw held-out ~0.67.
+    # (Was asserting >0.80 against the LEAKED 0.94; honest held-out full is ~0.756.)
+    assert r["full_discrimination"] > 0.72
     assert r["n_test_ant"] > 0 and r["n_test_syn"] > 0
 
 

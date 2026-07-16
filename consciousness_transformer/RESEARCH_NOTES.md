@@ -1241,12 +1241,18 @@ Live diagnostics confirmed the critique:
   domination, the same failure as absence=-1). The fixes: **z-score standardize**
   (random 0.32→**0.007**, commensurable) and **tanh(z-score)** (bounds each axis to a
   readable **[-1,1]** — the user's intent — random 0.32→0.145, best syn>ant
-  discrimination 0.82→**0.94**).
+  discrimination raw→tanh **0.673→0.756 held-out**).
+  > **[M24 leakage correction]** This was originally reported as **0.82→0.94**, which was
+  > *leaked*: the placement propagated over ALL synonym pairs and then scored discrimination
+  > on (a subset of) those same pairs. Re-run held-out (test pairs excluded from propagation),
+  > raw is 0.673 and tanh **0.756** — tanh is still the best normalization for antonyms, but
+  > the magnitude was inflated ~0.18. See §0z.
 - **M20.1 honest minimality.** Rank axes by leave-one-out *contribution* on the
-  normalized space, not variance. Full discrimination 0.69(raw)→**0.94**(tanh). The
-  honest curve: ~30 named axes for 95%, **PEAK ~60-80 (0.95)**, then the last ~150 axes
-  *add noise* (234→0.937). The minimal set is a named **mix** (primes + lexname + a few
-  attributes). "30" wasn't a pure artifact, but the real story is the curve.
+  normalized space, not variance. Full discrimination (held-out, tanh) **0.756** *[M24:
+  was 0.94, leaked]*. The honest curve **rises then falls**: it climbs to a **PEAK ~0.83
+  around K≈80–120**, then the tail axes *add noise* (all 214→0.756) — so the last ~100
+  axes hurt. The minimal set is a named **mix** (primes + lexname + a few attributes).
+  "30" wasn't a pure artifact, but the real story is the peaked curve.
 - **M20.2 re-audit (honest trade-off).** Dictionary reconstruction (held-out AUC):
   | norm | synonym | similar | hypernym | antonym |
   |---|---|---|---|---|
@@ -1261,8 +1267,8 @@ Live diagnostics confirmed the critique:
 
 Honest boundaries: antonym-by-distance is the wrong predictor for antonymy
 (near-but-opposite) regardless — the proper antonym metric is syn>ant discrimination
-(tanh 0.94). Gates: 9 new tests (normalize 5 · honest-minimality 3 · dictionary param
-1); full CT suite green.
+(tanh **0.756 held-out** *[M24: was 0.94, leaked]*). Gates: 9 new tests (normalize 5 ·
+honest-minimality 3 · dictionary param 1); full CT suite green.
 
 ### 0w. M21 — the Null-aware bipolar representation: unrelated words made unrelated (win) + honest negative on per-word antonyms (MEASURED)
 The user's brainstorm: `0` conflates "neutral" with "doesn't apply"; pure antonyms
@@ -1287,7 +1293,8 @@ Measured (2–3k gloss corpus):
   each (vs 137/234 dense) — "one meaning per axis" much closer to true.
 - **HONEST NEGATIVE — per-word antonym discrimination:** held-out syn>ant
   **0.39 (sparse) → ~0.48 (contrastive)** — improves but stays *below chance*, far
-  short of the M19.2 relational-propagation 0.69–0.94. The free optimization is also
+  short of the M19.2 relational-propagation **0.69–0.76 held-out** *[M24: this range was
+  written 0.69–0.94; the 0.94 was leaked, honest tanh is 0.756]*. The free optimization is also
   fragile on *pure* antonyms (good/bad collapses to 1.0 even anchored), because
   good/bad share their category and the single EVAL contrast is fragile.
 
@@ -1326,9 +1333,10 @@ Measured (1.5k gloss words → 3450 sense nodes):
   threshold gate is the fix.
 
 Honest boundaries: sim>ant 0.63 is above chance but **below the word-graph
-propagation ceiling (0.69–0.94)** — sense-nodes rely on similar_to/co-hyponym
+propagation ceiling (0.69–0.76 held-out** *[M24: was written 0.69–0.94; the 0.94 was
+leaked, honest tanh is 0.756]*) — sense-nodes rely on similar_to/co-hyponym
 (sparser than word synonymy), so absolute discrimination is lower and the plan's
-0.94 "both at once" target was NOT met (recorded, not hidden). Sense-matching gives
+"both at once" target was NOT met (recorded, not hidden). Sense-matching gives
 correct per-sense grounding and the fusion delivers separation+discrimination
 together, but does not lift absolute antonym discrimination beyond the word-graph.
 Gate: 4 new sense/fusion tests; full CT suite green.
@@ -1365,7 +1373,55 @@ But once leakage is removed, sense-node propagation barely beats chance (~0.50) 
 **nowhere near the word-graph** — because propagation only helps pairs *connected* by
 training edges; held-out similar pairs revert to the raw representation (~0.44). The
 generalizing win is **not** antonym discrimination — it is the **threshold gate cutting
-unrelated overlap (random 0.18→0.12)**, which holds up out-of-sample. Prior word-graph
-propagation numbers (0.69–0.94) are likely similarly leakage-optimistic and want the
-same held-out re-audit before being trusted. Gate: 5 sense/fusion tests (leaky M22 test
-replaced with a held-out one); probe [8] prints the honest sweep; full CT suite green.
+unrelated overlap (random 0.18→0.12)**, which holds up out-of-sample.
+> **[M24 follow-up]** This paragraph originally speculated that "prior word-graph numbers
+> (0.69–0.94) are likely similarly leakage-optimistic." The M24 audit settled it and the
+> speculation was **half right**: the **0.693** (M19.2, via held-out `evaluate_placement`)
+> is honest, but the **0.94** (M20 tanh, via `honest_minimality`/`probe_normalize` which
+> placed over all synonym pairs then scored them) *was* leaked → honest held-out **0.756**.
+> So the word-graph still genuinely beats sense-nodes on antonyms (0.756 vs ~0.50); M23's
+> conclusion holds and is starker. See §0z.
+
+Gate: 5 sense/fusion tests (leaky M22 test replaced with a held-out one); probe [8] prints
+the honest sweep; full CT suite green.
+
+### 0z. M24 — full leakage audit across M17–M23 (MEASURED)
+The M22→M23 leak prompted a systematic audit: trace every headline metric to the code that
+produced it and classify **H** (computed via a held-out `evaluate_*` function) or **A**
+(ad-hoc probe/test with a hand-rolled split), then re-run every (A) held-out.
+
+**Provenance table (headline metrics → source → verdict):**
+
+| metric (notes) | source | verdict |
+|---|---|---|
+| M18.3 graph-aware closeness 0.638 | `closeness` (circularity-free) | **H — clean** |
+| M18.2 multisignal held-out syn_cos | `multisignal.py:104–138` | **H — clean** |
+| M19.2 placement syn>ant **0.693** | `evaluate_placement` (`placement.py:123–133`) | **H — clean** |
+| M19.3 minimality 0.69 + K-curve | `minimality.py:53–68` (train_pairs passed) | **H — clean** |
+| M19.4 / M20.2 dictionary AUCs | `evaluate_dictionary` (`dictionary.py:80–111`) | **H — clean** |
+| M20.0 normalization random overlap | `probe_normalize` (random pairs) | clean (not a train/test metric) |
+| M20.0/M20.1 syn>ant **0.94 (tanh)** | `honest_minimality.py:57` + `probe_normalize.py:49` — `place()` over ALL synonym pairs, scored on them | **A — LEAKED → 0.756 held-out** |
+| M21 Null random 0.03 / syn>ant 0.39 | `sparse_value.pair_similarity` (no propagation) | clean (no training) |
+| M21(b) contrastive | `test_ground_sparse.py:90` trains on train half, checks only random separation | clean (no leaked number) |
+| M22 sim>ant **0.632** | ad-hoc fusion eval (test pairs = propagation edges) | **A — LEAKED → ~0.50** (fixed in M23) |
+| M17.3 / M18.1 syn>ant (0.455 / 0.466) | coordinate cosine, no propagation | clean (no training) |
+
+**Findings.** Two genuine leaks existed, both from the same bug — *placement propagated
+over the same synonym pairs it then scored*: **M22's 0.632** (found + fixed in M23) and
+**M20's 0.94** (found here → honest held-out **0.756**; leak table: raw 0.828→0.673,
+standardize 0.767→0.625, tanh 0.938→0.756). Every other headline metric goes through the
+held-out `evaluate_*` functions (which pass an explicit `train_pairs` = train half and score
+the disjoint test split) or is leak-free by construction (coordinate-cosine / random-pair
+metrics train on nothing). **The qualitative conclusions all survive** — tanh is still the
+best normalization for antonyms, the minimality curve still peaks then adds a noise tail, and
+the word-graph still beats sense-nodes — only three inflated magnitudes were corrected.
+
+**Fixes.** `honest_minimality.py` and `probe_normalize.py` now `place(..., train_pairs=
+train_syn+train_sim)` and score held-out; `test_ground_honest_minimality.py` /
+`test_ground_normalize.py` updated off the leaked thresholds.
+
+**Rule going forward:** any syn>ant / relatedness metric must either go through an
+`evaluate_*` function or explicitly exclude its scored pairs from the propagation edges
+(`train_pairs=` / `close = [p for p in edges if p not in test_set]`). A metric that
+propagates over the pairs it scores is leaked by construction. Gate: 2 code fixes + 2 test
+corrections; full CT suite green.
