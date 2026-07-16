@@ -1468,3 +1468,49 @@ per-word values), which cannot add un-named axes without breaking the thesis —
 `joint_place.py` is kept as the documented negative (like the M21b contrastive one). Gate:
 3 joint tests (mechanics + held-out split + determinism); probe `[9]` prints the head-to-head;
 full CT suite green.
+
+### The next layer — can everything live in the embedding space? (post-grounding roadmap)
+The grounding arc (M17–M25) converged on a clear substrate: **a minimal set of non-overlapping,
+interpretable named axes over which WORD-senses are *placed* by deterministic propagation** —
+honestly evaluated (M24) and shown to resist both reframes tried (sense-nodes M22–23, trained
+embeddings M25). So: **can everything be placed as a point in that space?** The measured answer
+is **no — and the boundary is informative, not a failure.**
+
+**What the coordinate DOES capture (place it as a point):** *gradient, "how-alike" meaning* —
+synonymy (held-out AUC 0.86), hypernymy (0.72), similarity (0.73), and unrelatedness (random
+→ ~0, the M21 win). For this, the embedding space is the right and sufficient representation, and
+"more axes" is not the lever (M20 showed the tail is noise; M25 showed free training overfits).
+
+**What resists placement (needs structure ON the space, not more axes):**
+1. **Opposition is a relation, not a position.** Antonymy caps at ~0.73–0.76 because opposites
+   *share* almost all structure — good/bad differ only in sign on a shared axis. Every attempt to
+   push it into the coordinate (per-word bipolar M21, sense-nodes M22–23, joint training M25) hit
+   the same wall; the only lever that has ever moved it is a **signed relational edge** used at
+   scoring/composition time. Antonymy lives on the graph, not in the distance.
+2. **Composition is an operation, not a point.** A clause/proposition is not a location in the
+   word space — it is a *binding* of grounded primes (negation, quantifiers, scope). This is the
+   project's central open problem (§2): you *place the primes*; you *compose the meaning*.
+3. **Reasoning is dynamics, not placement.** Inference is transformation of meaning over the Mind
+   loop, not a static coordinate.
+
+**So we keep going deeper — by LAYERING structure on the grounded floor, not deepening the floor.**
+Concrete next steps, in dependency order:
+- **(A) Sense-resolve into the Mind (nearest, highest-leverage).** The M22 `SenseGraph` + the
+  existing `wsd.WordNetSenseInventory` hook make sense→prime signatures *real grounded coordinates*
+  instead of the current `MockSenseInventory`. Wire sense-resolved grounded vectors (not raw
+  tokens) into what the Mind writes to memory (§2's stated "wire WSD into the Mind loop"). This is
+  where grounding stops being a standalone lexicon and starts feeding the reasoner.
+- **(B) Compose clauses over the grounded primes (the central problem, §2).** Represent a clause
+  as a composition of placed word-coordinates (the designed-but-unbuilt `compose_subtree` /
+  TPR binding), keeping antonymy/negation as *signed operations* per finding (1). Honest test:
+  does a composed-clause coordinate reconstruct the clause's relations (entailment direction,
+  negation flip) held-out — the M19.4 "dictionary from geometry" test lifted from words to clauses.
+- **(C) Antonymy as a first-class relational layer.** Stop chasing it in position; give the space a
+  companion signed-edge store consulted at comparison/composition time (generalizes finding (1)).
+- **(D) Grounded consciousness-state (the long arc).** Project the Mind's state onto the
+  interpretable named axes so reasoning is inspectable in prime terms, not opaque vectors.
+
+**Closed doors (do not re-open without new information):** more axes (M20 noise tail), sense-nodes
+as the *primary* space (M22–23 underperform the word-graph held-out), and trained per-word
+embeddings (M25 overfits and loses to propagation). The substrate is settled; the work moves up a
+level, from placing words to composing meaning.
