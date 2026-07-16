@@ -1425,3 +1425,46 @@ train_syn+train_sim)` and score held-out; `test_ground_honest_minimality.py` /
 (`train_pairs=` / `close = [p for p in edges if p not in test_set]`). A metric that
 propagates over the pairs it scores is leaked by construction. Gate: 2 code fixes + 2 test
 corrections; full CT suite green.
+
+### M25 — retrain the placement on ALL signals: an honest negative (MEASURED)
+The natural response to M23's wall (propagation only helps *connected* pairs): stop
+propagating, **train** the position from all relations at once. `ground/joint_place.py`
+fits per-word values on the **existing named axes** (init = anchored coordinate) with a
+joint loss over every relation on its **train split** — synonym→+1, similar→+τ,
+antonym→−1, hypernym(`is_a`)→related, meronym+derivational→mild, random→0, + an anchor
+regularizer. Thesis guardrails held throughout: the Null mask is re-imposed every step
+(no content on inapplicable axes — non-overlap, minimum values) and axes never rotate
+(interpretable). Evaluated held-out (M24 rule): trained on train pairs, scored on the
+disjoint test pairs, same split and same tanh space as the propagation baseline.
+
+**Result — a clear, robust negative. Free per-word training loses to propagation on every
+held-out metric** (2–3k gloss corpus, tanh):
+
+| method | syn AUC | syn>ant | random |
+|---|---|---|---|
+| **propagation (`place`)** | **0.72** | **0.73** | **0.18** |
+| joint-trained (best of a 4-config sweep) | 0.60 | 0.56 | 0.27 |
+
+And **more training makes it worse** — cranking iters / antonym / negative weights drove
+syn AUC 0.60→0.54 (classic overfitting: the free per-word values fit the train pairs while
+held-out pairs degrade). Two structural reasons, both fundamental (not tuning):
+1. **No generalization.** Propagation is *transductive* — it spreads anchored meaning along
+   the graph at inference, so held-out pairs benefit and the coordinate densifies
+   (~137/234 axes active). Free per-word fitting moves only the words that appear in train
+   pairs; held-out pairs (other words) keep ~anchored values, so they don't improve.
+2. **The mask caps density (by design).** The thesis mask forbids adding axes a word
+   doesn't already have — exactly the axis-spreading propagation uses to make synonyms
+   share support. Training cannot densify past it.
+3. **Antonym cap confirmed** (as the plan flagged): masked per-word values can't push words
+   that share all applicable axes to opposite (no bipolar axis to flip), so syn>ant sits
+   near chance (~0.56) vs propagation's 0.73.
+
+**Takeaway.** For this transductive lexical setting, **deterministic propagation over the
+named axes is the right mechanism** — "just train it on all the signals" underperforms it,
+and the experiment validates the existing design rather than replacing it. The all-signals
+lever that *did* pay off was M23's relation set feeding propagation, not a trained objective.
+A generalizing trainer would have to learn a *shared function* of graph context (not free
+per-word values), which cannot add un-named axes without breaking the thesis — out of scope.
+`joint_place.py` is kept as the documented negative (like the M21b contrastive one). Gate:
+3 joint tests (mechanics + held-out split + determinism); probe `[9]` prints the head-to-head;
+full CT suite green.

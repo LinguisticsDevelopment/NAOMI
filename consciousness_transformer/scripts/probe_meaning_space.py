@@ -108,6 +108,33 @@ def main() -> None:
     print("    But held-out sim>ant ~0.50 (near chance) << word-graph — propagation only helps")
     print("    CONNECTED pairs; the generalizing win is the gate cutting random overlap (0.18->0.12).")
 
+    # [9] M25 — joint all-signals TRAINED placement vs propagation (held-out): the negative
+    from nsm_ct.ground.joint_place import joint_place, split_all_relations
+    from nsm_ct.ground.normalize import normalize_matrix
+    tr9, te9 = split_all_relations(g.words(), g, train_frac=0.5)
+    prop9 = place(g.words(), g, ax, cache=cache, depth=3, alpha=0.7, train_pairs=tr9["syn"] + tr9["sim"])
+    trained9 = joint_place(g.words(), g, ax, cache=cache, depth=3, train_syn=tr9["syn"], train_sim=tr9["sim"],
+                           train_ant=tr9["ant"], train_hyp=tr9["hyp"], train_rel=tr9["rel"], iters=300)
+    widx = {w: i for i, w in enumerate(g.words())}
+    _pi = lambda p: np.array([(widx[a], widx[b]) for a, b in p if a in widx and b in widx and a != b])
+    te9i = {k: _pi(te9[k]) for k in te9}
+    rng9 = np.random.RandomState(0); R9 = rng9.randint(0, len(g.words()), (4000, 2))
+
+    def _sc9(coord):
+        M = normalize_matrix(np.stack([coord[w] for w in g.words()]), "tanh")
+        nn = np.linalg.norm(M, axis=1, keepdims=True); nn[nn < 1e-9] = 1.0; P = M / nn
+        def c(pr): return (P[pr[:, 0]] * P[pr[:, 1]]).sum(1) if len(pr) else np.array([])
+        rnd, s, a = c(R9), c(te9i["syn"]), c(te9i["ant"])
+        return float((s[:, None] > rnd[None, :]).mean()), float((s[:, None] > a[None, :]).mean()), float(rnd.mean())
+
+    print(f"\n[9] M25 retrain-on-all-signals (held-out, tanh) — the honest negative:")
+    print(f"    {'method':14s} {'synAUC':>7s} {'syn>ant':>8s} {'random':>7s}")
+    for nm, cd in (("propagation", prop9), ("joint-trained", trained9)):
+        syn, sa, rd = _sc9(cd)
+        print(f"    {nm:14s} {syn:7.3f} {sa:8.3f} {rd:7.3f}")
+    print("    free per-word fitting underperforms propagation on every held-out metric; more")
+    print("    training overfits. Propagation generalizes (spreads via the graph); training does not.")
+
 
 if __name__ == "__main__":
     main()
