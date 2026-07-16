@@ -155,6 +155,32 @@ class WordNetSenseInventory(SenseInventory):
         return [Sense(word.lower(), f"{word.lower()}.0", "generic sense", {})]
 
 
+class GroundedWordNetSenseInventory(WordNetSenseInventory):
+    """WordNet inventory whose ``Sense.primes`` are filled by GROUNDING each synset's
+    OWN gloss into NSM primes (M26 — roadmap step A).
+
+    This closes the M22→WSD bridge: `WordNetSenseInventory` returned real senses with
+    empty prime signatures; here each sense's signature is the grounded prime activation
+    of its gloss (`ground.sense_graph.gloss_prime_weights`), so `Sense.prime_vector()`
+    is real and *sense-distinct* (a synset's river gloss and finance gloss land on
+    different primes). Same enumeration/fallback as the base class; only `primes` change.
+    """
+
+    def __init__(self, *, depth: int = 2, max_children: int = 8):
+        self._depth = depth
+        self._max_children = max_children
+
+    def senses(self, word: str) -> List[Sense]:
+        from .ground.sense_graph import gloss_prime_weights
+
+        out = super().senses(word)
+        for s in out:
+            if s.gloss and s.gloss != "generic sense":
+                s.primes = gloss_prime_weights(s.gloss, depth=self._depth,
+                                               max_children=self._max_children)
+        return out
+
+
 # ---------------------------------------------------------------------------
 # The (real, trainable) scorer
 # ---------------------------------------------------------------------------

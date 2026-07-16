@@ -14,6 +14,7 @@ lexname / hypernym / similar_to / antonym are all read off that synset.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Dict, List
 
 import numpy as np
@@ -33,6 +34,34 @@ def _synset_gloss_primes(gloss: str, depth: int, max_children: int = 6) -> set:
             if lab in _PRIME_SET:
                 prims.add(lab)
     return prims
+
+
+@lru_cache(maxsize=8192)
+def _gloss_prime_counts(gloss: str, depth: int, max_children: int) -> tuple:
+    """Count activations of each NSM prime across a gloss's content-word decompositions."""
+    counts: Dict[str, int] = {}
+    for c in content_words(gloss)[:max_children]:
+        for n in naive_decompose(c, max_depth=depth).iter_preorder():
+            lab = canon_label(n.label)
+            if lab in _PRIME_SET:
+                counts[lab] = counts.get(lab, 0) + 1
+    return tuple(sorted(counts.items()))
+
+
+def gloss_prime_weights(gloss: str, *, depth: int = 2, max_children: int = 8,
+                        normalize: bool = True) -> Dict[str, float]:
+    """Grounded NSM-prime signature of a gloss: prime name -> weight (M26).
+
+    Decomposes the gloss's content words into primes and weights each by its
+    activation count (normalized so the strongest prime is 1.0). This is the M22
+    per-sense grounding, exposed as the sense-signature the WSD layer consumes."""
+    counts = dict(_gloss_prime_counts(gloss or "", depth, max_children))
+    if not counts:
+        return {}
+    if normalize:
+        m = float(max(counts.values()))
+        return {k: v / m for k, v in counts.items()}
+    return {k: float(v) for k, v in counts.items()}
 
 
 @dataclass

@@ -63,6 +63,7 @@ from .nsm_primes import NUM_PRIMES, PRIMES, PRIME_NAMES, NSMPrime, PrimeCategory
 from .parser_interface import AbstractParser, MockNaomiParser
 from .tokenizer import SimpleTokenizer
 from .wsd import (
+    GroundedWordNetSenseInventory,
     IterativeSenseResolver,
     MockSenseInventory,
     Sense,
@@ -87,6 +88,7 @@ __all__ = [
     "AbstractParser", "MockNaomiParser",
     "PRIMES", "PRIME_NAMES", "NUM_PRIMES", "NSMPrime", "PrimeCategory",
     "Sense", "SenseInventory", "MockSenseInventory", "WordNetSenseInventory",
+    "GroundedWordNetSenseInventory",
     "WSDModule", "SenseResolver", "IterativeSenseResolver",
     "Stack", "build_default_stack",
 ]
