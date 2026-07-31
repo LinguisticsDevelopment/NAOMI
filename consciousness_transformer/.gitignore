@@ -1,0 +1,27 @@
+# Training artifacts
+runs/
+*.pt
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# Derived data (large downloaded files — do NOT commit). The small, hand-curated
+# data/gold_explications.json IS committed; only the big DeepNSM store is ignored.
+# Rebuild the store: scripts/build_explication_store.py
+data/*.jsonl
+data/*.parquet
+data/**/*.jsonl
+# Downloaded ProofWriter (regenerate: scripts/fetch_proofwriter.py)
+data/proofwriter/
+# Generated gloss-vocabulary corpus (rebuild: ground.corpus.gloss_vocabulary)
+data/gloss_vocab.json
+# Generated decomposition caches
+data/decomp_cache*.json

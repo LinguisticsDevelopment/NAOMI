@@ -18,11 +18,16 @@
         "inf1", "ger1", "part1",
         "poss1", "poss2",
         "neg1", "neg2",
-        "rel1", "rel2",
         "aux1", "aux2",
         "verb1", "verb2",
         "predicate1", "predicate2",
-        "clause1", "clause2"
+        "rel1", "rel2",
+        "noun4",
+        "clause1", "clause2",
+        "suboord1",
+        "verb1b",
+        "predicate1b",
+        "clause1b", "clause2b"
     ],
 
     "rulesets": {
@@ -263,8 +268,8 @@
                     "connections": [
                         {
                             "type": "SUBORDINATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -807,8 +812,8 @@
                     "connections": [
                         {
                             "type": "DESCRIPTION",
-                            "from": "before[*]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "before[*]"
                         }
                     ],
                     "consume": ["before"],
@@ -833,8 +838,8 @@
                     "connections": [
                         {
                             "type": "SUBORDINATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -1422,8 +1427,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -1447,8 +1452,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -1472,8 +1477,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -1497,37 +1502,12 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
                     "note": "Mixed PP modifying noun"
-                },
-                {
-                    "result": "NOUN",
-                    "recursive": false,
-                    "pattern": {
-                        "anchor": {
-                            "type": "NOUN"
-                        },
-                        "before": [],
-                        "after": [
-                            {
-                                "type": "NOUN",
-                                "quantifier": "one"
-                            }
-                        ]
-                    },
-                    "connections": [
-                        {
-                            "type": "APPOSITION",
-                            "from": "after[0]",
-                            "to": "anchor"
-                        }
-                    ],
-                    "consume": ["after"],
-                    "note": "Noun-noun apposition"
                 }
             ]
         },
@@ -1761,7 +1741,7 @@
         },
 
         "rel1": {
-            "description": "Relative clauses with pronouns",
+            "description": "Relative clauses with pronouns (fires before clause1 so the relative pronoun is still unconsumed)",
             "result": "NOMINAL",
             "rules": [
                 {
@@ -1771,22 +1751,22 @@
                         "anchor": {"type": "NOMINAL"},
                         "before": [],
                         "after": [
-                            {"type": "NOUN", "subtypes": ["RELATIVE"], "quantifier": "one"},
-                            {"type": "CLAUSE", "quantifier": "one"}
+                            {"type": "NOMINAL", "subtypes": ["RELATIVE"], "quantifier": "one"},
+                            {"type": "PREDICATE", "quantifier": "one"}
                         ]
                     },
                     "connections": [
-                        {"type": "SUBORDINATION", "from": "after[1]", "to": "anchor"},
-                        {"type": "MODIFICATION", "from": "after[0]", "to": "after[1]"}
+                        {"type": "SUBORDINATION", "from": "anchor", "to": "after[1]"},
+                        {"type": "MODIFICATION", "from": "after[1]", "to": "after[0]"}
                     ],
                     "consume": ["after"],
-                    "note": "Relative clause: the dog that chased"
+                    "note": "Relative clause: the dog who chased (anchor->PREDICATE, PREDICATE->who)"
                 }
             ]
         },
 
         "rel2": {
-            "description": "Relative clauses with adverbs",
+            "description": "Relative clauses with adverbs (fires before clause1)",
             "result": "NOMINAL",
             "rules": [
                 {
@@ -1797,15 +1777,80 @@
                         "before": [],
                         "after": [
                             {"type": "SPECIFIER", "subtypes": ["RELATIVE"], "quantifier": "one"},
-                            {"type": "CLAUSE", "quantifier": "one"}
+                            {"type": "PREDICATE", "quantifier": "one"}
                         ]
                     },
                     "connections": [
-                        {"type": "SUBORDINATION", "from": "after[1]", "to": "anchor"},
-                        {"type": "MODIFICATION", "from": "after[0]", "to": "after[1]"}
+                        {"type": "SUBORDINATION", "from": "anchor", "to": "after[1]"},
+                        {"type": "MODIFICATION", "from": "after[1]", "to": "after[0]"}
                     ],
                     "consume": ["after"],
                     "note": "Relative adverb: the place where I live"
+                }
+            ]
+        },
+
+        "noun4": {
+            "description": "Noun-noun apposition (placed after rel1/rel2 so relative pronouns are not consumed first)",
+            "result": "NOUN",
+            "rules": [
+                {
+                    "result": "NOUN",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "NOUN"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "APPOSITION",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "note": "Noun-noun apposition (late-binding, after relative clause rules)"
+                }
+            ]
+        },
+
+        "suboord1": {
+            "description": "Subordinating conjunction + clause -> subordinate clause",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "SUBOORD"
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "CLAUSE",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "MODIFICATION",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "push_subtypes": ["SUBORDINATE"],
+                    "note": "Example: that he left -> CLAUSE[SUBORDINATE]"
                 }
             ]
         },
@@ -1858,6 +1903,42 @@
                     "consume": ["anchor"],
                     "pull_categories": ["PROGRESSIVE"],
                     "note": "Progressive auxiliary + verb: is running, was walking"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Bare progressive copula -> VERBAL (e.g. 'is' in 'mary is in the kitchen')"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PERFECT"]},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Bare perfect auxiliary -> VERBAL"
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["MODAL"]},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Bare modal -> VERBAL"
                 }
             ]
         },
@@ -1969,8 +2050,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -1994,8 +2075,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -2019,8 +2100,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -2045,8 +2126,8 @@
                     "connections": [
                         {
                             "type": "SUBORDINATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -2187,8 +2268,8 @@
                     "connections": [
                         {
                             "type": "MODIFICATION",
-                            "from": "after[0]",
-                            "to": "anchor"
+                            "from": "anchor",
+                            "to": "after[0]"
                         }
                     ],
                     "consume": ["after"],
@@ -2399,6 +2480,77 @@
                     ],
                     "consume": ["before", "after"],
                     "note": "Example: dog runs and cat sleeps"
+                }
+            ]
+        },
+
+        "verb1b": {
+            "description": "Second-pass: attach subordinate clauses to already-formed CLAUSEs (matrix verbs)",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [],
+                        "after": [
+                            {"type": "CLAUSE", "quantifier": "one", "subtypes": ["SUBORDINATE"]}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "SUBORDINATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Second pass: [john said] + [that he left](SUBORDINATE) -> CLAUSE"
+                }
+            ]
+        },
+
+        "predicate1b": {
+            "description": "Second-pass placeholder (no-op; kept for order consistency)",
+            "result": "PREDICATE",
+            "rules": [
+            ]
+        },
+
+        "clause1b": {
+            "description": "Second-pass placeholder (no-op; kept for order consistency)",
+            "result": "CLAUSE",
+            "rules": [
+            ]
+        },
+
+        "clause2b": {
+            "description": "Second-pass: coordinate outer clauses",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "COORD"},
+                        "before": [],
+                        "after": [{"type": "COORD", "quantifier": "one", "check_original": true}]
+                    },
+                    "connections": [],
+                    "consume": ["after"],
+                    "note": "Consume duplicate COORD"
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {"type": "COORD"},
+                        "before": [{"type": "CLAUSE", "quantifier": "all"}],
+                        "after": [{"type": "CLAUSE", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "COORDINATION", "from": "before[*]", "to": "anchor"},
+                        {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Coordinate outer clauses"
                 }
             ]
         }

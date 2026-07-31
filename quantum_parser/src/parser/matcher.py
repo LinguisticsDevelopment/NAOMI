@@ -52,12 +52,14 @@ def find_matches(hypothesis: Hypothesis, anchor_idx: int, rule: Rule) -> List[Ma
     if not matches_pattern(anchor, rule.anchor, anchor):
         return []
 
-    # Try to find "before" elements
+    # Try to find "before" elements — each element searches left from the
+    # previously matched element (chained, innermost first).
     before_match_sets = []
+    before_search_start = anchor_idx
     for before_pattern in rule.before:
         candidates = search_direction(
             hypothesis,
-            anchor_idx,
+            before_search_start,
             direction="left",
             pattern=before_pattern,
             anchor_node=anchor
@@ -65,13 +67,17 @@ def find_matches(hypothesis: Hypothesis, anchor_idx: int, rule: Rule) -> List[Ma
         if not candidates:
             return []  # Required element not found
         before_match_sets.append(candidates)
+        # Next before element searches further left from the leftmost match found
+        before_search_start = min(candidates)
 
-    # Try to find "after" elements
+    # Try to find "after" elements — each element searches right from the
+    # previously matched element (chained), so after[1] starts past after[0].
     after_match_sets = []
+    after_search_start = anchor_idx
     for after_pattern in rule.after:
         candidates = search_direction(
             hypothesis,
-            anchor_idx,
+            after_search_start,
             direction="right",
             pattern=after_pattern,
             anchor_node=anchor
@@ -79,6 +85,8 @@ def find_matches(hypothesis: Hypothesis, anchor_idx: int, rule: Rule) -> List[Ma
         if not candidates:
             return []  # Required element not found
         after_match_sets.append(candidates)
+        # Next after element searches further right from the rightmost match found
+        after_search_start = max(candidates)
 
     # Generate all combinations of matched elements
     # For now, just use first match from each set (simplification)

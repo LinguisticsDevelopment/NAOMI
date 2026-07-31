@@ -67,6 +67,7 @@ class Rule:
         consume: Which elements to mark as consumed
         pull_categories: SubCategories to propagate to anchor
         pop_categories: SubCategories to remove from anchor
+        push_subtypes: SubTypes to add to the result (anchor) node's flags
         note: Optional comment for documentation
     """
     result: NodeType
@@ -78,6 +79,7 @@ class Rule:
     consume: List[str] = field(default_factory=list)  # ["before", "after", "anchor"]
     pull_categories: List[SubCat] = field(default_factory=list)
     pop_categories: List[SubCat] = field(default_factory=list)
+    push_subtypes: List[SubType] = field(default_factory=list)
     note: str = ""
 
     def __repr__(self) -> str:
@@ -263,10 +265,15 @@ def parse_rule(data: Dict[str, Any], default_result: NodeType) -> Rule:
         if item not in valid_consume:
             raise DSLParseError(f"Invalid consume value: '{item}' (must be one of {valid_consume})")
 
-    # Flags (optional)
+    # Flags (optional) — read from a "flags" sub-object for pull/pop categories.
     flags = data.get("flags", {})
     pull_categories = [parse_subcat(sc) for sc in flags.get("pull_categories", [])]
-    pop_categories = [parse_subcat(sc) for sc in flags.get("pop_categories", [])]
+    pop_categories  = [parse_subcat(sc) for sc in flags.get("pop_categories",  [])]
+
+    # push_subtypes: SubTypes to stamp onto the result (anchor) node (optional).
+    # Accepted as a top-level key so grammar rules can write it inline.
+    push_subtypes_raw = data.get("push_subtypes", [])
+    push_subtypes = [parse_subtype(st) for st in push_subtypes_raw]
 
     # Note (optional)
     note = data.get("note", "")
@@ -281,6 +288,7 @@ def parse_rule(data: Dict[str, Any], default_result: NodeType) -> Rule:
         consume=consume,
         pull_categories=pull_categories,
         pop_categories=pop_categories,
+        push_subtypes=push_subtypes,
         note=note
     )
 
