@@ -43,6 +43,7 @@ from .episode import (
 )
 from .input_encoder import (
     AbstractInputEncoder,
+    GroundedMeaningEncoder,
     ParserInputEncoder,
     TokenInputEncoder,
     make_input_encoder,
@@ -77,7 +78,8 @@ __all__ = [
     "Config", "ModelConfig", "TrainConfig", "DataConfig", "load_config",
     "Episode", "AbstractEpisodeSource", "CurriculumGenerator", "BabiSource",
     "TextbookSource", "make_source",
-    "AbstractInputEncoder", "TokenInputEncoder", "ParserInputEncoder", "make_input_encoder",
+    "AbstractInputEncoder", "TokenInputEncoder", "ParserInputEncoder",
+    "GroundedMeaningEncoder", "make_input_encoder",
     "SimpleTokenizer", "EpisodeBatch", "EpisodeDataset", "collate", "make_dataloader",
     "build_tokenizer", "build_answer_vocab", "split_episodes",
     "WorkingMemory", "MemoryState", "LongTermMemory",
