@@ -21,7 +21,7 @@ STATUS — scaffold (honest about what is real):
 How it plugs into the loop (not wired yet, by design): a WSD step would, per
 content word, build a context from the current state + memory read, choose a
 sense, and write the *sense-resolved* representation (not the ambiguous surface
-token) into :class:`~nsm_ct.memory.WorkingMemory`. See RESEARCH_NOTES.
+token) into working memory. See RESEARCH_NOTES.
 """
 
 from __future__ import annotations
@@ -246,7 +246,7 @@ def candidates_to_tensor(
 class SenseResolver:
     """Ties an inventory + a :class:`WSDModule` into a usable disambiguator.
 
-    A future WSD step in :class:`~nsm_ct.agent.Mind` would call :meth:`resolve`
+    A future WSD step in the Mind loop would call :meth:`resolve`
     with a context built from ``(state, memory_read)`` and write the returned
     sense embedding into memory instead of the raw token.
     """
@@ -296,7 +296,7 @@ class IterativeSenseResolver(nn.Module):
 
     This is standalone: it operates on a context vector (which a caller builds
     from ``(state, memory_read)``) plus the candidate senses from an inventory.
-    It is NOT wired into :class:`~nsm_ct.agent.Mind` yet (see RESEARCH_NOTES).
+    It is NOT wired into the Mind loop yet (see RESEARCH_NOTES).
 
     Args:
         inventory: Source of candidate senses.

@@ -105,7 +105,7 @@ def test_decide_truth_head_and_coord_channel():
 
 
 def _logic_env():
-    from nsm_ct.dataset import PARSE_LABELS
+    from nsm_ct.structure import PARSE_LABELS
     from nsm_ct.episode import CurriculumGenerator
     from nsm_ct.input_encoder import ParserInputEncoder
     from nsm_ct.meaning import NSMMeaningResolver

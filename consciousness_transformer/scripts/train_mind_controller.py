@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from nsm_ct.clause_psyche import abstain_prf, clause_decode_accuracy  # noqa: E402
 from nsm_ct.clause_reactor import build_clause_batch  # noqa: E402
 from nsm_ct.data_structures import ParseNode, ParseTree  # noqa: E402
-from nsm_ct.dataset import split_episodes  # noqa: E402
+from nsm_ct.episode import split_episodes  # noqa: E402
 from nsm_ct.episode import CurriculumGenerator  # noqa: E402
 from nsm_ct.mind import teacher  # noqa: E402
 from nsm_ct.mind.controller import MindController, relation_match  # noqa: E402

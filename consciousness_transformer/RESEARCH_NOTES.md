@@ -1514,3 +1514,33 @@ Concrete next steps, in dependency order:
 as the *primary* space (M22–23 underperform the word-graph held-out), and trained per-word
 embeddings (M25 overfits and loses to propagation). The substrate is settled; the work moves up a
 level, from placing words to composing meaning.
+
+### M27 — delete the token stack (the §0h debt, paid)
+
+The destructive removal deferred since §0h is done: the legacy token-fed transformer
+stack is deleted, per the user's call ("it's still in version control"). The last
+commit containing it is tagged **`token-stack-final`**.
+
+**Deleted:** `model.py` (the last transformer in the package), `agent.py`,
+`memory.py`, `long_term_memory.py`, `bootstrap_memory.py`, `dataset.py`,
+`lifelong.py`, `losses.py`, `metrics.py`, `config.py` (+ `configs/default.yaml`),
+`semantic_mapper.py`, `parser_interface.py` (orphan); scripts `train_phase1`,
+`eval`, `lifelong`, `probe_consistency`; their tests. **M26.2's
+`GroundedMeaningEncoder` is deleted with the stack** — it wired grounded meaning
+into the token model's capped bag-of-primes channel (the wrong integration point;
+the grounded signal belongs in the mind/ meaning-graph fillers). The
+`GroundedWordNetSenseInventory` (M26.0) and the WSD machinery survive untouched —
+they are the real asset.
+
+**Moved, not lost:** `PARSE_LABELS` → `structure.py` (parser plumbing),
+`split_episodes` → `episode.py`, `consciousness_consistency_loss` →
+`clause_psyche.py` (its only consumer). `input_encoder.py` is stripped to the
+parser front-end (`ParserInputEncoder` + trivial fallback) — per §0g, tokenization
+survives only as the parser's text reader. README rewritten around the living
+mind/ architecture.
+
+**What this buys:** the package now contains zero transformers — the learned parts
+are the GRU controller family + the drive MLP, exactly matching the thesis
+("weights hold zero information", depth through the loop). The M26 arc's next step
+re-lands on the right seam: sense → *placed* M19–M25 coordinate → meaning-graph
+filler handles (not the deleted meaning-bag channel).

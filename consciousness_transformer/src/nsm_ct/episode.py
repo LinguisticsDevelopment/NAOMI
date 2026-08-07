@@ -704,3 +704,15 @@ def make_source(name: str, *, seed: int = 0, max_level: int = 3, babi_task: int 
     if name == "textbook":
         return TextbookSource()
     raise ValueError(f"Unknown episode source: {name!r}")
+
+
+def split_episodes(
+    episodes: List[Episode], val_fraction: float, seed: int = 0
+):
+    """Deterministically split into (train, val). (Moved from the deleted
+    token-stack dataset module — splitting is episode plumbing.)"""
+    rng = random.Random(seed)
+    shuffled = list(episodes)
+    rng.shuffle(shuffled)
+    n_val = int(len(shuffled) * val_fraction)
+    return shuffled[n_val:], shuffled[:n_val]

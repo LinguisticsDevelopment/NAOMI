@@ -42,6 +42,23 @@ STRUCTURE_LABELS: List[str] = [NOROLE] + _NODE_TYPES + _CONNECTION_TYPES
 _ROLE_TO_ID = {name: i for i, name in enumerate(STRUCTURE_LABELS)}
 NUM_ROLES = len(STRUCTURE_LABELS)
 
+# Parse-tree label vocabulary (NodeType + ConnectionType names) so the parser
+# encoder's serialized streams are in-vocab. Hard-coded to avoid importing
+# quantum_parser; kept loosely in sync with its enums. (Moved from the deleted
+# token-stack dataset module — this is parser plumbing, not dataset plumbing.)
+PARSE_LABELS: List[str] = [
+    # NodeTypes
+    "NIL", "NOUN", "VERBAL", "PREDICATE", "NOMINAL", "CLAUSE", "SPECIFIER",
+    "DESCRIPTOR", "MODIFIER", "COORD", "SUBOORD", "PREP", "PREP_SPEC",
+    "PREP_DESC", "PREP_MIX", "ROOT", "S", "CONTENT", "FUNC", "PUNCT", "NUM",
+    # ConnectionTypes
+    "SUBJECT", "OBJECT", "INDIRECT_OBJECT", "SUBJECT_COMPLEMENT", "DESCRIPTION",
+    "SPECIFICATION", "MODIFICATION", "COMPLEMENT", "COORDINATION", "PREPOSITION",
+    "PREPOSITION_FROM", "PREPOSITION_TO", "SUBORDINATION", "SUBORDINATION_FROM",
+    "SUBORDINATION_TO", "APPOSITION", "REL",
+    NOROLE,  # role for tokens the parser didn't annotate
+]
+
 
 def role_id(name: str) -> int:
     """Map a structure-role label to its id (unknown / None -> NOROLE = 0)."""

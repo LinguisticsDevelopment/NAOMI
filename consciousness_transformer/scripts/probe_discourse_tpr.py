@@ -32,7 +32,7 @@ from nsm_ct.clause import (  # noqa: E402
     DisjunctionBuffer, build_discourse_tpr, extract_discourse, read_connective,
     read_truth,
 )
-from nsm_ct.dataset import PARSE_LABELS  # noqa: E402
+from nsm_ct.structure import PARSE_LABELS  # noqa: E402
 from nsm_ct.episode import CurriculumGenerator  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402

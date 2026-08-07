@@ -21,7 +21,7 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 
 from nsm_ct.clause import EntityMemory, EntityTracker, clause_tpr, decode_clause, extract_clauses  # noqa: E402
-from nsm_ct.dataset import PARSE_LABELS  # noqa: E402
+from nsm_ct.structure import PARSE_LABELS  # noqa: E402
 from nsm_ct.episode import CurriculumGenerator  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402

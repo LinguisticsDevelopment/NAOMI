@@ -1,19 +1,19 @@
-"""Pluggable "sentence -> input object" encoders.
+"""The parser front-end: "sentence -> parse tree / discourse graph".
 
-The input object is just the token-id sequence the model's step function
-consumes; the model owns the embedding table, so encoders only need to produce
-ids. This keeps the *source* of structure swappable:
+What survives of the old pluggable-encoder layer after the token-stack removal:
+the clause perception path (:func:`nsm_ct.clause_reactor.build_clause_batch`)
+uses :class:`ParserInputEncoder` for its parse tree (``_parse_tree``) and flat
+discourse graph (``_parse_graph``); tokenization exists only as the parser's
+text reader (the §0g decision — the *model* never embeds tokens).
 
-* :class:`TokenInputEncoder` — the **default**. Plain tokenization, no parser.
-  Chosen as the spine because the rule-based parser is experimental/inconsistent.
-* :class:`ParserInputEncoder` — **optional / unstable**. Wraps the experimental
-  ``quantum_parser`` to produce a structure-aware token stream (with semantic
-  role markers). Any failure falls back to plain tokenization, so a flaky parse
-  never breaks training.
+* :class:`ParserInputEncoder` — wraps the experimental ``quantum_parser``.
+  The parser is treated as untrusted: any failure degrades gracefully to plain
+  tokenization, so a flaky parse never breaks the loop.
+* :class:`TokenInputEncoder` — the trivial fallback (plain token ids).
 
-TODO(input): a third encoder — "chained transformers" — is the user's fallback
-if rule parsing proves too messy: a learned transformer that maps a sentence to
-the input object. It would implement this same interface.
+TODO(input): a learned parser — a trained encoder mapping a sentence to the
+same parse/meaning objects — would implement this same interface (the membrane
+stays deterministic; see mind/grammar.py for the owned controlled-English path).
 """
 
 from __future__ import annotations
@@ -151,88 +151,3 @@ class ParserInputEncoder(AbstractInputEncoder):
                 [role_id(r) for r in roles], depths, meanings)
 
 
-class GroundedMeaningEncoder(AbstractInputEncoder):
-    """Feed the model **sense-resolved grounded meaning**, not just raw tokens (M26.2).
-
-    This is the first wiring of the roadmap's step (A): the grounding work (M17-M25)
-    placed word-senses over named NSM axes; here each content word's meaning bag is
-    filled from its resolved sense's *grounded* NSM-prime signature, so what the Mind
-    pools into its memory write carries grounded meaning rather than a bare token id.
-
-    Design (deliberately minimal, no model/pipeline surgery):
-
-    * **Tokens/ids stay plain.** ``encode`` is ordinary tokenization; the model still
-      owns the token embedding table. We only populate the per-token *meaning* channel
-      that the pipeline already threads end to end (``encode_structured`` meanings ->
-      ``item_meaning [B,T,L,M]`` -> ``prime_embedding(input_meaning).sum(2)`` in
-      ``model.step``). So swapping this encoder in changes the meaning source and
-      nothing else.
-    * **Sense resolution is MFS (most-frequent-sense), context-free.** At encode time
-      (host side, before the model) there is no ``(state, memory)`` context to drive
-      the coherence WSD, so we take WordNet's most-frequent sense -- the first sense
-      ``GroundedWordNetSenseInventory.senses(word)[0]`` (WordNet orders synsets MFS
-      first). The runtime, context-dependent coherence resolver
-      (``IterativeSenseResolver``) writing into the loop is the next milestone; this
-      lands the static grounded channel it will later refine.
-    * **Signature -> meaning ids.** The resolved sense's grounded primes (name -> weight
-      from ``ground.sense_graph.gloss_prime_weights``) are ranked by weight and the top
-      ``MAX_MEANING_PRIMES`` are mapped to the model's meaning ids via
-      ``thought.meaning_prime_id`` (= ``nsm_primes.prime_index(name) + 1``; id 0 is pad).
-
-    Honest note: ``prime_embedding`` is zero-initialized, so a fresh (untrained) model
-    is unaffected by this channel at step 0 -- the grounded meaning only *matters once
-    trained*. What this encoder guarantees is that the grounded signal is present,
-    correctly aligned, and connected to the learning path.
-    """
-
-    def __init__(self, tokenizer: SimpleTokenizer, inventory=None, max_primes: Optional[int] = None) -> None:
-        from .thought import MAX_MEANING_PRIMES
-        from .wsd import GroundedWordNetSenseInventory
-
-        self.tokenizer = tokenizer
-        self.inventory = inventory or GroundedWordNetSenseInventory()
-        self.max_primes = max_primes or MAX_MEANING_PRIMES
-        self._cache: dict = {}  # word -> meaning-id list (per-word MFS signature is stable)
-
-    def encode(self, sentence: str) -> List[int]:
-        # Plain token ids; the grounded meaning rides alongside via encode_structured.
-        return self.tokenizer.encode(sentence)
-
-    def _meaning_ids(self, word: str) -> List[int]:
-        """The MFS grounded sense's top primes for ``word``, as model meaning ids."""
-        if word in self._cache:
-            return self._cache[word]
-        from .thought import meaning_prime_id
-
-        senses = self.inventory.senses(word)
-        primes = senses[0].primes if senses else {}          # MFS = first sense
-        # rank primes by grounded weight; take the strongest few for the bag
-        top = sorted(primes.items(), key=lambda kv: -kv[1])[: self.max_primes]
-        ids = [meaning_prime_id(name) for name, _ in top]
-        self._cache[word] = ids
-        return ids
-
-    def encode_structured(self, sentence: str) -> Structured:
-        from .tokenizer import basic_tokenize
-
-        # basic_tokenize is exactly what the tokenizer's encode() splits on, so tokens,
-        # ids, and meanings stay index-aligned (one token = one word = one meaning bag).
-        tokens = basic_tokenize(sentence)
-        ids = self.tokenizer.encode_tokens(tokens)
-        meanings = [self._meaning_ids(tok) for tok in tokens]
-        n = len(ids)
-        # roles/depths are left neutral (0): this encoder grounds MEANING, not parse
-        # structure -- those remain the parser encoder's job.
-        return ids, [0] * n, [0] * n, meanings
-
-
-def make_input_encoder(name: str, tokenizer: SimpleTokenizer) -> AbstractInputEncoder:
-    """Factory: build an input encoder by config name."""
-    name = name.lower()
-    if name == "token":
-        return TokenInputEncoder(tokenizer)
-    if name == "parser":
-        return ParserInputEncoder(tokenizer)
-    if name == "grounded":
-        return GroundedMeaningEncoder(tokenizer)
-    raise ValueError(f"Unknown input encoder: {name!r}")

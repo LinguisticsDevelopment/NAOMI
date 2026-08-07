@@ -26,7 +26,7 @@ from nsm_ct.clause_psyche import ClausePsyche  # noqa: E402
 from nsm_ct.clause_psyche_graph import STM  # noqa: E402
 from nsm_ct.clause_reactor import build_clause_batch  # noqa: E402
 from nsm_ct.collapse import expand  # noqa: E402
-from nsm_ct.dataset import PARSE_LABELS  # noqa: E402
+from nsm_ct.structure import PARSE_LABELS  # noqa: E402
 from nsm_ct.episode import CurriculumGenerator  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402

@@ -27,7 +27,8 @@ from nsm_ct.clause_psyche import (  # noqa: E402
     compute_clause_psyche_losses,
 )
 from nsm_ct.clause_reactor import build_clause_batch  # noqa: E402
-from nsm_ct.dataset import PARSE_LABELS, split_episodes  # noqa: E402
+from nsm_ct.structure import PARSE_LABELS
+from nsm_ct.episode import split_episodes  # noqa: E402
 from nsm_ct.episode import CurriculumGenerator  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402

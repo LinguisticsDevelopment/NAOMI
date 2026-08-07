@@ -19,7 +19,8 @@ import torch.nn.functional as F
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 
 from nsm_ct.clause_reactor import ClauseReactor, build_clause_batch  # noqa: E402
-from nsm_ct.dataset import PARSE_LABELS, split_episodes  # noqa: E402
+from nsm_ct.structure import PARSE_LABELS
+from nsm_ct.episode import split_episodes  # noqa: E402
 from nsm_ct.episode import CurriculumGenerator  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402

@@ -25,7 +25,6 @@ import torch.nn.functional as F
 
 from . import entity_memory as em
 from .clause_reactor import ClauseBatch
-from .losses import consciousness_consistency_loss
 from .tpr import TPRCodec
 
 OPS = ("WRITE", "SUPERSEDE", "NEGATE", "CORROBORATE", "RESPOND")
@@ -217,6 +216,15 @@ def gold_matrix(model: ClausePsyche, batch: ClauseBatch) -> torch.Tensor:
     value = batch.options[torch.arange(b), batch.answer]
     pred = model.pred_atom.expand(b, -1)
     return model.assemble(pred, subj, value)
+
+
+def consciousness_consistency_loss(states: torch.Tensor) -> torch.Tensor:
+    """Mean L2 between consecutive consciousness states (placeholder "don't
+    thrash" prior; moved here from the deleted token-stack losses module)."""
+    if states.shape[1] < 2:
+        return states.new_zeros(())
+    diffs = states[:, 1:, :] - states[:, :-1, :]
+    return diffs.pow(2).mean()
 
 
 def compute_clause_psyche_losses(

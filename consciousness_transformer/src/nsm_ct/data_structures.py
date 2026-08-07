@@ -8,7 +8,7 @@ The three structures the rest of the system is built around:
 
 * :class:`ParseTree` / :class:`ParseNode` — the output of a syntactic parser.
   In this scaffold these are produced by a mock (see
-  :mod:`nsm_ct.parser_interface`); the real NAOMI parser would emit the same
+  the parser layer); the real NAOMI parser would emit the same
   shape.
 * :class:`CausalTable` — a small relational store of cause/effect facts. This
   is a placeholder for the reasoning substrate; the mock semantic mapper

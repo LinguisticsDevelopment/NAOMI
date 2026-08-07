@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from nsm_ct.clause import (  # noqa: E402
     build_discourse_tpr, extract_clauses, extract_discourse, read_connective,
 )
-from nsm_ct.dataset import PARSE_LABELS  # noqa: E402
+from nsm_ct.structure import PARSE_LABELS  # noqa: E402
 from nsm_ct.episode import CurriculumGenerator  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402

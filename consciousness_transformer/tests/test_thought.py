@@ -14,7 +14,7 @@ from nsm_ct.tokenizer import SimpleTokenizer, basic_tokenize
 
 
 def _tok():
-    from nsm_ct.dataset import PARSE_LABELS
+    from nsm_ct.structure import PARSE_LABELS
     from nsm_ct.episode import CurriculumGenerator
     from nsm_ct.nsm_primes import PRIME_NAMES
     eps = CurriculumGenerator(max_level=6, seed=0).generate(12)
