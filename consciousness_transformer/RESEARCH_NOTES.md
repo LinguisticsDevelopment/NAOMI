@@ -1709,3 +1709,30 @@ grounding depth (sourced explications; deeper gloss decomposition), not
 resolver machinery** — and the trained coherence resolver only becomes worth
 building after signatures show more signal. Next integration gate: M31 filler
 handles (MFS senses), which does not depend on beating MFS here.
+
+**M30b — the fallback-role stratification (user's architecture question).** The
+intended design is parser-picks-first (structure: POS, slots — the M13
+precedent), USVS only as the fallback for *unsure* words. Two clarifications,
+measured: (1) M30 already granted the parser's biggest pick — candidates were
+restricted to gold POS — so 0.353 is the *within-POS residual* the fallback
+would own. (2) Stratifying by the frequency prior's own confidence (unsure =
+no counts, top-2 within 1, or ratio > 0.6 — 11,071 of 37,353 instances):
+
+| resolver | sure (26,282) | unsure (11,071) |
+|---|---|---|
+| MFS | 0.787 | **0.584** |
+| usvs-idf | 0.341 | 0.382 |
+| random | 0.243 | 0.348 |
+
+USVS does relatively better exactly where the prior is weak (0.382 unsure vs
+0.341 sure — the right *shape* for a fallback) but still loses the unsure slice
+to MFS by 0.20, sitting only +0.034 over random there. **Verdict: the
+signatures don't yet earn even the tiebreaker slot.** The joint
+"every-sense-in-every-slot, maximize full-tree coherence" resolver (the §2
+coherence design + the parser hypothesis lattice) remains the right eventual
+architecture, but it is untestable on SemCor (the owned grammar doesn't parse
+open text — its test arrives with the M32 ambiguity curriculum), and pairwise
+slot-coherence cannot recover distinctions the representation doesn't carry —
+at ~3.8 axes/sense the bottleneck is the signature, not the search. Perception
+order of record: parser structure → MFS; grounding depth is the lever that
+re-opens this gate.

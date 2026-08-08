@@ -142,6 +142,20 @@ def main() -> None:
                 uidf = pick(cands, sig_ctx, weight=idf)
                 ucore = pick(cands, core_ctx, weight=idf)
             poly = len(cands) > 1
+            # MFS-confidence stratum: how sure is the frequency prior itself?
+            # counts from WordNet lemma.count(); "unsure" = no data or the top
+            # two senses are close — the exact slice a fallback would own.
+            if poly:
+                counts = []
+                for c in cands:
+                    syn_c = wn.synset(c)
+                    counts.append(sum(l.count() for l in syn_c.lemmas()
+                                      if l.name().lower() == word))
+                c_sorted = sorted(counts, reverse=True)
+                unsure = (c_sorted[0] == 0
+                          or c_sorted[0] - c_sorted[1] <= 1
+                          or c_sorted[1] / c_sorted[0] > 0.6)
+                stratum = "unsure" if unsure else "sure"
             for name, pred in (("mfs", mfs), ("usvs", usim), ("usvs-idf", uidf),
                                ("usvs-core", ucore), ("random", rnd)):
                 ok = pred == gold
@@ -150,18 +164,22 @@ def main() -> None:
                 if poly:
                     hits[(name, "poly")] += ok
                     tot[(name, "poly")] += 1
+                    hits[(name, stratum)] += ok
+                    tot[(name, stratum)] += 1
                     pos_hits[(name, pos)] += ok
                     pos_tot[(name, pos)] += 1
 
     print(f"\ninstances: all={tot[('mfs','all')]}  polysemous={tot[('mfs','poly')]}  "
           f"({time.time()-t0:.0f}s)")
-    print(f"{'resolver':9} {'all':>7} {'poly':>7}   " +
+    print(f"{'resolver':9} {'all':>7} {'poly':>7} {'sure':>7} {'unsure':>7}   " +
           " ".join(f"{p:>7}" for p in "nvar"))
     for name in ("mfs", "usvs", "usvs-idf", "usvs-core", "random"):
-        row = [hits[(name, s)] / max(tot[(name, s)], 1) for s in ("all", "poly")]
+        row = [hits[(name, s)] / max(tot[(name, s)], 1)
+               for s in ("all", "poly", "sure", "unsure")]
         pos_row = [pos_hits[(name, p)] / max(pos_tot[(name, p)], 1) for p in "nvar"]
-        print(f"{name:9} {row[0]:7.3f} {row[1]:7.3f}   " +
+        print(f"{name:9} " + " ".join(f"{v:7.3f}" for v in row) + "   " +
               " ".join(f"{v:7.3f}" for v in pos_row))
+    print(f"strata: sure={tot[('mfs','sure')]} unsure={tot[('mfs','unsure')]}")
     print("poly counts per POS: " +
           " ".join(f"{p}={pos_tot[('mfs', p)]}" for p in "nvar"))
 
