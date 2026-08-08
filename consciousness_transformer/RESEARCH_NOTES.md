@@ -1936,9 +1936,25 @@ never used by any rule — the biggest missing construction).
 Interrupted by a usage-limit kill mid-execution; all code landed and is
 tested (31 families live in `episode.py` with sense pre-flight checks;
 `curriculum2.scaled` mode + `probe_scaled_training.py` with 23 curriculum
-tests green). The two experiment runs — N-rotation leave-one-family-out at 31
-families, and the 480/1000/2000 × dim 48/64/96 scaling grid — are re-running;
-results land here.
+tests green). The re-runs were **killed at the user's request** — the
+full-scale runs were overloading the machine — so M37 closes on partials,
+salvaged from `runs/m37_*.log`:
+
+- **Sense chooser, 31 families, in-distribution (COMPLETE):** d=128,
+  24,705 params, 6,200 train / 1,550 val episodes. sense_acc **1.000** on
+  all subsets; flipped-half benchmark_acc **0.817** = the same-d GOLD
+  ceiling exactly (same-d MFS floor 0.287) → **100% of the floor→ceiling
+  gap closed** in-distribution at 31 families (was 4 families in M34).
+  The leave-one-family-out N-rotation (the generalization question — does
+  the bank-style transfer failure dissolve with 30 training families?)
+  never produced a row before the kill. **Still open.**
+- **Scaling grid (1 of 7 cells):** 480 episodes @ dim 48, 80 epochs →
+  val 0.750 in 2.6 min (169k params); per-level L1 0.80 / L2 0.92 /
+  L3 0.72 / L4 0.89 / **L5 0.59 / L6 0.60** — the recency/overwrite levels
+  are where a small model starves first. Data-vs-capacity curve unmeasured.
+
+Rerun recipe when compute allows: both commands are in `runs/` log headers;
+budget the grid down (fewer epochs or 3 cells) before retrying locally.
 
 ### M38 — parser round 2: passive voice + the SUBJECT tie-break (interactive loop; 18→20, MEASURED)
 
@@ -1971,3 +1987,69 @@ nothing asserts on it; "PASSIVE marker reliably wins its dedup tie" scoped
 out (SUBJECT-binding is correct either way); agentive-"by" guard ticketed at
 the `_PREP_RELATION` landmine (blocked on the adapter carrying node flags +
 an AGENT role downstream).
+
+### M39 — parser stress battery: the round-3 map (MEASURED)
+
+`scripts/probe_parser_stress.py`: 34 sentences across 10 categories, run
+through the real pipeline (`ParserInputEncoder._parse_graph` →
+`extract_discourse`), each case asserted against expected role→token pairs
+(not just "a clause came out"). Outcomes: PASS / WRONG (clauses came out,
+structure wrong) / NO_CLAUSE (parsed, nothing extracted) / NO_PARSE.
+
+| category   | pass | wrong | no_clause | rate |
+|------------|-----:|------:|----------:|------|
+| sanity     | 3    | 0     | 0         | 3/3  |
+| passive    | 2    | 0     | 2         | 2/4  |
+| prep       | 5    | 0     | 3         | 5/8  |
+| subord     | 1    | 1     | 1         | 1/3  |
+| relative   | 0    | 1     | 1         | 0/2  |
+| pronoun    | 2    | 1     | 0         | 2/3  |
+| conj       | 1    | 2     | 0         | 1/3  |
+| negation   | 2    | 0     | 0         | 2/2  |
+| question   | 0    | 0     | 2         | 0/2  |
+| open_vocab | 4    | 0     | 0         | 4/4  |
+| **TOTAL**  | 20   |       |           | **20/34 = 0.59** |
+
+NO_PARSE never happened — the parser always produces *something*; failures
+are downstream structure. Root causes, diagnosed per cluster:
+
+1. **Missing WORD_TAG_DICT entries** (cheapest fix, biggest single bucket):
+   `behind`/`beside` (ADP) kill two prep cases; `moved`/`broken` (need
+   PAST_PARTICIPLE) kill two passive cases; `thinks`/`knows` absent (VERB).
+   Twist: "mary **knows** that john is in the kitchen" PASSES — the unknown
+   matrix verb drops out and the embedded clause extracts clean — while
+   known-verb "mary **said** that the ball is in the garden" goes WRONG
+   (the embedded PP `in the garden` attaches to `said`; the embedded clause
+   vanishes). Complement clauses aren't handled; they're accidentally
+   survivable only when the matrix verb is unknown.
+2. **POS-ambiguity mis-tags**: "the ball came from the **shed**" — `shed`
+   tagged VERB, PP never assembles, zero clauses. Scorer/tagger issue, not
+   a missing prep (`from` is ADP and maps to SOURCE fine).
+3. **No sentence segmentation**: "mary went to the garden . **she found the
+   ball .**" parses as ONE hypothesis — `she` becomes OBJECT of `went`,
+   sentence 2 never yields a clause. Training feeds sentences one at a time
+   so the curriculum never sees this; any real-passage input needs an
+   upstream splitter (trivial) or parser-side segmentation.
+4. **Coordination is broken at extraction**: "mary **and** john are in the
+   garden" → SUBJECT = literally `and` (twice). "X is in A and Y is in B" →
+   second clause gets PLACE=`bat` (the conjunct's subject). COORDINATION
+   edges exist in the graph; `extract_discourse` doesn't consume them.
+5. **Relative clauses invert headedness**: "the ball that mary found is in
+   the garden" → single clause pred=`found` subj=`mary` place=`garden`; the
+   matrix clause (ball-in-garden) is lost entirely.
+6. **Wh-questions**: both NO_CLAUSE (known; wh-cleft was deferred in M38
+   with the verb1/rel2 collision as the prerequisite).
+
+Genuinely good news: **open_vocab 4/4** — zeppelin/wombat/gertrude/quokka
+sentences all extract perfectly (the unknown-word POS guesser + scorer
+handle novel nouns), so the "ranked #1 gap for real text" from M38 is
+narrower than feared: it's specific *known-word* gaps and ambiguity, not a
+general OOV collapse. Negation 2/2 at clause level (the NEGATIVE flag still
+isn't carried through the adapter — polarity is invisible downstream; same
+adapter-flags ticket as agentive-"by").
+
+Round-3 priority order this implies: (1) dict batch + past participles —
+mechanical, unblocks 4 cases; (2) coordination in `extract_discourse` —
+COORDINATION edges are already in the graph; (3) sentence splitter at the
+encoder seam; (4) complement/relative clause scoping in the grammar;
+(5) wh-questions last (needs the verb1/rel2 collision fix).
