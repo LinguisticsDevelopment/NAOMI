@@ -542,10 +542,39 @@ def generate_chained_episodes(n: int, seed: int = 0) -> List[Episode]:
 # senses (A, B): a real WordNet synset, the word that stands in for "the right
 # answer under that sense" (itself USVS-groundable), an ANCHOR sentence that
 # always contains the bare homograph, and DISTRACTOR sentences that reinforce
-# the same reading without repeating the word. ``mfs`` is the family's
-# most-frequent-sense synset (``wn.synsets(word)[0]``), recorded as a constant
-# so generation never needs a live WordNet call (offline, like the rest of
-# this module) — verified against a live lookup in tests/test_m32_ambiguity.py.
+# the same reading (sometimes by repeating the word, matching the style of the
+# original 4 families). ``mfs`` is the family's most-frequent-sense synset
+# (``wn.synsets(word)[0]``), recorded as a constant so generation never needs
+# a live WordNet call (offline, like the rest of this module) — verified
+# against a live lookup in tests/test_m32_ambiguity.py.
+#
+# M32.2 (this batch): grown from 4 to 31 families to test whether the
+# 24.7k-param sense chooser's leave-one-family-out failure on "bank" was a
+# too-few-shots artifact (bank was one of only 3 training families) rather
+# than something about "bank" itself — see scripts/train_sense_chooser.py's
+# leave-one-family-out rotation over ALL families now, not just 4.
+#
+# Most families are constructed so ``mfs`` equals sense A's synset (so within
+# a family sense-flip is close to a coin flip); a handful of words (seal,
+# crane, hood, cell, mole) have a WordNet MFS that lands on a rare/awkward
+# sense unrelated to BOTH curriculum-natural readings (e.g. crane's "most
+# frequent sense" by ``wn.synsets`` order is the writer Stephen Crane, not
+# the bird or the machine) — those families are ~100% sense-flipped and are
+# kept anyway (real WordNet quirk, not a generator bug); see
+# tests/test_m32_ambiguity.py for the accounting.
+#
+# Dropped during construction (pre-flight: both senses must have a nonzero
+# ``usvs_sense_handle(d=128)`` and cosine(A, B) < 0.8, else the chooser has no
+# vector-space signal to discriminate on):
+#   - "tank" (army tank vs. storage tank): cosine(A, B) = 0.875 at d=128 —
+#     both senses' USVS coordinates are too close (both cluster near a
+#     generic "large enclosed container" region) to be discriminable.
+# Trimmed (passed pre-flight but cut to keep the family count near the ~30
+# target, favoring the words explicitly called out in the design brief):
+#   bow, key, drill, trunk, block, spade, club — all had valid, discriminable
+#   sense pairs but the smallest A/B cosine margins among the non-hinted
+#   candidates, so cutting here preserved the rest of the pool's average
+#   discriminability while trimming headcount.
 _AMBIGUITY_FAMILIES = {
     "bank": {
         "word": "bank",
@@ -647,6 +676,708 @@ _AMBIGUITY_FAMILIES = {
                     "the organ filled the church .",
                     "the music was loud .",
                     "{name} pressed the keys .",
+                ],
+            },
+        },
+    },
+    "star": {
+        "word": "star",
+        "mfs": "star.n.01",
+        "senses": {
+            "A": {
+                "synset": "star.n.01",
+                "answer": "sky",
+                "anchor": "{name} looked at the star .",
+                "distractors": [
+                    "the sky was dark and clear .",
+                    "the light took years to arrive .",
+                    "{name} pointed at the sky .",
+                ],
+            },
+            "B": {
+                "synset": "star.n.04",
+                "answer": "actor",
+                "anchor": "{name} watched the star .",
+                "distractors": [
+                    "the actor took a bow .",
+                    "the audience clapped loudly .",
+                    "{name} read the movie poster .",
+                ],
+            },
+        },
+    },
+    "spring": {
+        "word": "spring",
+        "mfs": "spring.n.01",
+        "senses": {
+            "A": {
+                "synset": "spring.n.01",
+                "answer": "season",
+                "anchor": "{name} waited for spring .",
+                "distractors": [
+                    "the flowers began to bloom .",
+                    "the snow finally melted .",
+                    "the days grew warmer .",
+                ],
+            },
+            "B": {
+                "synset": "spring.n.02",
+                "answer": "coil",
+                "anchor": "{name} pressed on the spring .",
+                "distractors": [
+                    "the coil bounced right back .",
+                    "the mattress felt bouncy .",
+                    "{name} adjusted the mechanism .",
+                ],
+            },
+        },
+    },
+    "seal": {
+        "word": "seal",
+        "mfs": "sealing_wax.n.01",
+        "senses": {
+            "A": {
+                "synset": "seal.n.09",
+                "answer": "ocean",
+                "anchor": "{name} saw a seal on the rocks .",
+                "distractors": [
+                    "the ocean waves crashed nearby .",
+                    "{name} watched it dive underwater .",
+                    "the fur looked wet and sleek .",
+                ],
+            },
+            "B": {
+                "synset": "seal.n.02",
+                "answer": "stamp",
+                "anchor": "{name} pressed the seal into the wax .",
+                "distractors": [
+                    "the stamp marked the letter .",
+                    "the wax was still warm .",
+                    "{name} sealed the envelope .",
+                ],
+            },
+        },
+    },
+    "bark": {
+        "word": "bark",
+        "mfs": "bark.n.01",
+        "senses": {
+            "A": {
+                "synset": "bark.n.01",
+                "answer": "tree",
+                "anchor": "{name} touched the bark .",
+                "distractors": [
+                    "the tree had thick roots .",
+                    "the wood felt rough .",
+                    "{name} peeled a piece off .",
+                ],
+            },
+            "B": {
+                "synset": "bark.n.02",
+                "answer": "dog",
+                "anchor": "{name} heard the bark .",
+                "distractors": [
+                    "the dog ran to the door .",
+                    "the sound was loud and sudden .",
+                    "{name} looked outside .",
+                ],
+            },
+        },
+    },
+    "crane": {
+        "word": "crane",
+        "mfs": "crane.n.01",
+        "senses": {
+            "A": {
+                "synset": "crane.n.05",
+                "answer": "bird",
+                "anchor": "{name} watched the crane .",
+                "distractors": [
+                    "the bird waded through the marsh .",
+                    "its long neck curved gracefully .",
+                    "{name} took a photograph .",
+                ],
+            },
+            "B": {
+                "synset": "crane.n.04",
+                "answer": "machine",
+                "anchor": "{name} operated the crane .",
+                "distractors": [
+                    "the machine lifted the heavy beam .",
+                    "the construction site was noisy .",
+                    "{name} watched it swing slowly .",
+                ],
+            },
+        },
+    },
+    "pitcher": {
+        "word": "pitcher",
+        "mfs": "pitcher.n.01",
+        "senses": {
+            "A": {
+                "synset": "pitcher.n.01",
+                "answer": "baseball",
+                "anchor": "{name} was the pitcher .",
+                "distractors": [
+                    "the baseball game began .",
+                    "the crowd cheered from the stands .",
+                    "{name} threw a fastball .",
+                ],
+            },
+            "B": {
+                "synset": "pitcher.n.02",
+                "answer": "water",
+                "anchor": "{name} filled the pitcher .",
+                "distractors": [
+                    "the water poured out slowly .",
+                    "the glass was nearly full .",
+                    "{name} set it on the table .",
+                ],
+            },
+        },
+    },
+    "mouse": {
+        "word": "mouse",
+        "mfs": "mouse.n.01",
+        "senses": {
+            "A": {
+                "synset": "mouse.n.01",
+                "answer": "rodent",
+                "anchor": "{name} saw a mouse .",
+                "distractors": [
+                    "the rodent scurried under the couch .",
+                    "{name} set a small trap .",
+                    "the tiny footprints were everywhere .",
+                ],
+            },
+            "B": {
+                "synset": "mouse.n.04",
+                "answer": "computer",
+                "anchor": "{name} clicked the mouse .",
+                "distractors": [
+                    "the computer screen lit up .",
+                    "{name} opened a new window .",
+                    "the cursor moved across the screen .",
+                ],
+            },
+        },
+    },
+    "bass": {
+        "word": "bass",
+        "mfs": "bass.n.01",
+        "senses": {
+            "A": {
+                "synset": "bass.n.01",
+                "answer": "music",
+                "anchor": "{name} played the bass .",
+                "distractors": [
+                    "the music sounded deep and low .",
+                    "{name} tuned the instrument .",
+                    "the band practiced all afternoon .",
+                ],
+            },
+            "B": {
+                "synset": "bass.n.08",
+                "answer": "fish",
+                "anchor": "{name} caught a bass .",
+                "distractors": [
+                    "the fish jumped out of the water .",
+                    "the lake was calm and still .",
+                    "{name} used a small net .",
+                ],
+            },
+        },
+    },
+    "date": {
+        "word": "date",
+        "mfs": "date.n.01",
+        "senses": {
+            "A": {
+                "synset": "date.n.01",
+                "answer": "calendar",
+                "anchor": "{name} wrote down the date .",
+                "distractors": [
+                    "the calendar hung on the wall .",
+                    "the meeting was set for noon .",
+                    "{name} circled the day .",
+                ],
+            },
+            "B": {
+                "synset": "date.n.08",
+                "answer": "fruit",
+                "anchor": "{name} ate a date .",
+                "distractors": [
+                    "the fruit was sweet and sticky .",
+                    "the palm tree grew in the desert .",
+                    "{name} spit out the pit .",
+                ],
+            },
+        },
+    },
+    "palm": {
+        "word": "palm",
+        "mfs": "palm.n.01",
+        "senses": {
+            "A": {
+                "synset": "palm.n.01",
+                "answer": "hand",
+                "anchor": "{name} looked at the palm .",
+                "distractors": [
+                    "the hand felt smooth and warm .",
+                    "{name} made a fist .",
+                    "the fingers curled slowly .",
+                ],
+            },
+            "B": {
+                "synset": "palm.n.03",
+                "answer": "tree",
+                "anchor": "{name} climbed the palm .",
+                "distractors": [
+                    "the tree swayed in the wind .",
+                    "the leaves were long and green .",
+                    "{name} found a coconut .",
+                ],
+            },
+        },
+    },
+    "racket": {
+        "word": "racket",
+        "mfs": "racket.n.01",
+        "senses": {
+            "A": {
+                "synset": "racket.n.01",
+                "answer": "noise",
+                "anchor": "{name} heard a racket .",
+                "distractors": [
+                    "the noise was loud and sudden .",
+                    "{name} covered both ears .",
+                    "the neighbors complained loudly .",
+                ],
+            },
+            "B": {
+                "synset": "racket.n.04",
+                "answer": "tennis",
+                "anchor": "{name} picked up the racket .",
+                "distractors": [
+                    "the tennis ball bounced once .",
+                    "{name} served the ball .",
+                    "the match had just begun .",
+                ],
+            },
+        },
+    },
+    "pupil": {
+        "word": "pupil",
+        "mfs": "student.n.01",
+        "senses": {
+            "A": {
+                "synset": "student.n.01",
+                "answer": "school",
+                "anchor": "{name} was a pupil at the school .",
+                "distractors": [
+                    "the teacher gave a lesson .",
+                    "the classroom was quiet .",
+                    "{name} raised a hand .",
+                ],
+            },
+            "B": {
+                "synset": "pupil.n.02",
+                "answer": "eye",
+                "anchor": "the doctor examined the pupil .",
+                "distractors": [
+                    "the eye was slightly dilated .",
+                    "the light was too bright .",
+                    "{name} used a small light .",
+                ],
+            },
+        },
+    },
+    "fan": {
+        "word": "fan",
+        "mfs": "fan.n.01",
+        "senses": {
+            "A": {
+                "synset": "fan.n.01",
+                "answer": "wind",
+                "anchor": "{name} turned on the fan .",
+                "distractors": [
+                    "the wind blew across the room .",
+                    "the air felt cooler now .",
+                    "{name} felt relieved .",
+                ],
+            },
+            "B": {
+                "synset": "sports_fan.n.01",
+                "answer": "sports",
+                "anchor": "{name} was a big fan .",
+                "distractors": [
+                    "the sports team scored a goal .",
+                    "the crowd cheered loudly .",
+                    "{name} wore a team jersey .",
+                ],
+            },
+        },
+    },
+    "yard": {
+        "word": "yard",
+        "mfs": "yard.n.01",
+        "senses": {
+            "A": {
+                "synset": "yard.n.01",
+                "answer": "length",
+                "anchor": "{name} measured one yard .",
+                "distractors": [
+                    "the length was exact .",
+                    "the tape measure was long .",
+                    "{name} wrote down the number .",
+                ],
+            },
+            "B": {
+                "synset": "yard.n.02",
+                "answer": "grass",
+                "anchor": "{name} played in the yard .",
+                "distractors": [
+                    "the grass was green and soft .",
+                    "the fence surrounded the house .",
+                    "{name} ran across the lawn .",
+                ],
+            },
+        },
+    },
+    "staff": {
+        "word": "staff",
+        "mfs": "staff.n.01",
+        "senses": {
+            "A": {
+                "synset": "staff.n.01",
+                "answer": "workers",
+                "anchor": "{name} hired more staff .",
+                "distractors": [
+                    "the workers arrived early .",
+                    "the office was busy .",
+                    "{name} assigned new tasks .",
+                ],
+            },
+            "B": {
+                "synset": "staff.n.02",
+                "answer": "stick",
+                "anchor": "{name} carried a staff .",
+                "distractors": [
+                    "the stick was tall and sturdy .",
+                    "{name} leaned on it while walking .",
+                    "the wood was polished smooth .",
+                ],
+            },
+        },
+    },
+    "nail": {
+        "word": "nail",
+        "mfs": "nail.n.01",
+        "senses": {
+            "A": {
+                "synset": "nail.n.01",
+                "answer": "finger",
+                "anchor": "{name} painted the nail .",
+                "distractors": [
+                    "the finger looked shiny now .",
+                    "{name} chose a bright color .",
+                    "the polish dried quickly .",
+                ],
+            },
+            "B": {
+                "synset": "nail.n.02",
+                "answer": "hammer",
+                "anchor": "{name} hammered the nail .",
+                "distractors": [
+                    "the hammer struck hard .",
+                    "the wood held firm .",
+                    "{name} built a small shelf .",
+                ],
+            },
+        },
+    },
+    "ball": {
+        "word": "ball",
+        "mfs": "ball.n.01",
+        "senses": {
+            "A": {
+                "synset": "ball.n.01",
+                "answer": "game",
+                "anchor": "{name} kicked the ball .",
+                "distractors": [
+                    "the game was very exciting .",
+                    "the team scored a point .",
+                    "{name} ran across the field .",
+                ],
+            },
+            "B": {
+                "synset": "ball.n.09",
+                "answer": "dance",
+                "anchor": "{name} attended the ball .",
+                "distractors": [
+                    "the dance floor was crowded .",
+                    "the orchestra played all night .",
+                    "{name} wore a fine gown .",
+                ],
+            },
+        },
+    },
+    "hood": {
+        "word": "hood",
+        "mfs": "hood.n.01",
+        "senses": {
+            "A": {
+                "synset": "hood.n.09",
+                "answer": "car",
+                "anchor": "{name} opened the hood .",
+                "distractors": [
+                    "the engine was still hot .",
+                    "the car needed more oil .",
+                    "{name} checked the battery .",
+                ],
+            },
+            "B": {
+                "synset": "hood.n.08",
+                "answer": "head",
+                "anchor": "{name} wore a hood .",
+                "distractors": [
+                    "the fabric covered the head .",
+                    "the wind was cold outside .",
+                    "{name} pulled the drawstring tight .",
+                ],
+            },
+        },
+    },
+    "iron": {
+        "word": "iron",
+        "mfs": "iron.n.01",
+        "senses": {
+            "A": {
+                "synset": "iron.n.01",
+                "answer": "metal",
+                "anchor": "{name} studied the iron .",
+                "distractors": [
+                    "the metal was heavy and gray .",
+                    "the ore came from the mine .",
+                    "{name} tested its strength .",
+                ],
+            },
+            "B": {
+                "synset": "iron.n.04",
+                "answer": "clothes",
+                "anchor": "{name} used the iron .",
+                "distractors": [
+                    "the clothes were badly wrinkled .",
+                    "the shirt looked smooth now .",
+                    "{name} set it on the board .",
+                ],
+            },
+        },
+    },
+    "cell": {
+        "word": "cell",
+        "mfs": "cell.n.01",
+        "senses": {
+            "A": {
+                "synset": "cell.n.02",
+                "answer": "biology",
+                "anchor": "{name} studied the cell .",
+                "distractors": [
+                    "the biology lesson continued .",
+                    "the membrane was clearly visible .",
+                    "{name} drew a small diagram .",
+                ],
+            },
+            "B": {
+                "synset": "cell.n.07",
+                "answer": "prison",
+                "anchor": "{name} was locked in a cell .",
+                "distractors": [
+                    "the prison guard walked by .",
+                    "the bars felt cold and metal .",
+                    "{name} sat on the bench .",
+                ],
+            },
+        },
+    },
+    "pool": {
+        "word": "pool",
+        "mfs": "pool.n.01",
+        "senses": {
+            "A": {
+                "synset": "pool.n.01",
+                "answer": "swim",
+                "anchor": "{name} jumped into the pool .",
+                "distractors": [
+                    "the water was cool and clear .",
+                    "{name} swam several laps .",
+                    "the sun felt warm outside .",
+                ],
+            },
+            "B": {
+                "synset": "pool.n.09",
+                "answer": "billiards",
+                "anchor": "{name} played pool .",
+                "distractors": [
+                    "the billiard balls scattered .",
+                    "{name} lined up a shot .",
+                    "the table felt smooth .",
+                ],
+            },
+        },
+    },
+    "court": {
+        "word": "court",
+        "mfs": "court.n.01",
+        "senses": {
+            "A": {
+                "synset": "court.n.01",
+                "answer": "judge",
+                "anchor": "{name} appeared in court .",
+                "distractors": [
+                    "the judge listened carefully .",
+                    "the lawyer presented the case .",
+                    "{name} answered every question .",
+                ],
+            },
+            "B": {
+                "synset": "court.n.04",
+                "answer": "game",
+                "anchor": "{name} practiced on the court .",
+                "distractors": [
+                    "the game began at noon .",
+                    "{name} scored a basket .",
+                    "the crowd applauded loudly .",
+                ],
+            },
+        },
+    },
+    "bill": {
+        "word": "bill",
+        "mfs": "bill.n.01",
+        "senses": {
+            "A": {
+                "synset": "bill.n.01",
+                "answer": "law",
+                "anchor": "{name} proposed a new bill .",
+                "distractors": [
+                    "the law was debated for hours .",
+                    "the senate voted the next day .",
+                    "{name} explained the details .",
+                ],
+            },
+            "B": {
+                "synset": "beak.n.02",
+                "answer": "bird",
+                "anchor": "the bird had a long bill .",
+                "distractors": [
+                    "{name} watched it peck at seeds .",
+                    "the feathers were bright blue .",
+                    "{name} took a photograph .",
+                ],
+            },
+        },
+    },
+    "tie": {
+        "word": "tie",
+        "mfs": "necktie.n.01",
+        "senses": {
+            "A": {
+                "synset": "necktie.n.01",
+                "answer": "shirt",
+                "anchor": "{name} wore a tie .",
+                "distractors": [
+                    "the shirt was pressed neatly .",
+                    "{name} looked very formal .",
+                    "the suit fit well .",
+                ],
+            },
+            "B": {
+                "synset": "tie.n.03",
+                "answer": "score",
+                "anchor": "the game ended in a tie .",
+                "distractors": [
+                    "the score was perfectly even .",
+                    "{name} could not believe it .",
+                    "both teams cheered loudly .",
+                ],
+            },
+        },
+    },
+    "jam": {
+        "word": "jam",
+        "mfs": "jam.n.01",
+        "senses": {
+            "A": {
+                "synset": "jam.n.01",
+                "answer": "bread",
+                "anchor": "{name} spread jam on the toast .",
+                "distractors": [
+                    "the bread tasted very sweet .",
+                    "the fruit flavor was strong .",
+                    "{name} licked the spoon .",
+                ],
+            },
+            "B": {
+                "synset": "fix.n.01",
+                "answer": "trouble",
+                "anchor": "{name} was in a real jam .",
+                "distractors": [
+                    "the trouble seemed hard to escape .",
+                    "{name} needed help quickly .",
+                    "the situation felt tense .",
+                ],
+            },
+        },
+    },
+    "ring": {
+        "word": "ring",
+        "mfs": "ring.n.01",
+        "senses": {
+            "A": {
+                "synset": "ring.n.01",
+                "answer": "sound",
+                "anchor": "{name} heard a ring .",
+                "distractors": [
+                    "the sound echoed loudly .",
+                    "the phone kept buzzing .",
+                    "{name} answered right away .",
+                ],
+            },
+            "B": {
+                "synset": "ring.n.08",
+                "answer": "jewelry",
+                "anchor": "{name} wore a ring .",
+                "distractors": [
+                    "the jewelry sparkled brightly .",
+                    "the diamond caught the light .",
+                    "{name} admired it closely .",
+                ],
+            },
+        },
+    },
+    "mole": {
+        "word": "mole",
+        "mfs": "gram_molecule.n.01",
+        "senses": {
+            "A": {
+                "synset": "mole.n.06",
+                "answer": "animal",
+                "anchor": "{name} saw a mole in the garden .",
+                "distractors": [
+                    "the animal dug a small tunnel .",
+                    "the dirt piled up near the hole .",
+                    "{name} watched it disappear .",
+                ],
+            },
+            "B": {
+                "synset": "counterspy.n.01",
+                "answer": "spy",
+                "anchor": "{name} suspected a mole .",
+                "distractors": [
+                    "the spy passed secret information .",
+                    "the agency launched an investigation .",
+                    "{name} reviewed the evidence .",
                 ],
             },
         },

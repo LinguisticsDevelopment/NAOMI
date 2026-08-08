@@ -9,10 +9,11 @@ import pytest
 from nsm_ct.curriculum2 import (
     TEMPLATES,
     VOCAB_SCALE_PLACES,
+    generate_scaled_episodes,
     generate_varied_episodes,
     verify_templates,
 )
-from nsm_ct.episode import _PLACES
+from nsm_ct.episode import _NAMES, _PLACES
 
 
 # ---------------------------------------------------------------------------
@@ -199,3 +200,130 @@ def test_vocab_scale_grows_distinct_nouns():
 
 def test_vocab_scale_pool_disjoint_ok_but_all_distinct():
     assert len(VOCAB_SCALE_PLACES) == len(set(VOCAB_SCALE_PLACES)), "no duplicate nouns in the pool"
+
+
+# ---------------------------------------------------------------------------
+# "scaled" mode (M-scaling experiment's data axis, scripts/probe_scaled_training.py)
+# ---------------------------------------------------------------------------
+def _count_facts(ep) -> int:
+    return len(ep.context) + len(ep.post_context or [])
+
+
+def _count_distinct_entities(ep) -> int:
+    text = " " + " ".join(ep.context + (ep.post_context or []) + [ep.question]) + " "
+    return sum(1 for nm in _NAMES if f" {nm} " in text)
+
+
+def test_scaled_deterministic_given_seed():
+    a = generate_scaled_episodes(80, seed=7)
+    b = generate_scaled_episodes(80, seed=7)
+    assert [e.context for e in a] == [e.context for e in b]
+    assert [e.post_context for e in a] == [e.post_context for e in b]
+    assert [e.answer_text for e in a] == [e.answer_text for e in b]
+    assert [e.options for e in a] == [e.options for e in b]
+    assert [e.trust_labels for e in a] == [e.trust_labels for e in b]
+
+
+def test_scaled_different_seeds_differ():
+    a = generate_scaled_episodes(80, seed=1)
+    b = generate_scaled_episodes(80, seed=2)
+    assert [e.context for e in a] != [e.context for e in b]
+
+
+def test_scaled_defaults_to_mixed_templates_and_vocab_scale():
+    """generate_scaled_episodes' whole point is the scaling arm: mixed A+B
+    templates and the 61-noun pool, on by default (unlike generate_varied_episodes,
+    whose defaults are the single-template, 6-noun status quo)."""
+    eps = generate_scaled_episodes(40, seed=0)
+    assert all(e.meta.get("template_set") == "AB" for e in eps)
+    assert all(e.meta.get("vocab_scale") is True for e in eps)
+    assert all(e.meta.get("scaled") is True for e in eps)
+    noun_pool = {o for e in eps for o in e.options}
+    assert not noun_pool <= set(_PLACES), "vocab_scale should pull in the 61-noun pool, not just the 6 base places"
+
+
+def test_scaled_episode_density_in_range():
+    """Every scaled episode packs min_facts..max_facts context sentences
+    (context + post_context together), and never claims more entities than
+    max_entities -- the density knobs the scaling probe actually varies."""
+    min_facts, max_facts, min_entities, max_entities = 4, 8, 2, 4
+    eps = generate_scaled_episodes(300, seed=3, min_facts=min_facts, max_facts=max_facts,
+                                    min_entities=min_entities, max_entities=max_entities)
+    assert len(eps) == 300
+    for e in eps:
+        n_facts = _count_facts(e)
+        assert min_facts <= n_facts <= max_facts, f"L{e.level} had {n_facts} facts: {e.context}"
+        n_ent = _count_distinct_entities(e)
+        assert 1 <= n_ent <= max_entities, f"L{e.level} had {n_ent} distinct entities: {e.context}"
+        assert min_entities <= e.meta["n_entities"] <= max_entities
+
+    # Aggregate: the density knobs should actually widen variety, not just be
+    # present in metadata -- most episodes should see more than one entity.
+    avg_entities = sum(_count_distinct_entities(e) for e in eps) / len(eps)
+    assert avg_entities > 1.5, f"scaled episodes barely more varied than plain ones: avg={avg_entities:.2f}"
+
+
+def test_scaled_density_knobs_are_respected():
+    """A narrower min/max range actually narrows what gets generated."""
+    eps = generate_scaled_episodes(150, seed=4, min_facts=5, max_facts=6,
+                                    min_entities=3, max_entities=3)
+    for e in eps:
+        assert 5 <= _count_facts(e) <= 6
+        assert e.meta["n_entities"] == 3
+
+
+def test_scaled_min_greater_than_max_rejected():
+    with pytest.raises(ValueError):
+        generate_scaled_episodes(5, seed=0, min_facts=8, max_facts=4)
+    with pytest.raises(ValueError):
+        generate_scaled_episodes(5, seed=0, min_entities=4, max_entities=2)
+
+
+def test_scaled_episodes_structurally_valid():
+    eps = generate_scaled_episodes(120, seed=11)
+    assert {e.level for e in eps} == {1, 2, 3, 4, 5, 6}
+    for e in eps:
+        assert e.is_multiple_choice
+        assert e.answer_text in e.options
+        assert e.options[e.answer_idx] == e.answer_text
+        assert e.context
+        assert e.question.strip().endswith("?")
+        assert e.meta.get("src") == "curriculum2"
+
+
+def test_scaled_level4_post_context_present():
+    eps = [e for e in generate_scaled_episodes(120, seed=5) if e.level == 4]
+    assert eps
+    for e in eps:
+        assert e.post_context, "level 4 needs at least one post-question distractor"
+
+
+def test_scaled_level5_corroboration_labels_are_meaningful():
+    """Every scaled level-5 episode still needs at least one trustworthy
+    (label 1.0) statement that actually states the answer, and at least one
+    contradicting (label 0.0) statement -- the corroboration-vs-contradiction
+    signal from the plain curriculum, preserved under padding."""
+    eps = [e for e in generate_scaled_episodes(200, seed=5) if e.level == 5]
+    assert eps
+    for e in eps:
+        assert e.trust_labels is not None
+        assert len(e.trust_labels) == len(e.context)
+        assert any(lab == 1.0 and e.answer_text in ctx
+                   for ctx, lab in zip(e.context, e.trust_labels)), e.context
+        assert any(lab == 0.0 for lab in e.trust_labels), "no contradiction present"
+
+
+# -- parse-verification gate: scaled mode introduces no new sentence shapes --
+def test_scaled_mode_introduces_no_new_sentence_shapes():
+    """The scaling experiment's whole premise is "more of the SAME verified
+    sentences" -- density must come from generating more TEMPLATES-derived
+    sentences, never from new, unverified surface forms. Every context/
+    post_context sentence in scaled mode must match one of the already
+    parser-verified templates in TEMPLATES (see verify_templates() /
+    test_kept_templates_parse_successfully, which gates TEMPLATES itself)."""
+    all_templates = [t for s in ("A", "B") for action in TEMPLATES[s].values() for t in action]
+    eps = generate_scaled_episodes(150, seed=6)
+    for e in eps:
+        for sent in e.context + (e.post_context or []):
+            assert any(_matches_template(sent, t) for t in all_templates), \
+                f"{sent!r} does not match any parser-verified template"

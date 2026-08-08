@@ -31,8 +31,20 @@ _PRONOUNS = {"i", "you", "he", "she", "it", "we", "they",
 _PUNCT = set(".?!,;:")
 # A person's place: treat both locative ("in") and directional ("to") as PLACE,
 # so "is in the kitchen" then "went to the office" update the same slot.
+# NOTE (landmine): "by" is mapped to PLACE as a pure locative ("mary is by the
+# garden"). "by" is also the passive-voice agent marker ("chased by the dog"),
+# which is NOT a place. This is safe today because the grammar has no passive
+# rule at all (SubType.PASSIVE is unused) -- whoever adds passive support must
+# revisit this mapping so an agentive "by" doesn't get mislabeled PLACE.
 _PREP_RELATION = {"in": "PLACE", "on": "PLACE", "at": "PLACE", "inside": "PLACE",
-                  "to": "PLACE", "into": "PLACE", "from": "SOURCE"}
+                  "to": "PLACE", "into": "PLACE", "from": "SOURCE",
+                  "by": "PLACE", "near": "PLACE"}
+
+# Verbs whose bare direct object is a location ("entered the garden", no PP at
+# all) -- deliberately minimal and reviewed one-by-one (excludes "left": too
+# often non-locative, "left the meeting" vs "the box"). Only consulted when
+# there is no PREPOSITION edge at all, so it never overrides a real PP.
+_LOCATIVE_TRANSITIVE_VERBS = {"entered", "exited", "reached"}
 
 
 @dataclass
@@ -280,7 +292,7 @@ def extract_discourse(graph) -> Tuple[List[Clause], List[DiscourseLink]]:
     """
     if graph is None or not getattr(graph, "nodes", None):
         return [], []
-    subj, pred, _clause_idx = _subject_predicate(graph)
+    subj, pred, clause_idx = _subject_predicate(graph)
 
     # -- coordination (A or B): one lossless clause per coordinated value --------
     coord_edges = graph.edges_of("COORDINATION")
@@ -312,6 +324,19 @@ def extract_discourse(graph) -> Tuple[List[Clause], List[DiscourseLink]]:
         rel = _PREP_RELATION.get((graph.token(prep_node) or "").lower(),
                                  (graph.token(prep_node) or "PREP").upper())
         return [_fact_clause(graph, subj, pred, rel, val_idx)], []
+
+    # -- bare-object locative verbs ("entered the Y", no PP at all) --------------
+    # Only consulted when there is NO PREPOSITION edge, so a real PP always wins;
+    # scoped to _LOCATIVE_TRANSITIVE_VERBS so ordinary transitives ("chased the
+    # cat") are never reinterpreted as PLACE facts.
+    if subj is not None and not prep_edges and (pred or "").lower() in _LOCATIVE_TRANSITIVE_VERBS:
+        obj_edges = [(p, c) for (t, p, c) in graph.edges
+                     if t in ("OBJECT", "INDIRECT_OBJECT") and p == clause_idx
+                     and (graph.token(c) or "") not in _PUNCT]
+        if obj_edges:
+            _, val_idx = obj_edges[0]
+            return [_fact_clause(graph, subj, pred, "PLACE", val_idx)], []
+
     return [], []
 
 

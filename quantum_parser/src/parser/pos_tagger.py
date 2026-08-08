@@ -31,6 +31,7 @@ WORD_TAG_DICT = {
     "before": Tag.ADP, "after": Tag.ADP, "between": Tag.ADP,
     "among": Tag.ADP, "during": Tag.ADP, "without": Tag.ADP,
     "within": Tag.ADP, "toward": Tag.ADP, "towards": Tag.ADP,
+    "inside": Tag.ADP, "near": Tag.ADP,
 
     # Common adverbs
     "very": Tag.ADV, "quickly": Tag.ADV, "slowly": Tag.ADV,
@@ -91,6 +92,8 @@ WORD_TAG_DICT = {
     "like": Tag.VERB, "likes": Tag.VERB, "liked": Tag.VERB,
     "want": Tag.VERB, "wants": Tag.VERB, "wanted": Tag.VERB,
     "live": Tag.VERB, "lives": Tag.VERB, "lived": Tag.VERB,
+    "come": Tag.VERB, "comes": Tag.VERB, "coming": Tag.VERB, "came": Tag.VERB,
+    "sit": Tag.VERB, "sits": Tag.VERB, "sitting": Tag.VERB, "sat": Tag.VERB,
 
     # Particles (negation, possession, etc.) — "to" is listed in
     # AMBIGUOUS_WORDS as [ADP, PART] so the parser can branch contextually.

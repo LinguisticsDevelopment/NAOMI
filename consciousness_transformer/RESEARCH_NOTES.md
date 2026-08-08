@@ -1906,3 +1906,36 @@ never reaches the learned part. Caveats recorded: question phrasing untested;
 parser-rejected constructions untested by construction. Deliverables for the
 scaling push: the verified 12-template inventory + 61-noun place vocabulary +
 the parse-verification helper. 13 tests green.
+
+### M36 — parser robustness round 1 (interactive review loop; 12→18 constructions, MEASURED)
+
+Run as a two-phase dev loop (Sonnet diagnoses/proposes → review → implement):
+phase 1 traced all 9 dropped phrasings to exact failure points (empirically,
+with a hypothesis tracer — it also corrected the briefing: the prep→PLACE
+frame map lives in `clause.py:_PREP_RELATION`, not mind/coref.py, and the
+429-sentence membrane parity suite never touches quantum_parser). Findings:
+5 were **lexicon gaps** (inside/near missing as prepositions; came/sat/found
+unknown irregular verbs → default to NOUN → sentence loses its verb), 1 was a
+missing frame entry ("by" — the parse was fine all along), 1 needed a scoped
+consumer rule ("entered" — bare-object locatives), 2 need real grammar
+architecture. Approved + implemented: tagger entries (inside, near → ADP;
+come/came, sit/sat families → VERB), frame entries (by, near → PLACE, with the
+passive-agent landmine documented in code), and `_LOCATIVE_TRANSITIVE_VERBS =
+{entered, exited, reached}` consulted only when no PP exists ("left" excluded
+as ambiguous). **Verified: all 6 targets now parse with correct SUBJECT/PLACE;
+both WSD-family collision sentences parse better than before ("sat on the
+bank" gains its verb); quantum_parser suite 82/82; affected consumer tests
+49/49; template inventory 12→18 (new set "C", A/B frozen for
+reproducibility).** Deferred with reasons on record: "is located" (scorer
+tie-break picks a SUBJECT-less hypothesis at a 0.740 tie — aux1 blast radius),
+wh-clefts (no equative ruleset), passive voice (SubType.PASSIVE defined,
+never used by any rule — the biggest missing construction).
+
+### M37 (pending runs) — 31 homograph families + the first scaling curve
+
+Interrupted by a usage-limit kill mid-execution; all code landed and is
+tested (31 families live in `episode.py` with sense pre-flight checks;
+`curriculum2.scaled` mode + `probe_scaled_training.py` with 23 curriculum
+tests green). The two experiment runs — N-rotation leave-one-family-out at 31
+families, and the 480/1000/2000 × dim 48/64/96 scaling grid — are re-running;
+results land here.
