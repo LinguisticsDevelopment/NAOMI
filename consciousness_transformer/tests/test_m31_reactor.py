@@ -1,15 +1,21 @@
 """M31 consumer-gate tests: content-word ``meaning_source`` switch on the clause
-perception path (see RESEARCH_NOTES §0h). Covers three guarantees:
+perception path (see RESEARCH_NOTES §0h/§0i). Covers three guarantees:
 
-1. Default ("explication") is a zero-behavior-change no-op — a batch built with
-   the default matches one built by explicitly passing "explication", and the
-   pre-existing ``test_clause_reactor.py`` suite (which never passes the new
-   arg) stays green.
+1. Default is "usvs" (flipped in M31.1: full-budget training — dim 48, 480
+   episodes, 80 epochs — measured usvs val 0.885 vs explication val 0.698,
+   confirming the earlier quick-config result). A batch built with the
+   default matches one built by explicitly passing "usvs". The explication
+   path stays exercised as an explicit, first-class mode (below) — it remains
+   the fallback for words USVS doesn't know — and the pre-existing
+   ``test_clause_reactor.py`` suite (which never passes the new arg) stays
+   green under the new default.
 2. "usvs" mode changes CONTENT-WORD (relation/value) vectors to unit-norm USVS
    handles, while ENTITY-VARIABLE atoms (bound into ``entity`` and any
    ``var:`` filler used as a value) are IDENTICAL between modes — entities are
    atomic referents, never routed through content-word grounding.
-3. A word USVS doesn't know falls back to the explication path exactly.
+3. A word USVS doesn't know falls back to the explication path exactly (the
+   fallback regression test — explication must keep working correctly even
+   though it's no longer the default).
 """
 
 import numpy as np
@@ -46,13 +52,22 @@ def _batches_equal(a, b) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# 1. default == explication (zero behavior change)
+# 1. default == usvs (M31.1: usvs wins at full training budget)
 # ---------------------------------------------------------------------------
-def test_default_meaning_source_is_explication():
+def test_default_meaning_source_is_usvs():
     eps, parser, resolver, codec = _env()
     default_batch = build_clause_batch(eps, parser, resolver, codec)
-    explicit_batch = build_clause_batch(eps, parser, resolver, codec, "explication")
+    explicit_batch = build_clause_batch(eps, parser, resolver, codec, "usvs")
     assert _batches_equal(default_batch, explicit_batch)
+
+
+def test_default_meaning_source_is_not_explication():
+    """Guards against silently reverting the M31.1 flip: the default must no
+    longer coincide with the (losing, at full budget) explication path."""
+    eps, parser, resolver, codec = _env()
+    default_batch = build_clause_batch(eps, parser, resolver, codec)
+    explication_batch = build_clause_batch(eps, parser, resolver, codec, "explication")
+    assert not _batches_equal(default_batch, explication_batch)
 
 
 def test_default_meaning_source_matches_positional_call_without_arg():

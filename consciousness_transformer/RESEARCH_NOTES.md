@@ -1822,3 +1822,39 @@ adoption (meaning-graph handles at write time). Ops note: both agents stalled
 awaiting their own background-task notifications after their runs completed —
 results were collected directly from the run outputs; agent checkpoint-resume
 needs watching in future fan-outs.
+
+**M31b — full budget confirms; default flipped (MEASURED).** At the §0i budget
+(480 eps / 80 epochs / dim 48 / max_level 8, same seed both arms):
+explication val **0.698** → USVS val **0.885** (+0.19; per-level: L4 1.00,
+L6 0.94, L5 0.80 — USVS wins every level except L8 tie 0.70).
+`meaning_source` now **defaults to "usvs"** everywhere (explication stays as
+the tested fallback for USVS-unknown words). **Recorded drift, not hidden:**
+today's explication rerun (0.698) is below the historical §0i record (~0.86)
+on current code — the arms are internally comparable (identical code/seed) and
+the USVS arm ≈ matches the old record's level, but the baseline shift is
+unexplained (suspects: M26-era episode/meaning changes, torch version) and
+stands as an open observation. 14 reactor tests green.
+
+### M32 — the ambiguity curriculum: sense choice becomes a SCORED task (MEASURED, gate PASS +0.75)
+
+The first episodes whose answers depend on which SENSE of a homograph is meant
+(`episode.generate_ambiguity_episodes`; families: bank riverbank/institution,
+bat animal/club, plant factory/flora, organ body/instrument; 50% of episodes
+rigged so MFS is the WRONG reading). Each episode carries gold + MFS sense ids
+(live-verified synsets). The no-training probe
+(`scripts/probe_m32_ambiguity.py`, 400 episodes, d=256) grounds the homograph
+three ways and checks which answer option wins in USVS space:
+
+| grounding | all | sense-flipped half | unflipped half |
+|---|---|---|---|
+| word-level (sense-blind) | 0.522 | 0.510 | 0.534 |
+| MFS sense | 0.530 | **0.247** | 0.796 |
+| **gold sense** | **0.895** | **1.000** | 0.796 |
+
+Three facts in one table: the curriculum's trap works (MFS collapses to 0.25
+exactly where it should), **USVS sense vectors are sufficient — choose the
+right sense and the answer follows (ceiling 1.00)**, and nothing currently does
+the choosing. The +0.753 gold−MFS gap on the flipped half is the prize the
+future tree-coherence disambiguator (the §2 design: candidate parses × USVS
+vectors → coherent assignment) competes for — it finally has a benchmark,
+a floor, and a ceiling. 9 tests green; existing levels untouched.

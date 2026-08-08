@@ -25,10 +25,11 @@ from .usvs_bridge import usvs_handle
 
 _NAMESET = {n.lower() for n in _NAMES}
 
-# Content-word meaning source: "explication" (default, depth-bounded subtree TPR)
-# or "usvs" (M31: the word's USVS handle, falling back to explication when the
-# word isn't known to USVS). Entity/variable atoms are NEVER affected — they
-# never go through _content_vec.
+# Content-word meaning source: "usvs" (default since M31.1: the word's USVS
+# handle, falling back to explication when the word isn't known to USVS) or
+# "explication" (the depth-bounded subtree TPR — still exercised as the
+# fallback path, and available explicitly via --meaning-source explication).
+# Entity/variable atoms are NEVER affected — they never go through _content_vec.
 MeaningSource = str  # "explication" | "usvs"
 
 
@@ -36,7 +37,7 @@ MeaningSource = str  # "explication" | "usvs"
 # Fixed perception: curriculum episode -> stream of grounded clause triples
 # ---------------------------------------------------------------------------
 def _content_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
-                  meaning_source: MeaningSource = "explication") -> np.ndarray:
+                  meaning_source: MeaningSource = "usvs") -> np.ndarray:
     key = f"{meaning_source}:{word}"
     if key not in cache:
         vec = None
@@ -50,7 +51,7 @@ def _content_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarr
 
 
 def _option_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
-                 meaning_source: MeaningSource = "explication") -> np.ndarray:
+                 meaning_source: MeaningSource = "usvs") -> np.ndarray:
     """An MC option's meaning-vector — MAYBE/idk atoms for those, else content."""
     w = (word or "").lower()
     if w == "maybe":
@@ -61,14 +62,14 @@ def _option_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarra
 
 
 def _ent_vec(name: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
-             meaning_source: MeaningSource = "explication") -> np.ndarray:
+             meaning_source: MeaningSource = "usvs") -> np.ndarray:
     """Ground an entity/value: a person → its variable atom; a concept → its meaning."""
     return (codec.filler_vec("var:" + name) if name in _NAMESET
             else _content_vec(name, resolver, codec, cache, meaning_source))
 
 
 def _reasoning_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
-                      meaning_source: MeaningSource = "explication"):
+                      meaning_source: MeaningSource = "usvs"):
     """Grounded stream for a reasoning episode (L9-L11).
 
     Perception is a deterministic grounding of the input's *meaning* (the oracle's
@@ -100,7 +101,7 @@ def _reasoning_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]
 
 
 def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
-                    meaning_source: MeaningSource = "explication"):
+                    meaning_source: MeaningSource = "usvs"):
     """Grounded steps for a context sentence: one per clause.
 
     A disjunction ("A or B") yields one step per disjunct, each carrying the OR
@@ -174,7 +175,7 @@ class ClauseBatch:
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
-                        meaning_source: MeaningSource = "explication") -> ClauseBatch:
+                        meaning_source: MeaningSource = "usvs") -> ClauseBatch:
     """Encode curriculum episodes into grounded clause-triple streams (fixed).
 
     Each step is ``(entity, relation, value, pred, coord, is_q)``; ``coord`` carries
@@ -183,11 +184,11 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     "maybe" → the NSM MAYBE atom (so a disjunction can be answered "maybe").
 
     ``meaning_source`` (M31 consumer gate) selects how CONTENT-WORD meaning
-    vectors are built: ``"explication"`` (default, zero behavior change from
-    before this switch existed) uses the word's depth-bounded explication
-    subtree TPR; ``"usvs"`` uses the word's USVS handle
-    (:func:`nsm_ct.usvs_bridge.usvs_handle`), falling back to explication for
-    words USVS doesn't know. Entity/variable atoms (``var:<name>``) are never
+    vectors are built: ``"usvs"`` (default since M31.1 — beats explication at
+    both quick and full training budgets, see RESEARCH_NOTES) uses the word's
+    USVS handle (:func:`nsm_ct.usvs_bridge.usvs_handle`), falling back to
+    ``"explication"`` (the depth-bounded explication subtree TPR) for words
+    USVS doesn't know. Entity/variable atoms (``var:<name>``) are never
     affected by this switch either way.
     """
     cache: Dict[str, np.ndarray] = {}

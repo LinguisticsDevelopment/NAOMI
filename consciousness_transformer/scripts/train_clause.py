@@ -54,9 +54,11 @@ def main() -> None:
     ap.add_argument("--dim", type=int, default=64)
     ap.add_argument("--max-level", type=int, default=8)
     ap.add_argument("--batch-size", type=int, default=0, help="0 = full batch")
-    ap.add_argument("--meaning-source", choices=["explication", "usvs"], default="explication",
-                     help="M31: content-word meaning vectors from the explication subtree "
-                          "TPR (default) or from USVS handles (falls back per-word).")
+    ap.add_argument("--meaning-source", choices=["explication", "usvs"], default="usvs",
+                     help="M31: content-word meaning vectors from USVS handles (default "
+                          "since M31.1 — beats explication at full budget: val 0.885 vs "
+                          "0.698, dim 48/480 eps/80 epochs; falls back to explication "
+                          "per-word) or from the explication subtree TPR.")
     args = ap.parse_args()
     torch.manual_seed(0)
 

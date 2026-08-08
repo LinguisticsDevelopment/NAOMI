@@ -535,6 +535,176 @@ def generate_chained_episodes(n: int, seed: int = 0) -> List[Episode]:
 
 
 # ---------------------------------------------------------------------------
+# M32 — ambiguity-bearing comprehension curriculum
+# ---------------------------------------------------------------------------
+# Homograph families where WordNet carries clearly distinct senses and BOTH
+# senses fit the curriculum's simple declarative world. Each family names two
+# senses (A, B): a real WordNet synset, the word that stands in for "the right
+# answer under that sense" (itself USVS-groundable), an ANCHOR sentence that
+# always contains the bare homograph, and DISTRACTOR sentences that reinforce
+# the same reading without repeating the word. ``mfs`` is the family's
+# most-frequent-sense synset (``wn.synsets(word)[0]``), recorded as a constant
+# so generation never needs a live WordNet call (offline, like the rest of
+# this module) — verified against a live lookup in tests/test_m32_ambiguity.py.
+_AMBIGUITY_FAMILIES = {
+    "bank": {
+        "word": "bank",
+        "mfs": "bank.n.01",
+        "senses": {
+            "A": {
+                "synset": "bank.n.01",
+                "answer": "river",
+                "anchor": "{name} sat on the bank .",
+                "distractors": [
+                    "the river flowed past the bank .",
+                    "the water was cold .",
+                    "{name} watched the fish swim .",
+                ],
+            },
+            "B": {
+                "synset": "depository_financial_institution.n.01",
+                "answer": "money",
+                "anchor": "{name} walked into the bank .",
+                "distractors": [
+                    "the teller counted the money .",
+                    "the vault door was heavy .",
+                    "{name} opened a new account .",
+                ],
+            },
+        },
+    },
+    "bat": {
+        "word": "bat",
+        "mfs": "bat.n.01",
+        "senses": {
+            "A": {
+                "synset": "bat.n.01",
+                "answer": "cave",
+                "anchor": "{name} saw a bat in the cave .",
+                "distractors": [
+                    "the bat flew in the dark .",
+                    "the cave was silent .",
+                    "{name} heard a squeak .",
+                ],
+            },
+            "B": {
+                "synset": "bat.n.05",
+                "answer": "game",
+                "anchor": "{name} picked up the bat .",
+                "distractors": [
+                    "the bat hit the ball .",
+                    "the crowd cheered .",
+                    "{name} played in the game .",
+                ],
+            },
+        },
+    },
+    "plant": {
+        "word": "plant",
+        "mfs": "plant.n.01",
+        "senses": {
+            "A": {
+                "synset": "plant.n.01",
+                "answer": "factory",
+                "anchor": "{name} worked at the plant .",
+                "distractors": [
+                    "the plant made cars .",
+                    "the machines were loud .",
+                    "{name} wore a hard hat .",
+                ],
+            },
+            "B": {
+                "synset": "plant.n.02",
+                "answer": "garden",
+                "anchor": "{name} watered the plant .",
+                "distractors": [
+                    "the plant grew leaves .",
+                    "the soil was dry .",
+                    "{name} placed it near the window .",
+                ],
+            },
+        },
+    },
+    "organ": {
+        "word": "organ",
+        "mfs": "organ.n.01",
+        "senses": {
+            "A": {
+                "synset": "organ.n.01",
+                "answer": "body",
+                "anchor": "{name} studied the organ .",
+                "distractors": [
+                    "the organ pumped blood .",
+                    "the doctor examined the patient .",
+                    "{name} read the chart .",
+                ],
+            },
+            "B": {
+                "synset": "organ.n.05",
+                "answer": "music",
+                "anchor": "{name} played the organ .",
+                "distractors": [
+                    "the organ filled the church .",
+                    "the music was loud .",
+                    "{name} pressed the keys .",
+                ],
+            },
+        },
+    },
+}
+
+
+def ambiguity_episode(rng: random.Random) -> Episode:
+    """One ambiguity-bearing episode: 2-4 facts fix ONE sense of a homograph,
+    then a question whose correct option depends on that sense.
+
+    Metadata carries the homograph, its gold sense (the synset the CONTEXT
+    actually means) and the MFS sense (``wn.synsets(word)[0]``, a fixed
+    per-family constant) so evaluation can compare grounding methods without
+    a live WordNet call at generation time.
+    """
+    family_name = rng.choice(list(_AMBIGUITY_FAMILIES))
+    fam = _AMBIGUITY_FAMILIES[family_name]
+    sense_key = rng.choice(["A", "B"])
+    other_key = "B" if sense_key == "A" else "A"
+    sense, other = fam["senses"][sense_key], fam["senses"][other_key]
+    name = rng.choice(_NAMES)
+    k = rng.randint(2, 1 + len(sense["distractors"]))  # anchor + (k-1) distractors, k in [2,4]
+    picked_distractors = rng.sample(sense["distractors"], k - 1)
+    context = [sense["anchor"]] + picked_distractors
+    context = [s.format(name=name) for s in context]
+    rng.shuffle(context)
+    options = [sense["answer"], other["answer"]]
+    rng.shuffle(options)
+    answer = sense["answer"]
+    return Episode(
+        context=context,
+        question=f"what kind of {fam['word']} is it ?",
+        answer_text=answer,
+        options=options,
+        answer_idx=options.index(answer),
+        level=0,
+        meta={
+            "family": family_name,
+            "homograph": fam["word"],
+            "gold_sense": sense["synset"],
+            "mfs_sense": fam["mfs"],
+            "sense_key": sense_key,
+        },
+    )
+
+
+def generate_ambiguity_episodes(n: int, seed: int = 0) -> List[Episode]:
+    """``n`` ambiguity-bearing episodes (M32), deterministic given ``seed``.
+
+    Cycles across all homograph families with a single shared RNG stream, so
+    two calls with the same ``(n, seed)`` are byte-identical.
+    """
+    rng = random.Random(seed)
+    return [ambiguity_episode(rng) for _ in range(n)]
+
+
+# ---------------------------------------------------------------------------
 # bAbI source (real corpus, with offline fallback)
 # ---------------------------------------------------------------------------
 _BABI_URL = "http://www.thespermwhale.com/jaseweston/babi/tasks_1-20_v1-2.tar.gz"
