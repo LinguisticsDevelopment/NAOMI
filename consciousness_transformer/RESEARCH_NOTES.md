@@ -1544,3 +1544,34 @@ are the GRU controller family + the drive MLP, exactly matching the thesis
 ("weights hold zero information", depth through the loop). The M26 arc's next step
 re-lands on the right seam: sense → *placed* M19–M25 coordinate → meaning-graph
 filler handles (not the deleted meaning-bag channel).
+
+### M28.0 — the WordNet-only baseline audit (Step A of dev/SEMANTIC_MAPPING_PLAN.md, MEASURED)
+
+Plans now live in `dev/` (`SEMANTIC_MAPPING_PLAN.md` middle-term,
+`ROADMAP_LONG_TERM.md` reference) — per the user: tightly scoped immediate steps,
+hours not weeks, plans as repo files. Step A establishes the one table every Step B
+signal is judged against (`scripts/probe_m28_baseline.py`, 3k gloss corpus, 234
+axes, **17s total on CPU** — no compute wall anywhere in sight).
+
+**Post-M27 reproduction — the cleanup broke nothing:** placement anchored
+0.404 → placed **0.693** (α=0.7; = the M19.2 record); dictionary AUCs raw
+synonym **0.867** / similar 0.748 / hypernym 0.727 / antonym 0.261, tanh
+0.769 / 0.642 / 0.727 / 0.512 (= M19.4/M20.2 within split noise); tanh syn>ant
+0.775 (probe_normalize; recorded 0.756 — split variance).
+
+**POS-region breakdown (new):** held-out syn>rand is **uniform across regions** —
+n-n 0.860, v-v 0.848, a-a 0.883, mixed 0.849 — so the "verb region is
+under-signaled" hypothesis is **not supported** at this corpus scale for synonym
+separation. What IS thin is **in-bucket antonym coverage** (v-v has 5 test antonym
+pairs, a-a 10 — vs n-n 139) and the a-a sample overall (21 test synonym pairs).
+Honest caveats: buckets use each word's *dominant* POS (first synset), so
+adjective/verb pairs with noun homonyms leak into n-n/mixed; the gloss vocabulary
+is noun-heavy by construction.
+
+**Implication for Step B:** VerbNet/FrameNet are *not* triggered by verb-synonym
+weakness (their gate condition in the plan). The real improvement targets, in
+order: (1) **hypernym AUC 0.727** — flat through every milestone since M19.4;
+(2) **antonym edge breadth** outside nouns (feeds both placement and the signed
+edge store); (3) similar 0.748. The WordNet-remainder signals (entailment, cause,
+pertainyms, domain links, also_see) land next, one at a time, each as a held-out
+delta against this table.
