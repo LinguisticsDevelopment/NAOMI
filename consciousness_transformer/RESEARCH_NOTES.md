@@ -1779,3 +1779,46 @@ but they are pairwise graph algorithms, not vectors a model can consume or
 compose, and the taxonomic signal they exploit is available to us as future
 placement signal; USVS coverage/nuance on rare words is thinner than
 billion-token models.
+
+### M31 — USVS as filler/handle vectors: BOTH extrinsic gates PASS (MEASURED — the arc pays downstream)
+
+The payoff experiment the whole grounding arc existed for. Two gates, two
+Sonnet agents, main session = bridge + review (`src/nsm_ct/usvs_bridge.py`:
+deterministic axis-NAME-keyed projection of any USVS coordinate to any d;
+structure survives projection — dog~puppy 0.93 vs dog~justice 0.55 @ d256).
+
+**Gate (a) — concept dereference (`scripts/probe_m31_handles.py`), 500-word
+index, +5% noise, both dims:**
+
+| handles | d | top-1 | median margin |
+|---|---|---|---|
+| status quo (label-TPR) | 256 | 0.316 | 0.0004 |
+| **USVS** | 256 | **0.962** | **0.1263** |
+| status quo | 512 | 0.274 | 0.0004 |
+| **USVS** | 512 | **0.948** | **0.1230** |
+
+The honest re-read of §0j this forces: the old "7/7 top-1, margin 0.034" was a
+**7-node index** — at a realistic 500 concepts the label handles collapse
+(top-1 0.32, margins ~0); they were never going to scale. USVS handles give
+~300× the margin and 0.95+ retrieval under noise.
+
+**Gate (b) — the consumer (clause reactor, `train_clause.py
+--meaning-source`), identical config/seed both arms (192 train / 48 val eps,
+60 epochs — a quick-budget config, so compare the DELTA not the absolutes):**
+explication baseline val **0.521** → USVS fillers val **0.812** (+0.29);
+per-level: L1 0.43→0.71, L2 0.33→0.83, L6 0.29→1.00, L7-res 0.33→1.00 (L8
+0.67→0.50 on n=6 — watch, don't panic). Entity variables stay atomic; unknown
+words fall back to explication; default remains "explication" until the
+full-budget retrain (below). Tests: 19 green (bridge 6 + reactor-M31 +
+clause_reactor regression).
+
+**Verdict: the extrinsic-validation rule is finally satisfied in the strong
+direction — the semantic space measurably improves both memory addressing and
+task accuracy in a downstream consumer.** Follow-ons, in order: (1) flip
+`meaning_source` default to usvs + full-budget retrain of the reactor/psyche
+baselines (the §0h/§0i numbers get re-recorded); (2) M32 ambiguity curriculum
+(sense-level fillers via `usvs_sense_handle` are ready); (3) mind/-side
+adoption (meaning-graph handles at write time). Ops note: both agents stalled
+awaiting their own background-task notifications after their runs completed —
+results were collected directly from the run outputs; agent checkpoint-resume
+needs watching in future fan-outs.

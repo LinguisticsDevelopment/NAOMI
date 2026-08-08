@@ -39,6 +39,23 @@ decision rule: the fix is grounding depth (sourced explications, deeper
 decomposition), not resolver machinery; the trained coherence resolver stays
 unbuilt until signatures show more signal. M31 proceeds with MFS senses.
 
+## M31 execution plan (agents: Sonnet ×2 in parallel; main session = bridge + review)
+
+- **Phase 0 (main):** `src/nsm_ct/usvs_bridge.py` — load the artifact once;
+  deterministic axis-name-keyed projection (607 named axes → any d); 
+  `usvs_handle(word, d)` / `usvs_sense_handle(sid, d)`. Shared by both agents.
+- **Agent A (Sonnet) — the dereference gate:** probe comparing CONCEPT handle
+  quality, label-TPR (status quo, §0j margins 0.034 @ d256) vs USVS-projected,
+  at d=256/512, top-1 + margin distribution + noise robustness. Pure probe, no
+  core-file edits; wiring lands only if the gate passes.
+- **Agent B (Sonnet) — the consumer gate:** clause reactor with content-word
+  meaning vectors from `usvs_handle` vs the explication-TPR baseline
+  (`train_clause.py`, same seed/config both arms); report val accuracy per
+  level. Entity variables stay atomic.
+- **Phase 2 (main):** review, wire if gates pass, RESEARCH_NOTES M31, commit.
+- M32 is planned after M31's outcome (its curriculum design depends on how the
+  fillers land).
+
 ## M31 — USVS handles in the meaning graph (viability test #2, extrinsic)
 
 Content-word filler/handle vectors in `meaning_graph.py` / mind/ meaning objects

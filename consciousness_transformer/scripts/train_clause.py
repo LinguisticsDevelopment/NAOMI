@@ -54,6 +54,9 @@ def main() -> None:
     ap.add_argument("--dim", type=int, default=64)
     ap.add_argument("--max-level", type=int, default=8)
     ap.add_argument("--batch-size", type=int, default=0, help="0 = full batch")
+    ap.add_argument("--meaning-source", choices=["explication", "usvs"], default="explication",
+                     help="M31: content-word meaning vectors from the explication subtree "
+                          "TPR (default) or from USVS handles (falls back per-word).")
     args = ap.parse_args()
     torch.manual_seed(0)
 
@@ -65,9 +68,10 @@ def main() -> None:
     codec = TPRCodec(dim=args.dim)
 
     tr, va = split_episodes(eps, 0.2, seed=0)
-    print(f"encoding {len(tr)} train / {len(va)} val episodes (fixed perception)...")
-    train = build_clause_batch(tr, parser, resolver, codec)
-    val = build_clause_batch(va, parser, resolver, codec)
+    print(f"encoding {len(tr)} train / {len(va)} val episodes (fixed perception, "
+          f"meaning_source={args.meaning_source})...")
+    train = build_clause_batch(tr, parser, resolver, codec, args.meaning_source)
+    val = build_clause_batch(va, parser, resolver, codec, args.meaning_source)
     print(f"clause streams: T_train={train.entity.shape[1]} K={train.options.shape[1]} "
           f"| params learn ONLY the reaction policy")
 

@@ -21,37 +21,54 @@ from . import entity_memory as em
 from .clause import extract_discourse
 from .episode import _NAMES
 from .tpr import TPRCodec
+from .usvs_bridge import usvs_handle
 
 _NAMESET = {n.lower() for n in _NAMES}
+
+# Content-word meaning source: "explication" (default, depth-bounded subtree TPR)
+# or "usvs" (M31: the word's USVS handle, falling back to explication when the
+# word isn't known to USVS). Entity/variable atoms are NEVER affected — they
+# never go through _content_vec.
+MeaningSource = str  # "explication" | "usvs"
 
 
 # ---------------------------------------------------------------------------
 # Fixed perception: curriculum episode -> stream of grounded clause triples
 # ---------------------------------------------------------------------------
-def _content_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]) -> np.ndarray:
-    if word not in cache:
-        tree = resolver.resolve(word)
-        cache[word] = codec.contract(codec.encode_matrix(tree.root))
-    return cache[word]
+def _content_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                  meaning_source: MeaningSource = "explication") -> np.ndarray:
+    key = f"{meaning_source}:{word}"
+    if key not in cache:
+        vec = None
+        if meaning_source == "usvs":
+            vec = usvs_handle(word, codec.dim)
+        if vec is None:                            # explication path (default / fallback)
+            tree = resolver.resolve(word)
+            vec = codec.contract(codec.encode_matrix(tree.root))
+        cache[key] = vec
+    return cache[key]
 
 
-def _option_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]) -> np.ndarray:
+def _option_vec(word: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                 meaning_source: MeaningSource = "explication") -> np.ndarray:
     """An MC option's meaning-vector — MAYBE/idk atoms for those, else content."""
     w = (word or "").lower()
     if w == "maybe":
         return codec.filler_vec("MAYBE")
     if w == "idk":
         return codec.filler_vec("idk")            # the abstain atom
-    return _content_vec(word, resolver, codec, cache)
+    return _content_vec(word, resolver, codec, cache, meaning_source)
 
 
-def _ent_vec(name: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]) -> np.ndarray:
+def _ent_vec(name: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+             meaning_source: MeaningSource = "explication") -> np.ndarray:
     """Ground an entity/value: a person → its variable atom; a concept → its meaning."""
     return (codec.filler_vec("var:" + name) if name in _NAMESET
-            else _content_vec(name, resolver, codec, cache))
+            else _content_vec(name, resolver, codec, cache, meaning_source))
 
 
-def _reasoning_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]):
+def _reasoning_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                      meaning_source: MeaningSource = "explication"):
     """Grounded stream for a reasoning episode (L9-L11).
 
     Perception is a deterministic grounding of the input's *meaning* (the oracle's
@@ -71,18 +88,19 @@ def _reasoning_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]
     rule_list = ep.meta.get("rules") or ([ep.meta["rule"]] if ep.meta.get("rule") else [])
     for rule in rule_list:
         for (e, r, v) in rule:                          # antecedent then consequent
-            steps.append((_ent_vec(e, resolver, codec, cache), codec.filler_vec("rel:" + r),
-                          _ent_vec(v, resolver, codec, cache), pred_if, ifv, 0))
+            steps.append((_ent_vec(e, resolver, codec, cache, meaning_source), codec.filler_vec("rel:" + r),
+                          _ent_vec(v, resolver, codec, cache, meaning_source), pred_if, ifv, 0))
     for (e, r, v) in ep.meta["facts"]:
-        steps.append((_ent_vec(e, resolver, codec, cache), codec.filler_vec("rel:" + r),
-                      _ent_vec(v, resolver, codec, cache), pred_is, z, 0))
+        steps.append((_ent_vec(e, resolver, codec, cache, meaning_source), codec.filler_vec("rel:" + r),
+                      _ent_vec(v, resolver, codec, cache, meaning_source), pred_is, z, 0))
     qe, qr = ep.meta["query"]
-    steps.append((_ent_vec(qe, resolver, codec, cache), codec.filler_vec("rel:" + qr),
+    steps.append((_ent_vec(qe, resolver, codec, cache, meaning_source), codec.filler_vec("rel:" + qr),
                   z, q_pred, z, 1))
     return steps
 
 
-def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]):
+def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                    meaning_source: MeaningSource = "explication"):
     """Grounded steps for a context sentence: one per clause.
 
     A disjunction ("A or B") yields one step per disjunct, each carrying the OR
@@ -110,7 +128,7 @@ def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str
         if not (subj and place):
             continue
         steps.append((codec.filler_vec("var:" + subj), codec.filler_vec("rel:PLACE"),
-                      _content_vec(place, resolver, codec, cache),
+                      _content_vec(place, resolver, codec, cache, meaning_source),
                       codec.filler_vec("pred:" + pred), coordv, 0))
     return steps
 
@@ -155,13 +173,22 @@ class ClauseBatch:
                            self.options[idx], self.answer[idx], coord, ans_ok)
 
 
-def build_clause_batch(episodes, parser, resolver, codec: TPRCodec) -> ClauseBatch:
+def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
+                        meaning_source: MeaningSource = "explication") -> ClauseBatch:
     """Encode curriculum episodes into grounded clause-triple streams (fixed).
 
     Each step is ``(entity, relation, value, pred, coord, is_q)``; ``coord`` carries
     the OR/NOT atom for disjunction/negation steps (zeros otherwise) — the logical
     signal the controller reacts to. Options ground to content vectors, except
     "maybe" → the NSM MAYBE atom (so a disjunction can be answered "maybe").
+
+    ``meaning_source`` (M31 consumer gate) selects how CONTENT-WORD meaning
+    vectors are built: ``"explication"`` (default, zero behavior change from
+    before this switch existed) uses the word's depth-bounded explication
+    subtree TPR; ``"usvs"`` uses the word's USVS handle
+    (:func:`nsm_ct.usvs_bridge.usvs_handle`), falling back to explication for
+    words USVS doesn't know. Entity/variable atoms (``var:<name>``) are never
+    affected by this switch either way.
     """
     cache: Dict[str, np.ndarray] = {}
     d = codec.dim
@@ -170,19 +197,19 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec) -> ClauseBat
     rows = []
     for ep in episodes:
         if getattr(ep, "level", 0) >= 9 and ep.meta.get("query"):
-            steps = _reasoning_steps(ep, resolver, codec, cache)   # L9-L11 reasoning stream
+            steps = _reasoning_steps(ep, resolver, codec, cache, meaning_source)   # L9-L11 reasoning stream
         else:
             steps = []
             for sent in ep.context:
-                steps += _context_steps(sent, parser, resolver, codec, cache)
+                steps += _context_steps(sent, parser, resolver, codec, cache, meaning_source)
             qent = _question_entity(ep.question)
             if qent is None:
                 continue
             steps.append((codec.filler_vec("var:" + qent), codec.filler_vec("rel:PLACE"),
                           z, q_pred, z, 1))
             for sent in getattr(ep, "post_context", []) or []:
-                steps += _context_steps(sent, parser, resolver, codec, cache)
-        opt = [_option_vec(o, resolver, codec, cache) for o in ep.options]
+                steps += _context_steps(sent, parser, resolver, codec, cache, meaning_source)
+        opt = [_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
         rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0))
 
     b = len(rows)
