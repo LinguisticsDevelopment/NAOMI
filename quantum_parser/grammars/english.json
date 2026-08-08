@@ -1603,7 +1603,7 @@
                     "result": "NOMINAL",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER"},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["INFINITIVE"]},
                         "before": [],
                         "after": [{"type": "VERBAL", "quantifier": "one"}]
                     },
@@ -1611,7 +1611,7 @@
                         {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
                     ],
                     "consume": ["after"],
-                    "note": "Infinitive: to run, to see (anchor becomes NOMINAL result)"
+                    "note": "Infinitive: to run, to see (anchor becomes NOMINAL result). Scoped to INFINITIVE (round 2): without it, any MODIFIER (e.g. a modal like \"can\") immediately before an already-VERBAL node was wrongly read as an infinitive marker, stealing SUBJECT binding in modal+passive chains like \"can be found\"."
                 }
             ]
         },
@@ -1706,7 +1706,7 @@
                     "recursive": false,
                     "pattern": {
                         "anchor": {"type": "VERBAL"},
-                        "before": [{"type": "MODIFIER", "quantifier": "one"}],
+                        "before": [{"type": "MODIFIER", "subtypes": ["NEGATIVE"], "quantifier": "one"}],
                         "after": []
                     },
                     "connections": [
@@ -1714,7 +1714,7 @@
                     ],
                     "consume": ["before"],
                     "pull_categories": ["NEGATIVE"],
-                    "note": "Negation: not run, n't go"
+                    "note": "Negation: not run, n't go. Scoped to NEGATIVE (round 2): without it, any MODIFIER (e.g. \"be\"/\"is\") immediately before a VERBAL was wrongly consumed as if it were a negation particle, pre-empting aux1 for modal+passive chains like \"can be found\"."
                 }
             ]
         },
@@ -1856,9 +1856,24 @@
         },
 
         "aux1": {
-            "description": "Auxiliary verbs modify main verbs (modals, perfect, progressive)",
+            "description": "Auxiliary verbs modify main verbs (modals, perfect, progressive, passive)",
             "result": "VERBAL",
             "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": true,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL", "subtypes": ["PAST_PARTICIPLE"]},
+                        "before": [{"type": "MODIFIER", "subtypes": ["PROGRESSIVE"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "before[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "push_subtypes": ["PASSIVE"],
+                    "note": "Passive voice: be + past participle (mary can be found). Anchor is the participle (not \"be\") so push_subtypes lands on the node that survives the aux1 chain; SUBJECT still comes from the generic clause1 rule (preverbal NOMINAL -> SUBJECT), so no ConnectionType change is needed downstream."
+                },
                 {
                     "result": "VERBAL",
                     "recursive": true,

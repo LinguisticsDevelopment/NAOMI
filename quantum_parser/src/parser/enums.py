@@ -158,6 +158,12 @@ class SubType(Enum):
     NEGATIVE = auto()      # Negation marking
     INFINITIVE = auto()    # Infinitive marker
     PARTICIPLE = auto()    # Present/past participle
+    PAST_PARTICIPLE = auto()  # Past participle specifically (be + PAST_PARTICIPLE = passive).
+                              # Deliberately distinct from PARTICIPLE: ger1/part1 unconditionally
+                              # intercept any VERBAL+PARTICIPLE node (no context check), which would
+                              # swallow past participles into gerund/adjective readings before aux1
+                              # ever sees them. A disjoint SubType keeps the passive rule from
+                              # colliding with that existing (tested) -ing machinery.
 
     # Adjective position (for Spanish)
     POST_NOMINAL = auto()   # Adjective comes after noun
@@ -211,6 +217,7 @@ SUBTYPE_TO_SUBCAT = {
     SubType.PERFECT: SubCat.VERB,
     SubType.PROGRESSIVE: SubCat.VERB,
     SubType.PASSIVE: SubCat.VERB,
+    SubType.PAST_PARTICIPLE: SubCat.VERB,
 
     # Descriptor
     SubType.COMPARATIVE: SubCat.DESCRIPTOR,

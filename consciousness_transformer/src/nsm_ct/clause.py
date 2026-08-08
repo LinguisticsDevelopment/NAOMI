@@ -31,11 +31,18 @@ _PRONOUNS = {"i", "you", "he", "she", "it", "we", "they",
 _PUNCT = set(".?!,;:")
 # A person's place: treat both locative ("in") and directional ("to") as PLACE,
 # so "is in the kitchen" then "went to the office" update the same slot.
-# NOTE (landmine): "by" is mapped to PLACE as a pure locative ("mary is by the
-# garden"). "by" is also the passive-voice agent marker ("chased by the dog"),
-# which is NOT a place. This is safe today because the grammar has no passive
-# rule at all (SubType.PASSIVE is unused) -- whoever adds passive support must
-# revisit this mapping so an agentive "by" doesn't get mislabeled PLACE.
+# NOTE (landmine, now LIVE): "by" is mapped to PLACE as a pure locative ("mary
+# is by the garden"). "by" is also the passive-voice agent marker ("chased by
+# the dog"), which is NOT a place. quantum_parser's round-2 fix (M37) landed
+# passive voice for real -- SubType.PASSIVE is stamped by a new aux1 rule on
+# the surviving VERBAL/PREDICATE node -- so an agentive "by" can now actually
+# occur on a passive clause and would be mislabeled PLACE here.
+# TODO (round 3): guard this mapping on the predicate's PASSIVE flag -- when
+# the clause's predicate carries PASSIVE, map "by" -> "AGENT" instead of
+# PLACE. Currently BLOCKED: quantum_adapter.hypothesis_to_tree/hypothesis_to_
+# graph never carry node.flags through to ParseNode/HypGraph (only label/
+# token/relation/index), so this module has no way to see PASSIVE today.
+# Needs a quantum_adapter change first.
 _PREP_RELATION = {"in": "PLACE", "on": "PLACE", "at": "PLACE", "inside": "PLACE",
                   "to": "PLACE", "into": "PLACE", "from": "SOURCE",
                   "by": "PLACE", "near": "PLACE"}

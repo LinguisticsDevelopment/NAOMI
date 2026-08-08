@@ -74,14 +74,18 @@ TEMPLATES: Dict[str, Dict[str, List[str]]] = {
 # Set "C": templates originally dropped, then FIXED by the M36 parser round
 # (tagger lexicon: inside/near as ADP, come/came + sit/sat as VERB; clause.py:
 # by/near -> PLACE frame entries; the _LOCATIVE_TRANSITIVE_VERBS allow-list for
-# bare-object "entered"). Kept as a separate set so A/B stay byte-identical to
-# the M35 overfit-audit runs.
+# bare-object "entered") and the M38 parser round-2 fixes (scorer tie-break:
+# ParseChart prefers the hypothesis with a SUBJECT edge on ties; passive voice:
+# new aux1 rule + found->VERB + inf1/neg1 unscoped-pattern fixes). Kept as a
+# separate set so A/B stay byte-identical to the M35 overfit-audit runs.
 TEMPLATES["C"] = {
     "PLACE": [
         "{n} is inside the {p} .",
         "{n} is by the {p} .",
         "{n} is near the {p} .",
         "{n} sat in the {p} .",
+        "{n} is located in the {p} .",
+        "{n} can be found in the {p} .",
     ],
     "MOVE": [
         "{n} came to the {p} .",
@@ -90,19 +94,18 @@ TEMPLATES["C"] = {
 }
 
 # Templates that were TRIED and DROPPED because verify_templates() found them
-# degenerate (kept here so the negative result isn't silently lost). What
-# remains after the M36 parser fixes needs real grammar architecture:
-#   "{n} is located in the {p} ."    -> scorer tie-break: the winning "is"
-#                                        hypothesis has no SUBJECT edge
-#                                        (aux1 rules 3-6 territory; deferred).
-#   "the {p} is where {n} is ."      -> wh-cleft; no equative ruleset exists.
-#   "{n} can be found in the {p} ."  -> passive voice; SubType.PASSIVE is
-#                                        defined but no rule uses it; SUBJECT
-#                                        binds to the modal "can".
+# degenerate (kept here so the negative result isn't silently lost).
+#   "the {p} is where {n} is ."      -> wh-cleft; no equative ruleset exists,
+#                                        and there's a real prerequisite bug:
+#                                        verb1's adverbial-SPECIFIER rule has
+#                                        no subtype filter, so it grabs a
+#                                        relative "where" before rel2 ever
+#                                        sees it (same unscoped-pattern family
+#                                        as the round-2 inf1/neg1 fixes -- a
+#                                        round-3 candidate). Single template,
+#                                        no curriculum need; deferred.
 DROPPED_TEMPLATES = [
-    "{n} is located in the {p} .",
     "the {p} is where {n} is .",
-    "{n} can be found in the {p} .",
 ]
 
 # A larger place/object noun pool for the ``vocab_scale`` option (61 nouns,

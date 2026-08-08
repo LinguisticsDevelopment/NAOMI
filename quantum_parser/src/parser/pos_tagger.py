@@ -82,6 +82,9 @@ WORD_TAG_DICT = {
     "get": Tag.VERB, "gets": Tag.VERB, "got": Tag.VERB, "gotten": Tag.VERB,
     "give": Tag.VERB, "gives": Tag.VERB, "gave": Tag.VERB, "given": Tag.VERB,
     "take": Tag.VERB, "takes": Tag.VERB, "took": Tag.VERB, "taken": Tag.VERB,
+    # "found": irregular past participle of "find" (round-2 passive fix);
+    # without this it defaults to NOUN and the sentence loses its verb.
+    "found": Tag.VERB,
     "chase": Tag.VERB, "chases": Tag.VERB, "chased": Tag.VERB,
     "catch": Tag.VERB, "catches": Tag.VERB, "caught": Tag.VERB,
     "jump": Tag.VERB, "jumps": Tag.VERB, "jumped": Tag.VERB,
@@ -220,6 +223,9 @@ WORD_SUBTYPES = {
     "were": [SubType.PROGRESSIVE],
     "been": [SubType.PROGRESSIVE],
     "being": [SubType.PROGRESSIVE],
+
+    # Past participles (round-2 passive: be + PAST_PARTICIPLE -> aux1 passive rule)
+    "found": [SubType.PAST_PARTICIPLE],
 
     # Possessive marker
     "'s": [SubType.POSSESSIVE],

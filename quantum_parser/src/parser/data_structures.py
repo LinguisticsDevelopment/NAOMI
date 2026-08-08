@@ -164,7 +164,7 @@ class Hypothesis:
         Check if two hypotheses are structurally equivalent.
 
         Two hypotheses are equivalent if they have:
-        - Same node types at same indices
+        - Same node types (and flags) at same indices
         - Same set of edges
         - Same consumed set
         """
@@ -177,6 +177,12 @@ class Hypothesis:
 
         for i, (n1, n2) in enumerate(zip(self.nodes, other.nodes)):
             if n1.type != n2.type or n1.index != n2.index:
+                return False
+            # Flags matter too (round 2): e.g. a passive-marked VERBAL and an
+            # otherwise-identical unmarked one must NOT be deduped together,
+            # or the marker silently vanishes depending on which one the
+            # dedup loop happened to see first.
+            if set(n1.flags) != set(n2.flags):
                 return False
 
         # Check edges match (order-independent)
@@ -234,14 +240,16 @@ class ParseChart:
     config: ParserConfig = field(default_factory=ParserConfig)
 
     def best_hypothesis(self) -> Optional[Hypothesis]:
-        """Return highest-scoring hypothesis."""
+        """Return highest-scoring hypothesis (ties broken by argument completeness)."""
         if not self.hypotheses:
             return None
-        return max(self.hypotheses, key=lambda h: h.score)
+        from .scorer import completeness_key  # lazy: avoid data_structures<->scorer import cycle
+        return max(self.hypotheses, key=lambda h: (h.score, *completeness_key(h)))
 
     def sort_hypotheses(self) -> None:
-        """Sort hypotheses by score (descending)."""
-        self.hypotheses.sort(key=lambda h: h.score, reverse=True)
+        """Sort hypotheses by score (descending); ties broken by argument completeness."""
+        from .scorer import completeness_key  # lazy: avoid data_structures<->scorer import cycle
+        self.hypotheses.sort(key=lambda h: (h.score, *completeness_key(h)), reverse=True)
 
     def prune_hypotheses(self) -> None:
         """

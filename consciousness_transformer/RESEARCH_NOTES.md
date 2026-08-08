@@ -1939,3 +1939,35 @@ tested (31 families live in `episode.py` with sense pre-flight checks;
 tests green). The two experiment runs — N-rotation leave-one-family-out at 31
 families, and the 480/1000/2000 × dim 48/64/96 scaling grid — are re-running;
 results land here.
+
+### M38 — parser round 2: passive voice + the SUBJECT tie-break (interactive loop; 18→20, MEASURED)
+
+Same two-phase dev loop as M36; the design phase validated everything in
+scratch copies before proposing, and surfaced **three latent pre-existing
+bugs** in the grammar machinery: `inf1` and `neg1` had unscoped MODIFIER
+patterns (silently consuming "can be"/"be" before aux composition — the same
+bug family as the wh-cleft's `verb1`/`rel2` collision, now the round-3
+candidate), and `Hypothesis.is_equivalent` ignored node flags (dedup could
+silently drop voice marking).
+
+**Landed:** (1) the scorer tie-break — `completeness_key` (has-SUBJECT first,
+then core-role count) as a **secondary sort key only**, `.score` untouched;
+root cause on record: the structural score counts edges but is blind to which
+relations exist, so SUBJECT-less and SUBJECT-bearing parses tie exactly.
+Isolated validation: 9/10 corpus sentences byte-identical, only "is located"
+changes (gains its SUBJECT). (2) **Passive voice** — the grammar's first:
+new `SubType.PAST_PARTICIPLE` (reusing PARTICIPLE broke gerunds — caught in
+scratch), one aux1 rule anchored on the participle, found→VERB, plus the two
+companion scoping fixes; "mary can be found in the garden" now parses with
+SUBJECT=mary through the modal chain. (3) The `is_equivalent` flags fix.
+**Verified:** quantum_parser 82/82 at every increment; combined trace diff
+13/17 byte-identical with the 2 targets fixed, wh-cleft untouched, one
+spurious duplicate merged; consumer battery 37/37; curriculum negation
+("is not in") and disjunction re-verified by hand; templates **18→20**
+("is located", "can be found" promoted to set C; only the wh-cleft remains
+dropped). Honest flags on record: "does not run" (do-support negation)
+changed laterally — was nonsensical-complete, now incomplete, neither correct,
+nothing asserts on it; "PASSIVE marker reliably wins its dedup tie" scoped
+out (SUBJECT-binding is correct either way); agentive-"by" guard ticketed at
+the `_PREP_RELATION` landmine (blocked on the adapter carrying node flags +
+an AGENT role downstream).

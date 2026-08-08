@@ -102,6 +102,38 @@ def compute_semantic_score(hypothesis: Hypothesis, embeddings: Dict[str, Any]) -
     return 0.5
 
 
+def completeness_key(hypothesis: Hypothesis):
+    """
+    Argument-completeness tie-break key: (has_subject, other_core_roles).
+
+    Tie-break ONLY -- never folded into `score`. compute_structural_score()
+    only counts edge totals/shape (coverage, connectivity, projectivity,
+    balance), so two hypotheses that differ solely in whether a SUBJECT edge
+    exists can score identically (e.g. "mary is located in the garden ."
+    ties two hypotheses at 0.7401: one has SUBJECT, the other doesn't, but
+    both have the same node/edge/depth counts). A hypothesis can even trade
+    its SUBJECT edge for an OBJECT edge elsewhere and keep the same edge
+    *count* -- so `has_subject` is its own leading tuple component rather
+    than pooled into one flat core-role counter; that guarantees a
+    SUBJECT-bearing hypothesis can never be out-ranked, at equal score, by a
+    SUBJECT-less one that merely has more of some other role.
+
+    Used only as a secondary sort key by ParseChart.best_hypothesis() /
+    sort_hypotheses() -- consulted only when `.score` is exactly equal, so it
+    can re-order same-score ties but never change the winner across a real
+    score difference.
+    """
+    from .enums import ConnectionType
+    has_subject = any(e.type == ConnectionType.SUBJECT for e in hypothesis.edges)
+    other_core = {
+        ConnectionType.OBJECT,
+        ConnectionType.INDIRECT_OBJECT,
+        ConnectionType.SUBJECT_COMPLEMENT,
+    }
+    other_count = sum(1 for e in hypothesis.edges if e.type in other_core)
+    return (int(has_subject), other_count)
+
+
 def count_crossing_edges(hypothesis: Hypothesis) -> int:
     """
     Count number of crossing edge pairs (non-projective structures).
