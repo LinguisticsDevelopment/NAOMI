@@ -1947,7 +1947,32 @@ salvaged from `runs/m37_*.log`:
   gap closed** in-distribution at 31 families (was 4 families in M34).
   The leave-one-family-out N-rotation (the generalization question — does
   the bank-style transfer failure dissolve with 30 training families?)
-  never produced a row before the kill. **Still open.**
+  never produced a row before the kill. Re-run solo (`nice -19`, 47 min,
+  full table in `runs/m37_chooser.log`): **mean flipped-half benchmark
+  0.612 across 31/31 rotations** — but the raw mean undersells it, because
+  the same-d ceiling column shows the task isn't even solvable-with-gold
+  for every family at d=128:
+
+  - **7 rotations have no headroom** (same-d GOLD ceiling ≈ floor or 0):
+    ball, court, jam, racket, yard (ceiling 0.000 — gold sense handles at
+    d=128 fail these families outright; yard's floor is 1.000 with ceiling
+    0.000, i.e. gold does *worse* than MFS there), plus cell and hood
+    (floor = ceiling ≈ 0.51). These are **projection/handle failures, not
+    chooser failures** — consistent with Part 2's overall same-d ceiling
+    of 0.817 (~18% of flipped items unsolvable even with gold at d=128).
+  - **On the 16 rotations with real headroom** (floor 0, ceiling 1): mean
+    0.680; **9 transfer perfectly** (bark, bill, iron, nail, palm, spring,
+    star, tie + mouse 0.987), pupil 0.884, ring 0.651, **bank 0.355 — the
+    M34 bank failure half-dissolves** (was hard 0.000 at 3 training
+    families), and 4 stay at zero: date, fan, organ, pool.
+  - 5 rotations are trivial (floor = ceiling = 1.000: bass, bat, pitcher,
+    plant, staff — MFS already solves them; no signal either way).
+
+  Verdict: more training families genuinely improve zero-shot transfer
+  (0/1 → ~10/16 on solvable families), but it's not universal — and the
+  d=128 projection ceiling is now the measured bottleneck for ~1/5 of
+  families, which points at d=256 handles (canonical M32 ceiling was
+  1.000 at d=256) before blaming the chooser further.
 - **Scaling grid (1 of 7 cells):** 480 episodes @ dim 48, 80 epochs →
   val 0.750 in 2.6 min (169k params); per-level L1 0.80 / L2 0.92 /
   L3 0.72 / L4 0.89 / **L5 0.59 / L6 0.60** — the recency/overwrite levels
