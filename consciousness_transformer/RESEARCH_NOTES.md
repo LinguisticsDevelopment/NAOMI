@@ -1671,3 +1671,41 @@ are the contract. Gates: 6 USVS tests (determinism incl. fingerprint, save/load
 identity, M22 grounding parity, tier structure, query API). USVS is the
 substrate the roadmap's step (A)/(B) integrations consume next: sense →
 signature → meaning-graph filler handles.
+
+### M30 — the WSD gate on SemCor (USVS viability test #1; MEASURED — robust honest negative)
+
+The first integration gate (dev/INTEGRATION_PLAN.md): do USVS sense signatures
+carry enough signal to disambiguate in context? Tested **training-free** by
+design (`scripts/probe_wsd_semcor.py`) so the number measures the artifact, not
+a model: context = leave-one-out mean of the sentence's other annotated words'
+MFS-sense signatures (gold labels never enter the context); prediction = most
+similar candidate signature. Variants: raw cosine, **IDF-weighted axes** (the
+M21 distinctiveness fix — ubiquitous primes like SOMETHING otherwise dominate),
+and placed-core context.
+
+**Measured (4,000 SemCor sentences = 44,682 instances, 37,353 polysemous, 17s):**
+
+| resolver | all | polysemous | n | v | a | r |
+|---|---|---|---|---|---|---|
+| **MFS (floor)** | 0.772 | **0.727** | 0.749 | 0.584 | 0.849 | 0.747 |
+| usvs (raw) | 0.422 | 0.309 | 0.319 | 0.153 | 0.469 | 0.341 |
+| **usvs-idf (best)** | 0.459 | **0.353** | 0.390 | 0.169 | 0.486 | 0.381 |
+| usvs-core | 0.446 | 0.337 | 0.369 | 0.152 | 0.476 | 0.383 |
+| random | 0.393 | 0.274 | 0.266 | 0.159 | 0.424 | 0.322 |
+
+**Verdict (per the pre-registered decision rule):** signatures carry *real but
+weak* contextual signal — usvs-idf beats random by +0.079 everywhere except
+verbs (chance: 0.169 vs 0.159) — but sit ~0.37 below the MFS floor. **MFS keeps
+the perception slot.** Interpretation, honest in both directions: (1)
+training-free Lesk-class resolvers historically land in exactly this band and
+also lose to MFS, so this is "context matching without training doesn't clear
+the known-hard bar," not "the space is broken" — USVS's validated strengths
+(held-out similarity structure, M29) are a different, passing test. (2) The
+binding constraint is the long-documented grounding coarseness: signatures
+average ~3.8 axes/sense, verbs ground worst (the axis inventory is noun/adj-
+heavy — M28.0 showed verb *synonym* structure fine, but per-sense signatures
+can't separate verb senses at all). **The fix, if WSD-in-space is pursued, is
+grounding depth (sourced explications; deeper gloss decomposition), not
+resolver machinery** — and the trained coherence resolver only becomes worth
+building after signatures show more signal. Next integration gate: M31 filler
+handles (MFS senses), which does not depend on beating MFS here.

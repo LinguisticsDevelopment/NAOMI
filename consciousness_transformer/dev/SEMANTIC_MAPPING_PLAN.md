@@ -97,6 +97,6 @@ Step B = M28.1 sweep (2.5 winners → `signal_combined`); Step C = **M29 USVS**
 axes, 117,659 senses grounded sparse, tiered antonym store (11,317) + directed
 genus edges (1,546), dictionary.jsonl.gz, 72s deterministic build, fingerprint
 `72b00a67c2b9daca`, scale-validated held-out at 10k (synonym 0.885, similar
-0.803, random 0.233 with the winners). Semantic mapping is frozen; work moves to
-integration (`ROADMAP_LONG_TERM.md` stages 1–2: USVS handles into the meaning
-graph, then the WSD-vs-MFS gate).
+0.803, random 0.233 with the winners). Semantic mapping is frozen; this document
+is historical. The active mid-term arc is `INTEGRATION_PLAN.md` (M30 WSD gate →
+M31 handles → M32 curriculum); the reference horizon is `ROADMAP_LONG_TERM.md`.

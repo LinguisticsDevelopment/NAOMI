@@ -1,37 +1,38 @@
 # Long-term roadmap (reference — not scoped; scope each stage when it starts)
 
-The order below is dependency order. Nothing here starts until the semantic-mapping
-finish line (`SEMANTIC_MAPPING_PLAN.md`) ships its artifact.
+The order below is dependency order. **The semantic-mapping finish line shipped
+2026-08-07 (M29 USVS)** — stages 1–2 are now the active mid-term arc, scoped in
+`INTEGRATION_PLAN.md` (M30 WSD gate = NOW, then M31 handles, M32 curriculum).
 
-## 1. The bridge: grounded fillers in the meaning graph
+## 1. WSD: decoupled, gated, slotted (ACTIVE — M30 in INTEGRATION_PLAN.md)
+
+Interface (settled): the **parser stays untrained** (grammar files —
+`mind/grammar.py` / `quantum_parser`; same parser, different grammar file per
+language, far-future) and emits lemma + POS + syntactic context. The **WSD module
+may be trained**: `resolve(lemma, context) → sense id → USVS coordinate`, behind
+a facade so the parser never knows which resolver is active.
+
+- Gate 1 — correctness on SemCor vs the **MFS floor**. First pass is
+  training-free (USVS-signature similarity) so it measures USVS itself; a
+  trained coherence resolver is only worth building if the signatures show
+  signal. Winner takes the slot; a loss is recorded and MFS stays.
+- Gate 2 — task payoff: an **ambiguity-bearing comprehension curriculum**
+  (episodes whose answer flips with the sense) so WSD shows up in answer
+  accuracy. This doubles as the seed of the comprehension-question corpus.
+
+## 2. The bridge: USVS fillers in the meaning graph (ACTIVE — M31)
 
 Replace label-based CONCEPT handles: a content word's filler/handle vector in
 `meaning_graph.py` / mind/ meaning objects becomes a **fixed deterministic
-projection of its placed coordinate** (named axes → d-dim filler; frozen matrix, no
-learning, axes stay readable). Sense selection starts as MFS; the resolver slot
-belongs to stage 2. Touch points: `meaning_graph.GraphNode` handles,
-`mind/schema.py`, `clause_reactor.build_clause_batch` value vectors.
+projection of its USVS signature** (named axes → d-dim filler; frozen matrix, no
+learning, axes stay readable). Sense selection = the stage-1 winner. Touch
+points: `meaning_graph.GraphNode` handles, `mind/schema.py`,
+`clause_reactor.build_clause_batch` value vectors.
 
 Extrinsic gate (house rule — substrate milestones must pay downstream): concept
 handle-dereference margins improve vs §0j medians (0.034 @ d256), AND at least one
 consumer metric moves (STM read-resolution, or option scoring on the ambiguity
 curriculum). If neither moves: record the negative, keep the artifact standalone.
-
-## 2. WSD: decoupled, gated, slotted
-
-Interface (settled): the **parser stays untrained** (grammar files —
-`mind/grammar.py` / `quantum_parser`; same parser, different grammar file per
-language, far-future) and emits lemma + POS + syntactic context. The **WSD module
-may be trained**: `resolve(lemma, context) → sense id → placed coordinate`, behind
-a facade so the parser never knows which resolver is active.
-
-- Gate 1 — correctness: coherence resolver (`wsd.IterativeSenseResolver` +
-  `GroundedWordNetSenseInventory`) vs **MFS** on SemCor (nltk). MFS is the floor
-  and is famously hard to beat; winner takes the slot, a loss is recorded and MFS
-  stays.
-- Gate 2 — task payoff: an **ambiguity-bearing comprehension curriculum**
-  (episodes whose answer flips with the sense) so WSD shows up in answer accuracy.
-  This doubles as the seed of the comprehension-question training corpus.
 
 ## 3. Composition over grounded primes (the central problem)
 
