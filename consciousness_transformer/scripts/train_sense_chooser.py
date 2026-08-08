@@ -29,11 +29,16 @@ Two evaluations:
    else's) rotation clear the floor?
 
 Run:
-    python scripts/train_sense_chooser.py
+    python scripts/train_sense_chooser.py            # projected handles, d=128
+    python scripts/train_sense_chooser.py --d 0      # RAW mode: d = n_axes (607),
+                                                     # no projection — candidates and
+                                                     # context are the transparent
+                                                     # named-axis coordinates themselves
 """
 
 from __future__ import annotations
 
+import argparse
 import os
 import sys
 import time
@@ -90,6 +95,8 @@ CEILING_CANONICAL = 1.000  # gold-sense (oracle) win rate on the flipped half @ 
 
 def train(model: SenseChooser, examples: list, *, epochs: int = EPOCHS, lr: float = LR,
           batch_size: int = BATCH_SIZE, seed: int = SEED) -> None:
+    """batch_size note: full-batch is fastest at small d, but at raw d=607 the
+    [B, K, 3d] feature tensor hits GB scale — callers cap it in raw mode."""
     torch.manual_seed(seed)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     n = len(examples)
@@ -187,7 +194,7 @@ def _print_eval_table(title: str, result: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
-def run_supervised(d: int = D, seed: int = SEED) -> dict:
+def run_supervised(d: int = D, seed: int = SEED, batch_size: int = BATCH_SIZE) -> dict:
     train_eps = generate_ambiguity_episodes(TRAIN_PER_FAMILY * N_FAMILIES, seed=seed + 100)
     val_eps = generate_ambiguity_episodes(TRAIN_PER_FAMILY * N_FAMILIES // 4, seed=seed + 101)
 
@@ -195,7 +202,7 @@ def run_supervised(d: int = D, seed: int = SEED) -> dict:
     val_examples = [build_example(e, d) for e in val_eps]
 
     model = SenseChooser(d=d)
-    train(model, train_examples, seed=seed)
+    train(model, train_examples, seed=seed, batch_size=batch_size)
     result = evaluate(model, val_examples, d)
     return {"model": model, "result": result,
             "n_train": len(train_examples), "n_val": len(val_examples)}
@@ -206,7 +213,7 @@ def run_supervised(d: int = D, seed: int = SEED) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def run_leave_one_family_out(d: int = D, seed: int = SEED) -> dict:
+def run_leave_one_family_out(d: int = D, seed: int = SEED, batch_size: int = BATCH_SIZE) -> dict:
     # Held-in training set target: same ~200/family density as the original
     # 4-family run, scaled to however many families remain after holding one
     # out (N_FAMILIES - 1) instead of the old fixed 800 (which would have
@@ -226,7 +233,7 @@ def run_leave_one_family_out(d: int = D, seed: int = SEED) -> dict:
         eval_examples = [build_example(e, d) for e in eval_eps]
 
         model = SenseChooser(d=d)
-        train(model, train_examples, seed=seed)
+        train(model, train_examples, seed=seed, batch_size=batch_size)
         result = evaluate(model, eval_examples, d)
         rotations[held_out] = {
             "result": result, "n_train": len(train_examples), "n_eval": len(eval_examples),
@@ -241,28 +248,51 @@ def run_leave_one_family_out(d: int = D, seed: int = SEED) -> dict:
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--d", type=int, default=D,
+                    help="handle dimensionality; 0 = RAW mode (d = number of USVS "
+                         "axes, no projection — transparent named-axis coordinates)")
+    ap.add_argument("--batch-size", type=int, default=None,
+                    help="training batch size (default: full-batch at small d, "
+                         "4096 in raw mode to cap the [B,K,3d] feature tensor)")
+    args = ap.parse_args()
+
+    raw = args.d == 0
+    if raw:
+        from nsm_ct.usvs_bridge import default_usvs
+        d = len(default_usvs().axes)
+    else:
+        d = args.d
+    batch_size = args.batch_size or (4096 if raw else BATCH_SIZE)
+
     # This model/dataset is tiny; a 12-core box spawning full BLAS thread-pools
     # for thousands of small matmuls is *slower* than single-threaded here.
     torch.set_num_threads(1)
     t0 = time.time()
-    model_probe = SenseChooser(d=D)
+    model_probe = SenseChooser(d=d)
     n_params = sum(p.numel() for p in model_probe.parameters())
-    print(f"SenseChooser: d={D}, params={n_params} (<50k target: {'OK' if n_params < 50_000 else 'FAIL'})")
+    # The <50k covenant is about knowledge capacity at the projected handle
+    # width; raw mode's param count scales with input width (3*607), not with
+    # what the policy can memorize, so it reports against a looser 150k line.
+    limit = 150_000 if raw else 50_000
+    mode = f"RAW named-axis (d = n_axes = {d}, no projection)" if raw else f"projected handles (d={d})"
+    print(f"SenseChooser: {mode}, params={n_params} "
+          f"(<{limit // 1000}k target: {'OK' if n_params < limit else 'FAIL'}), batch_size={batch_size}")
 
     print(f"families: {N_FAMILIES} -> {FAMILIES}")
 
     print("\n=== Part 2: supervised train/val ===")
-    sup = run_supervised()
+    sup = run_supervised(d=d, batch_size=batch_size)
     val_n = TRAIN_PER_FAMILY * N_FAMILIES // 4
     val_eps = generate_ambiguity_episodes(val_n, seed=SEED + 101)  # same call as run_supervised's val split
-    same_d = baseline_rates(val_eps, D)
+    same_d = baseline_rates(val_eps, d)
     print(f"train episodes: {sup['n_train']}, val episodes: {sup['n_val']}")
-    _print_eval_table(f"val (benchmark_acc = MC-option win rate via chosen sense, d={D})",
+    _print_eval_table(f"val (benchmark_acc = MC-option win rate via chosen sense, d={d})",
                        sup["result"])
     flipped_bench = sup["result"]["benchmark_acc"]["flipped"]
     same_d_floor = same_d["MFS"]["flipped"]
     same_d_ceiling = same_d["GOLD"]["flipped"]
-    print(f"\nsame-d (d={D}) recomputed baseline on THIS val set, flipped half:"
+    print(f"\nsame-d (d={d}) recomputed baseline on THIS val set, flipped half:"
           f"  MFS floor={same_d_floor:.3f}  GOLD ceiling={same_d_ceiling:.3f}")
     print(f"canonical (d=256, probe_m32_ambiguity.py) reference:"
           f"          MFS floor={FLOOR_CANONICAL:.3f}  GOLD ceiling={CEILING_CANONICAL:.3f}")
@@ -273,7 +303,7 @@ def main() -> None:
           f"gap closed: {closed:.1f}%)")
 
     print(f"\n=== Part 3: leave-one-family-out generalization (all {N_FAMILIES} rotations) ===")
-    rotations = run_leave_one_family_out()
+    rotations = run_leave_one_family_out(d=d, batch_size=batch_size)
     header = (f"{'held_out':<10}{'n_train':>9}{'n_eval':>8}{'flipped_n':>11}"
               f"{'flipped_bench_acc':>19}{'same_d_floor':>14}{'same_d_ceiling':>16}")
     print(header)
@@ -282,7 +312,7 @@ def main() -> None:
     for family, r in rotations.items():
         res = r["result"]
         eval_eps = r["episodes"]
-        base = baseline_rates(eval_eps, D)
+        base = baseline_rates(eval_eps, d)
         acc = res["benchmark_acc"]["flipped"]
         if acc == acc:  # not NaN
             flipped_accs.append(acc)

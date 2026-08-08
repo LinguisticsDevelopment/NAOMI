@@ -41,8 +41,15 @@ def projection(axes_key: tuple, d: int) -> np.ndarray:
 
 
 def _project(coord: np.ndarray, axes: list, d: int) -> np.ndarray:
-    P = projection(tuple(axes), d)
-    v = coord.astype(np.float32) @ P
+    # d == n_axes is "raw mode": projecting through a random square matrix
+    # would only scramble an already-d-dim coordinate, so the handle IS the
+    # unit-normalized named-axis coordinate itself — fully transparent (each
+    # dimension keeps its axis name) and zero projection loss.
+    if d == len(axes):
+        v = coord.astype(np.float32)
+    else:
+        P = projection(tuple(axes), d)
+        v = coord.astype(np.float32) @ P
     n = np.linalg.norm(v)
     return v / n if n > 1e-9 else v
 
