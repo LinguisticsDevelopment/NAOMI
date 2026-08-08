@@ -1736,3 +1736,25 @@ slot-coherence cannot recover distinctions the representation doesn't carry —
 at ~3.8 axes/sense the bottleneck is the signature, not the search. Perception
 order of record: parser structure → MFS; grounding depth is the lever that
 re-opens this gate.
+
+**M30c — "is the comparison busted?" diagnostics (MEASURED — no; the task is).**
+Three suspects, three verdicts: (1) **Sense vectors are NOT degenerate** —
+intra-word top-2 sense signatures average cosine **0.406** (only 5.2% > 0.9),
+vs random cross-word sense pairs 0.171: a word's senses are clearly separated
+in the space, so a working resolver is *representable*. (2) **The comparison
+machinery is fine** — the identical cosine/masking stack produces the held-out
+0.885/0.803 similarity AUCs. (3) **Every training-free context construction
+fails identically**: prime-signature bag 0.309, +IDF 0.353, placed-core context
+0.337, and a v2 sense vector built from the gloss content words' *placed core
+coordinates* (the artifact's strongest layer) 0.327 — all in one band, far
+under MFS 0.727. Diagnosis: a **bag of co-occurring words in a lexical-
+relatedness space is weakly coupled to sense selection** — topical relatedness
+(what USVS encodes, validated) is simply different information from what picks
+senses (frequency priors + selectional/syntactic constraints — which this
+architecture already assigns to MFS + the parser). This matches the field's
+history: Lesk-class and embedding-Lesk methods sit in exactly this band without
+supervision. **Standing conclusion: stop pointing USVS at context-WSD.** Its
+validated strengths (similarity structure, antonym store, unrelated separation)
+are what M31/M32 consume; sense-picking belongs to parser structure + MFS, and
+the in-architecture WSD test (selectional constraints in parse slots) arrives
+with the M32 ambiguity curriculum where the owned grammar actually parses.

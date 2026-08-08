@@ -88,6 +88,22 @@ def main() -> None:
     def core_vec(word):
         return u.word_coord(word)
 
+    # v2 sense vector: mean PLACED-CORE coordinate of the sense's gloss content
+    # words (the artifact's held-out-validated layer), not their prime
+    # decompositions. Tests whether the sense-layer *definition* was the
+    # bottleneck (M30 diagnostic: sense signatures separate fine — intra-word
+    # top-2 cosine 0.41 — so the weak link is what we match them against).
+    from nsm_ct.ground.definition_graph import content_words
+    v2_cache: dict = {}
+
+    def dense_v2(sid):
+        if sid not in v2_cache:
+            gloss = wn.synset(sid).definition() or ""
+            vs = [u.word_coord(w) for w in content_words(gloss)]
+            vs = [v for v in vs if v is not None]
+            v2_cache[sid] = np.mean(vs, axis=0) if vs else None
+        return v2_cache[sid]
+
     hits = defaultdict(int)     # (resolver, subset) -> correct
     tot = defaultdict(int)
     pos_hits = defaultdict(int)  # (resolver, pos) -> correct on polysemous
@@ -113,6 +129,22 @@ def main() -> None:
         core_valid = [v for v in core_vecs if v is not None]
         core_sum = np.sum(core_valid, axis=0) if core_valid else None
 
+        def pick_v2(cands, k):
+            # context: the sentence's other words' own core coords (surface
+            # words, no sense commitment); candidates scored by their gloss-
+            # core vector. Both sides live in the placed-core space.
+            if core_sum is None:
+                return cands[0]
+            ctx = core_sum - (core_vecs[k] if core_vecs[k] is not None else 0.0)
+            if not np.any(ctx):
+                return cands[0]
+            scored = []
+            for c in cands:
+                v = dense_v2(c)
+                scored.append((cosine(v, ctx) if v is not None else -2.0, c))
+            best = max(scored)
+            return best[1] if best[0] > -2.0 else cands[0]
+
         def pick(cands, ctx, weight=None):
             if ctx is None or not np.any(ctx):
                 return cands[0]
@@ -132,8 +164,9 @@ def main() -> None:
             mfs = cands[0]
             rnd = rng.choice(cands)
             if len(cands) == 1:
-                usim = uidf = ucore = mfs
+                usim = uidf = ucore = uv2 = mfs
             else:
+                uv2 = pick_v2(cands, k)
                 sig_ctx = None if sig_sum is None else \
                     sig_sum - (mfs_vecs[k] if mfs_vecs[k] is not None else 0.0)
                 core_ctx = None if core_sum is None else \
@@ -156,7 +189,7 @@ def main() -> None:
                           or c_sorted[0] - c_sorted[1] <= 1
                           or c_sorted[1] / c_sorted[0] > 0.6)
                 stratum = "unsure" if unsure else "sure"
-            for name, pred in (("mfs", mfs), ("usvs", usim), ("usvs-idf", uidf),
+            for name, pred in (("mfs", mfs), ("usvs", usim), ("usvs-idf", uidf), ("usvs-v2", uv2),
                                ("usvs-core", ucore), ("random", rnd)):
                 ok = pred == gold
                 hits[(name, "all")] += ok
@@ -173,7 +206,7 @@ def main() -> None:
           f"({time.time()-t0:.0f}s)")
     print(f"{'resolver':9} {'all':>7} {'poly':>7} {'sure':>7} {'unsure':>7}   " +
           " ".join(f"{p:>7}" for p in "nvar"))
-    for name in ("mfs", "usvs", "usvs-idf", "usvs-core", "random"):
+    for name in ("mfs", "usvs", "usvs-idf", "usvs-v2", "usvs-core", "random"):
         row = [hits[(name, s)] / max(tot[(name, s)], 1)
                for s in ("all", "poly", "sure", "unsure")]
         pos_row = [pos_hits[(name, p)] / max(pos_tot[(name, p)], 1) for p in "nvar"]
