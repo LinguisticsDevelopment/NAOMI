@@ -1626,3 +1626,48 @@ hit-rate (~30%) is what an honest held-out bar should produce. Next: M29 —
 freeze the winning signal set, full-sense placement, publish the artifact + the
 English sense→coordinate dictionary (satellite pairs filtered, genus edges as a
 directed relation therein).
+
+### M29 — USVS: the Universal Semantic Vector Space artifact (BUILT + MEASURED)
+
+`ground/usvs.py` + `scripts/build_usvs.py` publish the semantic-mapping arc as
+one versioned, deterministic, loadable artifact (**72s full build on CPU** — the
+anticipated compute wall never materialized). What it combines (the "correct
+parts" as measured, nothing else):
+- **The placed word core** — 9,946 gloss-vocabulary words placed by deterministic
+  propagation over the winning close set (synonym 22,856 + similar 3,988 +
+  also_see 1,172 edges) on **607 named axes** (primes + attributes + lexnames +
+  the M28.1 domain features, which contribute ~370 axes at 10k vocab).
+- **The full sense layer** — all **117,659 WordNet synsets** grounded from their
+  own gloss (M22 semantics, bit-equal to `gloss_prime_weights`, via a word-level
+  decompose cache: 117k glosses in ~24s), stored sparse (444,965 nonzeros ≈ 3.8
+  axes/sense).
+- **The relational store** (what the coordinate cannot carry): **11,317 antonym
+  edges with provenance tiers** (direct 
+  / satellite_head / satellite_satellite; 3,383 in the default query tiers —
+  tiering replaces naive filtering, consumers pick their floor) and **1,546
+  directed genus edges** (the M28.1 lesson applied: hypernymy as relation, not
+  closeness).
+- **The dictionary** — `dictionary.jsonl.gz`: every sense with lemmas, gloss, and
+  its named-axis signature. Artifact ≈ 20MB, loads in 3s, fingerprinted
+  (`72b00a67c2b9daca`); blobs are git-ignored (deterministic rebuild), the pin
+  (`usvs_meta.json`: fingerprint + axes + edge store + counts) is committed.
+
+**Scale validation (held-out, harness):** the 10k-corpus baseline shows **no
+small-corpus artifact** — synonym AUC 0.868→**0.885**, similar 0.747→**0.803**,
+random 0.255 (flat) vs the 3k table; syn>ant eases 0.695→0.676 (883 vs 251 test
+antonym pairs — a harder, better-sampled test). The combined winner set holds at
+10k: similar +0.011, random −0.022, antonym AUC +0.005 (newly beyond band), the
+known hypernym_cos cost −0.009. Production build uses ALL edges (no split);
+quality numbers only ever come from the held-out harness — stated in the module
+docstring.
+
+**Honest spot-check caveats (recorded, not hidden):** lemma-level antonym tiers
+inherit sense conflation (antonyms("hot") includes "bad" via the slang sense —
+the WSD layer, not the store, is where that resolves); genus coverage is thin
+(1,546 edges — the hub cap that saved similarity costs recall); dense-cosine
+anecdotes can sit above the random mean (dog/justice 0.551 vs population 0.233)
+— per-pair readings need the Null-mask/tanh lenses, the population statistics
+are the contract. Gates: 6 USVS tests (determinism incl. fingerprint, save/load
+identity, M22 grounding parity, tier structure, query API). USVS is the
+substrate the roadmap's step (A)/(B) integrations consume next: sense →
+signature → meaning-graph filler handles.

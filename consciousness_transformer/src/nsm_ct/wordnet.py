@@ -359,3 +359,14 @@ def domains(word: str) -> List[str]:
         return sorted(out)
     except Exception:  # pragma: no cover
         return []
+
+
+def all_senses():
+    """Iterate EVERY WordNet synset as (sense_id, gloss, lexname, lemmas),
+    sorted by sense_id for deterministic artifact builds (M29 USVS)."""
+    if not wordnet_available():
+        return
+    wn = _wn()
+    for s in sorted(wn.all_synsets(), key=lambda x: x.name()):
+        yield (s.name(), s.definition() or "", s.lexname(),
+               [l.name().lower() for l in s.lemmas()])

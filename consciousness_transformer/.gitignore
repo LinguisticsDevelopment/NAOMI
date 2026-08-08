@@ -25,3 +25,9 @@ data/proofwriter/
 data/gloss_vocab.json
 # Generated decomposition caches
 data/decomp_cache*.json
+
+# USVS artifact blobs are deterministic rebuilds (scripts/build_usvs.py);
+# only the pin (usvs_meta.json) is committed.
+data/usvs/usvs.npz
+data/usvs/usvs_senses.json.gz
+data/usvs/dictionary.jsonl.gz

@@ -88,3 +88,15 @@ A frozen, versioned space artifact + sense dictionary, with an honest table sayi
 exactly what the space captures (synonymy/hypernymy/similarity/unrelatedness) and
 what it delegates to structure (antonymy → signed edges; composition → operations).
 After that, mapping work stops and integration work starts (`ROADMAP_LONG_TERM.md`).
+
+---
+
+**STATUS 2026-08-07: DONE — all three steps shipped.** Step A = M28.0 baseline;
+Step B = M28.1 sweep (2.5 winners → `signal_combined`); Step C = **M29 USVS**
+(`ground/usvs.py`, `scripts/build_usvs.py`): 9,946-word placed core on 607 named
+axes, 117,659 senses grounded sparse, tiered antonym store (11,317) + directed
+genus edges (1,546), dictionary.jsonl.gz, 72s deterministic build, fingerprint
+`72b00a67c2b9daca`, scale-validated held-out at 10k (synonym 0.885, similar
+0.803, random 0.233 with the winners). Semantic mapping is frozen; work moves to
+integration (`ROADMAP_LONG_TERM.md` stages 1–2: USVS handles into the meaning
+graph, then the WSD-vs-MFS gate).
