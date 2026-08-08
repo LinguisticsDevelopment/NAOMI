@@ -29,6 +29,14 @@ nouns** (v-v: 5 test pairs, a-a: 10); (T3) similar 0.748.
 | morphological negation (un-/dis-/-less) | polarity flip | small (+0.05 with poles) | M18.1 |
 | gloss magnitude (high/low) | polarity | small; recovers negation stopwords | M18.1 |
 | sense frequency (lemma.count) | MFS ordering | used for sense choice, not placement | M22 |
+| also_see | close-edges | **WIN** — similar +0.015 solo / +0.018 combined; in default set | M28.1 |
+| domains (topic/region/usage) | feature → named axes | **WIN** — random overlap −0.032 (M21 objective); hypernym_cos −0.006 cost | M28.1 |
+| satellite-cluster antonymy | antonym edge store | **WIN** — 2,553 new pairs (~11×), consistency 0.781; filter artifacts pre-M29 | M28.1 |
+| genus–differentia gloss parse | close-edges | ❌ target moved (+0.010 hyp_cos) but similar −0.021 / random +0.022 — hypernymy is directional; re-route to relational store | M28.1 |
+| entailment | close-edges | ❌ regresses similar — sequence, not sameness | M28.1 |
+| pertainym | close-edges | null (within noise) | M28.1 |
+| cause | close-edges | null (within noise) | M28.1 |
+| verb_group (solo) | close-edges | null — 872/1015 pairs M24-collide with synonym test pairs (redundant with synonymy) | M28.1 |
 
 ## 2. Tried — methods on top of signals (documented outcomes)
 
@@ -46,43 +54,29 @@ nouns** (v-v: 5 test pairs, a-a: 10); (T3) similar 0.748.
 
 ## 3. Untried — available signals, mapped to targets
 
-WordNet-internal (zero new dependencies — Step B order):
+*(M28.1 swept items 1–7 of the original list — genus, satellite, pertainyms,
+entailment+cause, also_see, domains, verb_group solo — results now in section 1.)*
 
-1. **Gloss genus–differentia parsing → T1.** Glosses are near-formulaic
-   ("a/an <genus> that/of <differentia>"); extracting the genus head gives a
-   second, independent hypernym signal (the current one is synset pointers only)
-   and differentia terms give feature evidence. Directly attacks the flat 0.727.
-2. **Satellite-cluster indirect antonymy → T2.** WordNet adjectives: satellites
-   orbit head adjectives via similar_to; heads carry the antonym. Propagating
-   antonymy through the full satellite cluster (damp~wet, wet⊥dry ⇒ damp⊥dry)
-   multiplies antonym coverage principled-ly. (M18.3 did one synonym hop; this is
-   the sense-level structural version.)
-3. **pertainyms** (dental→tooth) — cross-POS close-edges, same family as
-   derivational (which earned its keep).
-4. **verb entailment + cause** (snore→sleep, show→see) — directed edges; small
-   counts but clean semantics; candidate for the signed/relational store too.
-5. **also_see** — weak close-edges; cheap to ablate.
-6. **topic/region/usage domains** — feature relations (axis-naming candidates,
-   like lexname).
-7. **verb_group individual ablation** — present since M19.0, never measured alone.
-8. **morphosemantic links** (Princeton standoff file, small download) — types the
+WordNet-internal remainder:
+
+1. **morphosemantic links** (Princeton standoff file, small download) — types the
    derivational edges (agent/result/instrument); only if derivational-typed
    ablation suggests the types matter.
 
 External, nltk-available (gated, currently untriggered):
 
-9. **VerbNet classes** — gate was verb-region weakness; M28.0 shows v-v syn>rand
-   0.848 ≈ nouns, so **hold** unless a Step B ablation exposes a verb gap.
-10. **FrameNet frames** — same gate, **hold**.
-11. **Longman Defining Vocabulary** — not a placement signal; the external check
-    on the derived basis (M17.2 predicted Longman-style; measure actual overlap).
-12. **SemCor** — reserved for the WSD-vs-MFS gate, not placement.
+2. **VerbNet classes** — gate was verb-region weakness; M28.0 shows v-v syn>rand
+   0.848 ≈ nouns and M28.1 exposed no verb gap, so **hold**.
+3. **FrameNet frames** — same gate, **hold**.
+4. **Longman Defining Vocabulary** — not a placement signal; the external check
+   on the derived basis (M17.2 predicted Longman-style; measure actual overlap).
+5. **SemCor** — reserved for the WSD-vs-MFS gate, not placement.
 
 Deferred by decision (future bridges, not needed for the English space):
 
-13. OMW multilingual colexification — the cross-language bridge, out of scope now.
-14. CLICS³ colexification — stretch goal behind OMW.
-15. Wiktionary (translations, etymology families) — deferred.
+6. OMW multilingual colexification — the cross-language bridge, out of scope now.
+7. CLICS³ colexification — stretch goal behind OMW.
+8. Wiktionary (translations, etymology families) — deferred.
 
 ## 4. Excluded on principle (do not revisit without a thesis change)
 
@@ -93,13 +87,15 @@ Deferred by decision (future bridges, not needed for the English space):
 - **Trained per-word values**: M25 closed door (overfits, loses to propagation).
 - **More axes for their own sake**: M20 closed door (the tail is noise).
 
-## 5. Step B execution order (from this audit)
+## 5. Step B outcome (M28.1) → Step C
 
-1. Genus–differentia gloss parse (→T1, biggest flat target)
-2. Satellite-cluster antonymy (→T2)
-3. pertainyms + entailment/cause + also_see + domains + verb_group solo ablations
-   (cheap batch; keep what moves the table)
-4. Re-run minimality; update the M28.x table; then Step C (artifact + dictionary).
+The sweep ran 2026-08-07 (harness `ground/ablation.py` + 3 parallel agents;
+RESEARCH_NOTES M28.1). Hit rate 2.5 wins / 6.5 negatives out of nine signals.
+Default placement set is now `signal_combined` (also_see close-edges + domain
+feature axes + satellite antonym store): similar +0.018, random −0.029,
+hypernym_cos −0.008, rest within noise.
 
-Each lands as: `wordnet.py` wrapper → `RelationGraph` relation → held-out ablation
-vs M28.0 → RESEARCH_NOTES entry (win or documented negative).
+Step C (next): freeze this signal set; filter the satellite pairs (compass/
+off-sense artifacts); carry genus as a **directed relation** in the artifact's
+relational store (its close-edge form is the documented negative); full-sense
+placement; publish the artifact + English sense→coordinate dictionary.

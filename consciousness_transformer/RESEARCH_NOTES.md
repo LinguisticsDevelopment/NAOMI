@@ -1575,3 +1575,54 @@ order: (1) **hypernym AUC 0.727** — flat through every milestone since M19.4;
 edge store); (3) similar 0.748. The WordNet-remainder signals (entailment, cause,
 pertainyms, domain links, also_see) land next, one at a time, each as a held-out
 delta against this table.
+
+### M28.1 — the nine-signal sweep (harness + 3 parallel agents; MEASURED, 2.5 wins / 6.5 negatives)
+
+Built `ground/ablation.py` — one judge for every candidate signal: the M28.0 table
+across train-split jitters (mean ± noise band; a signal "moves" a metric only
+beyond 2× band), M24 enforced by construction (extra close edges filtered against
+every scored test split; expanded antonym pairs scored on the side, never mixed
+into the original held-out set). Added `hypernym_cos_auc` (placed-cosine readout
+of held-out is_a) since anchored containment is placement-independent. Signals
+plug in as `signal_<name>.extras()` modules; `scripts/ablate_signal.py` runs one.
+Nine signals were then implemented + ablated by three parallel agents (two
+Sonnet, one Haiku on the templated batch), ~20s per ablation.
+
+**Winners (land in the default set via `signal_combined`):**
+- **also_see** (close edges): similar_auc **+0.015** solo (5× band), nothing else
+  beyond noise.
+- **domain** (topic/region/usage as named feature axes): random overlap
+  **−0.032** (0.253→0.221 — the M21 unrelated-separation objective) at a small
+  real cost (hypernym_cos −0.006).
+- **satellite-cluster indirect antonymy** (edge store, placement-inert):
+  **2,553 new pairs** (~11× the held-out store; v-v and a-a breadth included);
+  the existing space separates the new pairs from synonyms at **0.781** — better
+  than the original antonym pairs (0.695), so the expansion agrees with the
+  geometry. Precision is good-not-clean (compass-direction artifacts, off-first-
+  sense pairs like minor/star) — filter before the M29 artifact.
+- **Combined** (all three together): similar **+0.018**, random **−0.029**,
+  hypernym_cos −0.008, everything else within noise — the wins compose, no
+  interaction surprises.
+
+**Negatives (documented, modules kept, edges NOT in the default set):**
+- **genus–differentia gloss parse — the informative one.** Coverage 0.943,
+  pointer-agreement 0.246 (properly independent of synset pointers). As a
+  *symmetric close edge* it moves its target (hypernym_cos **+0.010**) but costs
+  similar **−0.021** (7× band) and random +0.022, even after capping hub genera
+  ("act", "person", "state" absorb everything — degree cap 3). The mechanism is
+  the lesson: pulling word↔genus together makes **co-hyponyms** look similar.
+  Hypernymy, like antonymy, is *directional structure* — it belongs in the
+  relational store (and the M29 dictionary), not in closeness. Re-route there.
+- **entailment**: regresses similar −0.006 (beyond band) — verb entailment is
+  sequence, not sameness.
+- **pertainym, cause**: null (within noise).
+- **verbgroup** (solo ablation of the M19.0 field): null — and 872/1015 of its
+  pairs are M24-dropped as collisions with held-out synonym pairs, i.e. the
+  relation is mostly redundant with synonymy.
+
+Suite: +33 tests (ablation 6 · genus 17 — includes validity gates · satellite 12
+· batch 24 + relations regression, all green; full count 425+2 skips). The sweep
+hit-rate (~30%) is what an honest held-out bar should produce. Next: M29 —
+freeze the winning signal set, full-sense placement, publish the artifact + the
+English sense→coordinate dictionary (satellite pairs filtered, genus edges as a
+directed relation therein).

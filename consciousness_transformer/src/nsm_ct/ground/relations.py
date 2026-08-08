@@ -19,12 +19,17 @@ from dataclasses import dataclass, field
 from typing import Dict, FrozenSet, List, Tuple
 
 from ..wordnet import (
+    also_sees,
     antonyms,
     attributes,
+    causes,
     derivationally_related,
+    domains,
+    entailments,
     hypernyms,
     lexname,
     meronyms,
+    pertainyms,
     senses,
     similar_tos,
     synonyms,
@@ -33,7 +38,7 @@ from ..wordnet import (
 from .definition_graph import content_words
 
 # Word-word relation types carried as symmetric/directed pair sets.
-WORD_RELATIONS = ("synonym", "antonym", "similar", "is_a", "meronym", "derivational", "verb_group")
+WORD_RELATIONS = ("synonym", "antonym", "similar", "is_a", "meronym", "derivational", "verb_group", "pertainym", "entailment", "cause", "also_see")
 
 
 def _lemma_head(name: str) -> str:
@@ -54,6 +59,11 @@ class RelationGraph:
     meronym: Dict[str, List[str]] = field(default_factory=dict)
     derivational: Dict[str, List[str]] = field(default_factory=dict)
     verb_group: Dict[str, List[str]] = field(default_factory=dict)
+    pertainym: Dict[str, List[str]] = field(default_factory=dict)
+    entailment: Dict[str, List[str]] = field(default_factory=dict)
+    cause: Dict[str, List[str]] = field(default_factory=dict)
+    also_see: Dict[str, List[str]] = field(default_factory=dict)
+    domain: Dict[str, List[str]] = field(default_factory=dict)
     lexname: Dict[str, str] = field(default_factory=dict)                # one of 44 categories
     attribute: Dict[str, List[str]] = field(default_factory=dict)        # adj -> noun dimension(s)
 
@@ -76,6 +86,11 @@ class RelationGraph:
             g.meronym[w] = [m.lower() for m in meronyms(w)]
             g.derivational[w] = [d.lower() for d in derivationally_related(w)]
             g.verb_group[w] = [v.lower() for v in verb_groups(w)]
+            g.pertainym[w] = [p.lower() for p in pertainyms(w)]
+            g.entailment[w] = [e.lower() for e in entailments(w)]
+            g.cause[w] = [c.lower() for c in causes(w)]
+            g.also_see[w] = [a.lower() for a in also_sees(w)]
+            g.domain[w] = [d.lower() for d in domains(w)]
             lx = lexname(w)
             if lx:
                 g.lexname[w] = lx

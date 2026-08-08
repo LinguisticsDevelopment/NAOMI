@@ -279,3 +279,83 @@ def verb_groups(word: str) -> List[str]:
         return _lemmas([g for s in wn.synsets(word, wn.VERB) for g in s.verb_groups()])
     except Exception:  # pragma: no cover
         return []
+
+
+def pertainyms(word: str) -> List[str]:
+    """Related adjective/adverb lemmas (pertainym relation)."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        out = set()
+        wl = word.lower()
+        for s in wn.synsets(word):
+            for lemma in s.lemmas():
+                for p in lemma.pertainyms():
+                    if p.name().lower() != wl:
+                        out.add(p.name())
+        return sorted(out)
+    except Exception:  # pragma: no cover
+        return []
+
+
+def entailments(word: str) -> List[str]:
+    """Entailed verb lemmas (synset.entailments())."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        es = []
+        for s in wn.synsets(word, wn.VERB):
+            es += s.entailments()
+        return _lemmas(es)
+    except Exception:  # pragma: no cover
+        return []
+
+
+def causes(word: str) -> List[str]:
+    """Caused verb lemmas (synset.causes())."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        out = set()
+        wl = word.lower()
+        cs = []
+        for s in wn.synsets(word, wn.VERB):
+            cs += s.causes()
+        for c in cs:
+            for lemma in c.lemmas():
+                if lemma.name().lower() != wl:
+                    out.add(lemma.name())
+        return sorted(out)
+    except Exception:  # pragma: no cover
+        return []
+
+
+def also_sees(word: str) -> List[str]:
+    """Related concept lemmas (synset.also_sees())."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        return _lemmas([a for s in wn.synsets(word) for a in s.also_sees()])
+    except Exception:  # pragma: no cover
+        return []
+
+
+def domains(word: str) -> List[str]:
+    """Domain category names (topic/region/usage domains)."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        out = set()
+        for s in wn.synsets(word):
+            for domain in s.topic_domains() + s.region_domains() + s.usage_domains():
+                lemmas = [l.name() for l in domain.lemmas()]
+                if lemmas:
+                    out.add(lemmas[0])
+        return sorted(out)
+    except Exception:  # pragma: no cover
+        return []
