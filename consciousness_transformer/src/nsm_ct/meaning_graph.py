@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -142,11 +142,34 @@ class MeaningGraph:
         self.referent_index[key] = nid
         return nid
 
-    def add_concept(self, label: str, tree: ParseTree) -> int:
-        """One CONCEPT node per word/label; handle = contract(encode(tree))."""
+    def add_concept(
+        self,
+        label: str,
+        tree: ParseTree,
+        *,
+        handle_fn: Optional[Callable[[str], Optional[np.ndarray]]] = None,
+    ) -> int:
+        """One CONCEPT node per word/label; handle = contract(encode(tree)).
+
+        ``handle_fn`` is an optional M33 hook (e.g. ``nsm_ct.usvs_bridge.
+        usvs_handle`` closed over ``d``): if given ``label`` and it returns a
+        vector, that (unit-normalized) vector becomes the handle instead of the
+        default label/TPR handle. ``None`` (the default) is exactly today's
+        behavior — byte-identical, no hook call at all.
+        """
         if label in self.concept_index:
             return self.concept_index[label]
-        handle = self.codec.contract(self.codec.encode_matrix(tree.root))
+        handle = None
+        if handle_fn is not None:
+            v = handle_fn(label)
+            if v is not None:
+                v = np.asarray(v, dtype=np.float32)
+                if v.shape == (self.codec.dim,):
+                    n = float(np.linalg.norm(v))
+                    if n > 1e-8:
+                        handle = v / n
+        if handle is None:
+            handle = self.codec.contract(self.codec.encode_matrix(tree.root))
         nid = self.add_node(
             NodeKind.CONCEPT, handle, structure=serialize_thought(tree), label=label,
         )

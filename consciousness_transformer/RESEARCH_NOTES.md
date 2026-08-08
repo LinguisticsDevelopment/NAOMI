@@ -1858,3 +1858,51 @@ the choosing. The +0.753 gold−MFS gap on the flipped half is the prize the
 future tree-coherence disambiguator (the §2 design: candidate parses × USVS
 vectors → coherent assignment) competes for — it finally has a benchmark,
 a floor, and a ceiling. 9 tests green; existing levels untouched.
+
+### M33 — mind-line USVS handle adoption (MEASURED through the graph API)
+
+`meaning_graph.py`/`collapse.py` gain an opt-in `handle_fn` hook (default None =
+byte-identical old behavior; CLAUSE/REFERENT/OPERATOR nodes untouched; unknown
+words fall back). Probe through the real graph API (300 concepts filed via
+`collapse`, +5% noise, d=256): label handles top-1 **0.373** / median margin
+0.0005 → USVS hook **0.987** / margin **0.159**. The M31 win transfers to the
+line the user talks to. 20 tests green (new + collapse/meaning-graph/psyche
+regressions).
+
+### M34 — the sense chooser EXISTS: first trained WSD, 3/4 cross-word transfer (MEASURED)
+
+`sense_chooser.py` (24.7k params — a policy, not a knowledge store): scores
+each candidate sense's USVS vector against a context vector (mean USVS handle
+of the episode's other content words), trained SUPERVISED on M32's ostensive
+gold labels (`train_sense_chooser.py`, ~65s CPU).
+- **In-distribution: the M32 gap closes 100%** — flipped-half benchmark 1.000
+  (= the oracle ceiling; floor was MFS 0.247@d256). Expected — 4 homographs are
+  memorizable; the number that matters is:
+- **Leave-one-family-out (train 3 families, test the unseen 4th):** bat/plant/
+  organ held out → **1.000 flipped benchmark on never-seen homographs** — the
+  chooser learned a transferable context→sense-vector matching function, not
+  word memorization. **bank held out → 0.000** (= the no-resolution floor):
+  one family's context geometry doesn't transfer; honest 3/4.
+- Methodological catch (recorded): `usvs_sense_handle`'s projection is lossier
+  at small d — at d=64 even the GOLD oracle drops to 0.760 on the flipped half;
+  d=128 restores the 1.000 ceiling; all comparisons re-baselined same-d.
+9 tests green. Next rungs: more families (the M32 generator scales), context
+from parse-tree neighbors instead of bag (the §2 tree-coherence design), and
+weaning from gold labels onto answer-only signal.
+
+### M35 — template-generalization audit: NO overfitting; the parser is the surface bottleneck (MEASURED)
+
+The user's hypothesis (reactor gains might be template memorization) tested
+head-on. `curriculum2.py`: same facts, two DISJOINT surface template sets, each
+candidate template verified through the REAL parser with exact subject/place
+binding checks (catches passive false-positives). **12 of ~30 phrasings kept
+(100% parse success); 9 dropped** — passives, wh-clefts, unknown verbs all fail
+the parser, not the model. Three-arm experiment (usvs fillers, dim 48, same
+seed): train-A/val-A **0.850**, train-A/**val-B (unseen templates) 0.850** —
+**zero overfit gap**, bit-identical per-level; mixed-train 0.833 (noise).
+Architecturally explained: perception grounds every sentence to
+(entity, relation, meaning-vector) BEFORE the model sees it, so surface form
+never reaches the learned part. Caveats recorded: question phrasing untested;
+parser-rejected constructions untested by construction. Deliverables for the
+scaling push: the verified 12-template inventory + 61-noun place vocabulary +
+the parse-verification helper. 13 tests green.

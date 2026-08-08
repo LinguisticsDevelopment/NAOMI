@@ -15,7 +15,7 @@ routes through the exact path (:func:`expand`); the vector is a shortcut.
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import numpy as np
 
@@ -32,15 +32,20 @@ def collapse(
     *,
     label: Optional[str] = None,
     kind: NodeKind = NodeKind.CONCEPT,
+    handle_fn: Optional[Callable[[str], Optional[np.ndarray]]] = None,
 ) -> int:
     """File ``tree`` as a node and return its id (a.k.a. ``define_concept``).
 
     Losslessness is guaranteed by the stored ``structure``; the handle is the
-    lossy address ``contract(encode_matrix(root))``.
+    lossy address ``contract(encode_matrix(root))`` unless ``handle_fn`` (the
+    M33 opt-in hook, e.g. a USVS handle provider) is given and returns a vector
+    for a CONCEPT's ``label`` — then that becomes the handle instead. ``None``
+    (the default) reproduces today's behavior exactly; non-CONCEPT nodes and
+    CONCEPT nodes with no ``label`` never consult ``handle_fn``.
     """
     if kind is NodeKind.CONCEPT and label is not None:
         # one node per word/label — co-reference of words (the shared "is" node)
-        return graph.add_concept(label, tree)
+        return graph.add_concept(label, tree, handle_fn=handle_fn)
     handle = codec.contract(codec.encode_matrix(tree.root))
     return graph.add_node(
         kind, handle, structure=serialize_thought(tree), label=label,
