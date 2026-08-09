@@ -2078,3 +2078,49 @@ mechanical, unblocks 4 cases; (2) coordination in `extract_discourse` —
 COORDINATION edges are already in the graph; (3) sentence splitter at the
 encoder seam; (4) complement/relative clause scoping in the grammar;
 (5) wh-questions last (needs the verb1/rel2 collision fix).
+
+### M40 — the chooser on raw USVS axes: projection exonerated, grounding indicted (MEASURED)
+
+Follow-up to M37's verdict, at the user's suggestion that projecting at all
+was philosophically wrong for the chooser: `usvs_bridge` gains a raw mode
+(`d == n_axes` → the handle IS the unit-normalized 607-axis coordinate,
+transparent, zero loss) and `train_sense_chooser.py --d 0` re-ran the whole
+protocol on it (116.7k params from input width alone; batch capped at 4096;
+2.8 h niced, `runs/m40_chooser_raw.log`).
+
+**M37's "d=256 projection bottleneck" hypothesis is FALSIFIED.** The raw
+607-dim gold-sense ceiling on the 31-family flipped half is **0.813** —
+statistically the same as d=128's 0.817. The ~19% ceiling deficit was never
+projection loss; it is in the USVS signatures themselves. (The canonical
+1.000 ceiling was measured on the original 4 families only; at 31 families
+the geometry has real holes.) Corollary: the ceiling-0 families — **ball,
+court, racket, yard** (0.000 even raw; cell/mole/hood stuck ≈ 0.5) — are
+**grounding failures**: the gold sense's own signature cannot rank the MC
+options. Same disease class as M30's verdict (grounding depth, not
+machinery).
+
+In-distribution (Part 2): flipped 0.813 = raw ceiling exactly, gap again
+100% closed — the chooser saturates whatever the substrate supports, at
+every d tested.
+
+Leave-one-family-out: **mean 0.662 raw vs 0.612 projected**, with large
+family-level swings both ways:
+
+- **bank 0.355 → 1.000** — M34's canonical transfer failure fully
+  dissolves in raw space. fan 0→1.000, pool 0→1.000, pupil 0.884→1.000,
+  jam 0→0.254 (jam's ceiling also went 0→1.000: solvable raw, weakly
+  transferred).
+- Regressions: **pitcher 1.000 → 0.000** (floor AND ceiling are 1.000 —
+  the chooser picked a third sense, neither MFS nor gold, whose signature
+  loses the ranking; a genuine transfer error, invisible at d=128),
+  star 1.000→0.740, ring 0.651→0.498.
+- Persistent genuine transfer failures: date 0.000, organ 0.090 (both
+  have ceiling 1.000 raw — the signal exists; the policy doesn't find it
+  zero-shot).
+
+Verdict: raw named axes are the right substrate for the chooser (no loss,
+more transparent, modestly better transfer) and the open problems are now
+cleanly split in two: (a) **grounding depth** for the ceiling-0 families —
+a USVS/dictionary problem; (b) **zero-shot policy transfer** for
+date/organ/jam — a chooser/curriculum problem. Neither is a dimensionality
+problem; that door closes.
