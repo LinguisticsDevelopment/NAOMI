@@ -1761,6 +1761,26 @@
                     ],
                     "consume": ["after"],
                     "note": "Relative clause: the dog who chased (anchor->PREDICATE, PREDICATE->who)"
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "NOMINAL", "subtypes": ["RELATIVE"], "quantifier": "one"},
+                            {"type": "NOMINAL", "quantifier": "one"},
+                            {"type": "PREDICATE", "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "SUBJECT", "from": "after[2]", "to": "after[1]"},
+                        {"type": "SUBORDINATION", "from": "anchor", "to": "after[2]"},
+                        {"type": "MODIFICATION", "from": "after[2]", "to": "after[0]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Object-relative clause: the ball that mary found (gap after the verb -- the relative marker is not the embedded subject, so the intervening NOMINAL is; anchor stays NOMINAL so it can still become the matrix clause's own subject)"
                 }
             ]
         },

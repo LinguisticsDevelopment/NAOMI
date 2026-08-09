@@ -330,6 +330,58 @@ def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx:
     return out
 
 
+def _recover_coordinated_clause_orphans(graph) -> List[Clause]:
+    """Recover a second clause when NOUN-level coordination ate its subject.
+
+    quantum_parser's noun-coordination rule (``noun2``) runs long before any
+    CLAUSE exists, so "the ball is in the garden **and** the bat is in the
+    shed" is, at that point in the pipeline, indistinguishable from "the
+    garden and the bat" ("cats and dogs run"): the rule greedily merges the
+    two nouns flanking "and" into one NOUN-coordination structure, so "the
+    bat" is a PP object of the FIRST clause's preposition instead of the
+    SUBJECT of the second "is". The signature this leaves behind: an
+    unconsumed PREDICATE/CLAUSE node with a PP (a place/value) but with NO
+    SUBJECT edge of its own, immediately after a COORDINATION group whose
+    second (rightmost) element is exactly the noun that should have been its
+    subject.
+
+    Scoped narrowly (both a subject-less predicate/CLAUSE with its own PP
+    AND a COORDINATION group entirely to its left are required) so it never
+    fires on the legitimate shapes: coordinated-subject clauses ("mary and
+    john are ...") and coordinated-value clauses ("mary is in A or B") both
+    give their predicate a real SUBJECT edge already, so they never reach
+    this function's "no subject" branch.
+    """
+    out: List[Clause] = []
+    coord_groups: Dict[int, List[int]] = {}
+    for parent, child in graph.edges_of("COORDINATION"):
+        coord_groups.setdefault(child, []).append(parent)
+    if not coord_groups:
+        return out
+    subj_owned = {p for p, _c in graph.edges_of("SUBJECT")}
+    for idx, label, tok in graph.nodes:
+        if label not in ("PREDICATE", "CLAUSE") or idx in subj_owned:
+            continue
+        pp_idx = next((c for (t, p, c) in graph.edges if t == "MODIFICATION" and p == idx
+                       and (graph.label(c) or "").startswith("PP")), None)
+        if pp_idx is None:
+            continue
+        prep = next(((p, c) for (p, c) in graph.edges_of("PREPOSITION") if p == pp_idx), None)
+        if prep is None:
+            continue
+        _p, val_idx = prep
+        left_groups = [els for els in coord_groups.values() if max(els) < idx]
+        if not left_groups:
+            continue
+        elements = max(left_groups, key=max)
+        subj = graph.token(max(elements))
+        if subj is None:
+            continue
+        rel = _PREP_RELATION.get((graph.token(pp_idx) or "").lower(), "PLACE")
+        out.append(_fact_clause(graph, subj, tok, rel, val_idx))
+    return out
+
+
 def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Clause], List[DiscourseLink]]:
     """The original single-clause-graph logic — unchanged, factored out so
     :func:`extract_discourse` can append independent later-sentence clauses
@@ -411,6 +463,18 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
             _, val_idx = obj_edges[0]
             return [_fact_clause(graph, subj, pred, "PLACE", val_idx)], []
 
+    # -- bare subject-only fact (no PP, no object at all) ------------------------
+    # A genuine one-argument clause still exists even with nothing to fill the
+    # place/value slot -- e.g. a bare passive ("the window was broken .": the
+    # aux1 passive rule stamps SubType.PASSIVE and a SUBJECT edge onto the
+    # participle just fine, but there is no following PP, so every branch
+    # above (which all require a PREPOSITION edge or a locative-verb object)
+    # falls through). Mirrors the coordinated-subject "no PP" shape above.
+    if subj is not None:
+        return [Clause(predicate=pred or "is",
+                        args=[("SUBJECT", _syn("NOMINAL", subj, "SUBJECT"))],
+                        head=_syn("CLAUSE", pred))], []
+
     return [], []
 
 
@@ -431,6 +495,7 @@ def extract_discourse(graph) -> Tuple[List[Clause], List[DiscourseLink]]:
     subs = graph.edges_of("SUBJECT")
     if len(subs) > 1:
         clauses = clauses + _secondary_fact_clauses(graph, subs, clause_idx)
+    clauses = clauses + _recover_coordinated_clause_orphans(graph)
     return clauses, links
 
 

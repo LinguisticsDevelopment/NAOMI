@@ -2317,3 +2317,29 @@ rule is noted, not waived: this is recorded as an architectural
 simplification at measured parity, NOT a performance win. Full leave-one-
 family-out chooser revalidation deferred to better hardware (training-scale
 runs crash this box).
+
+### M47 — parser round 4 (Sonnet agent): stress battery 29/34 → 32/34 (MEASURED)
+
+All three remaining non-question failures fixed at their diagnosed layer,
+plus the regression tests M45 owed. (1) Bare passive ("the window was
+broken"): the GRAMMAR was fine — SUBJECT edge present all along; every
+branch of `_primary_discourse` demanded a PP or object before emitting a
+clause, so subject-only predicates fell through to nothing. Fallback added:
+a bare SUBJECT-only clause. (2) Object-gap relatives ("the ball that mary
+found is in the garden"): rel1 only knew subject-gap ("the man who came");
+one new 3-element rule (NOMINAL + NOMINAL[RELATIVE] + NOMINAL + PREDICATE)
+leaves the head noun unconsumed so clause1 builds the matrix clause, and
+the M45 secondary-clause walker recovers it. (3) Clausal coordination
+("...garden and the bat is in the shed"): noun2 runs before any CLAUSE
+exists and can't distinguish "garden and bat" from a real coordinated NP —
+a genuine ordering ambiguity. Engine-level lookahead judged too invasive;
+extraction instead recovers the orphan (a subject-less PREDICATE with its
+own PP, right of a COORDINATION group → rightmost conjunct is its subject),
+verified inert on legitimate coordinated-subject/value shapes.
+
+Battery **32/34 (0.94)** — passive 4/4, relative 2/2, conj 3/3; only
+wh-questions remain (out of scope, verb1/rel2). Suites: quantum_parser
+98/98 (7 new), clause/encoder subset 50/50 (12 new), templates 20/20.
+Parser is now ahead of the curriculum's needs; next parser work should be
+driven by whatever the scaled corpus actually fails on, not by this
+battery (saturated except questions).
