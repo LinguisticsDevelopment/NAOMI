@@ -115,3 +115,113 @@ a genuinely distinct mechanism — which is a research result, not a failure.
 Out of scope for v1 (recorded so they're chosen, not forgotten): soft/
 superposed writes (Model C), reanalysis, LTM candidates for pronouns
 (STM-only first), learned addressing beyond the resolver's needs.
+
+---
+
+# v2 — THE LOCKED DESIGN (draft for sign-off, 2026-08-09)
+
+Everything below supersedes nothing above — v1 (candidate sets + resolver)
+is step 2 of this loop. This section adds the full state schema, the dials,
+and the ambiguity-safety contract, in plain language. No proceeding path is
+recommended here; the design gets signed off first.
+
+## Glossary (each term defined once, plainly)
+
+- **USVS** — the meaning space. Every word sense is a point whose
+  dimensions have names. This is the metalanguage the whole mind runs on:
+  it trains on structured thoughts, not on statistics of word co-occurrence.
+- **Handle** — a meaning's vector address in that space.
+- **Clause** — one unit of thought: who did what, to what, where.
+- **STM (short-term memory)** — what the mind currently holds about the
+  ongoing situation.
+- **Episodic LTM (long-term memory)** — remembered past episodes/stories;
+  the stuff opinions are informed by.
+- **Truth memory** — what the mind believes about the world in general.
+- **Controller state** — the small learned network's running
+  train-of-thought vector, carried step to step.
+- **Workspace** — the single slot holding the thought currently under
+  consideration; filled from outside (heard sentence) or from inside
+  (recall, hypothesis, rewrite of the previous thought).
+- **Candidate set** — when perception isn't sure (pronoun, homograph,
+  hard parse), it hands over ALL the options plus how plausible each looks
+  structurally. Perception never guesses.
+- **Collapse / resolver** — the learned step that picks one option, using
+  memory as context.
+- **Margin** — how decisively it picked. Low margin = "that was hard."
+- **Emit gate** — the decision of whether the current thought stays
+  internal (keep thinking) or becomes actual output (speak).
+- **Consolidation** — copying what mattered from STM into LTM, and — with
+  much more caution — promoting repeatedly-confirmed facts into truth
+  memory.
+- **Membrane** — the boundary between deterministic perception and learned
+  thinking. Everything that crosses it is listed in the v1 tables.
+
+## The dials (explicit, named, tunable scalars — never buried in weights)
+
+| dial | what it controls | mechanism it feeds |
+|---|---|---|
+| **trust_ltm** | how easily an episode's content is kept long-term | consolidation threshold, STM → episodic LTM |
+| **trust_truth** | how much independent corroboration a fact needs before it becomes "believed about the world" | promotion threshold, STM/LTM → truth memory (strictly higher bar than trust_ltm) |
+| **caution** | minimum collapse margin to hard-bind; below it the ambiguity is HELD, not guessed | resolver binding threshold — this is the ambiguity-safety dial |
+| **yap_emit** | how readily inner content is spoken at all | emit-gate bias |
+| **yap_continue** | after emitting, how often the loop re-enters its own output to extend/elaborate it | workspace re-entry bias |
+| **patience** | thinking budget: how many silent inner loops per input before forced emit-or-move-on | loop budget (v1: fixed hyperparameter; later: a trained cost-of-thinking trade-off) |
+
+Design law for dials: they are runtime inputs to gates (like temperature),
+so behavior is tunable, per-configuration, and testable without retraining.
+First implementation treats them as fixed hyperparameters; conditioning the
+policy on them (so one model serves many dial settings) is a later,
+separately-gated step.
+
+## Ambiguity-by-design: what "unclear input is OK" means, stage by stage
+
+Uncertainty is never destroyed and never forced into a guess — it is
+represented, at every stage, in one of four sanctioned forms: (1) multiple
+candidates with priors, (2) an OPEN binding in the discourse record,
+(3) a low margin on a decision, (4) an abstention answer.
+
+| unclear thing | designed behavior |
+|---|---|
+| unparseable fragment | crosses as a minimal "fragment" workspace item (grounded words, no structure claim, floor confidence); never a fake parse, never a crash |
+| low-margin parse | top-K hypotheses cross with scores (v1 contract); resolver picks or holds |
+| unknown word | USVS fallback chain (explication → placeholder atom that KEEPS its surface form so it can be bound later); "learn the new word" is future work but the placeholder is the designed slot for it |
+| unresolvable pronoun | binding stays OPEN below the caution threshold; answers about it use the existing abstain atoms (idk / MAYBE — already in the codebase, already trained against) |
+| contradiction with memory | never silently overwritten: the existing vote/overwrite/negate gates + the trust dials decide; low trust keeps both votes alive |
+| garden path (all parses low-margin) | hold ambiguous; reanalysis (re-read triggered by low margin) is the named, deferred mechanism |
+
+## Invariants (the design laws — locked)
+
+1. Knowledge lives in inspectable structures (space, graphs, memory
+   tensors); **weights hold policy only**.
+2. **Perception is deterministic and never guesses** — uncertainty crosses
+   the membrane as candidate sets with structural priors.
+3. **The mind may abstain**; uncertainty is represented, never silently
+   dropped (the four sanctioned forms above).
+4. **Every memory write is gated, local, and auditable** — what was
+   written, when, from what evidence, at what trust setting.
+5. **One resolver contract**; Track A (distinct heads) and Track B (one
+   shared scorer) are swappable implementations behind it.
+6. **Dials are explicit named scalars**, chosen — never emergent settings
+   discovered after the fact.
+7. **Inner and outer content are the same vector**; emission is a gate,
+   not a separate pathway. (Thought = speech withheld.)
+8. **Compute per input is budgeted** (patience); halting is a designed
+   trade-off, not an accident of the architecture.
+9. The whole loop operates on the metalanguage: structured clauses of
+   grounded meanings. Ambiguity is explicit at the boundary — the
+   robustness bet of this project over token-statistical systems, now a
+   stated invariant rather than an aspiration.
+
+## What exists / what's new (so the build size is honest)
+
+| piece | status |
+|---|---|
+| STM (entity⊗relation⊗value, gated writes) | exists, per-episode |
+| controller recurrence | exists (GRU), now explicit in schema |
+| abstain atoms (idk/MAYBE) | exist, trained against |
+| vote/overwrite/negate write policy | exists (the trust dials will parameterize its thresholds) |
+| candidate sets + resolver (v1, M52–55) | designed, not built |
+| episodic LTM + consolidation | new |
+| truth-memory promotion | new (seed exists: L5 corroborate/contradict) |
+| workspace + emit gate + re-entry | new (respond-timing head is the degenerate ancestor) |
+| dials as runtime inputs | new (thresholds exist implicitly today) |
