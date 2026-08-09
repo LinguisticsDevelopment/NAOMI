@@ -104,7 +104,7 @@ def compute_semantic_score(hypothesis: Hypothesis, embeddings: Dict[str, Any]) -
 
 def completeness_key(hypothesis: Hypothesis):
     """
-    Argument-completeness tie-break key: (has_subject, other_core_roles).
+    Argument-completeness tie-break key: (has_subject, subject_count, other_core_roles).
 
     Tie-break ONLY -- never folded into `score`. compute_structural_score()
     only counts edge totals/shape (coverage, connectivity, projectivity,
@@ -118,20 +118,29 @@ def completeness_key(hypothesis: Hypothesis):
     SUBJECT-bearing hypothesis can never be out-ranked, at equal score, by a
     SUBJECT-less one that merely has more of some other role.
 
+    `subject_count` sits ahead of `other_core_roles`: each SUBJECT edge marks
+    a complete clause (predicate + its own subject), so a reading with two
+    fully-formed clauses beats a same-scoring reading that instead folded one
+    of those subjects into an OBJECT of the other clause and left a bare,
+    subject-less PREDICATE dangling (e.g. "mary thinks the ball is in the
+    shed .": {thinks(mary, OBJECT=ball), is(<no subject>, PP)} ties {thinks
+    (mary), is(ball, PP)} on structural score alone -- more SUBJECT edges is
+    the tell that the second reading actually finished building its clauses).
+
     Used only as a secondary sort key by ParseChart.best_hypothesis() /
     sort_hypotheses() -- consulted only when `.score` is exactly equal, so it
     can re-order same-score ties but never change the winner across a real
     score difference.
     """
     from .enums import ConnectionType
-    has_subject = any(e.type == ConnectionType.SUBJECT for e in hypothesis.edges)
+    subject_count = sum(1 for e in hypothesis.edges if e.type == ConnectionType.SUBJECT)
     other_core = {
         ConnectionType.OBJECT,
         ConnectionType.INDIRECT_OBJECT,
         ConnectionType.SUBJECT_COMPLEMENT,
     }
     other_count = sum(1 for e in hypothesis.edges if e.type in other_core)
-    return (int(has_subject), other_count)
+    return (int(subject_count > 0), subject_count, other_count)
 
 
 def count_crossing_edges(hypothesis: Hypothesis) -> int:

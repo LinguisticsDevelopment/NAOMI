@@ -56,6 +56,57 @@ class TokenInputEncoder(AbstractInputEncoder):
         return self.tokenizer.encode(sentence)
 
 
+_SENTENCE_END_TOKENS = {".", "?", "!"}
+
+
+def _split_sentences(sentence: str) -> List[str]:
+    """Split whitespace-tokenized text on sentence-final punctuation tokens.
+
+    Mirrors quantum_parser's own tokenization (``sentence.split()`` in
+    ``pos_tagger.tag_sentence``): a sentence boundary is a bare ``.``/``?``/
+    ``!`` token, exactly as every sentence in this codebase is already
+    written (space-separated from its final punctuation). Single-sentence
+    input yields exactly one segment, so callers can special-case "len == 1"
+    to keep that path byte-identical.
+    """
+    tokens = sentence.split()
+    sentences: List[str] = []
+    current: List[str] = []
+    for tok in tokens:
+        current.append(tok)
+        if tok in _SENTENCE_END_TOKENS:
+            sentences.append(" ".join(current))
+            current = []
+    if current:
+        sentences.append(" ".join(current))
+    return sentences or [sentence]
+
+
+def _merge_graphs(graphs: List["object"]):
+    """Concatenate per-sentence :class:`~nsm_ct.quantum_adapter.HypGraph`\\ s.
+
+    Node indices are offset by each preceding graph's node count so every
+    node/edge index stays unique and internally consistent; nothing else about
+    a sentence's nodes/edges is touched. The result satisfies exactly the
+    graph API :func:`nsm_ct.clause.extract_discourse` uses: ``.nodes``,
+    ``.edges``, ``node()``, ``token()``, ``label()``, ``edges_of()`` — all
+    inherited for free since the merged object is a real ``HypGraph``.
+    """
+    from .quantum_adapter import HypGraph  # local import (optional adapter)
+
+    nodes: List[Tuple[int, str, Optional[str]]] = []
+    edges: List[Tuple[str, int, int]] = []
+    roots: List[int] = []
+    offset = 0
+    for g in graphs:
+        idx_map = {idx: idx + offset for idx, _label, _token in g.nodes}
+        nodes.extend((idx_map[idx], label, token) for idx, label, token in g.nodes)
+        edges.extend((etype, idx_map.get(p, p), idx_map.get(c, c)) for etype, p, c in g.edges)
+        roots.extend(idx_map.get(r, r) for r in g.roots)
+        offset += len(g.nodes)
+    return HypGraph(nodes=nodes, edges=edges, roots=roots)
+
+
 class ParserInputEncoder(AbstractInputEncoder):
     """Optional encoder that runs the experimental ``quantum_parser``.
 
@@ -122,15 +173,11 @@ class ParserInputEncoder(AbstractInputEncoder):
             self._note(f"parse failed ({exc}); feeding tokens without structure.")
             return None
 
-    def _parse_graph(self, sentence: str):
-        """Best-effort flat hypothesis graph (keeps coordination/negation edges).
+    def _parse_graph_one(self, sentence: str):
+        """Best-effort flat hypothesis graph for a SINGLE sentence.
 
-        The tree view (:meth:`_parse_tree`) drops inter-clause structure; this
-        retains every typed edge for :func:`nsm_ct.clause.extract_discourse`.
         Returns ``None`` on any failure (the parser is untrusted).
         """
-        if getattr(self, "_parser", None) is None:
-            return None
         try:
             from .quantum_adapter import hypothesis_to_graph  # local import
 
@@ -140,6 +187,36 @@ class ParserInputEncoder(AbstractInputEncoder):
         except Exception as exc:  # pragma: no cover - parser is experimental
             self._note(f"graph parse failed ({exc}); no discourse structure.")
             return None
+
+    def _parse_graph(self, sentence: str):
+        """Best-effort flat hypothesis graph (keeps coordination/negation edges).
+
+        The tree view (:meth:`_parse_tree`) drops inter-clause structure; this
+        retains every typed edge for :func:`nsm_ct.clause.extract_discourse`.
+
+        quantum_parser has no cross-sentence grammar rule: fed multi-sentence
+        text directly, it folds sentence 2 into sentence 1's argument
+        structure (e.g. in "mary went to the garden . she found the ball .",
+        "she" comes out as an OBJECT of "went" and sentence 2 never yields a
+        hypothesis root). So multi-sentence input (a sentence-final
+        ``.``/``?``/``!`` token before the end, per :func:`_split_sentences`)
+        is split and each sentence parsed on its own, then the per-sentence
+        graphs are merged (:func:`_merge_graphs`, node indices offset) into
+        one graph. Single-sentence input takes the exact same path as before
+        this existed (``_split_sentences`` returns one segment) — byte-
+        identical behavior for every existing caller.
+        """
+        if getattr(self, "_parser", None) is None:
+            return None
+        sentences = _split_sentences(sentence)
+        if len(sentences) <= 1:
+            return self._parse_graph_one(sentence)
+        graphs = [g for g in (self._parse_graph_one(s) for s in sentences) if g is not None]
+        if not graphs:
+            return None
+        if len(graphs) == 1:
+            return graphs[0]
+        return _merge_graphs(graphs)
 
     def encode_structured(self, sentence: str) -> Structured:
         from .thought import build_thought  # local import (avoids cycle)

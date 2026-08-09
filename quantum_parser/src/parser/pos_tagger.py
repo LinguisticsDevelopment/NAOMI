@@ -19,6 +19,7 @@ Two layers:
 import gzip
 import json
 import os
+import string
 from typing import Dict, List, Optional, Tuple
 
 from .data_structures import Word
@@ -749,6 +750,17 @@ def simple_tag(text: str) -> Tag:
         POS tag
     """
     text_lower = text.lower()
+
+    # Punctuation (".", "?", "!", ",", etc.) -> PUNCT, never an open-class
+    # fallback. Without this a sentence-final "." falls through every
+    # heuristic below to the bare "Default: noun" case, becomes a phantom
+    # NOMINAL, and can wrongly satisfy a rule's "NOMINAL after" pattern
+    # (e.g. "is ... ." reading "." as its direct object) -- a spurious
+    # match that collides with an unrelated anchor elsewhere in the
+    # sentence and derails quantum branching (see aux1/predicate1 subord
+    # interaction, M-round subordinate-clause fix).
+    if text and all(ch in string.punctuation for ch in text):
+        return Tag.PUNCT
 
     # Check dictionary
     if text_lower in WORD_TAG_DICT:

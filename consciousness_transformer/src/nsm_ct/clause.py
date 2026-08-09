@@ -273,12 +273,12 @@ def _relation_for(graph, idx: int) -> str:
 
 
 def _subject_predicate(graph):
-    """The first clause's (subject token, predicate token, clause index)."""
+    """The first clause's (subject token, predicate token, clause index, subject index)."""
     subs = graph.edges_of("SUBJECT")
     if not subs:
-        return None, None, None
+        return None, None, None, None
     clause_idx, subj_idx = subs[0]
-    return graph.token(subj_idx), graph.token(clause_idx), clause_idx
+    return graph.token(subj_idx), graph.token(clause_idx), clause_idx, subj_idx
 
 
 def _fact_clause(graph, subj: str, pred: Optional[str], rel: str, val_idx: int) -> Clause:
@@ -288,25 +288,92 @@ def _fact_clause(graph, subj: str, pred: Optional[str], rel: str, val_idx: int) 
                   head=_syn("CLAUSE", pred))
 
 
-def extract_discourse(graph) -> Tuple[List[Clause], List[DiscourseLink]]:
-    """Pull clauses + their coordinating links from a flat hypothesis graph.
+def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx: Optional[int]) -> List[Clause]:
+    """Independent fact clauses for OTHER top-level subjects.
 
-    Handles the three shapes the curriculum needs: **coordination** (``A or B``:
-    one clause per coordinated value, related by an OR/MAYBE link), **negation**
-    (``not in A``: one clause tagged with a NOT link), and a plain single fact
-    (degrades to one clause, no links). Curriculum-scoped, like
+    :func:`_primary_discourse` only ever looks at the *first* SUBJECT edge
+    (``subs[0]``) — every existing single-sentence shape (coordination,
+    negation, plain fact) has exactly one. Once
+    :class:`~nsm_ct.input_encoder.ParserInputEncoder` merges several
+    per-sentence graphs into one (multi-sentence input), later sentences show
+    up as *additional* SUBJECT edges on unrelated clause nodes. This walks
+    those, reusing the same PP-relation heuristic as the primary path, plus a
+    plain transitive-object fallback (this parser sometimes files the real
+    direct object under INDIRECT_OBJECT and dumps the trailing period into
+    OBJECT — either is accepted, skipping punctuation, and reported as
+    "OBJECT").
+    """
+    out: List[Clause] = []
+    for c_idx, s_idx in subs:
+        if c_idx == skip_clause_idx:
+            continue
+        subj = graph.token(s_idx)
+        pred = graph.token(c_idx)
+        if subj is None:
+            continue
+        val_idx: Optional[int] = None
+        rel: Optional[str] = None
+        pp_idx = next((c for (t, p, c) in graph.edges if t == "MODIFICATION" and p == c_idx), None)
+        if pp_idx is not None:
+            prep = next(((p, c) for (p, c) in graph.edges_of("PREPOSITION") if p == pp_idx), None)
+            if prep is not None:
+                _p, val_idx = prep
+                rel = _PREP_RELATION.get((graph.token(pp_idx) or "").lower(), "PLACE")
+        if val_idx is None:
+            obj_idx = next((c for (t, p, c) in graph.edges
+                            if t in ("OBJECT", "INDIRECT_OBJECT") and p == c_idx
+                            and (graph.token(c) or "") not in _PUNCT), None)
+            if obj_idx is not None:
+                val_idx, rel = obj_idx, "OBJECT"
+        if val_idx is not None:
+            out.append(_fact_clause(graph, subj, pred, rel, val_idx))
+    return out
+
+
+def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Clause], List[DiscourseLink]]:
+    """The original single-clause-graph logic — unchanged, factored out so
+    :func:`extract_discourse` can append independent later-sentence clauses
+    (see :func:`_secondary_fact_clauses`) without touching this at all.
+
+    Handles the four shapes the curriculum needs: **coordinated value**
+    (``A or B``: one clause per coordinated value, related by an OR/MAYBE
+    link), **coordinated subject** (``mary and john are in the garden``: one
+    lossless clause per conjunct, each carrying the clause's own PLACE/value),
+    **negation** (``not in A``: one clause tagged with a NOT link), and a plain
+    single fact (degrades to one clause, no links). Curriculum-scoped, like
     :func:`extract_clauses`; conditionals (SUBORDINATION) are not handled yet.
     """
-    if graph is None or not getattr(graph, "nodes", None):
-        return [], []
-    subj, pred, clause_idx = _subject_predicate(graph)
-
-    # -- coordination (A or B): one lossless clause per coordinated value --------
+    # -- coordination: A-or-B value, OR coordinated subjects ---------------------
     coord_edges = graph.edges_of("COORDINATION")
     if coord_edges and subj is not None:
         by_coord: Dict[int, List[int]] = {}
         for parent, child in coord_edges:
             by_coord.setdefault(child, []).append(parent)
+
+        if subj_idx in by_coord:
+            # coordinated SUBJECT ("mary and john are in the garden"): the
+            # SUBJECT edge attaches to the coordinator node itself (its token
+            # is "and"/"or"), not to a real word -- one lossless clause per
+            # conjunct, each sharing the clause's own PP value (if any).
+            elements = sorted(set(by_coord[subj_idx]))
+            coordinator = _COORDINATOR_LABEL.get((graph.token(subj_idx) or "").lower(), "AND")
+            prep_edges = graph.edges_of("PREPOSITION")
+            if prep_edges:
+                _prep_node, val_idx = prep_edges[0]
+                rel = _relation_for(graph, val_idx)
+                clauses = [_fact_clause(graph, graph.token(el), pred, rel, val_idx)
+                           for el in elements]
+            else:
+                clauses = [Clause(predicate=pred or "is",
+                                   args=[("SUBJECT", _syn("NOMINAL", graph.token(el), "SUBJECT"))],
+                                   head=_syn("CLAUSE", pred))
+                           for el in elements]
+            prime = _COORD_PRIME.get(coordinator)
+            links = [DiscourseLink(coordinator, prime, 0, j) for j in range(1, len(clauses))]
+            return clauses, links
+
+        # coordinated VALUE ("mary is in the kitchen or the office"): one
+        # lossless clause per coordinated value, subject shared from above.
         coord_idx, elements = max(by_coord.items(), key=lambda kv: len(kv[1]))
         coordinator = _COORDINATOR_LABEL.get((graph.token(coord_idx) or "").lower(), "AND")
         rel = _relation_for(graph, coord_idx)
@@ -345,6 +412,26 @@ def extract_discourse(graph) -> Tuple[List[Clause], List[DiscourseLink]]:
             return [_fact_clause(graph, subj, pred, "PLACE", val_idx)], []
 
     return [], []
+
+
+def extract_discourse(graph) -> Tuple[List[Clause], List[DiscourseLink]]:
+    """Pull clauses + their coordinating links from a flat hypothesis graph.
+
+    Delegates the single-clause-graph shapes to :func:`_primary_discourse`
+    (coordination / negation / plain fact — byte-identical to before this
+    function existed), then appends one independent fact clause per *other*
+    top-level subject (see :func:`_secondary_fact_clauses`) — the shape that
+    shows up once :class:`~nsm_ct.input_encoder.ParserInputEncoder` merges
+    several per-sentence graphs into one for multi-sentence input.
+    """
+    if graph is None or not getattr(graph, "nodes", None):
+        return [], []
+    subj, pred, clause_idx, subj_idx = _subject_predicate(graph)
+    clauses, links = _primary_discourse(graph, subj, pred, clause_idx, subj_idx)
+    subs = graph.edges_of("SUBJECT")
+    if len(subs) > 1:
+        clauses = clauses + _secondary_fact_clauses(graph, subs, clause_idx)
+    return clauses, links
 
 
 # -- truth-tagging (non-destructive "overwrite but don't forget") ---------------

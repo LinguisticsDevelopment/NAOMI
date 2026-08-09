@@ -2239,3 +2239,39 @@ time — it is the prime whitelist in `sense_prime_weights`: molecule axes
 the decomposition already reaches (HEAD, FACE, ...) should survive into
 signatures. That is a build-path change with a casualty-list gate — the
 concrete next experiment. (2) M24 flagged a fake win again; the rule stays.
+
+### M45 — parser round 3 (agent pair): stress battery 23/34 → 29/34 (MEASURED)
+
+Two Sonnet agents with disjoint file ownership (both stopped mid-final-
+verification by the host-crash cycle; their on-disk work verified and
+landed by the main session). Four changes:
+
+1. **Quantum-branching engine fix** (`quantum_parser.py`): when several
+   rule matches hit one pass, ANY ambiguous anchor previously caused every
+   OTHER anchor's independent transformation to be dropped on each branch.
+   Now independent (single-match) anchors apply on every branch and only
+   the Cartesian product of genuinely ambiguous anchors' alternatives is
+   explored. This is what unlocked complement clauses.
+2. **PUNCT tagging** (`pos_tagger.py`): bare punctuation tokens tagged
+   PUNCT instead of falling through to default-NOUN — kills the phantom
+   NOMINAL "." that could satisfy rules' "NOMINAL after" patterns
+   (the PLACE="." artifact).
+3. **Tie-break extension** (`scorer.py` completeness_key): now
+   (has_subject, subject_count, other_core) — a reading with two complete
+   clauses beats one that folded the second subject into an OBJECT.
+   Backward compatible (first element unchanged).
+4. **Extraction upgrades** (`clause.py`, `input_encoder.py`): sentence
+   splitter at the encoder seam (multi-sentence input parsed per sentence,
+   HypGraphs merged with offset indices; single-sentence path byte-
+   identical), coordinated subjects ("mary and john" → one clause per
+   conjunct via COORDINATION edges), and secondary-sentence fact clauses
+   (later sentences arrive as extra SUBJECT edges).
+
+Battery: subord 0/3→3/3, pronoun 2/3→3/3, conj 1/3→2/3, relative 0/2→1/2;
+total **29/34 (0.85)**. Remaining: bare passive ("the window was broken" —
+still no clause), one relative ("the man who came..."), one conj, and
+wh-questions (out of scope, verb1/rel2 collision). Gates: quantum_parser
+91/91, curriculum templates A/B/C 20/20, clause/encoder test subset 41/41.
+TODO: the agents were stopped before writing regression tests for the new
+behaviors — battery + suites cover them, but dedicated tests should land
+with round 4.

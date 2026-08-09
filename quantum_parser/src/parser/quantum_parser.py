@@ -5,6 +5,7 @@ Implements the quantum parsing algorithm that maintains multiple parse
 interpretations simultaneously.
 """
 
+import itertools
 from typing import List, Optional
 from copy import deepcopy
 
@@ -79,31 +80,44 @@ class QuantumParser:
 
                 # SMARTER QUANTUM BRANCHING: Only branch on actual ambiguity
                 if len(all_matches) > 1:
-                    # Check if matches are independent (different anchors) or conflicting
-                    anchor_indices = [m.anchor_idx for m in all_matches]
+                    # Group by anchor: an anchor with exactly one match is a
+                    # deterministic, independent transformation; an anchor
+                    # with several matches is genuine ambiguity (multiple
+                    # ways to parse THAT anchor). Previously, the presence of
+                    # ANY ambiguous anchor discarded every OTHER anchor's
+                    # independent match entirely (each branch applied only
+                    # the one conflicting match and nothing else) -- so e.g.
+                    # "mary thinks [the ball] [is in the shed]": "thinks"
+                    # being ambiguous (intransitive vs. transitive-object)
+                    # silently ate the independent, unambiguous "is -> PREDICATE"
+                    # transformation on every branch. Now: independent matches
+                    # are applied on top of every branch, and only the
+                    # Cartesian product of the genuinely ambiguous anchors'
+                    # alternatives is explored.
+                    by_anchor: dict = {}
+                    for m in all_matches:
+                        by_anchor.setdefault(m.anchor_idx, []).append(m)
 
-                    if len(set(anchor_indices)) == len(anchor_indices):
-                        # ALL DIFFERENT ANCHORS: Independent transformations
-                        # Apply all matches to create a single hypothesis
-                        new_hyp = current_hyp
-                        for match in all_matches:
-                            new_hyp = apply_rule(new_hyp, match)
+                    independent_matches = [ms[0] for ms in by_anchor.values() if len(ms) == 1]
+                    ambiguous_groups = [ms for ms in by_anchor.values() if len(ms) > 1]
 
-                            # If recursive rule, keep applying until no more matches
+                    def _apply_all(base_hyp, matches):
+                        result = base_hyp
+                        for match in matches:
+                            result = apply_rule(result, match)
                             if match.rule.recursive:
-                                new_hyp = apply_ruleset_recursively(new_hyp, ruleset)
+                                result = apply_ruleset_recursively(result, ruleset)
+                        return result
 
-                        new_hypotheses.append(new_hyp)
+                    if not ambiguous_groups:
+                        # ALL DIFFERENT ANCHORS: independent transformations
+                        new_hypotheses.append(_apply_all(current_hyp, independent_matches))
                     else:
-                        # CONFLICTING ANCHORS: True ambiguity (multiple ways to parse same anchor)
-                        # Create a hypothesis for each match (parallel exploration)
-                        for match in all_matches:
-                            new_hyp = apply_rule(current_hyp, match)
-
-                            # If recursive rule, keep applying until no more matches
-                            if match.rule.recursive:
-                                new_hyp = apply_ruleset_recursively(new_hyp, ruleset)
-
+                        # Branch only over the ambiguous anchors' alternatives;
+                        # independent matches still land on every branch.
+                        for combo in itertools.product(*ambiguous_groups):
+                            new_hyp = _apply_all(current_hyp, independent_matches)
+                            new_hyp = _apply_all(new_hyp, combo)
                             new_hypotheses.append(new_hyp)
 
                 elif len(all_matches) == 1:
