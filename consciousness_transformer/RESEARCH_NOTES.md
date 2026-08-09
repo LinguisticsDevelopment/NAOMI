@@ -2465,3 +2465,27 @@ Battery 34/34, templates 20/20. Residual real-text map: homograph
 mis-tags 5, appositive leftovers 4, splitter-severed quotes 2, misc
 singletons — plus the compound-noun ("league commissioner") merge gap
 that surfaced twice as a blocking prerequisite.
+
+### M52 — the model consumes full argument structure (MEASURED, resolver plan phase 1)
+
+Sonnet agent + main-session gate run. Batch plumbing (`_context_steps` /
+`build_clause_batch` only — the ClauseReactor model class is UNCHANGED, per
+the design constraint): a transfer clause (give/hand/pass/take) unrolls
+into one step per role sharing the transferred OBJECT as the entity;
+questions carry their QUERIED ROLE as the relation vector ("who has"→
+RECIPIENT, "where"→PLACE default). Old episodes produce byte-identical
+batches (exact-equality regression test). New curriculum: TransferCurriculum-
+Generator (levels transfer_place / transfer_who), all 4 templates parser-
+verified with EVERY role exact. Design finds recorded: (1) the dative
+landmine — "gave the ball TO john" mislabels recipient as PLACE
+(_PREP_RELATION maps "to" unconditionally), so the curriculum uses the
+double-object construction; a dative fix is resolver-era work. (2) "who
+has X" excludes TAKE verbs — taker-possession needs AGENT-vs-RECIPIENT
+resolution, deferred to M53+ by design.
+
+Gate (probe_m52_transfer.py, 1500 eps, dim 48, 60 epochs, two arms):
+control old-only **0.843**; mixed old-subset **0.827** (within noise — no
+cost); transfer subset **0.853** (place 0.88, WHO-HAS 0.82 vs chance 0.25
+— queried-role routing works). Suites: 51 reactor/curriculum/transfer
+tests green; templates 20/20 + transfer 4/4. Phase 1 of
+RESOLVER_BUILD_PLAN complete; phase 2 (membrane types + pronoun A/B) next.

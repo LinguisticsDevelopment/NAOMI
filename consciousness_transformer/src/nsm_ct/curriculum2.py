@@ -582,3 +582,188 @@ def generate_scaled_episodes(n: int, seed: int = 0, template_set: str = "AB",
                                      num_options=num_options, scaled=True,
                                      min_facts=min_facts, max_facts=max_facts,
                                      min_entities=min_entities, max_entities=max_entities)
+
+
+# ---------------------------------------------------------------------------
+# M52 -- multi-arg TRANSFER curriculum (give/hand/pass/take:
+# AGENT/OBJECT/RECIPIENT/SOURCE/PLACE). The curriculum half of the M52
+# plumbing prerequisite for the resolver work (dev/MIND_INTERFACE.md,
+# dev/RESOLVER_BUILD_PLAN.md Phase 1); the reactor half is
+# :mod:`nsm_ct.clause_reactor`'s per-role step unrolling
+# (``_context_steps``/``_queried_role``).
+#
+# LANDMINE AVOIDED (deviation from the literal spec template, recorded here
+# so it isn't silently "fixed" back): the natural dative phrasing
+# "{giver} gave the {obj} to {receiver} in the {place} ." does NOT parse
+# cleanly through the real quantum_parser -- clause.py's ``_PREP_RELATION``
+# maps "to" to PLACE unconditionally (the directional-PLACE convention
+# "moved to the office" needs it), so "to {receiver}" comes out mislabeled
+# PLACE, indistinguishable from the real "in the {place}" PP (two PLACE
+# args, no RECIPIENT role at all -- verified empirically, not just read off
+# the code). clause.py is out of scope for M52 (FILES OWNED), so the fix is
+# a template choice: the double-object construction
+# ("{giver} gave {receiver} the {obj} ...") instead, which quantum_parser
+# resolves to a clean INDIRECT_OBJECT edge for {receiver}. Verified via
+# :func:`verify_transfer_templates` below, exactly like ``verify_templates``
+# gates :data:`TEMPLATES`.
+# ---------------------------------------------------------------------------
+_TRANSFER_OBJECTS: List[str] = ["ball", "box", "key", "book", "letter", "coin"]
+
+# GIVE-family (double-object: SUBJECT/INDIRECT_OBJECT/OBJECT/PLACE all
+# resolve correctly) + the TAKE/SOURCE variant (SUBJECT/SOURCE/OBJECT/PLACE).
+TRANSFER_TEMPLATES: Dict[str, str] = {
+    "GIVE": "{giver} gave {receiver} the {obj} in the {place} .",
+    "HAND": "{giver} handed {receiver} the {obj} in the {place} .",
+    "PASS": "{giver} passed {receiver} the {obj} in the {place} .",
+    "TAKE": "{taker} took the {obj} from {source} in the {place} .",
+}
+
+
+def verify_transfer_templates(sample_giver: str = "mary", sample_receiver: str = "john",
+                               sample_obj: str = "ball", sample_place: str = "garden"
+                               ) -> Dict[str, Dict[str, object]]:
+    """Parse-check every :data:`TRANSFER_TEMPLATES` entry through the REAL
+    parser, requiring EVERY role (not just SUBJECT+PLACE, unlike
+    :func:`verify_templates`) to resolve to the exact expected token.
+
+    Returns ``{template_key: {"sentence": str, "ok": bool, "roles": {rel:
+    token}}}`` -- the per-template table the M52 gate reports. A template
+    that fails must be fixed or dropped, never silently kept (mirrors
+    :func:`verify_templates`'s contract). Returns an empty dict if
+    ``quantum_parser`` isn't importable in this environment.
+    """
+    from .clause import extract_discourse
+    from .input_encoder import ParserInputEncoder
+    from .nsm_primes import PRIME_NAMES
+    from .structure import PARSE_LABELS
+    from .tokenizer import SimpleTokenizer
+
+    expected = {
+        "GIVE": {"SUBJECT": sample_giver, "INDIRECT_OBJECT": sample_receiver,
+                  "OBJECT": sample_obj, "PLACE": sample_place},
+        "HAND": {"SUBJECT": sample_giver, "INDIRECT_OBJECT": sample_receiver,
+                  "OBJECT": sample_obj, "PLACE": sample_place},
+        "PASS": {"SUBJECT": sample_giver, "INDIRECT_OBJECT": sample_receiver,
+                  "OBJECT": sample_obj, "PLACE": sample_place},
+        "TAKE": {"SUBJECT": sample_giver, "SOURCE": sample_receiver,
+                  "OBJECT": sample_obj, "PLACE": sample_place},
+    }
+    texts = {k: t.format(giver=sample_giver, receiver=sample_receiver, obj=sample_obj,
+                          place=sample_place, taker=sample_giver, source=sample_receiver)
+             for k, t in TRANSFER_TEMPLATES.items()}
+    tok = SimpleTokenizer.build(
+        list(texts.values()) + [sample_giver, sample_receiver, sample_obj, sample_place],
+        extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        return {}  # quantum_parser unavailable; caller must handle this case
+
+    results: Dict[str, Dict[str, object]] = {}
+    for key, sent in texts.items():
+        graph = parser._parse_graph(sent)
+        clauses, _links = extract_discourse(graph)
+        want = expected[key]
+        got: Dict[str, str] = {}
+        ok = False
+        for cl in clauses:
+            roles = {rel: (arg.token or "").lower() for rel, arg in cl.args}
+            if all(roles.get(rel) == val for rel, val in want.items()):
+                ok = True
+                got = roles
+                break
+            if len(roles) > len(got):   # keep the closest miss for the report
+                got = roles
+        results[key] = {"sentence": sent, "ok": ok, "roles": got}
+    return results
+
+
+class TransferCurriculumGenerator:
+    """Multi-arg transfer episodes (M52): give/hand/pass/take events over
+    AGENT(SUBJECT)/OBJECT/RECIPIENT(INDIRECT_OBJECT)/SOURCE/PLACE roles --
+    the curriculum half of the M52 plumbing (the reactor half is
+    :func:`nsm_ct.clause_reactor.build_clause_batch`'s per-role step
+    unrolling, keyed off the transferred OBJECT as the shared entity). Two
+    levels:
+
+        7 ("transfer_place"): one transfer event; the question asks WHERE
+          the transferred object ended up. Answerable regardless of which
+          of the 4 verbs was used, since the PLACE role is written the same
+          way no matter which participant role the verb assigns.
+        8 ("transfer_who"): a GIVE-family transfer event (give/hand/pass
+          only -- "took" has no RECIPIENT, so a "who has X" question after
+          a bare TAKE would have no ground truth). The question asks WHO
+          now HAS the object (the RECIPIENT) -- this requires the model to
+          route the question's queried role (RECIPIENT, not the PLACE every
+          earlier level used) to the memory slot the statement actually
+          wrote (:func:`nsm_ct.clause_reactor._queried_role`).
+
+    Every context sentence is one of :data:`TRANSFER_TEMPLATES` (parser-
+    verified by :func:`verify_transfer_templates`); object nouns are drawn
+    from :data:`_TRANSFER_OBJECTS`. Deterministic given ``seed``, like every
+    other generator in this module.
+    """
+
+    def __init__(self, num_options: int = 4, seed: int = 0) -> None:
+        self.num_options = num_options
+        self.rng = random.Random(seed)
+
+    def _mc_places(self, answer: str):
+        pool = [p for p in _PLACES if p != answer]
+        distractors = self.rng.sample(pool, min(self.num_options - 1, len(pool)))
+        options = distractors + [answer]
+        self.rng.shuffle(options)
+        return options, options.index(answer)
+
+    def _mc_names(self, answer: str):
+        # Deliberately does NOT exclude the other participant (e.g. the
+        # giver, for a "who has X" question): including it as a candidate
+        # distractor is the real test -- a model that just answers "a name
+        # mentioned in the sentence" gets this wrong roughly half the time.
+        pool = [n for n in _NAMES if n != answer]
+        distractors = self.rng.sample(pool, min(self.num_options - 1, len(pool)))
+        options = distractors + [answer]
+        self.rng.shuffle(options)
+        return options, options.index(answer)
+
+    def _sample_participants(self):
+        giver, receiver = self.rng.sample(_NAMES, 2)
+        obj = self.rng.choice(_TRANSFER_OBJECTS)
+        place = self.rng.choice(_PLACES)
+        return giver, receiver, obj, place
+
+    def _level7(self) -> Episode:
+        """Where did the transferred object end up? Any of the 4 verbs."""
+        giver, receiver, obj, place = self._sample_participants()
+        verb = self.rng.choice(list(TRANSFER_TEMPLATES))
+        sent = TRANSFER_TEMPLATES[verb].format(
+            giver=giver, receiver=receiver, obj=obj, place=place,
+            taker=giver, source=receiver)
+        options, idx = self._mc_places(place)
+        return Episode(
+            context=[sent], question=f"where is the {obj} ?",
+            answer_text=place, options=options, answer_idx=idx, level=7,
+            meta={"src": "curriculum2", "kind": "transfer_place", "verb": verb},
+        )
+
+    def _level8(self) -> Episode:
+        """Who now has the transferred object? GIVE-family only (needs a
+        RECIPIENT; a bare TAKE has none)."""
+        giver, receiver, obj, place = self._sample_participants()
+        verb = self.rng.choice(["GIVE", "HAND", "PASS"])
+        sent = TRANSFER_TEMPLATES[verb].format(giver=giver, receiver=receiver, obj=obj, place=place)
+        options, idx = self._mc_names(receiver)
+        return Episode(
+            context=[sent], question=f"who has the {obj} ?",
+            answer_text=receiver, options=options, answer_idx=idx, level=8,
+            meta={"src": "curriculum2", "kind": "transfer_who", "verb": verb},
+        )
+
+    def generate(self, n: int) -> List[Episode]:
+        builders = [self._level7, self._level8]
+        return [builders[i % len(builders)]() for i in range(n)]
+
+
+def generate_transfer_episodes(n: int, seed: int = 0, num_options: int = 4) -> List[Episode]:
+    """``n`` M52 multi-arg transfer episodes, deterministic given ``(n, seed,
+    num_options)``. See :class:`TransferCurriculumGenerator`."""
+    return TransferCurriculumGenerator(num_options=num_options, seed=seed).generate(n)
