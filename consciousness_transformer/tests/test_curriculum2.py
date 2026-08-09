@@ -9,8 +9,11 @@ import pytest
 from nsm_ct.curriculum2 import (
     TEMPLATES,
     VOCAB_SCALE_PLACES,
+    generate_pronoun_episodes,
     generate_scaled_episodes,
     generate_varied_episodes,
+    nearest_entity_baseline,
+    verify_pronoun_templates,
     verify_templates,
 )
 from nsm_ct.episode import _NAMES, _PLACES
@@ -327,3 +330,96 @@ def test_scaled_mode_introduces_no_new_sentence_shapes():
         for sent in e.context + (e.post_context or []):
             assert any(_matches_template(sent, t) for t in all_templates), \
                 f"{sent!r} does not match any parser-verified template"
+
+
+# ---------------------------------------------------------------------------
+# M53a -- pronoun-binding curriculum (dev/RESOLVER_BUILD_PLAN.md Phase 2)
+# ---------------------------------------------------------------------------
+def test_pronoun_templates_all_roles_correct():
+    results = verify_pronoun_templates()
+    if not results:
+        pytest.skip("quantum_parser unavailable in this environment")
+    assert results["CONTEXT_MOVE"]["ok"]
+    for pr in ("she", "he", "it", "they"):
+        assert results[f"PRONOUN_FIND[{pr}]"]["ok"], results[f"PRONOUN_FIND[{pr}]"]
+
+
+def test_pronoun_deterministic_given_seed():
+    a = generate_pronoun_episodes(40, seed=7)
+    b = generate_pronoun_episodes(40, seed=7)
+    assert [e.context for e in a] == [e.context for e in b]
+    assert [e.meta for e in a] == [e.meta for e in b]
+    assert [e.options for e in a] == [e.options for e in b]
+
+
+def test_pronoun_different_seeds_differ():
+    a = generate_pronoun_episodes(40, seed=1)
+    b = generate_pronoun_episodes(40, seed=2)
+    assert [e.context for e in a] != [e.context for e in b]
+
+
+def test_pronoun_episodes_structurally_valid():
+    eps = generate_pronoun_episodes(80, seed=3)
+    assert len(eps) == 80
+    for e in eps:
+        assert e.level == 14
+        assert e.is_multiple_choice
+        assert e.answer_text in e.options
+        assert e.options[e.answer_idx] == e.answer_text
+        assert len(e.context) == 3
+        assert e.question.strip().endswith("?")
+        assert e.meta["kind"] == "pronoun_binding"
+        assert e.meta["pronoun"] in ("she", "he")
+        assert e.meta["pronoun_sentence_index"] == 2
+        assert e.context[2].split()[0] == e.meta["pronoun"]
+        gold, other = e.meta["gold_antecedent"], e.meta["other_entity"]
+        assert gold != other
+        assert {gold, other} <= set(_NAMES)
+        assert gold in e.meta["registry_order"] and other in e.meta["registry_order"]
+        assert e.meta["gold_place"] != e.meta["other_place"]
+        assert e.answer_text == e.meta["gold_place"]
+        assert "fred" not in (gold, other), "known parser landmine, see curriculum2.py"
+
+
+def test_pronoun_gender_uniquely_identifies_antecedent():
+    """The whole design hinges on gender disambiguating: the pronoun's
+    gender must match the gold antecedent's gender and NOT the other
+    entity's (else "she"/"he" wouldn't carry any information)."""
+    from nsm_ct.membrane import NAME_GENDER
+
+    eps = generate_pronoun_episodes(80, seed=4)
+    for e in eps:
+        want_gender = "F" if e.meta["pronoun"] == "she" else "M"
+        assert NAME_GENDER[e.meta["gold_antecedent"]] == want_gender
+        assert NAME_GENDER[e.meta["other_entity"]] != want_gender
+
+
+# ---------------------------------------------------------------------------
+# Anti-recency data-design gate
+# ---------------------------------------------------------------------------
+def test_pronoun_anti_recency_is_at_least_half():
+    eps = generate_pronoun_episodes(201, seed=5)   # odd n: parity must still hold
+    n_anti = sum(1 for e in eps if e.meta["antecedent_recency"] == "old")
+    assert n_anti / len(eps) >= 0.5
+
+
+def test_nearest_entity_baseline_sits_at_or_below_chance_floor():
+    """The scripted nearest-entity baseline (RESOLVER_BUILD_PLAN.md Phase 2's
+    data-design check): on the anti-recency half it must be wrong 100% of
+    the time (0.0 accuracy -- strictly below the 1/num_options chance
+    floor), and overall it must be no better than the "recency" fraction
+    (<=50%, since anti-recency is >=50% by design). If this test starts
+    failing because the baseline scores high, the CURRICULUM's data design
+    is broken -- fix the data, don't raise the bound."""
+    eps = generate_pronoun_episodes(400, seed=8)
+    result = nearest_entity_baseline(eps)
+    assert result["n"] == 400
+    assert result["n_anti_recency"] >= 200
+    assert result["anti_recency_accuracy"] == 0.0
+    assert result["accuracy"] <= 0.5 + 1e-9
+
+
+def test_nearest_entity_baseline_ignores_non_pronoun_episodes():
+    eps = generate_varied_episodes(20, seed=0) + generate_pronoun_episodes(10, seed=0)
+    result = nearest_entity_baseline(eps)
+    assert result["n"] == 10

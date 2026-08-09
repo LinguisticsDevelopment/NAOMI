@@ -18,6 +18,7 @@ import torch
 import torch.nn as nn
 
 from . import entity_memory as em
+from . import membrane
 from .clause import extract_discourse
 from .episode import _NAMES
 from .tpr import TPRCodec
@@ -168,6 +169,54 @@ def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str
     return steps
 
 
+# M53a (RESOLVER_BUILD_PLAN Phase 2, "Agent 2"): a pronoun-subject context
+# sentence whose episode meta carries a gold antecedent binding
+# (curriculum2.PronounCurriculumGenerator's "pronoun_binding" episodes only
+# -- gated on ``ep.meta["pronoun_sentence_index"]``, a key no other
+# generator sets). Perception cannot resolve the pronoun on its own (that is
+# the resolver's job, M53b); M53a's PLACEHOLDER is to ground the sentence's
+# TRUE meaning directly from the curriculum's own ground truth (the gold
+# antecedent's place, already known at generation time) so the memory
+# pipeline is exercised end to end, while the real v1 candidate set +
+# gold index for the not-yet-built resolver rides along in the batch (see
+# :mod:`nsm_ct.membrane` and ``build_clause_batch``'s ``cand_*`` fields).
+def _pronoun_context_step(sent: str, ep, parser, resolver, codec: TPRCodec,
+                           cache: Dict[str, np.ndarray], meaning_source: MeaningSource,
+                           sentence_index: int):
+    """One placeholder-bound step + its :class:`membrane.EntityCandidateSet`
+    for a pronoun-subject context sentence ("she found the ball ."):
+    entity = the OBJECT token (the thing found), relation = PLACE, value =
+    the gold antecedent's place (``ep.meta["gold_place"]``) -- i.e. exactly
+    the (object, PLACE, place) triple the pipeline already knows how to
+    write, just resolved by the curriculum's ground truth instead of a
+    trained resolver. Returns ``(step_or_None, candidate_set_or_None)``;
+    ``None`` if the sentence doesn't have the expected pronoun+OBJECT shape
+    (defensive -- every :mod:`nsm_ct.curriculum2` template is parser-
+    verified, so this should never actually trigger).
+    """
+    d = codec.dim
+    graph = parser._parse_graph(sent) if hasattr(parser, "_parse_graph") else None
+    clauses, _links = extract_discourse(graph)
+    for cl in clauses:
+        roles = {rel: (arg.token or "").lower() for rel, arg in cl.args}
+        pronoun = roles.get("SUBJECT")
+        obj_tok = roles.get("OBJECT")
+        if not (pronoun and obj_tok and pronoun in membrane._PRONOUNS):
+            continue
+        registry = membrane.entity_registry(ep.context[:sentence_index], parser)
+        cand = membrane.pronoun_entity_candidate_set(
+            pronoun, registry, gold_antecedent=ep.meta.get("gold_antecedent"),
+            provenance={"sentence_index": sentence_index, "sentence": sent})
+        gold_place = ep.meta["gold_place"]
+        pred_vec = codec.filler_vec("pred:" + (cl.predicate or "").lower())
+        step = (_ent_vec(obj_tok, resolver, codec, cache, meaning_source),
+                codec.filler_vec("rel:PLACE"),
+                _content_vec(gold_place, resolver, codec, cache, meaning_source),
+                pred_vec, np.zeros(d, np.float32), 0)
+        return step, cand
+    return None, None
+
+
 # M52 v1 IN table ("queried role"): the relation a question is actually
 # asking about. "has" -> RECIPIENT (who now holds it -- the transfer_who
 # level); "where" -> PLACE, which is ALSO the fallback/default -- every
@@ -218,25 +267,42 @@ class ClauseBatch:
     answer: torch.Tensor    # [B]
     coord: Optional[torch.Tensor] = None  # [B, T, d]  OR/NOT/IF atom (else zeros): the logical signal
     answerable: Optional[torch.Tensor] = None  # [B]  1 = derivable, 0 = should abstain (reasoning levels)
+    # M53a (RESOLVER_BUILD_PLAN Phase 2): the v1 "entity" candidate set for
+    # pronoun-subject steps, carried through so the not-yet-built resolver
+    # (M53b) has data to train against. All None when the batch has no
+    # pronoun episodes at all -- this is what keeps old batches
+    # byte-identical (nothing above this line changes shape or values).
+    cand_entity: Optional[torch.Tensor] = None   # [B, T, C, d]  candidate atoms' var-vectors (0-padded)
+    cand_mask: Optional[torch.Tensor] = None     # [B, T, C]     1 = real candidate
+    cand_prior: Optional[torch.Tensor] = None    # [B, T, C]     structural prior (uniform v1)
+    cand_feature: Optional[torch.Tensor] = None  # [B, T, F]     mention feature vector (0 elsewhere)
+    cand_gold: Optional[torch.Tensor] = None     # [B, T]        long; gold candidate index, -1 elsewhere
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
 
+    def _cand_fields(self, xform):
+        return tuple(xform(t) if t is not None else None for t in
+                     (self.cand_entity, self.cand_mask, self.cand_prior,
+                      self.cand_feature, self.cand_gold))
+
     def to(self, device):
         coord = self.coord.to(device) if self.coord is not None else None
         ans_ok = self.answerable.to(device) if self.answerable is not None else None
+        cand = self._cand_fields(lambda t: t.to(device))
         return ClauseBatch(self.entity.to(device), self.relation.to(device),
                            self.value.to(device), self.pred.to(device),
                            self.is_q.to(device), self.mask.to(device),
-                           self.options.to(device), self.answer.to(device), coord, ans_ok)
+                           self.options.to(device), self.answer.to(device), coord, ans_ok, *cand)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
         coord = self.coord[idx] if self.coord is not None else None
         ans_ok = self.answerable[idx] if self.answerable is not None else None
+        cand = self._cand_fields(lambda t: t[idx])
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
-                           self.options[idx], self.answer[idx], coord, ans_ok)
+                           self.options[idx], self.answer[idx], coord, ans_ok, *cand)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
@@ -263,6 +329,16 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     QUERIED ROLE the question text actually names (:func:`_queried_role`)
     rather than a hardcoded PLACE; the default is still PLACE, so every
     pre-M52 "where is X ?" question is unaffected.
+
+    M53a (RESOLVER_BUILD_PLAN Phase 2): an episode whose meta carries
+    ``pronoun_sentence_index`` (curriculum2.PronounCurriculumGenerator only)
+    has that ONE context sentence routed through
+    :func:`_pronoun_context_step` instead of :func:`_context_steps` --
+    PLACEHOLDER-bound to the gold antecedent (see that function's
+    docstring) -- and its :class:`nsm_ct.membrane.EntityCandidateSet`
+    carried through in the returned batch's ``cand_*`` fields (``None`` for
+    every episode without a pronoun step, which is what keeps this
+    byte-identical to pre-M53a for every existing episode/level).
     """
     cache: Dict[str, np.ndarray] = {}
     d = codec.dim
@@ -270,12 +346,21 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     z = np.zeros(d, np.float32)
     rows = []
     for ep in episodes:
+        cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
         if getattr(ep, "level", 0) >= 9 and ep.meta.get("query"):
             steps = _reasoning_steps(ep, resolver, codec, cache, meaning_source)   # L9-L11 reasoning stream
         else:
             steps = []
-            for sent in ep.context:
-                steps += _context_steps(sent, parser, resolver, codec, cache, meaning_source)
+            pronoun_idx = ep.meta.get("pronoun_sentence_index")
+            for si, sent in enumerate(ep.context):
+                step_cand = (_pronoun_context_step(sent, ep, parser, resolver, codec, cache,
+                                                    meaning_source, si)
+                             if pronoun_idx is not None and si == pronoun_idx else (None, None))
+                if step_cand[0] is not None:
+                    cand_sets[len(steps)] = step_cand[1]
+                    steps.append(step_cand[0])
+                else:
+                    steps += _context_steps(sent, parser, resolver, codec, cache, meaning_source)
             qent = _question_entity(ep.question)
             if qent is None:
                 continue
@@ -285,17 +370,17 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
             for sent in getattr(ep, "post_context", []) or []:
                 steps += _context_steps(sent, parser, resolver, codec, cache, meaning_source)
         opt = [_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
-        rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0))
+        rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0, cand_sets))
 
     b = len(rows)
-    T = max(len(s) for s, _, _, _ in rows)
-    K = max(len(o) for _, o, _, _ in rows)
+    T = max(len(s) for s, _, _, _, _ in rows)
+    K = max(len(o) for _, o, _, _, _ in rows)
     ent = torch.zeros(b, T, d); rel = torch.zeros(b, T, d); val = torch.zeros(b, T, d)
     prd = torch.zeros(b, T, d); crd = torch.zeros(b, T, d)
     is_q = torch.zeros(b, T); mask = torch.zeros(b, T)
     opts = torch.zeros(b, K, d); ans = torch.zeros(b, dtype=torch.long)
     ans_ok = torch.zeros(b)
-    for i, (steps, opt, a, ok) in enumerate(rows):
+    for i, (steps, opt, a, ok, _cs) in enumerate(rows):
         for t, (e, r, v, p, c, q) in enumerate(steps):
             ent[i, t] = torch.from_numpy(e); rel[i, t] = torch.from_numpy(r)
             val[i, t] = torch.from_numpy(v); prd[i, t] = torch.from_numpy(p)
@@ -303,7 +388,30 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
         for k, ov in enumerate(opt):
             opts[i, k] = torch.from_numpy(ov)
         ans[i] = a; ans_ok[i] = ok
-    return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans, crd, ans_ok)
+
+    cand_entity = cand_mask = cand_prior = cand_feature = cand_gold = None
+    if any(cs for *_row, cs in rows):
+        Cmax = max((len(cs.candidates) for *_row, cs_map in rows for cs in cs_map.values()),
+                   default=1) or 1
+        cand_entity = torch.zeros(b, T, Cmax, d)
+        cand_mask = torch.zeros(b, T, Cmax)
+        cand_prior = torch.zeros(b, T, Cmax)
+        cand_feature = torch.zeros(b, T, membrane.FEATURE_DIM)
+        cand_gold = torch.full((b, T), -1, dtype=torch.long)
+        for i, (steps, opt, a, ok, cs_map) in enumerate(rows):
+            for t, cs in cs_map.items():
+                for j, c in enumerate(cs.candidates):
+                    cand_entity[i, t, j] = torch.from_numpy(
+                        _ent_vec(c.key, resolver, codec, cache, meaning_source))
+                    cand_mask[i, t, j] = 1.0
+                    cand_prior[i, t, j] = c.prior
+                if cs.feature is not None:
+                    cand_feature[i, t] = torch.from_numpy(cs.feature)
+                if cs.gold_index is not None:
+                    cand_gold[i, t] = cs.gold_index
+
+    return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans, crd, ans_ok,
+                       cand_entity, cand_mask, cand_prior, cand_feature, cand_gold)
 
 
 # ---------------------------------------------------------------------------

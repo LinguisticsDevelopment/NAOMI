@@ -29,9 +29,10 @@ the printed parse-success table.
 from __future__ import annotations
 
 import random
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from .episode import Episode, _NAMES, _PLACES
+from .membrane import NAME_GENDER  # noqa: F401  (M53a pronoun curriculum genders)
 
 # ---------------------------------------------------------------------------
 # Parser-verified, DISJOINT surface template sets.
@@ -767,3 +768,244 @@ def generate_transfer_episodes(n: int, seed: int = 0, num_options: int = 4) -> L
     """``n`` M52 multi-arg transfer episodes, deterministic given ``(n, seed,
     num_options)``. See :class:`TransferCurriculumGenerator`."""
     return TransferCurriculumGenerator(num_options=num_options, seed=seed).generate(n)
+
+
+# ---------------------------------------------------------------------------
+# M53a -- pronoun-binding curriculum, ANTI-RECENCY BY DESIGN.
+#
+# dev/MIND_INTERFACE.md's v1 "entity" IN row + dev/RESOLVER_BUILD_PLAN.md
+# Phase 2: a pronoun's true antecedent must NOT be recoverable by "pick the
+# most recently introduced entity" alone, or the curriculum would let a
+# resolver (or a non-resolver) win by a shortcut that has nothing to do with
+# coreference. Every episode: two people go to two DIFFERENT places -- one
+# with a female name, one with a male name (episode.py's fixed 6-name pool;
+# genders are nsm_ct.membrane.NAME_GENDER, the same hand-specified,
+# transparent, closed-class table the mention feature vectors use) -- so
+# GENDER alone disambiguates which one a "she"/"he" refers to, independent
+# of which was introduced first. A :class:`PronounCurriculumGenerator`
+# instance alternates, call by call, whether the antecedent is the
+# FIRST-introduced (older -> anti-recency) or SECOND-introduced (recent)
+# person, which guarantees >=50% anti-recency for ANY ``n`` and ANY
+# ``seed`` (the alternation is a counter, not an RNG draw).
+#
+# The pronoun sentence ("she found the ball .") is a NEW template shape (not
+# covered by TEMPLATES/verify_templates above) parser-verified below by
+# :func:`verify_pronoun_templates`, mirroring :func:`verify_transfer_templates`'s
+# contract: every role must resolve to the exact expected token, never just
+# "some clause came out".
+# ---------------------------------------------------------------------------
+_FEMALE_NAMES: List[str] = [n for n, g in NAME_GENDER.items() if g == "F"]
+# LANDMINE FOUND (M53a build, NOT fixed here -- quantum_parser/ is out of
+# scope for this task): quantum_parser.pos_tagger.simple_tag()'s
+# unconditional "ends in -ed -> VERB" suffix heuristic misfires on "fred"
+# (absent from both WORD_TAG_DICT and the WordNet-derived lexicon, so it
+# falls through to that heuristic) -- confirmed empirically: "fred is in
+# the garden ." parses to an EMPTY clause (extract_discourse returns no
+# SUBJECT/PLACE at all; build_clause_batch silently drops the whole context
+# step). This is a PRE-EXISTING defect: episode.py's fixed _NAMES pool
+# already includes "fred", so ANY level 1-13 episode that happens to sample
+# "fred" as a context subject is ALREADY silently degraded this way, with
+# or without M53a. Not fixed here; excluded from this generator's own name
+# pool only, because the anti-recency design depends on BOTH people's PLACE
+# facts parsing correctly (a dropped step would desync the entity registry
+# from ep.meta's ``registry_order``/``gold_antecedent`` bookkeeping). See
+# RESEARCH_NOTES.md M53a entry.
+_MALE_NAMES: List[str] = [n for n, g in NAME_GENDER.items() if g == "M" and n != "fred"]
+
+# The pronoun-mention template. Context sentences reuse TEMPLATES["B"]["MOVE"][0]
+# verbatim ("{n} went to the {p} .", already verify_templates()-covered above);
+# this is the one genuinely NEW sentence shape M53a introduces.
+PRONOUN_FIND_TEMPLATE = "{pronoun} found the {obj} ."
+_PRONOUN_CONTEXT_TEMPLATE = TEMPLATES["B"]["MOVE"][0]
+assert _PRONOUN_CONTEXT_TEMPLATE == "{n} went to the {p} ."
+
+
+def verify_pronoun_templates(sample_name: str = "mary", sample_place: str = "garden",
+                              sample_obj: str = "ball",
+                              sample_pronouns: Tuple[str, ...] = ("she", "he", "it", "they"),
+                              ) -> Dict[str, Dict[str, object]]:
+    """Parse-check the pronoun curriculum's sentence shapes through the REAL
+    parser (the ``verify_*`` pattern :func:`verify_templates` /
+    :func:`verify_transfer_templates` already establish): the context
+    sentence must yield SUBJECT/PLACE exactly matching the sample, and the
+    pronoun sentence must yield SUBJECT=pronoun, OBJECT=sample_obj exactly.
+    ``sample_pronouns`` defaults to all four candidates the design doc
+    mentions (she/he/it/they) so the table also documents which ones parse
+    cleanly even though the generator below only USES she/he (see its
+    docstring for why it/they are reported-not-used). Returns an empty dict
+    if ``quantum_parser`` isn't importable (caller must treat that as
+    "unable to verify", not a pass) -- same contract as the other verify_*
+    functions in this module.
+    """
+    from .clause import extract_discourse
+    from .input_encoder import ParserInputEncoder
+    from .nsm_primes import PRIME_NAMES
+    from .structure import PARSE_LABELS
+    from .tokenizer import SimpleTokenizer
+
+    ctx_sent = _PRONOUN_CONTEXT_TEMPLATE.format(n=sample_name, p=sample_place)
+    pronoun_sents = {pr: PRONOUN_FIND_TEMPLATE.format(pronoun=pr, obj=sample_obj)
+                      for pr in sample_pronouns}
+    texts = [ctx_sent, *pronoun_sents.values(), sample_name, sample_place, sample_obj]
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        return {}  # quantum_parser unavailable; caller must handle this case
+
+    results: Dict[str, Dict[str, object]] = {}
+
+    graph = parser._parse_graph(ctx_sent)
+    clauses, _links = extract_discourse(graph)
+    ok = any((arg.token or "").lower() == sample_name for rel, arg in
+             (ra for cl in clauses for ra in cl.args) if rel == "SUBJECT") and \
+        any((arg.token or "").lower() == sample_place for rel, arg in
+            (ra for cl in clauses for ra in cl.args) if rel == "PLACE")
+    results["CONTEXT_MOVE"] = {"sentence": ctx_sent, "ok": ok}
+
+    for pr, sent in pronoun_sents.items():
+        graph = parser._parse_graph(sent)
+        clauses, _links = extract_discourse(graph)
+        ok, roles = False, {}
+        for cl in clauses:
+            r = {rel: (arg.token or "").lower() for rel, arg in cl.args}
+            if r.get("SUBJECT") == pr and r.get("OBJECT") == sample_obj:
+                ok, roles = True, r
+                break
+            if len(r) > len(roles):
+                roles = r
+        results[f"PRONOUN_FIND[{pr}]"] = {"sentence": sent, "ok": ok, "roles": roles}
+    return results
+
+
+class PronounCurriculumGenerator:
+    """M53a pronoun-binding episodes: anti-recency by design.
+
+    Episode shape:
+        "{name_a} went to the {place_a} ." "{name_b} went to the {place_b} ."
+        "{pronoun} found the {obj} ." Q: "where is the {obj} ?"
+
+    ``pronoun`` is "she" or "he"; its gender picks out exactly ONE of
+    name_a/name_b (one female name, one male name -- genders from
+    :data:`nsm_ct.membrane.NAME_GENDER`), so the gold answer is that
+    person's place -- genuinely requires resolving the pronoun, not just
+    reading off the most recent fact. Whether the antecedent is name_a
+    (older, introduced first -- the ANTI-RECENCY case) or name_b (more
+    recent) alternates by an internal counter every call, guaranteeing
+    exactly-or-more-than 50% anti-recency for any ``n``.
+
+    it/they were evaluated (:func:`verify_pronoun_templates` includes them;
+    both parse cleanly -- "it"/"they found the ball ." both yield a clean
+    SUBJECT/OBJECT split) but are NOT generated here: "it" needs an OBJECT
+    antecedent registry (a different candidate-set population than the
+    person registry this level exercises) and "they" needs a genuine
+    multi-person-antecedent design (a coordinated-subject registry) -- both
+    real, both natural M53b-or-later extensions, both out of scope for the
+    single-focused anti-recency gender battery M53a's gate asks for.
+
+    Gold antecedent + the data the nearest-entity baseline needs (see
+    :func:`nearest_entity_baseline`) are recorded in ``ep.meta`` --
+    ``gold_antecedent``, ``gold_place``, ``other_entity``, ``other_place``,
+    ``pronoun``, ``pronoun_sentence_index`` (which context sentence carries
+    the pronoun -- :mod:`nsm_ct.clause_reactor`'s batch path keys off this),
+    and ``antecedent_recency`` ("old" | "recent", the anti-recency
+    accounting label).
+    """
+
+    def __init__(self, num_options: int = 4, seed: int = 0) -> None:
+        self.num_options = num_options
+        self.rng = random.Random(seed)
+        self._count = 0
+
+    def _mc_places(self, answer: str, required: List[str]):
+        opts = list(dict.fromkeys([answer, *required]))
+        pool = [p for p in _PLACES if p not in opts]
+        while len(opts) < self.num_options and pool:
+            opts.append(pool.pop(self.rng.randrange(len(pool))))
+        opts = opts[: self.num_options]
+        self.rng.shuffle(opts)
+        return opts, opts.index(answer)
+
+    def _episode(self) -> Episode:
+        antecedent_first = (self._count % 2 == 0)   # alternate -> exact >=50% anti-recency
+        self._count += 1
+
+        gender = self.rng.choice(["F", "M"])
+        pronoun = "she" if gender == "F" else "he"
+        female_name = self.rng.choice(_FEMALE_NAMES)
+        male_name = self.rng.choice(_MALE_NAMES)
+        antecedent_name = female_name if gender == "F" else male_name
+        other_name = male_name if gender == "F" else female_name
+        name_a, name_b = ((antecedent_name, other_name) if antecedent_first
+                          else (other_name, antecedent_name))
+
+        place_a, place_b = self.rng.sample(_PLACES, 2)
+        gold_place = place_a if antecedent_first else place_b
+        other_place = place_b if antecedent_first else place_a
+        obj = self.rng.choice(_TRANSFER_OBJECTS)
+
+        context = [
+            _PRONOUN_CONTEXT_TEMPLATE.format(n=name_a, p=place_a),
+            _PRONOUN_CONTEXT_TEMPLATE.format(n=name_b, p=place_b),
+            PRONOUN_FIND_TEMPLATE.format(pronoun=pronoun, obj=obj),
+        ]
+        options, idx = self._mc_places(gold_place, [other_place])
+        return Episode(
+            context=context, question=f"where is the {obj} ?",
+            answer_text=gold_place, options=options, answer_idx=idx, level=14,
+            meta={
+                "src": "curriculum2", "kind": "pronoun_binding",
+                "gold_antecedent": antecedent_name, "gold_place": gold_place,
+                "other_entity": other_name, "other_place": other_place,
+                "pronoun": pronoun, "pronoun_sentence_index": 2,
+                "antecedent_recency": "old" if antecedent_first else "recent",
+                "registry_order": [name_a, name_b],
+            },
+        )
+
+    def generate(self, n: int) -> List[Episode]:
+        return [self._episode() for _ in range(n)]
+
+
+def generate_pronoun_episodes(n: int, seed: int = 0, num_options: int = 4) -> List[Episode]:
+    """``n`` M53a pronoun-binding episodes, deterministic given ``(n, seed,
+    num_options)``. See :class:`PronounCurriculumGenerator`."""
+    return PronounCurriculumGenerator(num_options=num_options, seed=seed).generate(n)
+
+
+def nearest_entity_baseline(episodes: List[Episode]) -> Dict[str, float]:
+    """The scripted NEAREST-ENTITY coreference baseline
+    (dev/RESOLVER_BUILD_PLAN.md Phase 2's data-design check): resolve every
+    pronoun to the MOST RECENTLY introduced entity (name_b -- the second
+    "went to" sentence), predict that entity's place, score against the
+    episode's actual (gender-resolved) gold answer. Reads ``ep.meta``
+    directly (no parser needed -- the curriculum already knows the
+    registry order and the recency label).
+
+    By design (see :class:`PronounCurriculumGenerator`): on the
+    "antecedent_recency": "recent" half this baseline is trivially correct
+    (it names the entity that happens to BE the antecedent); on the "old"
+    half it is trivially WRONG (``other_place != gold_place`` always,
+    places are sampled distinct) -- i.e. the anti-recency half's accuracy
+    must be exactly 0.0, and the overall accuracy must equal the "recent"
+    fraction (<=50% is guaranteed by the >=50% anti-recency alternation).
+    Non-pronoun episodes are ignored (not part of this baseline's question).
+    """
+    total = anti = correct = anti_correct = 0
+    for ep in episodes:
+        if ep.meta.get("kind") != "pronoun_binding":
+            continue
+        recency = ep.meta["antecedent_recency"]
+        # nearest (most-recently-introduced) entity's place:
+        nearest_place = ep.meta["gold_place"] if recency == "recent" else ep.meta["other_place"]
+        hit = nearest_place == ep.answer_text
+        total += 1
+        correct += int(hit)
+        if recency == "old":
+            anti += 1
+            anti_correct += int(hit)
+    return {
+        "n": total,
+        "accuracy": correct / total if total else float("nan"),
+        "n_anti_recency": anti,
+        "anti_recency_accuracy": anti_correct / anti if anti else float("nan"),
+    }

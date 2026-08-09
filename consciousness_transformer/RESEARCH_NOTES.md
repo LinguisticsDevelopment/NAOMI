@@ -2489,3 +2489,37 @@ cost); transfer subset **0.853** (place 0.88, WHO-HAS 0.82 vs chance 0.25
 — queried-role routing works). Suites: 51 reactor/curriculum/transfer
 tests green; templates 20/20 + transfer 4/4. Phase 1 of
 RESOLVER_BUILD_PLAN complete; phase 2 (membrane types + pronoun A/B) next.
+
+### M53a — the membrane exists: candidate sets + anti-recency pronoun data (MEASURED)
+
+Sonnet agent, resolver plan phase 2 first half (no resolver, no model
+changes — placeholder gold binding proves the pipeline). New
+`src/nsm_ct/membrane.py`: Candidate/CandidateSet (the generic v1 shape
+senses and parse hypotheses will reuse), EntityCandidateSet (candidates +
+priors + mention feature vector + gold index + provenance),
+entity_registry, pronoun_entity_candidate_set. Feature vectors (dim 6):
+one real USVS axis (lex:noun.person — carries signal: woman 1.0, mary
+0.30, ball 0.02) + 5 hand-specified closed-class dims (PERSON, GENDER_F/M,
+NONPERSON, PLURAL) per the design doc's escape hatch — checked first:
+attr:gender/sex exist in the 607 but are noise (~1e-5), and pronouns have
+no word_coord at all. ClauseBatch carries cand_* tensors (None-default,
+byte-identical batches for pronoun-free episodes — regression-tested).
+
+PronounCurriculumGenerator: "mary went to the garden . john went to the
+kitchen . she found the ball ." → "where is the ball ?" — the answer
+genuinely requires the binding. Anti-recency is a COUNTER, not RNG: ≥50%
+of episodes have the correct antecedent NOT most recent. **Nearest-entity
+baseline: 0.500 overall, 0.000 on the anti-recency half** — recency is
+structurally worthless by design. All templates parser-verified (she/he/
+it/they all parse; generator uses she/he, it/they deferred). Smoke with
+gold binding: pronoun level 1.000, old 0.842 — pipeline sound.
+
+Landmine found (pre-existing, unfixed, ticketed): "fred" is absent from
+the WordNet lexicon and WORD_TAG_DICT, so the -ed suffix heuristic tags it
+VERB and its context sentences silently drop (mask=1 not 2) in the
+EXISTING curriculum whenever fred is sampled. Excluded from the pronoun
+name pool; parser-side fix (names batch in closed-class dict or heuristic
+reorder) queued for the next parser round.
+
+75 tests green; templates 20/20 + transfer 4/4 + pronoun 5/5 unchanged.
+Next: M53b — Track A coref head vs Track B shared scorer on this data.
