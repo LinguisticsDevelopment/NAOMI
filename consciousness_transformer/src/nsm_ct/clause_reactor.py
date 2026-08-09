@@ -16,11 +16,13 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from . import entity_memory as em
 from . import membrane
 from .clause import extract_discourse
 from .episode import _NAMES
+from .resolver import Resolver, query_candidates
 from .tpr import TPRCodec
 from .usvs_bridge import usvs_handle
 
@@ -422,9 +424,22 @@ class ClauseReactor(nn.Module):
 
     Learns: a write gate (commit/overwrite/trust), a respond weight (timing), and a
     generated response meaning-vector. No embeddings — input is fixed grounded vectors.
+
+    M53b (RESOLVER_BUILD_PLAN Phase 2, "Agent 3"): an OPTIONAL ``resolver``
+    (:class:`nsm_ct.resolver.Resolver` -- Track A :class:`~nsm_ct.resolver.CorefHead`
+    or Track B :class:`~nsm_ct.resolver.SharedScorer`) may be installed. Default
+    ``None`` -- forward is then BYTE-IDENTICAL to pre-M53b (regression-tested in
+    tests/test_resolver.py's ``test_no_resolver_byte_identity_regression``): the
+    resolver branch below never executes, so nothing about the per-step computation
+    changes. When a resolver IS installed and the batch carries candidate sets
+    (``batch.cand_mask is not None``), at every step whose row has a real candidate
+    set (M53a's pronoun-subject steps today) the resolver's collapsed choice
+    REPLACES the placeholder gold-bound ``value`` for that step before it enters the
+    GRU / gets written to memory -- MIND_INTERFACE.md §3's "collapse candidates ->
+    binding, before the write". Steps/rows with no candidate set are untouched.
     """
 
-    def __init__(self, dim: int, hidden: int = 128) -> None:
+    def __init__(self, dim: int, hidden: int = 128, resolver: Optional[Resolver] = None) -> None:
         super().__init__()
         self.dim = dim
         # (entity, relation, value, predicate, coord, mem_read)
@@ -434,6 +449,34 @@ class ClauseReactor(nn.Module):
         self.decide_truth = nn.Linear(hidden + dim, 1)    # refute (subtract) this value? (the truth policy)
         self.respond = nn.Linear(hidden, 1)
         self.response = nn.Linear(hidden + dim, dim)      # generate the response meaning-vector
+        self.resolver = resolver                          # M53b: optional, None = pre-M53b behavior
+
+    def _collapse(self, memory: torch.Tensor, state: torch.Tensor, r: torch.Tensor,
+                  v: torch.Tensor, batch: ClauseBatch, t: int):
+        """M53b collapse step: resolver logits/margin for step ``t`` (or ``None,
+        None`` if no candidate data at all) and the (possibly resolver-replaced)
+        value for this step. Isolated here so :meth:`forward`'s per-step loop reads
+        exactly like it did pre-M53b when ``self.resolver is None``."""
+        if self.resolver is None or batch.cand_mask is None:
+            return v, None, None
+        ce_t, cf_t = batch.cand_entity[:, t], batch.cand_feature[:, t]
+        cp_t, cm_t = batch.cand_prior[:, t], batch.cand_mask[:, t]
+        cand_mem_read = query_candidates(memory, ce_t, r)                    # [B, C, d]
+        logits = self.resolver(ce_t, cf_t, cp_t, cm_t, cand_mem_read, state)  # [B, C]
+        logits = logits.masked_fill(cm_t <= 0, -1e9)
+        has_cand = cm_t.sum(-1) > 0                                          # [B]
+        if self.training:
+            w = torch.softmax(logits, dim=-1)                                # soft collapse (gradients)
+        else:
+            C = logits.shape[-1]
+            w = F.one_hot(logits.argmax(-1), num_classes=C).to(logits.dtype)  # hard collapse at eval
+        resolved_v = (w.unsqueeze(-1) * cand_mem_read).sum(1)                # [B, d]
+        v_out = torch.where(has_cand.unsqueeze(-1), resolved_v, v)
+        margin = torch.zeros(v.shape[0], device=v.device)
+        if logits.shape[-1] >= 2:
+            top2 = torch.topk(logits, k=2, dim=-1).values
+            margin = torch.where(has_cand, top2[:, 0] - top2[:, 1], margin)
+        return v_out, logits, margin
 
     def forward(self, batch: ClauseBatch) -> Dict[str, torch.Tensor]:
         b, T, d = batch.entity.shape
@@ -442,12 +485,15 @@ class ClauseReactor(nn.Module):
         memory = em.init_memory(b, d, device)
 
         coord = batch._coord()
+        have_resolver_data = self.resolver is not None and batch.cand_mask is not None
         resp_logits, resp_vecs = [], []
+        resolver_logits_all, resolver_margin_all = [], []
         for t in range(T):
             e, r, v = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
             p, c = batch.pred[:, t], coord[:, t]
             real, isq = batch.mask[:, t], batch.is_q[:, t]
             mem_read = em.query(memory, e, r)                          # [B, d]
+            v, res_logits_t, res_margin_t = self._collapse(memory, state, r, v, batch, t)
             state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
             stmt = real * (1.0 - isq)                                  # statement (write) step
             # write gate: statement steps only (questions carry no value)
@@ -464,6 +510,9 @@ class ClauseReactor(nn.Module):
             rl = rl.masked_fill(real <= 0, float("-inf"))
             resp_logits.append(rl)
             resp_vecs.append(self.response(torch.cat([state, mem_read], dim=-1)))  # [B, d]
+            if have_resolver_data:
+                resolver_logits_all.append(res_logits_t)
+                resolver_margin_all.append(res_margin_t)
 
         RL = torch.stack(resp_logits, dim=1)               # [B, T]
         RV = torch.stack(resp_vecs, dim=1)                 # [B, T, d]
@@ -475,5 +524,9 @@ class ClauseReactor(nn.Module):
         on = batch.options / (batch.options.norm(dim=-1, keepdim=True) + 1e-8)
         answer_logits = torch.einsum("bd,bkd->bk", rn, on) * 10.0   # temperature
 
-        return {"answer_logits": answer_logits, "response": r,
-                "respond_gates": w, "respond_position": (w * batch.is_q).sum(1)}
+        out = {"answer_logits": answer_logits, "response": r,
+               "respond_gates": w, "respond_position": (w * batch.is_q).sum(1)}
+        if have_resolver_data:
+            out["resolver_logits"] = torch.stack(resolver_logits_all, dim=1)   # [B, T, C]
+            out["resolver_margin"] = torch.stack(resolver_margin_all, dim=1)   # [B, T]
+        return out

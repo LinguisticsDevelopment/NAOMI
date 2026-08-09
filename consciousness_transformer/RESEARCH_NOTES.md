@@ -2523,3 +2523,41 @@ reorder) queued for the next parser round.
 
 75 tests green; templates 20/20 + transfer 4/4 + pronoun 5/5 unchanged.
 Next: M53b — Track A coref head vs Track B shared scorer on this data.
+
+### M53 — the first collapse: Track A resolves reference PERFECTLY; Track B binds but interferes (MEASURED)
+
+M53b (Sonnet agent): resolver contract in `src/nsm_ct/resolver.py` — both
+tracks take (candidate entities, features, priors, mask, per-candidate
+memory readouts, controller state) → [B,C] logits. Track A CorefHead:
+specialist, NO controller state (MLP over [cand; mem_read; mention_feat;
+prior]). Track B SharedScorer: the design doc's literal
+score(candidate, mem_read, state). ClauseReactor gains an OPTIONAL
+resolver (default None = byte-identical, proven by independent
+re-derivation + all prior tests unmodified); collapse happens BEFORE the
+write (soft mixture in training, argmax at eval), margins exposed.
+Deliberate architectural difference: any A-vs-B gap is attributable to
+the state input specifically.
+
+Gate run (1500 eps, 1/2 old + 1/4 transfer + 1/4 pronoun, dim 48, 60
+epochs, three arms; nearest-entity baseline 0.499 overall / 0.000
+anti-recency, n=188):
+
+| arm | task | pronoun task | binding | binding anti-recency | params |
+|---|---|---|---|---|---|
+| gold ceiling | 0.917 | 1.000 | — | — | 0 |
+| **Track A** | **0.913** | **1.000** | **1.000** | **1.000** (44/44) | 2,521 |
+| Track B | 0.807 | 0.550 | 0.963 | 0.932 | 2,841 |
+
+**Track A matches the gold ceiling with PERFECT binding — including every
+anti-recency case, where recency scores 0.000 by construction.** The
+membrane design works end to end: reference resolution as memory-keyed
+collapse, learned from task reward + aux binding loss, no recency
+heuristic anywhere. Track B's failure is the informative kind: binding is
+nearly perfect (0.932) yet task accuracy craters (0.807, pronoun-level
+0.550) — consulting the controller state entangles resolving with
+answering (the state also drives write gates; the smoke-scale B>A signal
+inverted at real scale). Round 1: the specialist wins on functionality
+AND parameter count. Per the plan, B is not eliminated — the same shared
+scorer contests M54 (senses), where its generality argument actually
+starts; but "reference resolution needs the running thought-state" is now
+measured FALSE at this scale.
