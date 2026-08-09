@@ -14,7 +14,7 @@ into a tree, labelling each node by its ``NodeType`` and each child by the
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .data_structures import ParseNode, ParseTree
 
@@ -34,11 +34,23 @@ def _node_index(node: Any):
     return int(i) if isinstance(i, int) and i >= 0 else None
 
 
+def _node_flags(node: Any) -> List[str]:
+    """Node subtype flag names (e.g. ``["PASSIVE"]``), or ``[]``.
+
+    quantum_parser's ``Node.flags`` is a ``List[SubType]`` (an Enum stamped by
+    ``push_subtypes`` -- PASSIVE by ``aux1`` since M38, QUESTION by
+    ``question1`` since M49); we only need the names, so this stays decoupled
+    from the ``SubType`` enum itself (no quantum_parser import here).
+    """
+    return [getattr(f, "name", str(f)) for f in (getattr(node, "flags", None) or [])]
+
+
 def _build(idx: int, nodes: list, edges: list, relation: str | None, seen: set) -> ParseNode:
     node = nodes[idx]
     pnode = ParseNode(
         label=_node_label(node), token=_node_token(node),
         relation=relation, index=_node_index(node),
+        flags=_node_flags(node),
     )
     if idx in seen:  # guard against cycles in an experimental parser
         return pnode
@@ -65,6 +77,7 @@ class HypGraph:
     nodes: List[Tuple[int, str, Optional[str]]]   # (index, label, token)
     edges: List[Tuple[str, int, int]]             # (type, parent, child)
     roots: List[int] = field(default_factory=list)
+    flags: Dict[int, List[str]] = field(default_factory=dict)  # idx -> subtype names (M50)
 
     def node(self, idx: int) -> Optional[Tuple[int, str, Optional[str]]]:
         return next((n for n in self.nodes if n[0] == idx), None)
@@ -80,13 +93,22 @@ class HypGraph:
     def edges_of(self, etype: str) -> List[Tuple[int, int]]:
         return [(p, c) for (t, p, c) in self.edges if t == etype]
 
+    def flags_of(self, idx: int) -> List[str]:
+        """Subtype flag names on node ``idx`` (e.g. ``["PASSIVE"]``), or ``[]``."""
+        return self.flags.get(idx, [])
+
 
 def hypothesis_to_graph(hyp: Any) -> HypGraph:
     """Convert a ``quantum_parser`` ``Hypothesis`` to a flat :class:`HypGraph`."""
     nodes: List[Tuple[int, str, Optional[str]]] = []
+    flags: Dict[int, List[str]] = {}
     for i, node in enumerate(getattr(hyp, "nodes", [])):
         idx = _node_index(node)
-        nodes.append((idx if idx is not None else i, _node_label(node), _node_token(node)))
+        node_idx = idx if idx is not None else i
+        nodes.append((node_idx, _node_label(node), _node_token(node)))
+        node_flags = _node_flags(node)
+        if node_flags:
+            flags[node_idx] = node_flags
     edges: List[Tuple[str, int, int]] = []
     for edge in getattr(hyp, "edges", []):
         etype = getattr(getattr(edge, "type", None), "name", "REL")
@@ -95,7 +117,7 @@ def hypothesis_to_graph(hyp: Any) -> HypGraph:
         roots = list(hyp.get_unconsumed())
     except Exception:  # pragma: no cover - defensive
         roots = [n[0] for n in nodes[:1]]
-    return HypGraph(nodes=nodes, edges=edges, roots=roots)
+    return HypGraph(nodes=nodes, edges=edges, roots=roots, flags=flags)
 
 
 def hypothesis_to_tree(hyp: Any, text: str = "") -> ParseTree:

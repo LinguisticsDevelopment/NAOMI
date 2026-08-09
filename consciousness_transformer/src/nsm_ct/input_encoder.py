@@ -21,7 +21,7 @@ from __future__ import annotations
 import abc
 import os
 import sys
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from .structure import align_structure, role_id
 from .tokenizer import SimpleTokenizer
@@ -91,20 +91,27 @@ def _merge_graphs(graphs: List["object"]):
     graph API :func:`nsm_ct.clause.extract_discourse` uses: ``.nodes``,
     ``.edges``, ``node()``, ``token()``, ``label()``, ``edges_of()`` — all
     inherited for free since the merged object is a real ``HypGraph``.
+
+    Per-node subtype flags (M50, ``HypGraph.flags``) are carried through under
+    the same index offset, defensively via ``getattr`` so a caller-supplied
+    graph without a ``flags`` attribute (pre-M50) still merges fine.
     """
     from .quantum_adapter import HypGraph  # local import (optional adapter)
 
     nodes: List[Tuple[int, str, Optional[str]]] = []
     edges: List[Tuple[str, int, int]] = []
     roots: List[int] = []
+    flags: Dict[int, List[str]] = {}
     offset = 0
     for g in graphs:
         idx_map = {idx: idx + offset for idx, _label, _token in g.nodes}
         nodes.extend((idx_map[idx], label, token) for idx, label, token in g.nodes)
         edges.extend((etype, idx_map.get(p, p), idx_map.get(c, c)) for etype, p, c in g.edges)
         roots.extend(idx_map.get(r, r) for r in g.roots)
+        for idx, fl in getattr(g, "flags", {}).items():
+            flags[idx_map.get(idx, idx)] = fl
         offset += len(g.nodes)
-    return HypGraph(nodes=nodes, edges=edges, roots=roots)
+    return HypGraph(nodes=nodes, edges=edges, roots=roots, flags=flags)
 
 
 class ParserInputEncoder(AbstractInputEncoder):

@@ -31,21 +31,44 @@ _PRONOUNS = {"i", "you", "he", "she", "it", "we", "they",
 _PUNCT = set(".?!,;:")
 # A person's place: treat both locative ("in") and directional ("to") as PLACE,
 # so "is in the kitchen" then "went to the office" update the same slot.
-# NOTE (landmine, now LIVE): "by" is mapped to PLACE as a pure locative ("mary
-# is by the garden"). "by" is also the passive-voice agent marker ("chased by
-# the dog"), which is NOT a place. quantum_parser's round-2 fix (M37) landed
-# passive voice for real -- SubType.PASSIVE is stamped by a new aux1 rule on
-# the surviving VERBAL/PREDICATE node -- so an agentive "by" can now actually
-# occur on a passive clause and would be mislabeled PLACE here.
-# TODO (round 3): guard this mapping on the predicate's PASSIVE flag -- when
-# the clause's predicate carries PASSIVE, map "by" -> "AGENT" instead of
-# PLACE. Currently BLOCKED: quantum_adapter.hypothesis_to_tree/hypothesis_to_
-# graph never carry node.flags through to ParseNode/HypGraph (only label/
-# token/relation/index), so this module has no way to see PASSIVE today.
-# Needs a quantum_adapter change first.
+# NOTE (landmine, RESOLVED M50): "by" is mapped to PLACE as a pure locative
+# ("mary is by the garden"). "by" is also the passive-voice agent marker
+# ("chased by the dog"), which is NOT a place. quantum_parser's round-2 fix
+# (M37) landed passive voice for real -- SubType.PASSIVE is stamped by a new
+# aux1 rule on the surviving VERBAL/PREDICATE node -- so an agentive "by" can
+# occur on a passive clause and would be mislabeled PLACE by a bare
+# ``_PREP_RELATION`` lookup. M50 carries node flags through
+# quantum_adapter (HypGraph.flags / ParseNode.flags) and adds
+# :func:`_prep_relation`, which every PP-role lookup in this module now goes
+# through: when the clause's predicate node carries PASSIVE, "by" resolves to
+# "AGENT" instead of "PLACE"; on a non-passive predicate "by" still resolves
+# to PLACE exactly as before.
 _PREP_RELATION = {"in": "PLACE", "on": "PLACE", "at": "PLACE", "inside": "PLACE",
                   "to": "PLACE", "into": "PLACE", "from": "SOURCE",
                   "by": "PLACE", "near": "PLACE"}
+
+
+def _prep_relation(graph, predicate_idx: Optional[int], prep_token: Optional[str],
+                    default: str) -> str:
+    """``_PREP_RELATION`` lookup with the agentive-"by" guard (see the module-
+    level landmine note above): a "by" PP attached to a PASSIVE-flagged
+    predicate is the passive agent ("the ball was found by mary" -> AGENT),
+    not a place. ``predicate_idx`` is the graph node whose PASSIVE flag (if
+    any) governs the guard; ``None`` (no known predicate node) never triggers
+    it, so every existing non-passive call site is unaffected.
+    """
+    tok = (prep_token or "").lower()
+    if tok == "by" and predicate_idx is not None and "PASSIVE" in graph.flags_of(predicate_idx):
+        return "AGENT"
+    return _PREP_RELATION.get(tok, default)
+
+
+def _is_question(graph, idx: Optional[int]) -> bool:
+    """True if graph node ``idx`` carries quantum_parser's QUESTION subtype
+    (stamped by ``question1``, M49) -- reachable via M50's flags passthrough.
+    """
+    return idx is not None and "QUESTION" in graph.flags_of(idx)
+
 
 # Verbs whose bare direct object is a location ("entered the garden", no PP at
 # all) -- deliberately minimal and reviewed one-by-one (excludes "left": too
@@ -61,13 +84,20 @@ class Clause:
     predicate: str
     args: List[Tuple[str, ParseNode]]   # (relation, arg_node)
     head: ParseNode
+    is_question: bool = False           # predicate carries quantum_parser's QUESTION subtype (M49/M50)
 
 
 def _clause_from_node(node: ParseNode) -> Clause:
     """Build one :class:`Clause` from a predicate-bearing parse node.
 
     The per-node argument logic, factored out of :func:`extract_clauses` so the
-    discourse path can reuse it. Output is byte-identical to the old inline loop.
+    discourse path can reuse it. Output is byte-identical to the old inline
+    loop EXCEPT for the M50 agentive-"by" guard: a "by" PP on a PASSIVE-
+    flagged predicate now resolves to AGENT instead of PLACE (see the
+    module-level landmine note and :func:`_prep_relation`; this tree view
+    reads ``node.flags``/``ch.flags`` directly since M50 carries them onto
+    :class:`ParseNode`, rather than going through :func:`_prep_relation`
+    which is graph-based).
     """
     args: List[Tuple[str, ParseNode]] = []
     for ch in node.children:
@@ -79,10 +109,13 @@ def _clause_from_node(node: ParseNode) -> Clause:
             obj = next((g for g in ch.children
                         if g.relation == "PREPOSITION" and g.token), None)
             if obj is not None:
-                rel = _PREP_RELATION.get((ch.token or "").lower(),
-                                         (ch.token or "PREP").upper())
+                prep_tok = (ch.token or "").lower()
+                if prep_tok == "by" and "PASSIVE" in node.flags:
+                    rel = "AGENT"
+                else:
+                    rel = _PREP_RELATION.get(prep_tok, (ch.token or "PREP").upper())
                 args.append((rel, obj))
-    return Clause(predicate=node.token, args=args, head=node)
+    return Clause(predicate=node.token, args=args, head=node, is_question="QUESTION" in node.flags)
 
 
 def extract_clauses(tree: ParseTree) -> List[Clause]:
@@ -261,11 +294,16 @@ def _syn(label: str, token: Optional[str], relation: Optional[str] = None) -> Pa
     return ParseNode(label=label, token=token, relation=relation)
 
 
-def _relation_for(graph, idx: int) -> str:
-    """Relation under which node ``idx`` attaches (preposition → PLACE, else OBJECT…)."""
+def _relation_for(graph, idx: int, predicate_idx: Optional[int] = None) -> str:
+    """Relation under which node ``idx`` attaches (preposition → PLACE, else OBJECT…).
+
+    ``predicate_idx`` (the clause's predicate node, if known) threads through
+    to :func:`_prep_relation` for the agentive-"by" guard; ``None`` preserves
+    the old PLACE-always behavior for any caller that doesn't have it.
+    """
     for p, c in graph.edges_of("PREPOSITION"):
         if c == idx:
-            return _PREP_RELATION.get((graph.token(p) or "").lower(), "PLACE")
+            return _prep_relation(graph, predicate_idx, graph.token(p), "PLACE")
     for t, _p, c in graph.edges:
         if c == idx and t in ("OBJECT", "INDIRECT_OBJECT", "SUBJECT"):
             return t
@@ -281,11 +319,75 @@ def _subject_predicate(graph):
     return graph.token(subj_idx), graph.token(clause_idx), clause_idx, subj_idx
 
 
-def _fact_clause(graph, subj: str, pred: Optional[str], rel: str, val_idx: int) -> Clause:
+def _extra_args(graph, clause_idx: int, primary_val_idx: Optional[int] = None,
+                 exclude: "set" = frozenset()) -> List[Tuple[str, ParseNode]]:
+    """Every argument edge beyond the one (or two, SUBJECT + primary) role a
+    caller already captured -- the M48/M50 fix for the 2-arg extraction
+    ceiling: real prose routinely carries a second/third PP, an OBJECT, or an
+    INDIRECT_OBJECT that the curriculum-scoped callers used to drop silently.
+
+    Scoped to edges parented at ``clause_idx`` itself, at any OBJECT/
+    INDIRECT_OBJECT child of ``clause_idx``, or at ``primary_val_idx``
+    (quantum_parser's ``noun3`` rule hangs a trailing PP off the *preceding
+    NP*, not the verb -- "mary gave the ball to john in the garden" attaches
+    BOTH "to john" and "in the garden" under "ball" (the OBJECT), not "gave"
+    -- confirmed empirically; ``primary_val_idx`` covers the PP-chained-onto-
+    a-PP-object case, e.g. a further PP hanging off the first PP's own
+    object). Scoping to just these parents (never the whole graph) means a
+    multi-sentence merged graph can never leak another clause's PP into this
+    one.
+
+    Each PP's role is resolved via :func:`_prep_relation` (agentive-"by"
+    guard included); OBJECT/INDIRECT_OBJECT edges keep their real edge-type
+    name (unlike the primary-slot fallback in :func:`_secondary_fact_clauses`,
+    which normalizes to "OBJECT" for historical reasons). ``exclude`` is the
+    set of value-node indices already used by the caller as a primary role
+    (never re-added here); punctuation-token args are always excluded.
+    Deterministic: sorted by the argument's own node index (surface order),
+    so additional roles are always appended AFTER the primary one.
+    """
+    seen = set(exclude)
+    parents = {clause_idx}
+    for t, p, c in graph.edges:
+        if p == clause_idx and t in ("OBJECT", "INDIRECT_OBJECT"):
+            parents.add(c)
+    if primary_val_idx is not None:
+        parents.add(primary_val_idx)
+    found: List[Tuple[int, str, ParseNode]] = []
+    for t, p, c in graph.edges:
+        if p not in parents:
+            continue
+        if t in ("OBJECT", "INDIRECT_OBJECT"):
+            tok = graph.token(c)
+            if c in seen or not tok or tok in _PUNCT:
+                continue
+            seen.add(c)
+            found.append((c, t, _syn(graph.label(c) or "NOUN", tok, t)))
+        elif t == "MODIFICATION":
+            prep = next(((pp, cc) for (pp, cc) in graph.edges_of("PREPOSITION") if pp == c), None)
+            if prep is None:
+                continue
+            _pp, val_idx = prep
+            if val_idx in seen:
+                continue
+            seen.add(val_idx)
+            prep_tok = graph.token(c)
+            rel = _prep_relation(graph, clause_idx, prep_tok,
+                                  (prep_tok or "PREP").upper() if prep_tok else "PREP")
+            found.append((val_idx, rel, _syn(graph.label(val_idx) or "NOUN", graph.token(val_idx), rel)))
+    found.sort(key=lambda item: item[0])
+    return [(rel, node) for _idx, rel, node in found]
+
+
+def _fact_clause(graph, subj: str, pred: Optional[str], rel: str, val_idx: int,
+                  extra: Optional[List[Tuple[str, ParseNode]]] = None,
+                  is_question: bool = False) -> Clause:
     val = _syn(graph.label(val_idx) or "NOUN", graph.token(val_idx), rel)
-    return Clause(predicate=pred or "is",
-                  args=[("SUBJECT", _syn("NOMINAL", subj, "SUBJECT")), (rel, val)],
-                  head=_syn("CLAUSE", pred))
+    args = [("SUBJECT", _syn("NOMINAL", subj, "SUBJECT")), (rel, val)]
+    if extra:
+        args.extend(extra)
+    return Clause(predicate=pred or "is", args=args,
+                  head=_syn("CLAUSE", pred), is_question=is_question)
 
 
 def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx: Optional[int]) -> List[Clause]:
@@ -318,7 +420,7 @@ def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx:
             prep = next(((p, c) for (p, c) in graph.edges_of("PREPOSITION") if p == pp_idx), None)
             if prep is not None:
                 _p, val_idx = prep
-                rel = _PREP_RELATION.get((graph.token(pp_idx) or "").lower(), "PLACE")
+                rel = _prep_relation(graph, c_idx, graph.token(pp_idx), "PLACE")
         if val_idx is None:
             obj_idx = next((c for (t, p, c) in graph.edges
                             if t in ("OBJECT", "INDIRECT_OBJECT") and p == c_idx
@@ -326,7 +428,9 @@ def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx:
             if obj_idx is not None:
                 val_idx, rel = obj_idx, "OBJECT"
         if val_idx is not None:
-            out.append(_fact_clause(graph, subj, pred, rel, val_idx))
+            extra = _extra_args(graph, c_idx, primary_val_idx=val_idx, exclude={val_idx})
+            out.append(_fact_clause(graph, subj, pred, rel, val_idx, extra,
+                                     is_question=_is_question(graph, c_idx)))
     return out
 
 
@@ -377,15 +481,21 @@ def _recover_coordinated_clause_orphans(graph) -> List[Clause]:
         subj = graph.token(max(elements))
         if subj is None:
             continue
-        rel = _PREP_RELATION.get((graph.token(pp_idx) or "").lower(), "PLACE")
-        out.append(_fact_clause(graph, subj, tok, rel, val_idx))
+        rel = _prep_relation(graph, idx, graph.token(pp_idx), "PLACE")
+        extra = _extra_args(graph, idx, primary_val_idx=val_idx, exclude={val_idx})
+        out.append(_fact_clause(graph, subj, tok, rel, val_idx, extra,
+                                 is_question=_is_question(graph, idx)))
     return out
 
 
 def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Clause], List[DiscourseLink]]:
-    """The original single-clause-graph logic — unchanged, factored out so
+    """The original single-clause-graph logic, factored out so
     :func:`extract_discourse` can append independent later-sentence clauses
-    (see :func:`_secondary_fact_clauses`) without touching this at all.
+    (see :func:`_secondary_fact_clauses`) without touching this at all. The
+    PRIMARY role selection in every branch below is unchanged (byte-identical
+    choice of role/value) -- M50 only appends further roles (every remaining
+    PP/OBJECT/INDIRECT_OBJECT, via :func:`_extra_args`) after it, and resolves
+    prepositions through :func:`_prep_relation` (the agentive-"by" guard).
 
     Handles the four shapes the curriculum needs: **coordinated value**
     (``A or B``: one clause per coordinated value, related by an OR/MAYBE
@@ -395,6 +505,8 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
     single fact (degrades to one clause, no links). Curriculum-scoped, like
     :func:`extract_clauses`; conditionals (SUBORDINATION) are not handled yet.
     """
+    is_q = _is_question(graph, clause_idx)
+
     # -- coordination: A-or-B value, OR coordinated subjects ---------------------
     coord_edges = graph.edges_of("COORDINATION")
     if coord_edges and subj is not None:
@@ -412,13 +524,15 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
             prep_edges = graph.edges_of("PREPOSITION")
             if prep_edges:
                 _prep_node, val_idx = prep_edges[0]
-                rel = _relation_for(graph, val_idx)
-                clauses = [_fact_clause(graph, graph.token(el), pred, rel, val_idx)
+                rel = _relation_for(graph, val_idx, clause_idx)
+                extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx})
+                clauses = [_fact_clause(graph, graph.token(el), pred, rel, val_idx, extra, is_q)
                            for el in elements]
             else:
+                extra = _extra_args(graph, clause_idx)
                 clauses = [Clause(predicate=pred or "is",
-                                   args=[("SUBJECT", _syn("NOMINAL", graph.token(el), "SUBJECT"))],
-                                   head=_syn("CLAUSE", pred))
+                                   args=[("SUBJECT", _syn("NOMINAL", graph.token(el), "SUBJECT"))] + extra,
+                                   head=_syn("CLAUSE", pred), is_question=is_q)
                            for el in elements]
             prime = _COORD_PRIME.get(coordinator)
             links = [DiscourseLink(coordinator, prime, 0, j) for j in range(1, len(clauses))]
@@ -428,9 +542,11 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
         # lossless clause per coordinated value, subject shared from above.
         coord_idx, elements = max(by_coord.items(), key=lambda kv: len(kv[1]))
         coordinator = _COORDINATOR_LABEL.get((graph.token(coord_idx) or "").lower(), "AND")
-        rel = _relation_for(graph, coord_idx)
+        rel = _relation_for(graph, coord_idx, clause_idx)
         elements = sorted(set(elements))
-        clauses = [_fact_clause(graph, subj, pred, rel, el) for el in elements]
+        extra = _extra_args(graph, clause_idx, primary_val_idx=coord_idx,
+                             exclude=set(elements) | {coord_idx})
+        clauses = [_fact_clause(graph, subj, pred, rel, el, extra, is_q) for el in elements]
         prime = _COORD_PRIME.get(coordinator)
         links = [DiscourseLink(coordinator, prime, 0, j) for j in range(1, len(clauses))]
         return clauses, links
@@ -441,15 +557,17 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
     prep_edges = graph.edges_of("PREPOSITION")
     if neg and subj is not None and prep_edges:
         prep_node, val_idx = prep_edges[0]
-        rel = _PREP_RELATION.get((graph.token(prep_node) or "").lower(), "PLACE")
-        return [_fact_clause(graph, subj, pred, rel, val_idx)], [DiscourseLink("NOT", "NOT", 0, 0)]
+        rel = _prep_relation(graph, clause_idx, graph.token(prep_node), "PLACE")
+        extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx})
+        return [_fact_clause(graph, subj, pred, rel, val_idx, extra, is_q)], [DiscourseLink("NOT", "NOT", 0, 0)]
 
     # -- plain single fact -------------------------------------------------------
     if subj is not None and prep_edges:
         prep_node, val_idx = prep_edges[0]
-        rel = _PREP_RELATION.get((graph.token(prep_node) or "").lower(),
-                                 (graph.token(prep_node) or "PREP").upper())
-        return [_fact_clause(graph, subj, pred, rel, val_idx)], []
+        default = (graph.token(prep_node) or "PREP").upper()
+        rel = _prep_relation(graph, clause_idx, graph.token(prep_node), default)
+        extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx})
+        return [_fact_clause(graph, subj, pred, rel, val_idx, extra, is_q)], []
 
     # -- bare-object locative verbs ("entered the Y", no PP at all) --------------
     # Only consulted when there is NO PREPOSITION edge, so a real PP always wins;
@@ -461,19 +579,25 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
                      and (graph.token(c) or "") not in _PUNCT]
         if obj_edges:
             _, val_idx = obj_edges[0]
-            return [_fact_clause(graph, subj, pred, "PLACE", val_idx)], []
+            extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx})
+            return [_fact_clause(graph, subj, pred, "PLACE", val_idx, extra, is_q)], []
 
-    # -- bare subject-only fact (no PP, no object at all) ------------------------
+    # -- bare subject-only fact (no PP, no locative-verb object) -----------------
     # A genuine one-argument clause still exists even with nothing to fill the
     # place/value slot -- e.g. a bare passive ("the window was broken .": the
     # aux1 passive rule stamps SubType.PASSIVE and a SUBJECT edge onto the
     # participle just fine, but there is no following PP, so every branch
     # above (which all require a PREPOSITION edge or a locative-verb object)
-    # falls through). Mirrors the coordinated-subject "no PP" shape above.
+    # falls through). Mirrors the coordinated-subject "no PP" shape above. Since
+    # there is no PP anywhere in the graph (``prep_edges`` is empty by
+    # construction here) and no locative-verb object was claimed above, M50's
+    # :func:`_extra_args` still recovers a plain OBJECT/INDIRECT_OBJECT here
+    # (e.g. "mary found the ball ." -- previously a SUBJECT-only stump).
     if subj is not None:
-        return [Clause(predicate=pred or "is",
-                        args=[("SUBJECT", _syn("NOMINAL", subj, "SUBJECT"))],
-                        head=_syn("CLAUSE", pred))], []
+        args = [("SUBJECT", _syn("NOMINAL", subj, "SUBJECT"))]
+        args.extend(_extra_args(graph, clause_idx))
+        return [Clause(predicate=pred or "is", args=args,
+                        head=_syn("CLAUSE", pred), is_question=is_q)], []
 
     return [], []
 

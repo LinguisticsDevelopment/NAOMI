@@ -41,6 +41,10 @@ class ParseNode:
         relation: The semantic role linking this node to its parent (e.g.
             "SUBJECT", "DESCRIPTION"). ``None`` for the root or for parsers that
             do not emit typed relations (the mock).
+        flags: Morphological/syntactic subtype names carried over from the
+            source parser (e.g. ``["PASSIVE"]``, ``["QUESTION"]``) -- see
+            ``nsm_ct.quantum_adapter``'s ``SubType`` passthrough (M50).
+            ``[]`` for the mock and for parsers that emit no such flags.
     """
 
     label: str
@@ -49,6 +53,7 @@ class ParseNode:
     relation: Optional[str] = None
     index: Optional[int] = None  # source word position (for aligning structure to tokens)
     meaning: Optional["ParseTree"] = None  # a word-leaf's tree of NSM primes (its explication)
+    flags: List[str] = field(default_factory=list)
 
     @property
     def is_leaf(self) -> bool:

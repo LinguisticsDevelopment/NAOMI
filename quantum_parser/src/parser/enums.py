@@ -134,6 +134,8 @@ class SubCat(Enum):
     NUMBER = auto()       # Number agreement
     QUESTIONS = auto()    # Question markers
     LOGIC = auto()        # Logical operators
+    PUNCTUATION = auto()  # Bracket/quote punctuation identity (M50 interrupters)
+    QUANTIFIER = auto()   # Bare-quantifier identity (M50 QUANTIFIER_SUBJECT)
 
 
 class SubType(Enum):
@@ -204,6 +206,32 @@ class SubType(Enum):
     L_NOR = auto()
     L_XNOR = auto()
 
+    # Punctuation identity (M50: distinguishes NodeType.NIL siblings so a
+    # grammar rule can require e.g. "comma ... comma" or "quote-close" as a
+    # trigger, without punctuation ever matching an ordinary word pattern --
+    # existing rules never mention these subtypes, so this is additive).
+    COMMA = auto()         # ,
+    DASH = auto()          # -  (interrupter-set dash, symmetric open/close)
+    PAREN_OPEN = auto()    # (
+    PAREN_CLOSE = auto()   # )
+    QUOTE_OPEN = auto()    # ``
+    QUOTE_CLOSE = auto()   # ''
+
+    # Existential "there" (M50 bonus: "there is a problem", "there was n't a
+    # bit of trouble") -- distinguishes the expletive-subject word from
+    # ordinary locative "there" ("he went there") so a rule can require it
+    # (plus sentence-initial position) without touching the locative reading.
+    EXISTENTIAL = auto()
+
+    # Bare-quantifier identity (M50: this/both/each/all/most/bare numerals,
+    # tagged regardless of which POS branch they land on -- DET/ADJ->
+    # DESCRIPTOR or ADV->SPECIFIER -- so a single grammar rule can promote
+    # whichever one is still unconsumed after ordinary determiner-attachment
+    # to a standalone NOMINAL, without adding a new tag-lattice branch that
+    # would multiply combinatorially with every OTHER ambiguous word in the
+    # sentence and risk being pruned out before it can prove itself).
+    QUANTIFIER = auto()
+
 
 # SubType → SubCat mapping (what category does each subtype belong to?)
 SUBTYPE_TO_SUBCAT = {
@@ -257,6 +285,20 @@ SUBTYPE_TO_SUBCAT = {
     SubType.L_NOT: SubCat.LOGIC,
     SubType.L_NOR: SubCat.LOGIC,
     SubType.L_XNOR: SubCat.LOGIC,
+
+    # Punctuation identity
+    SubType.COMMA: SubCat.PUNCTUATION,
+    SubType.DASH: SubCat.PUNCTUATION,
+    SubType.PAREN_OPEN: SubCat.PUNCTUATION,
+    SubType.PAREN_CLOSE: SubCat.PUNCTUATION,
+    SubType.QUOTE_OPEN: SubCat.PUNCTUATION,
+    SubType.QUOTE_CLOSE: SubCat.PUNCTUATION,
+
+    # Bare-quantifier identity
+    SubType.QUANTIFIER: SubCat.QUANTIFIER,
+
+    # Existential "there"
+    SubType.EXISTENTIAL: SubCat.QUANTIFIER,
 }
 
 

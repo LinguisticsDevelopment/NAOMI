@@ -325,6 +325,49 @@ WORD_SUBTYPES = {
     "hardly": [SubType.NEGATIVE],
     "rarely": [SubType.NEGATIVE],
     "seldom": [SubType.NEGATIVE],
+
+    # Interrupter/bracket punctuation (M50: appositive/parenthetical gap-skip
+    # and quote-inversion rules key off these so a comma or quote-close can
+    # be required as a specific rule trigger without matching every NIL).
+    ",": [SubType.COMMA],
+    "-": [SubType.DASH],
+    "(": [SubType.PAREN_OPEN],
+    ")": [SubType.PAREN_CLOSE],
+    "``": [SubType.QUOTE_OPEN],
+    "''": [SubType.QUOTE_CLOSE],
+
+    # M50 QUANTIFIER_SUBJECT: bare quantifiers/numerals that can stand alone
+    # as a subject ("both were under the mark", "each of the four shots...",
+    # "all was quiet", "this would help", "three were doubles"). Tagged
+    # regardless of POS (DET/ADJ->DESCRIPTOR or ADV->SPECIFIER) so the quant1
+    # grammar rule can promote whichever one is still unconsumed after
+    # ordinary determiner-attachment (noun1) to a standalone NOMINAL --
+    # deliberately NOT done via AMBIGUOUS_WORDS/get_possible_tags, which
+    # would add a NOUN/PRON tag-lattice branch that multiplies
+    # combinatorially with every other ambiguous word in the sentence and
+    # can be pruned out (ParserConfig.max_hypotheses) before the branch ever
+    # reaches a rule that would prove its worth.
+    "this": [SubType.QUANTIFIER],
+    "both": [SubType.QUANTIFIER],
+    "each": [SubType.QUANTIFIER],
+    "all": [SubType.QUANTIFIER],
+    "most": [SubType.QUANTIFIER],
+    # Existential "there" (M50 bonus): tagged regardless of position; the
+    # exist1 grammar rule only fires when it is ALSO sentence-initial and
+    # immediately precedes a copula, so ordinary locative "there" ("he went
+    # there") is untouched.
+    "there": [SubType.EXISTENTIAL],
+
+    "one": [SubType.QUANTIFIER],
+    "two": [SubType.QUANTIFIER],
+    "three": [SubType.QUANTIFIER],
+    "four": [SubType.QUANTIFIER],
+    "five": [SubType.QUANTIFIER],
+    "six": [SubType.QUANTIFIER],
+    "seven": [SubType.QUANTIFIER],
+    "eight": [SubType.QUANTIFIER],
+    "nine": [SubType.QUANTIFIER],
+    "ten": [SubType.QUANTIFIER],
 }
 
 

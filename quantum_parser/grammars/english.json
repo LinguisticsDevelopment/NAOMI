@@ -11,7 +11,9 @@
         "adj1", "adj2", "adjPrep1", "adjPrep2",
         "mixPrep",
         "noun1", "noun2",
+        "quant1",
         "question1",
+        "exist1",
         "normPP1", "mixPP1", "adjPP1", "advPP1", "verbPP1",
         "normPP2", "adjPP2", "advPP2", "verbPP2", "mixPP2",
         "noun3",
@@ -21,9 +23,11 @@
         "neg1", "neg2",
         "aux1", "aux2",
         "verb1", "verb2",
+        "quote1",
         "predicate1", "predicate2",
         "rel1", "rel2",
         "noun4",
+        "appositive1",
         "clause1", "clause2",
         "suboord1",
         "verb1b",
@@ -911,6 +915,37 @@
             ]
         },
 
+        "quant1": {
+            "description": "M50 QUANTIFIER_SUBJECT: promote a bare quantifier/numeral (this/both/each/all/most/one..ten, tagged SubType.QUANTIFIER regardless of which POS it landed on) to a standalone NOUN when it is used pronominally instead of as a determiner. Runs right after noun1/noun2 -- ordinary determiner-attachment ('both teams', 'this dog') has already had its chance to consume the quantifier as a 'before' DESCRIPTOR of a following noun, so if it is STILL unconsumed here, nothing claimed it as a modifier and it is standing alone ('both were...', 'each of the four...', 'this would help...', 'three were doubles'). Runs before normPP1/noun3 so a partitive PP ('of the four wayward shots') can still attach to the promoted NOUN exactly like any other noun -- no new rule needed for the partitive shape. Two rules because the closed-class/lexicon tag for these words lands on either DESCRIPTOR (DET/ADJ) or SPECIFIER (ADV) depending on the word; both convert the same way. Deliberately NOT a tag-lattice branch (see pos_tagger.py WORD_SUBTYPES comment) -- this is a single deterministic transform, so it can never be pruned away by ParserConfig.max_hypotheses the way an added POS-ambiguity branch could.",
+            "result": "NOUN",
+            "rules": [
+                {
+                    "result": "NOUN",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "DESCRIPTOR", "subtypes": ["QUANTIFIER"]},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Bare quantifier/numeral, DET/ADJ reading: 'both were...', 'three were doubles'"
+                },
+                {
+                    "result": "NOUN",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "SPECIFIER", "subtypes": ["QUANTIFIER"]},
+                        "before": [],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Bare quantifier, ADV reading: 'each of the four...', 'most was quiet'"
+                }
+            ]
+        },
+
         "question1": {
             "description": "Subject-initial questions: grab the postposed bare NOMINAL as SUBJECT before predicate1's generic transitive-object rule (VERBAL+NOMINAL(after)->OBJECT) or noun3's NP-internal PP attachment ever see it. Runs before aux1 (anchor is still the tagger's raw MODIFIER, subtypes still carry PROGRESSIVE from the copula word list) and before noun3/normPP1's NP-attachment, so it never competes with either -- it simply claims the subject first. Two DISJOINT shapes, kept apart deliberately (M43: the wh-cleft's verb1/rel2 collision showed unscoped SPECIFIER-adjacency rules misfire on relative/wh material, so both rules here are scoped as tightly as possible: RELATIVE subtype for the wh-word, sentence-initial position_constraints for the inversion, neither touches verb1/rel2 at all).",
             "result": "MODIFIER",
@@ -981,6 +1016,77 @@
                     "push_subtypes": ["QUESTION"],
                     "position_constraints": {"anchor": 0},
                     "note": "Yes/no subject-aux inversion: 'is the ball in the garden ?' -- the copula is fronted with no subject before it. Scoped to sentence-initial copula only (position_constraints), so an ordinary mid-sentence copula ('mary is happy') is never touched."
+                }
+            ]
+        },
+
+        "exist1": {
+            "description": "M50 bonus, EXISTENTIAL_THERE: 'there is a problem', 'there was n't a bit of trouble'. Without this, predicate1's generic copula-object rules grab the postposed logical subject as an OBJECT/INDIRECT_OBJECT of the copula, and expletive 'there' itself gets attached as an ordinary adverbial SPECIFICATION -- no SUBJECT edge ever forms. Scoped exactly like question1's inversion rule: 'there' must carry the EXISTENTIAL subtype (pos_tagger.py; ordinary locative 'there' -- 'he went there' -- is unaffected since it never sits sentence-initial immediately before a copula) AND sit at position 0 (position_constraints), and the anchor must still be the tagger's raw copula MODIFIER (runs in the same slot as question1, before aux1/verb1/predicate1 ever transform it). Three rules for how much sits between the copula and the logical subject: nothing, one adverb ('definitely'), or a negation particle ('n't') -- the DSL's before/after elements always require at least one match, so each gap width needs its own rule. Jumps straight to CLAUSE (not PREDICATE) so clause1 never re-fires on the same anchor looking for a preverbal NOMINAL that isn't there.",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "before": [
+                            {"type": "SPECIFIER", "subtypes": ["EXISTENTIAL"], "quantifier": "one"}
+                        ],
+                        "after": [
+                            {"type": "NOUN", "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "SUBJECT", "from": "anchor", "to": "after[0]"},
+                        {"type": "MODIFICATION", "from": "anchor", "to": "before[0]"}
+                    ],
+                    "consume": ["before", "after"],
+                    "position_constraints": {"before[0]": 0},
+                    "note": "'there is a problem' -- subject directly after the copula"
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "before": [
+                            {"type": "SPECIFIER", "subtypes": ["EXISTENTIAL"], "quantifier": "one"}
+                        ],
+                        "after": [
+                            {"type": "SPECIFIER", "quantifier": "one"},
+                            {"type": "NOUN", "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "SUBJECT", "from": "anchor", "to": "after[1]"},
+                        {"type": "MODIFICATION", "from": "anchor", "to": "before[0]"},
+                        {"type": "SPECIFICATION", "from": "after[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before", "after"],
+                    "position_constraints": {"before[0]": 0},
+                    "note": "'there is definitely some ligament damage' -- one adverb between copula and subject"
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "before": [
+                            {"type": "SPECIFIER", "subtypes": ["EXISTENTIAL"], "quantifier": "one"}
+                        ],
+                        "after": [
+                            {"type": "MODIFIER", "subtypes": ["NEGATIVE"], "quantifier": "one"},
+                            {"type": "NOUN", "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "SUBJECT", "from": "anchor", "to": "after[1]"},
+                        {"type": "MODIFICATION", "from": "anchor", "to": "before[0]"},
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["before", "after"],
+                    "position_constraints": {"before[0]": 0},
+                    "note": "'there was n't a bit of trouble' -- negation particle between copula and subject"
                 }
             ]
         },
@@ -1917,6 +2023,141 @@
             ]
         },
 
+        "appositive1": {
+            "description": "M50 appositive/parenthetical gap-skip: a bracketed span (comma-set, dash-set, or paren-set) sitting between a subject NOMINAL and its predicate defeats clause1's strict adjacency requirement (before[0] search stops at the first unconsumed, non-matching node). Consuming the bracketed span here -- attaching its content as a MODIFICATION on the head NOMINAL -- lets clause1's leftward search skip straight past it (search_direction skips CONSUMED nodes even under a 'one' quantifier) and find the real subject. Runs after rel1/rel2/noun4 so an appositive with its own relative clause ('the quarterback who led the eagles...') is already folded into a single NOMINAL before this rule ever looks at it; runs before clause1 so the gap is gone by the time SUBJECT-attachment is tried. Two content shapes per bracket kind: a NOMINAL appositive ('the league commissioner') and a bare parenthetical adverb ('however'). Punctuation is disambiguated via the M50 COMMA/DASH/PAREN_OPEN/PAREN_CLOSE subtypes (pos_tagger.py WORD_SUBTYPES) so this never matches an ordinary sentence-final period or unrelated NIL.",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"},
+                            {"type": "NOMINAL", "quantifier": "one"},
+                            {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Comma-set appositive: 'pete rozelle , the league commissioner , pointed out'"
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"},
+                            {"type": "NOMINAL", "quantifier": "one"},
+                            {"type": "NOMINAL", "quantifier": "one"},
+                            {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[1]"},
+                        {"type": "APPOSITION", "from": "after[1]", "to": "after[2]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Comma-set appositive, two-word compound-noun head ('the league commissioner', 'sports editor of the globe-democrat'): nominal1 promotes NOUN->NOMINAL long before any noun-noun apposition rule runs, so an unmodified two-word compound never collapses to the single NOMINAL the rule above expects. Scoped strictly inside the comma pair (both NOMINALs must sit between the two COMMA-tagged NILs), so this never runs on an ordinary two-item subject list elsewhere in the sentence."
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"},
+                            {"type": "SPECIFIER", "quantifier": "one"},
+                            {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Comma-set parenthetical adverb: 'moritz , however , kicks'"
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "NIL", "subtypes": ["DASH"], "quantifier": "one"},
+                            {"type": "NOMINAL", "quantifier": "one"},
+                            {"type": "NIL", "subtypes": ["DASH"], "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Dash-set appositive: 'the leaders - texas - made a dent'"
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "NIL", "subtypes": ["DASH"], "quantifier": "one"},
+                            {"type": "SPECIFIER", "quantifier": "one"},
+                            {"type": "NIL", "subtypes": ["DASH"], "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Dash-set parenthetical adverb"
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "NIL", "subtypes": ["PAREN_OPEN"], "quantifier": "one"},
+                            {"type": "NOMINAL", "quantifier": "one"},
+                            {"type": "NIL", "subtypes": ["PAREN_CLOSE"], "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Paren-set appositive: 'bill white ( sore ankles ) should be ready'"
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "NOMINAL"},
+                        "before": [],
+                        "after": [
+                            {"type": "NIL", "subtypes": ["PAREN_OPEN"], "quantifier": "one"},
+                            {"type": "SPECIFIER", "quantifier": "one"},
+                            {"type": "NIL", "subtypes": ["PAREN_CLOSE"], "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Paren-set parenthetical adverb"
+                }
+            ]
+        },
+
         "suboord1": {
             "description": "Subordinating conjunction + clause -> subordinate clause",
             "result": "CLAUSE",
@@ -2304,6 +2545,50 @@
                     ],
                     "consume": ["before", "after"],
                     "note": "Example: runs and jumps"
+                }
+            ]
+        },
+
+        "quote1": {
+            "description": "M50 quote-inversion: postposed subject of a quotation's reporting verb (quote-close , said long jim .). Without this, predicate1's generic VERBAL+NOMINAL(after)->OBJECT rule grabs the speaker as a direct object of 'said'. Scoped to a directly-preceding quote-close token ('''', 1 or 2 positions back, skipping at most one intervening punctuation mark such as comma/!/?) so ordinary transitive verbs elsewhere in the sentence are never touched -- the quote-close subtype only exists on the literal '''' token. Runs before predicate1 (claims the VERBAL anchor first, exactly like question1's subject-aux-inversion rules) and jumps straight to CLAUSE (not PREDICATE) so clause1's generic preverbal-NOMINAL rule never re-fires on the same anchor and adds a second, spurious SUBJECT from something unconsumed further left (e.g. a NOMINAL still sitting inside the quoted material).",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL"},
+                        "before": [
+                            {"type": "NIL", "quantifier": "one"},
+                            {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}
+                        ],
+                        "after": [
+                            {"type": "NOMINAL", "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "SUBJECT", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Quote-close, one punctuation mark, reporting verb, subject: quote-close , said long jim ."
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL"},
+                        "before": [
+                            {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}
+                        ],
+                        "after": [
+                            {"type": "NOMINAL", "quantifier": "one"}
+                        ]
+                    },
+                    "connections": [
+                        {"type": "SUBJECT", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Quote-close directly adjacent to the reporting verb, no intervening punctuation: quote-close said ratcliff"
                 }
             ]
         },

@@ -2413,3 +2413,55 @@ one adapter change would unblock both).
 The hand battery is DONE as a driver (34/34). Round 6+ is owned by the
 M48 real-text list: extraction 2-arg ceiling, appositive gap-skip, quote
 inversion, quantifier subjects.
+
+### M50 — the 2-arg extraction ceiling falls + adapter flags (MEASURED)
+
+Sonnet agent, consciousness_transformer side. `_extra_args` in clause.py
+now walks EVERY argument edge of a predicate (all PPs — including those
+quantum_parser's noun3 attaches to the object NP, confirmed empirically —
+plus OBJECT/INDIRECT_OBJECT), appended after the primary role so existing
+consumers are unaffected; scoped to the clause's own nodes so merged
+multi-sentence graphs can't cross-leak. Real-text richness histogram:
+was 88.5% capped at exactly 2 args → now 3-7 args on ~66% of clauses,
+SUBJECT-only stumps 11.5% → 4.8%. CLAUSE_OK held exactly; battery 34/34;
+zero existing-test expectation changes needed.
+
+Adapter node-flags passthrough (one change, three tickets): ParseNode and
+HypGraph carry SubType names (backward-compatible defaults). Lands (a) the
+M38-ticketed agentive-"by" guard — "the ball was found by mary" now yields
+AGENT=mary, while "mary is by the garden" keeps PLACE (both tested);
+(b) Clause.is_question from the M49 QUESTION stamp; (c) PASSIVE visible
+downstream for whatever needs it next. 18 new adapter tests.
+
+### M51 — real-text grammar trio: coverage 89.0% → 94.5% (MEASURED)
+
+Sonnet agent, quantum_parser side. Mechanism discovered first: punctuation
+is tagged NIL, no rule ever consumes NIL, and the matcher's adjacency
+search only skips CONSUMED nodes — so a comma is a permanent wall for
+every strict-adjacency rule. Fix pattern: punctuation SubTypes (COMMA,
+DASH, PAREN_*, QUOTE_*) + rules that explicitly consume interrupter spans.
+
+- APPOSITIVE_INTERRUPT 13→4: appositive1 ruleset (comma/dash/paren ×
+  nominal/adverb content). Residuals are gerund-content appositives, an
+  interior list, and two HOMOGRAPH_MISTAG artifacts (other bucket).
+- QUANTIFIER_SUBJECT 9→0: first attempt (PRON branch in AMBIGUOUS_WORDS)
+  worked in isolation but died to order-sensitive max_hypotheses pruning
+  on real sentences — measured, reverted. Final: SubType.QUANTIFIER +
+  quant1 (DESCRIPTOR/SPECIFIER+QUANTIFIER→NOUN) placed after noun1 (real
+  determiner reading keeps first claim; guards tested) and before noun3
+  (partitive "each of the four shots" attaches for free).
+- QUOTE_INVERSION 6→4 fixed, 2 residual: quote1 emits SUBJECT for the
+  postposed speaker, jumping straight to CLAUSE so clause1 can't double-
+  fire. The 2 residuals parse CORRECTLY as single units but the M45
+  sentence splitter treats mid-quote !/? as sentence boundaries and
+  severs the reporting clause — input_encoder follow-up ticketed.
+- EXISTENTIAL_THERE mechanism built (exist1) and unit-tested; none of the
+  3 corpus instances flip (leading quotes / compound-noun gap / modal
+  copula) — honest zero, kept for its regression-free correctness.
+
+Real text: **378/400 = 94.5%** (the 22-sentence delta exactly matches the
+class fixes — no other bucket moved). quantum_parser suite 105 → 126.
+Battery 34/34, templates 20/20. Residual real-text map: homograph
+mis-tags 5, appositive leftovers 4, splitter-severed quotes 2, misc
+singletons — plus the compound-noun ("league commissioner") merge gap
+that surfaced twice as a blocking prerequisite.
