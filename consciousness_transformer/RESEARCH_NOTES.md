@@ -2160,3 +2160,30 @@ Remaining parser map after M41: complement clauses (uniform failure mode),
 relative-clause headedness, coordination in extract_discourse, sentence
 splitter, bare passives ("the window was broken" — no clause), wh-questions.
 All grammar/extraction tier — the dict tier is closed for good.
+
+### M42 — grounding-depth diagnosis: why the dead families are dead (MEASURED)
+
+`scripts/probe_grounding_depth.py` on the 7 families M40 showed dead/stuck
+even with gold senses in raw 607-axis space. The mechanism is uniform:
+**sense signatures are shallow (2-6 active axes) and the wrong answer wins
+through GENERIC axes.** court.n.04 loses to "judge" via SOMETHING=0.449;
+hood.n.08 ({lex:noun.artifact, BODY} — two axes total) loses to "car" via
+noun.artifact=0.420; yard.n.02 loses via SOMETHING=0.353. SOMETHING appears
+in 66,875 of 117,659 sense signatures (57%) — cosine on raw signatures is
+substantially a genericity match. (M30 called this: "much collapses to
+SOMETHING". Now it's the measured kill mechanism.)
+
+Cheap-fix test — IDF axis weighting (df over all sense signatures,
+idf = log(N/(1+df)), elementwise reweight, renormalize): sense-level option
+ranking across all 31 families goes **50/62 → 53/62**; cell and racket
+fully revive; ball/court/hood/mole/yard do NOT — their signatures simply
+lack content axes to reweight. Also noted: the benchmark is associative
+(sense → related word, ball.n.01 → "game"), which shallow signatures can't
+support even in principle.
+
+Verdict: (a) IDF weighting is a real, cheap metric improvement — candidate
+to land as an opt-in in USVS similarity + chooser inputs behind the usual
+ablation; (b) the remaining 5 families need **deeper explications** (their
+glosses mention head/face/protect, tennis/hit, dance/party — content the
+current decomposition drops to SOMETHING). Grounding depth is now the
+substrate's #1 open item, with a concrete casualty list to test against.
