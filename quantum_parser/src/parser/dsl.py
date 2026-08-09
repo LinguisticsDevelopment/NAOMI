@@ -68,6 +68,14 @@ class Rule:
         pull_categories: SubCategories to propagate to anchor
         pop_categories: SubCategories to remove from anchor
         push_subtypes: SubTypes to add to the result (anchor) node's flags
+        position_constraints: optional {node_ref: absolute_sentence_index}
+            requirements (e.g. {"anchor": 0} = anchor must be the sentence's
+            first word). Checked after a match is otherwise found; empty dict
+            (the default) imposes no constraint, so every pre-existing rule
+            is unaffected. Introduced for subject-initial questions (M43):
+            without it, "is the ball ..." and "where is the ball ..." have no
+            way to distinguish subject-aux inversion / wh-fronting from an
+            ordinary mid-sentence copula using only type/subtype patterns.
         note: Optional comment for documentation
     """
     result: NodeType
@@ -80,6 +88,7 @@ class Rule:
     pull_categories: List[SubCat] = field(default_factory=list)
     pop_categories: List[SubCat] = field(default_factory=list)
     push_subtypes: List[SubType] = field(default_factory=list)
+    position_constraints: Dict[str, int] = field(default_factory=dict)
     note: str = ""
 
     def __repr__(self) -> str:
@@ -275,6 +284,18 @@ def parse_rule(data: Dict[str, Any], default_result: NodeType) -> Rule:
     push_subtypes_raw = data.get("push_subtypes", [])
     push_subtypes = [parse_subtype(st) for st in push_subtypes_raw]
 
+    # position_constraints (optional): {node_ref: absolute_sentence_index}.
+    position_constraints_raw = data.get("position_constraints", {})
+    if not isinstance(position_constraints_raw, dict):
+        raise DSLParseError("'position_constraints' must be an object")
+    position_constraints: Dict[str, int] = {}
+    for ref, idx in position_constraints_raw.items():
+        if ref != "anchor" and not (ref.startswith("before[") or ref.startswith("after[")):
+            raise DSLParseError(f"Invalid node reference in position_constraints: '{ref}'")
+        if not isinstance(idx, int):
+            raise DSLParseError(f"position_constraints value for '{ref}' must be an int")
+        position_constraints[ref] = idx
+
     # Note (optional)
     note = data.get("note", "")
 
@@ -289,6 +310,7 @@ def parse_rule(data: Dict[str, Any], default_result: NodeType) -> Rule:
         pull_categories=pull_categories,
         pop_categories=pop_categories,
         push_subtypes=push_subtypes,
+        position_constraints=position_constraints,
         note=note
     )
 

@@ -2382,3 +2382,34 @@ mis-tags (scorer-level, entangled with lowercasing), (7) recursion-limit
 engine guard — plus, orthogonal and arguably first: **lift the 2-arg
 extraction ceiling**, since it bounds what every downstream consumer can
 see regardless of parse quality.
+
+### M49 — wh-questions land: the stress battery saturates at 34/34 (MEASURED)
+
+Sonnet agent. Root cause for both question shapes was the same: with no
+NOMINAL before the copula (wh-fronting / subject-aux inversion),
+predicate1's generic transitive rule grabbed the postposed subject as an
+OBJECT, and no SUBJECT edge ever formed. Fix: a new `position_constraints`
+DSL feature (opt-in, zero effect on existing rules — a rule can require a
+matched element to sit at a specific sentence position) + one new ruleset
+`question1` ahead of the promotion chain: a wh-rule (sentence-initial
+RELATIVE specifier + copula + NOUN → SUBJECT, stamps SubType.QUESTION) and
+an inversion rule (sentence-initial copula + NOUN → SUBJECT). Both leave
+node types unchanged so aux1/verb1/predicate1 proceed normally. A scoring
+subtlety was found and fixed: the consumed wh-word must keep its
+SPECIFICATION edge or the correct hypothesis under-scores the OBJECT
+misreading; with parity restored, the M38/M45 completeness tie-break picks
+the SUBJECT reading.
+
+**Battery 34/34 (1.00)** — question 2/2, all other categories unchanged.
+Suites: quantum_parser 105/105 (7 new), question+round3 extraction tests
+15/15 (3 new), templates 20/20. The wh-cleft template stays dropped,
+now with a full diagnosis: beyond the verb1/rel2 collision, rel2 can't
+skip the copula between anchor and RELATIVE, and the template needs a
+subject/place swap no rule produces — a dedicated pseudo-cleft rule,
+ticketed, not forced. SubType.QUESTION is stamped on the parse node but
+not yet carried through the adapter (same node-flags gap as PASSIVE —
+one adapter change would unblock both).
+
+The hand battery is DONE as a driver (34/34). Round 6+ is owned by the
+M48 real-text list: extraction 2-arg ceiling, appositive gap-skip, quote
+inversion, quantifier subjects.

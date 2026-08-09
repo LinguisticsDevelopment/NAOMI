@@ -11,6 +11,7 @@
         "adj1", "adj2", "adjPrep1", "adjPrep2",
         "mixPrep",
         "noun1", "noun2",
+        "question1",
         "normPP1", "mixPP1", "adjPP1", "advPP1", "verbPP1",
         "normPP2", "adjPP2", "advPP2", "verbPP2", "mixPP2",
         "noun3",
@@ -906,6 +907,80 @@
                     ],
                     "consume": ["before", "after"],
                     "note": "Example: cats and dogs -> COORD becomes NOUN"
+                }
+            ]
+        },
+
+        "question1": {
+            "description": "Subject-initial questions: grab the postposed bare NOMINAL as SUBJECT before predicate1's generic transitive-object rule (VERBAL+NOMINAL(after)->OBJECT) or noun3's NP-internal PP attachment ever see it. Runs before aux1 (anchor is still the tagger's raw MODIFIER, subtypes still carry PROGRESSIVE from the copula word list) and before noun3/normPP1's NP-attachment, so it never competes with either -- it simply claims the subject first. Two DISJOINT shapes, kept apart deliberately (M43: the wh-cleft's verb1/rel2 collision showed unscoped SPECIFIER-adjacency rules misfire on relative/wh material, so both rules here are scoped as tightly as possible: RELATIVE subtype for the wh-word, sentence-initial position_constraints for the inversion, neither touches verb1/rel2 at all).",
+            "result": "MODIFIER",
+            "rules": [
+                {
+                    "result": "MODIFIER",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "MODIFIER",
+                            "subtypes": ["PROGRESSIVE"]
+                        },
+                        "before": [
+                            {
+                                "type": "SPECIFIER",
+                                "subtypes": ["RELATIVE"],
+                                "quantifier": "one"
+                            }
+                        ],
+                        "after": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "SUBJECT",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        },
+                        {
+                            "type": "SPECIFICATION",
+                            "from": "before[0]",
+                            "to": "anchor"
+                        }
+                    ],
+                    "consume": ["before", "after"],
+                    "push_subtypes": ["QUESTION"],
+                    "position_constraints": {"before[0]": 0},
+                    "note": "Wh-question: 'where is the ball ?' -- English fronts the wh-word, so the copula has no subject to its left. Scoped to RELATIVE-tagged wh-adverbs (where/when/why/how) only, so verb1's ordinary adverb-adjacency rules ('quickly runs') are never touched; sentence-initial position_constraints so it can never fire on a mid-sentence 'where' (e.g. a future embedded question)."
+                },
+                {
+                    "result": "MODIFIER",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {
+                            "type": "MODIFIER",
+                            "subtypes": ["PROGRESSIVE"]
+                        },
+                        "before": [],
+                        "after": [
+                            {
+                                "type": "NOUN",
+                                "quantifier": "one"
+                            }
+                        ]
+                    },
+                    "connections": [
+                        {
+                            "type": "SUBJECT",
+                            "from": "anchor",
+                            "to": "after[0]"
+                        }
+                    ],
+                    "consume": ["after"],
+                    "push_subtypes": ["QUESTION"],
+                    "position_constraints": {"anchor": 0},
+                    "note": "Yes/no subject-aux inversion: 'is the ball in the garden ?' -- the copula is fronted with no subject before it. Scoped to sentence-initial copula only (position_constraints), so an ordinary mid-sentence copula ('mary is happy') is never touched."
                 }
             ]
         },

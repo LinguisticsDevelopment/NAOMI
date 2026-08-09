@@ -94,6 +94,15 @@ def find_matches(hypothesis: Hypothesis, anchor_idx: int, rule: Rule) -> List[Ma
     before_indices = [candidates[0] for candidates in before_match_sets] if before_match_sets else []
     after_indices = [candidates[0] for candidates in after_match_sets] if after_match_sets else []
 
+    # Optional absolute-position requirements (e.g. "anchor must be the
+    # sentence's first word" for subject-aux inversion). Empty for every
+    # pre-existing rule, so this is a no-op unless a rule opts in.
+    if rule.position_constraints:
+        for ref, required_idx in rule.position_constraints.items():
+            actual_idx = _resolve_position_ref(ref, anchor_idx, before_indices, after_indices)
+            if actual_idx != required_idx:
+                return []
+
     match = Match(
         anchor_idx=anchor_idx,
         before_indices=before_indices,
@@ -103,6 +112,20 @@ def find_matches(hypothesis: Hypothesis, anchor_idx: int, rule: Rule) -> List[Ma
     matches.append(match)
 
     return matches
+
+
+def _resolve_position_ref(ref: str, anchor_idx: int, before_indices: List[int],
+                           after_indices: List[int]) -> Optional[int]:
+    """Resolve a rule reference ("anchor"/"before[N]"/"after[N]") to a node index."""
+    if ref == "anchor":
+        return anchor_idx
+    if ref.startswith("before["):
+        i = int(ref[7:-1])
+        return before_indices[i] if 0 <= i < len(before_indices) else None
+    if ref.startswith("after["):
+        i = int(ref[6:-1])
+        return after_indices[i] if 0 <= i < len(after_indices) else None
+    return None
 
 
 def matches_pattern(node: Node, pattern: PatternElement, anchor_node: Node) -> bool:
