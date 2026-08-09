@@ -2187,3 +2187,55 @@ ablation; (b) the remaining 5 families need **deeper explications** (their
 glosses mention head/face/protect, tennis/hit, dance/party — content the
 current decomposition drops to SOMETHING). Grounding depth is now the
 substrate's #1 open item, with a concrete casualty list to test against.
+
+### M43 — the first scaling curve: data-limited, not capacity-limited (MEASURED, data axis)
+
+`probe_scaled_training.py` (curriculum2 scaled mode: mixed A+B templates,
+61-noun pool, 4-8 facts / 2-4 entities per episode), dim 48 / 169k params
+fixed, 80 epochs:
+
+| episodes | val_acc | minutes |
+|---------:|--------:|--------:|
+| 480      | 0.750   | 2.4     |
+| 1000     | 0.825   | 6.3     |
+| 2000     | 0.885   | 15.9    |
+
+Monotone data scaling at fixed capacity; the (2000, dim=48) cell reproduced
+0.885 exactly on a second run (deterministic harness). Per-level at 2000:
+L1 0.88 / L2 0.95 / L3 0.93 / L4 0.91 / **L5 0.75** / L6 0.88 — recency
+under distractors is the residual weakness, and it is the level that
+improved most with data (0.59 → 0.75 from 480 to 2000). The capacity axis
+(dim 64/96 at 2000 episodes) was killed twice by host crashes and is
+**abandoned on this machine by user decision** — the run overloads WSL. The
+data-axis answer stands: the reactor at this size wants more episodes, not
+more width. `--axis` flag added to the probe for partial reruns elsewhere.
+
+### M44 — gloss content-word enrichment: honest negative, M24 earns its keep (MEASURED)
+
+Sonnet-agent prototype of the M42 "deeper explications" lever
+(`ground/explication.py`, opt-in `enriched_sense_dense(usvs, sid, alpha)`,
+default-off identity; `scripts/probe_explication_depth.py`; 5 tests).
+
+Root-cause trace (hood.n.08, "a headdress that protects the head and
+face"): `sense_prime_weights` keeps decomposition leaves ONLY if they are
+literal NSM primes — `head` decomposes in one hop to the named axis HEAD,
+which EXISTS in usvs.axes but is not in the prime whitelist, so it is
+**discarded**; `protects`→body survives by coincidence. The 57%
+SOMETHING-saturation has the same shape: generic primes win because
+decomposition keeps whatever whitelisted prime it stumbles into and throws
+away the specific named axes it actually reaches.
+
+The enrichment (blend gloss content words' placed-core coordinates into the
+sense vector): **negative**. With the M24 leakage guard ON (answer word
+excluded when it appears verbatim in the gloss), enriched+IDF peaks at
+51/62 sense rankings vs **53/62 for IDF alone** — two new regressions, zero
+casualties revived. With the guard OFF it "wins" (55/62) — but every flip
+is literal leakage (court.n.04's gloss contains "game", ball.n.09's
+contains "dance", fan/tie likewise): the exact artifact M24 exists to
+catch. SemCor subsample: enriched+IDF +0.003 over usvs-idf — noise.
+
+Standing conclusions: (1) the depth lever is NOT gloss-blending at query
+time — it is the prime whitelist in `sense_prime_weights`: molecule axes
+the decomposition already reaches (HEAD, FACE, ...) should survive into
+signatures. That is a build-path change with a casualty-list gate — the
+concrete next experiment. (2) M24 flagged a fake win again; the rule stays.

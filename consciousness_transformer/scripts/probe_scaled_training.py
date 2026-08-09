@@ -164,13 +164,17 @@ def main() -> None:
     ap.add_argument("--epochs", type=int, default=80)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--time-budget-min", type=float, default=40.0)
+    ap.add_argument("--axis", choices=("both", "data", "capacity"), default="both",
+                    help="run only one axis's cells (resume aid: a killed run's "
+                         "completed axis doesn't need re-running — cells are "
+                         "deterministic given the same seed/args)")
     args = ap.parse_args()
 
     # Overlap by design: (2000, dim=48) appears on both axes -- run it twice
     # (once per axis) so each axis's own table is self-contained and each
     # cell gets its own independent wall-time measurement.
-    data_points = [(480, 48), (1000, 48), (2000, 48)]
-    capacity_points = [(2000, 48), (2000, 64), (2000, 96)]
+    data_points = [(480, 48), (1000, 48), (2000, 48)] if args.axis != "capacity" else []
+    capacity_points = [(2000, 48), (2000, 64), (2000, 96)] if args.axis != "data" else []
 
     results = []
     print("#" * 78)
