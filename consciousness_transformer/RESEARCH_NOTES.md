@@ -2275,3 +2275,45 @@ wh-questions (out of scope, verb1/rel2 collision). Gates: quantum_parser
 TODO: the agents were stopped before writing regression tests for the new
 behaviors — battery + suites cover them, but dedicated tests should land
 with round 4.
+
+### M46 — senses regrounded IN the space: USVS is the metalanguage (MEASURED: parity, adopted on architectural grounds)
+
+User's call, closing the M44 thread: "USVS is our Semantic Metalanguage, we
+don't need a vestigial lossy one." Sense signatures are no longer built by
+gloss-to-prime decomposition; `sense_usvs_weights` (ground/usvs.py) grounds
+each sense **in the placed space itself** — classical genus + differentia:
+unit coordinates of its direct hypernyms' lemmas (w=1.0) blended with its
+gloss content words' coordinates (w=0.7), each contributing word discounted
+by 1/sqrt(n_senses) and each component scaled by its mean confidence,
+top-24-axis sparsified, plus the lex: axis as before. Prime decomposition
+survives ONLY as the fallback (1,208 of 117,659 senses = 1.0%).
+`build_usvs(sense_grounding="usvs"|"primes")` keeps the legacy path for A/B.
+New artifact: fingerprint **e0daef638b640dd5**, nnz 2,784,733 (~24 axes per
+sense, was ~4), 75s build.
+
+Design lesson measured on the way: including the synset's OWN lemma
+coordinates (v1) cratered same-word discrimination (62-proxy 50→44) — a
+word's coordinate is a mixture over its senses, so the headword drags every
+sense toward the dominant one. The thing being defined must not appear in
+its own definition; genus + differentia only.
+
+Gates — parity across the board, reported straight:
+- 62-sense ranking proxy: new 50 plain / 52 idf vs old 50 / 53.
+- SemCor subsample (2,056 inst): poly 0.237 vs 0.232 (MFS 0.507). Noise.
+- Episode-level flipped-half GOLD ceiling (3,450 eps): **0.810 vs 0.812**.
+  ball and racket REVIVE (0→1); pitcher and seal break (1→0/0.48);
+  court/yard/cell/hood/mole unchanged. court + yard fail under BOTH
+  groundings → remaining suspicion moves to the placed word coordinates /
+  association geometry, not sense signatures.
+- Chooser in-distribution spot check (raw d=607, new artifact): sense_acc
+  1.000, benchmark 0.796 = the new same-d ceiling exactly — the trained
+  consumer still saturates whatever the substrate supports.
+
+Adopted as default despite parity: one grounding mechanism instead of two,
+senses live on the same axes words do (~24 vs ~4), transparency improves
+(ball.n.09 now reads attr:dancing where it read SOMETHING), and the lossy
+whitelist path is retired to OOV fallback. The extrinsic-validation house
+rule is noted, not waived: this is recorded as an architectural
+simplification at measured parity, NOT a performance win. Full leave-one-
+family-out chooser revalidation deferred to better hardware (training-scale
+runs crash this box).

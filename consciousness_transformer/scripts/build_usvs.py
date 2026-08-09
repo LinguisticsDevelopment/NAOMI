@@ -25,10 +25,15 @@ def main() -> None:
     ap.add_argument("--max-senses", type=int, default=None)
     ap.add_argument("--out", default=str(Path(__file__).resolve().parent.parent / "data" / "usvs"))
     ap.add_argument("--no-dictionary", action="store_true")
+    ap.add_argument("--sense-grounding", choices=("usvs", "primes"), default="usvs",
+                    help="M46: 'usvs' grounds senses in the placed space "
+                         "(genus + differentia coordinates, prime decomposition "
+                         "as fallback only); 'primes' is the legacy M29 path")
     args = ap.parse_args()
 
     t0 = time.time()
     u = build_usvs(n_core=args.n_core, max_senses=args.max_senses,
+                   sense_grounding=args.sense_grounding,
                    log=lambda m: print(f"[{time.time()-t0:6.0f}s] {m}", flush=True))
     out = save_usvs(u, args.out)
     print(f"[{time.time()-t0:6.0f}s] saved -> {out}  fingerprint={u.fingerprint}")

@@ -57195,7 +57195,7 @@
   "lex:verb.stative",
   "lex:verb.weather"
  ],
- "fingerprint": "72b00a67c2b9daca",
+ "fingerprint": "e0daef638b640dd5",
  "genus": [
   [
    "abdominal",
@@ -63388,11 +63388,13 @@
    "axes": 607,
    "core_words": 9946,
    "genus_edges": 1546,
+   "prime_fallback_senses": 1208,
    "senses": 117659
   },
   "n_core": 10000,
-  "provenance": "M17-M28.1; see RESEARCH_NOTES M29",
+  "provenance": "M17-M28.1 core; sense layer M46 (usvs-native) / M29 (primes); see RESEARCH_NOTES",
   "schema": "usvs-1",
+  "sense_grounding": "usvs",
   "signal_set": [
    "synonym",
    "similar",

@@ -73,7 +73,13 @@ def _word_prime_counts(word: str, depth: int) -> Tuple[Tuple[str, int], ...]:
 
 def sense_prime_weights(gloss: str, *, depth: int = 2, max_children: int = 8) -> Dict[str, float]:
     """`sense_graph.gloss_prime_weights` semantics with a word-level decompose
-    cache (identical output — counts are additive per content word)."""
+    cache (identical output — counts are additive per content word).
+
+    M46: demoted from THE sense-grounding path to the fallback for senses the
+    USVS-native path can't reach (no in-core lemma, hypernym, or gloss word).
+    The lossy step was never the primes themselves but forcing every sense
+    through the prime whitelist when the full 607-axis space already existed
+    — see RESEARCH_NOTES M44/M46."""
     counts: Dict[str, float] = {}
     for c in content_words(gloss or "")[:max_children]:
         for prime, n in _word_prime_counts(c, depth):
@@ -82,6 +88,101 @@ def sense_prime_weights(gloss: str, *, depth: int = 2, max_children: int = 8) ->
         return {}
     m = max(counts.values())
     return {k: v / m for k, v in counts.items()}
+
+
+# ---------------------------------------------------------------------------
+# M46 sense grounding: senses defined in terms of USVS itself
+# ---------------------------------------------------------------------------
+# Weights for the structural components (genus + differentia — the classical
+# definition form). The synset's OWN lemmas are deliberately EXCLUDED: a
+# word's placed coordinate is a mixture over all its senses, so blending it
+# into one sense drags every sense of a word toward the word's dominant sense
+# and destroys same-word discrimination (measured: 62-ranking 50->44 with a
+# lemma component, even ambiguity-discounted). The genus carries the is-a
+# bulk; gloss content words carry the differentia.
+SENSE_W_GENUS = 1.0
+SENSE_W_GLOSS = 0.7
+SENSE_TOP_K = 24  # sparsify each sense row to its top-K axes (artifact size)
+
+
+@lru_cache(maxsize=200_000)
+def _n_senses(word: str) -> int:
+    from ..wordnet import _wn
+    try:
+        return max(1, len(_wn().synsets(word)))
+    except Exception:
+        return 1
+
+
+def _mean_unit_coord(words: Sequence[str], placed: Dict[str, np.ndarray]) -> Optional[np.ndarray]:
+    """Ambiguity-discounted mean of unit word coordinates.
+
+    A placed word coordinate is a mixture over ALL that word's senses, so its
+    evidence about any ONE sense scales down with the word's polysemy: each
+    word contributes with weight 1/sqrt(n_senses), and the component's overall
+    CONFIDENCE (returned alongside the vector, mean of those weights) scales
+    the component in the caller's blend. Without this, a synset's own headword
+    ("ball" in ball.n.09) floods the sense with its dominant-sense content and
+    every sense of a word collapses toward the word.
+
+    Returns (unit vector, confidence in (0, 1]) or None."""
+    vecs, wts = [], []
+    for w in words:
+        c = placed.get(w)
+        if c is not None:
+            n = float(np.linalg.norm(c))
+            if n > 1e-9:
+                vecs.append(c / n)
+                wts.append(1.0 / float(_n_senses(w)) ** 0.5)
+    if not vecs:
+        return None
+    m = np.average(vecs, axis=0, weights=wts)
+    n = float(np.linalg.norm(m))
+    if n <= 1e-9:
+        return None
+    return m / n, float(sum(wts) / len(wts))
+
+
+def sense_usvs_weights(sid: str, gloss: str, lemmas: Sequence[str],
+                       placed: Dict[str, np.ndarray], axis_names: Sequence[str],
+                       *, top_k: int = SENSE_TOP_K) -> Dict[str, float]:
+    """Ground one sense IN the space: blend of (a) its synset's own in-core
+    lemma coordinates, (b) its direct hypernyms' lemma coordinates, (c) its
+    gloss content words' coordinates — all placed-core vectors over the full
+    named-axis inventory, no prime whitelist anywhere. Returns {axis: weight}
+    (top-``top_k`` axes, max-normalized like the legacy path) or {} if no
+    component is available (caller falls back to prime decomposition).
+    """
+    from ..wordnet import _wn
+    wn = _wn()
+
+    parts: List[Tuple[float, np.ndarray]] = []
+    try:
+        syn = wn.synset(sid)
+        hyper_lemmas = [l.name().lower() for h in
+                        (syn.hypernyms() + syn.instance_hypernyms())
+                        for l in h.lemmas() if "_" not in l.name()]
+    except Exception:
+        hyper_lemmas = []
+    r = _mean_unit_coord(hyper_lemmas, placed)
+    if r is not None:
+        parts.append((SENSE_W_GENUS * r[1], r[0]))
+    r = _mean_unit_coord(content_words(gloss or ""), placed)
+    if r is not None:
+        parts.append((SENSE_W_GLOSS * r[1], r[0]))
+    if not parts:
+        return {}
+
+    blend = np.zeros_like(parts[0][1])
+    for w, vec in parts:
+        blend += w * vec
+    if top_k < len(blend):
+        cut = np.partition(blend, -top_k)[-top_k]
+        blend = np.where(blend >= max(cut, 1e-9), blend, 0.0)
+    m = float(blend.max())
+    if m <= 1e-9:
+        return {}
+    return {axis_names[j]: float(blend[j] / m) for j in np.nonzero(blend)[0]}
 
 
 # ---------------------------------------------------------------------------
@@ -208,7 +309,10 @@ class USVS:
 # ---------------------------------------------------------------------------
 def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
                depth: int = 3, sense_depth: int = 2, alpha: float = 0.7,
-               iters: int = 20, log=None) -> USVS:
+               iters: int = 20, sense_grounding: str = "usvs", log=None) -> USVS:
+    """sense_grounding: "usvs" (M46 default — senses grounded in the placed
+    space itself: lemma/genus/gloss coordinate blend, prime decomposition as
+    fallback only) or "primes" (the legacy M29 whitelist path, kept for A/B)."""
     def say(msg: str) -> None:
         if log:
             log(msg)
@@ -240,7 +344,8 @@ def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
         f"({sum(1 for *_, t in ants if t != 'satellite_satellite')} in default tiers), "
         f"genus={len(genus_edges)}")
 
-    # 3) the full sense layer, grounded per-gloss
+    # 3) the full sense layer — grounded IN the placed space (M46 default),
+    #    or per-gloss prime decomposition (legacy "primes" mode)
     from ..wordnet import all_senses
     axis_index = {a: j for j, a in enumerate(axes.names)}
     sense_ids: List[str] = []
@@ -248,14 +353,22 @@ def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
     indptr = [0]
     idxs: List[int] = []
     vals: List[float] = []
+    n_fallback = 0
     for k, (sid, gloss, lex, lemmas) in enumerate(all_senses()):
         if max_senses is not None and k >= max_senses:
             break
         sense_ids.append(sid)
         sense_lemmas.append(lemmas)
+        weights: Dict[str, float] = {}
+        if sense_grounding == "usvs":
+            weights = sense_usvs_weights(sid, gloss, lemmas, placed, axes.names)
+        if not weights:  # legacy mode, or USVS-native path found nothing
+            weights = sense_prime_weights(gloss, depth=sense_depth)
+            if sense_grounding == "usvs":
+                n_fallback += 1
         row: Dict[int, float] = {}
-        for prime, wgt in sense_prime_weights(gloss, depth=sense_depth).items():
-            j = axis_index.get(prime)
+        for axis, wgt in weights.items():
+            j = axis_index.get(axis)
             if j is not None:
                 row[j] = wgt
         j = axis_index.get(f"lex:{lex}")
@@ -267,17 +380,20 @@ def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
         indptr.append(len(idxs))
         if log and (k + 1) % 20_000 == 0:
             say(f"senses grounded: {k + 1}")
-    say(f"senses: {len(sense_ids)} (nnz={len(idxs)})")
+    say(f"senses: {len(sense_ids)} (nnz={len(idxs)}"
+        + (f", prime-fallback={n_fallback}" if sense_grounding == "usvs" else "") + ")")
 
     meta = {
         "schema": SCHEMA_VERSION,
         "n_core": n_core,
         "signal_set": ["synonym", "similar", "also_see", "domain-features",
                        "satellite-antonyms(tiered)", "genus(directed)"],
+        "sense_grounding": sense_grounding,
         "counts": {"core_words": len(words), "axes": axes.dim,
                    "senses": len(sense_ids), "antonym_edges": len(ants),
-                   "genus_edges": len(genus_edges)},
-        "provenance": "M17-M28.1; see RESEARCH_NOTES M29",
+                   "genus_edges": len(genus_edges),
+                   "prime_fallback_senses": n_fallback},
+        "provenance": "M17-M28.1 core; sense layer M46 (usvs-native) / M29 (primes); see RESEARCH_NOTES",
     }
     fp = hashlib.sha256(json.dumps(
         {"axes": list(axes.names), "meta": meta}, sort_keys=True).encode()).hexdigest()[:16]
