@@ -76,3 +76,34 @@ between correct-WSD and MFS-error perception on the same episodes.
 
 M30 (now, ~hours) → M31 (next session-scale task) → M32 (after M31's gate).
 Long-term stages beyond these live in `ROADMAP_LONG_TERM.md`.
+
+## State after M40 (2026-08-09) and the next jobs
+
+Integration arc so far: M30 WSD negative → M31/M31b handles win (reactor
+0.885) → M32 curriculum → M33 mind-line handles → M34 chooser → M35 zero
+template overfit (parser = bottleneck) → M36/M38 parser rounds 1-2 (20
+templates) → M37 31-family tables → M39 parser stress map (20/34) → M40 raw
+axes (projection exonerated; chooser saturates the substrate at every d).
+
+Open problems, cleanly separated:
+1. **Parser coverage** (M39 map): dict batch, coordination-in-extraction,
+   sentence splitter, complement/relative scoping, wh-questions.
+2. **Grounding depth**: ball/court/racket/yard have ceiling 0.000 even with
+   gold senses on raw axes — their sense signatures can't rank the MC
+   options. Diagnose before fixing (is it explication shallowness or a
+   signature-construction artifact?).
+3. **Zero-shot chooser transfer**: date/organ (ceiling 1.0, transfer ~0) +
+   the pitcher third-sense error; then wean off gold labels.
+4. **Scaling curve**: 6 of 7 grid cells unmeasured (480ep/d48 = 0.750).
+
+Job protocol (WSL constraint, learned the hard way): ONE heavy run at a
+time, `nice -n 19`, nohup to `runs/*.log` (durable), watcher armed; main
+session does cheap CPU work (parser dev, probes, ledger) in parallel.
+
+NOW (next session-scale slot):
+- Background slot: **scaling grid** (`probe_scaled_training.py`, solo).
+- Main session: **parser round 3 tier 1** — WORD_TAG_DICT batch (+past
+  participles), coordination in `extract_discourse`, sentence splitter at
+  the encoder seam. Each lands with stress-battery deltas (M39 re-run).
+- Quick probe when the slot frees: grounding-depth diagnosis on the four
+  ceiling-0 families (cheap, no training).
