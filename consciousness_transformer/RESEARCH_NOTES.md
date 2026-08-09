@@ -2343,3 +2343,42 @@ wh-questions remain (out of scope, verb1/rel2). Suites: quantum_parser
 Parser is now ahead of the curriculum's needs; next parser work should be
 driven by whatever the scaled corpus actually fails on, not by this
 battery (saturated except questions).
+
+### M48 — the real-text failure map: 89% subject-coverage, 2-arg ceiling exposed (MEASURED)
+
+`scripts/probe_realtext.py` (Sonnet agent; deterministic, rerunnable in
+~70s): first 400 SemCor sentences of length 5-25 tokens through the REAL
+pipeline. **CLAUSE_OK 356/400 = 89.0%** (a clause with a real SUBJECT came
+out); NO_CLAUSE 43; NO_PARSE 1 (a recursion-limit crash in the hypothesis
+search — engine reliability item, caught and degraded gracefully).
+
+All 44 failures taxonomized by hand from their graphs:
+- APPOSITIVE_INTERRUPT 13 — "pete rozelle, the league commissioner,
+  pointed out" — a comma/dash/paren span between subject and verb defeats
+  SUBJECT attachment (strict adjacency). Grammar rule; most fixable.
+- QUANTIFIER_SUBJECT 9 — "both were under...", "each of the four..." —
+  this/both/each/all as standalone subjects keep their determiner tag.
+- QUOTE_INVERSION 6 — "'' , said long jim ." — postposed subject comes out
+  as OBJECT of the reporting verb. New rule, bounded trigger.
+- HOMOGRAPH_MISTAG 5 — "meek expressed...", "the tie was..." (partly a
+  lowercasing artifact — the probe lowercases, destroying the PROPN
+  capitalization signal).
+- EXISTENTIAL_THERE 3, FRONTED_ADJUNCT 2, fragments 3 (not bugs),
+  GERUND_SUBJECT/CONTRACTED_COPULA 1 each.
+
+**The load-bearing secondary finding: the 2-arg extraction ceiling.** Even
+on passing sentences the best clause never exceeds SUBJECT + ONE other
+role (88.5% cap at exactly 2 args; 11.5% are SUBJECT-only stumps) —
+`_fact_clause`/`_primary_discourse` are curriculum-scoped to the first
+PREPOSITION edge, so every additional PP/object/modifier on real prose is
+silently dropped. The 89% headline measures "got a subject," not "captured
+the sentence." The probe tracks this richness histogram so future rounds
+see the ceiling move.
+
+Round-5+ ranked list: (1) appositive/interrupter gap-skip rule,
+(2) quote-inversion rule, (3) quantifier-subject tagging, (4) existential
+there, (5) fronted adjuncts (byproduct of #1's mechanism), (6) homograph
+mis-tags (scorer-level, entangled with lowercasing), (7) recursion-limit
+engine guard — plus, orthogonal and arguably first: **lift the 2-arg
+extraction ceiling**, since it bounds what every downstream consumer can
+see regardless of parse quality.
