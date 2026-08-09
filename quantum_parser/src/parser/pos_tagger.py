@@ -1,13 +1,75 @@
 """
 Simple POS tagger for automatic word tagging.
 
-Uses a basic rule-based approach with a word dictionary.
-For production, integrate spaCy or similar.
+Two layers:
+
+1. ``WORD_TAG_DICT`` / ``WORD_SUBTYPES`` — hand-authored CLOSED-CLASS entries
+   (determiners, pronouns, auxiliaries, prepositions, conjunctions). These are
+   finite classes WordNet doesn't cover; they keep top precedence.
+2. ``data/en_lexicon.json.gz`` — the generated OPEN-CLASS lexicon (nouns,
+   verbs, adjectives, adverbs + inflections with morphological subtypes),
+   built from WordNet by consciousness_transformer/scripts/
+   build_parser_lexicon.py. Multi-POS words expose every tag to the
+   hypothesis lattice via get_possible_tags (frequency-ordered, entry [0] is
+   the context-free default); the scorer picks the reading that completes a
+   tree. If the file is absent, behavior degrades to the old suffix
+   heuristics — never an error.
 """
 
-from typing import List
+import gzip
+import json
+import os
+from typing import Dict, List, Optional, Tuple
+
 from .data_structures import Word
 from .enums import Tag, SubType
+
+_LEXICON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "..", "..", "data", "en_lexicon.json.gz")
+_lexicon: Optional[Dict[str, List[Tuple[Tag, List[SubType]]]]] = None
+
+
+def _load_lexicon() -> Dict[str, List[Tuple[Tag, List[SubType]]]]:
+    """Lazy-load the generated open-class lexicon (stdlib only, one time).
+
+    Enum names unknown to this build (schema drift) are skipped per-entry
+    rather than failing the load."""
+    global _lexicon
+    if _lexicon is None:
+        table: Dict[str, List[Tuple[Tag, List[SubType]]]] = {}
+        try:
+            with gzip.open(_LEXICON_PATH, "rb") as f:
+                raw = json.load(f)
+            for word, entries in raw.items():
+                parsed = []
+                for tag_name, subtype_names in entries:
+                    try:
+                        parsed.append((Tag[tag_name],
+                                       [SubType[s] for s in subtype_names]))
+                    except KeyError:
+                        continue
+                if parsed:
+                    table[word] = parsed
+        except (OSError, ValueError):
+            table = {}
+        _lexicon = table
+    return _lexicon
+
+
+def lexicon_entry(text_lower: str) -> Optional[List[Tuple[Tag, List[SubType]]]]:
+    """The word's open-class lexicon entries (frequency-ordered), or None."""
+    return _load_lexicon().get(text_lower)
+
+
+def lexicon_subtypes(text_lower: str, tag: Tag) -> List[SubType]:
+    """Morphological subtypes the lexicon assigns to ``text_lower`` read as
+    ``tag`` (e.g. broken/VERB -> [PAST_PARTICIPLE]); [] if unknown."""
+    entry = lexicon_entry(text_lower)
+    if entry:
+        for etag, subs in entry:
+            if etag == tag:
+                return list(subs)
+    return []
 
 
 # Simple word → POS tag dictionary (expandable)
@@ -32,6 +94,11 @@ WORD_TAG_DICT = {
     "among": Tag.ADP, "during": Tag.ADP, "without": Tag.ADP,
     "within": Tag.ADP, "toward": Tag.ADP, "towards": Tag.ADP,
     "inside": Tag.ADP, "near": Tag.ADP,
+    "behind": Tag.ADP, "beside": Tag.ADP, "above": Tag.ADP,
+    "below": Tag.ADP, "beneath": Tag.ADP, "across": Tag.ADP,
+    "along": Tag.ADP, "around": Tag.ADP, "onto": Tag.ADP,
+    "upon": Tag.ADP, "against": Tag.ADP, "beyond": Tag.ADP,
+    "outside": Tag.ADP, "off": Tag.ADP,
 
     # Common adverbs
     "very": Tag.ADV, "quickly": Tag.ADV, "slowly": Tag.ADV,
@@ -655,6 +722,18 @@ def get_possible_tags(word: Word) -> List[Tag]:
     if text_lower in AMBIGUOUS_WORDS:
         return AMBIGUOUS_WORDS[text_lower].copy()
 
+    # Closed-class hand entries are authoritative: no branching
+    if text_lower in WORD_TAG_DICT:
+        return [word.pos]
+
+    # Open-class lexicon: expose every WordNet POS to the lattice
+    entry = lexicon_entry(text_lower)
+    if entry and len(entry) > 1:
+        tags = [t for t, _subs in entry]
+        if word.pos not in tags:  # e.g. PROPN from capitalization heuristic
+            tags.append(word.pos)
+        return tags
+
     # Not ambiguous - return current tag as only option
     return [word.pos]
 
@@ -675,10 +754,19 @@ def simple_tag(text: str) -> Tag:
     if text_lower in WORD_TAG_DICT:
         return WORD_TAG_DICT[text_lower]
 
-    # Simple heuristics
-    # Capitalized words (not at start) → Proper noun
+    # Capitalized words (not at start) → Proper noun. Checked BEFORE the
+    # lexicon so names that are also common words ("Mark", "Bill") stay PROPN.
     if text[0].isupper() and text not in ["I", "A"]:
         return Tag.PROPN
+
+    # Open-class lexicon (generated from WordNet): entry [0] is the
+    # frequency-ordered context-free default; the lattice can still branch to
+    # the other tags via get_possible_tags.
+    entry = lexicon_entry(text_lower)
+    if entry:
+        return entry[0][0]
+
+    # Simple heuristics
 
     # Ends in -ly → probably adverb
     if text_lower.endswith("ly"):
@@ -725,6 +813,11 @@ def tag_sentence(sentence: str) -> List[Word]:
             # Add suffix-based subtypes
             token_lower = token.lower()
 
+            # Morphological subtypes from the open-class lexicon
+            for st in lexicon_subtypes(token_lower, tag):
+                if st not in subtypes:
+                    subtypes.append(st)
+
             # -ing suffix → PARTICIPLE (for present participles)
             if token_lower.endswith("ing") and tag == Tag.VERB:
                 if SubType.PARTICIPLE not in subtypes:
@@ -752,6 +845,12 @@ def tag_words(text_list: List[str]) -> List[Word]:
 
         # Add suffix-based subtypes
         text_lower = text.lower()
+
+        # Morphological subtypes from the open-class lexicon
+        for st in lexicon_subtypes(text_lower, tag):
+            if st not in subtypes:
+                subtypes.append(st)
+
         if text_lower.endswith("ing") and tag == Tag.VERB:
             if SubType.PARTICIPLE not in subtypes:
                 subtypes.append(SubType.PARTICIPLE)

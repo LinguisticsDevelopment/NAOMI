@@ -62,3 +62,7 @@ htmlcov/
 *.tmp
 temp/
 tmp/
+
+# The WordNet-generated tag lexicon is a committed artifact (deterministic,
+# 0.59 MB; built by consciousness_transformer/scripts/build_parser_lexicon.py)
+!data/en_lexicon.json.gz

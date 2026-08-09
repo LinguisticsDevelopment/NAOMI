@@ -2124,3 +2124,39 @@ cleanly split in two: (a) **grounding depth** for the ceiling-0 families —
 a USVS/dictionary problem; (b) **zero-shot policy transfer** for
 date/organ/jam — a chooser/curriculum problem. Neither is a dimensionality
 problem; that door closes.
+
+### M41 — the WordNet-backed tag lexicon: hand-listing ends (MEASURED)
+
+The user's call on seeing M39: "we were hand tagging????" — WORD_TAG_DICT
+was ~200 hand-listed words while the project already owns WordNet/USVS with
+117k senses. `scripts/build_parser_lexicon.py` now generates
+`quantum_parser/data/en_lexicon.json.gz` (159,993 entries, 15,090 multi-POS,
+0.59 MB gz, fingerprint 80fa20bf6b16c13f, committed): every single-word
+WordNet lemma, every POS it can be, frequency-ordered (SemCor counts), plus
+generated inflections carrying morphological subtypes — plurals [PLURAL],
+3sg [THIRD_PERSON, SINGULAR], -ing [PARTICIPLE], past/-ed
+[PAST_PARTICIPLE] (irregulars from WordNet's exc lists; past vs participle
+indistinguishable there, both flagged — documented).
+
+Wiring precedence in `pos_tagger.py`: hand dict (now genuinely closed-class:
+determiners/pronouns/aux/prepositions — 14 prepositions added: behind,
+beside, above, below, beneath, across, along, around, onto, upon, against,
+beyond, outside, off) → PROPN capitalization guard → lexicon entry[0] →
+old suffix heuristics (lexicon absent = old behavior, never an error).
+Multi-POS words expose ALL their tags to the hypothesis lattice via
+get_possible_tags — the scorer picks the reading that completes a tree
+("every option in every slot", the project's stated design).
+
+Stress battery: **20/34 → 23/34**. prep 5/8 → **8/8** ("came from the shed"
+fixed by NOUN/VERB branching, not by a dict entry). passive 2/4 → 3/4
+(moved). One honest regression: subord 1/3 → 0/3 — "knows that john…"
+previously PASSED by accident (unknown matrix verb dropped out, embedded
+clause extracted clean); with "knows" now a real verb it fails structurally
+like "said". Complement clauses are confirmed pure grammar work. Suites:
+quantum_parser 82 → 91 (9 new lexicon tests), curriculum templates A 6/6,
+B 6/6, C 8/8 — zero regression.
+
+Remaining parser map after M41: complement clauses (uniform failure mode),
+relative-clause headedness, coordination in extract_discourse, sentence
+splitter, bare passives ("the window was broken" — no clause), wh-questions.
+All grammar/extraction tier — the dict tier is closed for good.
