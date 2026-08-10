@@ -75,3 +75,39 @@ bridge.
   per-word embeddings, distributional signals in the placement.
 - No transformers inside the loop; attention only as a single readable
   select-over-explicit-objects op. Depth lives in the loop, not in layers.
+
+## The Spanish Freeze Test (endgame validation, user-specified 2026-08-09)
+
+The decisive falsification test of the knowledge/policy separation: map a
+Spanish lexicon onto USVS, author Spanish grammar, and test reading
+comprehension WITH THE TRAINED REACTOR FROZEN — zero retraining.
+
+Why it's decisive: sense signatures are keyed to SYNSET IDs, not English
+strings (Open Multilingual Wordnet links Spanish lemmas to the same
+Princeton synsets — "gato" → cat.n.01 → the SAME vector). A translated
+episode therefore produces a near-identical clause stream at the membrane.
+If perception does its job, Spanish is INVISIBLE to the mind. Prediction:
+comprehension within noise of English. Any gap localizes to perception
+(parser/lexicon/role-map) and is inspectable — the architecture makes the
+failure analysis possible, which is itself part of the claim.
+
+Transfers for free: sense layer (synset-keyed), reactor weights, memory
+machinery, resolver heads, entity atoms (language-neutral by design).
+Needs building (all perception-side, all deterministic):
+1. Spanish tag lexicon generated from OMW-es (the M41 recipe verbatim).
+2. Spanish grammar rulesets (spanish.json — the parser was designed for
+   grammar-file swaps; quantum_parser already carries Spanish tagging
+   stubs). The interactive/agent parser-dev loop pattern applies.
+3. Spanish role map (clause.py _PREP_RELATION is English: needs es
+   equivalents — "en"→PLACE, "a"→PLACE/dative, "de"→SOURCE...) — argues
+   for making the role map a per-language data file, like the grammar.
+4. Spanish word-coordinate layer: either propagate placement over OMW-es
+   relations (M29 recipe) or derive word coords from synset-mean of the
+   M46 sense layer (cheaper; senses already transfer).
+5. Spanish surface templates for the existing curriculum generators
+   (translation, not new logic) + pronoun feature rows (ella/él — gender
+   is richer in Spanish, the feature table already has the dims).
+
+Sequencing: after real-text English comprehension is measured (the other
+big unopened door). Both are perception-side campaigns; the mind is done
+being the bottleneck for either.
