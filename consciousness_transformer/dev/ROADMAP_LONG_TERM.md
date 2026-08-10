@@ -111,3 +111,28 @@ Needs building (all perception-side, all deterministic):
 Sequencing: after real-text English comprehension is measured (the other
 big unopened door). Both are perception-side campaigns; the mind is done
 being the bottleneck for either.
+
+## The Advice Test (far endgame, user-specified 2026-08-09)
+
+The vision one level above the Spanish Freeze Test: skills themselves
+migrate from weights into memory. If the policy bottoms out as a small
+universal executor (attend / bind / write / branch / loop over its own
+memory — a Turing-complete instruction set), then a new capability is
+acquired by EXPLANATION — imperative/conditional clauses parsed by the
+same parser, grounded in the same space, stored as a procedure by the
+same consolidation machinery — with ZERO retraining. (Lineage: McCarthy's
+Advice Taker, 1959 — proposed at AI's founding, abandoned for lack of a
+grounded substrate to take advice into.)
+
+Test shape, when we get there: teach the frozen system a task type it was
+never trained on, purely via instruction sentences; measure task success.
+Gradient descent demoted to bootstrap (learning the interpreter once).
+
+Design consequences already in the locked v2 spec that this depends on:
+trust dials applied to PROCEDURES (teachability implies gullibility —
+provenance + testing before promotion), the patience dial as the halting
+budget for taught procedures, the workspace loop as the execution engine.
+Reframes the A/B experiment's stakes: every specialist head A forces us to
+keep is evidence the executor isn't universal yet; every capability that
+falls out of B's shared mechanism is a step toward the interpreter that
+only needs explaining.
