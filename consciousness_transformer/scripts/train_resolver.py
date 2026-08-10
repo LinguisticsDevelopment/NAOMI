@@ -78,6 +78,8 @@ torch.set_num_threads(1)
 
 from nsm_ct.clause_reactor import ClauseReactor, build_clause_batch  # noqa: E402
 from nsm_ct.curriculum2 import (  # noqa: E402
+    _FEMALE_NAMES,
+    _MALE_NAMES,
     association_only_baseline,
     generate_pronoun_episodes,
     generate_sense_binding_episodes,
@@ -354,6 +356,115 @@ def sense_binding_stats(out, batch, va_eps):
     }
 
 
+def _held_out_name_pools(held_out_female: str, held_out_male: str):
+    """M56b (dev/TRACK_C_DESIGN.md §1.8/Risk #4, RESEARCH_NOTES M56): split
+    curriculum2's fixed pronoun name pools into a TRAIN pool (every name
+    except the two held out) and a HELD-OUT pool (exactly the two held-out
+    names) -- disjoint by construction. Raises loudly on a typo'd name
+    (not silently falling back to the full pool) or on holding out the only
+    name in a gender pool (would leave nothing to train that gender on)."""
+    if held_out_female not in _FEMALE_NAMES:
+        raise ValueError(f"{held_out_female!r} not in curriculum2._FEMALE_NAMES {_FEMALE_NAMES}")
+    if held_out_male not in _MALE_NAMES:
+        raise ValueError(f"{held_out_male!r} not in curriculum2._MALE_NAMES {_MALE_NAMES}")
+    train_female = [n for n in _FEMALE_NAMES if n != held_out_female]
+    train_male = [n for n in _MALE_NAMES if n != held_out_male]
+    if not train_female or not train_male:
+        raise ValueError("holding out the only name in a gender pool leaves nothing to train on")
+    return (train_female, train_male), ([held_out_female], [held_out_male])
+
+
+def run_held_out_name_ablation(n_episodes: int, epochs: int, dim: int, seed: int, hidden: int,
+                                held_out_female: str = "sandra", held_out_male: str = "bill",
+                                heads=("old", "fixed")) -> dict:
+    """M56b: the held-out-name ablation THAT CONFIRMS the memorization
+    finding, plus (when ``heads`` includes ``"fixed"``) the re-gate proving
+    the per-candidate-feature fix closes the gap -- one call, the milestone's
+    own 2x2 deliverable.
+
+    Trains a fresh :class:`~nsm_ct.resolver.CorefHead` per ``heads`` entry
+    (``"old"`` = ``use_cand_feature=False``, the pre-M56b head; ``"fixed"`` =
+    ``use_cand_feature=True``, §1.8's per-candidate feature register) on
+    PURE pronoun-binding episodes drawn ONLY from a TRAIN name pool (every
+    curriculum name except one held-out female + one held-out male, see
+    :func:`_held_out_name_pools`). No old/transfer/ambiguity episodes and no
+    sense_resolver -- this ablation isolates the coref mechanism alone, at
+    smoke scale. Evaluates RESOLVER BINDING ACCURACY on two DISJOINT
+    batches: the usual 20%% held-back split of the TRAIN-name episodes
+    (in-distribution), and a separate batch built entirely from the two
+    held-out names (never seen in ANY training step). If M56's hypothesis
+    is right, the old head's held-out-name binding collapses toward chance
+    (0.5) while its train-name binding stays high; the fixed head should
+    hold up on both, since ``feature_match`` no longer requires having
+    memorized the specific name atom.
+
+    Returns ``{head_label: {"train_names": acc, "held_out_names": acc,
+    "n_train_names": n, "n_held_out_names": n}}``.
+    """
+    (train_female, train_male), (ho_female, ho_male) = _held_out_name_pools(held_out_female, held_out_male)
+
+    train_episodes = generate_pronoun_episodes(n_episodes, seed=seed,
+                                                female_names=train_female, male_names=train_male)
+    n_held_out = max(200, n_episodes // 4)
+    held_out_episodes = generate_pronoun_episodes(n_held_out, seed=seed + 999,
+                                                   female_names=ho_female, male_names=ho_male)
+
+    all_texts = [t for e in (train_episodes + held_out_episodes)
+                 for t in e.context + [e.question] + (e.options or [])]
+    tok = SimpleTokenizer.build(all_texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        print("quantum_parser unavailable in this environment; skipping.")
+        return {}
+    meaning_resolver = NSMMeaningResolver()
+    codec = TPRCodec(dim=dim)
+
+    tr_eps, va_eps = split_episodes(train_episodes, 0.2, seed=0)
+    tr = build_clause_batch(tr_eps, parser, meaning_resolver, codec)
+    va = build_clause_batch(va_eps, parser, meaning_resolver, codec)
+    ho = build_clause_batch(held_out_episodes, parser, meaning_resolver, codec)
+    gold_tr = torch.tensor([e.answer_idx for e in tr_eps])
+
+    results: dict = {}
+    for label in heads:
+        use_cand_feature = label == "fixed"
+        torch.manual_seed(seed)
+        resolver = CorefHead(dim, use_cand_feature=use_cand_feature)
+        model = ClauseReactor(dim=dim, hidden=hidden, resolver=resolver, sense_resolver=None)
+        opt = torch.optim.Adam(model.parameters(), lr=3e-3)
+        model.train()
+        for _ in range(epochs):
+            out = model(tr)
+            loss = F.cross_entropy(out["answer_logits"], gold_tr)
+            cg = tr.cand_gold
+            has_cand = cg >= 0
+            if bool(has_cand.any()):
+                loss = loss + AUX_WEIGHT * F.cross_entropy(out["resolver_logits"][has_cand], cg[has_cand])
+            opt.zero_grad(); loss.backward(); opt.step()
+
+        model.eval()
+        with torch.no_grad():
+            out_va, out_ho = model(va), model(ho)
+        bind_va = resolver_binding_stats(out_va, va, va_eps)
+        bind_ho = resolver_binding_stats(out_ho, ho, held_out_episodes)
+        results[label] = {
+            "train_names": bind_va["overall_acc"] if bind_va else float("nan"),
+            "n_train_names": bind_va["n"] if bind_va else 0,
+            "held_out_names": bind_ho["overall_acc"] if bind_ho else float("nan"),
+            "n_held_out_names": bind_ho["n"] if bind_ho else 0,
+        }
+        r = results[label]
+        print(f"  [{label} head] train-names binding={r['train_names']:.3f} (n={r['n_train_names']})  "
+              f"held-out-names binding={r['held_out_names']:.3f} (n={r['n_held_out_names']})", flush=True)
+
+    print("\n=== M56b held-out-name ablation: 2x2 table ===")
+    print(f"{'head':<10} {'train names':>14} {'held-out names':>16}")
+    for label in heads:
+        r = results[label]
+        print(f"{label:<10} {r['train_names']:>14.3f} {r['held_out_names']:>16.3f}")
+    return results
+
+
 def report_eval(name: str, model, va, va_eps, gold_va, n_resolver_params: int, n_sense_params: int,
                  shared: bool, elapsed_min: "float | None" = None):
     """Shared eval + report tail for :func:`run_arm` and (M54c)
@@ -620,7 +731,28 @@ def main() -> None:
                      help="--track B-distilled only: task-only fine-tune epochs (default --epochs // 4)")
     ap.add_argument("--distill-weight", type=float, default=DISTILL_WEIGHT,
                      help="--track B-distilled only: weight on stage 2's KL(B || frozen A) term")
+    ap.add_argument("--held-out-name-ablation", action="store_true",
+                     help="M56b: run the held-out-name ablation instead of any --track arm -- trains "
+                          "CorefHead (old: use_cand_feature=False, and fixed: use_cand_feature=True) "
+                          "on pronoun-only episodes from a TRAIN name pool, evaluates RESOLVER BINDING "
+                          "ACCURACY on a train-name val split AND a disjoint held-out-name-only batch, "
+                          "prints the 2x2 table (see dev/TRACK_C_DESIGN.md §1.8, RESEARCH_NOTES M56/M56b)")
+    ap.add_argument("--held-out-female", default="sandra",
+                     help="--held-out-name-ablation only: which curriculum2._FEMALE_NAMES entry to hold out")
+    ap.add_argument("--held-out-male", default="bill",
+                     help="--held-out-name-ablation only: which curriculum2._MALE_NAMES entry to hold out")
+    ap.add_argument("--ablation-heads", default="old,fixed",
+                     help="--held-out-name-ablation only: comma-separated subset of {old,fixed} to run")
     args = ap.parse_args()
+
+    if args.held_out_name_ablation:
+        heads = tuple(h.strip() for h in args.ablation_heads.split(",") if h.strip())
+        print(f"=== M56b held-out-name ablation: {args.episodes} train eps, "
+              f"held-out={args.held_out_female}/{args.held_out_male}, dim={args.dim}, "
+              f"epochs={args.epochs}, heads={heads} ===", flush=True)
+        run_held_out_name_ablation(args.episodes, args.epochs, args.dim, args.seed, args.hidden,
+                                    args.held_out_female, args.held_out_male, heads=heads)
+        return
 
     n_arms = sum([args.gold_binding, args.mfs_floor, args.track is not None])
     if n_arms != 1:

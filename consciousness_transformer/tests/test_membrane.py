@@ -270,3 +270,78 @@ def test_to_and_subset_carry_cand_fields_when_present():
     assert sub.cand_entity is not None
     assert sub.cand_entity.shape[0] == 3
     assert torch.equal(sub.cand_gold, batch.cand_gold[[0, 1, 2]])
+
+
+# ---------------------------------------------------------------------------
+# M56b: the per-candidate feature register (dev/TRACK_C_DESIGN.md §1.8's
+# "GAP: no such op/register exists today" -- EntityCandidateSet.cand_features
+# + ClauseBatch.cand_feature_per_candidate).
+# ---------------------------------------------------------------------------
+def test_pronoun_entity_candidate_set_carries_cand_features():
+    registry = ["mary", "john"]
+    cand = pronoun_entity_candidate_set("she", registry, gold_antecedent="john")
+    assert cand.cand_features is not None
+    assert cand.cand_features.shape == (2, FEATURE_DIM)
+    assert np.array_equal(cand.cand_features[0], mention_feature_vector("mary"))
+    assert np.array_equal(cand.cand_features[1], mention_feature_vector("john"))
+    # each candidate's OWN feature -- NOT the mention's ("she"'s feature is
+    # FEMALE; "john"'s candidate feature must stay MALE, not copy the mention).
+    assert not np.array_equal(cand.cand_features[1], cand.feature)
+
+
+def test_pronoun_entity_candidate_set_empty_registry_cand_features_is_none():
+    cand = pronoun_entity_candidate_set("she", [], gold_antecedent=None)
+    assert cand.cand_features is None
+
+
+def test_entity_candidate_set_default_cand_features_is_none():
+    """Hand-built (no cand_features passed) mirrors every pre-M56b
+    construction -- the field is purely additive."""
+    ec = EntityCandidateSet(candidates=[Candidate("mary", 1.0)])
+    assert ec.cand_features is None
+
+
+def test_batch_carries_cand_feature_per_candidate_for_pronoun_episodes():
+    parser, resolver, codec, eps = _parser_env()
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    assert batch.cand_feature_per_candidate is not None
+    b, T, C, d = batch.cand_entity.shape
+    assert batch.cand_feature_per_candidate.shape == (b, T, C, FEATURE_DIM)
+
+    for i, e in enumerate(eps):
+        t = e.meta["pronoun_sentence_index"]
+        registry = e.meta["registry_order"]
+        for j, name in enumerate(registry):
+            got = batch.cand_feature_per_candidate[i, t, j].numpy()
+            assert np.array_equal(got, mention_feature_vector(name)), (i, j, name)
+        # padding beyond the real candidate count stays zero
+        for j in range(len(registry), C):
+            assert np.array_equal(batch.cand_feature_per_candidate[i, t, j].numpy(),
+                                   np.zeros(FEATURE_DIM, dtype=np.float32))
+        # every OTHER step carries an all-zero per-candidate feature slab
+        for tt in range(T):
+            if tt == t:
+                continue
+            assert np.array_equal(batch.cand_feature_per_candidate[i, tt].numpy(),
+                                   np.zeros((C, FEATURE_DIM), dtype=np.float32))
+
+
+def test_batch_cand_feature_per_candidate_none_for_pronoun_free_episodes():
+    """Byte-identity regression companion: an old-curriculum-only batch
+    (no EntityCandidateSet at all) must leave the new field None exactly
+    like every other cand_* field (test_batch_identity_regression_no_pronoun_episodes)."""
+    parser, resolver, codec, _pron_eps = _parser_env()
+    eps = CurriculumGenerator(max_level=8, seed=1).generate(30)
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    assert batch.cand_feature_per_candidate is None
+
+
+def test_to_and_subset_carry_cand_feature_per_candidate_when_present():
+    parser, resolver, codec, eps = _parser_env()
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    moved = batch.to("cpu")
+    assert moved.cand_feature_per_candidate is not None
+    assert torch.equal(moved.cand_feature_per_candidate, batch.cand_feature_per_candidate)
+    sub = batch.subset(torch.tensor([0, 1, 2]))
+    assert sub.cand_feature_per_candidate is not None
+    assert torch.equal(sub.cand_feature_per_candidate, batch.cand_feature_per_candidate[[0, 1, 2]])

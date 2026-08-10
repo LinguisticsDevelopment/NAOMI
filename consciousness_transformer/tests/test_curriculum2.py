@@ -9,9 +9,12 @@ import pytest
 from nsm_ct.curriculum2 import (
     TEMPLATES,
     VOCAB_SCALE_PLACES,
+    _FEMALE_NAMES,
+    _MALE_NAMES,
     _SENSE_BINDING_ELIGIBLE,
     _SENSE_BINDING_EXCLUDE_FAMILY,
     _SENSE_BINDING_NAMES,
+    PronounCurriculumGenerator,
     association_only_baseline,
     generate_pronoun_episodes,
     generate_scaled_episodes,
@@ -398,6 +401,71 @@ def test_pronoun_gender_uniquely_identifies_antecedent():
         want_gender = "F" if e.meta["pronoun"] == "she" else "M"
         assert NAME_GENDER[e.meta["gold_antecedent"]] == want_gender
         assert NAME_GENDER[e.meta["other_entity"]] != want_gender
+
+
+# ---------------------------------------------------------------------------
+# M56b: splittable name pools (dev/TRACK_C_DESIGN.md §1.8/Risk #4,
+# RESEARCH_NOTES M56/M56b's held-out-name ablation) -- PronounCurriculumGenerator's
+# female_names/male_names constructor override.
+# ---------------------------------------------------------------------------
+def test_pronoun_generator_default_pools_match_module_globals():
+    """Default (no override) must reproduce the exact pre-M56b generator --
+    same globals, same rng draws, for any seed."""
+    a = PronounCurriculumGenerator(seed=5).generate(20)
+    b = PronounCurriculumGenerator(seed=5, female_names=_FEMALE_NAMES, male_names=_MALE_NAMES).generate(20)
+    assert [e.meta["gold_antecedent"] for e in a] == [e.meta["gold_antecedent"] for e in b]
+    assert [e.meta["other_entity"] for e in a] == [e.meta["other_entity"] for e in b]
+    assert [e.context for e in a] == [e.context for e in b]
+
+
+def test_generate_pronoun_episodes_default_matches_no_kwargs():
+    a = generate_pronoun_episodes(20, seed=6)
+    b = generate_pronoun_episodes(20, seed=6, female_names=None, male_names=None)
+    assert [e.context for e in a] == [e.context for e in b]
+
+
+def test_pronoun_generator_name_split_deterministic():
+    """Same custom pools + same seed -> identical episodes (determinism
+    survives the new constructor args, not just the default path)."""
+    kwargs = dict(seed=7, female_names=["mary"], male_names=["john", "daniel"])
+    a = PronounCurriculumGenerator(**kwargs).generate(30)
+    b = PronounCurriculumGenerator(**kwargs).generate(30)
+    assert [e.meta["gold_antecedent"] for e in a] == [e.meta["gold_antecedent"] for e in b]
+    assert [e.meta["other_entity"] for e in a] == [e.meta["other_entity"] for e in b]
+
+
+def test_pronoun_generator_name_split_restricts_names_used():
+    """A generator built from a restricted pool must NEVER sample a name
+    outside it -- the property the held-out-name ablation depends on for
+    both its train side and its held-out side."""
+    train_female, train_male = ["mary"], ["john", "daniel"]
+    eps = PronounCurriculumGenerator(seed=8, female_names=train_female, male_names=train_male).generate(60)
+    used_names = {e.meta["gold_antecedent"] for e in eps} | {e.meta["other_entity"] for e in eps}
+    assert used_names <= set(train_female) | set(train_male)
+    # and the restriction is non-trivial: names OUTSIDE the pool never appear,
+    # even though they're in the module-level pools generally available.
+    assert used_names.isdisjoint({"sandra", "bill"})
+
+
+def test_pronoun_generator_name_split_no_leak_between_train_and_held_out():
+    """The ablation's core precondition: a TRAIN-pool generator and a
+    HELD-OUT-pool generator (disjoint name sets by construction) never
+    produce episodes referencing each other's names."""
+    held_out_female, held_out_male = "sandra", "bill"
+    train_female = [n for n in _FEMALE_NAMES if n != held_out_female]
+    train_male = [n for n in _MALE_NAMES if n != held_out_male]
+
+    train_eps = PronounCurriculumGenerator(seed=9, female_names=train_female,
+                                            male_names=train_male).generate(80)
+    held_out_eps = PronounCurriculumGenerator(seed=10, female_names=[held_out_female],
+                                               male_names=[held_out_male]).generate(80)
+
+    train_names = {e.meta["gold_antecedent"] for e in train_eps} | {e.meta["other_entity"] for e in train_eps}
+    held_out_names = {e.meta["gold_antecedent"] for e in held_out_eps} | {e.meta["other_entity"] for e in held_out_eps}
+
+    assert train_names.isdisjoint(held_out_names)
+    assert held_out_names == {held_out_female, held_out_male}
+    assert train_names == set(train_female) | set(train_male)
 
 
 # ---------------------------------------------------------------------------

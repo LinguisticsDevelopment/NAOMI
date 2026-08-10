@@ -411,6 +411,15 @@ class ClauseBatch:
     cand_prior: Optional[torch.Tensor] = None    # [B, T, C]     structural prior (uniform v1)
     cand_feature: Optional[torch.Tensor] = None  # [B, T, F]     mention feature vector (0 elsewhere)
     cand_gold: Optional[torch.Tensor] = None     # [B, T]        long; gold candidate index, -1 elsewhere
+    # M56b (dev/TRACK_C_DESIGN.md §1.8 "the missing register"): each
+    # CANDIDATE's own feature vector (membrane.EntityCandidateSet.
+    # cand_features), as opposed to cand_feature above (the MENTION's,
+    # broadcast). None whenever no EntityCandidateSet carried cand_features
+    # (which is None for every episode -- old and new -- since only
+    # pronoun_entity_candidate_set populates it), keeping this
+    # byte-identical for every pre-M56b batch, exactly like cand_* above
+    # stays None for a pronoun-free batch.
+    cand_feature_per_candidate: Optional[torch.Tensor] = None    # [B, T, C, F]  per-candidate feature (0 elsewhere)
     # M54 (RESOLVER_BUILD_PLAN Phase 3): the v1 "value" candidate set for
     # homograph-bearing steps (nsm_ct.membrane.SenseCandidateSet), carried
     # through in a SEPARATE field group from the cand_* ones above rather
@@ -450,7 +459,7 @@ class ClauseBatch:
     def _cand_fields(self, xform):
         return tuple(xform(t) if t is not None else None for t in
                      (self.cand_entity, self.cand_mask, self.cand_prior,
-                      self.cand_feature, self.cand_gold))
+                      self.cand_feature, self.cand_gold, self.cand_feature_per_candidate))
 
     def _sense_cand_fields(self, xform):
         return tuple(xform(t) if t is not None else None for t in
@@ -588,6 +597,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
         ans[i] = a; ans_ok[i] = ok
 
     cand_entity = cand_mask = cand_prior = cand_feature = cand_gold = None
+    cand_feature_per_candidate = None
     if any(cs for *_row, cs, _scs in rows):
         Cmax = max((len(cs.candidates) for *_row, cs_map, _scs in rows for cs in cs_map.values()),
                    default=1) or 1
@@ -596,6 +606,16 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
         cand_prior = torch.zeros(b, T, Cmax)
         cand_feature = torch.zeros(b, T, membrane.FEATURE_DIM)
         cand_gold = torch.full((b, T), -1, dtype=torch.long)
+        # M56b: only allocated when at least one EntityCandidateSet actually
+        # carries cand_features (pronoun_entity_candidate_set always sets it
+        # today, but this mirrors the sense_cand_subject "only if present"
+        # pattern rather than assuming) -- an entity-candidate batch built
+        # before M56b (or hand-built in a test without cand_features) leaves
+        # this None exactly like every other optional field here.
+        has_cand_features = any(
+            cs.cand_features is not None for *_row, cs_map, _scs in rows for cs in cs_map.values())
+        if has_cand_features:
+            cand_feature_per_candidate = torch.zeros(b, T, Cmax, membrane.FEATURE_DIM)
         for i, (steps, opt, a, ok, cs_map, _scs) in enumerate(rows):
             for t, cs in cs_map.items():
                 for j, c in enumerate(cs.candidates):
@@ -607,6 +627,8 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                     cand_feature[i, t] = torch.from_numpy(cs.feature)
                 if cs.gold_index is not None:
                     cand_gold[i, t] = cs.gold_index
+                if has_cand_features and cs.cand_features is not None:
+                    cand_feature_per_candidate[i, t, :len(cs.candidates)] = torch.from_numpy(cs.cand_features)
 
     # M54: SAME shape/pattern as the cand_* block above, but for
     # nsm_ct.membrane.SenseCandidateSet -- a wholly SEPARATE tensor group
@@ -655,6 +677,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
 
     return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans, crd, ans_ok,
                        cand_entity, cand_mask, cand_prior, cand_feature, cand_gold,
+                       cand_feature_per_candidate,
                        sense_cand_entity, sense_cand_mask, sense_cand_prior,
                        sense_cand_context, sense_cand_gold,
                        sense_cand_subject, sense_cand_subject_rel)
@@ -780,7 +803,15 @@ class ClauseReactor(nn.Module):
             ce_t, cf_t = batch.cand_entity[:, t], batch.cand_feature[:, t]
             cp_t, cm_t = batch.cand_prior[:, t], batch.cand_mask[:, t]
             cand_mem_read = query_candidates(memory, ce_t, r)                    # [B, C, d]
-            logits = self.resolver(ce_t, cf_t, cp_t, cm_t, cand_mem_read, state)  # [B, C]
+            # M56b: pass the per-candidate feature register (§1.8) ONLY to a
+            # resolver that opted in (`use_cand_feature=True` -- CorefHead
+            # only today); SharedScorer/SenseHead are never called with this
+            # kwarg at all, so "Do NOT change SharedScorer" holds literally
+            # (zero edits, zero new call shape) for every non-opted-in track.
+            extra = {}
+            if getattr(self.resolver, "use_cand_feature", False) and batch.cand_feature_per_candidate is not None:
+                extra["cand_feature_per_candidate"] = batch.cand_feature_per_candidate[:, t]
+            logits = self.resolver(ce_t, cf_t, cp_t, cm_t, cand_mem_read, state, **extra)  # [B, C]
             logits = logits.masked_fill(cm_t <= 0, -1e9)
             has_cand = cm_t.sum(-1) > 0                                          # [B]
             w = self._collapse_weights(logits, self.training)

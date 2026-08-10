@@ -345,3 +345,156 @@ def test_determinism_same_seed_same_outputs(track):
     out1, out2 = m1(batch), m2(batch)
     for k in out1:
         assert torch.equal(out1[k], out2[k])
+
+
+# ---------------------------------------------------------------------------
+# 7. M56b: the per-candidate feature register (dev/TRACK_C_DESIGN.md §1.8's
+#    "GAP: no such op/register exists today"). CorefHead.use_cand_feature
+#    (default False, byte-identical) plus ClauseReactor's opt-in dispatch of
+#    batch.cand_feature_per_candidate -- see resolver.py's CorefHead
+#    docstring and clause_reactor.py's ClauseReactor._collapse.
+# ---------------------------------------------------------------------------
+def _add_cand_feature_per_candidate(batch: ClauseBatch, pronoun_t: int, C: int, seed: int = 100):
+    """Mutates ``batch`` in place: a fresh random per-candidate feature slab
+    at the pronoun step only (zeros elsewhere, mirroring how
+    build_clause_batch actually populates it)."""
+    b, T = batch.entity.shape[0], batch.entity.shape[1]
+    g = torch.Generator().manual_seed(seed)
+    cfpc = torch.zeros(b, T, C, FEATURE_DIM)
+    cfpc[:, pronoun_t] = torch.randn(b, C, FEATURE_DIM, generator=g)
+    batch.cand_feature_per_candidate = cfpc
+    return batch
+
+
+def test_corefhead_default_in_dim_unchanged():
+    """use_cand_feature defaults False -- in_dim must be EXACTLY the
+    pre-M56b formula (2*dim + FEATURE_DIM + 1), a direct regression check on
+    the docstring's own numbers (dim=32 -> in_dim=71)."""
+    head = CorefHead(32)
+    assert head.use_cand_feature is False
+    assert head.net[0].in_features == 2 * 32 + FEATURE_DIM + 1 == 71
+
+
+def test_corefhead_use_cand_feature_grows_in_dim():
+    head = CorefHead(32, use_cand_feature=True)
+    assert head.net[0].in_features == 2 * 32 + 2 * FEATURE_DIM + 1
+
+
+def test_corefhead_default_ignores_cand_feature_per_candidate_kwarg():
+    """use_cand_feature=False: passing the new kwarg must be a pure no-op --
+    identical output whether it's omitted or supplied (it's never read)."""
+    torch.manual_seed(0)
+    head = CorefHead(16)
+    b, C, d = 3, 4, 16
+    cand_entity = torch.randn(b, C, d)
+    cand_feature = torch.randn(b, FEATURE_DIM)
+    cand_prior = torch.rand(b, C)
+    cand_mask = torch.ones(b, C)
+    mem_read = torch.randn(b, C, d)
+    state = torch.randn(b, 8)
+    out_without = head(cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state)
+    out_with = head(cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state,
+                     cand_feature_per_candidate=torch.randn(b, C, FEATURE_DIM))
+    assert torch.equal(out_without, out_with)
+
+
+def test_corefhead_use_cand_feature_true_missing_arg_defaults_to_zero():
+    """use_cand_feature=True but the caller passes no per-candidate tensor
+    (defensive fallback, §CorefHead docstring) -- must match explicit zeros,
+    not error."""
+    torch.manual_seed(0)
+    head = CorefHead(16, use_cand_feature=True)
+    b, C, d = 3, 4, 16
+    cand_entity = torch.randn(b, C, d)
+    cand_feature = torch.randn(b, FEATURE_DIM)
+    cand_prior = torch.rand(b, C)
+    cand_mask = torch.ones(b, C)
+    mem_read = torch.randn(b, C, d)
+    state = torch.randn(b, 8)
+    out_missing = head(cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state)
+    out_zeros = head(cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state,
+                      cand_feature_per_candidate=torch.zeros(b, C, FEATURE_DIM))
+    assert torch.equal(out_missing, out_zeros)
+
+
+def test_corefhead_use_cand_feature_true_output_depends_on_it():
+    """The whole point of the fix: once use_cand_feature=True, the
+    per-candidate feature register is GEOMETRICALLY visible to the net --
+    changing it must change the logits (not silently ignored like a
+    zero-weight input would look identical)."""
+    torch.manual_seed(0)
+    head = CorefHead(16, use_cand_feature=True)
+    b, C, d = 3, 4, 16
+    cand_entity = torch.randn(b, C, d)
+    cand_feature = torch.randn(b, FEATURE_DIM)
+    cand_prior = torch.rand(b, C)
+    cand_mask = torch.ones(b, C)
+    mem_read = torch.randn(b, C, d)
+    state = torch.randn(b, 8)
+    out_a = head(cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state,
+                 cand_feature_per_candidate=torch.zeros(b, C, FEATURE_DIM))
+    out_b = head(cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state,
+                 cand_feature_per_candidate=torch.ones(b, C, FEATURE_DIM))
+    assert not torch.allclose(out_a, out_b)
+
+
+def test_reactor_old_head_byte_identical_regardless_of_cand_feature_per_candidate():
+    """The regression the milestone's "byte-identity preserved" gate asks
+    for at the ClauseReactor level: a CorefHead with use_cand_feature=False
+    (the pre-M56b default) must produce EXACTLY the same output whether or
+    not batch.cand_feature_per_candidate is populated -- the new register
+    existing in the batch must not perturb the old head at all."""
+    torch.manual_seed(0)
+    batch, pronoun_t = _toy_batch_with_candidates(b=4, d=16, K=4, C=3, seed=11)
+    torch.manual_seed(5)
+    model = ClauseReactor(dim=16, resolver=CorefHead(16, use_cand_feature=False))
+    model.eval()
+    with torch.no_grad():
+        out_without = model(batch)
+    _add_cand_feature_per_candidate(batch, pronoun_t, C=3, seed=200)
+    with torch.no_grad():
+        out_with = model(batch)
+    for k in out_without:
+        assert torch.equal(out_without[k], out_with[k]), k
+
+
+def test_reactor_shared_scorer_unaffected_by_cand_feature_per_candidate():
+    """"Do NOT change SharedScorer" as a runtime guarantee, not just a
+    diff-review rule: SharedScorer is never even CALLED with the new kwarg
+    (ClauseReactor._collapse gates on `resolver.use_cand_feature`, which
+    SharedScorer doesn't have), so its output is untouched by the new
+    register's presence."""
+    torch.manual_seed(0)
+    batch, pronoun_t = _toy_batch_with_candidates(b=4, d=16, K=4, C=3, seed=12)
+    torch.manual_seed(5)
+    model = ClauseReactor(dim=16, hidden=32, resolver=SharedScorer(16, 32))
+    model.eval()
+    with torch.no_grad():
+        out_without = model(batch)
+    _add_cand_feature_per_candidate(batch, pronoun_t, C=3, seed=201)
+    with torch.no_grad():
+        out_with = model(batch)
+    for k in out_without:
+        assert torch.equal(out_without[k], out_with[k]), k
+
+
+def test_reactor_fixed_head_actually_receives_per_candidate_slice():
+    """Positive-side companion: with use_cand_feature=True installed AND the
+    batch carrying real cand_feature_per_candidate data, the reactor's
+    resolver logits must actually change when that data changes (proves the
+    plumbing from ClauseBatch through ClauseReactor._collapse to
+    CorefHead.forward is live, not just accepted-and-dropped)."""
+    torch.manual_seed(0)
+    batch, pronoun_t = _toy_batch_with_candidates(b=4, d=16, K=4, C=3, seed=13)
+    _add_cand_feature_per_candidate(batch, pronoun_t, C=3, seed=300)
+    torch.manual_seed(5)
+    model = ClauseReactor(dim=16, resolver=CorefHead(16, use_cand_feature=True))
+    model.eval()
+    with torch.no_grad():
+        out_a = model(batch)
+
+    batch2, _ = _toy_batch_with_candidates(b=4, d=16, K=4, C=3, seed=13)
+    _add_cand_feature_per_candidate(batch2, pronoun_t, C=3, seed=301)   # different feature data
+    with torch.no_grad():
+        out_b = model(batch2)
+    assert not torch.allclose(out_a["resolver_logits"][:, pronoun_t], out_b["resolver_logits"][:, pronoun_t])

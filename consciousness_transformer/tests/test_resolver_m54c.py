@@ -379,3 +379,53 @@ def test_run_arm_new_tracks_execute_on_m54b_mix(track):
     assert result is not None
     assert result["n_resolver_params"] == result["n_sense_params"]   # shared instance
     assert 0.0 <= result["total_acc"] <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# 6. M56b: the held-out-name ablation (dev/TRACK_C_DESIGN.md §1.8/Risk #4,
+#    RESEARCH_NOTES M56/M56b) -- scripts/train_resolver.py's
+#    _held_out_name_pools + run_held_out_name_ablation.
+# ---------------------------------------------------------------------------
+def test_held_out_name_pools_are_disjoint_and_cover_everything():
+    (train_f, train_m), (ho_f, ho_m) = tr._held_out_name_pools("sandra", "bill")
+    assert ho_f == ["sandra"] and ho_m == ["bill"]
+    assert "sandra" not in train_f and "bill" not in train_m
+    from nsm_ct.curriculum2 import _FEMALE_NAMES, _MALE_NAMES
+    assert set(train_f) | set(ho_f) == set(_FEMALE_NAMES)
+    assert set(train_m) | set(ho_m) == set(_MALE_NAMES)
+
+
+def test_held_out_name_pools_rejects_unknown_name():
+    with pytest.raises(ValueError):
+        tr._held_out_name_pools("mary", "not-a-real-name")
+    with pytest.raises(ValueError):
+        tr._held_out_name_pools("not-a-real-name", "bill")
+
+
+@pytest.mark.skipif(not _parser_available(), reason="quantum_parser unavailable in this environment")
+def test_run_held_out_name_ablation_mechanics_smoke():
+    """Tiny, fast mechanics check (not a gate run -- see RESEARCH_NOTES M56b
+    for the real smoke-scale numbers): both heads train without error, the
+    2x2 result dict has the right shape, and every reported accuracy is a
+    valid probability computed over a non-empty n."""
+    result = tr.run_held_out_name_ablation(
+        n_episodes=40, epochs=2, dim=8, seed=0, hidden=16,
+        held_out_female="sandra", held_out_male="bill", heads=("old", "fixed"))
+    assert set(result.keys()) == {"old", "fixed"}
+    for label in ("old", "fixed"):
+        r = result[label]
+        assert 0.0 <= r["train_names"] <= 1.0
+        assert 0.0 <= r["held_out_names"] <= 1.0
+        assert r["n_train_names"] > 0
+        assert r["n_held_out_names"] > 0
+
+
+@pytest.mark.skipif(not _parser_available(), reason="quantum_parser unavailable in this environment")
+def test_run_held_out_name_ablation_fixed_head_uses_more_params_than_old():
+    """use_cand_feature=True adds a second FEATURE_DIM-wide input slot to
+    CorefHead -- a cheap, direct way to confirm the "fixed" arm is actually
+    installing the new architecture, not silently reusing the old one."""
+    from nsm_ct.resolver import CorefHead
+    n_old = sum(p.numel() for p in CorefHead(8, use_cand_feature=False).parameters())
+    n_fixed = sum(p.numel() for p in CorefHead(8, use_cand_feature=True).parameters())
+    assert n_fixed > n_old

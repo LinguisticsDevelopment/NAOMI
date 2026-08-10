@@ -265,6 +265,84 @@ cheaper-to-fix prerequisite than §1.8 (no new data needed — `emit` just
 needs to take a register NAME as one of its routed arguments instead of
 being baked into the branch).
 
+### 1.10 M55 gold program, attempted prospectively (M56b addendum)
+
+M56b (RESEARCH_NOTES M56b) confirmed §1.8's memorization diagnosis
+empirically (held-out-name ablation: pre-fix `CorefHead` binding craters on
+names never seen in training; the fix -- a genuine per-candidate `Feat`
+register, `membrane.EntityCandidateSet.cand_features` -- recovers most of
+the gap) and, per Risk #1 (§6), this section runs the SAME prospective
+acid test §1.7 applied to the two solved tasks against M55's
+parse-hypothesis collapse, BEFORE any Track C prototype exists -- exactly
+the "resolving experiment" §6.1 named.
+
+Restating the task in §1's terms: perception (the parser) emits `K`
+structural hypotheses for a garden-path sentence, each a full clause-stream
+reading, with the parser's own structural margin as a graded prior (§4.4
+already sketched this candidate shape informally; this subsection is that
+sketch pushed through the strict step-numbered notation §1.7 used, to
+actually check the type table, not just gesture at it):
+
+```
+for each candidate hypothesis i in top-K:
+  1. P.addr[i]  = hypothesis_reading_vector(i)                    # Vec-typed, like a sense candidate
+  2. P.score[i] = prior(candidate_i)                              # the PARSER's own structural score (graded)
+  G.ctx = mem_query(???, ???)                                     # *** GAP: see below ***
+for each candidate hypothesis i:
+  3. P.tmp[i]   = interact(P.addr[i], G.ctx)                      # does this hypothesis cohere with memory?
+  4. P.score[i] = combine_scalar(P.score[i], score(P.addr[i], G.ctx, P.tmp[i]))
+5. w = select({P.score[i]})
+6. resolved   = emit(w, {P.addr[i]})
+```
+
+Steps 1, 2, 3, 4, 5, 6 type-check cleanly against §1.2's types and §1.3's
+op table with no new op, exactly as §4.4 claimed. **Step "`G.ctx =
+mem_query(...)`" does not.** `mem_query`'s signature is `(Addr, Vec) ->
+Vec` (§1.3), and every prior use of it (both gold programs in §1.7) reads
+its `Addr` argument from a **global** register -- `G.rel`/`hom_addr`/
+`subj_addr` -- because for pronouns and senses, "which entity, which
+relation" is a fact about the CLAUSE STEP being processed, fixed before
+collapse even starts, identical for every candidate in the set. For a
+garden-path sentence this fact does not exist globally: the two parse
+hypotheses in "the horse raced past the barn fell" **disagree about which
+token is which role** (main-verb "raced" with SUBJECT=horse, vs.
+reduced-relative "raced" modifying "horse" with the main clause's SUBJECT
+still "horse" but a DIFFERENT relation/predicate structure entirely) --
+which (entity, relation) pair is even worth querying memory about is
+itself PART OF what each hypothesis asserts, not a shared precondition for
+evaluating all of them. So `mem_query`'s `Addr` argument here must be
+**per-candidate** (`P.query_addr[i]`, `P.query_rel[i]`, populated by
+reading candidate `i`'s own structural content, not any `G` register) --
+a register kind §1.4's model does not have: every `G.*` register there is
+explicitly "one value ... shared across all `C` candidates," and `P.*`
+registers are candidate-owned VALUES the ops fill in (`P.mem[i]`,
+`P.feat[i]`, `P.tmp[i]`, `P.score[i]`), never a candidate-owned ADDRESS
+that `mem_query` reads its key from.
+
+**Verdict on the Risk #1 acid test: ALMOST type-checks, not cleanly.** Five
+of six steps (and both non-`mem_query` ops touching `G.ctx`) fit the
+existing inventory exactly; the one that doesn't fails for precisely the
+reason Risk #1 predicted prospectively ("a hypothesis reading may need to
+bind multiple (entity, relation) pairs simultaneously, not one") --
+confirmed, not hypothetical, once the program is actually written out
+rather than gestured at. This is a real, third finding, distinct from
+§1.8/§1.9: `mem_query`'s `Addr` argument needs a register-model extension
+(a per-candidate `Addr` slot, `P.query_addr[i]`/`P.query_rel[i]`) before
+M55 can be posed as a chained program at all -- the op itself is
+unchanged (`(Addr, Vec) -> Vec`, still parameter-free bilinear read), only
+WHICH register may supply its first argument grows from "global-only" to
+"global or per-candidate." That is a smaller fix than §1.8's (no new
+deterministic-feature design, no new data -- just widening where an
+existing type is allowed to live), but it is a genuine addition to §1.4's
+register model, not a free consequence of it, and Stage 3 (§4.4) cannot
+be posed correctly without deciding it first, exactly as §4.2's own
+prerequisite note says for §1.8/§1.9. Recorded here per §6.1's own
+instruction ("if it doesn't type-check cleanly, that's a finding to fold
+into this doc before Stage 3, not a discovery mid-build") -- a third
+prerequisite, not a reason to revise the verdict in §7 (still
+more-research-needed, now with three cheap, sequenced, doc-only-so-far
+checks ahead of prototype commitment instead of two).
+
 ---
 
 ## 2. The graveyard survey

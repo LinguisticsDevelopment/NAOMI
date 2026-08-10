@@ -29,7 +29,7 @@ the printed parse-success table.
 from __future__ import annotations
 
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -913,10 +913,24 @@ class PronounCurriculumGenerator:
     accounting label).
     """
 
-    def __init__(self, num_options: int = 4, seed: int = 0) -> None:
+    def __init__(self, num_options: int = 4, seed: int = 0, *,
+                 female_names: Optional[List[str]] = None,
+                 male_names: Optional[List[str]] = None) -> None:
+        """``female_names``/``male_names`` (M56b, RESEARCH_NOTES M56/M56b)
+        override the module-level :data:`_FEMALE_NAMES`/:data:`_MALE_NAMES`
+        pools this generator samples antecedents from -- default ``None``
+        reproduces every pre-M56b call exactly (same globals, same rng
+        draws). This is what makes the held-out-name ablation possible: a
+        caller passes a TRAIN pool (all names minus one held-out
+        female/male) to one generator and the held-out singleton(s) to a
+        second, so `scripts/train_resolver.py`'s ablation runner can build
+        train-name and held-out-name episode sets from the SAME template
+        machinery with no leak (see tests/test_curriculum2_name_split.py)."""
         self.num_options = num_options
         self.rng = random.Random(seed)
         self._count = 0
+        self._female_names = list(female_names) if female_names is not None else _FEMALE_NAMES
+        self._male_names = list(male_names) if male_names is not None else _MALE_NAMES
 
     def _mc_places(self, answer: str, required: List[str]):
         opts = list(dict.fromkeys([answer, *required]))
@@ -933,8 +947,8 @@ class PronounCurriculumGenerator:
 
         gender = self.rng.choice(["F", "M"])
         pronoun = "she" if gender == "F" else "he"
-        female_name = self.rng.choice(_FEMALE_NAMES)
-        male_name = self.rng.choice(_MALE_NAMES)
+        female_name = self.rng.choice(self._female_names)
+        male_name = self.rng.choice(self._male_names)
         antecedent_name = female_name if gender == "F" else male_name
         other_name = male_name if gender == "F" else female_name
         name_a, name_b = ((antecedent_name, other_name) if antecedent_first
@@ -968,10 +982,16 @@ class PronounCurriculumGenerator:
         return [self._episode() for _ in range(n)]
 
 
-def generate_pronoun_episodes(n: int, seed: int = 0, num_options: int = 4) -> List[Episode]:
+def generate_pronoun_episodes(n: int, seed: int = 0, num_options: int = 4, *,
+                               female_names: Optional[List[str]] = None,
+                               male_names: Optional[List[str]] = None) -> List[Episode]:
     """``n`` M53a pronoun-binding episodes, deterministic given ``(n, seed,
-    num_options)``. See :class:`PronounCurriculumGenerator`."""
-    return PronounCurriculumGenerator(num_options=num_options, seed=seed).generate(n)
+    num_options, female_names, male_names)``. See
+    :class:`PronounCurriculumGenerator`; ``female_names``/``male_names`` are
+    the M56b held-out-name-ablation override (default ``None`` = pre-M56b
+    behavior, the fixed module-level name pools)."""
+    return PronounCurriculumGenerator(num_options=num_options, seed=seed,
+                                       female_names=female_names, male_names=male_names).generate(n)
 
 
 def nearest_entity_baseline(episodes: List[Episode]) -> Dict[str, float]:

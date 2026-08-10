@@ -2731,3 +2731,37 @@ register (NAME_GENDER exists in membrane.py — the data was there, the
 per-candidate plumbing wasn't) and re-gate CorefHead on held-out names;
 (2) write M55's gold program in the notation prospectively to confirm the
 transfer target is expressible before Stage-1 code exists.
+
+### M56b — memorization CONFIRMED, membrane fixed, generalization restored (MEASURED)
+
+The held-out-name ablation (600 pronoun episodes, two seed/name-pair
+runs):
+
+| head | train names | HELD-OUT names |
+|---|---|---|
+| old CorefHead (mention feature only) | 1.000 | **0.000** |
+| fixed (per-candidate features) | 1.000 | **0.875** |
+
+(Second pair mary/daniel: old 0.410 held-out, fixed 0.870.) M56's
+hypothesis is confirmed exactly: M53's celebrated 1.000 was a six-name
+lookup table in resolver weights — on unseen names the old head scores
+WORSE than chance. With per-candidate feature vectors plumbed through the
+membrane (the gender/person data always existed in membrane.NAME_GENDER;
+only the per-candidate wiring was missing), binding generalizes to names
+never seen in training at 0.87+. The "knowledge in structures" invariant
+now has its enforcement precedent: WHEN A CAPABILITY LOOKS PERFECT, TEST
+IT ON HELD-OUT ATOMS — closed-set curricula hide weight-memorization.
+SharedScorer untouched (proven by test); byte-identity preserved; 186
+tests green.
+
+Also: §1.10 appended to TRACK_C_DESIGN — M55's gold program nearly
+type-checks; it needs one register-model extension (a per-candidate Addr
+slot: WHICH (entity, relation) to query is itself part of what each parse
+hypothesis asserts). Third C-prerequisite, prospectively predicted by the
+design's own Risk #1 — the formalism is earning its keep before a line of
+executor code exists.
+
+Standing corrections: M53's headline number stands only for the closed
+set; the honest generalizing number is 0.875 held-out with the fixed
+membrane. Real-scale re-gate of the pronoun benchmark with per-candidate
+features + held-out names queued as the next solo run.

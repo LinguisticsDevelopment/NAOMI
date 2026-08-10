@@ -87,11 +87,25 @@ class EntityCandidateSet(CandidateSet):
     structural prior), the mention's deterministic FEATURE vector (see
     :func:`mention_feature_vector`), and -- M53a placeholder only, not a
     learned resolution -- the gold index for the not-yet-built resolver
-    (M53b) to train against."""
+    (M53b) to train against.
+
+    M56b: ``cand_features`` -- shape ``(len(candidates), FEATURE_DIM)`` --
+    is each CANDIDATE's own deterministic feature vector (same recipe as
+    ``feature``/:func:`mention_feature_vector`, applied to the candidate's
+    own key instead of the mention's surface word). This is the register
+    `dev/TRACK_C_DESIGN.md` §1.7/§1.8 finds MISSING from the v1 membrane --
+    without it, nothing in the candidate-set contract carries a candidate's
+    OWN gender/person signal, so a coref head can only memorize a
+    closed-world name->response lookup, not geometrically compare the
+    mention's feature against each candidate's. ``None`` (not an empty
+    array) when ``candidates`` is empty, mirroring ``feature``'s own
+    Optional contract -- keeps every pre-M56b caller that never reads this
+    field untouched."""
 
     surface: str = ""
     feature: Optional[np.ndarray] = None
     gold_index: Optional[int] = None
+    cand_features: Optional[np.ndarray] = None
 
 
 # ---------------------------------------------------------------------------
@@ -248,12 +262,22 @@ def pronoun_entity_candidate_set(pronoun: str, registry: List[str], *,
     n = max(len(registry), 1)
     candidates = [Candidate(key=name, prior=1.0 / n) for name in registry]
     gold_index = registry.index(gold_antecedent) if gold_antecedent in registry else None
+    # M56b: per-candidate feature register (dev/TRACK_C_DESIGN.md §1.8's
+    # "GAP: no such op/register exists today") -- each candidate's OWN
+    # deterministic feature vector, exactly mention_feature_vector applied
+    # to the candidate's key (candidate keys are surface-name strings, same
+    # closed-class NAME_GENDER + lex:noun.person recipe the mention feature
+    # already uses). None (not a zero-row array) when there are no
+    # candidates, matching `feature`'s own Optional contract.
+    cand_features = (np.stack([mention_feature_vector(name) for name in registry], axis=0)
+                      if registry else None)
     return EntityCandidateSet(
         candidates=candidates,
         provenance=dict(provenance or {}),
         surface=pronoun,
         feature=mention_feature_vector(pronoun),
         gold_index=gold_index,
+        cand_features=cand_features,
     )
 
 
