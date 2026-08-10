@@ -2694,3 +2694,40 @@ prior-mix — with learned routing) hard-codes the ABILITY, not the cases
 capabilities with legible routing, no per-task heads. A/B final score:
 A 3, B 1 (pronoun round overturned on capacity appeal), senses to neither
 — to C's motivation.
+
+### M56 — Track C design spike: verdict "more research"; and a hole blown in M53's halo (DESIGN + one measured finding)
+
+`dev/TRACK_C_DESIGN.md` (629 lines, Sonnet research agent, no code
+touched). Op algebra formalized (7 ops explain the whole A/B record:
+mem_query, feature_match, prior, interact, score, select, emit; register
+model; K_max=6 halting; gold programs written out for both solved tasks).
+Graveyard survey reframed per the user's correction: the failures were
+mostly ENVIRONMENTAL (no traces, learned representations under the ops,
+noisy perception, huge search spaces) — all absent here; the mechanical
+residue (gradient-through-composition) is small at our chain lengths and
+trace-defused. Training design: trace-supervised → trace-weaned →
+compositional transfer with M55's parse-hypothesis collapse as the
+zero-new-ops transfer target. Go/kill gates with numbers, ~10k param
+budget, ~1-milestone build cost. Verdict: MORE RESEARCH — two hours-scale
+checks before any prototype.
+
+**The measured finding (PROVISIONAL until the ablation runs): M53's
+perfect pronoun binding is likely a closed-set memorization artifact.**
+The gold pronoun program needs a per-candidate feature to match against
+the mention's feature — and the membrane never built one: only a
+mention-level feature exists, broadcast identically to every candidate.
+Checked empirically: entity atoms carry ZERO gender geometry
+(cos(mary,john)=0.089, cos(mary,sandra)=-0.043 — same-gender names no
+closer). So CorefHead's 1.000/1.000 is a 6-name lookup table learned in
+RESOLVER WEIGHTS — name→gender knowledge silently migrated into weights,
+violating the "knowledge in structures" invariant, and would not transfer
+to a 7th name. The membrane rule needs an enforcement clause: feature
+knowledge must live in membrane feature vectors, not be recoverable-only
+from weight memorization.
+
+Next (the spike's two pre-prototype checks): (1) held-out-name ablation
+to confirm the memorization finding, then add the per-candidate feature
+register (NAME_GENDER exists in membrane.py — the data was there, the
+per-candidate plumbing wasn't) and re-gate CorefHead on held-out names;
+(2) write M55's gold program in the notation prospectively to confirm the
+transfer target is expressible before Stage-1 code exists.
