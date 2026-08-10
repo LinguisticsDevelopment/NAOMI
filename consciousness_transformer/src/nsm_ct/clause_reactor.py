@@ -256,12 +256,52 @@ def _pronoun_context_step(sent: str, ep, parser, resolver, codec: TPRCodec,
 # MIND_INTERFACE.md's "+ optionally the step's other-role vectors" takes
 # here). A name-only clause (e.g. "mary walked into the bank .") yields
 # ``context_word=None`` -- no signal to add, not a bug.
+#
+# M54b (RESOLVER_BUILD_PLAN follow-up, RESEARCH_NOTES M54b): the fixed
+# (hom_vec, rel:SENSE) address above is entity-agnostic BY DESIGN. A first
+# attempt at this curriculum swapped the sense step's OWN address to the
+# homograph event's SUBJECT's (var:<name>, rel:PLACE) slot -- the same slot
+# the entity's earlier disambiguating fact was written under -- reasoning
+# that ClauseReactor.forward()'s generic ``mem_read = query(memory, e, r)``
+# would then transparently retrieve it. MEASURED WRONG: reusing an address
+# that ALREADY holds the entity's own (answer-revealing) content lets the
+# model learn a zero-write-gate shortcut at the sense step -- writing
+# (gate≈0) simply PRESERVES whatever was already there regardless of which
+# sense gets placeholder-bound, so gold-ceiling and MFS-floor become
+# indistinguishable (the exact gap M54b exists to restore). The sense step's
+# address stays the OLD, untouched, entity-agnostic (hom_vec, rel:SENSE) --
+# a slot NOTHING else ever writes to, so the placeholder bind_vec is the
+# ONLY thing ever there (first-write-wins, no shortcut available). The
+# genuine memory-mediated signal a REAL sense_resolver needs instead rides
+# through NEW, separately-gated ``ClauseBatch.sense_cand_subject``/
+# ``sense_cand_subject_rel`` fields, consumed by :meth:`ClauseReactor.
+# _collapse`'s sense branch via an ACTUAL ``em.query`` call at collapse time
+# (see that method's docstring) -- inert (``None``) for every episode this
+# curriculum doesn't touch, including the M32 curriculum above.
 def _ambiguity_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                       meaning_source: MeaningSource, sense_bind: str = "gold"):
     """Grounded stream + per-step :class:`membrane.SenseCandidateSet` map for
-    one M32 ambiguity episode. Returns ``(steps, sense_cand_sets)`` -- the
-    same shape ``_pronoun_context_step``'s caller already threads through
-    ``build_clause_batch``'s ``cand_sets`` dict, just for sense candidates.
+    one ambiguity episode (M32's ``episode.generate_ambiguity_episodes`` OR
+    M54b's ``curriculum2.generate_sense_binding_episodes``). Returns
+    ``(steps, sense_cand_sets)`` -- the same shape ``_pronoun_context_step``'s
+    caller already threads through ``build_clause_batch``'s ``cand_sets``
+    dict, just for sense candidates.
+
+    M54b addendum (RESEARCH_NOTES M54b; the ONE clause_reactor.py change that
+    curriculum needs, gated on ``ep.meta["kind"] == "sense_binding"`` -- a
+    marker only ``curriculum2.SenseBindingCurriculumGenerator`` sets, so the
+    M32 curriculum above is completely byte-unaffected): every homograph-hit
+    step's :class:`membrane.SenseCandidateSet` gets an EXTRA provenance key,
+    ``"subject"`` -- ``ep.meta["entity"]``, the name whose own earlier
+    context sentence carries the disambiguating fact (mirrors
+    :func:`_pronoun_context_step`'s own pattern of reading a ground-truth
+    binding straight out of ``ep.meta`` rather than re-deriving it here).
+    ``build_clause_batch`` grounds this into the ``sense_cand_subject``/
+    ``sense_cand_subject_rel`` batch fields (see their doc comment on
+    :class:`ClauseBatch` for why a genuine per-collapse memory query, not a
+    reused step address, is the fix). The sense/question steps' OWN
+    address stays ``(hom_vec, rel:SENSE)`` -- unconditionally, for every
+    homograph episode, old or new.
     """
     d = codec.dim
     homograph = ep.meta["homograph"]
@@ -277,6 +317,11 @@ def _ambiguity_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, np.
     bind_vec = usvs_sense_handle(bind_sense, d) if bind_sense else None
     if bind_vec is None:                       # defensive: shouldn't happen for the M32 families
         bind_vec = hom_vec
+
+    # M54b: the SUBJECT whose own prior fact disambiguates this homograph
+    # event, threaded through SenseCandidateSet.provenance only -- None for
+    # the M32 curriculum (ep.meta has no "entity" key there).
+    subj_name = ep.meta.get("entity") if ep.meta.get("kind") == "sense_binding" else None
 
     steps = []
     sense_cand_sets: Dict[int, "membrane.SenseCandidateSet"] = {}
@@ -299,7 +344,7 @@ def _ambiguity_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, np.
                 break
         cs = membrane.sense_candidate_set(
             homograph, gold_sense=gold_sense, context_word=context_word,
-            provenance={"sentence_index": si, "sentence": sent})
+            provenance={"sentence_index": si, "sentence": sent, "subject": subj_name})
         sense_cand_sets[len(steps)] = cs
         steps.append((hom_vec, sense_rel, bind_vec, pred_is, z, 0))
     steps.append((hom_vec, sense_rel, z, q_pred, z, 1))
@@ -380,6 +425,24 @@ class ClauseBatch:
     sense_cand_prior: Optional[torch.Tensor] = None    # [B, T, C]     MFS-rank-derived structural prior
     sense_cand_context: Optional[torch.Tensor] = None  # [B, T, d]     same-clause other-role vector (0 elsewhere)
     sense_cand_gold: Optional[torch.Tensor] = None     # [B, T]        long; gold candidate index, -1 elsewhere
+    # M54b (RESEARCH_NOTES M54b, curriculum2.SenseBindingCurriculumGenerator
+    # ONLY -- both None for every other episode, including the M32 ambiguity
+    # curriculum above): a GENUINE memory-mediated collapse context, kept
+    # SEPARATE from ``sense_cand_context`` (a static, batch-build-time
+    # grounded word -- never used by this curriculum, which carries no
+    # same-clause context word by construction) because this one requires an
+    # actual live memory QUERY at collapse time, not a precomputed vector --
+    # see ClauseReactor._collapse's sense branch and _ambiguity_steps's M54b
+    # docstring for why the sense STEP's own (entity, relation) address
+    # can't double as this signal (it must stay the OLD, entity-agnostic,
+    # freshly-written (hom_vec, rel:SENSE) slot for the gold/MFS placeholder
+    # arms to mean anything -- reusing an entity's own already-written PLACE
+    # slot let a model learn a zero-write-gate shortcut that preserves the
+    # entity's pre-existing (answer-revealing) content regardless of which
+    # sense gets placeholder-bound, silently erasing the gold-vs-MFS gap;
+    # MEASURED, not guessed -- see RESEARCH_NOTES M54b).
+    sense_cand_subject: Optional[torch.Tensor] = None      # [B, T, d]  homograph event's SUBJECT var-atom (0 elsewhere)
+    sense_cand_subject_rel: Optional[torch.Tensor] = None  # [B, T, d]  relation to query the subject under (0 elsewhere)
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
@@ -392,7 +455,8 @@ class ClauseBatch:
     def _sense_cand_fields(self, xform):
         return tuple(xform(t) if t is not None else None for t in
                      (self.sense_cand_entity, self.sense_cand_mask, self.sense_cand_prior,
-                      self.sense_cand_context, self.sense_cand_gold))
+                      self.sense_cand_context, self.sense_cand_gold,
+                      self.sense_cand_subject, self.sense_cand_subject_rel))
 
     def to(self, device):
         coord = self.coord.to(device) if self.coord is not None else None
@@ -550,6 +614,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     # leaves it None exactly like a pronoun-free batch leaves cand_* None.
     sense_cand_entity = sense_cand_mask = sense_cand_prior = None
     sense_cand_context = sense_cand_gold = None
+    sense_cand_subject = sense_cand_subject_rel = None
     if any(scs for *_row, _cs, scs in rows):
         Smax = max((len(scs.candidates) for *_row, _cs, scs_map in rows for scs in scs_map.values()),
                    default=1) or 1
@@ -558,6 +623,18 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
         sense_cand_prior = torch.zeros(b, T, Smax)
         sense_cand_context = torch.zeros(b, T, d)
         sense_cand_gold = torch.full((b, T), -1, dtype=torch.long)
+        # M54b: only allocated when at least one SenseCandidateSet actually
+        # carries a "subject" provenance key (curriculum2.
+        # SenseBindingCurriculumGenerator episodes only -- _ambiguity_steps
+        # sets this key exclusively for ep.meta["kind"] == "sense_binding",
+        # so the M32 curriculum's batches never allocate these tensors at
+        # all, exactly like sense_cand_context/etc. stay None for a
+        # homograph-free batch).
+        has_subject = any(
+            scs.provenance.get("subject") for *_row, _cs, scs_map in rows for scs in scs_map.values())
+        if has_subject:
+            sense_cand_subject = torch.zeros(b, T, d)
+            sense_cand_subject_rel = torch.zeros(b, T, d)
         for i, (steps, opt, a, ok, _cs, scs_map) in enumerate(rows):
             for t, scs in scs_map.items():
                 for j, c in enumerate(scs.candidates):
@@ -570,11 +647,17 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                         _content_vec(scs.context_word, resolver, codec, cache, meaning_source))
                 if scs.gold_index is not None:
                     sense_cand_gold[i, t] = scs.gold_index
+                subject_name = scs.provenance.get("subject")
+                if subject_name and has_subject:
+                    sense_cand_subject[i, t] = torch.from_numpy(
+                        _ent_vec(subject_name, resolver, codec, cache, meaning_source))
+                    sense_cand_subject_rel[i, t] = torch.from_numpy(codec.filler_vec("rel:PLACE"))
 
     return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans, crd, ans_ok,
                        cand_entity, cand_mask, cand_prior, cand_feature, cand_gold,
                        sense_cand_entity, sense_cand_mask, sense_cand_prior,
-                       sense_cand_context, sense_cand_gold)
+                       sense_cand_context, sense_cand_gold,
+                       sense_cand_subject, sense_cand_subject_rel)
 
 
 # ---------------------------------------------------------------------------
@@ -679,9 +762,15 @@ class ClauseReactor(nn.Module):
           content at the homograph's address) PLUS the same-clause
           other-role vector (``batch.sense_cand_context`` --
           ``nsm_ct.membrane.SenseCandidateSet.context_word``, grounded at
-          batch-build time), broadcast identically across every candidate
-          slot -- MIND_INTERFACE.md §3's "context IS the memory readout (+
-          optionally the step's other-role vectors)" for M54.
+          batch-build time) PLUS (M54b addendum, ``batch.sense_cand_subject``
+          only -- None for the M32 curriculum) a GENUINE live memory query
+          ``em.query(memory, sense_cand_subject, sense_cand_subject_rel)``:
+          the homograph event's SUBJECT's own prior fact, read from the SAME
+          memory tensor this very step's generic read/write already uses,
+          not a batch-build-time-grounded shortcut. Broadcast identically
+          across every candidate slot -- MIND_INTERFACE.md §3's "context IS
+          the memory readout (+ optionally the step's other-role vectors)"
+          for M54/M54b.
         - the RESOLVED value is the weighted SUM OF THE CANDIDATE VECTORS
           THEMSELVES (not their memory readout, unlike the entity branch --
           a sense candidate's vector already IS the resolved meaning).
@@ -704,7 +793,11 @@ class ClauseReactor(nn.Module):
             sc_t = batch.sense_cand_entity[:, t]                                 # [B, C, d]  sense VECTORS
             sp_t, sm_t = batch.sense_cand_prior[:, t], batch.sense_cand_mask[:, t]
             b, C, sd = sc_t.shape
-            ctx = (mem_read + batch.sense_cand_context[:, t]).unsqueeze(1).expand(b, C, sd)
+            extra_ctx = mem_read
+            if batch.sense_cand_subject is not None:                            # M54b addendum, see docstring
+                subj_read = em.query(memory, batch.sense_cand_subject[:, t], batch.sense_cand_subject_rel[:, t])
+                extra_ctx = extra_ctx + subj_read
+            ctx = (extra_ctx + batch.sense_cand_context[:, t]).unsqueeze(1).expand(b, C, sd)
             feat0 = sc_t.new_zeros(b, FEATURE_DIM)          # thinnest projection, see docstring above
             logits = self.sense_resolver(sc_t, feat0, sp_t, sm_t, ctx, state)     # [B, C]
             logits = logits.masked_fill(sm_t <= 0, -1e9)

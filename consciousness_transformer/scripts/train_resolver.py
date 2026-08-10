@@ -47,7 +47,9 @@ torch.set_num_threads(1)
 
 from nsm_ct.clause_reactor import ClauseReactor, build_clause_batch  # noqa: E402
 from nsm_ct.curriculum2 import (  # noqa: E402
+    association_only_baseline,
     generate_pronoun_episodes,
+    generate_sense_binding_episodes,
     generate_transfer_episodes,
     nearest_entity_baseline,
 )
@@ -98,6 +100,26 @@ def build_m54_curriculum(n_episodes: int, seed: int):
         e.meta.setdefault("kind", "ambiguity")
     episodes = old + transfer + pronoun + ambiguity
     order = np.random.RandomState(seed + 4).permutation(len(episodes))
+    return [episodes[i] for i in order]
+
+
+def build_m54b_curriculum(n_episodes: int, seed: int):
+    """M54b's mix (RESEARCH_NOTES M54b): 50% old L1-6 + 50% the NEW
+    entity-keyed, binding-critical sense curriculum
+    (curriculum2.generate_sense_binding_episodes) -- deliberately heavy in
+    the new kind (unlike --mix m54's 20% old-M32-ambiguity slice) so the
+    gold-ceiling-vs-MFS-floor gap probe has enough of the new signal to
+    measure cleanly. No transfer/pronoun episodes here on purpose -- this
+    mix isolates the ONE new capability M54b adds; --mix m54 already covers
+    the full curriculum-mix regression. Deterministic given
+    (n_episodes, seed). Episodes get ``meta["kind"] = "sense_binding"``
+    already (the generator sets it itself, unlike the M32 generator)."""
+    n_new = n_episodes // 2
+    n_old = n_episodes - n_new
+    old = CurriculumGenerator(max_level=6, seed=seed).generate(n_old)
+    new = generate_sense_binding_episodes(n_new, seed=seed + 1)
+    episodes = old + new
+    order = np.random.RandomState(seed + 2).permutation(len(episodes))
     return [episodes[i] for i in order]
 
 
@@ -296,22 +318,32 @@ def main() -> None:
     ap.add_argument("--hidden", type=int, default=128)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--mix", choices=["m53", "m54"], default="m54",
+    ap.add_argument("--mix", choices=["m53", "m54", "m54b"], default="m54",
                      help="m53 = the original 1/2 old + 1/4 transfer + 1/4 pronoun mix "
                           "(no ambiguity episodes, exact M53 reproduction); "
-                          "m54 (default) = 40%% old / 20%% transfer / 20%% pronoun / 20%% ambiguity")
+                          "m54 (default) = 40%% old / 20%% transfer / 20%% pronoun / 20%% ambiguity; "
+                          "m54b = 50%% old / 50%% the NEW entity-keyed sense-binding curriculum "
+                          "(RESEARCH_NOTES M54b's gold/MFS gap probe)")
     args = ap.parse_args()
 
     n_arms = sum([args.gold_binding, args.mfs_floor, args.track is not None])
     if n_arms != 1:
         raise SystemExit("pass exactly one of --track A|B, --gold-binding, --mfs-floor")
 
-    episodes = (build_m54_curriculum(args.episodes, args.seed) if args.mix == "m54"
-                else build_mixed_curriculum(args.episodes, args.seed))
+    if args.mix == "m54":
+        episodes = build_m54_curriculum(args.episodes, args.seed)
+    elif args.mix == "m54b":
+        episodes = build_m54b_curriculum(args.episodes, args.seed)
+    else:
+        episodes = build_mixed_curriculum(args.episodes, args.seed)
     baseline = nearest_entity_baseline(episodes)
     print(f"nearest-entity baseline: overall={baseline['accuracy']:.3f} (n={baseline['n']}) "
           f"anti-recency={baseline['anti_recency_accuracy']:.3f} (n={baseline['n_anti_recency']})",
           flush=True)
+    assoc = association_only_baseline(episodes)
+    if assoc["n"]:
+        print(f"association-only baseline (M54b sense-binding kind): "
+              f"accuracy={assoc['accuracy']:.3f} (n={assoc['n']}) vs chance 0.500", flush=True)
 
     if args.gold_binding:
         print(f"=== gold-binding ceiling: no resolver, {args.episodes} eps, dim={args.dim}, "

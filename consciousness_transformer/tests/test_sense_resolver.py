@@ -17,7 +17,7 @@ import torch
 import torch.nn.functional as F
 
 from nsm_ct import entity_memory as em
-from nsm_ct.clause_reactor import ClauseBatch, ClauseReactor, build_clause_batch
+from nsm_ct.clause_reactor import ClauseBatch, ClauseReactor, _content_vec, build_clause_batch
 from nsm_ct.membrane import FEATURE_DIM, Candidate, SenseCandidateSet, sense_candidate_set
 from nsm_ct.resolver import Resolver, SenseHead, SharedScorer, make_resolver, make_sense_resolver
 from nsm_ct.tpr import TPRCodec
@@ -475,6 +475,195 @@ def test_sense_determinism_same_seed_same_outputs(track):
 # 7. No-sense-resolver byte identity (mirrors test_resolver.py's own
 #    resolver=None regression, for the sense_resolver=None case).
 # ---------------------------------------------------------------------------
+def _sense_binding_parser_env(dim=32, n=40, seed=0):
+    """Like :func:`_amb_parser_env` but for M54b's entity-keyed curriculum."""
+    from nsm_ct.input_encoder import ParserInputEncoder
+    from nsm_ct.meaning import NSMMeaningResolver
+    from nsm_ct.nsm_primes import PRIME_NAMES
+    from nsm_ct.structure import PARSE_LABELS
+    from nsm_ct.tokenizer import SimpleTokenizer
+    from nsm_ct.curriculum2 import generate_sense_binding_episodes
+
+    eps = generate_sense_binding_episodes(n, seed=seed)
+    texts = [t for e in eps for t in e.context + [e.question] + (e.options or [])]
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        pytest.skip("quantum_parser unavailable in this environment")
+    return parser, NSMMeaningResolver(), TPRCodec(dim=dim), eps
+
+
+# ---------------------------------------------------------------------------
+# 8. M54b: entity-keyed sense-binding curriculum through the batch path
+#    (RESEARCH_NOTES M54b -- the _ambiguity_steps addendum this task owns).
+# ---------------------------------------------------------------------------
+def test_sense_binding_batch_produces_sense_step_not_dropped():
+    parser, resolver, codec, eps = _sense_binding_parser_env(n=40)
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    assert batch.entity.shape[0] == len(eps)
+    assert batch.sense_cand_entity is not None
+    has_cand = batch.sense_cand_gold >= 0
+    assert int(has_cand.any(dim=1).sum()) == len(eps), "every episode must get exactly one sense step"
+
+
+def test_sense_binding_batch_no_same_clause_context_leak():
+    """The M54 leak, directly measured absent: the anchor clause carries no
+    OTHER content word besides the homograph, so sense_cand_context must be
+    all-zero for every sense step (unlike some M32 families, which DO carry
+    a nonzero context_word -- see test_batch_carries_sense_candidates_for_
+    homograph_steps's sibling coverage of that curriculum)."""
+    parser, resolver, codec, eps = _sense_binding_parser_env(n=60)
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    has_cand = batch.sense_cand_gold >= 0
+    leak = (batch.sense_cand_context.abs().sum(dim=-1) > 1e-6) & has_cand
+    assert int(leak.sum()) == 0
+
+
+def test_sense_binding_batch_packs_sense_gold_index_correctly():
+    from nsm_ct.wordnet import senses as wn_senses
+
+    parser, resolver, codec, eps = _sense_binding_parser_env(n=60)
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    has_cand = batch.sense_cand_gold >= 0
+    checked = 0
+    for i, e in enumerate(eps):
+        row = has_cand[i]
+        assert bool(row.any())
+        ids = tuple(s["sense_id"] for s in wn_senses(e.meta["homograph"]))
+        expected_gold_idx = ids.index(e.meta["gold_sense"])
+        t = int(row.nonzero()[0, 0])
+        assert int(batch.sense_cand_gold[i, t]) == expected_gold_idx
+        checked += 1
+    assert checked == len(eps)
+
+
+def test_sense_binding_sense_step_address_stays_entity_agnostic():
+    """A first M54b design swapped the sense/question step's OWN address to
+    the gold entity's (var:name, rel:PLACE) slot; MEASURED to silently erase
+    the gold-vs-MFS gap (a zero-write-gate strategy at the sense step simply
+    preserves the entity's pre-existing, answer-revealing content regardless
+    of which sense gets placeholder-bound -- see RESEARCH_NOTES M54b). The
+    fix keeps the sense/question step's address the SAME entity-agnostic
+    (hom_vec, rel:SENSE) slot the M32 curriculum already uses -- nothing else
+    ever writes there, so the placeholder bind_vec is the only thing that
+    can end up at that address (first-write-wins)."""
+    parser, resolver, codec, eps = _sense_binding_parser_env(n=20)
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    has_cand = batch.sense_cand_gold >= 0
+    sense_rel = codec.filler_vec("rel:SENSE")
+    cache = {}
+    for i, e in enumerate(eps):
+        hom_vec = _content_vec(e.meta["homograph"], resolver, codec, cache)
+        row = has_cand[i]
+        t_sense = int(row.nonzero()[0, 0])
+        assert np.allclose(batch.entity[i, t_sense].numpy(), hom_vec, atol=1e-5)
+        assert np.allclose(batch.relation[i, t_sense].numpy(), sense_rel, atol=1e-6)
+        is_q_idx = batch.is_q[i].nonzero().flatten().tolist()
+        assert is_q_idx, "every sense-binding episode must carry a question step"
+        t_q = is_q_idx[-1]
+        assert np.allclose(batch.entity[i, t_q].numpy(), hom_vec, atol=1e-5)
+        assert np.allclose(batch.relation[i, t_q].numpy(), sense_rel, atol=1e-6)
+
+
+def test_sense_binding_batch_carries_genuine_subject_query_fields():
+    """The M54b addendum's actual mechanism: ClauseBatch.sense_cand_subject /
+    sense_cand_subject_rel are populated with the gold entity's own
+    (var:name, rel:PLACE) query key -- the SAME address the entity's earlier
+    disambiguating cue wrote its fact under -- so ClauseReactor._collapse's
+    sense branch can run a GENUINE ``em.query(memory, ...)`` at collapse
+    time (not a batch-build-time-grounded shortcut)."""
+    parser, resolver, codec, eps = _sense_binding_parser_env(n=20)
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    assert batch.sense_cand_subject is not None
+    assert batch.sense_cand_subject_rel is not None
+    has_cand = batch.sense_cand_gold >= 0
+    place_rel = codec.filler_vec("rel:PLACE")
+    for i, e in enumerate(eps):
+        gold_var = codec.filler_vec("var:" + e.meta["entity"])
+        t_sense = int(has_cand[i].nonzero()[0, 0])
+        assert np.allclose(batch.sense_cand_subject[i, t_sense].numpy(), gold_var, atol=1e-6)
+        assert np.allclose(batch.sense_cand_subject_rel[i, t_sense].numpy(), place_rel, atol=1e-6)
+        # sanity: an EARLIER step (the gold entity's own cue) wrote the SAME
+        # (var:entity, rel:PLACE) address with the gold answer's content.
+        earlier_hits = [t for t in range(t_sense) if
+                        np.allclose(batch.entity[i, t].numpy(), gold_var, atol=1e-6) and
+                        np.allclose(batch.relation[i, t].numpy(), place_rel, atol=1e-6)]
+        assert earlier_hits, "the gold entity's disambiguating cue must precede the sense step"
+
+
+def test_sense_binding_collapse_reads_genuine_subject_memory():
+    """End-to-end mechanism check: after the gold entity's cue fact has been
+    written to memory (full gate/overwrite, simulating a well-trained write
+    policy), ClauseReactor._collapse's sense branch's ``em.query`` against
+    ``sense_cand_subject``/``sense_cand_subject_rel`` actually retrieves it
+    -- the signal a real sense_resolver needs, via the SAME memory tensor
+    the reactor's own read/write already uses (not a side channel)."""
+    parser, resolver, codec, eps = _sense_binding_parser_env(n=5)
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    has_cand = batch.sense_cand_gold >= 0
+    i = 0
+    e = eps[i]
+    gold_var = codec.filler_vec("var:" + e.meta["entity"])
+    place_rel = codec.filler_vec("rel:PLACE")
+    cache = {}
+    gold_answer_vec = _content_vec(e.meta["gold_answer"], resolver, codec, cache)
+    t_sense = int(has_cand[i].nonzero()[0, 0])
+    cue_t = next(t for t in range(t_sense) if
+                 np.allclose(batch.entity[i, t].numpy(), gold_var, atol=1e-6) and
+                 np.allclose(batch.relation[i, t].numpy(), place_rel, atol=1e-6))
+
+    memory = em.init_memory(1, codec.dim, torch.device("cpu"))
+    ent = torch.from_numpy(gold_var).unsqueeze(0)
+    rel = torch.from_numpy(place_rel).unsqueeze(0)
+    val = batch.value[i, cue_t].unsqueeze(0)
+    memory = em.write(memory, ent, rel, val, gate=torch.ones(1), overwrite=torch.ones(1))
+
+    subj_read = em.query(memory, batch.sense_cand_subject[i, t_sense].unsqueeze(0),
+                          batch.sense_cand_subject_rel[i, t_sense].unsqueeze(0))
+    assert torch.allclose(subj_read[0], torch.from_numpy(gold_answer_vec), atol=1e-4)
+
+
+def test_sense_binding_does_not_disturb_m32_ambiguity_addressing():
+    """Regression: the M54b addendum is gated on ep.meta["kind"] ==
+    "sense_binding" -- the pre-existing M32 curriculum (episode.py's
+    generate_ambiguity_episodes) must keep using the old, entity-agnostic
+    (hom_vec, rel:SENSE) address, completely untouched."""
+    from nsm_ct.usvs_bridge import usvs_handle
+    from nsm_ct.episode import generate_ambiguity_episodes
+
+    dim = 32
+    eps = generate_ambiguity_episodes(20, seed=0)
+    texts = [t for e in eps for t in e.context + [e.question] + (e.options or [])]
+    from nsm_ct.input_encoder import ParserInputEncoder
+    from nsm_ct.meaning import NSMMeaningResolver
+    from nsm_ct.nsm_primes import PRIME_NAMES
+    from nsm_ct.structure import PARSE_LABELS
+    from nsm_ct.tokenizer import SimpleTokenizer
+
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        pytest.skip("quantum_parser unavailable in this environment")
+    resolver = NSMMeaningResolver()
+    codec = TPRCodec(dim=dim)
+    batch = build_clause_batch(eps, parser, resolver, codec)
+    has_cand = batch.sense_cand_gold >= 0
+    sense_rel = codec.filler_vec("rel:SENSE")
+    checked = 0
+    for i, e in enumerate(eps):
+        row = has_cand[i]
+        if not bool(row.any()):
+            continue
+        hom_vec = usvs_handle(e.meta["homograph"], dim)
+        if hom_vec is None:
+            continue
+        t = int(row.nonzero()[0, 0])
+        assert np.allclose(batch.relation[i, t].numpy(), sense_rel, atol=1e-6)
+        assert np.allclose(batch.entity[i, t].numpy(), hom_vec, atol=1e-5)
+        checked += 1
+    assert checked > 0
+
+
 def test_no_sense_resolver_leaves_forward_untouched_even_with_sense_data():
     """A sense_resolver CAN be omitted even when the batch DOES carry sense
     candidate data -- the sense-collapse branch must never fire, matching

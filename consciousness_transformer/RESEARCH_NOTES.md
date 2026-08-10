@@ -2603,3 +2603,44 @@ Next: **M54b — a binding-critical ambiguity curriculum** (the answer must
 depend on the SENSE through memory, not on a co-written context word;
 mirror the anti-recency discipline: an association-only baseline must sit
 at floor). Then re-run these arms unchanged.
+
+### M54b — memory-context WSD works: the M30 rematch, won honestly (MEASURED)
+
+The binding-critical curriculum (Sonnet agent; agent caught and reverted
+its own leak mid-build — an address-swap variant where a near-zero write
+gate preserved the answer-revealing cue, measured as zero gold/MFS gap,
+rebuilt with a genuine entity-keyed em.query at collapse time). Data
+honesty gates: association-only baseline 0.487-0.516 across seeds
+INCLUDING a fresh main-session seed (chance by construction — both
+senses' cue words present, attached to different entities); 47 eligible
+family/sense pairs after an exhaustive leak audit (pool family + 13
+anchors excluded, fred/bill names excluded).
+
+Gate run (1500 eps, 50% old + 50% sense-binding, dim 48, 80 epochs):
+
+| arm | task total | sense-kind task | sense binding overall / flipped |
+|---|---|---|---|
+| gold ceiling | 0.953 | **1.000** | — |
+| MFS floor | 0.700 | **0.483** | — |
+| **Track A** | 0.863 | **0.823** | **0.680 / 0.629** |
+| Track B (shared) | 0.727 | 0.544 | 0.374 / 0.429 |
+
+The exam is now real: gold-vs-MFS gap on the sense kind is 52 points (was
+0.7 in M54's leaky curriculum). On it, **Track A closes 66% of the
+floor→ceiling gap: the mind disambiguates a homograph by consulting
+entity-keyed memory** — "what do I know about mary?" → river → riverbank —
+where association is chance and MFS actively misleads. This is the first
+positive WSD-inside-the-mind result: M30's bag-context loss is avenged by
+memory context, exactly as the membrane design predicted. Not saturated
+(pronouns hit 1.000; senses are harder — 0.629 flipped binding leaves
+real headroom for curriculum scale/head tuning), but the mechanism is
+PROVEN.
+
+A/B verdict after three fair rounds: **A three, B zero.** With genuine
+task pressure B manages 0.544 sense-kind task (barely above the 0.483
+floor). The specialist-heads architecture is the working configuration;
+the universal-executor bet (see roadmap: Advice Test) is not falsified —
+B stays in the codebase and contests M55 — but at this scale, with these
+capacities, "methods fall out of one mechanism" has not materialized.
+Standing result, recorded straight. Full-vocabulary WSD (SemCor-class)
+remains open; the proven mechanism is the credible attack on it.

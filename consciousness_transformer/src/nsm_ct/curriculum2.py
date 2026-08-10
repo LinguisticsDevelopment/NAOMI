@@ -31,7 +31,9 @@ from __future__ import annotations
 import random
 from typing import Dict, List, Tuple
 
-from .episode import Episode, _NAMES, _PLACES
+import numpy as np
+
+from .episode import Episode, _NAMES, _PLACES, _AMBIGUITY_FAMILIES
 from .membrane import NAME_GENDER  # noqa: F401  (M53a pronoun curriculum genders)
 
 # ---------------------------------------------------------------------------
@@ -1009,3 +1011,314 @@ def nearest_entity_baseline(episodes: List[Episode]) -> Dict[str, float]:
         "n_anti_recency": anti,
         "anti_recency_accuracy": anti_correct / anti if anti else float("nan"),
     }
+
+
+# ---------------------------------------------------------------------------
+# M54b -- entity-keyed, binding-critical sense-ambiguity curriculum.
+#
+# RESEARCH_NOTES.md M54's finding: the M32/episode.py ambiguity curriculum
+# (``episode.ambiguity_episode`` / ``generate_ambiguity_episodes``) LEAKS --
+# MFS-floor task accuracy (0.910) sits almost at the gold ceiling (0.917),
+# meaning the model never needs the SENSE at all to answer. This generator
+# fixes that BY CONSTRUCTION, mirroring the M53a anti-recency discipline
+# exactly: the disambiguating cue for the homograph lives in an EARLIER
+# sentence keyed to a SPECIFIC entity ("mary went to the river ."), a
+# DIFFERENT entity gets a decoy sentence supporting the WRONG sense's answer
+# ("john went to the money ."), and only THEN does the homograph event happen
+# ("mary sat on the bank ."). Both senses' associated content is present in
+# EVERY episode, attached to different entities -- so a bag-of-words
+# association over the whole episode is uninformative BY DESIGN (see
+# :func:`association_only_baseline`, which must land at chance on generated
+# data) and only correctly binding the homograph to the RIGHT entity's own
+# prior fact -- via genuine entity-keyed memory, not a side-channel -- can
+# discriminate. See ``nsm_ct.clause_reactor._ambiguity_steps``'s "M54b"
+# addendum for the one clause_reactor.py change this needs (gated on
+# ``ep.meta["kind"] == "sense_binding"``, so the M32 curriculum's own
+# behavior is completely unaffected).
+#
+# Vocabulary: reuses episode.py's _AMBIGUITY_FAMILIES (senses/answers/
+# anchors) as the closed-class word list -- NOT episode.py's own episode
+# SHAPE, which is untouched by anything below.
+#
+# Two exhaustive, PARSER-MEASURED exclusions (found by literally parsing
+# every anchor/answer combination through quantum_parser -- see
+# :func:`verify_sense_binding_templates`, which reproduces this audit and
+# reports it, exactly like :func:`verify_pronoun_templates` reports the
+# fred landmine instead of silently working around it):
+#
+#   1. ``_SENSE_BINDING_EXCLUDE_FAMILY`` -- "pool"'s sense-A answer, "swim",
+#      does not parse as a PLACE noun in "{name} went to the {p} ." (the
+#      generic MOVE template this generator uses for BOTH the disambiguating
+#      cue and the decoy -- the same parser-verified shape as
+#      ``TEMPLATES["B"]["MOVE"][0]``). Every OTHER answer word across all 31
+#      families' both senses (62 words total) parses cleanly. "pool" is
+#      dropped entirely (not just its A sense) for simplicity.
+#
+#   2. ``_SENSE_BINDING_EXCLUDE_ANCHOR`` -- a (family, sense_key) that cannot
+#      be the ANCHOR (the sense whose event actually happens, entity-keyed)
+#      because its own anchor sentence fails one of two checks: (a) the
+#      clause's SUBJECT isn't the {name} at all (three anchors are built
+#      around a non-person subject -- "the doctor examined the pupil .",
+#      "the bird had a long bill .", "the game ended in a tie ." -- pupil/B,
+#      bill/B, tie/B), or (b) the SAME clause contains a second content word
+#      besides SUBJECT/homograph -- e.g. "cave" in "{name} saw a bat in the
+#      cave ." -- which is EXACTLY the M54 same-clause leak this curriculum
+#      exists to avoid, so any anchor with that shape is disqualified as a
+#      binding-critical ANCHOR outright (bat/A, plant/B [also a genuine
+#      no-hit-clause parse miss], seal/A, seal/B, pupil/A, hood/A [no-hit-
+#      clause], jam/A, jam/B, mole/A) plus the pre-existing "hammered"
+#      landmine (nail/B, RESEARCH_NOTES M53a/M54 -- fred's sibling, not
+#      fixed here, quantum_parser/ out of scope). A family with BOTH senses
+#      excluded (seal, jam, pupil) is simply never used as the anchor side;
+#      it remains fully available as the DECOY side (only the answer WORD is
+#      used there, never the anchor sentence).
+#
+# Landmine avoided (mirrors M53a's fred exclusion exactly): "bill" is BOTH a
+# curriculum NAME (episode.py's _NAMES) and an ambiguity-family HOMOGRAPH --
+# picking "bill" as an entity name in a "bill"-family episode would make the
+# SUBJECT token and the homograph token the SAME SURFACE WORD, an
+# unnecessary and confusing self-collision. "bill" is excluded from this
+# generator's own entity-name pool entirely (like fred is excluded from
+# PronounCurriculumGenerator's), leaving 4 usable names.
+# ---------------------------------------------------------------------------
+_SENSE_BINDING_NAMES: List[str] = [n for n in _NAMES if n not in ("fred", "bill")]
+
+_SENSE_BINDING_EXCLUDE_FAMILY = {"pool"}
+_SENSE_BINDING_EXCLUDE_ANCHOR = {
+    ("bat", "A"), ("plant", "B"), ("seal", "A"), ("seal", "B"),
+    ("pupil", "A"), ("pupil", "B"), ("nail", "B"), ("hood", "A"),
+    ("bill", "B"), ("tie", "B"), ("jam", "A"), ("jam", "B"), ("mole", "A"),
+}
+
+# The one new sentence shape this curriculum introduces: reuses
+# TEMPLATES["B"]["MOVE"][0] verbatim (already verify_templates()-covered
+# above) with a sense's ANSWER WORD standing in for the place noun -- the
+# disambiguating cue AND the decoy are the exact same shape, just keyed to
+# different entities and different sense answers.
+_SENSE_BINDING_CUE_TEMPLATE = TEMPLATES["B"]["MOVE"][0]
+assert _SENSE_BINDING_CUE_TEMPLATE == "{n} went to the {p} ."
+
+
+def _sense_binding_eligible_pairs() -> List[Tuple[str, str, bool]]:
+    """``[(family, gold_key, flipped)]`` for every (family, sense) that may
+    be the ANCHOR (see module-level exclusions above). ``flipped`` is
+    ``gold_sense != mfs_sense`` computed off the REAL synset ids (not an
+    A/B-key shortcut -- a handful of families' ``mfs`` synset matches
+    NEITHER curriculum sense, e.g. "seal"'s mfs is ``sealing_wax.n.01``,
+    a real WordNet quirk episode.py's own module docstring already flags --
+    those are always-flipped regardless of which key is chosen, which this
+    computation gets right for free by comparing synset strings directly)."""
+    pairs = []
+    for word, fam in _AMBIGUITY_FAMILIES.items():
+        if word in _SENSE_BINDING_EXCLUDE_FAMILY:
+            continue
+        for key in ("A", "B"):
+            if (word, key) in _SENSE_BINDING_EXCLUDE_ANCHOR:
+                continue
+            flipped = fam["senses"][key]["synset"] != fam["mfs"]
+            pairs.append((word, key, flipped))
+    return pairs
+
+
+_SENSE_BINDING_ELIGIBLE = _sense_binding_eligible_pairs()
+
+
+def verify_sense_binding_templates(sample_gold_name: str = "mary",
+                                    sample_other_name: str = "john"
+                                    ) -> Dict[str, Dict[str, object]]:
+    """Parse-check this curriculum's sentence shapes through the REAL parser
+    (the ``verify_*`` pattern every other generator in this module follows):
+    every eligible anchor's clause must have SUBJECT == the sample name and
+    carry NO other content word besides the homograph (the same-clause-leak
+    check M54 measured missing), and every family's BOTH answer words must
+    parse as a clean SUBJECT/PLACE pair through
+    :data:`_SENSE_BINDING_CUE_TEMPLATE`. Returns
+    ``{check_name: {"sentence": str, "ok": bool, ...}}``. Returns an empty
+    dict if ``quantum_parser`` isn't importable (caller must treat that as
+    "unable to verify", not a pass) -- same contract as
+    :func:`verify_templates` / :func:`verify_transfer_templates` /
+    :func:`verify_pronoun_templates`.
+    """
+    from .clause import extract_discourse
+    from .input_encoder import ParserInputEncoder
+    from .nsm_primes import PRIME_NAMES
+    from .structure import PARSE_LABELS
+    from .tokenizer import SimpleTokenizer
+
+    # Only answer words this generator can actually produce -- i.e. every
+    # family EXCEPT _SENSE_BINDING_EXCLUDE_FAMILY ("pool"'s sense-A answer,
+    # "swim", is the one word in the whole 62-word vocabulary that fails this
+    # check -- feed the pre-exclusion set to see it fail explicitly).
+    answers = sorted({fam["senses"][k]["answer"] for w, fam in _AMBIGUITY_FAMILIES.items()
+                       for k in ("A", "B") if w not in _SENSE_BINDING_EXCLUDE_FAMILY})
+    cue_texts = [_SENSE_BINDING_CUE_TEMPLATE.format(n=sample_gold_name, p=a) for a in answers]
+    anchor_texts = {(w, k): _AMBIGUITY_FAMILIES[w]["senses"][k]["anchor"].format(name=sample_gold_name)
+                    for (w, k, _f) in _SENSE_BINDING_ELIGIBLE}
+    texts = cue_texts + list(anchor_texts.values()) + [sample_gold_name, sample_other_name] + answers
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        return {}  # quantum_parser unavailable; caller must handle this case
+
+    results: Dict[str, Dict[str, object]] = {}
+    for a in answers:
+        sent = _SENSE_BINDING_CUE_TEMPLATE.format(n=sample_gold_name, p=a)
+        graph = parser._parse_graph(sent)
+        clauses, _links = extract_discourse(graph)
+        ok = any((arg.token or "").lower() == sample_gold_name for rel, arg in
+                 (ra for cl in clauses for ra in cl.args) if rel == "SUBJECT") and \
+            any((arg.token or "").lower() == a for rel, arg in
+                (ra for cl in clauses for ra in cl.args) if rel == "PLACE")
+        results[f"CUE[{a}]"] = {"sentence": sent, "ok": ok}
+
+    for (w, k), sent in anchor_texts.items():
+        graph = parser._parse_graph(sent)
+        clauses, _links = extract_discourse(graph)
+        hit = None
+        for cl in clauses:
+            if any((arg.token or "").lower() == w for _rel, arg in cl.args):
+                hit = cl
+                break
+        ok, roles, extra = False, {}, []
+        if hit is not None:
+            roles = {rel: (arg.token or "").lower() for rel, arg in hit.args}
+            extra = [t for _rel, arg in hit.args for t in [(arg.token or "").lower()]
+                     if t and t != w and t != sample_gold_name]
+            ok = roles.get("SUBJECT") == sample_gold_name and not extra
+        results[f"ANCHOR[{w}.{k}]"] = {"sentence": sent, "ok": ok, "roles": roles, "context_leak": extra}
+    return results
+
+
+class SenseBindingCurriculumGenerator:
+    """M54b binding-critical ambiguity episodes: entity-keyed, decoy-balanced.
+
+    Episode shape (order: cues first in random relative order, ANCHOR always
+    last so its sense-binding step's memory READ sees both cues already
+    written):
+
+        "{gold_name} went to the {gold_answer} ."
+        "{other_name} went to the {other_answer} ."
+        "{gold_name} <anchor verb phrase with the homograph> ."
+        Q: "what kind of {homograph} is it ?"
+        options: [gold_answer, other_answer] (shuffled)
+
+    ``gold_answer``/``other_answer`` are the homograph family's two senses'
+    answer words (:data:`nsm_ct.episode._AMBIGUITY_FAMILIES`) -- e.g. for
+    "bank": river (the A/river-bank sense) vs money (the B/financial-
+    institution sense). Both are present in EVERY episode, each attached to
+    a DIFFERENT entity, so a bag-of-words association over the whole episode
+    is uninformative by construction (:func:`association_only_baseline`
+    must land at chance on generated data) -- only correctly binding the
+    homograph event to ``gold_name``'s own earlier fact discriminates.
+
+    Flip balance mirrors :class:`PronounCurriculumGenerator`'s anti-recency
+    discipline exactly: an internal COUNTER (not RNG) alternates wanting a
+    "flipped" episode (``gold_sense != mfs_sense`` -- the half where always-
+    guessing MFS is wrong) vs "unflipped", guaranteeing (as close to) exact
+    50/50 as :data:`_SENSE_BINDING_ELIGIBLE`'s pool allows (47 eligible
+    (family, gold_key) pairs: 22 unflipped, 25 flipped -- both sides always
+    have candidates, so the alternation never has to fall back).
+
+    ``ep.meta`` carries ``kind="sense_binding"`` (the marker
+    ``clause_reactor._ambiguity_steps`` gates its M54b addendum on),
+    ``family``, ``homograph``, ``gold_sense``, ``mfs_sense``, ``sense_key``,
+    ``flipped``, ``entity`` (the gold/anchor-bearing name --
+    ``clause_reactor`` reads this directly, mirroring
+    ``_pronoun_context_step``'s own ``ep.meta["gold_antecedent"]`` placeholder
+    pattern), ``other_entity``, ``gold_answer``, ``other_answer``.
+    """
+
+    def __init__(self, num_options: int = 2, seed: int = 0) -> None:
+        self.num_options = num_options
+        self.rng = random.Random(seed)
+        self._count = 0
+
+    def _episode(self) -> Episode:
+        want_flipped = (self._count % 2 == 1)
+        self._count += 1
+        candidates = [(w, k) for (w, k, f) in _SENSE_BINDING_ELIGIBLE if f == want_flipped]
+        if not candidates:   # defensive; both buckets are non-empty today
+            candidates = [(w, k) for (w, k, _f) in _SENSE_BINDING_ELIGIBLE]
+        family, gold_key = self.rng.choice(candidates)
+        fam = _AMBIGUITY_FAMILIES[family]
+        other_key = "B" if gold_key == "A" else "A"
+        gold_sense_obj, other_sense_obj = fam["senses"][gold_key], fam["senses"][other_key]
+        gold_answer, other_answer = gold_sense_obj["answer"], other_sense_obj["answer"]
+
+        gold_name, other_name = self.rng.sample(_SENSE_BINDING_NAMES, 2)
+        gold_cue = _SENSE_BINDING_CUE_TEMPLATE.format(n=gold_name, p=gold_answer)
+        other_cue = _SENSE_BINDING_CUE_TEMPLATE.format(n=other_name, p=other_answer)
+        cues = [gold_cue, other_cue]
+        self.rng.shuffle(cues)
+        anchor = gold_sense_obj["anchor"].format(name=gold_name)
+        context = cues + [anchor]
+
+        options = [gold_answer, other_answer]
+        self.rng.shuffle(options)
+        return Episode(
+            context=context, question=f"what kind of {fam['word']} is it ?",
+            answer_text=gold_answer, options=options, answer_idx=options.index(gold_answer),
+            level=15,
+            meta={
+                "src": "curriculum2", "kind": "sense_binding",
+                "family": family, "homograph": fam["word"],
+                "gold_sense": gold_sense_obj["synset"], "mfs_sense": fam["mfs"],
+                "sense_key": gold_key, "flipped": gold_sense_obj["synset"] != fam["mfs"],
+                "entity": gold_name, "other_entity": other_name,
+                "gold_answer": gold_answer, "other_answer": other_answer,
+            },
+        )
+
+    def generate(self, n: int) -> List[Episode]:
+        return [self._episode() for _ in range(n)]
+
+
+def generate_sense_binding_episodes(n: int, seed: int = 0, num_options: int = 2) -> List[Episode]:
+    """``n`` M54b binding-critical ambiguity episodes, deterministic given
+    ``(n, seed, num_options)``. See :class:`SenseBindingCurriculumGenerator`."""
+    return SenseBindingCurriculumGenerator(num_options=num_options, seed=seed).generate(n)
+
+
+def association_only_baseline(episodes: List[Episode], dim: int = 64) -> Dict[str, float]:
+    """The scripted ASSOCIATION-ONLY baseline (M54b's honesty gate, computed
+    WITHOUT training/parsing): answer = whichever option's USVS handle is
+    most cosine-similar to the mean of every content word's USVS handle,
+    bagged over the episode's context sentences (names and ungroundable
+    tokens dropped, exactly like the reactor drops ungroundable words --
+    no parser call needed, this reads raw ``ep.context`` text directly).
+
+    By :class:`SenseBindingCurriculumGenerator`'s construction, BOTH
+    options' associated content word (``gold_answer`` and ``other_answer``)
+    appear in every episode with equal footing (one per entity) -- so this
+    baseline must land at chance (~0.5) on generated data; a value far from
+    that means the curriculum's balance is broken, not that this baseline is
+    unusually clever. Only ``kind == "sense_binding"`` episodes are scored;
+    others are ignored (mirrors :func:`nearest_entity_baseline`'s own
+    kind-filtering contract).
+    """
+    import re
+
+    from .usvs_bridge import usvs_handle
+
+    names = {n.lower() for n in _NAMES}
+    total = correct = 0
+    for ep in episodes:
+        if ep.meta.get("kind") != "sense_binding":
+            continue
+        words = [w for sent in ep.context for w in re.findall(r"[a-z]+", sent.lower())
+                 if w not in names]
+        vecs = [usvs_handle(w, dim) for w in words]
+        vecs = [v for v in vecs if v is not None]
+        if not vecs or not ep.options:
+            continue
+        bag = np.mean(np.stack(vecs), axis=0)
+        bag_n = bag / (np.linalg.norm(bag) + 1e-8)
+        opt_vecs = [usvs_handle(o, dim) for o in ep.options]
+        sims = [
+            float(np.dot(bag_n, v / (np.linalg.norm(v) + 1e-8))) if v is not None else -1e9
+            for v in opt_vecs
+        ]
+        pred = int(np.argmax(sims))
+        total += 1
+        correct += int(pred == ep.answer_idx)
+    return {"n": total, "accuracy": correct / total if total else float("nan")}

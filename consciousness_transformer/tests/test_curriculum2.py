@@ -9,14 +9,20 @@ import pytest
 from nsm_ct.curriculum2 import (
     TEMPLATES,
     VOCAB_SCALE_PLACES,
+    _SENSE_BINDING_ELIGIBLE,
+    _SENSE_BINDING_EXCLUDE_FAMILY,
+    _SENSE_BINDING_NAMES,
+    association_only_baseline,
     generate_pronoun_episodes,
     generate_scaled_episodes,
+    generate_sense_binding_episodes,
     generate_varied_episodes,
     nearest_entity_baseline,
     verify_pronoun_templates,
+    verify_sense_binding_templates,
     verify_templates,
 )
-from nsm_ct.episode import _NAMES, _PLACES
+from nsm_ct.episode import _AMBIGUITY_FAMILIES, _NAMES, _PLACES
 
 
 # ---------------------------------------------------------------------------
@@ -423,3 +429,139 @@ def test_nearest_entity_baseline_ignores_non_pronoun_episodes():
     eps = generate_varied_episodes(20, seed=0) + generate_pronoun_episodes(10, seed=0)
     result = nearest_entity_baseline(eps)
     assert result["n"] == 10
+
+
+# ---------------------------------------------------------------------------
+# M54b: entity-keyed, binding-critical sense-ambiguity curriculum
+# ---------------------------------------------------------------------------
+def test_sense_binding_deterministic_given_seed():
+    a = generate_sense_binding_episodes(60, seed=7)
+    b = generate_sense_binding_episodes(60, seed=7)
+    assert [e.context for e in a] == [e.context for e in b]
+    assert [e.meta for e in a] == [e.meta for e in b]
+    assert [e.options for e in a] == [e.options for e in b]
+
+
+def test_sense_binding_different_seeds_differ():
+    a = generate_sense_binding_episodes(60, seed=1)
+    b = generate_sense_binding_episodes(60, seed=2)
+    assert [e.context for e in a] != [e.context for e in b]
+
+
+def test_sense_binding_episodes_structurally_valid():
+    eps = generate_sense_binding_episodes(120, seed=3)
+    assert len(eps) == 120
+    for e in eps:
+        assert e.level == 15
+        assert e.is_multiple_choice
+        assert e.answer_text in e.options
+        assert e.options[e.answer_idx] == e.answer_text
+        assert len(e.context) == 3
+        assert e.question == f"what kind of {e.meta['homograph']} is it ?"
+        assert e.meta["kind"] == "sense_binding"
+        gold, other = e.meta["entity"], e.meta["other_entity"]
+        assert gold != other
+        assert {gold, other} <= set(_SENSE_BINDING_NAMES)
+        assert "fred" not in (gold, other), "known parser landmine, see curriculum2.py"
+        assert "bill" not in (gold, other), "collides with the 'bill' homograph family"
+        # the anchor sentence (always context[-1]) is the gold entity's own
+        # -- it must be the ONLY sentence carrying gold_name, and both cue
+        # sentences (context[0:2]) must open with a distinct entity name.
+        assert e.context[-1].startswith(gold)
+        cue_subjects = {e.context[0].split()[0], e.context[1].split()[0]}
+        assert cue_subjects == {gold, other}
+
+
+def test_sense_binding_meta_completeness():
+    eps = generate_sense_binding_episodes(80, seed=9)
+    required = {"src", "kind", "family", "homograph", "gold_sense", "mfs_sense",
+                "sense_key", "flipped", "entity", "other_entity", "gold_answer", "other_answer"}
+    for e in eps:
+        assert required <= set(e.meta)
+        fam = _AMBIGUITY_FAMILIES[e.meta["family"]]
+        assert fam["word"] == e.meta["homograph"]
+        assert e.meta["gold_sense"] == fam["senses"][e.meta["sense_key"]]["synset"]
+        assert e.meta["gold_answer"] == fam["senses"][e.meta["sense_key"]]["answer"]
+        assert e.meta["flipped"] == (e.meta["gold_sense"] != e.meta["mfs_sense"])
+        assert e.meta["gold_answer"] == e.answer_text
+
+
+def test_sense_binding_flip_balance_is_exact_alternation():
+    """Mirrors the pronoun curriculum's anti-recency counter discipline: a
+    COUNTER, not RNG, so the flipped/unflipped split is exact (to within one
+    episode of parity), not merely statistically likely."""
+    eps = generate_sense_binding_episodes(300, seed=11)
+    n_flipped = sum(1 for e in eps if e.meta["flipped"])
+    assert abs(n_flipped - len(eps) / 2) <= 1
+
+
+def test_sense_binding_excludes_landmine_family():
+    eps = generate_sense_binding_episodes(400, seed=13)
+    assert all(e.meta["family"] not in _SENSE_BINDING_EXCLUDE_FAMILY for e in eps)
+    assert all("swim" not in (e.meta["gold_answer"], e.meta["other_answer"]) for e in eps)
+
+
+def test_sense_binding_eligible_pairs_cover_both_flip_directions():
+    flipped = [f for (_w, _k, f) in _SENSE_BINDING_ELIGIBLE if f]
+    unflipped = [f for (_w, _k, f) in _SENSE_BINDING_ELIGIBLE if not f]
+    assert len(flipped) > 10 and len(unflipped) > 10
+
+
+# -- decoy-balance property (the association-only baseline's precondition) --
+def test_sense_binding_decoy_balance_both_senses_present_distinct_entities():
+    """Both senses' associated content word must be present in the episode,
+    each attached to a DIFFERENT entity -- the property that makes
+    bag-of-words association uninformative by construction."""
+    eps = generate_sense_binding_episodes(150, seed=17)
+    for e in eps:
+        gold, other = e.meta["entity"], e.meta["other_entity"]
+        gold_answer, other_answer = e.meta["gold_answer"], e.meta["other_answer"]
+        assert gold_answer != other_answer
+        gold_cue = next(s for s in e.context[:2] if s.startswith(gold))
+        other_cue = next(s for s in e.context[:2] if s.startswith(other))
+        assert gold_answer in gold_cue.split()
+        assert other_answer in other_cue.split()
+        assert set(e.options) == {gold_answer, other_answer}
+
+
+# -- association-only baseline: must sit at chance BY CONSTRUCTION ----------
+def test_association_only_baseline_at_chance():
+    eps = generate_sense_binding_episodes(500, seed=21)
+    result = association_only_baseline(eps)
+    assert result["n"] >= 400
+    assert abs(result["accuracy"] - 0.5) < 0.08, (
+        "association-only baseline drifted from chance -- fix the curriculum's "
+        "decoy balance, don't loosen this bound: " + str(result)
+    )
+
+
+def test_association_only_baseline_ignores_non_sense_binding_episodes():
+    eps = generate_varied_episodes(20, seed=0) + generate_sense_binding_episodes(10, seed=0)
+    result = association_only_baseline(eps)
+    assert result["n"] == 10
+
+
+# -- parser verification (verify_* pattern) ----------------------------------
+def test_sense_binding_templates_all_verified():
+    results = verify_sense_binding_templates()
+    if not results:
+        pytest.skip("quantum_parser unavailable in this environment")
+    bad = {k: v for k, v in results.items() if not v["ok"]}
+    assert not bad, bad
+
+
+def test_sense_binding_anchor_clauses_never_carry_a_context_word():
+    """The M54 same-clause leak, directly: every anchor this generator can
+    pick must show SUBJECT == the sample name and NO other content word in
+    the SAME clause besides the homograph (verify_sense_binding_templates's
+    ANCHOR[...] checks assert this already; this test pins the specific
+    families this generator is eligible to draw the anchor from, so a future
+    _AMBIGUITY_FAMILIES edit that reintroduces a leaky anchor is caught even
+    if quantum_parser is unavailable in some other environment)."""
+    results = verify_sense_binding_templates()
+    if not results:
+        pytest.skip("quantum_parser unavailable in this environment")
+    for (word, key, _flipped) in _SENSE_BINDING_ELIGIBLE:
+        r = results[f"ANCHOR[{word}.{key}]"]
+        assert r["ok"], r
+        assert not r["context_leak"], r
