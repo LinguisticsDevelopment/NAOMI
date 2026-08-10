@@ -28,6 +28,37 @@ Usage:
     python scripts/train_resolver.py --gold-binding      # ceiling: gold sense + gold antecedent, no resolver
     python scripts/train_resolver.py --mfs-floor         # floor: MFS sense (+ gold antecedent), no resolver
     python scripts/train_resolver.py --track A --mix m53 # M53 reproduction (no ambiguity episodes)
+
+M54c (RESEARCH_NOTES M54c) adds four diagnosis arms unpicking three
+confounds in the A-vs-B history (Track A's two specialist heads beat Track
+B's one shared scorer three rounds straight, but B fights at ~40% of A's
+combined capacity, B's state-input was implicated in M53's task-accuracy
+damage, and B has never been distilled from A's already-learned behavior).
+All four still install ONE :class:`~nsm_ct.resolver.SharedScorer` instance
+across pronoun and sense candidates (``resolver is sense_resolver``, same as
+plain ``--track B``) -- see :func:`build_b_family_resolver` and
+:func:`run_distilled_arm`:
+    --track B-wide          capacity-matched: mlp_hidden picked so total
+                             params ~= CorefHead+SenseHead combined at this
+                             dim (see nsm_ct.resolver.shared_scorer_for_budget).
+    --track B-nostate       drops the controller-state input (use_state=False),
+                             params matched to the ORIGINAL narrow B.
+    --track B-nostate-wide  no state input AND capacity-matched wide -- the
+                             2x2 {state,no-state} x {narrow,wide} cell that
+                             isolates architecture from capacity.
+    --track B-distilled     stage 1 trains Track A normally; stage 2 inits a
+                             fresh B-family resolver (--distill-b-track,
+                             default B-nostate-wide) and trains it with task
+                             + aux losses PLUS KL(B's candidate softmax ||
+                             frozen Track-A's per-type candidate softmax) on
+                             the same batches; stage 3 drops the distillation
+                             term for a brief task-only fine-tune. Stage
+                             epoch counts are configurable
+                             (--distill-stage{1,2,3}-epochs, default to
+                             --epochs / --epochs / --epochs//4).
+
+Run both --mix m53 (pronoun-critical) and --mix m54b (sense-critical) for
+each new arm -- the diagnosis needs both capabilities measured.
 """
 
 from __future__ import annotations
@@ -57,12 +88,140 @@ from nsm_ct.episode import CurriculumGenerator, generate_ambiguity_episodes, spl
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402
 from nsm_ct.nsm_primes import PRIME_NAMES  # noqa: E402
-from nsm_ct.resolver import make_resolver, make_sense_resolver  # noqa: E402
+from nsm_ct.resolver import (  # noqa: E402
+    CorefHead,
+    SenseHead,
+    make_resolver,
+    make_sense_resolver,
+    shared_scorer_for_budget,
+)
 from nsm_ct.structure import PARSE_LABELS  # noqa: E402
 from nsm_ct.tokenizer import SimpleTokenizer  # noqa: E402
 from nsm_ct.tpr import TPRCodec  # noqa: E402
 
 AUX_WEIGHT = 0.5   # resolver cross-entropy weight added to the answer loss (training-script side, not the model)
+DISTILL_WEIGHT = 1.0   # M54c: default weight on stage 2's B-vs-frozen-A KL term (--distill-weight overrides)
+
+B_FAMILY_TRACKS = ("B-WIDE", "B-NOSTATE", "B-NOSTATE-WIDE")   # M54c: all install ONE shared instance, like "B"
+
+
+def a_combined_params(dim: int) -> int:
+    """Track A's combined capacity at this ``dim`` -- CorefHead + SenseHead,
+    the two INDEPENDENT specialist heads plain ``--track A`` installs. M54c's
+    "capacity-matched" B arms (B-wide, B-nostate-wide) target this number via
+    :func:`nsm_ct.resolver.shared_scorer_for_budget` rather than a hardcoded
+    constant, so the match stays correct at whatever ``--dim`` a run uses
+    (the M53/M54b gate runs use dim=48; the M54c smokes use dim=32 -- the
+    combined-capacity target is genuinely different at each)."""
+    return (sum(p.numel() for p in CorefHead(dim).parameters()) +
+            sum(p.numel() for p in SenseHead(dim).parameters()))
+
+
+def build_b_family_resolver(track: str, dim: int, hidden: int):
+    """M54c dispatch for the three capacity/architecture diagnosis arms
+    (RESEARCH_NOTES M54c) -- always returns a single :class:`SharedScorer`
+    instance (the caller installs it as BOTH ``resolver=`` and
+    ``sense_resolver=``, mirroring plain ``--track B``'s
+    ``resolver is sense_resolver``):
+        B-WIDE          use_state=True,  mlp_hidden picked for
+                         :func:`a_combined_params` (Track A's combined
+                         capacity) -- capacity-matched, architecture
+                         unchanged from the original B.
+        B-NOSTATE       use_state=False, mlp_hidden picked to match the
+                         ORIGINAL narrow B's own param count
+                         (``SharedScorer(dim, hidden)``) -- architecture
+                         changed, capacity held at B's original (small) scale.
+        B-NOSTATE-WIDE  use_state=False, mlp_hidden picked for
+                         :func:`a_combined_params` -- both changes at once,
+                         the cell that isolates whether dropping state costs
+                         anything once B is no longer capacity-starved.
+    """
+    t = track.strip().upper()
+    if t == "B-WIDE":
+        return shared_scorer_for_budget(dim, hidden, a_combined_params(dim), use_state=True)
+    if t == "B-NOSTATE":
+        narrow_target = sum(p.numel() for p in make_resolver("B", dim, hidden).parameters())
+        return shared_scorer_for_budget(dim, hidden, narrow_target, use_state=False)
+    if t == "B-NOSTATE-WIDE":
+        return shared_scorer_for_budget(dim, hidden, a_combined_params(dim), use_state=False)
+    raise ValueError(f"not a B-family track: {track!r}, expected one of {B_FAMILY_TRACKS}")
+
+
+def build_resolvers(track: str, dim: int, hidden: int):
+    """Track dispatch shared by :func:`run_arm` and :func:`run_distilled_arm`:
+    "A" -> two INDEPENDENT specialist heads (CorefHead, SenseHead); "B" and
+    every M54c B-family track -> ONE :class:`SharedScorer` instance
+    installed as both slots. Returns ``(resolver, sense_resolver)``."""
+    t = track.strip().upper()
+    if t == "A":
+        return make_resolver("A", dim, hidden), make_sense_resolver("A", dim, hidden)
+    if t == "B":
+        r = make_resolver("B", dim, hidden)
+        return r, r
+    if t in B_FAMILY_TRACKS:
+        r = build_b_family_resolver(t, dim, hidden)
+        return r, r
+    raise ValueError(f"unknown track {track!r}")
+
+
+def aux_loss_terms(out, batch, resolver, sense_resolver):
+    """The two resolver-aux cross-entropy terms (pronoun + sense), each
+    weighted by ``AUX_WEIGHT`` and summed -- factored out of :func:`run_arm`'s
+    training loop so :func:`run_distilled_arm`'s three stages can reuse the
+    exact same aux-loss definition without duplicating the masking logic.
+    Returns ``0.0`` (a plain float, safe to add to a loss tensor) if neither
+    candidate kind is present in ``batch``."""
+    total = 0.0
+    if resolver is not None and "resolver_logits" in out:
+        cg = batch.cand_gold
+        has = cg >= 0
+        if bool(has.any()):
+            total = total + AUX_WEIGHT * F.cross_entropy(out["resolver_logits"][has], cg[has])
+    if sense_resolver is not None and "sense_resolver_logits" in out:
+        scg = batch.sense_cand_gold
+        has = scg >= 0
+        if bool(has.any()):
+            total = total + AUX_WEIGHT * F.cross_entropy(out["sense_resolver_logits"][has], scg[has])
+    return total
+
+
+def _distill_kl(student_logits, teacher_logits, has_cand):
+    """KL(B's candidate softmax || A's frozen candidate softmax) for ONE
+    candidate kind, over rows with a real candidate set, averaged (M54c
+    distillation term). Computed by hand rather than ``F.kl_div`` to keep the
+    direction unambiguous: with ``p`` = student (B) softmax and ``q`` =
+    teacher (A, frozen, detached) softmax, this is ``sum(p * (log p - log
+    q))`` -- literally KL(B || A), the direction RESEARCH_NOTES M54c
+    specifies. Padded candidate slots carry logit -1e9 (masked upstream by
+    :meth:`~nsm_ct.clause_reactor.ClauseReactor._collapse`), so their
+    softmax probability is exactly 0.0 in float32 and contributes exactly
+    0.0 here (0.0 * finite, not 0 * inf -- no NaN risk)."""
+    if not bool(has_cand.any()):
+        return None
+    s = student_logits[has_cand]
+    t = teacher_logits[has_cand].detach()
+    p = F.softmax(s, dim=-1)
+    log_p = F.log_softmax(s, dim=-1)
+    log_q = F.log_softmax(t, dim=-1)
+    return (p * (log_p - log_q)).sum(-1).mean()
+
+
+def distill_loss_terms(student_out, teacher_out, batch):
+    """Sum of both per-type KL terms (pronoun-candidate rows, sense-candidate
+    rows) present in ``batch`` -- ``0.0`` if neither kind is present (e.g. an
+    old-only batch). Mirrors :func:`aux_loss_terms`'s per-kind masking."""
+    total = 0.0
+    if "resolver_logits" in student_out and "resolver_logits" in teacher_out:
+        kl = _distill_kl(student_out["resolver_logits"], teacher_out["resolver_logits"],
+                          batch.cand_gold >= 0)
+        if kl is not None:
+            total = total + kl
+    if "sense_resolver_logits" in student_out and "sense_resolver_logits" in teacher_out:
+        kl = _distill_kl(student_out["sense_resolver_logits"], teacher_out["sense_resolver_logits"],
+                          batch.sense_cand_gold >= 0)
+        if kl is not None:
+            total = total + kl
+    return total
 
 
 def build_mixed_curriculum(n_episodes: int, seed: int):
@@ -195,6 +354,54 @@ def sense_binding_stats(out, batch, va_eps):
     }
 
 
+def report_eval(name: str, model, va, va_eps, gold_va, n_resolver_params: int, n_sense_params: int,
+                 shared: bool, elapsed_min: "float | None" = None):
+    """Shared eval + report tail for :func:`run_arm` and (M54c)
+    :func:`run_distilled_arm`: task accuracy (overall + per curriculum kind),
+    RESOLVER/SENSE BINDING ACCURACY (M53/M54's own metrics) + margin
+    distributions, and both resolvers' param counts. Factored out of
+    :func:`run_arm`'s post-training tail UNCHANGED (same prints, same dict
+    shape) purely so the M54c distillation arm's stage-3 output doesn't
+    duplicate ~35 lines of reporting logic."""
+    model.eval()
+    with torch.no_grad():
+        out_va = model(va)
+    pred = out_va["answer_logits"].argmax(-1)
+    total_acc = float((pred == gold_va).float().mean())
+    time_str = f"  time={elapsed_min:.2f} min" if elapsed_min is not None else ""
+    print(f"  [{name}] val total={total_acc:.3f}  resolver_params={n_resolver_params} "
+          f"sense_resolver_params={n_sense_params}{' (SHARED, same instance)' if shared else ''}"
+          f"{time_str}", flush=True)
+
+    per_kind = {}
+    for i, e in enumerate(va_eps):
+        per_kind.setdefault(str(e.meta.get("kind", "old")), []).append(bool(pred[i] == gold_va[i]))
+    for k in sorted(per_kind):
+        w = per_kind[k]
+        print(f"    kind {k}: {sum(w)}/{len(w)} = {sum(w)/len(w):.3f}")
+
+    binding = resolver_binding_stats(out_va, va, va_eps)
+    if binding is not None:
+        m = np.array(binding["margins"]) if binding["margins"] else np.array([0.0])
+        print(f"  [{name}] RESOLVER BINDING ACCURACY overall={binding['overall_acc']:.3f} "
+              f"(n={binding['n']}) anti-recency={binding['anti_recency_acc']:.3f} "
+              f"(n={binding['n_anti_recency']}) vs baseline 0.500/0.000", flush=True)
+        print(f"  [{name}] pronoun margin distribution: min={m.min():.3f} p25={np.percentile(m, 25):.3f} "
+              f"median={np.median(m):.3f} p75={np.percentile(m, 75):.3f} max={m.max():.3f}", flush=True)
+
+    sense_binding = sense_binding_stats(out_va, va, va_eps)
+    if sense_binding is not None:
+        sm = np.array(sense_binding["margins"]) if sense_binding["margins"] else np.array([0.0])
+        print(f"  [{name}] SENSE BINDING ACCURACY overall={sense_binding['overall_acc']:.3f} "
+              f"(n={sense_binding['n']}) flipped-half={sense_binding['flipped_acc']:.3f} "
+              f"(n={sense_binding['n_flipped']}) vs MFS floor 0.000 (by construction)", flush=True)
+        print(f"  [{name}] sense margin distribution: min={sm.min():.3f} p25={np.percentile(sm, 25):.3f} "
+              f"median={np.median(sm):.3f} p75={np.percentile(sm, 75):.3f} max={sm.max():.3f}", flush=True)
+
+    return {"total_acc": total_acc, "n_resolver_params": n_resolver_params,
+            "n_sense_params": n_sense_params, "binding": binding, "sense_binding": sense_binding}
+
+
 def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden: int = 128,
             sense_bind: str = "gold"):
     """``track``: "A" | "B" | None (None = --gold-binding / --mfs-floor, no resolver).
@@ -225,9 +432,7 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
 
     torch.manual_seed(seed)
     if track:
-        t = track.strip().upper()
-        resolver = make_resolver(t, dim, hidden)
-        sense_resolver = resolver if t == "B" else make_sense_resolver(t, dim, hidden)
+        resolver, sense_resolver = build_resolvers(track, dim, hidden)
     else:
         resolver = sense_resolver = None
     model = ClauseReactor(dim=dim, hidden=hidden, resolver=resolver, sense_resolver=sense_resolver)
@@ -267,47 +472,126 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
             model.train()
             print(f"  [{name}] epoch {i+1:3d} loss={loss.item():.3f} val={acc:.3f}", flush=True)
 
-    model.eval()
-    with torch.no_grad():
-        out_va = model(va)
-    pred = out_va["answer_logits"].argmax(-1)
-    total_acc = float((pred == gold_va).float().mean())
-    print(f"  [{name}] val total={total_acc:.3f}  resolver_params={n_resolver_params} "
-          f"sense_resolver_params={n_sense_params}{' (SHARED, same instance)' if shared else ''}  "
-          f"time={(time.time()-t0)/60:.2f} min", flush=True)
+    elapsed_min = (time.time() - t0) / 60
+    return report_eval(name, model, va, va_eps, gold_va, n_resolver_params, n_sense_params,
+                        shared, elapsed_min)
 
-    per_kind = {}
-    for i, e in enumerate(va_eps):
-        per_kind.setdefault(str(e.meta.get("kind", "old")), []).append(bool(pred[i] == gold_va[i]))
-    for k in sorted(per_kind):
-        w = per_kind[k]
-        print(f"    kind {k}: {sum(w)}/{len(w)} = {sum(w)/len(w):.3f}")
 
-    binding = resolver_binding_stats(out_va, va, va_eps)
-    if binding is not None:
-        m = np.array(binding["margins"]) if binding["margins"] else np.array([0.0])
-        print(f"  [{name}] RESOLVER BINDING ACCURACY overall={binding['overall_acc']:.3f} "
-              f"(n={binding['n']}) anti-recency={binding['anti_recency_acc']:.3f} "
-              f"(n={binding['n_anti_recency']}) vs baseline 0.500/0.000", flush=True)
-        print(f"  [{name}] pronoun margin distribution: min={m.min():.3f} p25={np.percentile(m, 25):.3f} "
-              f"median={np.median(m):.3f} p75={np.percentile(m, 75):.3f} max={m.max():.3f}", flush=True)
+def run_distilled_arm(name: str, episodes, dim: int, seed: int, hidden: int = 128,
+                       stage1_epochs: int = 60, stage2_epochs: int = 60, stage3_epochs: int = 15,
+                       b_track: str = "B-NOSTATE-WIDE", distill_weight: float = DISTILL_WEIGHT):
+    """M54c ``--track B-distilled``: three stages in ONE call, unpicking the
+    third A-vs-B confound (B has never been given a head start from A's
+    already-learned specialist behavior).
 
-    sense_binding = sense_binding_stats(out_va, va, va_eps)
-    if sense_binding is not None:
-        sm = np.array(sense_binding["margins"]) if sense_binding["margins"] else np.array([0.0])
-        print(f"  [{name}] SENSE BINDING ACCURACY overall={sense_binding['overall_acc']:.3f} "
-              f"(n={sense_binding['n']}) flipped-half={sense_binding['flipped_acc']:.3f} "
-              f"(n={sense_binding['n_flipped']}) vs MFS floor 0.000 (by construction)", flush=True)
-        print(f"  [{name}] sense margin distribution: min={sm.min():.3f} p25={np.percentile(sm, 25):.3f} "
-              f"median={np.median(sm):.3f} p75={np.percentile(sm, 75):.3f} max={sm.max():.3f}", flush=True)
+    Stage 1 -- train Track A normally (the exact two-specialist-head setup
+      ``run_arm("A", ...)`` uses: task CE + both resolver aux losses).
+    Stage 2 -- FREEZE stage 1's Track A model (eval mode, forward passes
+      under ``torch.no_grad()`` -- never backprops into it) and initialize a
+      FRESH B-family resolver (``b_track``, default B-nostate-wide per the
+      milestone brief: "pick the best config from your smokes, default
+      wide-no-state if smokes are ambiguous"), installed as ONE shared
+      instance across both slots. Trains it on the SAME batches with task +
+      aux losses PLUS :func:`distill_loss_terms` -- KL(B's candidate softmax
+      || frozen Track-A's per-type candidate softmax), computed separately
+      for pronoun-candidate rows (against A's CorefHead output) and
+      sense-candidate rows (against A's SenseHead output) on THIS batch.
+    Stage 3 -- drop the distillation term; brief task(+aux)-only fine-tune of
+      the SAME B model (no reinitialization).
 
-    return {"total_acc": total_acc, "n_resolver_params": n_resolver_params,
-            "n_sense_params": n_sense_params, "binding": binding, "sense_binding": sense_binding}
+    All three stage epoch counts are independently configurable so a smoke
+    can check the MECHANICS (loss decreases within each stage, stages
+    actually transition) cheaply without running a full comparison.
+    """
+    texts = [t for e in episodes for t in e.context + [e.question] + (e.options or [])]
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        print("quantum_parser unavailable in this environment; skipping.")
+        return None
+    meaning_resolver = NSMMeaningResolver()
+    codec = TPRCodec(dim=dim)
+
+    tr_eps, va_eps = split_episodes(episodes, 0.2, seed=0)
+    tr = build_clause_batch(tr_eps, parser, meaning_resolver, codec, sense_bind="gold")
+    va = build_clause_batch(va_eps, parser, meaning_resolver, codec, sense_bind="gold")
+    gold_tr = torch.tensor([e.answer_idx for e in tr_eps])
+    gold_va = torch.tensor([e.answer_idx for e in va_eps])
+
+    # ---- stage 1: Track A, trained normally ----
+    torch.manual_seed(seed)
+    a_resolver, a_sense_resolver = build_resolvers("A", dim, hidden)
+    model_a = ClauseReactor(dim=dim, hidden=hidden, resolver=a_resolver, sense_resolver=a_sense_resolver)
+    opt_a = torch.optim.Adam(model_a.parameters(), lr=3e-3)
+    model_a.train()
+    stage1_losses = []
+    t0 = time.time()
+    for i in range(stage1_epochs):
+        out = model_a(tr)
+        loss = F.cross_entropy(out["answer_logits"], gold_tr) + aux_loss_terms(out, tr, a_resolver, a_sense_resolver)
+        opt_a.zero_grad(); loss.backward(); opt_a.step()
+        stage1_losses.append(float(loss.item()))
+    model_a.eval()
+    print(f"  [{name}] stage 1 (Track A) done: loss {stage1_losses[0]:.3f} -> {stage1_losses[-1]:.3f} "
+          f"over {stage1_epochs} epochs", flush=True)
+
+    # ---- stage 2: fresh B, distilling from frozen stage-1 A ----
+    torch.manual_seed(seed + 1000)
+    b_resolver = build_b_family_resolver(b_track, dim, hidden)
+    model_b = ClauseReactor(dim=dim, hidden=hidden, resolver=b_resolver, sense_resolver=b_resolver)
+    n_resolver_params = sum(p.numel() for p in b_resolver.parameters())
+    opt_b = torch.optim.Adam(model_b.parameters(), lr=3e-3)
+    model_b.train()
+    stage2_losses, stage2_kl = [], []
+    for i in range(stage2_epochs):
+        with torch.no_grad():
+            teacher_out = model_a(tr)
+        out = model_b(tr)
+        kl = distill_loss_terms(out, teacher_out, tr)
+        loss = (F.cross_entropy(out["answer_logits"], gold_tr)
+                + aux_loss_terms(out, tr, b_resolver, b_resolver)
+                + distill_weight * kl)
+        opt_b.zero_grad(); loss.backward(); opt_b.step()
+        stage2_losses.append(float(loss.item()))
+        stage2_kl.append(float(kl.item()) if torch.is_tensor(kl) else float(kl))
+    print(f"  [{name}] stage 2 (distill into {b_track}) done: loss {stage2_losses[0]:.3f} -> "
+          f"{stage2_losses[-1]:.3f}, KL term {stage2_kl[0]:.3f} -> {stage2_kl[-1]:.3f} "
+          f"over {stage2_epochs} epochs", flush=True)
+
+    # ---- stage 3: task-only fine-tune, distillation dropped ----
+    model_b.train()
+    stage3_losses = []
+    for i in range(stage3_epochs):
+        out = model_b(tr)
+        loss = F.cross_entropy(out["answer_logits"], gold_tr) + aux_loss_terms(out, tr, b_resolver, b_resolver)
+        opt_b.zero_grad(); loss.backward(); opt_b.step()
+        stage3_losses.append(float(loss.item()))
+    if stage3_losses:
+        print(f"  [{name}] stage 3 (task-only fine-tune) done: loss {stage3_losses[0]:.3f} -> "
+              f"{stage3_losses[-1]:.3f} over {stage3_epochs} epochs", flush=True)
+
+    elapsed_min = (time.time() - t0) / 60
+    result = report_eval(name, model_b, va, va_eps, gold_va, n_resolver_params, n_resolver_params,
+                          True, elapsed_min)
+    result["stage1_losses"] = stage1_losses
+    result["stage2_losses"] = stage2_losses
+    result["stage2_kl"] = stage2_kl
+    result["stage3_losses"] = stage3_losses
+    return result
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--track", choices=["A", "B"], default=None)
+    ap.add_argument("--track",
+                     choices=["A", "B", "B-wide", "B-nostate", "B-nostate-wide", "B-distilled"],
+                     default=None,
+                     help="A/B = M53/M54's original two tracks. M54c diagnosis arms (RESEARCH_NOTES "
+                          "M54c), all installing ONE SharedScorer instance across pronoun+sense "
+                          "candidates like B: B-wide (capacity-matched to A's CorefHead+SenseHead "
+                          "combined), B-nostate (drops the controller-state input, params matched "
+                          "to the original narrow B), B-nostate-wide (both at once), B-distilled "
+                          "(stage 1 trains A, stage 2 distills a fresh B from frozen A, stage 3 "
+                          "task-only fine-tune -- see --distill-* flags)")
     ap.add_argument("--gold-binding", action="store_true",
                      help="ceiling arm: no resolver, gold sense + gold antecedent placeholder binding")
     ap.add_argument("--mfs-floor", action="store_true",
@@ -324,11 +608,24 @@ def main() -> None:
                           "m54 (default) = 40%% old / 20%% transfer / 20%% pronoun / 20%% ambiguity; "
                           "m54b = 50%% old / 50%% the NEW entity-keyed sense-binding curriculum "
                           "(RESEARCH_NOTES M54b's gold/MFS gap probe)")
+    ap.add_argument("--distill-b-track", choices=["B-wide", "B-nostate", "B-nostate-wide"],
+                     default="B-nostate-wide",
+                     help="--track B-distilled only: which B-family config stage 2 initializes "
+                          "fresh and distills into (default wide-no-state, per the M54c brief)")
+    ap.add_argument("--distill-stage1-epochs", type=int, default=None,
+                     help="--track B-distilled only: Track-A pretraining epochs (default --epochs)")
+    ap.add_argument("--distill-stage2-epochs", type=int, default=None,
+                     help="--track B-distilled only: distillation epochs (default --epochs)")
+    ap.add_argument("--distill-stage3-epochs", type=int, default=None,
+                     help="--track B-distilled only: task-only fine-tune epochs (default --epochs // 4)")
+    ap.add_argument("--distill-weight", type=float, default=DISTILL_WEIGHT,
+                     help="--track B-distilled only: weight on stage 2's KL(B || frozen A) term")
     args = ap.parse_args()
 
     n_arms = sum([args.gold_binding, args.mfs_floor, args.track is not None])
     if n_arms != 1:
-        raise SystemExit("pass exactly one of --track A|B, --gold-binding, --mfs-floor")
+        raise SystemExit("pass exactly one of --track A|B|B-wide|B-nostate|B-nostate-wide|B-distilled, "
+                          "--gold-binding, --mfs-floor")
 
     if args.mix == "m54":
         episodes = build_m54_curriculum(args.episodes, args.seed)
@@ -355,6 +652,17 @@ def main() -> None:
               f"mix={args.mix} ===", flush=True)
         run_arm("mfs-floor", None, episodes, args.dim, args.epochs, args.seed, args.hidden,
                  sense_bind="mfs")
+    elif args.track == "B-distilled":
+        s1 = args.distill_stage1_epochs if args.distill_stage1_epochs is not None else args.epochs
+        s2 = args.distill_stage2_epochs if args.distill_stage2_epochs is not None else args.epochs
+        s3 = (args.distill_stage3_epochs if args.distill_stage3_epochs is not None
+              else max(1, args.epochs // 4))
+        print(f"=== track B-distilled (stage1={s1} stage2={s2} stage3={s3}, "
+              f"b_track={args.distill_b_track}): {args.episodes} eps, dim={args.dim}, "
+              f"mix={args.mix} ===", flush=True)
+        run_distilled_arm("track-B-distilled", episodes, args.dim, args.seed, args.hidden,
+                           stage1_epochs=s1, stage2_epochs=s2, stage3_epochs=s3,
+                           b_track=args.distill_b_track, distill_weight=args.distill_weight)
     else:
         print(f"=== track {args.track}: {args.episodes} eps, dim={args.dim}, mix={args.mix} ===",
               flush=True)

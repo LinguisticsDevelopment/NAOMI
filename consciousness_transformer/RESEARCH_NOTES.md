@@ -2644,3 +2644,53 @@ B stays in the codebase and contests M55 — but at this scale, with these
 capacities, "methods fall out of one mechanism" has not materialized.
 Standing result, recorded straight. Full-vocabulary WSD (SemCor-class)
 remains open; the proven mechanism is the credible attack on it.
+
+### M54c — the B diagnosis: pronouns were CAPACITY, senses want an INTERACTION PRIOR (MEASURED)
+
+User's challenge to the 3-0 scoreboard: B fought at ~40% of A's parameters
+(2,841 vs 7,194 combined) — "B loses" vs "B is starved" were confounded.
+Diagnostic arms (Sonnet agent build, 90 tests incl. byte-exact regression
+of default SharedScorer; seven solo runs at full scale):
+
+m53 mix (pronoun-critical; reference A = 0.913 task, 1.000/1.000 binding):
+| arm | task | binding overall/anti-recency |
+|---|---|---|
+| B original (2,841) | 0.807 | 0.963 / 0.932 |
+| **B-wide (7,248)** | **0.913** | **1.000 / 1.000** |
+| B-nostate-wide | 0.910 | 1.000 / 1.000 |
+| B-distilled | 0.917 | 1.000 / 1.000 |
+
+**Pronouns: it was model size, full stop.** Every capacity-matched B
+variant is IDENTICAL to A — perfect binding, task at ceiling. The M53
+"state entanglement" interpretation is retired: with adequate width the
+state input costs nothing. The generalist was never worse at reference;
+it was half-sized.
+
+m54b mix (sense-critical; reference A = 0.863 task, 0.680/0.629 binding;
+MFS floor task 0.700, gold 0.953):
+| arm | task | sense binding overall/flipped |
+|---|---|---|
+| B original | 0.727 | 0.374 / 0.429 |
+| B-wide | 0.737 | 0.531 / 0.229 |
+| B-nostate | 0.733 | 0.449 / 0.329 |
+| B-nostate-wide | 0.727 | 0.517 / 0.186 |
+| **B-distilled** | **0.787** | **0.667 / 0.486** |
+
+**Senses: size no, state-removal no, distillation most-of-the-way.**
+(Also: the smoke-scale B-nostate-wide star, 0.789 binding, collapsed to
+0.517/0.186 at scale — the SECOND smoke-inversion this arc; smoke tables
+are for mechanics only, never verdicts.) Distillation nearly reaching A
+says B can roughly REPRESENT the sense solution but cannot FIND it —
+optimization trouble layered on a genuine architectural gap: A's
+SenseHead inherits M34's multiplicative candidate×context interaction
+feature; plain-MLP B must invent multiplication from scratch and doesn't.
+
+Synthesis → the Track C mandate: shared mechanisms scale fine where the
+task is matching-by-lookup (pronouns), and fail where they lack an
+INTERACTION operator the specialist got as a prior. So give the operator
+explicitly: Track C (named ops — query, compare/interact, feature-match,
+prior-mix — with learned routing) hard-codes the ABILITY, not the cases
+(user's framing). C's design bar, set by this data: match A on BOTH
+capabilities with legible routing, no per-task heads. A/B final score:
+A 3, B 1 (pronoun round overturned on capacity appeal), senses to neither
+— to C's motivation.

@@ -43,7 +43,7 @@ from . import entity_memory as em
 from .membrane import FEATURE_DIM
 
 __all__ = ["Resolver", "CorefHead", "SharedScorer", "SenseHead", "query_candidates",
-           "make_resolver", "make_sense_resolver"]
+           "make_resolver", "make_sense_resolver", "shared_scorer_for_budget"]
 
 
 def query_candidates(memory: torch.Tensor, cand_entity: torch.Tensor,
@@ -118,13 +118,32 @@ class SharedScorer(Resolver):
     MLP scores every candidate. With ``dim=32, hidden=128, state_proj=8``:
     state projection 128*8+8=1,032 params, MLP in_dim=32+6+1+32+8=79 ->
     hidden=16 -> 1,281 params; total 2,313 (under the 20k budget).
+
+    M54c adds ONE constructor flag, ``use_state`` (default ``True`` --
+    byte-identical to every pre-M54c call site: the default path is the
+    exact original code, same submodule construction order, so seeded
+    reproducibility is untouched). ``use_state=False`` drops the
+    ``state_proj`` submodule entirely and the MLP input narrows to
+    ``[candidate_vec ; mem_read]`` -- the B-no-state diagnosis arm
+    (RESEARCH_NOTES M54c) isolating whether Track B's task-accuracy damage
+    (M53) comes from consulting the controller state at all, holding
+    everything else about the "one shared collapse mechanism" bet fixed.
+    See :func:`shared_scorer_for_budget` to pick ``mlp_hidden`` for a target
+    total parameter count (capacity-matched arms) instead of inverting the
+    step-function param count by hand.
     """
 
-    def __init__(self, dim: int, hidden: int, state_proj: int = 8, mlp_hidden: int = 16) -> None:
+    def __init__(self, dim: int, hidden: int, state_proj: int = 8, mlp_hidden: int = 16,
+                 use_state: bool = True) -> None:
         super().__init__()
-        self.state_proj = nn.Linear(hidden, state_proj)
+        self.use_state = use_state
         cand_vec_dim = dim + FEATURE_DIM + 1
-        in_dim = cand_vec_dim + dim + state_proj
+        if use_state:
+            self.state_proj = nn.Linear(hidden, state_proj)
+            in_dim = cand_vec_dim + dim + state_proj
+        else:
+            self.state_proj = None
+            in_dim = cand_vec_dim + dim
         self.net = nn.Sequential(nn.Linear(in_dim, mlp_hidden), nn.Tanh(),
                                   nn.Linear(mlp_hidden, 1))
 
@@ -133,9 +152,47 @@ class SharedScorer(Resolver):
         feat = cand_feature.unsqueeze(1).expand(b, C, -1)      # [B, C, F]
         prior = cand_prior.unsqueeze(-1)                        # [B, C, 1]
         candidate_vec = torch.cat([cand_entity, feat, prior], dim=-1)   # [B, C, cand_vec_dim]
-        s = self.state_proj(state).unsqueeze(1).expand(b, C, -1)        # [B, C, state_proj]
-        x = torch.cat([candidate_vec, mem_read, s], dim=-1)
+        if self.use_state:
+            s = self.state_proj(state).unsqueeze(1).expand(b, C, -1)    # [B, C, state_proj]
+            x = torch.cat([candidate_vec, mem_read, s], dim=-1)
+        else:
+            x = torch.cat([candidate_vec, mem_read], dim=-1)
         return self.net(x).squeeze(-1)                          # [B, C]
+
+
+def shared_scorer_for_budget(dim: int, hidden: int, target_params: int, *,
+                              use_state: bool = True, state_proj: int = 8) -> SharedScorer:
+    """M54c: build a :class:`SharedScorer` whose total parameter count is the
+    closest achievable -- by varying ``mlp_hidden`` alone, everything else
+    fixed -- to ``target_params``. Used to construct the capacity-matched B
+    arms (RESEARCH_NOTES M54c): B-wide and B-nostate-wide are matched to
+    Track A's CorefHead + SenseHead combined at whatever ``dim`` the caller
+    is using; B-nostate (narrow) is matched to the original default
+    ``SharedScorer(dim, hidden)``'s own param count. Total params are a step
+    function of the integer ``mlp_hidden``, so exact equality generally isn't
+    achievable -- this searches upward from ``mlp_hidden=1`` (param count is
+    monotonically increasing in it) and returns whichever of the two widths
+    straddling the target lands closer, so callers can just read the
+    constructed module's own ``sum(p.numel() for p in ...parameters())``
+    to report the exact count actually achieved rather than assuming the
+    target was hit precisely.
+    """
+    def n_params(m: int) -> int:
+        return sum(p.numel() for p in
+                    SharedScorer(dim, hidden, state_proj=state_proj, mlp_hidden=m,
+                                 use_state=use_state).parameters())
+
+    m = 1
+    prev = n_params(m)
+    while prev < target_params:
+        m += 1
+        cur = n_params(m)
+        if cur >= target_params:
+            best_m = m if (cur - target_params) <= (target_params - prev) else m - 1
+            return SharedScorer(dim, hidden, state_proj=state_proj, mlp_hidden=best_m,
+                                 use_state=use_state)
+        prev = cur
+    return SharedScorer(dim, hidden, state_proj=state_proj, mlp_hidden=m, use_state=use_state)
 
 
 def make_resolver(track: str, dim: int, hidden: int = 128) -> Resolver:
