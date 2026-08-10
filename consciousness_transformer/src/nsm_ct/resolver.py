@@ -42,7 +42,8 @@ import torch.nn as nn
 from . import entity_memory as em
 from .membrane import FEATURE_DIM
 
-__all__ = ["Resolver", "CorefHead", "SharedScorer", "query_candidates", "make_resolver"]
+__all__ = ["Resolver", "CorefHead", "SharedScorer", "SenseHead", "query_candidates",
+           "make_resolver", "make_sense_resolver"]
 
 
 def query_candidates(memory: torch.Tensor, cand_entity: torch.Tensor,
@@ -144,6 +145,82 @@ def make_resolver(track: str, dim: int, hidden: int = 128) -> Resolver:
     t = track.strip().upper()
     if t == "A":
         return CorefHead(dim)
+    if t == "B":
+        return SharedScorer(dim, hidden)
+    raise ValueError(f"unknown track {track!r}, expected 'A' or 'B'")
+
+
+# ---------------------------------------------------------------------------
+# M54 -- sense collapse joins the same membrane (dev/RESOLVER_BUILD_PLAN.md
+# Phase 3). Track A gets its OWN specialist (:class:`SenseHead`, the M34
+# ``sense_chooser`` architecture ported onto this contract) since M53's
+# CorefHead is coref-SPECIALIZED by design and not meant to generalize.
+# Track B reuses :class:`SharedScorer` UNCHANGED -- no new class, no
+# architecture change, not even a new constructor call site beyond
+# ``make_sense_resolver``'s dispatch: the whole point of Track B is that the
+# SAME weights (in practice, in
+# ``scripts/train_resolver.py``, literally the SAME module instance --
+# ``resolver is sense_resolver``) work for entities AND senses. See
+# :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse` for how the CALLER
+# adapts sense-candidate tensors to this contract's fixed slots (the
+# "thinnest possible projection" the module docstring above promises):
+# ``cand_entity`` carries the candidate SENSE VECTORS directly (not entity
+# atoms to look up in memory -- there is no memory address a meaning vector
+# can stand in for), ``cand_feature`` is zero-filled (senses carry no
+# gender/person mention feature; zero keeps :class:`SharedScorer`'s fixed
+# input width intact without inventing a new one), and ``mem_read`` carries
+# the memory readout at the homograph's own address PLUS (M54's reading of
+# MIND_INTERFACE.md's "+ optionally the step's other-role vectors") the same
+# clause's other-role token's vector, broadcast identically across every
+# candidate slot -- exactly the shape both tracks already expect.
+# ---------------------------------------------------------------------------
+class SenseHead(Resolver):
+    """Track A -- the M34 ``sense_chooser`` architecture, ported onto the
+    membrane's :class:`Resolver` contract with ONE change: the M34 chooser's
+    context was the mean USVS handle of the episode's other content words
+    (a bag-of-words vector, no notion of ANY OTHER step); here ``mem_read``
+    IS the context (the running memory readout at this homograph's address,
+    plus the same-clause other-role token -- see the module note above),
+    supplied already-broadcast to ``[B, C, d]`` by the caller so this class
+    needs no special-casing at all.
+
+    ``score = MLP([cand_sense_vec ; context ; cand_sense_vec * context])``
+    -- literally :class:`nsm_ct.sense_chooser.SenseChooser`'s
+    ``3*d -> hidden -> 1`` shape (see that module's docstring), scored per
+    candidate with ONE shared set of weights (param count independent of
+    candidate-set size ``C``, same as :class:`CorefHead`). Deliberately
+    ignores ``cand_feature``, ``cand_prior``, and ``state`` -- exactly like
+    the M34 chooser (candidate + context only, no frequency prior, no
+    running thought-state) and like :class:`CorefHead`'s "no controller
+    state" specialist design (Track A's whole argument is that a narrow,
+    local-match head suffices; whatever it can't see is the point being
+    tested, not an oversight -- see ``dev/RESOLVER_BUILD_PLAN.md`` Phase 3's
+    A-vs-B framing). With ``dim=32, hidden=32``: ``in_dim=96`` ->
+    ``96*32+32=3,104`` -> ``32*1+1=33``; total 3,137 params (well under the
+    20k budget, and smaller than M34's own 24.7k because ``dim`` here is 32
+    vs M34's ``d=64``).
+    """
+
+    def __init__(self, dim: int, hidden: int = 32) -> None:
+        super().__init__()
+        self.net = nn.Sequential(nn.Linear(3 * dim, hidden), nn.GELU(), nn.Linear(hidden, 1))
+
+    def forward(self, cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state):
+        feats = torch.cat([cand_entity, mem_read, cand_entity * mem_read], dim=-1)
+        return self.net(feats).squeeze(-1)                     # [B, C]
+
+
+def make_sense_resolver(track: str, dim: int, hidden: int = 128) -> Resolver:
+    """M54's factory, mirroring :func:`make_resolver`: ``track`` "A" ->
+    :class:`SenseHead` (a NEW specialist, distinct from :class:`CorefHead`),
+    "B" -> :class:`SharedScorer` (the SAME class Track B always was -- callers
+    that want the literal "one shared scorer for everything" experiment pass
+    the SAME instance to both ``ClauseReactor(resolver=..., sense_resolver=...)``
+    slots; this factory just constructs one when a caller wants a fresh,
+    independent one instead)."""
+    t = track.strip().upper()
+    if t == "A":
+        return SenseHead(dim)
     if t == "B":
         return SharedScorer(dim, hidden)
     raise ValueError(f"unknown track {track!r}, expected 'A' or 'B'")

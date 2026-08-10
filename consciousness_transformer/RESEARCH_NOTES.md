@@ -2561,3 +2561,45 @@ AND parameter count. Per the plan, B is not eliminated — the same shared
 scorer contests M54 (senses), where its generality argument actually
 starts; but "reference resolution needs the running thought-state" is now
 measured FALSE at this scale.
+
+### M54 — sense collapse joins the membrane: pipeline works, but the curriculum doesn't FORCE binding (MEASURED, honest partial)
+
+Build (Sonnet agent): SenseCandidateSet through the same membrane (separate
+batch fields from entity candidates — entities are memory ADDRESSES, senses
+are VALUES; unifying would muddy both). Silent-bug find: M32's ambiguity
+episodes NEVER flowed through the reactor before — the batch builder
+dropped every one (question shape had no recognizable entity); all prior
+chooser results were standalone. Fixed via _ambiguity_steps (rel:SENSE
+address + same-clause context token). Track A adds SenseHead (M34 chooser
+shape, memory-context, 4,673 params @ d48); Track B is ONE literal shared
+instance across pronouns and senses (params counted once, gradients
+accumulate — tested). 93 tests; both byte-identity regressions hold.
+~22% of ambiguity episodes still drop on the ticketed fred/"hammered"
+parser landmines (now a real data cost — fix promoted).
+
+Gate (1500 eps, 40/20/20/20 mix, dim 48, 80 epochs, four arms):
+
+| arm | task | pronoun bind (anti-rec) | sense bind overall / flipped |
+|---|---|---|---|
+| gold ceiling | 0.917 | — | — |
+| **MFS floor** | **0.910** | — | — |
+| Track A | 0.860 | **1.000 (1.000)** | 0.370 / 0.407 |
+| Track B (shared) | 0.800 | 0.849 (0.840) | 0.304 / 0.222 |
+
+Findings, straight: (1) **The data doesn't make binding matter: MFS-floor
+task 0.910 ≈ gold 0.917.** The reactor-form ambiguity episodes leak — the
+same-clause context token gets written to memory, so the model answers
+from association without needing the sense. Exactly the lesson M53a's
+anti-recency design existed to prevent, now measured on the sense side:
+capability curricula must make the capability NECESSARY. (2) Sense binding
+itself is weak: A's 0.370 overall is BELOW always-pick-MFS (~0.41), though
+0.407 on the flipped half clears the by-construction 0.000 floor — with no
+task pressure (see 1), the aux loss alone doesn't teach it. (3) Pronoun
+resolution is ROBUST: A keeps 1.000/1.000 with the sense head coexisting.
+(4) A > B again on both capabilities; B's shared-instance argument remains
+unproven, not disproven.
+
+Next: **M54b — a binding-critical ambiguity curriculum** (the answer must
+depend on the SENSE through memory, not on a co-written context word;
+mirror the anti-recency discipline: an association-only baseline must sit
+at floor). Then re-run these arms unchanged.

@@ -41,6 +41,7 @@ import numpy as np
 
 from .clause import _PRONOUNS, extract_discourse
 from .episode import _NAMES
+from .wordnet import senses as _wn_senses
 
 # ---------------------------------------------------------------------------
 # Generic candidate-set shape (v1 contract) -- perception never guesses.
@@ -253,4 +254,78 @@ def pronoun_entity_candidate_set(pronoun: str, registry: List[str], *,
         surface=pronoun,
         feature=mention_feature_vector(pronoun),
         gold_index=gold_index,
+    )
+
+
+# ---------------------------------------------------------------------------
+# M54: sense candidate sets -- the v1 IN table's "value" row for a homograph
+# (episode.generate_ambiguity_episodes). Reuses the generic CandidateSet
+# shape exactly as M53a's own docstring promised M54 would.
+# ---------------------------------------------------------------------------
+@dataclass
+class SenseCandidateSet(CandidateSet):
+    """The v1 IN-table "value" row: a homograph's candidate senses.
+
+    ``candidates`` come from :func:`nsm_ct.wordnet.senses` (MFS-ordered --
+    index 0 IS the most-frequent sense by construction, matching
+    ``episode._AMBIGUITY_FAMILIES``'s own ``fam["mfs"] == wn.synsets(word)[0]``
+    convention: the SAME ordering source, not re-derived). Priors are
+    MFS-RANK-derived (``1/(rank+1)``, normalized to sum to 1) -- perception
+    has exactly one honest structural signal about which sense is likelier
+    (how frequent it is in general, per WordNet), nothing about the CURRENT
+    context, so that is the only prior it is allowed to expose (the v1
+    membrane rule: perception never guesses).
+
+    ``gold_index`` is the curriculum's gold sense's position in the
+    candidate list (``None`` if somehow absent -- shouldn't happen for the
+    M32 families, defensive only, mirrors :class:`EntityCandidateSet`'s own
+    ``gold_index`` contract). ``context_word`` (M54 addition, not part of
+    the generic candidate-set shape) is the SAME CLAUSE's other-role token,
+    if any (e.g. "river" in "the river flowed past the bank ." when the
+    homograph is "bank") -- membrane stays torch/codec-free, so this is a
+    surface word string; :mod:`nsm_ct.clause_reactor`'s batch-build grounds
+    it into a vector, mirroring how :class:`EntityCandidateSet`'s candidate
+    KEYS (name strings) are grounded downstream, not here. It is the
+    concrete form MIND_INTERFACE.md's "context IS the memory readout (+
+    optionally the step's other-role vectors)" line takes for M54, since a
+    same-name subject (e.g. "mary walked into the bank .") carries no
+    lexical content at all (names ground to arbitrary identity atoms) and
+    would add noise, not signal -- see :func:`sense_candidate_set`.
+    """
+
+    word: str = ""
+    gold_index: Optional[int] = None
+    context_word: Optional[str] = None
+
+
+def sense_candidate_set(word: str, *, gold_sense: Optional[str] = None,
+                         context_word: Optional[str] = None,
+                         provenance: Optional[Dict[str, object]] = None
+                         ) -> SenseCandidateSet:
+    """The v1 "value" IN-row for one homograph mention.
+
+    Candidates are ``nsm_ct.wordnet.senses(word)``'s sense ids, MFS-ordered
+    (index 0 == MFS); priors are ``1/(rank+1)`` normalized. ``gold_index``
+    indexes into that same list (``None`` if the curriculum's gold synset
+    isn't among WordNet's candidates for this word -- shouldn't happen for
+    the M32 families). If WordNet has no senses at all for ``word`` (should
+    never happen for the hand-curated ambiguity families; defensive only),
+    falls back to a single-candidate set built from ``gold_sense`` alone so
+    downstream code never sees an empty candidate list, mirroring
+    :func:`nsm_ct.sense_chooser.candidate_vectors`'s own empty-candidate
+    fallback.
+    """
+    ids = tuple(s["sense_id"] for s in _wn_senses(word.lower()))
+    if not ids and gold_sense:
+        ids = (gold_sense,)
+    raw_priors = [1.0 / (i + 1) for i in range(len(ids))] or [1.0]
+    total = sum(raw_priors) or 1.0
+    candidates = [Candidate(key=sid, prior=p / total) for sid, p in zip(ids, raw_priors)]
+    gold_index = ids.index(gold_sense) if gold_sense in ids else None
+    return SenseCandidateSet(
+        candidates=candidates,
+        provenance=dict(provenance or {}),
+        word=word,
+        gold_index=gold_index,
+        context_word=context_word,
     )

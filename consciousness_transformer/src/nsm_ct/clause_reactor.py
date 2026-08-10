@@ -22,9 +22,10 @@ from . import entity_memory as em
 from . import membrane
 from .clause import extract_discourse
 from .episode import _NAMES
+from .membrane import FEATURE_DIM
 from .resolver import Resolver, query_candidates
 from .tpr import TPRCodec
-from .usvs_bridge import usvs_handle
+from .usvs_bridge import usvs_handle, usvs_sense_handle
 
 _NAMESET = {n.lower() for n in _NAMES}
 
@@ -219,6 +220,92 @@ def _pronoun_context_step(sent: str, ep, parser, resolver, codec: TPRCodec,
     return None, None
 
 
+# M54 (RESOLVER_BUILD_PLAN Phase 3, "Agent 4"): an M32 ambiguity episode
+# (episode.generate_ambiguity_episodes -- gated on ``ep.meta["homograph"]``,
+# a key no other generator sets) whose context+question don't fit the
+# old/transfer/pronoun shapes at all: the question is "what kind of X is it
+# ?" (no NAME, no "the" -- _question_entity would return None and the whole
+# episode would be silently DROPPED by build_clause_batch, which is exactly
+# what happens today with no M54 code -- the "check they parse through"
+# finding this function fixes at the batch-build level per the task, without
+# touching _context_steps/_question_entity/_queried_role themselves).
+#
+# Design: every context sentence that literally contains the homograph token
+# (in ANY clause role -- families place it as SUBJECT/OBJECT/PLACE
+# inconsistently, see the M54 dev-agent's parser probe) gets ONE step whose
+# ENTITY is the homograph's own (unambiguous, MFS-grounded) identity vector
+# -- a stable address used consistently for every occurrence in the episode,
+# exactly like _context_steps already uses a transfer clause's OBJECT token
+# as an address -- on a FIXED "rel:SENSE" relation (not the sentence's real
+# syntactic role: the question has no way to name a role to query, so the
+# write/query address must be the same regardless of how any one sentence
+# phrased it). The VALUE is the v1 IN table's homograph candidate SET
+# (nsm_ct.membrane.SenseCandidateSet); in PLACEHOLDER mode (no sense_resolver
+# installed) it is bound directly to either the GOLD sense (``sense_bind=
+# "gold"``, the M32 oracle ceiling) or the MFS sense (``sense_bind="mfs"``,
+# the M30 floor) -- mirrors _pronoun_context_step's gold-placeholder pattern
+# exactly, just with a floor option added for the M30 rematch arm.
+#
+# Sentences that DON'T mention the homograph flow through _context_steps
+# UNCHANGED (dropped if they don't fit its SUBJECT+PLACE shape, same as
+# every other curriculum level -- not a regression introduced here). The
+# ONE new signal this function extracts beyond that: the SAME CLAUSE's other
+# role token (e.g. "river" in "the river flowed past the bank ."), carried
+# as SenseCandidateSet.context_word -- membrane.py's docstring explains why
+# (names carry no lexical content; this is the concrete, cheap form
+# MIND_INTERFACE.md's "+ optionally the step's other-role vectors" takes
+# here). A name-only clause (e.g. "mary walked into the bank .") yields
+# ``context_word=None`` -- no signal to add, not a bug.
+def _ambiguity_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                      meaning_source: MeaningSource, sense_bind: str = "gold"):
+    """Grounded stream + per-step :class:`membrane.SenseCandidateSet` map for
+    one M32 ambiguity episode. Returns ``(steps, sense_cand_sets)`` -- the
+    same shape ``_pronoun_context_step``'s caller already threads through
+    ``build_clause_batch``'s ``cand_sets`` dict, just for sense candidates.
+    """
+    d = codec.dim
+    homograph = ep.meta["homograph"]
+    gold_sense = ep.meta.get("gold_sense")
+    mfs_sense = ep.meta.get("mfs_sense")
+    hom_vec = _content_vec(homograph, resolver, codec, cache, meaning_source)
+    sense_rel = codec.filler_vec("rel:SENSE")
+    pred_is = codec.filler_vec("pred:is")
+    q_pred = codec.filler_vec("pred:?")
+    z = np.zeros(d, np.float32)
+
+    bind_sense = gold_sense if sense_bind == "gold" else mfs_sense
+    bind_vec = usvs_sense_handle(bind_sense, d) if bind_sense else None
+    if bind_vec is None:                       # defensive: shouldn't happen for the M32 families
+        bind_vec = hom_vec
+
+    steps = []
+    sense_cand_sets: Dict[int, "membrane.SenseCandidateSet"] = {}
+    for si, sent in enumerate(ep.context):
+        graph = parser._parse_graph(sent) if hasattr(parser, "_parse_graph") else None
+        clauses, _links = extract_discourse(graph)
+        hit_clause = None
+        for cl in clauses:
+            if any((arg.token or "").lower() == homograph for _rel, arg in cl.args):
+                hit_clause = cl
+                break
+        if hit_clause is None:
+            steps += _context_steps(sent, parser, resolver, codec, cache, meaning_source)
+            continue
+        context_word = None
+        for _rel, arg in hit_clause.args:
+            tok = (arg.token or "").lower()
+            if tok and tok != homograph and tok not in _NAMESET:
+                context_word = tok
+                break
+        cs = membrane.sense_candidate_set(
+            homograph, gold_sense=gold_sense, context_word=context_word,
+            provenance={"sentence_index": si, "sentence": sent})
+        sense_cand_sets[len(steps)] = cs
+        steps.append((hom_vec, sense_rel, bind_vec, pred_is, z, 0))
+    steps.append((hom_vec, sense_rel, z, q_pred, z, 1))
+    return steps, sense_cand_sets
+
+
 # M52 v1 IN table ("queried role"): the relation a question is actually
 # asking about. "has" -> RECIPIENT (who now holds it -- the transfer_who
 # level); "where" -> PLACE, which is ALSO the fallback/default -- every
@@ -279,6 +366,20 @@ class ClauseBatch:
     cand_prior: Optional[torch.Tensor] = None    # [B, T, C]     structural prior (uniform v1)
     cand_feature: Optional[torch.Tensor] = None  # [B, T, F]     mention feature vector (0 elsewhere)
     cand_gold: Optional[torch.Tensor] = None     # [B, T]        long; gold candidate index, -1 elsewhere
+    # M54 (RESOLVER_BUILD_PLAN Phase 3): the v1 "value" candidate set for
+    # homograph-bearing steps (nsm_ct.membrane.SenseCandidateSet), carried
+    # through in a SEPARATE field group from the cand_* ones above rather
+    # than folded into them -- see build_clause_batch's docstring for why
+    # (byte-identity: an entity-candidate-free OR sense-candidate-free batch
+    # must leave the OTHER group entirely None/untouched, and the two kinds
+    # need different per-candidate semantics downstream -- cand_entity holds
+    # ATOMS to look up in memory, sense_cand_entity holds MEANING VECTORS
+    # used directly, not memory addresses).
+    sense_cand_entity: Optional[torch.Tensor] = None   # [B, T, C, d]  candidate SENSE vectors (0-padded)
+    sense_cand_mask: Optional[torch.Tensor] = None     # [B, T, C]     1 = real (USVS-groundable) candidate
+    sense_cand_prior: Optional[torch.Tensor] = None    # [B, T, C]     MFS-rank-derived structural prior
+    sense_cand_context: Optional[torch.Tensor] = None  # [B, T, d]     same-clause other-role vector (0 elsewhere)
+    sense_cand_gold: Optional[torch.Tensor] = None     # [B, T]        long; gold candidate index, -1 elsewhere
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
@@ -288,27 +389,36 @@ class ClauseBatch:
                      (self.cand_entity, self.cand_mask, self.cand_prior,
                       self.cand_feature, self.cand_gold))
 
+    def _sense_cand_fields(self, xform):
+        return tuple(xform(t) if t is not None else None for t in
+                     (self.sense_cand_entity, self.sense_cand_mask, self.sense_cand_prior,
+                      self.sense_cand_context, self.sense_cand_gold))
+
     def to(self, device):
         coord = self.coord.to(device) if self.coord is not None else None
         ans_ok = self.answerable.to(device) if self.answerable is not None else None
         cand = self._cand_fields(lambda t: t.to(device))
+        scand = self._sense_cand_fields(lambda t: t.to(device))
         return ClauseBatch(self.entity.to(device), self.relation.to(device),
                            self.value.to(device), self.pred.to(device),
                            self.is_q.to(device), self.mask.to(device),
-                           self.options.to(device), self.answer.to(device), coord, ans_ok, *cand)
+                           self.options.to(device), self.answer.to(device), coord, ans_ok,
+                           *cand, *scand)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
         coord = self.coord[idx] if self.coord is not None else None
         ans_ok = self.answerable[idx] if self.answerable is not None else None
         cand = self._cand_fields(lambda t: t[idx])
+        scand = self._sense_cand_fields(lambda t: t[idx])
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
-                           self.options[idx], self.answer[idx], coord, ans_ok, *cand)
+                           self.options[idx], self.answer[idx], coord, ans_ok, *cand, *scand)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
-                        meaning_source: MeaningSource = "usvs") -> ClauseBatch:
+                        meaning_source: MeaningSource = "usvs",
+                        sense_bind: str = "gold") -> ClauseBatch:
     """Encode curriculum episodes into grounded clause-triple streams (fixed).
 
     Each step is ``(entity, relation, value, pred, coord, is_q)``; ``coord`` carries
@@ -341,6 +451,23 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     carried through in the returned batch's ``cand_*`` fields (``None`` for
     every episode without a pronoun step, which is what keeps this
     byte-identical to pre-M53a for every existing episode/level).
+
+    M54 (RESOLVER_BUILD_PLAN Phase 3): an episode whose meta carries
+    ``homograph`` (``episode.generate_ambiguity_episodes`` only -- no other
+    generator sets this key) is routed WHOLESALE through
+    :func:`_ambiguity_steps` instead of the old/transfer/pronoun path above
+    (its question shape, "what kind of X is it ?", doesn't fit
+    :func:`_question_entity` at all -- see that function's docstring for why
+    this has to be a top-level branch, not a per-sentence patch). Its
+    :class:`nsm_ct.membrane.SenseCandidateSet` map rides through the
+    returned batch's SEPARATE ``sense_cand_*`` fields (``None`` for every
+    episode without a homograph step -- ambiguity-free batches are
+    byte-identical to pre-M54, same guarantee M53a made for ``cand_*``).
+    ``sense_bind`` (``"gold"`` default, or ``"mfs"``) selects which sense
+    :func:`_ambiguity_steps` placeholder-binds to when NO sense_resolver is
+    installed (the gold-ceiling / MFS-floor training arms); it is inert
+    whenever a resolver IS installed, since :meth:`ClauseReactor._collapse`
+    always overrides the placeholder for any step carrying real candidates.
     """
     cache: Dict[str, np.ndarray] = {}
     d = codec.dim
@@ -349,8 +476,12 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     rows = []
     for ep in episodes:
         cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
+        sense_cand_sets: Dict[int, "membrane.SenseCandidateSet"] = {}
         if getattr(ep, "level", 0) >= 9 and ep.meta.get("query"):
             steps = _reasoning_steps(ep, resolver, codec, cache, meaning_source)   # L9-L11 reasoning stream
+        elif ep.meta.get("homograph"):
+            steps, sense_cand_sets = _ambiguity_steps(ep, parser, resolver, codec, cache,
+                                                       meaning_source, sense_bind)   # M54 ambiguity stream
         else:
             steps = []
             pronoun_idx = ep.meta.get("pronoun_sentence_index")
@@ -372,17 +503,18 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
             for sent in getattr(ep, "post_context", []) or []:
                 steps += _context_steps(sent, parser, resolver, codec, cache, meaning_source)
         opt = [_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
-        rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0, cand_sets))
+        rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0,
+                     cand_sets, sense_cand_sets))
 
     b = len(rows)
-    T = max(len(s) for s, _, _, _, _ in rows)
-    K = max(len(o) for _, o, _, _, _ in rows)
+    T = max(len(s) for s, _, _, _, _, _ in rows)
+    K = max(len(o) for _, o, _, _, _, _ in rows)
     ent = torch.zeros(b, T, d); rel = torch.zeros(b, T, d); val = torch.zeros(b, T, d)
     prd = torch.zeros(b, T, d); crd = torch.zeros(b, T, d)
     is_q = torch.zeros(b, T); mask = torch.zeros(b, T)
     opts = torch.zeros(b, K, d); ans = torch.zeros(b, dtype=torch.long)
     ans_ok = torch.zeros(b)
-    for i, (steps, opt, a, ok, _cs) in enumerate(rows):
+    for i, (steps, opt, a, ok, _cs, _scs) in enumerate(rows):
         for t, (e, r, v, p, c, q) in enumerate(steps):
             ent[i, t] = torch.from_numpy(e); rel[i, t] = torch.from_numpy(r)
             val[i, t] = torch.from_numpy(v); prd[i, t] = torch.from_numpy(p)
@@ -392,15 +524,15 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
         ans[i] = a; ans_ok[i] = ok
 
     cand_entity = cand_mask = cand_prior = cand_feature = cand_gold = None
-    if any(cs for *_row, cs in rows):
-        Cmax = max((len(cs.candidates) for *_row, cs_map in rows for cs in cs_map.values()),
+    if any(cs for *_row, cs, _scs in rows):
+        Cmax = max((len(cs.candidates) for *_row, cs_map, _scs in rows for cs in cs_map.values()),
                    default=1) or 1
         cand_entity = torch.zeros(b, T, Cmax, d)
         cand_mask = torch.zeros(b, T, Cmax)
         cand_prior = torch.zeros(b, T, Cmax)
         cand_feature = torch.zeros(b, T, membrane.FEATURE_DIM)
         cand_gold = torch.full((b, T), -1, dtype=torch.long)
-        for i, (steps, opt, a, ok, cs_map) in enumerate(rows):
+        for i, (steps, opt, a, ok, cs_map, _scs) in enumerate(rows):
             for t, cs in cs_map.items():
                 for j, c in enumerate(cs.candidates):
                     cand_entity[i, t, j] = torch.from_numpy(
@@ -412,8 +544,37 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                 if cs.gold_index is not None:
                     cand_gold[i, t] = cs.gold_index
 
+    # M54: SAME shape/pattern as the cand_* block above, but for
+    # nsm_ct.membrane.SenseCandidateSet -- a wholly SEPARATE tensor group
+    # (see ClauseBatch's field comment for why), so an ambiguity-free batch
+    # leaves it None exactly like a pronoun-free batch leaves cand_* None.
+    sense_cand_entity = sense_cand_mask = sense_cand_prior = None
+    sense_cand_context = sense_cand_gold = None
+    if any(scs for *_row, _cs, scs in rows):
+        Smax = max((len(scs.candidates) for *_row, _cs, scs_map in rows for scs in scs_map.values()),
+                   default=1) or 1
+        sense_cand_entity = torch.zeros(b, T, Smax, d)
+        sense_cand_mask = torch.zeros(b, T, Smax)
+        sense_cand_prior = torch.zeros(b, T, Smax)
+        sense_cand_context = torch.zeros(b, T, d)
+        sense_cand_gold = torch.full((b, T), -1, dtype=torch.long)
+        for i, (steps, opt, a, ok, _cs, scs_map) in enumerate(rows):
+            for t, scs in scs_map.items():
+                for j, c in enumerate(scs.candidates):
+                    sv = usvs_sense_handle(c.key, d)     # None -> masked out, never chosen (sense_chooser.py's rule)
+                    sense_cand_entity[i, t, j] = torch.from_numpy(sv if sv is not None else np.zeros(d, np.float32))
+                    sense_cand_mask[i, t, j] = 1.0 if sv is not None else 0.0
+                    sense_cand_prior[i, t, j] = c.prior
+                if scs.context_word:
+                    sense_cand_context[i, t] = torch.from_numpy(
+                        _content_vec(scs.context_word, resolver, codec, cache, meaning_source))
+                if scs.gold_index is not None:
+                    sense_cand_gold[i, t] = scs.gold_index
+
     return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans, crd, ans_ok,
-                       cand_entity, cand_mask, cand_prior, cand_feature, cand_gold)
+                       cand_entity, cand_mask, cand_prior, cand_feature, cand_gold,
+                       sense_cand_entity, sense_cand_mask, sense_cand_prior,
+                       sense_cand_context, sense_cand_gold)
 
 
 # ---------------------------------------------------------------------------
@@ -437,9 +598,26 @@ class ClauseReactor(nn.Module):
     REPLACES the placeholder gold-bound ``value`` for that step before it enters the
     GRU / gets written to memory -- MIND_INTERFACE.md §3's "collapse candidates ->
     binding, before the write". Steps/rows with no candidate set are untouched.
+
+    M54 (RESOLVER_BUILD_PLAN Phase 3, "Agent 4"): a SECOND, independent,
+    OPTIONAL ``sense_resolver`` slot for the v1 "value" candidate set
+    (homograph senses, ``batch.sense_cand_mask``) -- kept SEPARATE from
+    ``resolver`` rather than reusing one slot for both kinds, because Track A
+    needs TWO DIFFERENT specialist heads active in the SAME forward pass
+    (:class:`~nsm_ct.resolver.CorefHead` for pronoun steps,
+    :class:`~nsm_ct.resolver.SenseHead` for sense steps -- pronoun and
+    ambiguity episodes coexist in one M54 batch), while Track B's whole
+    argument is that ONE :class:`~nsm_ct.resolver.SharedScorer` instance can
+    be passed to BOTH slots (``resolver is sense_resolver``, a genuine
+    shared-weights setup -- ``scripts/train_resolver.py`` does exactly this).
+    Default ``None`` -- when neither ``sense_resolver`` nor
+    ``batch.sense_cand_mask`` is set, the sense-collapse branch never
+    executes, so a batch/model with no sense involvement is untouched by
+    M54 (verified alongside the M53 byte-identity regression).
     """
 
-    def __init__(self, dim: int, hidden: int = 128, resolver: Optional[Resolver] = None) -> None:
+    def __init__(self, dim: int, hidden: int = 128, resolver: Optional[Resolver] = None,
+                 sense_resolver: Optional[Resolver] = None) -> None:
         super().__init__()
         self.dim = dim
         # (entity, relation, value, predicate, coord, mem_read)
@@ -450,33 +628,93 @@ class ClauseReactor(nn.Module):
         self.respond = nn.Linear(hidden, 1)
         self.response = nn.Linear(hidden + dim, dim)      # generate the response meaning-vector
         self.resolver = resolver                          # M53b: optional, None = pre-M53b behavior
+        self.sense_resolver = sense_resolver               # M54: optional, None = pre-M54 behavior
 
-    def _collapse(self, memory: torch.Tensor, state: torch.Tensor, r: torch.Tensor,
-                  v: torch.Tensor, batch: ClauseBatch, t: int):
-        """M53b collapse step: resolver logits/margin for step ``t`` (or ``None,
-        None`` if no candidate data at all) and the (possibly resolver-replaced)
-        value for this step. Isolated here so :meth:`forward`'s per-step loop reads
-        exactly like it did pre-M53b when ``self.resolver is None``."""
-        if self.resolver is None or batch.cand_mask is None:
-            return v, None, None
-        ce_t, cf_t = batch.cand_entity[:, t], batch.cand_feature[:, t]
-        cp_t, cm_t = batch.cand_prior[:, t], batch.cand_mask[:, t]
-        cand_mem_read = query_candidates(memory, ce_t, r)                    # [B, C, d]
-        logits = self.resolver(ce_t, cf_t, cp_t, cm_t, cand_mem_read, state)  # [B, C]
-        logits = logits.masked_fill(cm_t <= 0, -1e9)
-        has_cand = cm_t.sum(-1) > 0                                          # [B]
-        if self.training:
-            w = torch.softmax(logits, dim=-1)                                # soft collapse (gradients)
-        else:
-            C = logits.shape[-1]
-            w = F.one_hot(logits.argmax(-1), num_classes=C).to(logits.dtype)  # hard collapse at eval
-        resolved_v = (w.unsqueeze(-1) * cand_mem_read).sum(1)                # [B, d]
-        v_out = torch.where(has_cand.unsqueeze(-1), resolved_v, v)
-        margin = torch.zeros(v.shape[0], device=v.device)
+    @staticmethod
+    def _collapse_weights(logits: torch.Tensor, training: bool) -> torch.Tensor:
+        """Soft (training) or hard argmax (eval) collapse weights -- factored
+        out of the pre-M54 ``_collapse`` body UNCHANGED so both the entity
+        and (M54) sense branches share it byte-for-byte."""
+        if training:
+            return torch.softmax(logits, dim=-1)                                # soft collapse (gradients)
+        C = logits.shape[-1]
+        return F.one_hot(logits.argmax(-1), num_classes=C).to(logits.dtype)     # hard collapse at eval
+
+    @staticmethod
+    def _top2_margin(logits: torch.Tensor, has_cand: torch.Tensor, ref: torch.Tensor) -> torch.Tensor:
+        """``top1 - top2`` logit margin per row, 0 where ``has_cand`` is False --
+        factored out of the pre-M54 ``_collapse`` body UNCHANGED."""
+        margin = torch.zeros(ref.shape[0], device=ref.device)
         if logits.shape[-1] >= 2:
             top2 = torch.topk(logits, k=2, dim=-1).values
             margin = torch.where(has_cand, top2[:, 0] - top2[:, 1], margin)
-        return v_out, logits, margin
+        return margin
+
+    def _collapse(self, memory: torch.Tensor, state: torch.Tensor, mem_read: torch.Tensor,
+                  r: torch.Tensor, v: torch.Tensor, batch: ClauseBatch, t: int):
+        """M53b/M54 collapse step for step ``t``: resolves ENTITY candidates
+        (M53b, arithmetic UNCHANGED from pre-M54) and then SENSE candidates
+        (M54, new) against the (possibly entity-collapsed) value. The two
+        kinds are always on DISJOINT (row, step) entries in every M54
+        curriculum (an ambiguity episode's step never also carries a pronoun
+        candidate set), so applying them in sequence is safe: each only
+        touches rows where its own ``has_cand`` is true, via ``torch.where``.
+        Returns ``(value, ent_logits, ent_margin, sense_logits, sense_margin)``
+        -- any of the last four is ``None`` exactly when the corresponding
+        resolver/candidate data is absent (mirrors the pre-M54
+        ``(v, None, None)`` contract for the no-resolver case component-wise).
+
+        M54's sense branch is the "thinnest possible projection" adapting
+        :class:`~nsm_ct.resolver.SharedScorer` (Track B, UNCHANGED code) and
+        the new :class:`~nsm_ct.resolver.SenseHead` (Track A) to sense
+        candidates without changing the :class:`~nsm_ct.resolver.Resolver`
+        contract's fixed slots at all:
+        - ``cand_entity`` <- the candidate SENSE VECTORS directly (there is
+          no entity address a meaning vector can stand in for, so unlike the
+          entity branch there is no ``query_candidates`` call here).
+        - ``cand_feature`` <- zero (``membrane.FEATURE_DIM`` width) -- senses
+          carry no gender/person mention feature; zero keeps SharedScorer's
+          fixed input width intact.
+        - ``mem_read`` <- THIS step's own memory readout (the running
+          content at the homograph's address) PLUS the same-clause
+          other-role vector (``batch.sense_cand_context`` --
+          ``nsm_ct.membrane.SenseCandidateSet.context_word``, grounded at
+          batch-build time), broadcast identically across every candidate
+          slot -- MIND_INTERFACE.md §3's "context IS the memory readout (+
+          optionally the step's other-role vectors)" for M54.
+        - the RESOLVED value is the weighted SUM OF THE CANDIDATE VECTORS
+          THEMSELVES (not their memory readout, unlike the entity branch --
+          a sense candidate's vector already IS the resolved meaning).
+        """
+        ent_logits = ent_margin = None
+        if self.resolver is not None and batch.cand_mask is not None:
+            ce_t, cf_t = batch.cand_entity[:, t], batch.cand_feature[:, t]
+            cp_t, cm_t = batch.cand_prior[:, t], batch.cand_mask[:, t]
+            cand_mem_read = query_candidates(memory, ce_t, r)                    # [B, C, d]
+            logits = self.resolver(ce_t, cf_t, cp_t, cm_t, cand_mem_read, state)  # [B, C]
+            logits = logits.masked_fill(cm_t <= 0, -1e9)
+            has_cand = cm_t.sum(-1) > 0                                          # [B]
+            w = self._collapse_weights(logits, self.training)
+            resolved_v = (w.unsqueeze(-1) * cand_mem_read).sum(1)                # [B, d]
+            v = torch.where(has_cand.unsqueeze(-1), resolved_v, v)
+            ent_logits, ent_margin = logits, self._top2_margin(logits, has_cand, v)
+
+        sense_logits = sense_margin = None
+        if self.sense_resolver is not None and batch.sense_cand_mask is not None:
+            sc_t = batch.sense_cand_entity[:, t]                                 # [B, C, d]  sense VECTORS
+            sp_t, sm_t = batch.sense_cand_prior[:, t], batch.sense_cand_mask[:, t]
+            b, C, sd = sc_t.shape
+            ctx = (mem_read + batch.sense_cand_context[:, t]).unsqueeze(1).expand(b, C, sd)
+            feat0 = sc_t.new_zeros(b, FEATURE_DIM)          # thinnest projection, see docstring above
+            logits = self.sense_resolver(sc_t, feat0, sp_t, sm_t, ctx, state)     # [B, C]
+            logits = logits.masked_fill(sm_t <= 0, -1e9)
+            has_cand = sm_t.sum(-1) > 0                                          # [B]
+            w = self._collapse_weights(logits, self.training)
+            resolved_v = (w.unsqueeze(-1) * sc_t).sum(1)                         # [B, d] -- candidates ARE the value
+            v = torch.where(has_cand.unsqueeze(-1), resolved_v, v)
+            sense_logits, sense_margin = logits, self._top2_margin(logits, has_cand, v)
+
+        return v, ent_logits, ent_margin, sense_logits, sense_margin
 
     def forward(self, batch: ClauseBatch) -> Dict[str, torch.Tensor]:
         b, T, d = batch.entity.shape
@@ -486,14 +724,17 @@ class ClauseReactor(nn.Module):
 
         coord = batch._coord()
         have_resolver_data = self.resolver is not None and batch.cand_mask is not None
+        have_sense_data = self.sense_resolver is not None and batch.sense_cand_mask is not None
         resp_logits, resp_vecs = [], []
         resolver_logits_all, resolver_margin_all = [], []
+        sense_logits_all, sense_margin_all = [], []
         for t in range(T):
             e, r, v = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
             p, c = batch.pred[:, t], coord[:, t]
             real, isq = batch.mask[:, t], batch.is_q[:, t]
             mem_read = em.query(memory, e, r)                          # [B, d]
-            v, res_logits_t, res_margin_t = self._collapse(memory, state, r, v, batch, t)
+            v, res_logits_t, res_margin_t, sense_logits_t, sense_margin_t = self._collapse(
+                memory, state, mem_read, r, v, batch, t)
             state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
             stmt = real * (1.0 - isq)                                  # statement (write) step
             # write gate: statement steps only (questions carry no value)
@@ -513,6 +754,9 @@ class ClauseReactor(nn.Module):
             if have_resolver_data:
                 resolver_logits_all.append(res_logits_t)
                 resolver_margin_all.append(res_margin_t)
+            if have_sense_data:
+                sense_logits_all.append(sense_logits_t)
+                sense_margin_all.append(sense_margin_t)
 
         RL = torch.stack(resp_logits, dim=1)               # [B, T]
         RV = torch.stack(resp_vecs, dim=1)                 # [B, T, d]
@@ -529,4 +773,7 @@ class ClauseReactor(nn.Module):
         if have_resolver_data:
             out["resolver_logits"] = torch.stack(resolver_logits_all, dim=1)   # [B, T, C]
             out["resolver_margin"] = torch.stack(resolver_margin_all, dim=1)   # [B, T]
+        if have_sense_data:
+            out["sense_resolver_logits"] = torch.stack(sense_logits_all, dim=1)   # [B, T, C]
+            out["sense_resolver_margin"] = torch.stack(sense_margin_all, dim=1)   # [B, T]
         return out
