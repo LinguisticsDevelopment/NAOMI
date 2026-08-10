@@ -225,3 +225,39 @@ candidates with priors, (2) an OPEN binding in the discourse record,
 | truth-memory promotion | new (seed exists: L5 corroborate/contradict) |
 | workspace + emit gate + re-entry | new (respond-timing head is the degenerate ancestor) |
 | dials as runtime inputs | new (thresholds exist implicitly today) |
+
+---
+
+# v2 addendum — the entity-instance subsystem (user-specified, 2026-08-10)
+
+Standing defect it fixes: today identity IS the name string (entity atoms
+are minted deterministically from the name — var:mary is the same vector
+everywhere), so two Marys collapse into one memory entity and "another
+person also named mary" is UNREPRESENTABLE. Names and referents are fused;
+M56b proved feature-knowledge must not hide in strings or weights — this
+is the same rule applied to identity.
+
+Design (DRT discourse-referents shape):
+1. First mention MINTS a fresh instance atom (arbitrary vector — correct
+   for individuals; it's a variable, not a meaning). mary₁ ≠ mary₂.
+2. All properties become ATTRIBUTE FACTS in the entity⊗relation⊗value
+   store: name(e₁,"mary"), kind(e₁,person), gender(e₁,F@prior),
+   occupation(e₁,doctor)... — inspectable, source-tagged, updatable by
+   discourse (name-based gender priors get overridden by observed
+   bindings; the caution dial holds low-margin cases open).
+3. EVERY referring expression = candidate generation over instances by
+   attribute match, resolved by the EXISTING membrane resolver:
+   - "mary" → instances with name=mary (two Marys = a real candidate set)
+   - "she"  → person instances with compatible features
+   - "the doctor" → instances with kind=doctor  ← definite descriptions,
+     the dominant referring device in real prose, unified under the same
+     collapse machinery. Pronouns stop being special; they're the
+     referring expression with the least attribute evidence.
+4. Cross-episode identity ("is this mary THAT mary?") becomes an explicit
+   consolidation-time decision (LTM linking), not a string collision.
+
+Build timing: with the corpus campaign (real prose has multiple Johns and
+definite descriptions immediately) / as the front half of v2 LTM work.
+Registry + minting + attribute writes are deterministic membrane-side
+work; only the collapse policy (already built, already held-out-validated)
+is learned.
