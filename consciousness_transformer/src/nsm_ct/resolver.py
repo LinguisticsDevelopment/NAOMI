@@ -43,7 +43,8 @@ from . import entity_memory as em
 from .membrane import FEATURE_DIM
 
 __all__ = ["Resolver", "CorefHead", "SharedScorer", "SenseHead", "query_candidates",
-           "make_resolver", "make_sense_resolver", "shared_scorer_for_budget"]
+           "query_candidates_per_addr", "make_resolver", "make_sense_resolver",
+           "shared_scorer_for_budget"]
 
 
 def query_candidates(memory: torch.Tensor, cand_entity: torch.Tensor,
@@ -59,6 +60,24 @@ def query_candidates(memory: torch.Tensor, cand_entity: torch.Tensor,
     if C == 0:
         return cand_entity.new_zeros(b, 0, d)
     return torch.stack([em.query(memory, cand_entity[:, j], relation) for j in range(C)], dim=1)
+
+
+def query_candidates_per_addr(memory: torch.Tensor, cand_query_entity: torch.Tensor,
+                               cand_query_relation: torch.Tensor) -> torch.Tensor:
+    """Like :func:`query_candidates`, but each candidate supplies its OWN
+    relation, not one clause-level relation shared by every candidate --
+    M55a's per-candidate ``Addr`` register (dev/TRACK_C_DESIGN.md Sec 1.10:
+    "WHICH (entity, relation) to query is itself part of what each [parse]
+    hypothesis asserts"). ``cand_query_entity``/``cand_query_relation`` are
+    both ``[B, C, d]``; returns ``[B, C, d]``, one ``em.query`` per
+    candidate slot (same "``C`` is small, a Python loop is fine" rationale
+    as :func:`query_candidates`).
+    """
+    b, C, d = cand_query_entity.shape
+    if C == 0:
+        return cand_query_entity.new_zeros(b, 0, d)
+    return torch.stack([em.query(memory, cand_query_entity[:, j], cand_query_relation[:, j])
+                         for j in range(C)], dim=1)
 
 
 class Resolver(nn.Module):

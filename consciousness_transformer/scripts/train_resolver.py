@@ -81,6 +81,7 @@ from nsm_ct.curriculum2 import (  # noqa: E402
     _FEMALE_NAMES,
     _MALE_NAMES,
     association_only_baseline,
+    generate_garden_path_episodes,
     generate_pronoun_episodes,
     generate_sense_binding_episodes,
     generate_transfer_episodes,
@@ -279,6 +280,28 @@ def build_m54b_curriculum(n_episodes: int, seed: int):
     n_old = n_episodes - n_new
     old = CurriculumGenerator(max_level=6, seed=seed).generate(n_old)
     new = generate_sense_binding_episodes(n_new, seed=seed + 1)
+    episodes = old + new
+    order = np.random.RandomState(seed + 2).permutation(len(episodes))
+    return [episodes[i] for i in order]
+
+
+def build_m55a_curriculum(n_episodes: int, seed: int):
+    """M55a's mix (RESEARCH_NOTES M55a, dev/TRACK_C_DESIGN.md Sec 1.10): 50%
+    old L1-6 + 50% the NEW garden-path curriculum
+    (curriculum2.generate_garden_path_episodes) -- mirrors
+    :func:`build_m54b_curriculum`'s exact "isolate the one new capability"
+    reasoning: heavy in the new kind, no transfer/pronoun/sense episodes,
+    since --mix m54/m54b already cover the full regression. Deterministic
+    given (n_episodes, seed). M55a itself trains NO resolver (placeholder
+    mode, like M53a before M53b existed) -- this mix exists so a smoke run
+    can exercise the garden-path batch-build/collapse plumbing end to end
+    (see scripts/probe_garden_path_smoke.py) and so a FUTURE resolver-
+    training round has a ready-made mix to consume without a second
+    data-plumbing pass."""
+    n_new = n_episodes // 2
+    n_old = n_episodes - n_new
+    old = CurriculumGenerator(max_level=6, seed=seed).generate(n_old)
+    new = generate_garden_path_episodes(n_new, seed=seed + 1)
     episodes = old + new
     order = np.random.RandomState(seed + 2).permutation(len(episodes))
     return [episodes[i] for i in order]
@@ -713,12 +736,14 @@ def main() -> None:
     ap.add_argument("--hidden", type=int, default=128)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--mix", choices=["m53", "m54", "m54b"], default="m54",
+    ap.add_argument("--mix", choices=["m53", "m54", "m54b", "m55a"], default="m54",
                      help="m53 = the original 1/2 old + 1/4 transfer + 1/4 pronoun mix "
                           "(no ambiguity episodes, exact M53 reproduction); "
                           "m54 (default) = 40%% old / 20%% transfer / 20%% pronoun / 20%% ambiguity; "
                           "m54b = 50%% old / 50%% the NEW entity-keyed sense-binding curriculum "
-                          "(RESEARCH_NOTES M54b's gold/MFS gap probe)")
+                          "(RESEARCH_NOTES M54b's gold/MFS gap probe); "
+                          "m55a = 50%% old / 50%% the NEW garden-path curriculum (RESEARCH_NOTES "
+                          "M55a, placeholder-bound -- no --track resolver consumes hyp_cand_* yet)")
     ap.add_argument("--distill-b-track", choices=["B-wide", "B-nostate", "B-nostate-wide"],
                      default="B-nostate-wide",
                      help="--track B-distilled only: which B-family config stage 2 initializes "
@@ -763,6 +788,8 @@ def main() -> None:
         episodes = build_m54_curriculum(args.episodes, args.seed)
     elif args.mix == "m54b":
         episodes = build_m54b_curriculum(args.episodes, args.seed)
+    elif args.mix == "m55a":
+        episodes = build_m55a_curriculum(args.episodes, args.seed)
     else:
         episodes = build_mixed_curriculum(args.episodes, args.seed)
     baseline = nearest_entity_baseline(episodes)

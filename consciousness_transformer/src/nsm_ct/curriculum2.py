@@ -1342,3 +1342,272 @@ def association_only_baseline(episodes: List[Episode], dim: int = 64) -> Dict[st
         total += 1
         correct += int(pred == ep.answer_idx)
     return {"n": total, "accuracy": correct / total if total else float("nan")}
+
+
+# ---------------------------------------------------------------------------
+# M55a: the garden-path curriculum (dev/TRACK_C_DESIGN.md Sec 1.10,
+# RESEARCH_NOTES M55a). Built ONLY from the ambiguity shape
+# scripts/probe_m55_hyp_survey.py's survey proved real: "{n} can {h} ."
+# produces an EXACT structural-score tie (margin 0.0) between two
+# non-equivalent readings for a specific set of verb/noun homographs (the
+# M41 WordNet-lexicon-backed tag lattice) -- "can" as a transitive VERB with
+# the homograph as its OBJECT vs the homograph as the main VERB with "can"
+# as a bare modal. See :mod:`nsm_ct.clause_reactor`'s ``_garden_path_steps``
+# for how the membrane candidate set is built from this.
+# ---------------------------------------------------------------------------
+
+# The 14 homographs the survey confirmed give an EXACT (margin=0.0) tie
+# between the OBJECT reading (predicate=can, SUBJECT=n, OBJECT=h) and the
+# VERB reading (predicate=h, SUBJECT=n, "can" a bare modal) for "{n} can
+# {h} ." AND parse cleanly (SUBJECT=h, PLACE=p, single dominant reading) as
+# "the {h} is in the {p} ." -- both checked empirically, not assumed (see
+# the survey script and RESEARCH_NOTES M55a for the numbers). "flies"
+# (plural of "fly") dropped as redundant with "fly".
+GARDEN_PATH_HOMOGRAPHS: Tuple[str, ...] = (
+    "bear", "book", "date", "duck", "fish", "fly", "park", "rock",
+    "run", "saw", "time", "train", "watch",
+)
+
+# fred/bill excluded (parser landmines: "fred" is absent from the WordNet
+# lexicon and falls through the -ed suffix heuristic to VERB; "bill" is
+# itself a common-noun/verb homograph, risking collision when used as a
+# proper name) -- same exclusion M53a/M54b already established.
+_GARDEN_PATH_NAMES: Tuple[str, ...] = tuple(n for n in _NAMES if n not in ("fred", "bill"))
+
+_GARDEN_PATH_MOVE_TEMPLATE = TEMPLATES["B"]["MOVE"][0]
+assert _GARDEN_PATH_MOVE_TEMPLATE == "{n} went to the {p} ."
+_GARDEN_PATH_HOMOGRAPH_PLACE_TEMPLATE = "the {h} is in the {p} ."
+_GARDEN_PATH_AMBIGUOUS_TEMPLATE = "{n} can {h} ."
+
+
+def verify_garden_path_templates(sample_name: str = "mary", sample_place_a: str = "garden",
+                                  sample_place_b: str = "kitchen",
+                                  homographs: Tuple[str, ...] = GARDEN_PATH_HOMOGRAPHS,
+                                  ) -> Dict[str, Dict[str, object]]:
+    """Parse-check the garden-path curriculum's sentence shapes through the
+    REAL parser (the ``verify_*`` pattern every other generator in this
+    module follows). Checks, per homograph:
+
+    - ``CONTEXT_HOM[{h}]``: "the {h} is in the {p} ." yields SUBJECT={h},
+      PLACE={p} as its BEST (top-scoring) hypothesis.
+    - ``AMBIGUOUS[{h}]``: "{n} can {h} ." yields >=2 top hypotheses with an
+      EXACT score tie (margin 0.0) whose extracted role signatures differ
+      AND both carry a SUBJECT (neither is a broken/degenerate parse) --
+      the structural garden-path ambiguity :func:`GardenPathCurriculumGenerator`
+      is built on. Returns an empty dict if ``quantum_parser`` isn't
+      importable (caller must treat that as "unable to verify", not a
+      pass) -- same contract as :func:`verify_templates` /
+      :func:`verify_pronoun_templates` / :func:`verify_sense_binding_templates`.
+    """
+    from .clause import extract_discourse
+    from .input_encoder import ParserInputEncoder
+    from .nsm_primes import PRIME_NAMES
+    from .structure import PARSE_LABELS
+    from .tokenizer import SimpleTokenizer
+
+    ctx_texts = [_GARDEN_PATH_MOVE_TEMPLATE.format(n=sample_name, p=sample_place_a)]
+    hom_place_texts = {h: _GARDEN_PATH_HOMOGRAPH_PLACE_TEMPLATE.format(h=h, p=sample_place_b)
+                        for h in homographs}
+    ambiguous_texts = {h: _GARDEN_PATH_AMBIGUOUS_TEMPLATE.format(n=sample_name, h=h)
+                        for h in homographs}
+    texts = (ctx_texts + list(hom_place_texts.values()) + list(ambiguous_texts.values())
+             + [sample_name, sample_place_a, sample_place_b] + list(homographs))
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        return {}  # quantum_parser unavailable; caller must handle this case
+
+    def _signature(graph) -> frozenset:
+        clauses, _links = extract_discourse(graph)
+        return frozenset(((cl.predicate or "").lower(), rel, (arg.token or "").lower())
+                          for cl in clauses for rel, arg in cl.args)
+
+    results: Dict[str, Dict[str, object]] = {}
+    for h, sent in hom_place_texts.items():
+        graph = parser._parse_graph(sent)
+        clauses, _links = extract_discourse(graph)
+        roles = {rel: (arg.token or "").lower() for cl in clauses for rel, arg in cl.args}
+        ok = roles.get("SUBJECT") == h and roles.get("PLACE") == sample_place_b
+        results[f"CONTEXT_HOM[{h}]"] = {"sentence": sent, "ok": ok, "roles": roles}
+
+    for h, sent in ambiguous_texts.items():
+        graphs, scores, margin = parser._parse_topk_one(sent, k=2)
+        ok = False
+        sig0 = sig1 = None
+        if len(scores) >= 2 and margin == 0.0:
+            sig0, sig1 = _signature(graphs[0]), _signature(graphs[1])
+            has_subj0 = any(rel == "SUBJECT" for _p, rel, _a in sig0)
+            has_subj1 = any(rel == "SUBJECT" for _p, rel, _a in sig1)
+            ok = sig0 != sig1 and bool(sig0) and bool(sig1) and has_subj0 and has_subj1
+        results[f"AMBIGUOUS[{h}]"] = {"sentence": sent, "ok": ok, "n_hyp": len(scores),
+                                       "margin": margin, "sig0": sig0, "sig1": sig1}
+    return results
+
+
+class GardenPathCurriculumGenerator:
+    """M55a garden-path episodes: memory-coherence-flavored collapse over a
+    genuine parser-score tie.
+
+    Episode shape:
+        "{name_a} went to the {place_a} ."          -- VERB-reading answer source
+        "the {h} is in the {place_b} ."              -- OBJECT-reading answer source
+        "{name_a} can {h} ."                          -- the garden-path sentence
+        Q: "where is {name_a} ?"
+
+    "{name_a} can {h} ." is an EXACT parser-score tie (margin 0.0,
+    :data:`GARDEN_PATH_HOMOGRAPHS`, see :func:`verify_garden_path_templates`
+    and ``scripts/probe_m55_hyp_survey.py``) between: the OBJECT reading
+    ("can" as a transitive VERB, homograph as its OBJECT -- semantically
+    placeholder-bound here as "name_a now has/is with the homograph", so
+    the correct place is the homograph's OWN place, ``place_b``) and the
+    VERB reading (homograph as the main VERB, "can" a bare modal, no object
+    at all -- an ability statement that doesn't touch place, so the correct
+    answer stays ``place_a``, unaffected).
+
+    ``gold_reading`` ("object" | "verb") alternates by an internal COUNTER
+    (not RNG, mirroring :class:`PronounCurriculumGenerator`'s anti-recency
+    discipline and :class:`SenseBindingCurriculumGenerator`'s flip balance)
+    -- exactly 50/50 for any ``n``. Both context facts (``place_a`` for
+    name_a, ``place_b`` for the homograph) are ALWAYS present regardless of
+    which reading is gold, so a bag-of-words association can't shortcut
+    (:func:`garden_path_association_baseline` must land at chance), and the
+    parser's own top-1 hypothesis for the ambiguous sentence is a
+    DETERMINISTIC tie-break (always the OBJECT reading, per
+    ``completeness_key``'s "more core-role edges wins" rule -- verified
+    empirically for every homograph in :data:`GARDEN_PATH_HOMOGRAPHS`), so
+    always-trust-the-parser's-top-1 also lands at chance
+    (:func:`garden_path_parser_top1_baseline`).
+
+    ``ep.meta`` carries ``garden_path=True`` (the marker
+    ``clause_reactor.build_clause_batch`` gates its M55a branch on),
+    ``name_a``, ``homograph``, ``place_a``, ``place_b``, ``gold_reading``.
+    """
+
+    def __init__(self, num_options: int = 2, seed: int = 0, *,
+                 names: Tuple[str, ...] = _GARDEN_PATH_NAMES,
+                 homographs: Tuple[str, ...] = GARDEN_PATH_HOMOGRAPHS) -> None:
+        self.num_options = num_options
+        self.rng = random.Random(seed)
+        self._count = 0
+        self._names = names
+        self._homographs = homographs
+
+    def _episode(self) -> Episode:
+        want_object = (self._count % 2 == 0)   # alternate -> exact 50/50
+        self._count += 1
+        gold_reading = "object" if want_object else "verb"
+
+        name_a = self.rng.choice(self._names)
+        homograph = self.rng.choice(self._homographs)
+        place_a, place_b = self.rng.sample(_PLACES, 2)
+        gold_place = place_b if want_object else place_a
+        other_place = place_a if want_object else place_b
+
+        context = [
+            _GARDEN_PATH_MOVE_TEMPLATE.format(n=name_a, p=place_a),
+            _GARDEN_PATH_HOMOGRAPH_PLACE_TEMPLATE.format(h=homograph, p=place_b),
+            _GARDEN_PATH_AMBIGUOUS_TEMPLATE.format(n=name_a, h=homograph),
+        ]
+        options = [gold_place, other_place]
+        self.rng.shuffle(options)
+        return Episode(
+            context=context, question=f"where is {name_a} ?",
+            answer_text=gold_place, options=options, answer_idx=options.index(gold_place),
+            level=16,
+            meta={
+                "src": "curriculum2", "kind": "garden_path", "garden_path": True,
+                # NOTE: keyed "gp_homograph", not "homograph" -- the latter is
+                # the M54 ambiguity-episode marker (episode.py's
+                # generate_ambiguity_episodes / clause_reactor.py's
+                # `elif ep.meta.get("homograph")` branch); reusing it here
+                # would silently route garden-path episodes through the WRONG
+                # step-builder (_ambiguity_steps) since that check comes first.
+                "name_a": name_a, "gp_homograph": homograph,
+                "place_a": place_a, "place_b": place_b,
+                "gold_reading": gold_reading,
+            },
+        )
+
+    def generate(self, n: int) -> List[Episode]:
+        return [self._episode() for _ in range(n)]
+
+
+def generate_garden_path_episodes(n: int, seed: int = 0, num_options: int = 2) -> List[Episode]:
+    """``n`` M55a garden-path episodes, deterministic given ``(n, seed,
+    num_options)``. See :class:`GardenPathCurriculumGenerator`."""
+    return GardenPathCurriculumGenerator(num_options=num_options, seed=seed).generate(n)
+
+
+def garden_path_parser_top1_baseline(episodes: List[Episode], parser) -> Dict[str, float]:
+    """The scripted PARSER-TOP-1 baseline (M55a's honesty gate (a)): parse
+    the ambiguous sentence with the REAL parser, take ``best_hypothesis()``
+    (the parser's own top choice, exactly what :meth:`nsm_ct.input_encoder.
+    ParserInputEncoder._parse_graph` already uses everywhere else), read off
+    whether that ONE hypothesis is the OBJECT or VERB reading (has an
+    OBJECT-relation edge on the "can" clause, or not), predict accordingly
+    -- NO memory, no context facts consulted, exactly what a model would get
+    "for free" if the parser's own score already picked the right reading.
+    Must sit near floor (~0.5, chance) on generated data by
+    :class:`GardenPathCurriculumGenerator`'s 50/50 balance -- if it doesn't,
+    the episode doesn't belong (RESEARCH_NOTES M53a/M54b's "capability
+    curricula must make the capability NECESSARY" discipline). ``parser`` is
+    a :class:`~nsm_ct.input_encoder.ParserInputEncoder`; episodes without
+    ``kind == "garden_path"`` are ignored (mirrors
+    :func:`nearest_entity_baseline`'s own kind-filtering contract).
+    """
+    from .clause import extract_discourse
+
+    total = correct = 0
+    for ep in episodes:
+        if ep.meta.get("kind") != "garden_path":
+            continue
+        name_a, homograph = ep.meta["name_a"], ep.meta["gp_homograph"]
+        sentence = _GARDEN_PATH_AMBIGUOUS_TEMPLATE.format(n=name_a, h=homograph)
+        graph = parser._parse_graph(sentence)
+        clauses, _links = extract_discourse(graph)
+        is_object_reading = any(
+            rel == "OBJECT" and (arg.token or "").lower() == homograph
+            for cl in clauses for rel, arg in cl.args)
+        pred_place = ep.meta["place_b"] if is_object_reading else ep.meta["place_a"]
+        total += 1
+        correct += int(pred_place == ep.answer_text)
+    return {"n": total, "accuracy": correct / total if total else float("nan")}
+
+
+def garden_path_association_baseline(episodes: List[Episode], dim: int = 64) -> Dict[str, float]:
+    """The scripted ASSOCIATION-ONLY baseline (M55a's honesty gate (b),
+    mirroring :func:`association_only_baseline`'s exact method): answer =
+    whichever option's USVS handle is most cosine-similar to the mean of
+    every content word's USVS handle, bagged over the episode's context
+    sentences (names dropped). By :class:`GardenPathCurriculumGenerator`'s
+    construction BOTH place words (``place_a``, ``place_b``) appear in
+    every episode's context with equal footing regardless of which is
+    gold, so this must land at chance (~0.5). Only ``kind ==
+    "garden_path"`` episodes are scored.
+    """
+    import re
+
+    from .usvs_bridge import usvs_handle
+
+    names = {n.lower() for n in _NAMES}
+    total = correct = 0
+    for ep in episodes:
+        if ep.meta.get("kind") != "garden_path":
+            continue
+        words = [w for sent in ep.context for w in re.findall(r"[a-z]+", sent.lower())
+                 if w not in names]
+        vecs = [usvs_handle(w, dim) for w in words]
+        vecs = [v for v in vecs if v is not None]
+        if not vecs or not ep.options:
+            continue
+        bag = np.mean(np.stack(vecs), axis=0)
+        bag_n = bag / (np.linalg.norm(bag) + 1e-8)
+        opt_vecs = [usvs_handle(o, dim) for o in ep.options]
+        sims = [
+            float(np.dot(bag_n, v / (np.linalg.norm(v) + 1e-8))) if v is not None else -1e9
+            for v in opt_vecs
+        ]
+        pred = int(np.argmax(sims))
+        total += 1
+        correct += int(pred == ep.answer_idx)
+    return {"n": total, "accuracy": correct / total if total else float("nan")}

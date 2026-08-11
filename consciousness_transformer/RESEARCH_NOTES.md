@@ -2785,3 +2785,33 @@ and zero of it in weights. The M56 arc (design spike → memorization
 exposé → membrane fix → re-gate) is closed; it cost four days-scale
 steps and upgraded both a flagship result and the design discipline
 (held-out-atom testing now standard).
+
+### M55a — parse-hypothesis membrane + the honest ambiguity census (MEASURED plumbing, one headline)
+
+Sonnet agent. The C-prerequisite per-candidate Addr register is BUILT
+(Candidate.query_entity/query_relation, query_candidates_per_addr —
+§1.10 satisfied); parser top-K exposure (opt-in, default-off);
+HypothesisCandidateSet; third _collapse branch + hyp_resolver slot; all
+three candidate kinds coexist in one batch without cross-contamination;
+byte-identity twice over; 277 tests green. Meta-key collision
+("homograph" reused by two branches, silently mis-routing) found and
+fixed during build.
+
+**The headline — the ambiguity census**: of 1,171 sentences across 33
+shapes, ONLY the modal/main-verb homograph collision ("{name} can
+{homograph} .") yields exact score ties; every other structurally
+distinct reading pair has a CONFIDENT margin (0.08-0.37). This grammar's
+garden-path capacity is narrow: one collision family, 13 homographs.
+Broad garden-pathing awaits richer grammar or real text — recorded
+straight, not padded with synthetic ambiguity.
+
+Baselines at floor by construction: parser-top-1 exactly 0.500 (its
+tie-break always picks OBJECT; gold alternates), association 0.42-0.51.
+Placeholder-bound smoke 1.000.
+
+**Flagged for M55b (the agent's own honest caveat, load-bearing): the
+gold reading is currently an internal counter, NOT inferable from the
+context facts.** Plumbing-adequate, but a resolver trained on this could
+not exceed 0.5 legitimately — M55b's FIRST job is the M54b move: make the
+context facts determine the correct reading (binding-critical redesign),
+prove it with a gold-vs-forced-wrong gap, THEN train the collapse.

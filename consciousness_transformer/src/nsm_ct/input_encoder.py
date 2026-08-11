@@ -225,6 +225,50 @@ class ParserInputEncoder(AbstractInputEncoder):
             return graphs[0]
         return _merge_graphs(graphs)
 
+    def _parse_topk_one(self, sentence: str, k: int = 4) -> Tuple[List["object"], List[float], float]:
+        """M55a opt-in path (default OFF -- purely additive; no existing
+        caller of ``_parse_graph``/``_parse_graph_one``/``_parse_tree`` is
+        touched): the top-``k`` parse hypotheses for a SINGLE sentence, with
+        their structural scores and the top1-top2 margin.
+
+        ``QuantumParser.parse`` already deduplicates structurally-equivalent
+        hypotheses at every grammar-rule step (its own ``is_equivalent``
+        pass) and returns ``chart.hypotheses`` sorted by ``(score,
+        completeness_key)`` (``ParseChart.sort_hypotheses`` /
+        :func:`~quantum_parser.scorer.completeness_key`) with only complete
+        parses kept when any exist -- so ``chart.hypotheses[:k]`` is already
+        "K genuinely different readings" with no new dedup logic needed
+        here (see ``scripts/probe_m55_hyp_survey.py``'s survey for which
+        sentence SHAPES actually exercise this in our grammar).
+
+        Returns ``(graphs, scores, margin)`` -- ``graphs`` are up to ``k``
+        :class:`~nsm_ct.quantum_adapter.HypGraph` views (the same flat,
+        ``extract_discourse``-ready shape :meth:`_parse_graph` returns),
+        ``scores`` their matching structural scores, ``margin`` is
+        ``scores[0] - scores[1]`` (``0.0`` if fewer than 2 hypotheses).
+        ``([], [], 0.0)`` on any parser failure or multi-sentence input (the
+        parser has no cross-sentence grammar rule -- see :meth:`_parse_graph`'s
+        docstring; top-K exposure is single-sentence only, which is all any
+        garden-path sentence needs).
+        """
+        if getattr(self, "_parser", None) is None:
+            return [], [], 0.0
+        if len(_split_sentences(sentence)) > 1:
+            return [], [], 0.0
+        try:
+            from .quantum_adapter import hypothesis_to_graph  # local import
+
+            words = self._tag(sentence)
+            chart = self._parser.parse(words)
+            hyps = chart.hypotheses[:k]
+            graphs = [hypothesis_to_graph(h) for h in hyps]
+            scores = [float(h.score) for h in hyps]
+            margin = (scores[0] - scores[1]) if len(scores) > 1 else 0.0
+            return graphs, scores, margin
+        except Exception as exc:  # pragma: no cover - parser is experimental
+            self._note(f"top-k parse failed ({exc}); no hypotheses.")
+            return [], [], 0.0
+
     def encode_structured(self, sentence: str) -> Structured:
         from .thought import build_thought  # local import (avoids cycle)
         tree = self._parse_tree(sentence)
