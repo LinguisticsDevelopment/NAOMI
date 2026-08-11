@@ -2765,3 +2765,23 @@ Standing corrections: M53's headline number stands only for the closed
 set; the honest generalizing number is 0.875 held-out with the fixed
 membrane. Real-scale re-gate of the pronoun benchmark with per-candidate
 features + held-out names queued as the next solo run.
+
+### M56c — the re-gate: generalizing pronoun binding restored to 1.000 (MEASURED, closes the M56 arc)
+
+Full scale (3000 train episodes, dim 48, 80 epochs, held-out names
+sandra/bill, n=750 held-out evaluations):
+
+| head | train names | HELD-OUT names |
+|---|---|---|
+| old (mention-feature only) | 1.000 | 0.353 |
+| **fixed (per-candidate features)** | 1.000 | **1.000** |
+
+The M53 capability is not merely repaired — with the knowledge moved to
+its rightful place (per-candidate feature vectors at the membrane), the
+resolver binds pronouns PERFECTLY on names it never trained on. The
+honest headline for reference resolution is now: 1.000, held-out,
+feature-driven, with the name→gender knowledge in an inspectable table
+and zero of it in weights. The M56 arc (design spike → memorization
+exposé → membrane fix → re-gate) is closed; it cost four days-scale
+steps and upgraded both a flagship result and the design discipline
+(held-out-atom testing now standard).
