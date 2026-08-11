@@ -6,7 +6,10 @@
   merges, commits, and pushes. It should MINIMIZE the code it writes
   itself — token economy.
 - Implementation work goes to **Sonnet-model agents** (`model: "sonnet"`),
-  in parallel when tasks are independent, single when not.
+  in parallel when tasks are independent, single when not. Opus agents
+  (low/medium effort) are permitted for genuinely difficult tasks, but
+  with the director reviewing and giving feedback, Sonnet should almost
+  always suffice — escalate only after a Sonnet attempt actually fails.
 - Agents are foreground-only for training runs, never touch git, and
   smoke tests they run must be ≤2.5 min.
 
