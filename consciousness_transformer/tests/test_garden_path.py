@@ -1,5 +1,5 @@
-"""Tests for M55a: the membrane half of parse-hypothesis collapse
-(dev/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a, dev/NEXT_ARC_PLAN.md
+"""Tests for M55a/M55b: the membrane half of parse-hypothesis collapse
+(dev/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a/M55b, dev/NEXT_ARC_PLAN.md
 M55). Covers:
 
 1. The per-candidate Addr register plumbing (membrane.Candidate.query_entity/
@@ -11,6 +11,13 @@ M55). Covers:
 5. Gold-index packing (curriculum -> batch tensors).
 6. Byte-identity: all three candidate kinds (entity/sense/hypothesis)
    coexisting in one batch, and old batches carrying none of them.
+7. M55b: the redesigned, binding-critical GardenPathCurriculumGenerator --
+   determinism, the fact-determines-gold property, decoy two-sidedness,
+   meta completeness, TRAIT template verification, and the
+   reading_bind="wrong" floor plumbing.
+8. M55b: resolver.RankHead's contract (shapes, param budget, mask/margin,
+   state-dependence -- the one deliberate deviation from Sec 1.10's literal
+   3-input sketch, see RankHead's own docstring for why).
 
 Parser-dependent tests skip cleanly (mirrors every other test_*.py in this
 module) if quantum_parser isn't importable in this environment.
@@ -25,7 +32,7 @@ import torch.nn.functional as F
 from nsm_ct import entity_memory as em
 from nsm_ct.clause_reactor import ClauseBatch, ClauseReactor
 from nsm_ct.membrane import Candidate, HypothesisCandidateSet, hypothesis_candidate_set
-from nsm_ct.resolver import SharedScorer, query_candidates_per_addr
+from nsm_ct.resolver import RankHead, Resolver, SharedScorer, make_hyp_resolver, query_candidates_per_addr
 
 
 # ---------------------------------------------------------------------------
@@ -375,3 +382,354 @@ def test_all_three_candidate_kinds_coexist_in_one_batch():
     assert "resolver_logits" not in out
     assert "sense_resolver_logits" not in out
     assert "hyp_resolver_logits" not in out
+
+
+# ---------------------------------------------------------------------------
+# 7. M55b: the redesigned, binding-critical GardenPathCurriculumGenerator.
+# ---------------------------------------------------------------------------
+def test_garden_path_v2_deterministic_given_seed():
+    from nsm_ct.curriculum2 import generate_garden_path_episodes
+
+    a = generate_garden_path_episodes(60, seed=7)
+    b = generate_garden_path_episodes(60, seed=7)
+    assert [e.context for e in a] == [e.context for e in b]
+    assert [e.meta for e in a] == [e.meta for e in b]
+    assert [e.options for e in a] == [e.options for e in b]
+
+
+def test_garden_path_v2_different_seeds_differ():
+    from nsm_ct.curriculum2 import generate_garden_path_episodes
+
+    a = generate_garden_path_episodes(60, seed=1)
+    b = generate_garden_path_episodes(60, seed=2)
+    assert [e.context for e in a] != [e.context for e in b]
+
+
+def test_garden_path_v2_episodes_structurally_valid():
+    from nsm_ct.curriculum2 import GARDEN_PATH_HOMOGRAPHS, generate_garden_path_episodes
+
+    eps = generate_garden_path_episodes(150, seed=3)
+    assert len(eps) == 150
+    for e in eps:
+        assert e.level == 16
+        assert e.is_multiple_choice
+        assert e.answer_text in e.options
+        assert e.options[e.answer_idx] == e.answer_text
+        assert len(e.context) == 5      # 2 TRAIT cues + MOVE + HOM-PLACE + AMBIGUOUS
+        assert e.meta["kind"] == "garden_path"
+        assert e.meta["garden_path"] is True
+        assert e.meta["gp_homograph"] in GARDEN_PATH_HOMOGRAPHS
+        assert e.meta["gold_reading"] in ("object", "verb")
+        name_a, name_b = e.meta["name_a"], e.meta["other_entity"]
+        assert name_a != name_b
+        assert "fred" not in (name_a, name_b) and "bill" not in (name_a, name_b)
+        # the last context sentence is always the ambiguous one, second/third
+        # are the two independently-true PLACE facts (M55a, unchanged).
+        assert e.context[-1] == f"{name_a} can {e.meta['gp_homograph']} ."
+        assert e.context[2] == f"{name_a} went to the {e.meta['place_a']} ."
+        assert e.context[3] == f"the {e.meta['gp_homograph']} is in the {e.meta['place_b']} ."
+
+
+def test_garden_path_v2_meta_completeness():
+    from nsm_ct.curriculum2 import generate_garden_path_episodes
+
+    eps = generate_garden_path_episodes(80, seed=9)
+    required = {"src", "kind", "garden_path", "name_a", "gp_homograph", "place_a", "place_b",
+                "gold_reading", "other_entity", "trait_word", "other_trait_word", "cue_order"}
+    for e in eps:
+        assert required <= set(e.meta)
+        assert e.meta["cue_order"] in (("a", "b"), ("b", "a"))
+
+
+def test_garden_path_v2_flip_balance_is_exact_alternation():
+    """Mirrors PronounCurriculumGenerator's anti-recency / SenseBindingCurriculumGenerator's
+    flip-balance counter discipline: exact (to within one episode of parity)
+    50/50, not merely statistically likely."""
+    from nsm_ct.curriculum2 import generate_garden_path_episodes
+
+    eps = generate_garden_path_episodes(300, seed=11)
+    n_object = sum(1 for e in eps if e.meta["gold_reading"] == "object")
+    assert abs(n_object - len(eps) / 2) <= 1
+
+
+# -- fact-determines-gold property: RESEARCH_NOTES M55a's own flagged caveat,
+#    fixed -- the gold reading must be a deterministic function of a
+#    meta-recorded, entity-keyed context fact, not a bare counter. ----------
+def test_garden_path_v2_gold_reading_follows_from_trait_fact():
+    from nsm_ct.curriculum2 import _GARDEN_PATH_TRAIT_WORDS, generate_garden_path_episodes
+
+    eps = generate_garden_path_episodes(200, seed=13)
+    for e in eps:
+        # name_a's OWN trait_word deterministically implies gold_reading, and
+        # vice versa -- a genuine bijection, not an independent hidden field.
+        assert e.meta["trait_word"] == _GARDEN_PATH_TRAIT_WORDS[e.meta["gold_reading"]]
+        inferred_reading = next(r for r, w in _GARDEN_PATH_TRAIT_WORDS.items() if w == e.meta["trait_word"])
+        assert inferred_reading == e.meta["gold_reading"]
+
+
+def test_garden_path_v2_trait_fact_is_entity_keyed_in_context():
+    """The TRAIT cue sentence naming name_a (not the decoy) is the one that
+    carries name_a's own trait_word -- i.e. the fact genuinely lives at
+    name_a's own address in the rendered context, not just in meta."""
+    from nsm_ct.curriculum2 import generate_garden_path_episodes
+
+    eps = generate_garden_path_episodes(150, seed=15)
+    for e in eps:
+        name_a, name_b = e.meta["name_a"], e.meta["other_entity"]
+        cue_a = next(s for s in e.context[:2] if s.startswith(name_a))
+        cue_b = next(s for s in e.context[:2] if s.startswith(name_b))
+        assert e.meta["trait_word"] in cue_a.split()
+        assert e.meta["other_trait_word"] in cue_b.split()
+
+
+# -- decoy two-sidedness: the association-defeating property ---------------
+def test_garden_path_v2_decoy_two_sidedness():
+    """Both trait words are present in EVERY episode, each attached to a
+    DIFFERENT entity -- the property that makes a bag-of-words reader
+    (which can't bind facts to entities) unable to use the marker at all."""
+    from nsm_ct.curriculum2 import generate_garden_path_episodes
+
+    eps = generate_garden_path_episodes(150, seed=17)
+    for e in eps:
+        assert e.meta["trait_word"] != e.meta["other_trait_word"]
+        assert e.meta["name_a"] != e.meta["other_entity"]
+        words = {w for s in e.context[:2] for w in s.split()}
+        assert e.meta["trait_word"] in words
+        assert e.meta["other_trait_word"] in words
+        # neither trait word ever coincides with this episode's own place_a/
+        # place_b/homograph vocabulary -- the marker and the answer sources
+        # are genuinely disjoint channels.
+        assert e.meta["trait_word"] not in (e.meta["place_a"], e.meta["place_b"], e.meta["gp_homograph"])
+        assert e.meta["other_trait_word"] not in (e.meta["place_a"], e.meta["place_b"], e.meta["gp_homograph"])
+
+
+def test_garden_path_v2_trait_words_disjoint_from_places_and_homographs():
+    from nsm_ct.curriculum2 import GARDEN_PATH_HOMOGRAPHS, _GARDEN_PATH_TRAIT_WORDS
+    from nsm_ct.episode import _PLACES
+
+    trait_words = set(_GARDEN_PATH_TRAIT_WORDS.values())
+    assert trait_words.isdisjoint(_PLACES)
+    assert trait_words.isdisjoint(GARDEN_PATH_HOMOGRAPHS)
+
+
+def test_garden_path_v2_association_baseline_still_at_chance():
+    from nsm_ct.curriculum2 import garden_path_association_baseline, generate_garden_path_episodes
+
+    eps = generate_garden_path_episodes(600, seed=21)
+    result = garden_path_association_baseline(eps)
+    assert result["n"] == 600
+    assert abs(result["accuracy"] - 0.5) < 0.1, (
+        "association-only baseline drifted from chance after the M55b redesign -- "
+        "fix the curriculum's decoy balance, don't loosen this bound: " + str(result)
+    )
+
+
+def test_garden_path_v2_trait_templates_all_verified():
+    from nsm_ct.curriculum2 import verify_garden_path_trait_templates
+
+    results = verify_garden_path_trait_templates()
+    if not results:
+        pytest.skip("quantum_parser unavailable in this environment")
+    bad = {k: v for k, v in results.items() if not v["ok"]}
+    assert not bad, bad
+
+
+def _build_parser_for_episodes(eps):
+    from nsm_ct.input_encoder import ParserInputEncoder
+    from nsm_ct.nsm_primes import PRIME_NAMES
+    from nsm_ct.structure import PARSE_LABELS
+    from nsm_ct.tokenizer import SimpleTokenizer
+
+    texts = ([s for e in eps for s in e.context] + [e.question for e in eps]
+             + [o for e in eps for o in e.options])
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    return ParserInputEncoder(tok)
+
+
+def test_garden_path_v2_reading_bind_wrong_flips_written_value_not_gold_index():
+    """RESEARCH_NOTES M55b's --wrong-binding floor plumbing: reading_bind=
+    "wrong" must flip the collapse step's WRITTEN value (what the ceiling/
+    floor placeholder-binds to) while the HypothesisCandidateSet's
+    gold_index -- what a trained resolver's aux loss actually targets --
+    stays the TRUE gold reading regardless."""
+    import numpy as np
+
+    from nsm_ct.clause_reactor import _garden_path_steps
+    from nsm_ct.curriculum2 import generate_garden_path_episodes
+    from nsm_ct.meaning import NSMMeaningResolver
+    from nsm_ct.tpr import TPRCodec
+
+    eps = generate_garden_path_episodes(8, seed=23)
+    parser = _build_parser_for_episodes(eps)
+    if getattr(parser, "_parser", None) is None:
+        pytest.skip("quantum_parser unavailable in this environment")
+    codec = TPRCodec(dim=16)
+    meaning_resolver = NSMMeaningResolver()
+    for ep in eps:
+        steps_gold, cand_gold = _garden_path_steps(ep, parser, meaning_resolver, codec, {}, "usvs",
+                                                     reading_bind="gold")
+        steps_wrong, cand_wrong = _garden_path_steps(ep, parser, meaning_resolver, codec, {}, "usvs",
+                                                       reading_bind="wrong")
+        gold_index_g = next(iter(cand_gold.values())).gold_index
+        gold_index_w = next(iter(cand_wrong.values())).gold_index
+        assert gold_index_g == gold_index_w == (0 if ep.meta["gold_reading"] == "object" else 1)
+        collapse_t = next(iter(cand_gold.keys()))
+        assert not np.allclose(steps_gold[collapse_t][2], steps_wrong[collapse_t][2])
+
+
+def test_garden_path_v2_reading_bind_default_matches_gold():
+    """reading_bind defaults to "gold" -- byte-identical to calling with
+    reading_bind="gold" explicitly (keeps every pre-M55b call site, which
+    never passed this argument, unaffected)."""
+    from nsm_ct.clause_reactor import _garden_path_steps
+    from nsm_ct.curriculum2 import generate_garden_path_episodes
+    from nsm_ct.meaning import NSMMeaningResolver
+    from nsm_ct.tpr import TPRCodec
+
+    eps = generate_garden_path_episodes(4, seed=25)
+    parser = _build_parser_for_episodes(eps)
+    if getattr(parser, "_parser", None) is None:
+        pytest.skip("quantum_parser unavailable in this environment")
+    codec = TPRCodec(dim=16)
+    meaning_resolver = NSMMeaningResolver()
+    for ep in eps:
+        steps_default, _ = _garden_path_steps(ep, parser, meaning_resolver, codec, {}, "usvs")
+        steps_explicit, _ = _garden_path_steps(ep, parser, meaning_resolver, codec, {}, "usvs",
+                                                reading_bind="gold")
+        for (e1, r1, v1, p1, c1, q1), (e2, r2, v2, p2, c2, q2) in zip(steps_default, steps_explicit):
+            assert (e1 == e2).all() and (r1 == r2).all() and (v1 == v2).all()
+
+
+def test_garden_path_v2_trait_marker_written_under_dedicated_relation():
+    """The TRAIT marker steps must NOT reuse rel:PLACE (which would silently
+    overwrite name_a's own baseline-place fact, RESEARCH_NOTES M54b's
+    zero-write-gate-shortcut lesson applied to the reading axis)."""
+    from nsm_ct.clause_reactor import _garden_path_steps
+    from nsm_ct.curriculum2 import generate_garden_path_episodes
+    from nsm_ct.meaning import NSMMeaningResolver
+    from nsm_ct.tpr import TPRCodec
+
+    eps = generate_garden_path_episodes(4, seed=27)
+    parser = _build_parser_for_episodes(eps)
+    if getattr(parser, "_parser", None) is None:
+        pytest.skip("quantum_parser unavailable in this environment")
+    codec = TPRCodec(dim=16)
+    meaning_resolver = NSMMeaningResolver()
+    place_rel = codec.filler_vec("rel:PLACE")
+    trait_rel = codec.filler_vec("rel:TRAIT")
+    assert not (place_rel == trait_rel).all()
+    for ep in eps:
+        steps, _cand = _garden_path_steps(ep, parser, meaning_resolver, codec, {}, "usvs")
+        # the first two steps are the TRAIT markers -- their relation vector
+        # must be rel:TRAIT, not rel:PLACE.
+        for e, r, v, p, c, q in steps[:2]:
+            assert (r == trait_rel).all()
+            assert not (r == place_rel).all()
+
+
+# ---------------------------------------------------------------------------
+# 8. M55b: resolver.RankHead's contract.
+# ---------------------------------------------------------------------------
+def test_rank_head_produces_BC_logits():
+    b, C, d, hidden = 5, 2, 16, 32
+    head = RankHead(d, controller_hidden=hidden)
+    cand_entity = torch.randn(b, C, d)
+    cand_feature = torch.randn(b, 6)     # unused by RankHead, contract still takes it
+    cand_prior = torch.rand(b, C)
+    cand_mask = torch.ones(b, C)
+    mem_read = torch.randn(b, C, d)
+    state = torch.randn(b, hidden)
+    logits = head(cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state)
+    assert logits.shape == (b, C)
+    assert isinstance(head, Resolver)
+
+
+def test_rank_head_param_count_under_20k():
+    for dim, hidden in [(32, 128), (48, 128)]:
+        head = RankHead(dim, controller_hidden=hidden)
+        n = sum(p.numel() for p in head.parameters())
+        assert n < 20_000, f"dim={dim} hidden={hidden}: {n} params"
+
+
+def test_make_hyp_resolver_dispatch():
+    assert isinstance(make_hyp_resolver("A", 16, 32), RankHead)
+    assert isinstance(make_hyp_resolver("a", 16, 32), RankHead)
+    assert isinstance(make_hyp_resolver("B", 16, 32), SharedScorer)
+
+
+def test_make_hyp_resolver_rejects_unknown_track():
+    with pytest.raises(ValueError):
+        make_hyp_resolver("C", 16, 32)
+
+
+def test_rank_head_output_depends_on_state():
+    """The one deliberate deviation from Sec 1.10's literal 3-input sketch
+    (RankHead's own docstring): state carries the M55b TRAIT marker signal,
+    so the head's output must actually be sensitive to it -- otherwise the
+    extra input is dead weight, not the load-bearing channel it's meant to
+    be."""
+    torch.manual_seed(0)
+    b, C, d, hidden = 4, 2, 12, 16
+    head = RankHead(d, controller_hidden=hidden)
+    cand_entity = torch.randn(b, C, d)
+    cand_feature = torch.zeros(b, 6)
+    cand_prior = torch.full((b, C), 0.5)
+    cand_mask = torch.ones(b, C)
+    mem_read = torch.randn(b, C, d)
+    state1 = torch.randn(b, hidden)
+    state2 = torch.randn(b, hidden)
+    logits1 = head(cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state1)
+    logits2 = head(cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state2)
+    assert not torch.allclose(logits1, logits2)
+
+
+def test_rank_head_margin_respects_padding_mask():
+    """Mirrors tests/test_resolver.py's test_margin_respects_padding_mask,
+    for the hyp branch: a padded candidate slot must never win top-1/top-2
+    even if the resolver assigns it the largest raw logit."""
+
+    class _FixedLogitResolver(Resolver):
+        def __init__(self, row):
+            super().__init__()
+            self._row = torch.tensor(row, dtype=torch.float32)
+            self.dummy = torch.nn.Parameter(torch.zeros(1))
+
+        def forward(self, cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state):
+            b = cand_entity.shape[0]
+            return self._row.unsqueeze(0).expand(b, -1).clone()
+
+    torch.manual_seed(0)
+    batch, _gold = _toy_hyp_batch(b=2, d=12, C=3, seed=8)
+    batch.hyp_cand_mask[:, 1, 2] = 0.0    # candidate slot 2 (of the collapse step, index C-1=1) is padding
+    model = ClauseReactor(dim=12, hidden=16, hyp_resolver=_FixedLogitResolver([0.0, 1.0, 100.0]))
+    model.eval()
+    with torch.no_grad():
+        out = model(batch)
+    assert torch.allclose(out["hyp_resolver_margin"][:, 1], torch.full((2,), 1.0), atol=1e-4)
+
+
+def test_gradients_flow_through_rank_head_including_state_proj():
+    torch.manual_seed(0)
+    batch, _ = _toy_hyp_batch(b=4, d=10, C=2, seed=3)
+    hyp_resolver = RankHead(10, controller_hidden=16)
+    model = ClauseReactor(dim=10, hidden=16, hyp_resolver=hyp_resolver)
+    out = model(batch)
+    loss = out["answer_logits"].sum() + out["hyp_resolver_logits"].sum()
+    loss.backward()
+    assert any(p.grad is not None and torch.any(p.grad != 0) for p in hyp_resolver.parameters())
+    assert hyp_resolver.state_proj.weight.grad is not None
+    assert torch.any(hyp_resolver.state_proj.weight.grad != 0)
+
+
+def test_rank_head_installed_on_m55_style_batch_shapes_correctly():
+    """A RankHead installed via make_hyp_resolver("A", ...) fires correctly
+    on a synthetic hyp batch, mirroring test_hyp_resolver_installed_fires_
+    and_shapes_correctly but for the actual Track A specialist instead of
+    SharedScorer."""
+    torch.manual_seed(0)
+    batch, gold_idx = _toy_hyp_batch(b=6, d=12, C=2, seed=4)
+    hyp_resolver = make_hyp_resolver("A", 12, 16)
+    model = ClauseReactor(dim=12, hidden=16, hyp_resolver=hyp_resolver)
+    out = model(batch)
+    assert out["hyp_resolver_logits"].shape == (6, batch.entity.shape[1], 2)
+    assert out["hyp_resolver_margin"].shape == (6, batch.entity.shape[1])

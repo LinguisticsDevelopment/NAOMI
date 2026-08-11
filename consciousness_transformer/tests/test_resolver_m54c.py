@@ -194,15 +194,17 @@ def test_shared_scorer_for_budget_monotonic_search_handles_tiny_target():
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("track", ["B-wide", "B-nostate", "B-nostate-wide"])
 def test_b_family_dispatch_returns_shared_scorer_shared_instance(track):
-    resolver, sense_resolver = tr.build_resolvers(track, dim=16, hidden=32)
+    resolver, sense_resolver, hyp_resolver = tr.build_resolvers(track, dim=16, hidden=32)
     assert isinstance(resolver, SharedScorer)
-    assert resolver is sense_resolver, "B-family tracks must install ONE shared instance"
+    assert resolver is sense_resolver is hyp_resolver, (
+        "B-family tracks must install ONE shared instance across all three slots (M55b: now "
+        "including hyp_resolver)")
 
 
 def test_b_wide_dispatch_uses_state_b_nostate_variants_dont():
-    wide, _ = tr.build_resolvers("B-wide", dim=16, hidden=32)
-    nostate, _ = tr.build_resolvers("B-nostate", dim=16, hidden=32)
-    nostate_wide, _ = tr.build_resolvers("B-nostate-wide", dim=16, hidden=32)
+    wide, _, _ = tr.build_resolvers("B-wide", dim=16, hidden=32)
+    nostate, _, _ = tr.build_resolvers("B-nostate", dim=16, hidden=32)
+    nostate_wide, _, _ = tr.build_resolvers("B-nostate-wide", dim=16, hidden=32)
     assert wide.use_state is True
     assert nostate.use_state is False
     assert nostate_wide.use_state is False
@@ -210,14 +212,14 @@ def test_b_wide_dispatch_uses_state_b_nostate_variants_dont():
 
 def test_track_dispatch_case_insensitive_and_matches_plain_ab():
     """"A"/"B" dispatch must be untouched by the refactor into build_resolvers:
-    "A" -> two independent heads, "B" -> one shared instance."""
-    from nsm_ct.resolver import CorefHead as _CH, SenseHead as _SH
-    r, s = tr.build_resolvers("A", dim=16, hidden=32)
-    assert isinstance(r, _CH) and isinstance(s, _SH)
-    assert r is not s
-    r2, s2 = tr.build_resolvers("b", dim=16, hidden=32)   # lowercase, like make_resolver accepts
+    "A" -> three independent heads (M55b: now including RankHead), "B" -> one shared instance."""
+    from nsm_ct.resolver import CorefHead as _CH, RankHead as _RH, SenseHead as _SH
+    r, s, h = tr.build_resolvers("A", dim=16, hidden=32)
+    assert isinstance(r, _CH) and isinstance(s, _SH) and isinstance(h, _RH)
+    assert r is not s and r is not h and s is not h
+    r2, s2, h2 = tr.build_resolvers("b", dim=16, hidden=32)   # lowercase, like make_resolver accepts
     assert isinstance(r2, SharedScorer)
-    assert r2 is s2
+    assert r2 is s2 is h2
 
 
 def test_unknown_track_raises():

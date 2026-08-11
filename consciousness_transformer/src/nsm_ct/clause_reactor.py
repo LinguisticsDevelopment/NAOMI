@@ -371,35 +371,68 @@ def _ambiguity_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, np.
 # Addr, not a clause-level one every candidate shares (unlike
 # EntityCandidateSet/SenseCandidateSet).
 def _garden_path_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
-                        meaning_source: MeaningSource):
+                        meaning_source: MeaningSource, reading_bind: str = "gold"):
     """Grounded stream + the garden-path step's
     :class:`membrane.HypothesisCandidateSet` for one
     :class:`~nsm_ct.curriculum2.GardenPathCurriculumGenerator` episode.
 
-    Episode shape (``ep.meta`` keys in parens):
-        "{name_a} went to the {place_a} ."          -- the VERB reading's answer source
-        "the {homograph} is in the {place_b} ."     -- the OBJECT reading's answer source
-        "{name_a} can {homograph} ."                -- the garden-path sentence
+    Episode shape (M55b, ``ep.meta`` keys in parens -- see that generator's
+    docstring for the full binding-critical redesign):
+        "{name_a_or_b} is in the {trait_word} ."       -- TRAIT cue (order per meta["cue_order"])
+        "{name_b_or_a} is in the {other_trait_word} ." -- TRAIT cue (decoy)
+        "{name_a} went to the {place_a} ."              -- the VERB reading's answer source
+        "the {homograph} is in the {place_b} ."         -- the OBJECT reading's answer source
+        "{name_a} can {homograph} ."                     -- the garden-path sentence
         Q: "where is {name_a} ?"
 
-    M55a is PLUMBING ONLY (no resolver trained yet, like M53a's pronoun
-    placeholder): the third sentence's step is PLACEHOLDER-bound directly
-    from ``ep.meta["gold_reading"]`` (``"object"`` | ``"verb"``) -- mirrors
-    :func:`_pronoun_context_step`'s gold-antecedent pattern exactly -- while
-    the REAL :class:`membrane.HypothesisCandidateSet` (top-K parse exposure,
-    real structural-score priors, per-candidate query addresses) rides
-    along in the batch's ``hyp_cand_*`` fields so a future resolver has
-    something to train against without a second data-plumbing pass, same
-    division of labor M53a established for entity candidates.
+    M55a's placeholder mechanism is UNCHANGED (the collapse step's own value
+    is still bound directly from a meta field so the memory pipeline is
+    exercised end to end even with no resolver installed -- mirrors
+    :func:`_pronoun_context_step`'s gold-antecedent pattern exactly), but
+    M55b adds two things:
+
+    1. Two new TRAIT steps (M55b), written under a DEDICATED relation
+       (``rel:TRAIT``) that NEITHER reading's own PLACE query ever touches
+       (see :class:`~nsm_ct.curriculum2.GardenPathCurriculumGenerator`'s
+       docstring for why this can't reuse the per-candidate ``Addr``
+       register), so the discriminating fact reaches the collapse step's
+       resolver only through the controller's running GRU ``state`` -- see
+       :class:`~nsm_ct.resolver.RankHead`'s docstring.
+    2. ``reading_bind`` (mirrors ``_ambiguity_steps``'s ``sense_bind``):
+       ``"gold"`` (default) placeholder-binds the collapse step's value to
+       the TRUE gold reading's place (the M55a ceiling behavior, unchanged);
+       ``"wrong"`` binds it to the OPPOSITE reading's place instead -- the
+       M55b floor probe (``scripts/train_resolver.py --wrong-binding``):
+       if forcing the wrong reading doesn't crater task accuracy, the
+       reading isn't actually determining the answer, and the curriculum
+       doesn't belong (RESEARCH_NOTES M53a/M54b's "capability curricula
+       must make the capability NECESSARY" discipline, applied here as a
+       gold-vs-wrong gap probe instead of a gold-vs-MFS one). The
+       :class:`membrane.HypothesisCandidateSet`'s ``gold_index`` ALWAYS
+       reflects the TRUE reading regardless of ``reading_bind`` -- mirrors
+       ``_ambiguity_steps``'s ``sense_candidate_set(gold_sense=gold_sense,
+       ...)`` always passing the true gold sense even under
+       ``sense_bind="mfs"`` -- so a trained resolver's aux loss/eval never
+       sees the forced-wrong value as its training target.
+
+    The REAL :class:`membrane.HypothesisCandidateSet` (top-K parse
+    exposure, real structural-score priors, per-candidate query addresses)
+    still rides along in the batch's ``hyp_cand_*`` fields exactly as
+    M55a built it -- unchanged.
     """
     d = codec.dim
     name_a = ep.meta["name_a"]
     homograph = ep.meta["gp_homograph"]   # NOT "homograph" -- see curriculum2.py's note (M54 key collision)
     place_a_word = ep.meta["place_a"]
     place_b_word = ep.meta["place_b"]
-    gold_reading = ep.meta["gold_reading"]        # "object" | "verb"
+    true_reading = ep.meta["gold_reading"]        # "object" | "verb" -- ALWAYS the true gold
+    if reading_bind == "wrong":
+        write_reading = "verb" if true_reading == "object" else "object"
+    else:
+        write_reading = true_reading
 
     place_rel = codec.filler_vec("rel:PLACE")
+    trait_rel = codec.filler_vec("rel:TRAIT")     # M55b: dedicated, never collides with rel:PLACE
     pred_is = codec.filler_vec("pred:is")
     q_pred = codec.filler_vec("pred:?")
     z = np.zeros(d, np.float32)
@@ -410,6 +443,25 @@ def _garden_path_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, n
     place_b_vec = _content_vec(place_b_word, resolver, codec, cache, meaning_source)
 
     steps = []
+    # M55b T1/T2: the two entity-keyed TRAIT marker facts (gold cue +
+    # decoy), in the curriculum's own randomized relative order
+    # (meta["cue_order"]) -- mirrors SenseBindingCurriculumGenerator's
+    # "cues first" discipline. Absent (pre-M55b episodes / defensive) ->
+    # no marker steps at all, so a garden_path episode with no
+    # "other_entity" key still builds (byte-compatible with any caller
+    # constructing meta by hand without the new keys).
+    other_entity = ep.meta.get("other_entity")
+    if other_entity is not None:
+        trait_word = ep.meta["trait_word"]
+        other_trait_word = ep.meta["other_trait_word"]
+        other_vec = _ent_vec(other_entity, resolver, codec, cache, meaning_source)
+        trait_a_vec = _content_vec(trait_word, resolver, codec, cache, meaning_source)
+        trait_b_vec = _content_vec(other_trait_word, resolver, codec, cache, meaning_source)
+        marker_a = (name_a_vec, trait_rel, trait_a_vec, pred_is, z, 0)
+        marker_b = (other_vec, trait_rel, trait_b_vec, pred_is, z, 0)
+        cue_order = ep.meta.get("cue_order", ("a", "b"))
+        steps += [marker_a, marker_b] if cue_order[0] == "a" else [marker_b, marker_a]
+
     # C1: name_a's baseline place -- the VERB reading's answer source.
     steps.append((name_a_vec, place_rel, place_a_vec, pred_is, z, 0))
     # C2: the homograph's OWN place -- an independently-grounded fact, the
@@ -437,8 +489,8 @@ def _garden_path_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, n
     # so which of the two equally-scored hypotheses the parser happens to
     # emit first carries no semantic meaning; what matters (Sec 1.10) is
     # that each candidate carries its OWN address.
-    gold_index = 0 if gold_reading == "object" else 1
-    bind_vec = place_b_vec if gold_reading == "object" else place_a_vec
+    gold_index = 0 if true_reading == "object" else 1        # ALWAYS the true reading (see docstring point 2)
+    bind_vec = place_b_vec if write_reading == "object" else place_a_vec
     steps.append((name_a_vec, place_rel, bind_vec, pred_is, z, 0))
 
     cand = membrane.hypothesis_candidate_set(
@@ -622,13 +674,21 @@ class ClauseBatch:
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                         meaning_source: MeaningSource = "usvs",
-                        sense_bind: str = "gold") -> ClauseBatch:
+                        sense_bind: str = "gold",
+                        reading_bind: str = "gold") -> ClauseBatch:
     """Encode curriculum episodes into grounded clause-triple streams (fixed).
 
     Each step is ``(entity, relation, value, pred, coord, is_q)``; ``coord`` carries
     the OR/NOT atom for disjunction/negation steps (zeros otherwise) — the logical
     signal the controller reacts to. Options ground to content vectors, except
     "maybe" → the NSM MAYBE atom (so a disjunction can be answered "maybe").
+
+    ``reading_bind`` (M55b, mirrors ``sense_bind``): ``"gold"`` (default)
+    placeholder-binds a garden-path episode's collapse step to the TRUE
+    gold reading's place (the ceiling); ``"wrong"`` binds it to the
+    OPPOSITE reading instead (``--wrong-binding``'s floor probe) -- see
+    :func:`_garden_path_steps`. Inert for every episode without
+    ``ep.meta["garden_path"]``.
 
     ``meaning_source`` (M31 consumer gate) selects how CONTENT-WORD meaning
     vectors are built: ``"usvs"`` (default since M31.1 — beats explication at
@@ -698,7 +758,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                                                        meaning_source, sense_bind)   # M54 ambiguity stream
         elif ep.meta.get("garden_path"):
             steps, hyp_cand_sets = _garden_path_steps(ep, parser, resolver, codec, cache,
-                                                        meaning_source)   # M55a garden-path stream
+                                                        meaning_source, reading_bind)   # M55a/M55b garden-path stream
         else:
             steps = []
             pronoun_idx = ep.meta.get("pronoun_sentence_index")

@@ -81,6 +81,8 @@ from nsm_ct.curriculum2 import (  # noqa: E402
     _FEMALE_NAMES,
     _MALE_NAMES,
     association_only_baseline,
+    garden_path_association_baseline,
+    garden_path_parser_top1_baseline,
     generate_garden_path_episodes,
     generate_pronoun_episodes,
     generate_sense_binding_episodes,
@@ -94,6 +96,7 @@ from nsm_ct.nsm_primes import PRIME_NAMES  # noqa: E402
 from nsm_ct.resolver import (  # noqa: E402
     CorefHead,
     SenseHead,
+    make_hyp_resolver,
     make_resolver,
     make_sense_resolver,
     shared_scorer_for_budget,
@@ -152,28 +155,40 @@ def build_b_family_resolver(track: str, dim: int, hidden: int):
 
 def build_resolvers(track: str, dim: int, hidden: int):
     """Track dispatch shared by :func:`run_arm` and :func:`run_distilled_arm`:
-    "A" -> two INDEPENDENT specialist heads (CorefHead, SenseHead); "B" and
-    every M54c B-family track -> ONE :class:`SharedScorer` instance
-    installed as both slots. Returns ``(resolver, sense_resolver)``."""
+    "A" -> THREE INDEPENDENT specialist heads (CorefHead, SenseHead,
+    M55b's RankHead); "B" and every M54c B-family track -> ONE
+    :class:`SharedScorer` instance installed as all three slots (Track B's
+    "one shared collapse mechanism" bet extends to the garden-path
+    candidate kind with zero new code -- same reasoning M54 already applied
+    to senses). Returns ``(resolver, sense_resolver, hyp_resolver)``.
+    ``hyp_resolver`` is inert (never fires) on any batch without a
+    garden-path episode -- exactly like ``sense_resolver`` already is on a
+    batch with no ambiguity episodes -- so building it unconditionally
+    changes nothing for ``--mix`` values that don't include garden-path
+    episodes."""
     t = track.strip().upper()
     if t == "A":
-        return make_resolver("A", dim, hidden), make_sense_resolver("A", dim, hidden)
+        return (make_resolver("A", dim, hidden), make_sense_resolver("A", dim, hidden),
+                make_hyp_resolver("A", dim, hidden))
     if t == "B":
         r = make_resolver("B", dim, hidden)
-        return r, r
+        return r, r, r
     if t in B_FAMILY_TRACKS:
         r = build_b_family_resolver(t, dim, hidden)
-        return r, r
+        return r, r, r
     raise ValueError(f"unknown track {track!r}")
 
 
-def aux_loss_terms(out, batch, resolver, sense_resolver):
-    """The two resolver-aux cross-entropy terms (pronoun + sense), each
-    weighted by ``AUX_WEIGHT`` and summed -- factored out of :func:`run_arm`'s
-    training loop so :func:`run_distilled_arm`'s three stages can reuse the
-    exact same aux-loss definition without duplicating the masking logic.
-    Returns ``0.0`` (a plain float, safe to add to a loss tensor) if neither
-    candidate kind is present in ``batch``."""
+def aux_loss_terms(out, batch, resolver, sense_resolver, hyp_resolver=None):
+    """The resolver-aux cross-entropy terms (pronoun + sense + M55b's
+    reading), each weighted by ``AUX_WEIGHT`` and summed -- factored out of
+    :func:`run_arm`'s training loop so :func:`run_distilled_arm`'s three
+    stages can reuse the exact same aux-loss definition without duplicating
+    the masking logic. Returns ``0.0`` (a plain float, safe to add to a loss
+    tensor) if no candidate kind is present in ``batch``. ``hyp_resolver``
+    defaults ``None`` so every pre-M55b call site (there are none left in
+    this file, but the default keeps the function callable the old way)
+    stays valid."""
     total = 0.0
     if resolver is not None and "resolver_logits" in out:
         cg = batch.cand_gold
@@ -185,6 +200,11 @@ def aux_loss_terms(out, batch, resolver, sense_resolver):
         has = scg >= 0
         if bool(has.any()):
             total = total + AUX_WEIGHT * F.cross_entropy(out["sense_resolver_logits"][has], scg[has])
+    if hyp_resolver is not None and "hyp_resolver_logits" in out:
+        hg = batch.hyp_cand_gold
+        has = hg >= 0
+        if bool(has.any()):
+            total = total + AUX_WEIGHT * F.cross_entropy(out["hyp_resolver_logits"][has], hg[has])
     return total
 
 
@@ -210,9 +230,10 @@ def _distill_kl(student_logits, teacher_logits, has_cand):
 
 
 def distill_loss_terms(student_out, teacher_out, batch):
-    """Sum of both per-type KL terms (pronoun-candidate rows, sense-candidate
-    rows) present in ``batch`` -- ``0.0`` if neither kind is present (e.g. an
-    old-only batch). Mirrors :func:`aux_loss_terms`'s per-kind masking."""
+    """Sum of all per-type KL terms (pronoun-candidate rows, sense-candidate
+    rows, M55b reading-candidate rows) present in ``batch`` -- ``0.0`` if no
+    kind is present (e.g. an old-only batch). Mirrors :func:`aux_loss_terms`'s
+    per-kind masking."""
     total = 0.0
     if "resolver_logits" in student_out and "resolver_logits" in teacher_out:
         kl = _distill_kl(student_out["resolver_logits"], teacher_out["resolver_logits"],
@@ -222,6 +243,11 @@ def distill_loss_terms(student_out, teacher_out, batch):
     if "sense_resolver_logits" in student_out and "sense_resolver_logits" in teacher_out:
         kl = _distill_kl(student_out["sense_resolver_logits"], teacher_out["sense_resolver_logits"],
                           batch.sense_cand_gold >= 0)
+        if kl is not None:
+            total = total + kl
+    if "hyp_resolver_logits" in student_out and "hyp_resolver_logits" in teacher_out:
+        kl = _distill_kl(student_out["hyp_resolver_logits"], teacher_out["hyp_resolver_logits"],
+                          batch.hyp_cand_gold >= 0)
         if kl is not None:
             total = total + kl
     return total
@@ -307,6 +333,28 @@ def build_m55a_curriculum(n_episodes: int, seed: int):
     return [episodes[i] for i in order]
 
 
+def build_m55_curriculum(n_episodes: int, seed: int):
+    """M55b's mix (RESEARCH_NOTES M55b): 40%% old L1-6 + 20%% pronoun + 20%%
+    sense-binding (M54b's ``curriculum2.generate_sense_binding_episodes``)
+    + 20%% garden-path (M55b's redesigned
+    ``curriculum2.generate_garden_path_episodes``) -- the FULL-MEMBRANE mix:
+    all three collapse types (pronoun antecedent, sense, parse-hypothesis
+    reading) training in the SAME batch for the first time, unlike m54/m54b/
+    m55a which each isolate one new capability at a time. Deterministic
+    given (n_episodes, seed)."""
+    n_pronoun = n_episodes // 5
+    n_sense = n_episodes // 5
+    n_garden = n_episodes // 5
+    n_old = n_episodes - n_pronoun - n_sense - n_garden
+    old = CurriculumGenerator(max_level=6, seed=seed).generate(n_old)
+    pronoun = generate_pronoun_episodes(n_pronoun, seed=seed + 1)
+    sense = generate_sense_binding_episodes(n_sense, seed=seed + 2)
+    garden = generate_garden_path_episodes(n_garden, seed=seed + 3)
+    episodes = old + pronoun + sense + garden
+    order = np.random.RandomState(seed + 4).permutation(len(episodes))
+    return [episodes[i] for i in order]
+
+
 def resolver_binding_stats(out, batch, va_eps):
     """RESOLVER BINDING ACCURACY overall + anti-recency half, and the raw margin
     list, read off one resolver-carrying forward pass + the episodes' meta."""
@@ -375,6 +423,49 @@ def sense_binding_stats(out, batch, va_eps):
         "overall_acc": hits / total, "n": total,
         "flipped_acc": (flip_hits / flip_total) if flip_total else float("nan"),
         "n_flipped": flip_total,
+        "margins": margins,
+    }
+
+
+def garden_path_binding_stats(out, batch, va_eps):
+    """M55b's READING BINDING ACCURACY: overall accuracy + margin
+    distribution, mirroring :func:`resolver_binding_stats`/
+    :func:`sense_binding_stats` exactly, keyed on ``hyp_resolver_logits``/
+    ``batch.hyp_cand_gold``. ``gold_reading`` is an EXACT 50/50 split by
+    construction (``GardenPathCurriculumGenerator``'s own counter, not an
+    MFS-style skew), so there is no "flipped half" the way sense binding
+    has one -- instead this reports the object/verb split separately, a
+    balance sanity check (both should be near the overall accuracy if the
+    resolver isn't just learning one reading's shortcut)."""
+    if "hyp_resolver_logits" not in out:
+        return None
+    cand_gold = batch.hyp_cand_gold
+    has_cand = cand_gold >= 0
+    pred_idx = out["hyp_resolver_logits"].argmax(-1)
+    correct = (pred_idx == cand_gold) & has_cand
+    margins = []
+    hits = obj_hits = obj_total = verb_hits = verb_total = total = 0
+    for i, e in enumerate(va_eps):
+        row_mask = has_cand[i]
+        if not bool(row_mask.any()):
+            continue
+        t = int(row_mask.nonzero()[0, 0])
+        total += 1
+        is_hit = bool(correct[i, t])
+        hits += int(is_hit)
+        margins.append(float(out["hyp_resolver_margin"][i, t]))
+        if e.meta.get("gold_reading") == "object":
+            obj_total += 1
+            obj_hits += int(is_hit)
+        elif e.meta.get("gold_reading") == "verb":
+            verb_total += 1
+            verb_hits += int(is_hit)
+    if total == 0:
+        return None
+    return {
+        "overall_acc": hits / total, "n": total,
+        "object_acc": (obj_hits / obj_total) if obj_total else float("nan"), "n_object": obj_total,
+        "verb_acc": (verb_hits / verb_total) if verb_total else float("nan"), "n_verb": verb_total,
         "margins": margins,
     }
 
@@ -489,14 +580,15 @@ def run_held_out_name_ablation(n_episodes: int, epochs: int, dim: int, seed: int
 
 
 def report_eval(name: str, model, va, va_eps, gold_va, n_resolver_params: int, n_sense_params: int,
-                 shared: bool, elapsed_min: "float | None" = None):
+                 shared: bool, elapsed_min: "float | None" = None, n_hyp_params: int = 0):
     """Shared eval + report tail for :func:`run_arm` and (M54c)
     :func:`run_distilled_arm`: task accuracy (overall + per curriculum kind),
-    RESOLVER/SENSE BINDING ACCURACY (M53/M54's own metrics) + margin
-    distributions, and both resolvers' param counts. Factored out of
+    RESOLVER/SENSE/READING BINDING ACCURACY (M53/M54/M55b's own metrics) +
+    margin distributions, and all resolvers' param counts. Factored out of
     :func:`run_arm`'s post-training tail UNCHANGED (same prints, same dict
     shape) purely so the M54c distillation arm's stage-3 output doesn't
-    duplicate ~35 lines of reporting logic."""
+    duplicate ~35 lines of reporting logic. ``n_hyp_params`` defaults 0 so
+    callers that never install a hyp_resolver need no change."""
     model.eval()
     with torch.no_grad():
         out_va = model(va)
@@ -504,7 +596,8 @@ def report_eval(name: str, model, va, va_eps, gold_va, n_resolver_params: int, n
     total_acc = float((pred == gold_va).float().mean())
     time_str = f"  time={elapsed_min:.2f} min" if elapsed_min is not None else ""
     print(f"  [{name}] val total={total_acc:.3f}  resolver_params={n_resolver_params} "
-          f"sense_resolver_params={n_sense_params}{' (SHARED, same instance)' if shared else ''}"
+          f"sense_resolver_params={n_sense_params} hyp_resolver_params={n_hyp_params}"
+          f"{' (SHARED, same instance)' if shared else ''}"
           f"{time_str}", flush=True)
 
     per_kind = {}
@@ -532,24 +625,40 @@ def report_eval(name: str, model, va, va_eps, gold_va, n_resolver_params: int, n
         print(f"  [{name}] sense margin distribution: min={sm.min():.3f} p25={np.percentile(sm, 25):.3f} "
               f"median={np.median(sm):.3f} p75={np.percentile(sm, 75):.3f} max={sm.max():.3f}", flush=True)
 
+    hyp_binding = garden_path_binding_stats(out_va, va, va_eps)
+    if hyp_binding is not None:
+        hm = np.array(hyp_binding["margins"]) if hyp_binding["margins"] else np.array([0.0])
+        print(f"  [{name}] READING BINDING ACCURACY overall={hyp_binding['overall_acc']:.3f} "
+              f"(n={hyp_binding['n']}) object={hyp_binding['object_acc']:.3f} (n={hyp_binding['n_object']}) "
+              f"verb={hyp_binding['verb_acc']:.3f} (n={hyp_binding['n_verb']}) vs baseline 0.500", flush=True)
+        print(f"  [{name}] reading margin distribution: min={hm.min():.3f} p25={np.percentile(hm, 25):.3f} "
+              f"median={np.median(hm):.3f} p75={np.percentile(hm, 75):.3f} max={hm.max():.3f}", flush=True)
+
     return {"total_acc": total_acc, "n_resolver_params": n_resolver_params,
-            "n_sense_params": n_sense_params, "binding": binding, "sense_binding": sense_binding}
+            "n_sense_params": n_sense_params, "n_hyp_params": n_hyp_params,
+            "binding": binding, "sense_binding": sense_binding, "hyp_binding": hyp_binding}
 
 
 def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden: int = 128,
-            sense_bind: str = "gold"):
-    """``track``: "A" | "B" | None (None = --gold-binding / --mfs-floor, no resolver).
+            sense_bind: str = "gold", reading_bind: str = "gold"):
+    """``track``: "A" | "B" | None (None = --gold-binding / --mfs-floor /
+    --wrong-binding, no resolver).
 
-    M54: when ``track`` is set, installs BOTH a pronoun resolver (``resolver=``,
-    unchanged from M53) AND a sense resolver (``sense_resolver=``, new) on the
-    SAME model -- Track A gets two INDEPENDENT specialist heads (CorefHead +
-    SenseHead); Track B gets ONE SharedScorer instance passed to both slots
-    (``resolver is sense_resolver`` -- the literal "one shared scorer for
-    everything" experiment). When ``track`` is None, neither slot is
-    installed and ``sense_bind`` controls what :func:`build_clause_batch`
-    placeholder-binds homograph steps to (``"gold"`` = ceiling, ``"mfs"`` =
-    floor); pronoun steps always placeholder-bind to the gold antecedent
-    regardless (there is no MFS-equivalent floor for coreference).
+    M54/M55b: when ``track`` is set, installs a pronoun resolver
+    (``resolver=``, unchanged from M53), a sense resolver
+    (``sense_resolver=``, M54), AND a garden-path/reading resolver
+    (``hyp_resolver=``, M55b) on the SAME model -- Track A gets THREE
+    INDEPENDENT specialist heads (CorefHead + SenseHead + RankHead); Track B
+    gets ONE SharedScorer instance passed to all three slots
+    (``resolver is sense_resolver is hyp_resolver`` -- the literal "one
+    shared scorer for everything" experiment, now covering all three
+    collapse types). When ``track`` is None, no slot is installed and
+    ``sense_bind``/``reading_bind`` control what :func:`build_clause_batch`
+    placeholder-binds homograph/garden-path steps to (``sense_bind``:
+    ``"gold"`` = ceiling, ``"mfs"`` = floor; ``reading_bind``: ``"gold"`` =
+    ceiling, ``"wrong"`` = the M55b floor probe -- forces the OPPOSITE
+    reading); pronoun steps always placeholder-bind to the gold antecedent
+    regardless (there is no MFS/wrong-equivalent floor for coreference).
     """
     texts = [t for e in episodes for t in e.context + [e.question] + (e.options or [])]
     tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
@@ -561,21 +670,25 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
     codec = TPRCodec(dim=dim)
 
     tr_eps, va_eps = split_episodes(episodes, 0.2, seed=0)
-    tr = build_clause_batch(tr_eps, parser, meaning_resolver, codec, sense_bind=sense_bind)
-    va = build_clause_batch(va_eps, parser, meaning_resolver, codec, sense_bind=sense_bind)
+    tr = build_clause_batch(tr_eps, parser, meaning_resolver, codec,
+                             sense_bind=sense_bind, reading_bind=reading_bind)
+    va = build_clause_batch(va_eps, parser, meaning_resolver, codec,
+                             sense_bind=sense_bind, reading_bind=reading_bind)
 
     torch.manual_seed(seed)
     if track:
-        resolver, sense_resolver = build_resolvers(track, dim, hidden)
+        resolver, sense_resolver, hyp_resolver = build_resolvers(track, dim, hidden)
     else:
-        resolver = sense_resolver = None
-    model = ClauseReactor(dim=dim, hidden=hidden, resolver=resolver, sense_resolver=sense_resolver)
+        resolver = sense_resolver = hyp_resolver = None
+    model = ClauseReactor(dim=dim, hidden=hidden, resolver=resolver,
+                           sense_resolver=sense_resolver, hyp_resolver=hyp_resolver)
 
     def _params(m):
         return sum(p.numel() for p in m.parameters()) if m is not None else 0
 
     n_resolver_params = _params(resolver)
     n_sense_params = _params(sense_resolver)
+    n_hyp_params = _params(hyp_resolver)
     shared = resolver is not None and resolver is sense_resolver
     opt = torch.optim.Adam(model.parameters(), lr=3e-3)
     gold_tr = torch.tensor([e.answer_idx for e in tr_eps])
@@ -598,6 +711,12 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
             if bool(has_scand.any()):
                 saux = F.cross_entropy(out["sense_resolver_logits"][has_scand], scg[has_scand])
                 loss = loss + AUX_WEIGHT * saux
+        if hyp_resolver is not None and "hyp_resolver_logits" in out:
+            hcg = tr.hyp_cand_gold
+            has_hcand = hcg >= 0
+            if bool(has_hcand.any()):
+                haux = F.cross_entropy(out["hyp_resolver_logits"][has_hcand], hcg[has_hcand])
+                loss = loss + AUX_WEIGHT * haux
         opt.zero_grad(); loss.backward(); opt.step()
         if (i + 1) % 20 == 0 or i == 0:
             model.eval()
@@ -608,7 +727,7 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
 
     elapsed_min = (time.time() - t0) / 60
     return report_eval(name, model, va, va_eps, gold_va, n_resolver_params, n_sense_params,
-                        shared, elapsed_min)
+                        shared, elapsed_min, n_hyp_params=n_hyp_params)
 
 
 def run_distilled_arm(name: str, episodes, dim: int, seed: int, hidden: int = 128,
@@ -654,15 +773,17 @@ def run_distilled_arm(name: str, episodes, dim: int, seed: int, hidden: int = 12
 
     # ---- stage 1: Track A, trained normally ----
     torch.manual_seed(seed)
-    a_resolver, a_sense_resolver = build_resolvers("A", dim, hidden)
-    model_a = ClauseReactor(dim=dim, hidden=hidden, resolver=a_resolver, sense_resolver=a_sense_resolver)
+    a_resolver, a_sense_resolver, a_hyp_resolver = build_resolvers("A", dim, hidden)
+    model_a = ClauseReactor(dim=dim, hidden=hidden, resolver=a_resolver, sense_resolver=a_sense_resolver,
+                             hyp_resolver=a_hyp_resolver)
     opt_a = torch.optim.Adam(model_a.parameters(), lr=3e-3)
     model_a.train()
     stage1_losses = []
     t0 = time.time()
     for i in range(stage1_epochs):
         out = model_a(tr)
-        loss = F.cross_entropy(out["answer_logits"], gold_tr) + aux_loss_terms(out, tr, a_resolver, a_sense_resolver)
+        loss = (F.cross_entropy(out["answer_logits"], gold_tr)
+                + aux_loss_terms(out, tr, a_resolver, a_sense_resolver, a_hyp_resolver))
         opt_a.zero_grad(); loss.backward(); opt_a.step()
         stage1_losses.append(float(loss.item()))
     model_a.eval()
@@ -672,7 +793,8 @@ def run_distilled_arm(name: str, episodes, dim: int, seed: int, hidden: int = 12
     # ---- stage 2: fresh B, distilling from frozen stage-1 A ----
     torch.manual_seed(seed + 1000)
     b_resolver = build_b_family_resolver(b_track, dim, hidden)
-    model_b = ClauseReactor(dim=dim, hidden=hidden, resolver=b_resolver, sense_resolver=b_resolver)
+    model_b = ClauseReactor(dim=dim, hidden=hidden, resolver=b_resolver, sense_resolver=b_resolver,
+                             hyp_resolver=b_resolver)
     n_resolver_params = sum(p.numel() for p in b_resolver.parameters())
     opt_b = torch.optim.Adam(model_b.parameters(), lr=3e-3)
     model_b.train()
@@ -683,7 +805,7 @@ def run_distilled_arm(name: str, episodes, dim: int, seed: int, hidden: int = 12
         out = model_b(tr)
         kl = distill_loss_terms(out, teacher_out, tr)
         loss = (F.cross_entropy(out["answer_logits"], gold_tr)
-                + aux_loss_terms(out, tr, b_resolver, b_resolver)
+                + aux_loss_terms(out, tr, b_resolver, b_resolver, b_resolver)
                 + distill_weight * kl)
         opt_b.zero_grad(); loss.backward(); opt_b.step()
         stage2_losses.append(float(loss.item()))
@@ -697,7 +819,8 @@ def run_distilled_arm(name: str, episodes, dim: int, seed: int, hidden: int = 12
     stage3_losses = []
     for i in range(stage3_epochs):
         out = model_b(tr)
-        loss = F.cross_entropy(out["answer_logits"], gold_tr) + aux_loss_terms(out, tr, b_resolver, b_resolver)
+        loss = (F.cross_entropy(out["answer_logits"], gold_tr)
+                + aux_loss_terms(out, tr, b_resolver, b_resolver, b_resolver))
         opt_b.zero_grad(); loss.backward(); opt_b.step()
         stage3_losses.append(float(loss.item()))
     if stage3_losses:
@@ -706,7 +829,7 @@ def run_distilled_arm(name: str, episodes, dim: int, seed: int, hidden: int = 12
 
     elapsed_min = (time.time() - t0) / 60
     result = report_eval(name, model_b, va, va_eps, gold_va, n_resolver_params, n_resolver_params,
-                          True, elapsed_min)
+                          True, elapsed_min, n_hyp_params=n_resolver_params)
     result["stage1_losses"] = stage1_losses
     result["stage2_losses"] = stage2_losses
     result["stage2_kl"] = stage2_kl
@@ -727,23 +850,31 @@ def main() -> None:
                           "(stage 1 trains A, stage 2 distills a fresh B from frozen A, stage 3 "
                           "task-only fine-tune -- see --distill-* flags)")
     ap.add_argument("--gold-binding", action="store_true",
-                     help="ceiling arm: no resolver, gold sense + gold antecedent placeholder binding")
+                     help="ceiling arm: no resolver, gold sense + gold antecedent + gold reading "
+                          "placeholder binding")
     ap.add_argument("--mfs-floor", action="store_true",
                      help="floor arm: no resolver, MFS sense placeholder binding "
-                          "(gold antecedent still bound) -- the M30 baseline")
+                          "(gold antecedent/reading still bound) -- the M30 baseline")
+    ap.add_argument("--wrong-binding", action="store_true",
+                     help="M55b floor arm: no resolver, garden-path reading steps placeholder-bound "
+                          "to the OPPOSITE of the true gold reading (gold sense/antecedent still "
+                          "bound) -- the gold-vs-wrong gap probe (RESEARCH_NOTES M55b)")
     ap.add_argument("--episodes", type=int, default=1500)
     ap.add_argument("--dim", type=int, default=48)
     ap.add_argument("--hidden", type=int, default=128)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--mix", choices=["m53", "m54", "m54b", "m55a"], default="m54",
+    ap.add_argument("--mix", choices=["m53", "m54", "m54b", "m55a", "m55"], default="m54",
                      help="m53 = the original 1/2 old + 1/4 transfer + 1/4 pronoun mix "
                           "(no ambiguity episodes, exact M53 reproduction); "
                           "m54 (default) = 40%% old / 20%% transfer / 20%% pronoun / 20%% ambiguity; "
                           "m54b = 50%% old / 50%% the NEW entity-keyed sense-binding curriculum "
                           "(RESEARCH_NOTES M54b's gold/MFS gap probe); "
-                          "m55a = 50%% old / 50%% the NEW garden-path curriculum (RESEARCH_NOTES "
-                          "M55a, placeholder-bound -- no --track resolver consumes hyp_cand_* yet)")
+                          "m55a = 50%% old / 50%% the OLD (counter-driven) garden-path curriculum "
+                          "(RESEARCH_NOTES M55a, superseded by m55 below); "
+                          "m55 = 40%% old / 20%% pronoun / 20%% sense-binding / 20%% the REDESIGNED "
+                          "binding-critical garden-path curriculum (RESEARCH_NOTES M55b) -- the "
+                          "full-membrane mix, all three collapse types together")
     ap.add_argument("--distill-b-track", choices=["B-wide", "B-nostate", "B-nostate-wide"],
                      default="B-nostate-wide",
                      help="--track B-distilled only: which B-family config stage 2 initializes "
@@ -779,10 +910,10 @@ def main() -> None:
                                     args.held_out_female, args.held_out_male, heads=heads)
         return
 
-    n_arms = sum([args.gold_binding, args.mfs_floor, args.track is not None])
+    n_arms = sum([args.gold_binding, args.mfs_floor, args.wrong_binding, args.track is not None])
     if n_arms != 1:
         raise SystemExit("pass exactly one of --track A|B|B-wide|B-nostate|B-nostate-wide|B-distilled, "
-                          "--gold-binding, --mfs-floor")
+                          "--gold-binding, --mfs-floor, --wrong-binding")
 
     if args.mix == "m54":
         episodes = build_m54_curriculum(args.episodes, args.seed)
@@ -790,6 +921,8 @@ def main() -> None:
         episodes = build_m54b_curriculum(args.episodes, args.seed)
     elif args.mix == "m55a":
         episodes = build_m55a_curriculum(args.episodes, args.seed)
+    elif args.mix == "m55":
+        episodes = build_m55_curriculum(args.episodes, args.seed)
     else:
         episodes = build_mixed_curriculum(args.episodes, args.seed)
     baseline = nearest_entity_baseline(episodes)
@@ -800,17 +933,33 @@ def main() -> None:
     if assoc["n"]:
         print(f"association-only baseline (M54b sense-binding kind): "
               f"accuracy={assoc['accuracy']:.3f} (n={assoc['n']}) vs chance 0.500", flush=True)
+    gp_assoc = garden_path_association_baseline(episodes)
+    if gp_assoc["n"]:
+        print(f"association-only baseline (M55b garden-path kind): "
+              f"accuracy={gp_assoc['accuracy']:.3f} (n={gp_assoc['n']}) vs chance 0.500", flush=True)
+        gp_texts = [t for e in episodes for t in e.context + [e.question] + (e.options or [])]
+        gp_tok = SimpleTokenizer.build(gp_texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+        gp_parser = ParserInputEncoder(gp_tok)
+        if getattr(gp_parser, "_parser", None) is not None:
+            gp_top1 = garden_path_parser_top1_baseline(episodes, gp_parser)
+            print(f"parser-top-1 baseline (M55b garden-path kind): "
+                  f"accuracy={gp_top1['accuracy']:.3f} (n={gp_top1['n']}) vs chance 0.500", flush=True)
 
     if args.gold_binding:
         print(f"=== gold-binding ceiling: no resolver, {args.episodes} eps, dim={args.dim}, "
               f"mix={args.mix} ===", flush=True)
         run_arm("gold-binding", None, episodes, args.dim, args.epochs, args.seed, args.hidden,
-                 sense_bind="gold")
+                 sense_bind="gold", reading_bind="gold")
     elif args.mfs_floor:
         print(f"=== mfs-floor: no resolver, {args.episodes} eps, dim={args.dim}, "
               f"mix={args.mix} ===", flush=True)
         run_arm("mfs-floor", None, episodes, args.dim, args.epochs, args.seed, args.hidden,
-                 sense_bind="mfs")
+                 sense_bind="mfs", reading_bind="gold")
+    elif args.wrong_binding:
+        print(f"=== wrong-binding floor: no resolver, {args.episodes} eps, dim={args.dim}, "
+              f"mix={args.mix} ===", flush=True)
+        run_arm("wrong-binding", None, episodes, args.dim, args.epochs, args.seed, args.hidden,
+                 sense_bind="gold", reading_bind="wrong")
     elif args.track == "B-distilled":
         s1 = args.distill_stage1_epochs if args.distill_stage1_epochs is not None else args.epochs
         s2 = args.distill_stage2_epochs if args.distill_stage2_epochs is not None else args.epochs

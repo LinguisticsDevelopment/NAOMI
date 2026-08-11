@@ -1379,6 +1379,39 @@ assert _GARDEN_PATH_MOVE_TEMPLATE == "{n} went to the {p} ."
 _GARDEN_PATH_HOMOGRAPH_PLACE_TEMPLATE = "the {h} is in the {p} ."
 _GARDEN_PATH_AMBIGUOUS_TEMPLATE = "{n} can {h} ."
 
+# ---------------------------------------------------------------------------
+# M55b (RESEARCH_NOTES M55a's own flagged caveat: "the gold reading is
+# currently an internal counter, NOT inferable from the context facts ...
+# a resolver trained on this could not exceed 0.5 legitimately"). The fix,
+# mirroring M54b's binding-critical move exactly (SenseBindingCurriculumGenerator
+# above): an entity-keyed TRAIT marker fact, attached to name_a, that the
+# gold reading is a deterministic function of -- plus a two-sided DECOY (the
+# opposite marker, attached to a DIFFERENT entity never mentioned in the
+# ambiguous sentence or question), so bag-of-words association stays
+# uninformative by construction.
+#
+# The convention is arbitrary but fixed, like every other scripted word-to-
+# meaning mapping in this module (see e.g. SenseBindingCurriculumGenerator's
+# family/answer words): "market" (a place thematically tied to ACQUIRING/
+# HAVING things) marks the OBJECT reading ("can" = transitively get/hold the
+# homograph); "stadium" (a place thematically tied to physical ABILITY)
+# marks the VERB reading ("can" = bare modal, an ability statement). Both
+# words are checked disjoint from _PLACES, GARDEN_PATH_HOMOGRAPHS, and
+# episode._AMBIGUITY_FAMILIES's vocabulary below (test_curriculum2.py) so
+# they never collide with place_a/place_b/the homograph or the sense-binding
+# curriculum's own word bank.
+#
+# The marker is written to memory under a DEDICATED relation (``rel:TRAIT``,
+# nsm_ct.clause_reactor._garden_path_steps) -- never rel:PLACE -- so it can
+# never collide with (overwrite) either reading's own PLACE address, and it
+# reaches the collapse step's resolver ONLY through the controller's running
+# ``state`` (see nsm_ct.resolver.RankHead's docstring for why: membrane.py's
+# per-candidate Addr register is a single (entity, relation) slot per
+# candidate, already spoken for by each reading's own PLACE query).
+_GARDEN_PATH_TRAIT_WORDS: Dict[str, str] = {"object": "market", "verb": "stadium"}
+_GARDEN_PATH_TRAIT_TEMPLATE = TEMPLATES["A"]["PLACE"][0]
+assert _GARDEN_PATH_TRAIT_TEMPLATE == "{n} is in the {p} ."
+
 
 def verify_garden_path_templates(sample_name: str = "mary", sample_place_a: str = "garden",
                                   sample_place_b: str = "kitchen",
@@ -1444,43 +1477,101 @@ def verify_garden_path_templates(sample_name: str = "mary", sample_place_a: str 
     return results
 
 
-class GardenPathCurriculumGenerator:
-    """M55a garden-path episodes: memory-coherence-flavored collapse over a
-    genuine parser-score tie.
+def verify_garden_path_trait_templates(sample_name_a: str = "mary", sample_name_b: str = "john",
+                                        ) -> Dict[str, Dict[str, object]]:
+    """Parse-check the M55b TRAIT marker sentences (both directions,
+    both entities) through the REAL parser -- the ``verify_*`` pattern every
+    other generator in this module follows. Each must yield SUBJECT=name,
+    PLACE=trait_word with no other content word (the same-clause-leak check
+    :func:`verify_sense_binding_templates` already runs for its own cue
+    sentences). Returns an empty dict if ``quantum_parser`` isn't importable
+    (caller must treat that as "unable to verify", not a pass)."""
+    from .clause import extract_discourse
+    from .input_encoder import ParserInputEncoder
+    from .nsm_primes import PRIME_NAMES
+    from .structure import PARSE_LABELS
+    from .tokenizer import SimpleTokenizer
 
-    Episode shape:
-        "{name_a} went to the {place_a} ."          -- VERB-reading answer source
-        "the {h} is in the {place_b} ."              -- OBJECT-reading answer source
-        "{name_a} can {h} ."                          -- the garden-path sentence
+    texts = [_GARDEN_PATH_TRAIT_TEMPLATE.format(n=n, p=p)
+             for n in (sample_name_a, sample_name_b) for p in _GARDEN_PATH_TRAIT_WORDS.values()]
+    tok = SimpleTokenizer.build(texts + [sample_name_a, sample_name_b] + list(_GARDEN_PATH_TRAIT_WORDS.values()),
+                                 extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok)
+    if getattr(parser, "_parser", None) is None:
+        return {}  # quantum_parser unavailable; caller must handle this case
+
+    results: Dict[str, Dict[str, object]] = {}
+    for n in (sample_name_a, sample_name_b):
+        for reading, trait in _GARDEN_PATH_TRAIT_WORDS.items():
+            sent = _GARDEN_PATH_TRAIT_TEMPLATE.format(n=n, p=trait)
+            graph = parser._parse_graph(sent)
+            clauses, _links = extract_discourse(graph)
+            ok = any(
+                {rel: (arg.token or "").lower() for rel, arg in cl.args}.get("SUBJECT") == n
+                and {rel: (arg.token or "").lower() for rel, arg in cl.args}.get("PLACE") == trait
+                and len(cl.args) == 2
+                for cl in clauses)
+            results[f"TRAIT[{n}.{reading}]"] = {"sentence": sent, "ok": ok}
+    return results
+
+
+class GardenPathCurriculumGenerator:
+    """M55b binding-critical garden-path episodes: entity-keyed TRAIT marker
+    facts (mirroring :class:`SenseBindingCurriculumGenerator`'s M54b decoy
+    structure) determine which reading is gold, replacing M55a's internal
+    counter (RESEARCH_NOTES M55a's own flagged caveat: "the gold reading is
+    currently an internal counter, NOT inferable from the context facts ...
+    a resolver trained on this could not exceed 0.5 legitimately").
+
+    Episode shape (order: TRAIT cues first in random relative order --
+    mirrors :class:`SenseBindingCurriculumGenerator`'s own "cues first"
+    discipline -- then the two independently-true PLACE facts, the ANCHOR
+    (the ambiguous sentence itself) always last):
+
+        "{name_a_or_b} is in the {trait_word} ."      -- TRAIT cue (shuffled order)
+        "{name_b_or_a} is in the {other_trait_word} ." -- TRAIT cue (decoy)
+        "{name_a} went to the {place_a} ."              -- VERB-reading answer source
+        "the {h} is in the {place_b} ."                 -- OBJECT-reading answer source
+        "{name_a} can {h} ."                             -- the garden-path sentence
         Q: "where is {name_a} ?"
 
-    "{name_a} can {h} ." is an EXACT parser-score tie (margin 0.0,
-    :data:`GARDEN_PATH_HOMOGRAPHS`, see :func:`verify_garden_path_templates`
-    and ``scripts/probe_m55_hyp_survey.py``) between: the OBJECT reading
-    ("can" as a transitive VERB, homograph as its OBJECT -- semantically
-    placeholder-bound here as "name_a now has/is with the homograph", so
-    the correct place is the homograph's OWN place, ``place_b``) and the
-    VERB reading (homograph as the main VERB, "can" a bare modal, no object
-    at all -- an ability statement that doesn't touch place, so the correct
-    answer stays ``place_a``, unaffected).
+    "{name_a} can {h} ." is still the EXACT parser-score tie (margin 0.0,
+    :data:`GARDEN_PATH_HOMOGRAPHS`, see :func:`verify_garden_path_templates`)
+    between the OBJECT reading ("can" as a transitive VERB, homograph as its
+    OBJECT -- "name_a now has/is with the homograph", so the correct place
+    is the homograph's OWN place, ``place_b``) and the VERB reading
+    (homograph as the main VERB, "can" a bare modal -- an ability statement
+    that doesn't touch place, so the answer stays ``place_a``) -- UNCHANGED
+    from M55a. What M55b changes is WHICH of those two readings is gold:
 
-    ``gold_reading`` ("object" | "verb") alternates by an internal COUNTER
-    (not RNG, mirroring :class:`PronounCurriculumGenerator`'s anti-recency
-    discipline and :class:`SenseBindingCurriculumGenerator`'s flip balance)
-    -- exactly 50/50 for any ``n``. Both context facts (``place_a`` for
-    name_a, ``place_b`` for the homograph) are ALWAYS present regardless of
-    which reading is gold, so a bag-of-words association can't shortcut
-    (:func:`garden_path_association_baseline` must land at chance), and the
-    parser's own top-1 hypothesis for the ambiguous sentence is a
-    DETERMINISTIC tie-break (always the OBJECT reading, per
-    ``completeness_key``'s "more core-role edges wins" rule -- verified
-    empirically for every homograph in :data:`GARDEN_PATH_HOMOGRAPHS`), so
-    always-trust-the-parser's-top-1 also lands at chance
-    (:func:`garden_path_parser_top1_baseline`).
+    ``gold_reading`` ("object" | "verb") is still chosen by an internal
+    COUNTER (not RNG, mirroring :class:`PronounCurriculumGenerator`'s
+    anti-recency discipline) for an exact 50/50 split -- but the counter's
+    choice is then RECORDED as ``name_a``'s own TRAIT marker fact
+    (``trait_word = _GARDEN_PATH_TRAIT_WORDS[gold_reading]``), so the
+    reading genuinely FOLLOWS from a context fact keyed to the ambiguous
+    sentence's own subject, exactly M54b's "the gold answer must follow
+    from a memory-reachable fact, not a hidden field" move, applied to
+    structural (not lexical) ambiguity. ``name_b`` -- a DIFFERENT entity,
+    sampled distinct from ``name_a``, never mentioned in the ambiguous
+    sentence or the question -- carries the OPPOSITE marker: the two-sided
+    decoy. Both trait words are present in EVERY episode, one per entity,
+    so a bag-of-words association can't use them
+    (:func:`garden_path_association_baseline` must stay at chance) and only
+    binding the marker to ``name_a`` SPECIFICALLY discriminates. Both PLACE
+    facts (``place_a`` for name_a, ``place_b`` for the homograph) are STILL
+    always present regardless of which reading is gold (M55a's own
+    association-defeating property, preserved unchanged), and the parser's
+    own top-1 hypothesis is still the deterministic OBJECT tie-break
+    (:func:`garden_path_parser_top1_baseline` still lands at chance -- the
+    marker redesign never touches the ambiguous sentence itself).
 
-    ``ep.meta`` carries ``garden_path=True`` (the marker
-    ``clause_reactor.build_clause_batch`` gates its M55a branch on),
-    ``name_a``, ``homograph``, ``place_a``, ``place_b``, ``gold_reading``.
+    ``ep.meta`` carries everything M55a's did (``garden_path=True``,
+    ``name_a``, ``gp_homograph``, ``place_a``, ``place_b``,
+    ``gold_reading``) PLUS ``other_entity`` (the decoy name), ``trait_word``
+    (name_a's own marker), ``other_trait_word`` (the decoy's marker), and
+    ``cue_order`` (``("a", "b")`` or ``("b", "a")`` -- which marker sentence
+    comes first in ``ep.context``).
     """
 
     def __init__(self, num_options: int = 2, seed: int = 0, *,
@@ -1496,14 +1587,23 @@ class GardenPathCurriculumGenerator:
         want_object = (self._count % 2 == 0)   # alternate -> exact 50/50
         self._count += 1
         gold_reading = "object" if want_object else "verb"
+        other_reading = "verb" if want_object else "object"
 
-        name_a = self.rng.choice(self._names)
+        name_a, name_b = self.rng.sample(self._names, 2)
         homograph = self.rng.choice(self._homographs)
         place_a, place_b = self.rng.sample(_PLACES, 2)
         gold_place = place_b if want_object else place_a
         other_place = place_a if want_object else place_b
 
-        context = [
+        trait_word = _GARDEN_PATH_TRAIT_WORDS[gold_reading]
+        other_trait_word = _GARDEN_PATH_TRAIT_WORDS[other_reading]
+        cue_a = _GARDEN_PATH_TRAIT_TEMPLATE.format(n=name_a, p=trait_word)
+        cue_b = _GARDEN_PATH_TRAIT_TEMPLATE.format(n=name_b, p=other_trait_word)
+        cues = [("a", cue_a), ("b", cue_b)]
+        self.rng.shuffle(cues)
+        cue_order = tuple(tag for tag, _sent in cues)
+
+        context = [sent for _tag, sent in cues] + [
             _GARDEN_PATH_MOVE_TEMPLATE.format(n=name_a, p=place_a),
             _GARDEN_PATH_HOMOGRAPH_PLACE_TEMPLATE.format(h=homograph, p=place_b),
             _GARDEN_PATH_AMBIGUOUS_TEMPLATE.format(n=name_a, h=homograph),
@@ -1525,6 +1625,8 @@ class GardenPathCurriculumGenerator:
                 "name_a": name_a, "gp_homograph": homograph,
                 "place_a": place_a, "place_b": place_b,
                 "gold_reading": gold_reading,
+                "other_entity": name_b, "trait_word": trait_word,
+                "other_trait_word": other_trait_word, "cue_order": cue_order,
             },
         )
 

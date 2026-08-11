@@ -42,9 +42,9 @@ import torch.nn as nn
 from . import entity_memory as em
 from .membrane import FEATURE_DIM
 
-__all__ = ["Resolver", "CorefHead", "SharedScorer", "SenseHead", "query_candidates",
+__all__ = ["Resolver", "CorefHead", "SharedScorer", "SenseHead", "RankHead", "query_candidates",
            "query_candidates_per_addr", "make_resolver", "make_sense_resolver",
-           "shared_scorer_for_budget"]
+           "make_hyp_resolver", "shared_scorer_for_budget"]
 
 
 def query_candidates(memory: torch.Tensor, cand_entity: torch.Tensor,
@@ -338,6 +338,103 @@ def make_sense_resolver(track: str, dim: int, hidden: int = 128) -> Resolver:
     t = track.strip().upper()
     if t == "A":
         return SenseHead(dim)
+    if t == "B":
+        return SharedScorer(dim, hidden)
+    raise ValueError(f"unknown track {track!r}, expected 'A' or 'B'")
+
+
+# ---------------------------------------------------------------------------
+# M55b -- the garden-path (parse-hypothesis) collapse joins the same
+# membrane (RESEARCH_NOTES M55a's flagged caveat, M55b's redesign in
+# nsm_ct.curriculum2.GardenPathCurriculumGenerator, dev/TRACK_C_DESIGN.md
+# Sec 1.10). Track A gets its OWN specialist, :class:`RankHead`, following
+# :class:`SenseHead`'s pattern exactly (interact-based, param count
+# independent of candidate-set size); Track B reuses :class:`SharedScorer`
+# UNCHANGED -- its generic ``[cand_entity ; cand_feature ; prior ; mem_read
+# (; state)]`` contract already matches this candidate kind's shapes with
+# zero new code, exactly like it already does for sense candidates.
+# ---------------------------------------------------------------------------
+class RankHead(Resolver):
+    """M55b Track A -- the parse-hypothesis (garden-path) collapse's
+    specialist, following :class:`SenseHead`'s architecture: ``score =
+    MLP([hypothesis_assertion ; per-addr memory readout ; interact(the two) ;
+    structural prior ; state])``.
+
+    ``cand_entity`` here is each reading's own asserted identity/query
+    vector (``ClauseBatch.hyp_cand_entity`` -- e.g. the homograph's own
+    vector for the OBJECT reading, name_a's for the VERB reading; see
+    ``clause_reactor._garden_path_steps``'s docstring: "candidate identity
+    IS the entity this reading's address is about") -- dev/TRACK_C_DESIGN.md
+    Sec 1.10 calls this the hypothesis's ``P.addr[i]``. ``mem_read`` is that
+    SAME reading's per-candidate ``Addr`` readout
+    (:func:`query_candidates_per_addr`, Sec 1.10's ``P.mem[i] =
+    mem_query(P.addr[i], G.rel)``). ``interact = cand_entity * mem_read``
+    is Sec 1.10 step 3 (``P.tmp[i] = interact(P.addr[i], G.ctx)``,
+    "does this hypothesis cohere with memory?") -- the SAME elementwise
+    product :class:`SenseHead` uses for its own candidate/context match.
+    ``cand_prior`` is the parser's own REAL structural score (near-tied by
+    construction for this grammar's garden-path sentences -- see
+    ``curriculum2.verify_garden_path_templates`` -- so it carries little
+    signal on its own, but the contract includes it: a genuine chained
+    program (Sec 1.5's ``combine_scalar(prior, score(...))``) is entitled
+    to it).
+
+    ONE deliberate deviation from Sec 1.10's literal type table, and from
+    :class:`SenseHead`'s own "ignores state" design: this head DOES consume
+    ``state``, projected small first (mirrors :class:`SharedScorer`'s own
+    ``state_proj``). Why: M55b's redesigned curriculum
+    (:class:`nsm_ct.curriculum2.GardenPathCurriculumGenerator`) makes
+    ``gold_reading`` a deterministic function of an entity-keyed TRAIT
+    marker fact written under a THIRD relation (``rel:TRAIT``,
+    ``clause_reactor._garden_path_steps``) that NEITHER reading's own
+    ``Addr`` (``rel:PLACE`` on the homograph or on name_a) ever touches --
+    membrane.py's ``Candidate`` carries exactly ONE ``Addr`` slot per
+    candidate (already spoken for by each reading's own PLACE query), and
+    extending it to a second, marker-specific slot is out of scope for
+    M55b (RESEARCH_NOTES M55b). So the marker fact's ONLY channel into the
+    collapse step is the controller's running GRU ``state`` -- already
+    part of every :class:`Resolver`'s fixed call signature, threaded
+    through with ZERO new plumbing. A head built strictly from
+    ``{mem_read, prior, interact}`` would be structurally blind to it
+    (both fixed query addresses hold real, ``gold_reading``-INDEPENDENT
+    facts -- exactly RESEARCH_NOTES M55a's own diagnosis of why the OLD
+    counter-driven curriculum was unlearnable), so ``state`` is the
+    minimum addition that makes the redesigned gold-vs-wrong gap learnable
+    at all.
+
+    With ``dim=48, hidden=32, controller_hidden=128, state_proj=8``:
+    state_proj 128*8+8=1,032; MLP in_dim=3*48+1+8=153 -> hidden=32:
+    153*32+32=4,928 -> 32*1+1=33; total 5,993 params (well under the
+    20k budget, and independent of the candidate-set size ``C``).
+    """
+
+    def __init__(self, dim: int, hidden: int = 32, controller_hidden: int = 128,
+                 state_proj: int = 8) -> None:
+        super().__init__()
+        self.state_proj = nn.Linear(controller_hidden, state_proj)
+        in_dim = 3 * dim + 1 + state_proj
+        self.net = nn.Sequential(nn.Linear(in_dim, hidden), nn.GELU(), nn.Linear(hidden, 1))
+
+    def forward(self, cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state):
+        b, C, _d = cand_entity.shape
+        interact = cand_entity * mem_read
+        prior = cand_prior.unsqueeze(-1)                        # [B, C, 1]
+        s = self.state_proj(state).unsqueeze(1).expand(b, C, -1)   # [B, C, state_proj]
+        feats = torch.cat([cand_entity, mem_read, interact, prior, s], dim=-1)
+        return self.net(feats).squeeze(-1)                     # [B, C]
+
+
+def make_hyp_resolver(track: str, dim: int, hidden: int = 128) -> Resolver:
+    """M55b's factory, mirroring :func:`make_sense_resolver`: ``track`` "A"
+    -> :class:`RankHead` (a NEW specialist -- ``hidden`` here is the
+    CONTROLLER's hidden size, forwarded to ``RankHead(controller_hidden=)``
+    for its state projection, exactly like :func:`make_resolver`/
+    :func:`make_sense_resolver`'s own "B" branch already forwards it to
+    :class:`SharedScorer`), "B" -> :class:`SharedScorer` (the SAME class,
+    unchanged, reused for this THIRD candidate kind with zero new code)."""
+    t = track.strip().upper()
+    if t == "A":
+        return RankHead(dim, controller_hidden=hidden)
     if t == "B":
         return SharedScorer(dim, hidden)
     raise ValueError(f"unknown track {track!r}, expected 'A' or 'B'")
