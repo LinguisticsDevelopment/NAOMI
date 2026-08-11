@@ -2815,3 +2815,36 @@ context facts.** Plumbing-adequate, but a resolver trained on this could
 not exceed 0.5 legitimately — M55b's FIRST job is the M54b move: make the
 context facts determine the correct reading (binding-critical redesign),
 prove it with a gold-vs-forced-wrong gap, THEN train the collapse.
+
+### M55 — v1 membrane gate: pronouns and senses PROVEN at full scale; readings leak AGAIN (MEASURED, honest partial)
+
+Three arms, m55 mix (old/pronoun/sense/garden-path 40/20/20/20), 1500
+eps, dim 48, 80 epochs. Per-kind:
+
+| arm | garden_path | old | pronoun | sense |
+|---|---|---|---|---|
+| gold-binding | 1.000 | 0.895 | 1.000 | 1.000 |
+| **wrong-binding** | **1.000** | 0.911 | 1.000 | 1.000 |
+| Track A | 0.456 | 0.911 | 1.000 (bind 1.000/1.000) | 0.698 (bind 0.623/0.536) |
+
+**The wrong-binding arm scoring 1.000 on garden paths is the verdict:
+forcing the WRONG reading costs nothing at scale — the trait fact that
+determines the gold reading is itself model-visible in memory and
+bijectively predicts the answer, so the model shortcuts trait→answer and
+never needs the binding.** The small-scale gap probe (1.000 vs 0.341) was
+the THIRD smoke-scale result to invert at full scale. Track A's weak
+reading numbers (0.561 binding, 0.456 task) are therefore moot — there
+was no legitimate task pressure to learn from.
+
+What IS proven at full scale, all three heads coexisting: pronoun
+binding 1.000/1.000 (again, now alongside two other active heads) and
+sense binding at M54b levels. v1 membrane scorecard: 2.5 of 3.
+
+New curriculum-design rule (the third leak teaches it): **the
+gold-determinant must not itself be answer-predictive** — it must be
+information that selects the READING while the answer still flows only
+through the bound choice. M54b satisfied this accidentally (the cue word
+WAS the answer, so binding wrong emitted the wrong vector); M55b's trait
+violated it. M55c redesign queued with a mandatory full-scale
+wrong-binding arm BEFORE any resolver training (smoke gaps no longer
+accepted as gates for curriculum validity).
