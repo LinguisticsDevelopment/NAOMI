@@ -53,3 +53,15 @@ mappings). No giant coupled job anywhere.
 ## Deprioritized until after (recorded, not forgotten)
 Fluent generation, pragmatics, full dial conditioning, Advice Test
 machinery, parser round beyond what zero-shot demands.
+
+## Reprioritization 2026-08-11 (post M-ES1, user decision)
+- M57 EXPANDS to "robust memory schema": entity instances + attribute
+  edges + resolver-driven WRITE-BACK + PROVENANCE METADATA on every write
+  (source, language, timestamp, trust — makes invariant #4 real) +
+  morphological signals (number/gender subtypes) flowing parser→membrane→
+  memory attributes + inverse queries + capacity curve. This is the
+  corpus prerequisite and the priority.
+- M55c (garden-path redesign) DEPRIORITIZED: two leak-failures say the
+  synthetic task is hard to pose honestly in our controlled world; real
+  text supplies natural garden paths later. Design law retained; v1
+  membrane recorded as 2.5/3, acceptable for the sprint.
