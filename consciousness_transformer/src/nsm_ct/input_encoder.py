@@ -114,6 +114,48 @@ def _merge_graphs(graphs: List["object"]):
     return HypGraph(nodes=nodes, edges=edges, roots=roots, flags=flags)
 
 
+
+# ---------------------------------------------------------------------------
+# Spanish Freeze Test (dev/ROADMAP_LONG_TERM.md): the language/grammar seam.
+#
+# clause.py's ``_PREP_RELATION`` (English preposition-token -> role-label map)
+# is a bare module-level dict, not a parameter threaded through
+# extract_clauses/extract_discourse -- there is no call-signature seam to
+# inject a Spanish role map through. clause.py is explicitly out of scope for
+# this task (FILES OWNED); the two options are (a) edit clause.py to
+# parameterize ``_prep_relation``, or (b) extend the SAME dict from outside
+# the file. (b) is safe here specifically because English and Spanish
+# preposition tokens are disjoint strings (verified: "en"/"al"/"a"/"del"/"de"
+# never collide with clause.py's English keys "in"/"on"/"at"/"to"/"into"/
+# "from"/"by"/"near"/"inside") -- adding Spanish entries can only ever affect
+# Spanish text, never change what an English preposition resolves to. This is
+# recorded here as the seam decision, not silently done: a "proper" fix
+# (parameterizing ``_prep_relation`` so callers pass their own role map)
+# would touch clause.py and is left for a follow-up if a THIRD language ever
+# makes the disjoint-keys assumption break.
+# ---------------------------------------------------------------------------
+_SPANISH_PREP_RELATION = {
+    "en": "PLACE", "al": "PLACE", "a": "PLACE",   # locative / motion-destination
+    "de": "SOURCE", "del": "SOURCE",              # "from" / "of" (de+el)
+    "por": "PLACE",
+}
+_spanish_prep_relation_installed = False
+
+
+def _install_spanish_prep_relation() -> None:
+    """Idempotently extend ``nsm_ct.clause._PREP_RELATION`` with the Spanish
+    map above (see the module-level note). Called once, lazily, only when a
+    Spanish :class:`ParserInputEncoder` is actually constructed -- an
+    English-only process never imports this path and clause.py's dict never
+    changes for it."""
+    global _spanish_prep_relation_installed
+    if _spanish_prep_relation_installed:
+        return
+    from . import clause as _clause
+    _clause._PREP_RELATION.update(_SPANISH_PREP_RELATION)
+    _spanish_prep_relation_installed = True
+
+
 class ParserInputEncoder(AbstractInputEncoder):
     """Optional encoder that runs the experimental ``quantum_parser``.
 
@@ -124,17 +166,26 @@ class ParserInputEncoder(AbstractInputEncoder):
     Args:
         tokenizer: Vocabulary (must already include node/relation label tokens).
         grammar_path: Path to a quantum_parser grammar JSON. If ``None``, uses
-            the repo's English grammar.
+            the repo's English (or, if ``lang="es"``, Spanish) grammar.
+        lang: ``"en"`` (default, byte-identical to before this parameter
+            existed) or ``"es"`` -- selects the Spanish tagger
+            (``tag_spanish_sentence``) and grammar (``grammars/spanish.json``)
+            and installs the Spanish preposition->role extension (see
+            :func:`_install_spanish_prep_relation`). No other behavior
+            differs; unknown values raise (fail loud, not silently English).
     """
 
     def __init__(self, tokenizer: SimpleTokenizer, grammar_path: Optional[str] = None,
-                 meaning_resolver=None) -> None:
+                 meaning_resolver=None, lang: str = "en") -> None:
         from .meaning import NSMMeaningResolver
+        if lang not in ("en", "es"):
+            raise ValueError(f"lang must be 'en' or 'es', got {lang!r}")
         self.tokenizer = tokenizer
         self._fallback = TokenInputEncoder(tokenizer)
         self._warned = False
         self._adapter = None
         self._grammar_path = grammar_path
+        self._lang = lang
         self._resolver = meaning_resolver or NSMMeaningResolver()
         self._init_adapter()
 
@@ -146,11 +197,18 @@ class ParserInputEncoder(AbstractInputEncoder):
             )
             if qp_root not in sys.path:
                 sys.path.insert(0, qp_root)
-            from src.parser.pos_tagger import tag_sentence  # type: ignore
             from src.parser.quantum_parser import QuantumParser  # type: ignore
 
-            grammar = self._grammar_path or os.path.join(qp_root, "grammars", "english.json")
-            self._tag = tag_sentence
+            if self._lang == "es":
+                from src.parser.pos_tagger import tag_spanish_sentence as _tag  # type: ignore
+                default_grammar = os.path.join(qp_root, "grammars", "spanish.json")
+                _install_spanish_prep_relation()
+            else:
+                from src.parser.pos_tagger import tag_sentence as _tag  # type: ignore
+                default_grammar = os.path.join(qp_root, "grammars", "english.json")
+
+            grammar = self._grammar_path or default_grammar
+            self._tag = _tag
             self._parser = QuantumParser(grammar)
         except Exception as exc:  # pragma: no cover - depends on optional deps
             self._note(f"quantum_parser unavailable ({exc}); using plain tokenization.")

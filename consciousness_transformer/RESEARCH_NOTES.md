@@ -2848,3 +2848,33 @@ WAS the answer, so binding wrong emitted the wrong vector); M55b's trait
 violated it. M55c redesign queued with a mandatory full-scale
 wrong-binding arm BEFORE any resolver training (smoke gaps no longer
 accepted as gates for curriculum validity).
+
+### M-ES1 — Spanish Freeze Test, stage 1: the interlingua claim holds at the stream level (MEASURED)
+
+Perception-side only, zero retraining. OMW-es sense mapping (coverage:
+places 60/61, transfer objects 6/6, ambiguity senses 60/62), es_lexicon
+via the M41 recipe (--lang spa), spanish.json rebuilt as a full clone of
+english.json's rulesets (rules match abstract categories, not words —
+tested, not assumed; the pre-existing partial spanish.json was replaced),
+SpanishMeaningResolver (OMW translation → unmodified English parent).
+
+**Stream equivalence, 240 parallel EN/ES episode pairs: entities 240/240
+IDENTICAL, relations 400/400 IDENTICAL, values cosine median 0.984 (mean
+0.842, exact 42.5%).** All 93 value leaks trace to FIVE words whose
+OMW-es sense ORDERING differs from English MFS (ball→bootlicking.s.01
+first is an OMW data-quality artifact) — a mapping-layer fix (align by
+synset, not Spanish-MFS order), not an architecture problem. To the
+frozen mind, entities and relations are provably language-invariant
+already; values are one resolver fix from it.
+
+Blockers reported straight: clause.py's _PRONOUNS/is_entity don't know
+ella/él (pronoun episodes excluded from the gate); Spanish question
+copula needs language-gated tag ambiguity; _PREP_RELATION extended at
+the encoder seam (disjoint keys, English byte-identical). 22 new tests;
+quantum_parser 134/134; English suites green.
+
+Verdict: the deepest architectural claim — one metalanguage, languages
+as interchangeable perception front-ends — survives its first measured
+contact. Week-5 Aurora multilingual plans are GO-flavored pending the
+synset-alignment fix + a true frozen-model comparison once checkpointing
+lands.

@@ -419,3 +419,70 @@ def hypothesis_candidate_set(readings: List[Tuple[str, float, str, str]], *,
                   for key, prior, qe, qr in readings]
     return HypothesisCandidateSet(candidates=candidates, provenance=dict(provenance or {}),
                                    gold_index=gold_index)
+
+
+# ---------------------------------------------------------------------------
+# Spanish Freeze Test (dev/ROADMAP_LONG_TERM.md): Spanish 3rd-person pronoun
+# feature profiles.
+#
+# NOT added into ``_PRONOUN_EXTRA`` above: that dict has an asserted
+# invariant (``set(_PRONOUN_EXTRA) == _PRONOUNS``) tying it exactly to
+# clause.py's English-only ``_PRONOUNS`` set, which is out of scope for this
+# task (FILES OWNED) -- adding Spanish keys there would break the assertion
+# without a matching clause.py edit. This is a SEPARATE, append-only table
+# instead, consumed only by Spanish-specific curriculum code
+# (curriculum2.py's pronoun-episode verification), never by
+# ``mention_feature_vector``/``_feature_tuple``.
+#
+# Reported alongside this table, not hidden: clause.py's ``is_entity()``
+# checks membership in its own hardcoded ``_PRONOUNS`` (English strings) to
+# decide whether a subject token becomes a variable atom or gets sent through
+# the content-word resolver. "ella"/"él"/"ellos"/"ellas" are not in that set,
+# so a Spanish pronoun-subject clause is NOT recognized as an entity mention
+# by the unmodified clause.py -- this table's feature profiles are therefore
+# usable for parse-layer verification (verify_pronoun_templates_es confirms
+# the SUBJECT edge is structurally correct) but the pronoun-episode STREAM
+# comparison in scripts/probe_spanish_freeze.py excludes this template from
+# its quantitative gate for exactly this reason (documented there too). The
+# minimal fix would be one line in clause.py extending ``_PRONOUNS`` (or
+# making it overridable) -- not done here, per FILES OWNED.
+_PRONOUN_EXTRA_ES: Dict[str, Dict[str, float]] = {
+    "él":     {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 1.0, "NONPERSON": 0.0, "PLURAL": 0.0},
+    "ella":   {"PERSON": 1.0, "GENDER_F": 1.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 0.0},
+    "ellos":  {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 1.0, "NONPERSON": 0.0, "PLURAL": 1.0},
+    "ellas":  {"PERSON": 1.0, "GENDER_F": 1.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 1.0},
+    "yo":     {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 0.0},
+    "tú":     {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 0.0},
+    "nosotros": {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 1.0, "NONPERSON": 0.0, "PLURAL": 1.0},
+    "nosotras": {"PERSON": 1.0, "GENDER_F": 1.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 1.0},
+}
+
+# ``él``/``ella`` are the Spanish 3rd-person subject pronoun the curriculum's
+# GENDER->pronoun choice needs (mirrors episode.py's English pronoun-episode
+# generator picking she/he from NAME_GENDER). Reuses NAME_GENDER as-is (the
+# Spanish curriculum keeps the SAME 6 English name strings -- see
+# curriculum2.py's Spanish templates docstring for why) so no new name table
+# is needed; this is purely the gender -> Spanish-pronoun lookup.
+GENDER_PRONOUN_ES: Dict[str, str] = {"F": "ella", "M": "él"}
+
+
+def mention_feature_vector_es(word: str) -> np.ndarray:
+    """Spanish counterpart of :func:`mention_feature_vector`: Spanish 3rd-
+    person pronouns via :data:`_PRONOUN_EXTRA_ES`, curriculum names via the
+    SAME :data:`NAME_GENDER` table (see its module note -- names are not
+    translated), else zeros. No USVS component (the ``lex:noun.person`` axis
+    is a WordNet word-coordinate keyed on the English surface form; reusing
+    it here would require the same synset-translation
+    :class:`~nsm_ct.meaning_es.SpanishMeaningResolver` uses, which is a
+    heavier dependency than this closed 8-pronoun/6-name table needs).
+    """
+    w = (word or "").lower()
+    if w in _PRONOUN_EXTRA_ES:
+        extra = _PRONOUN_EXTRA_ES[w]
+    elif w in NAME_GENDER:
+        g = NAME_GENDER[w]
+        extra = {"PERSON": 1.0, "GENDER_F": 1.0 if g == "F" else 0.0,
+                 "GENDER_M": 1.0 if g == "M" else 0.0, "NONPERSON": 0.0, "PLURAL": 0.0}
+    else:
+        extra = {d: 0.0 for d in _EXTRA_DIMS}
+    return np.array([0.0] + [extra[d] for d in _EXTRA_DIMS], dtype=np.float32)

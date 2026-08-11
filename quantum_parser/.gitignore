@@ -66,3 +66,6 @@ tmp/
 # The WordNet-generated tag lexicon is a committed artifact (deterministic,
 # 0.59 MB; built by consciousness_transformer/scripts/build_parser_lexicon.py)
 !data/en_lexicon.json.gz
+# Same recipe, OMW-es source (Spanish Freeze Test; build_parser_lexicon.py
+# --lang spa; deterministic, 0.34 MB).
+!data/es_lexicon.json.gz

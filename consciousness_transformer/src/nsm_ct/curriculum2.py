@@ -33,7 +33,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from .episode import Episode, _NAMES, _PLACES, _AMBIGUITY_FAMILIES
+from .episode import Episode, _NAMES, _PLACES, _AMBIGUITY_FAMILIES  # noqa: F401
 from .membrane import NAME_GENDER  # noqa: F401  (M53a pronoun curriculum genders)
 
 # ---------------------------------------------------------------------------
@@ -1713,3 +1713,343 @@ def garden_path_association_baseline(episodes: List[Episode], dim: int = 64) -> 
         total += 1
         correct += int(pred == ep.answer_idx)
     return {"n": total, "accuracy": correct / total if total else float("nan")}
+
+
+# ===========================================================================
+# Spanish Freeze Test (dev/ROADMAP_LONG_TERM.md "The Spanish Freeze Test")
+# ===========================================================================
+# Append-only from here down: nothing above this line is touched. Perception-
+# side, curriculum-scale surface templates for the L1-6-equivalent PLACE/MOVE
+# facts + the TRANSFER TAKE/SOURCE shape, translated (not re-derived) from
+# TEMPLATES["A"]/TRANSFER_TEMPLATES above, each parse-verified through the
+# REAL Spanish grammar (grammars/spanish.json, cloned from english.json --
+# see its metadata) + tagger (quantum_parser.pos_tagger.tag_spanish_sentence)
+# exactly like verify_templates()/verify_transfer_templates() gate the
+# English sets.
+#
+# Deliberate, documented exclusions (task explicitly allows "handle it or
+# exclude it explicitly" for both):
+#
+# - **Pro-drop** ("encontró la pelota .", no subject at all): quantum_parser
+#   is a constituency-rule engine keyed on tokens actually present -- there
+#   is no rule that synthesizes an implicit SUBJECT node from verb
+#   person/number morphology, and clause.extract_discourse's
+#   _primary_discourse requires a real SUBJECT edge on every branch (no
+#   subject -> zero clauses extracted, a silent content-loss failure mode,
+#   not a crash). Building that synthesis is a grammar-engine feature, out
+#   of scope here; every Spanish template below has an explicit subject.
+# - **GIVE-family dative transfer** ("... dio la pelota a juan ."): mirrors
+#   the ALREADY-DOCUMENTED English GIVE landmine above (this file, near
+#   TRANSFER_TEMPLATES) almost exactly -- Spanish "a" is used for BOTH the
+#   MOVE template's motion destination ("fue a la oficina") and the dative
+#   recipient, and clause.py's ``_PREP_RELATION`` (extended, not edited --
+#   see input_encoder._install_spanish_prep_relation) is a flat
+#   token->role dict with no verb-sensitivity, so it cannot resolve "a" to
+#   PLACE for one verb and RECIPIENT for another. English's escape hatch
+#   (the double-object construction, "gave {receiver} the {obj}") does not
+#   exist in Spanish without a clitic ("le dio la pelota a juan"), and the
+#   clitic breaks SUBJECT extraction outright: "juan le dio ..." puts TWO
+#   bare NOMINALs before the verb ("juan", "le"), and clause1's
+#   before-quantifier "one" rule binds the NEAREST one ("le") as SUBJECT --
+#   verified empirically, not just reasoned about (see
+#   scripts/probe_spanish_freeze.py's template table). The TAKE/SOURCE
+#   variant is used instead (below): "de" -> SOURCE has no motion-PLACE
+#   ambiguity in these templates, so it needs no clitic and no landmine.
+# - **Wh-question subject-verb inversion** ("¿ dónde está la pelota ?"):
+#   english.json's question1 ruleset requires the copula tagged MODIFIER
+#   (Tag.AUX, PROGRESSIVE) -- English gets this via ``AMBIGUOUS_WORDS``
+#   exposing BOTH the AUX and VERB reading of "is" to the parse lattice
+#   (declaratives need the VERB reading for predicate1's PP rule; questions
+#   need the AUX reading for question1). Spanish "está" is tagged VERB only
+#   (single tag, needed for "mary está en el jardín ." to parse at all);
+#   making it ambiguous the same way would require gating
+#   ``pos_tagger.get_possible_tags`` by language, since that function
+#   currently has no language parameter and consults English-only tables --
+#   a real architectural change, not attempted here to avoid ANY risk to
+#   the English byte-identity gate. The question TEMPLATE below is still
+#   authored and parse-checked (tokenization of "¿" decided: its own
+#   whitespace-separated PUNCT token, mirroring how trailing "?" is
+#   already tokenized) so the actual outcome is measured and reported
+#   honestly, not assumed.
+# ---------------------------------------------------------------------------
+
+# Spanish place table, matching episode._PLACES 1:1. ``det``/``a_det`` are the
+# FULL determined NP and its "a"+article motion-destination form (al/a la) --
+# Spanish grammatical gender means the article travels with the noun, so
+# (unlike English's fixed "the", baked into the template string) it is
+# precomputed here and substituted as a whole. Hand-verified against a
+# dictionary (not the trailing-vowel gender heuristic
+# scripts/probe_spanish_freeze.py uses for the ~60-word VOCAB_SCALE_PLACES
+# OMW coverage report, which is reporting-only and not fed into these
+# templates).
+_PLACES_ES: Dict[str, Dict[str, str]] = {
+    "kitchen":  {"noun": "cocina",     "det": "la cocina",     "a_det": "a la cocina"},
+    "garden":   {"noun": "jardín",     "det": "el jardín",     "a_det": "al jardín"},
+    "office":   {"noun": "oficina",    "det": "la oficina",    "a_det": "a la oficina"},
+    "bedroom":  {"noun": "dormitorio", "det": "el dormitorio", "a_det": "al dormitorio"},
+    "hallway":  {"noun": "pasillo",    "det": "el pasillo",    "a_det": "al pasillo"},
+    "bathroom": {"noun": "baño",       "det": "el baño",       "a_det": "al baño"},
+}
+assert set(_PLACES_ES) == set(_PLACES), "every episode._PLACES noun needs a Spanish entry"
+
+# Spanish transfer-object table, matching this module's own _TRANSFER_OBJECTS
+# 1:1 (grammatical-gender note from the task: "la pelota"/"el libro" -- both
+# genders genuinely occur, not cherry-picked).
+_TRANSFER_OBJECTS_ES: Dict[str, Dict[str, str]] = {
+    "ball":   {"noun": "pelota", "det": "la pelota"},
+    "box":    {"noun": "caja",   "det": "la caja"},
+    "key":    {"noun": "llave",  "det": "la llave"},
+    "book":   {"noun": "libro",  "det": "el libro"},
+    "letter": {"noun": "carta",  "det": "la carta"},
+    "coin":   {"noun": "moneda", "det": "la moneda"},
+}
+assert set(_TRANSFER_OBJECTS_ES) == set(_TRANSFER_OBJECTS), \
+    "every _TRANSFER_OBJECTS noun needs a Spanish entry"
+
+# Entity names are the UNTRANSLATED English _NAMES strings (mary/john/sandra/
+# daniel/bill/fred), used verbatim as Spanish proper nouns. Deliberate:
+# clause.py's is_entity()/EntityTracker/_ENTITY_NAMES are hardcoded to
+# episode.py's English _NAMES and are out of scope for this task (FILES
+# OWNED) -- reusing the identical strings means entity-atom resolution needs
+# ZERO clause.py changes and produces EXACTLY (not just "up to naming")
+# identical entity vectors across the English/Spanish clause streams (the
+# entity column of scripts/probe_spanish_freeze.py's stream-equivalence
+# table). Proper names not translating is also just linguistically ordinary.
+
+# Spanish surface templates, mirroring TEMPLATES["A"]'s two actions.
+# {n} = name (untranslated), {p} = the FULL determined place NP (_PLACES_ES
+# "det" for PLACE, "a_det" for MOVE -- the a+el contraction lives in the
+# table, not the template string).
+TEMPLATES_ES: Dict[str, Dict[str, List[str]]] = {
+    "A": {
+        "PLACE": [
+            "{n} está en {p} .",
+            "{n} está ahora en {p} .",
+        ],
+        "MOVE": [
+            "{n} fue {p} .",
+        ],
+    },
+}
+
+# Spanish question template (see the module-note above on why subject-verb
+# inversion is not expected to work end-to-end; parse-checked honestly by
+# verify_templates_es below rather than assumed). "¿" tokenized as its own
+# leading whitespace-separated PUNCT token (decision recorded, mirrors how
+# trailing "?" is already a separate token in the English templates).
+QUESTION_TEMPLATE_ES = "¿ dónde está {p} ?"
+
+
+def _check_subject_place(parser, extract_discourse, sent: str, name: str, place_noun: str) -> bool:
+    """Shared body: parse ``sent``, require a clause whose SUBJECT/PLACE args
+    equal ``name``/``place_noun`` exactly (same contract as verify_templates)."""
+    graph = parser._parse_graph(sent)
+    clauses, _links = extract_discourse(graph)
+    for cl in clauses:
+        subj = place = None
+        for rel, arg in cl.args:
+            if rel == "SUBJECT":
+                subj = (arg.token or "").lower()
+            elif rel == "PLACE":
+                place = (arg.token or "").lower()
+        if subj == name and place == place_noun:
+            return True
+    return False
+
+
+def verify_templates_es(sample_name: str = "mary", sample_place: str = "garden"
+                         ) -> Dict[str, bool]:
+    """Spanish counterpart of :func:`verify_templates`: parse-check every
+    :data:`TEMPLATES_ES` entry through the REAL Spanish grammar/tagger,
+    requiring the resulting clause's SUBJECT and PLACE arguments to match
+    the sentence's actual entity/place exactly (same non-degenerate-clause
+    contract as the English gate). Returns ``{template_string: bool}``
+    (formatted keys, like ``verify_templates``'s pre-format keys are English-
+    template strings -- Spanish's per-noun article means the template
+    string itself isn't reusable across places, unlike English's fixed
+    "the"). Empty dict if quantum_parser isn't importable.
+    """
+    from .clause import extract_discourse
+    from .input_encoder import ParserInputEncoder
+    from .nsm_primes import PRIME_NAMES
+    from .structure import PARSE_LABELS
+    from .tokenizer import SimpleTokenizer
+
+    place = _PLACES_ES[sample_place]
+    texts = [t.format(n=sample_name, p=place["det"]) for t in TEMPLATES_ES["A"]["PLACE"]]
+    texts += [t.format(n=sample_name, p=place["a_det"]) for t in TEMPLATES_ES["A"]["MOVE"]]
+    texts += [sample_name, place["noun"]]
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok, lang="es")
+    if getattr(parser, "_parser", None) is None:
+        return {}
+
+    results: Dict[str, bool] = {}
+    for t in TEMPLATES_ES["A"]["PLACE"]:
+        sent = t.format(n=sample_name, p=place["det"])
+        results[sent] = _check_subject_place(parser, extract_discourse, sent,
+                                              sample_name, place["noun"])
+    for t in TEMPLATES_ES["A"]["MOVE"]:
+        sent = t.format(n=sample_name, p=place["a_det"])
+        results[sent] = _check_subject_place(parser, extract_discourse, sent,
+                                              sample_name, place["noun"])
+    return results
+
+
+# TAKE/SOURCE transfer template only -- see the module note above for why
+# the GIVE/dative family is excluded. Carries its own "en {place}" PP (like
+# English TRANSFER_TEMPLATES["TAKE"]'s trailing "in the {place}") so the two
+# languages' clause streams expose the SAME relation set (SUBJECT/SOURCE/
+# OBJECT/PLACE) for scripts/probe_spanish_freeze.py's relation-match gate --
+# an earlier version omitted it, which under-counted relation agreement for
+# a template-asymmetry reason having nothing to do with translation fidelity
+# (fixed before this file's first measured run).
+TRANSFER_TEMPLATES_ES: Dict[str, str] = {
+    "TAKE": "{taker} tomó {obj} de {source} en {place} .",
+}
+
+
+def verify_transfer_templates_es(sample_taker: str = "mary", sample_source: str = "john",
+                                  sample_obj: str = "ball", sample_place: str = "garden"
+                                  ) -> Dict[str, Dict[str, object]]:
+    """Spanish counterpart of :func:`verify_transfer_templates`, TAKE/SOURCE
+    only (see module note). Returns ``{template_key: {"sentence": str, "ok":
+    bool, "roles": {rel: token}}}``, same shape/contract as the English gate.
+    Empty dict if quantum_parser isn't importable.
+    """
+    from .clause import extract_discourse
+    from .input_encoder import ParserInputEncoder
+    from .nsm_primes import PRIME_NAMES
+    from .structure import PARSE_LABELS
+    from .tokenizer import SimpleTokenizer
+
+    obj = _TRANSFER_OBJECTS_ES[sample_obj]
+    place = _PLACES_ES[sample_place]
+    expected = {"SUBJECT": sample_taker, "SOURCE": sample_source, "OBJECT": obj["noun"],
+                "PLACE": place["noun"]}
+    texts = {k: t.format(taker=sample_taker, source=sample_source, obj=obj["det"], place=place["det"])
+             for k, t in TRANSFER_TEMPLATES_ES.items()}
+    tok = SimpleTokenizer.build(
+        list(texts.values()) + [sample_taker, sample_source, obj["noun"], place["noun"]],
+        extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok, lang="es")
+    if getattr(parser, "_parser", None) is None:
+        return {}
+
+    out: Dict[str, Dict[str, object]] = {}
+    for k, sent in texts.items():
+        graph = parser._parse_graph(sent)
+        clauses, _links = extract_discourse(graph)
+        roles: Dict[str, str] = {}
+        ok = False
+        for cl in clauses:
+            cand = {rel: (arg.token or "").lower() for rel, arg in cl.args}
+            if all(cand.get(rel) == val for rel, val in expected.items()):
+                roles = cand
+                ok = True
+                break
+            if len(cand) > len(roles):
+                roles = cand
+        out[k] = {"sentence": sent, "ok": ok, "roles": roles}
+    return out
+
+
+# Pronoun-find template (see module note: parse-verified only -- clause.py's
+# English-only _PRONOUNS blocks entity-level extraction; this is reported,
+# not hidden).
+PRONOUN_FIND_TEMPLATE_ES = "{pronoun} encontró {obj} ."
+_PRONOUN_CONTEXT_TEMPLATE_ES = TEMPLATES_ES["A"]["MOVE"][0]
+
+
+def verify_pronoun_templates_es(sample_pronouns=("ella", "él"), sample_obj: str = "ball"
+                                 ) -> Dict[str, Dict[str, object]]:
+    """Parse-check :data:`PRONOUN_FIND_TEMPLATE_ES` for each of
+    ``sample_pronouns``: reports whether the SUBJECT edge lands on the
+    pronoun token at all (structural, grammar-layer check -- this is NOT
+    the same as clause.py recognizing it as an entity; see the module note
+    and membrane.py's ``_PRONOUN_EXTRA_ES`` docstring for that separate,
+    documented gap). Returns ``{pronoun: {"sentence": str, "subject_ok":
+    bool}}``. Empty dict if quantum_parser isn't importable.
+    """
+    from .clause import extract_discourse
+    from .input_encoder import ParserInputEncoder
+    from .nsm_primes import PRIME_NAMES
+    from .structure import PARSE_LABELS
+    from .tokenizer import SimpleTokenizer
+
+    obj = _TRANSFER_OBJECTS_ES[sample_obj]
+    texts = [PRONOUN_FIND_TEMPLATE_ES.format(pronoun=pr, obj=obj["det"]) for pr in sample_pronouns]
+    tok = SimpleTokenizer.build(texts + list(sample_pronouns) + [obj["noun"]],
+                                 extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok, lang="es")
+    if getattr(parser, "_parser", None) is None:
+        return {}
+
+    out: Dict[str, Dict[str, object]] = {}
+    for pr in sample_pronouns:
+        sent = PRONOUN_FIND_TEMPLATE_ES.format(pronoun=pr, obj=obj["det"])
+        graph = parser._parse_graph(sent)
+        clauses, _links = extract_discourse(graph)
+        subj_ok = any((arg.token or "").lower() == pr
+                       for cl in clauses for rel, arg in cl.args if rel == "SUBJECT")
+        out[pr] = {"sentence": sent, "subject_ok": subj_ok}
+    return out
+
+
+def generate_freeze_pairs(n: int, seed: int = 0) -> List[Dict[str, object]]:
+    """``n`` parallel English/Spanish (context, shape) pairs -- the Freeze
+    Test's raw material: same underlying facts (same rng draw of name(s) +
+    place/object), same seed, only the surface language differs. Each item:
+    ``{"shape": "PLACE"|"MOVE"|"TRANSFER", "en": [sentences], "es":
+    [sentences], **draw}`` where ``draw`` carries the entities/places drawn
+    (so a caller can independently verify a downstream comparison uses the
+    SAME facts, not just eyeball the strings). Deterministic given ``seed``,
+    like every other generator in this module. Shapes are drawn uniformly;
+    PLACE/MOVE use the canonical (index-0) template from each language's set
+    (:data:`TEMPLATES`/:data:`TEMPLATES_ES`) -- entities vary per draw, not
+    phrasing, so a "translated episode" means translated STRUCTURE with the
+    same random facts, exactly what the roadmap's freeze test asks to
+    compare.
+
+    Name pool excludes "fred" (the SAME pre-existing English-tagger landmine
+    ``_MALE_NAMES``/``_SENSE_BINDING_NAMES`` above already exclude it for:
+    the unconditional "ends in -ed -> VERB" suffix heuristic mistags lower-
+    case "fred" as a VERB, which breaks ENGLISH clause extraction entirely
+    -- confirmed empirically here too (any pair drawing "fred" produced
+    zero English clauses, an English-side failure with nothing to do with
+    Spanish). Excluding it is not a Spanish-side workaround; it is reusing
+    the codebase's own established exclusion for a bug this task did not
+    introduce and is not chartered to fix (quantum_parser/pos_tagger.py's
+    ``simple_tag`` suffix heuristics).
+    """
+    rng = random.Random(seed)
+    shapes = ["PLACE", "MOVE", "TRANSFER"]
+    freeze_names = [n for n in _NAMES if n != "fred"]
+    out: List[Dict[str, object]] = []
+    for _ in range(n):
+        shape = rng.choice(shapes)
+        if shape in ("PLACE", "MOVE"):
+            name = rng.choice(freeze_names)
+            place = rng.choice(list(_PLACES_ES))
+            en_t = TEMPLATES["A"][shape][0]
+            es_t = TEMPLATES_ES["A"][shape][0]
+            es_p = _PLACES_ES[place]["det"] if shape == "PLACE" else _PLACES_ES[place]["a_det"]
+            out.append({
+                "shape": shape, "name": name, "place": place,
+                "en": [en_t.format(n=name, p=place)],
+                "es": [es_t.format(n=name, p=es_p)],
+            })
+        else:
+            taker, source = rng.sample(freeze_names, 2)
+            obj = rng.choice(list(_TRANSFER_OBJECTS_ES))
+            place = rng.choice(list(_PLACES_ES))
+            en_t = TRANSFER_TEMPLATES["TAKE"]
+            es_t = TRANSFER_TEMPLATES_ES["TAKE"]
+            out.append({
+                "shape": shape, "taker": taker, "source": source, "obj": obj, "place": place,
+                "en": [en_t.format(taker=taker, source=source, obj=obj, place=place)],
+                "es": [es_t.format(taker=taker, source=source,
+                                    obj=_TRANSFER_OBJECTS_ES[obj]["det"],
+                                    place=_PLACES_ES[place]["det"])],
+            })
+    return out

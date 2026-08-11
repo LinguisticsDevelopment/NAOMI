@@ -29,32 +29,55 @@ _LEXICON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                              "..", "..", "data", "en_lexicon.json.gz")
 _lexicon: Optional[Dict[str, List[Tuple[Tag, List[SubType]]]]] = None
 
+# Spanish open-class lexicon (M41 recipe pointed at OMW-es; see
+# consciousness_transformer/scripts/build_parser_lexicon.py --lang spa).
+# Separate cache/path from the English lexicon above -- loaded lazily and
+# independently, so a process that never touches Spanish never pays for it
+# and English behavior/timing is untouched.
+_ES_LEXICON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "..", "data", "es_lexicon.json.gz")
+_es_lexicon: Optional[Dict[str, List[Tuple[Tag, List[SubType]]]]] = None
 
-def _load_lexicon() -> Dict[str, List[Tuple[Tag, List[SubType]]]]:
-    """Lazy-load the generated open-class lexicon (stdlib only, one time).
+
+def _load_lexicon_from(path: str) -> Dict[str, List[Tuple[Tag, List[SubType]]]]:
+    """Shared loader body for the English/Spanish open-class lexicons.
 
     Enum names unknown to this build (schema drift) are skipped per-entry
-    rather than failing the load."""
+    rather than failing the load. Missing/corrupt file -> empty table (the
+    caller's tagger degrades to its heuristics, never an error)."""
+    table: Dict[str, List[Tuple[Tag, List[SubType]]]] = {}
+    try:
+        with gzip.open(path, "rb") as f:
+            raw = json.load(f)
+        for word, entries in raw.items():
+            parsed = []
+            for tag_name, subtype_names in entries:
+                try:
+                    parsed.append((Tag[tag_name],
+                                   [SubType[s] for s in subtype_names]))
+                except KeyError:
+                    continue
+            if parsed:
+                table[word] = parsed
+    except (OSError, ValueError):
+        table = {}
+    return table
+
+
+def _load_lexicon() -> Dict[str, List[Tuple[Tag, List[SubType]]]]:
+    """Lazy-load the generated English open-class lexicon (stdlib only, one time)."""
     global _lexicon
     if _lexicon is None:
-        table: Dict[str, List[Tuple[Tag, List[SubType]]]] = {}
-        try:
-            with gzip.open(_LEXICON_PATH, "rb") as f:
-                raw = json.load(f)
-            for word, entries in raw.items():
-                parsed = []
-                for tag_name, subtype_names in entries:
-                    try:
-                        parsed.append((Tag[tag_name],
-                                       [SubType[s] for s in subtype_names]))
-                    except KeyError:
-                        continue
-                if parsed:
-                    table[word] = parsed
-        except (OSError, ValueError):
-            table = {}
-        _lexicon = table
+        _lexicon = _load_lexicon_from(_LEXICON_PATH)
     return _lexicon
+
+
+def _load_es_lexicon() -> Dict[str, List[Tuple[Tag, List[SubType]]]]:
+    """Lazy-load the generated Spanish open-class lexicon (stdlib only, one time)."""
+    global _es_lexicon
+    if _es_lexicon is None:
+        _es_lexicon = _load_lexicon_from(_ES_LEXICON_PATH)
+    return _es_lexicon
 
 
 def lexicon_entry(text_lower: str) -> Optional[List[Tuple[Tag, List[SubType]]]]:
@@ -66,6 +89,22 @@ def lexicon_subtypes(text_lower: str, tag: Tag) -> List[SubType]:
     """Morphological subtypes the lexicon assigns to ``text_lower`` read as
     ``tag`` (e.g. broken/VERB -> [PAST_PARTICIPLE]); [] if unknown."""
     entry = lexicon_entry(text_lower)
+    if entry:
+        for etag, subs in entry:
+            if etag == tag:
+                return list(subs)
+    return []
+
+
+def es_lexicon_entry(text_lower: str) -> Optional[List[Tuple[Tag, List[SubType]]]]:
+    """The word's Spanish open-class lexicon entries (sense-count-ordered), or None."""
+    return _load_es_lexicon().get(text_lower)
+
+
+def es_lexicon_subtypes(text_lower: str, tag: Tag) -> List[SubType]:
+    """Morphological subtypes the Spanish lexicon assigns to ``text_lower`` read
+    as ``tag``; [] if unknown. Mirrors :func:`lexicon_subtypes`."""
+    entry = es_lexicon_entry(text_lower)
     if entry:
         for etag, subs in entry:
             if etag == tag:
@@ -435,6 +474,26 @@ SPANISH_WORD_TAG_DICT = {
     # LEVANTAR (to get up - reflexive: levantarse)
     "levanto": Tag.VERB, "levantas": Tag.VERB, "levanta": Tag.VERB, "levantamos": Tag.VERB, "levantáis": Tag.VERB, "levantan": Tag.VERB,
 
+    # IR (to go, preterite -- motion template "fue a ...", M-spanish-freeze).
+    # Only the 3rd-person forms the curriculum needs are hand-listed (same
+    # closed-set-of-what's-actually-used rationale as the English verb block
+    # above); full conjugation is explicitly out of scope (see
+    # build_parser_lexicon.py --lang spa's docstring).
+    "fui": Tag.VERB, "fuiste": Tag.VERB, "fue": Tag.VERB,
+    "fuimos": Tag.VERB, "fuisteis": Tag.VERB, "fueron": Tag.VERB,
+    # ENCONTRAR (to find, preterite -- pronoun-find template).
+    "encontré": Tag.VERB, "encontraste": Tag.VERB, "encontró": Tag.VERB,
+    "encontramos": Tag.VERB, "encontrasteis": Tag.VERB, "encontraron": Tag.VERB,
+    # DAR (to give, preterite -- transfer template, GIVE-family excluded per
+    # the dative-"a" ambiguity landmine documented in curriculum2.py; kept
+    # here for completeness/parse-verification only).
+    "di": Tag.VERB, "diste": Tag.VERB, "dio": Tag.VERB,
+    "dimos": Tag.VERB, "disteis": Tag.VERB, "dieron": Tag.VERB,
+    # TOMAR (to take, preterite -- transfer template's TAKE/SOURCE variant,
+    # the one actually used: "de" -> SOURCE has no motion-PLACE ambiguity).
+    "tomé": Tag.VERB, "tomaste": Tag.VERB, "tomó": Tag.VERB,
+    "tomamos": Tag.VERB, "tomasteis": Tag.VERB, "tomaron": Tag.VERB,
+
     # Past participles (can be used as adjectives)
     "leído": Tag.VERB, "leída": Tag.VERB, "leídos": Tag.VERB, "leídas": Tag.VERB,  # read
     "construido": Tag.VERB, "construida": Tag.VERB, "construidos": Tag.VERB, "construidas": Tag.VERB,  # built
@@ -450,10 +509,22 @@ SPANISH_WORD_TAG_DICT = {
     "rápidamente": Tag.ADV, "lentamente": Tag.ADV, "ya": Tag.ADV, "también": Tag.ADV,
     "tampoco": Tag.ADV, "mucho": Tag.ADV, "poco": Tag.ADV,
 
-    # Prepositions
+    # Prepositions ("al"/"del" are the obligatory a+el/de+el contractions --
+    # tagged ADP directly, same as the bare preposition, so normPP1's
+    # PREP+NOUN rule fires with no DET in between, matching what the
+    # contraction already ate).
     "a": Tag.ADP, "de": Tag.ADP, "en": Tag.ADP, "con": Tag.ADP, "por": Tag.ADP,
     "para": Tag.ADP, "sin": Tag.ADP, "sobre": Tag.ADP, "bajo": Tag.ADP,
     "entre": Tag.ADP, "desde": Tag.ADP, "hasta": Tag.ADP, "hacia": Tag.ADP,
+    "al": Tag.ADP, "del": Tag.ADP,
+
+    # Interrogatives (wh-words -- mirrors English's where/when/why/how/who/
+    # what block above). Tagged ADV like their English counterparts so they
+    # map to the same NodeType.SPECIFIER; RELATIVE subtype below is what
+    # english.json's question1/rel1 rulesets key on.
+    "dónde": Tag.ADV, "cuándo": Tag.ADV, "cómo": Tag.ADV, "por qué": Tag.ADV,
+    "qué": Tag.PRON, "quién": Tag.PRON, "quiénes": Tag.PRON, "cuál": Tag.PRON,
+    "cuáles": Tag.PRON, "cuánto": Tag.PRON, "cuánta": Tag.PRON,
 
     # Coordinating conjunctions
     "y": Tag.CCONJ, "o": Tag.CCONJ, "pero": Tag.CCONJ, "ni": Tag.CCONJ,
@@ -747,7 +818,53 @@ SPANISH_WORD_SUBTYPES = {
 
     # Negation
     "nunca": [SubType.NEGATIVE],
+
+    # Interrogatives (RELATIVE, mirrors English's where/when/why/how/who/
+    # what/which/whose block).
+    "dónde": [SubType.RELATIVE], "cuándo": [SubType.RELATIVE],
+    "cómo": [SubType.RELATIVE], "qué": [SubType.RELATIVE],
+    "quién": [SubType.RELATIVE], "quiénes": [SubType.RELATIVE],
+    "cuál": [SubType.RELATIVE], "cuáles": [SubType.RELATIVE],
+
+    # IR (to go) preterite, person/number
+    "fui": [SubType.FIRST_PERSON, SubType.SINGULAR],
+    "fuiste": [SubType.SECOND_PERSON, SubType.SINGULAR],
+    "fue": [SubType.THIRD_PERSON, SubType.SINGULAR],
+    "fuimos": [SubType.FIRST_PERSON, SubType.PLURAL],
+    "fuisteis": [SubType.SECOND_PERSON, SubType.PLURAL],
+    "fueron": [SubType.THIRD_PERSON, SubType.PLURAL],
+
+    # ENCONTRAR (to find) preterite, person/number
+    "encontré": [SubType.FIRST_PERSON, SubType.SINGULAR],
+    "encontraste": [SubType.SECOND_PERSON, SubType.SINGULAR],
+    "encontró": [SubType.THIRD_PERSON, SubType.SINGULAR],
+    "encontramos": [SubType.FIRST_PERSON, SubType.PLURAL],
+    "encontrasteis": [SubType.SECOND_PERSON, SubType.PLURAL],
+    "encontraron": [SubType.THIRD_PERSON, SubType.PLURAL],
+
+    # DAR (to give) preterite, person/number
+    "di": [SubType.FIRST_PERSON, SubType.SINGULAR],
+    "diste": [SubType.SECOND_PERSON, SubType.SINGULAR],
+    "dio": [SubType.THIRD_PERSON, SubType.SINGULAR],
+    "dimos": [SubType.FIRST_PERSON, SubType.PLURAL],
+    "disteis": [SubType.SECOND_PERSON, SubType.PLURAL],
+    "dieron": [SubType.THIRD_PERSON, SubType.PLURAL],
+
+    # TOMAR (to take) preterite, person/number
+    "tomé": [SubType.FIRST_PERSON, SubType.SINGULAR],
+    "tomaste": [SubType.SECOND_PERSON, SubType.SINGULAR],
+    "tomó": [SubType.THIRD_PERSON, SubType.SINGULAR],
+    "tomamos": [SubType.FIRST_PERSON, SubType.PLURAL],
+    "tomasteis": [SubType.SECOND_PERSON, SubType.PLURAL],
+    "tomaron": [SubType.THIRD_PERSON, SubType.PLURAL],
 }
+
+# Inverted question/exclamation marks (Spanish-only; not in string.punctuation,
+# which is ASCII-only) -- must be recognized as PUNCT, same reason English's
+# simple_tag has an all-punctuation guard (see its comment): an unrecognized
+# "¿" would default through every heuristic below to NOUN and become a
+# phantom NOMINAL that can wrongly satisfy a rule's argument slot.
+_ES_PUNCT_EXTRA = "¿¡"
 
 
 def get_possible_tags(word: Word) -> List[Tag]:
@@ -929,15 +1046,31 @@ def simple_tag_spanish(text: str) -> Tag:
     """
     text_lower = text.lower()
 
+    # Punctuation (incl. inverted ¿/¡) -> PUNCT, never an open-class fallback.
+    # See the module-level guard note by _ES_PUNCT_EXTRA and simple_tag's own
+    # comment for why this must run before every other branch.
+    if text and all(ch in string.punctuation or ch in _ES_PUNCT_EXTRA for ch in text):
+        return Tag.PUNCT
+
     # Check Spanish dictionary
     if text_lower in SPANISH_WORD_TAG_DICT:
         return SPANISH_WORD_TAG_DICT[text_lower]
 
-    # Spanish heuristics
-    # Capitalized words → Proper noun
+    # Capitalized words (not sentence-initial in practice; mirrors English's
+    # simple_tag PROPN guard) → Proper noun. Checked BEFORE the lexicon so
+    # names that are also common words stay PROPN.
     if text[0].isupper():
         return Tag.PROPN
 
+    # Open-class Spanish lexicon (generated from OMW-es): entry [0] is the
+    # sense-count-ordered default (see build_parser_lexicon.py --lang spa's
+    # docstring for why this is a weaker MFS proxy than English's frequency
+    # order).
+    entry = es_lexicon_entry(text_lower)
+    if entry:
+        return entry[0][0]
+
+    # Spanish heuristics (unchanged fallback if the lexicon is absent/misses)
     # Ends in -mente → adverb (Spanish)
     if text_lower.endswith("mente"):
         return Tag.ADV
@@ -982,6 +1115,11 @@ def tag_spanish_sentence(sentence: str) -> List[Word]:
             # Add suffix-based subtypes for Spanish
             token_lower = token.lower()
 
+            # Morphological subtypes from the open-class Spanish lexicon
+            for st in es_lexicon_subtypes(token_lower, tag):
+                if st not in subtypes:
+                    subtypes.append(st)
+
             # -ando/-iendo suffix → PARTICIPLE (gerund)
             if token_lower.endswith(("ando", "iendo")) and tag == Tag.VERB:
                 if SubType.PARTICIPLE not in subtypes:
@@ -1014,6 +1152,12 @@ def tag_spanish_words(text_list: List[str]) -> List[Word]:
 
         # Add suffix-based subtypes
         text_lower = text.lower()
+
+        # Morphological subtypes from the open-class Spanish lexicon
+        for st in es_lexicon_subtypes(text_lower, tag):
+            if st not in subtypes:
+                subtypes.append(st)
+
         if text_lower.endswith(("ando", "iendo", "ado", "ido")) and tag == Tag.VERB:
             if SubType.PARTICIPLE not in subtypes:
                 subtypes.append(SubType.PARTICIPLE)

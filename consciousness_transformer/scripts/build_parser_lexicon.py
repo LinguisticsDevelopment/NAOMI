@@ -25,6 +25,34 @@ auxiliaries, prepositions — WordNet doesn't cover them) stay hand-authored in
 WORD_TAG_DICT, which keeps runtime precedence.
 
 Run:  python scripts/build_parser_lexicon.py [--out PATH]
+
+--- Spanish (``--lang spa``), added for the Spanish Freeze Test ---------------
+
+``--lang spa`` builds ``quantum_parser/data/es_lexicon.json.gz`` from OMW's
+Spanish lemma layer (``wn.all_lemma_names(pos=p, lang="spa")`` /
+``wn.synsets(w, pos=p, lang="spa")``) instead of the plain English lemma
+layer -- same recipe (M41), same output schema, different source table. Two
+deliberate scope-narrowings vs. the English build, both because the source
+data doesn't support the English recipe's tricks and are documented here
+rather than silently approximated:
+
+1. **No corpus frequency.** OMW-es lemmas don't carry SemCor-style
+   ``lemma.count()`` (it is always 0 for a non-English lemma), so entries
+   are ordered by sense-count alone (still deterministic, just a weaker
+   MFS proxy than English's frequency-weighted order).
+2. **No verb-conjugation generation.** English's ``third_sg``/``ing_form``/
+   ``past_form`` regular-inflection rules and the irregular ``exc`` map are
+   English morphology; Spanish conjugation (person/number/tense/mood) is a
+   different, much larger system this script does not attempt. Only a
+   simple regular NOUN pluralization is generated for Spanish (``+s`` after
+   a vowel, ``+es`` after a consonant — the standard rule, exceptions
+   unhandled). The few conjugated verb forms the Spanish curriculum
+   templates need stay hand-authored in ``pos_tagger.SPANISH_WORD_TAG_DICT``
+   (closed-class precedence, same as English's determiners/pronouns/aux).
+
+``_ok_word`` also drops the ``isascii()`` requirement for ``--lang spa`` (own
+branch) so accented letters (á é í ó ú ñ ü ü) survive — English's ASCII-only
+check is untouched.
 """
 
 from __future__ import annotations
@@ -46,8 +74,16 @@ _VOWELS = set("aeiou")
 WN_POS_TO_TAG = {"n": "NOUN", "v": "VERB", "a": "ADJ", "s": "ADJ", "r": "ADV"}
 
 
-def _ok_word(w: str) -> bool:
+def _ok_word(w: str, lang: str = "eng") -> bool:
+    if lang == "spa":
+        return w.isalpha() and len(w) > 1  # accented letters allowed
     return w.isalpha() and w.isascii() and len(w) > 1
+
+
+def _es_plural(noun: str) -> str:
+    """Regular Spanish noun pluralization (standard rule; exceptions unhandled,
+    documented at module level): vowel-final -> +s, consonant-final -> +es."""
+    return noun + "s" if noun[-1] in "aeiouáéíóú" else noun + "es"
 
 
 def _doubles_final(base: str) -> bool:
@@ -90,7 +126,7 @@ def past_form(verb: str) -> str:
     return verb + "ed"
 
 
-def build() -> dict:
+def build(lang: str = "eng") -> dict:
     # word -> tag -> [freq, set(subtypes)]
     acc: dict = defaultdict(lambda: defaultdict(lambda: [0, set()]))
 
@@ -99,45 +135,59 @@ def build() -> dict:
         cell[0] += freq
         cell[1].update(subtypes)
 
-    # -- base lemmas, frequency-weighted --------------------------------------
+    # -- base lemmas, frequency-weighted (eng) / sense-count-weighted (spa) ----
     for pos in ("n", "v", "a", "r"):
         tag = WN_POS_TO_TAG[pos]
-        for lemma_name in wn.all_lemma_names(pos=pos):
+        lemma_names = (wn.all_lemma_names(pos=pos, lang=lang) if lang != "eng"
+                       else wn.all_lemma_names(pos=pos))
+        for lemma_name in lemma_names:
             w = lemma_name.lower()
-            if not _ok_word(w):
+            if not _ok_word(w, lang):
                 continue
             freq = 0
             n_senses = 0
-            for syn in wn.synsets(w, pos=pos):
-                for lem in syn.lemmas():
+            synsets = wn.synsets(w, pos=pos, lang=lang) if lang != "eng" else wn.synsets(w, pos=pos)
+            for syn in synsets:
+                lemmas = syn.lemmas(lang=lang) if lang != "eng" else syn.lemmas()
+                for lem in lemmas:
                     if lem.name().lower() == w:
-                        freq += lem.count()
+                        # lem.count() is SemCor English-only; always 0 for spa
+                        # (documented at module level -- sense-count is the
+                        # whole ordering signal for non-English lemmas).
+                        freq += lem.count() if lang == "eng" else 0
                         n_senses += 1
             add(w, tag, freq * 10 + n_senses)  # counts dominate; senses break ties
 
-    # -- irregular inflections from WordNet's exception lists ------------------
-    # exc maps inflected -> base ("came" -> "come", "children" -> "child")
-    for pos, tag, subtypes in (("n", "NOUN", ("PLURAL",)),
-                               ("v", "VERB", ("PAST_PARTICIPLE",))):
-        for inflected, bases in wn._exception_map[pos].items():
-            w = inflected.lower()
-            if not _ok_word(w):
-                continue
-            base_freq = max(
-                (acc[b.lower()][tag][0] for b in bases if b.lower() in acc), default=1
-            )
-            add(w, tag, max(base_freq, 1), subtypes)
+    if lang == "eng":
+        # -- irregular inflections from WordNet's exception lists --------------
+        # exc maps inflected -> base ("came" -> "come", "children" -> "child")
+        for pos, tag, subtypes in (("n", "NOUN", ("PLURAL",)),
+                                   ("v", "VERB", ("PAST_PARTICIPLE",))):
+            for inflected, bases in wn._exception_map[pos].items():
+                w = inflected.lower()
+                if not _ok_word(w):
+                    continue
+                base_freq = max(
+                    (acc[b.lower()][tag][0] for b in bases if b.lower() in acc), default=1
+                )
+                add(w, tag, max(base_freq, 1), subtypes)
 
-    # -- regular inflections generated from base lemmas ------------------------
-    nouns = [(w, tags["NOUN"][0]) for w, tags in list(acc.items()) if "NOUN" in tags]
-    verbs = [(w, tags["VERB"][0]) for w, tags in list(acc.items()) if "VERB" in tags]
-    for w, freq in nouns:
-        add(plural(w), "NOUN", max(freq, 1), ("PLURAL",))
-    for w, freq in verbs:
-        f = max(freq, 1)
-        add(third_sg(w), "VERB", f, ("THIRD_PERSON", "SINGULAR"))
-        add(ing_form(w), "VERB", f, ("PARTICIPLE",))
-        add(past_form(w), "VERB", f, ("PAST_PARTICIPLE",))
+        # -- regular inflections generated from base lemmas ---------------------
+        nouns = [(w, tags["NOUN"][0]) for w, tags in list(acc.items()) if "NOUN" in tags]
+        verbs = [(w, tags["VERB"][0]) for w, tags in list(acc.items()) if "VERB" in tags]
+        for w, freq in nouns:
+            add(plural(w), "NOUN", max(freq, 1), ("PLURAL",))
+        for w, freq in verbs:
+            f = max(freq, 1)
+            add(third_sg(w), "VERB", f, ("THIRD_PERSON", "SINGULAR"))
+            add(ing_form(w), "VERB", f, ("PARTICIPLE",))
+            add(past_form(w), "VERB", f, ("PAST_PARTICIPLE",))
+    else:
+        # Spanish: regular noun pluralization only (see module docstring for
+        # why verb conjugation generation is out of scope for this script).
+        nouns = [(w, tags["NOUN"][0]) for w, tags in list(acc.items()) if "NOUN" in tags]
+        for w, freq in nouns:
+            add(_es_plural(w), "NOUN", max(freq, 1), ("PLURAL",))
 
     # -- serialize: per word, tags ordered by descending frequency -------------
     out = {}
@@ -149,22 +199,28 @@ def build() -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    default_out = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                               "..", "..", "quantum_parser", "data", "en_lexicon.json.gz")
-    ap.add_argument("--out", default=default_out)
+    ap.add_argument("--lang", choices=["eng", "spa"], default="eng")
+    ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
-    lex = build()
-    payload = json.dumps(lex, sort_keys=True, separators=(",", ":")).encode()
-    os.makedirs(os.path.dirname(args.out), exist_ok=True)
-    with gzip.GzipFile(args.out, "wb", mtime=0) as f:  # mtime=0 -> reproducible bytes
+    out_name = "en_lexicon.json.gz" if args.lang == "eng" else "es_lexicon.json.gz"
+    default_out = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "..", "..", "quantum_parser", "data", out_name)
+    out_path = args.out or default_out
+
+    lex = build(args.lang)
+    payload = json.dumps(lex, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with gzip.GzipFile(out_path, "wb", mtime=0) as f:  # mtime=0 -> reproducible bytes
         f.write(payload)
 
     fp = hashlib.sha256(payload).hexdigest()[:16]
     n_multi = sum(1 for v in lex.values() if len(v) > 1)
-    print(f"entries: {len(lex)}  multi-POS: {n_multi}  "
-          f"gz size: {os.path.getsize(args.out) / 1e6:.2f} MB  fingerprint: {fp}")
-    for probe in ("shed", "moved", "broken", "thinks", "knows", "zeppelin", "bank"):
+    print(f"lang: {args.lang}  entries: {len(lex)}  multi-POS: {n_multi}  "
+          f"gz size: {os.path.getsize(out_path) / 1e6:.2f} MB  fingerprint: {fp}")
+    probes = ("shed", "moved", "broken", "thinks", "knows", "zeppelin", "bank") \
+        if args.lang == "eng" else ("jardín", "cocina", "pelota", "casa", "gato", "perro")
+    for probe in probes:
         print(f"  {probe}: {lex.get(probe)}")
 
 
