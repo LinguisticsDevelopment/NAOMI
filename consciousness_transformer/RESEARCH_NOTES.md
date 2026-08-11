@@ -2878,3 +2878,34 @@ as interchangeable perception front-ends — survives its first measured
 contact. Week-5 Aurora multilingual plans are GO-flavored pending the
 synset-alignment fix + a true frozen-model comparison once checkpointing
 lands.
+
+### M57a — entity-instance subsystem built: registry + attribute facts + provenance (BUILT, Sonnet agent, director-verified)
+
+The v2 addendum's instantiation design, first half, as pure deterministic
+membrane-side engineering (no training): `src/nsm_ct/instances.py` + 16
+tests. Schema decision on record (CLAUDE.md): knowledge in the tensor,
+enumeration in the registry, audit in the log.
+
+- InstanceRegistry mints FRESH seeded-RNG atoms (not codec-hashed from
+  the name — that hash IS the defect being fixed): mary#1 ≠ mary#2,
+  deterministic per seed, near-orthogonality regression-gated.
+- Attribute facts are ordinary entity_memory writes: instance ⊗
+  attr:<name> (codec filler, same as rel:) ⊗ value. Roundtrip argmax
+  100% with 5 instances × 3 attributes superposed in one dim-48 tensor.
+- candidates_for = enumerate-and-score by attribute match — "mary" →
+  both Marys (2-candidate set), "the doctor" → kind=doctor instances —
+  with a thin to_candidate_set adapter onto the EXISTING membrane
+  CandidateSet/resolver contract (membrane.py stays torch-free per its
+  own constraint). inverse_query ("who is a doctor?") is the same
+  machinery unthresholded, margins clean in tests.
+- ProvenanceLog: append-only frozen-dataclass records (source, language,
+  timestamp, trust, step) per gated write — invariant #4's auditable
+  record lives HERE; the superposed tensor cannot carry it. Timestamps
+  caller-supplied, never wall-clock.
+
+Suite: 16/16 new, full 798 passed / 2 env-gated skips (19m20s), director
+re-ran new file + resolver/tpr/membrane subset independently. Next:
+M57b resolver-driven write-back ("she is tall" writes to MARY's node;
+gate = no-gold inference test) — the registry threading note is in the
+agent's report: clause_reactor grounds candidate keys via codec fillers
+today; instance ids ground via registry.lookup instead.
