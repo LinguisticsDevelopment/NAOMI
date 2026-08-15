@@ -1034,6 +1034,218 @@ def nearest_entity_baseline(episodes: List[Episode]) -> Dict[str, float]:
 
 
 # ---------------------------------------------------------------------------
+# M57b -- resolver-driven write-BACK curriculum (CLAUDE.md's M57
+# memory-schema decision). :class:`PronounCurriculumGenerator` above tests
+# whether the collapsed resolver choice can redirect a WRITE's VALUE ("she
+# found the ball ." -> WHERE is the ball, resolved from the antecedent's own
+# place). This generator tests the opposite direction: whether the
+# collapsed choice can redirect the write's ADDRESS -- "she is tall ." must
+# write to the referent's OWN node (mary's), not to a fixed pronoun-mention
+# placeholder, or a later question naming mary directly ("what is mary
+# like ?") reads back nothing.
+#
+# v2 REDESIGN (fixes a full-scale leak the v1 shape had -- see
+# RESEARCH_NOTES M57b): v1 always asked about the pronoun's TRUE referent
+# ("target_name == antecedent_name", always), so the pronoun sentence's own
+# stated attribute was ALWAYS the answer -- a GRU could carry that value from
+# the pronoun step straight through to the question step and answer
+# correctly with NO binding at all (measured, full scale: a CHEAT arm with
+# candidate sets stripped entirely, and a WRONG-BINDING arm with only the
+# resolver's aux-loss target corrupted, BOTH scored 1.000 on write-back
+# questions). v2 closes this two ways at once:
+#
+#   1. Every entity now gets its OWN named attribute statement FIRST
+#      ("mary is kind .", "john is strong ."), and the pronoun statement
+#      comes LAST ("she is tall .") -- its write OVERWRITES the referent's
+#      earlier named attribute at the SAME (entity, rel:ATTR) address (the
+#      reactor's own learned overwrite gate does this; nothing here
+#      special-cases it -- see :func:`nsm_ct.clause_reactor._writeback_steps`
+#      below). The referent's earlier (now-stale) value is retained in
+#      ``ep.meta["stale_attr"]`` and is ALWAYS one of the multiple-choice
+#      options -- it is the signature wrong answer a failed redirect (or a
+#      GRU merely carrying the pronoun step's value forward without binding)
+#      would produce.
+#   2. The question no longer always asks about the referent: ``target_name``
+#      is sampled UNIFORMLY over BOTH entities. When it names the referent,
+#      the answer is the PRONOUN's overwrite value (answerable only via a
+#      correct address redirect); when it names the other entity, the
+#      answer is that entity's OWN (never-overwritten) named attribute -- a
+#      control condition requiring no redirect at all, so the SAME question
+#      template can't be answered by a single fixed "always echo the
+#      pronoun's value" shortcut.
+#
+# Same anti-recency-style discipline as PronounCurriculumGenerator: gender
+# picks which of name_a/name_b the pronoun refers to (an internal counter
+# alternates which slot -- first or second introduced -- is the antecedent,
+# so recency alone can never fully predict the answer either).
+#
+# Design law (CLAUDE.md: "the gold-determinant must not itself be
+# answer-predictive"): TWO features select the READING here, and NEITHER may
+# predict the ANSWER VALUE --
+#   - GENDER (which name the pronoun picks out as the referent);
+#   - target selection (``question_targets_referent`` -- whether the
+#     question asks about the referent or the other entity).
+# The three attribute values in play (``stale_attr``/``other_attr``/
+# ``pronoun_attr``) are drawn by ``self.rng.sample(_ATTR_VALUES, 3)`` AFTER
+# gender/antecedent and target are both chosen, from the SAME fixed word
+# pool, WITHOUT ever consulting gender, name identity, antecedent-recency, or
+# target selection. This makes the joint draw a literal product distribution
+# by construction: P(answer | gender) == P(answer | question_targets_referent)
+# == P(answer) for every value in the pool, since the RNG call that picks the
+# attribute triple never branches on either determinant at all -- zero
+# mutual information, not an approximation (verified empirically in
+# tests/test_writeback.py's determinant/answer independence check, since
+# "the code never reads the value" is easy to state but the test is what
+# actually catches a future edit that breaks this).
+#
+# Validity machinery (replacing v1's ``wrong_binding`` aux-gold-corruption
+# arm -- see :class:`nsm_ct.clause_reactor.ClauseBatch`'s
+# ``cand_forced_index`` field, :meth:`nsm_ct.clause_reactor.ClauseReactor.
+# _collapse`'s teacher-forcing paragraph, and
+# ``scripts/train_writeback.py``'s ``--force-binding {gold,wrong}``): this
+# generator carries NO wrong-binding flag of its own anymore --
+# ``ep.meta["gold_antecedent"]`` is ALWAYS the true referent. Forcing the
+# collapse to the wrong candidate now happens at COLLAPSE time (a
+# teacher-forced one-hot weight, independent of the resolver's own logits
+# AND of the curriculum's gold_index), not by lying to the resolver's own
+# supervision target -- task pressure simply overrode that corrupted target
+# (measured: v1's wrong_binding arm ALSO scored 1.000 -- corrupting only the
+# aux loss's target was insufficient; only forcing the COLLAPSE ITSELF
+# closes the gap honestly).
+#
+# No parser dependency (:func:`nsm_ct.clause_reactor._writeback_steps`
+# builds every triple straight from ``ep.meta``, like the L9-11 reasoning
+# stream) -- ``context``/``question`` strings here exist for
+# readability/provenance only, mirroring how :func:`_reasoning_steps` treats
+# its own episodes' text. See that function's docstring for why: an
+# attribute VALUE is a genuine adjective, and quantum_parser's tagger is
+# noun-lexicon-biased (curriculum2.py's own "fred" landmine note above), so
+# betting a new sentence shape's parse reliability against the one thing
+# THIS milestone is meant to test would be a needless risk.
+# ---------------------------------------------------------------------------
+_ATTR_VALUES: List[str] = ["tall", "quiet", "clever", "brave", "curious", "gentle"]
+
+
+class WriteBackCurriculumGenerator:
+    """M57b write-back episodes (v2): resolver-driven ADDRESS redirection.
+
+    Episode shape:
+        "{name_a} went to the {place_a} ."
+        "{name_b} went to the {place_b} ."
+        "{antecedent_name} is {stale_attr} ."   -- referent's OWN named attribute
+        "{other_name} is {other_attr} ."        -- other entity's OWN (persisting) named attribute
+        "{pronoun} is {pronoun_attr} ."         -- the write-back collapse step: OVERWRITES
+                                                     the referent's rel:ATTR slot
+        Q: "what is {target_name} like ?"        (target_name sampled uniformly
+                                                     over {antecedent_name, other_name})
+
+    Answer key: if ``target_name`` is the referent, the answer is
+    ``pronoun_attr`` (answerable only via a correct address redirect +
+    overwrite); otherwise it's ``other_attr`` (the other entity's own,
+    never-overwritten attribute -- a redirect-free control condition). See
+    the module docstring above for the full v2 leak-fix rationale and its
+    design-law argument.
+
+    ``female_names``/``male_names`` (default ``None`` = the module pools)
+    mirror :class:`PronounCurriculumGenerator`'s own held-out-name-ablation
+    override for the same reason (a future M57-family ablation may want
+    train/held-out name splits without touching this generator's internals).
+    """
+
+    def __init__(self, num_options: int = 4, seed: int = 0, *,
+                 female_names: Optional[List[str]] = None,
+                 male_names: Optional[List[str]] = None) -> None:
+        self.num_options = num_options
+        self.rng = random.Random(seed)
+        self._count = 0
+        self._female_names = list(female_names) if female_names is not None else _FEMALE_NAMES
+        self._male_names = list(male_names) if male_names is not None else _MALE_NAMES
+
+    def _mc_attrs(self, answer: str, required: List[str]):
+        opts = list(dict.fromkeys([answer, *required]))
+        pool = [a for a in _ATTR_VALUES if a not in opts]
+        while len(opts) < self.num_options and pool:
+            opts.append(pool.pop(self.rng.randrange(len(pool))))
+        opts = opts[: self.num_options]
+        self.rng.shuffle(opts)
+        return opts, opts.index(answer)
+
+    def _episode(self) -> Episode:
+        antecedent_first = (self._count % 2 == 0)   # alternate -> exact >=50% anti-recency
+        self._count += 1
+
+        gender = self.rng.choice(["F", "M"])
+        pronoun = "she" if gender == "F" else "he"
+        female_name = self.rng.choice(self._female_names)
+        male_name = self.rng.choice(self._male_names)
+        antecedent_name = female_name if gender == "F" else male_name
+        other_name = male_name if gender == "F" else female_name
+        name_a, name_b = ((antecedent_name, other_name) if antecedent_first
+                          else (other_name, antecedent_name))
+
+        place_a, place_b = self.rng.sample(_PLACES, 2)
+
+        # Three distinct attribute draws, independent of gender/antecedent-
+        # recency/target-selection -- see the module note above for the
+        # zero-MI-by-construction argument. stale_attr: the referent's own
+        # named (soon overwritten) attribute; other_attr: the other entity's
+        # own (persisting) named attribute; pronoun_attr: the write-back
+        # overwrite value.
+        stale_attr, other_attr, pronoun_attr = self.rng.sample(_ATTR_VALUES, 3)
+
+        # Which entity the question asks about -- sampled UNIFORMLY,
+        # independent of gender/attribute draws (the second half of the
+        # design law: not only WHO the pronoun refers to, but WHICH entity
+        # gets asked about, must carry zero information about the answer).
+        target_name = self.rng.choice([antecedent_name, other_name])
+        targets_referent = target_name == antecedent_name
+        answer = pronoun_attr if targets_referent else other_attr
+
+        context = [
+            f"{name_a} went to the {place_a} .",
+            f"{name_b} went to the {place_b} .",
+            f"{antecedent_name} is {stale_attr} .",
+            f"{other_name} is {other_attr} .",
+            f"{pronoun} is {pronoun_attr} .",
+        ]
+        options, idx = self._mc_attrs(answer, [stale_attr, other_attr, pronoun_attr])
+        return Episode(
+            context=context, question=f"what is {target_name} like ?",
+            answer_text=answer, options=options, answer_idx=idx, level=15,
+            meta={
+                "src": "curriculum2", "kind": "writeback",
+                "name_a": name_a, "name_b": name_b,
+                "place_a": place_a, "place_b": place_b,
+                "pronoun": pronoun,
+                "gold_antecedent": antecedent_name,   # ALWAYS the true referent (v2: no wrong_binding flag)
+                "true_antecedent": antecedent_name,
+                "other_entity": other_name,
+                "stale_attr": stale_attr,
+                "other_attr": other_attr,
+                "pronoun_attr": pronoun_attr,
+                "target_name": target_name,
+                "question_targets_referent": targets_referent,
+                "pronoun_sentence_index": 4,
+                "antecedent_recency": "old" if antecedent_first else "recent",
+                "registry_order": [name_a, name_b],
+            },
+        )
+
+    def generate(self, n: int) -> List[Episode]:
+        return [self._episode() for _ in range(n)]
+
+
+def generate_writeback_episodes(n: int, seed: int = 0, num_options: int = 4, *,
+                                 female_names: Optional[List[str]] = None,
+                                 male_names: Optional[List[str]] = None) -> List[Episode]:
+    """``n`` M57b write-back episodes, deterministic given ``(n, seed,
+    num_options, female_names, male_names)``. See
+    :class:`WriteBackCurriculumGenerator`."""
+    return WriteBackCurriculumGenerator(num_options=num_options, seed=seed,
+                                         female_names=female_names, male_names=male_names).generate(n)
+
+
+# ---------------------------------------------------------------------------
 # M54b -- entity-keyed, binding-critical sense-ambiguity curriculum.
 #
 # RESEARCH_NOTES.md M54's finding: the M32/episode.py ambiguity curriculum

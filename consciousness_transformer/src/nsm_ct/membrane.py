@@ -117,12 +117,25 @@ class EntityCandidateSet(CandidateSet):
     mention's feature against each candidate's. ``None`` (not an empty
     array) when ``candidates`` is empty, mirroring ``feature``'s own
     Optional contract -- keeps every pre-M56b caller that never reads this
-    field untouched."""
+    field untouched.
+
+    M57b (resolver-driven write-BACK, CLAUDE.md's M57 memory-schema
+    decision): ``addr_redirect`` -- default ``False``, byte-identical for
+    every pre-M57b caller (M53a/M53b's pronoun-antecedent-for-a-VALUE sets,
+    e.g. "she found the ball .", never touch this flag) -- marks a candidate
+    set whose resolved choice must redirect the WRITE ADDRESS instead of the
+    value ("she is tall ." must write to the referent's OWN node, not to a
+    fixed pronoun-mention placeholder). Read by
+    :func:`nsm_ct.clause_reactor.build_clause_batch` to populate
+    ``ClauseBatch.cand_addr_mask`` -- see that field's docstring and
+    :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse` for the
+    address-vs-value split this flag drives."""
 
     surface: str = ""
     feature: Optional[np.ndarray] = None
     gold_index: Optional[int] = None
     cand_features: Optional[np.ndarray] = None
+    addr_redirect: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -267,7 +280,8 @@ def entity_registry(context_sentences: List[str], parser) -> List[str]:
 
 def pronoun_entity_candidate_set(pronoun: str, registry: List[str], *,
                                   gold_antecedent: Optional[str] = None,
-                                  provenance: Optional[Dict[str, object]] = None
+                                  provenance: Optional[Dict[str, object]] = None,
+                                  addr_redirect: bool = False,
                                   ) -> EntityCandidateSet:
     """The v1 "entity" IN-row for one pronoun mention: a uniform structural
     prior over every entity in ``registry`` (introduced earlier in the
@@ -275,7 +289,9 @@ def pronoun_entity_candidate_set(pronoun: str, registry: List[str], *,
     (M53a placeholder) the gold index -- ``None`` if ``gold_antecedent``
     isn't among the candidates (an unresolvable/OPEN case; the real v1
     design's answer for that is the caution dial + abstain atoms, not
-    built here)."""
+    built here). ``addr_redirect`` (M57b, default ``False``) forwards
+    straight to :attr:`EntityCandidateSet.addr_redirect` -- see that
+    field's docstring."""
     n = max(len(registry), 1)
     candidates = [Candidate(key=name, prior=1.0 / n) for name in registry]
     gold_index = registry.index(gold_antecedent) if gold_antecedent in registry else None
@@ -295,6 +311,7 @@ def pronoun_entity_candidate_set(pronoun: str, registry: List[str], *,
         feature=mention_feature_vector(pronoun),
         gold_index=gold_index,
         cand_features=cand_features,
+        addr_redirect=addr_redirect,
     )
 
 

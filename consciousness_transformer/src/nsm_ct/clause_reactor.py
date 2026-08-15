@@ -507,6 +507,181 @@ def _garden_path_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, n
     return steps, hyp_cand_sets
 
 
+# M57b (resolver-driven write-BACK, CLAUDE.md's M57 memory-schema decision):
+# a WriteBackCurriculumGenerator episode (curriculum2.py -- gated on
+# ep.meta["kind"] == "writeback", a key no other generator sets). Mirrors
+# :func:`_reasoning_steps` in ONE respect that matters a lot here: it takes
+# NO ``parser`` argument at all and never calls one -- every triple is built
+# straight from ``ep.meta``, exactly like the L9-11 reasoning stream. Unlike
+# ``_pronoun_context_step``/``_ambiguity_steps``/``_garden_path_steps`` (which
+# all lean on the real parser to extract SUBJECT/OBJECT/PLACE roles from a
+# sentence), a write-back episode's ``ep.context``/``ep.question`` strings
+# exist for HUMAN READABILITY / provenance only -- they are never parsed.
+# This sidesteps a real risk the pronoun-FIND template doesn't have: an
+# attribute assertion's stated VALUE ("tall", "quiet", ...) is a genuine
+# adjective, and quantum_parser's POS lexicon is WordNet-noun-biased (see
+# curriculum2.py's own "fred" landmine note) -- there was no upside in
+# betting a new sentence shape's parse reliability against the one thing
+# this milestone is actually supposed to test (address redirection).
+#
+# The write-back triple itself (v2 -- see WriteBackCurriculumGenerator's own
+# docstring for the full context shape: every entity gets a named attribute
+# statement first, the pronoun statement comes LAST):
+#   entity   = a PLACEHOLDER mention atom (``_ent_vec(pronoun, ...)`` --
+#              "she"/"he" are not curriculum names, so this grounds to their
+#              own CONTENT vector, a fixed atom distinct from EVERY var:<name>
+#              atom in the episode). This is the address BEFORE collapse --
+#              deliberately garbage: nothing else in the episode ever writes
+#              to or queries "she"/"he"'s own content vector, so if the
+#              resolver fails to redirect it, the write lands nowhere useful
+#              and the target entity's own rel:ATTR slot keeps its EARLIER
+#              (stale) named-attribute value instead of the overwrite --
+#              exactly the signal the M57b v2 gate checks for.
+#   relation = a NEW, dedicated ``rel:ATTR`` atom (never shared with
+#              rel:PLACE/rel:TRAIT/rel:SENSE/etc.) -- the referent's own
+#              named-attribute step, the write-back step, and the question
+#              step all address it, so a correct redirect is both necessary
+#              AND sufficient for the question to recover the right value,
+#              and the write-back step's redirected write can OVERWRITE the
+#              referent's earlier named-attribute value at that SAME address
+#              (the reactor's own learned overwrite gate does this).
+#   value    = the literally-stated attribute word (``ep.meta
+#              ["pronoun_attr"]``) -- UNTOUCHED by collapse (M57b's "the
+#              clause says WHAT is asserted; the resolver decides WHO it is
+#              about").
+#
+# The candidate set (:func:`nsm_ct.membrane.pronoun_entity_candidate_set`,
+# ``addr_redirect=True``) is built over the SAME two-name registry the write
+# steps below establish (``[name_a, name_b]``, matching
+# ``ep.meta["registry_order"]`` -- :class:`nsm_ct.curriculum2.
+# WriteBackCurriculumGenerator`'s own bookkeeping), so each candidate's own
+# grounded atom (``cand_entity[..., j]`` in the batch) is LITERALLY the same
+# ``var:<name>`` vector the entity's own PLACE fact used to register it --
+# the collapse's address-redirect sum (``Σ w·cand_entity``) can therefore
+# land EXACTLY on the true referent's node, not merely something correlated
+# with it.
+def _writeback_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                      meaning_source: MeaningSource, cheat: bool = False,
+                      no_gold: bool = False, force: Optional[str] = None):
+    """Grounded stream + the write-back step's
+    :class:`membrane.EntityCandidateSet` (``addr_redirect=True``) for one
+    :class:`~nsm_ct.curriculum2.WriteBackCurriculumGenerator` episode (v2
+    shape -- see that class's docstring: every entity gets its own NAMED
+    attribute statement first, the pronoun statement comes LAST and
+    OVERWRITES the referent's).
+
+    ``cheat`` (M57b cheat-baseline arm): when True, the candidate set is
+    dropped entirely (``cand_sets`` returned empty) -- the write-back step
+    still carries the SAME placeholder (garbage) address, but with no
+    candidate data at all the resolver (even if installed) never fires for
+    it, so nothing in the batch can tell the model which node to write to.
+    ``no_gold`` (M57b no-gold eval mode): when True, the candidate set's
+    ``gold_index`` is forced ``None`` (``gold_antecedent=None`` passed to
+    :func:`membrane.pronoun_entity_candidate_set`) regardless of
+    ``ep.meta`` -- candidates + priors + the trained resolver are still
+    fully present, only the supervision target is withheld, mirroring how
+    :func:`membrane.pronoun_entity_candidate_set` already returns
+    ``gold_index=None`` for an unresolvable open case.
+
+    ``force`` (``"gold"`` | ``"wrong"`` | ``None``, replaces v1's
+    ``wrong_binding`` aux-gold-corruption arm): when set, the pronoun step's
+    candidate index to TEACHER-FORCE is recorded in the returned
+    ``forced_map`` (``{step_idx: candidate_index}``) -- ``"gold"`` forces the
+    TRUE referent's index, ``"wrong"`` forces the OTHER candidate's index
+    (there are always exactly two candidates here), computed directly from
+    ``ep.meta["true_antecedent"]``/the registry, independent of
+    ``gold_antecedent`` (so it still works correctly under ``no_gold``).
+    Consumed by :func:`build_clause_batch` to populate
+    ``ClauseBatch.cand_forced_index`` -- see
+    :meth:`ClauseReactor._collapse`'s teacher-forcing paragraph for why this
+    replaces corrupting the resolver's own supervision target (task pressure
+    simply overrode that corrupted target; forcing the COLLAPSE itself
+    cannot be overridden that way). A no-op (``forced_map`` stays empty)
+    when ``cheat`` is True (no candidate set exists to force an index into).
+    """
+    d = codec.dim
+    name_a, name_b = ep.meta["name_a"], ep.meta["name_b"]
+    place_a_word, place_b_word = ep.meta["place_a"], ep.meta["place_b"]
+    pronoun = ep.meta["pronoun"]
+    antecedent_name = ep.meta["true_antecedent"]
+    other_name = ep.meta["other_entity"]
+    stale_attr = ep.meta["stale_attr"]
+    other_attr = ep.meta["other_attr"]
+    pronoun_attr = ep.meta["pronoun_attr"]
+    target_name = ep.meta["target_name"]
+    gold_antecedent = None if no_gold else ep.meta.get("gold_antecedent")
+
+    place_rel = codec.filler_vec("rel:PLACE")
+    attr_rel = codec.filler_vec("rel:ATTR")          # M57b: dedicated, never collides with PLACE/TRAIT/SENSE
+    pred_is = codec.filler_vec("pred:is")
+    q_pred = codec.filler_vec("pred:?")
+    z = np.zeros(d, np.float32)
+
+    name_a_vec = _ent_vec(name_a, resolver, codec, cache, meaning_source)
+    name_b_vec = _ent_vec(name_b, resolver, codec, cache, meaning_source)
+    place_a_vec = _content_vec(place_a_word, resolver, codec, cache, meaning_source)
+    place_b_vec = _content_vec(place_b_word, resolver, codec, cache, meaning_source)
+    pronoun_vec = _ent_vec(pronoun, resolver, codec, cache, meaning_source)   # PLACEHOLDER address, see docstring
+    antecedent_vec = _ent_vec(antecedent_name, resolver, codec, cache, meaning_source)
+    other_name_vec = _ent_vec(other_name, resolver, codec, cache, meaning_source)
+    stale_attr_vec = _ent_vec(stale_attr, resolver, codec, cache, meaning_source)
+    other_attr_vec = _ent_vec(other_attr, resolver, codec, cache, meaning_source)
+    pronoun_attr_vec = _ent_vec(pronoun_attr, resolver, codec, cache, meaning_source)
+    target_vec = _ent_vec(target_name, resolver, codec, cache, meaning_source)
+
+    steps = []
+    # S0/S1: register both named entities with a distinguishing PLACE fact --
+    # the same "own fact establishes the entity as a candidate referent"
+    # convention PronounCurriculumGenerator/_pronoun_context_step already use.
+    steps.append((name_a_vec, place_rel, place_a_vec, pred_is, z, 0))
+    steps.append((name_b_vec, place_rel, place_b_vec, pred_is, z, 0))
+
+    # S2: the referent's OWN named attribute statement ("mary is kind .") --
+    # an ordinary write under rel:ATTR, the SAME relation the pronoun step
+    # (S4) and the question both use, so S4's redirected write can OVERWRITE
+    # this one at the SAME (entity, relation) address. Nothing here
+    # special-cases the overwrite -- the reactor's own learned overwrite
+    # gate (write_gate/overwrite_gate) does it, exactly like any other
+    # repeated assertion about the same slot.
+    steps.append((antecedent_vec, attr_rel, stale_attr_vec, pred_is, z, 0))
+
+    # S3: the OTHER entity's OWN named attribute -- persists untouched
+    # (nothing ever redirects a write to other_name's node), the
+    # redirect-free control condition's answer source.
+    steps.append((other_name_vec, attr_rel, other_attr_vec, pred_is, z, 0))
+
+    # S4: the pronoun-SUBJECT overwrite statement ("she is tall .") -- the
+    # collapse step this whole milestone is about. Placeholder (garbage)
+    # address; the candidate set below carries the real redirect data.
+    pronoun_step_idx = len(steps)
+    steps.append((pronoun_vec, attr_rel, pronoun_attr_vec, pred_is, z, 0))
+
+    # Q: "what is {target_name} like ?" -- queries target_name's OWN
+    # rel:ATTR slot directly (a NAMED entity, never the pronoun's own
+    # placeholder address). WriteBackCurriculumGenerator (v2) samples
+    # target_name UNIFORMLY over both entities: when it's the referent,
+    # answerable ONLY if S4's write actually redirected+overwrote there;
+    # when it's the other entity, answerable from S3 alone (no redirect
+    # needed) -- the control condition that keeps the question template
+    # itself from being a fixed "echo the pronoun's value" shortcut.
+    steps.append((target_vec, attr_rel, z, q_pred, z, 1))
+
+    cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
+    forced_map: Dict[int, int] = {}
+    if not cheat:
+        registry = [name_a, name_b]   # matches ep.meta["registry_order"] (WriteBackCurriculumGenerator)
+        cand = membrane.pronoun_entity_candidate_set(
+            pronoun, registry, gold_antecedent=gold_antecedent,
+            provenance={"sentence_index": pronoun_step_idx, "kind": "writeback"},
+            addr_redirect=True)
+        cand_sets[pronoun_step_idx] = cand
+        if force is not None:
+            true_idx = registry.index(antecedent_name)
+            wrong_idx = 1 - true_idx     # exactly two candidates in this registry
+            forced_map[pronoun_step_idx] = true_idx if force == "gold" else wrong_idx
+    return steps, cand_sets, forced_map
+
+
 # M52 v1 IN table ("queried role"): the relation a question is actually
 # asking about. "has" -> RECIPIENT (who now holds it -- the transfer_who
 # level); "where" -> PLACE, which is ALSO the fallback/default -- every
@@ -627,6 +802,33 @@ class ClauseBatch:
     # clause-level address shared by every candidate in the set.
     hyp_cand_query_entity: Optional[torch.Tensor] = None          # [B, T, C, d]
     hyp_cand_query_relation: Optional[torch.Tensor] = None         # [B, T, C, d]
+    # M57b (resolver-driven write-BACK, CLAUDE.md's M57 memory-schema
+    # decision): ONE new field, kept deliberately separate from every cand_*
+    # tensor above (not folded into cand_gold/cand_mask) so a batch with NO
+    # write-back episode leaves it None -- byte-identical to every pre-M57b
+    # batch, same guarantee every prior addition in this dataclass made for
+    # its own group. Truthy at (row, step) means: THIS step's ENTITY
+    # candidate set (the SAME cand_entity/cand_mask/... group M53a/M53b
+    # already populate -- write-back reuses that group wholesale, it is
+    # not a fourth tensor family) resolves the WRITE ADDRESS ("she is
+    # tall ." -- who does "she" address?), not the value ("she found the
+    # ball ." -- M53a/M53b's existing pronoun-antecedent-for-a-VALUE
+    # convention, untouched). See ClauseReactor._collapse's M57b paragraph
+    # for the arithmetic this drives.
+    cand_addr_mask: Optional[torch.Tensor] = None   # [B, T]  truthy = address-redirect, not value-redirect
+    # M57b (v2 redesign, honest validity machinery replacing the
+    # aux-gold-corruption "wrong_binding" arm): ``cand_forced_index`` --
+    # per (row, step), the ENTITY candidate index to teacher-force the
+    # collapse weights to, overriding the resolver's own logits entirely
+    # (both train and eval) -- ``-1`` = "not forced" (the sentinel, mirrors
+    # ``cand_gold``'s own -1-elsewhere convention). ``None`` (the default)
+    # is byte-identical to an all-``-1`` tensor and to every pre-M57b-v2
+    # batch -- see :meth:`ClauseReactor._collapse`'s teacher-forcing
+    # paragraph. Generic machinery: not specific to write-back or to
+    # address-redirect rows -- any curriculum's step-building code may
+    # populate it (today only :func:`_writeback_steps`/``writeback_force``
+    # does, via :func:`build_clause_batch`).
+    cand_forced_index: Optional[torch.Tensor] = None  # [B, T]  long; forced candidate index, -1 = not forced
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
@@ -653,11 +855,13 @@ class ClauseBatch:
         cand = self._cand_fields(lambda t: t.to(device))
         scand = self._sense_cand_fields(lambda t: t.to(device))
         hcand = self._hyp_cand_fields(lambda t: t.to(device))
+        addr_mask = self.cand_addr_mask.to(device) if self.cand_addr_mask is not None else None
+        forced = self.cand_forced_index.to(device) if self.cand_forced_index is not None else None
         return ClauseBatch(self.entity.to(device), self.relation.to(device),
                            self.value.to(device), self.pred.to(device),
                            self.is_q.to(device), self.mask.to(device),
                            self.options.to(device), self.answer.to(device), coord, ans_ok,
-                           *cand, *scand, *hcand)
+                           *cand, *scand, *hcand, addr_mask, forced)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
@@ -666,16 +870,21 @@ class ClauseBatch:
         cand = self._cand_fields(lambda t: t[idx])
         scand = self._sense_cand_fields(lambda t: t[idx])
         hcand = self._hyp_cand_fields(lambda t: t[idx])
+        addr_mask = self.cand_addr_mask[idx] if self.cand_addr_mask is not None else None
+        forced = self.cand_forced_index[idx] if self.cand_forced_index is not None else None
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
                            self.options[idx], self.answer[idx], coord, ans_ok,
-                           *cand, *scand, *hcand)
+                           *cand, *scand, *hcand, addr_mask, forced)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                         meaning_source: MeaningSource = "usvs",
                         sense_bind: str = "gold",
-                        reading_bind: str = "gold") -> ClauseBatch:
+                        reading_bind: str = "gold",
+                        writeback_cheat: bool = False,
+                        writeback_no_gold: bool = False,
+                        writeback_force: Optional[str] = None) -> ClauseBatch:
     """Encode curriculum episodes into grounded clause-triple streams (fixed).
 
     Each step is ``(entity, relation, value, pred, coord, is_q)``; ``coord`` carries
@@ -741,16 +950,45 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     rides through a THIRD, separate ``hyp_cand_*`` field group (``None`` for
     every episode without a garden-path step -- byte-identical to pre-M55a
     for every existing batch, same guarantee M53a/M54 made for their groups).
+
+    M57b (resolver-driven write-BACK, CLAUDE.md's M57 memory-schema
+    decision): an episode whose meta carries ``kind == "writeback"``
+    (``curriculum2.WriteBackCurriculumGenerator`` only) is routed WHOLESALE
+    through :func:`_writeback_steps` (its own dedicated, parser-free stream
+    -- see that function's docstring for why). Its
+    :class:`nsm_ct.membrane.EntityCandidateSet` (``addr_redirect=True``)
+    rides through the SAME ``cand_*`` fields M53a/M53b's pronoun-antecedent
+    sets already use (NOT a fourth tensor family -- both kinds share one
+    contract, they just differ in what the collapsed choice REDIRECTS), and
+    the new ``cand_addr_mask`` field is set truthy at exactly those steps --
+    ``None`` for every batch with no ``addr_redirect`` candidate set at all,
+    keeping this byte-identical to pre-M57b for every existing batch/level
+    (including plain pronoun-binding batches, which never set
+    ``addr_redirect``). ``writeback_cheat``/``writeback_no_gold`` forward to
+    :func:`_writeback_steps`'s own ``cheat``/``no_gold`` (the M57b
+    cheat-baseline / no-gold-eval arms); both default ``False`` (inert,
+    pre-M57b behavior) and are no-ops for every episode without
+    ``ep.meta["kind"] == "writeback"``. ``writeback_force`` (``"gold"`` |
+    ``"wrong"`` | ``None``, v2's honest validity machinery, replacing the
+    curriculum-level ``wrong_binding`` aux-gold-corruption arm) forwards to
+    :func:`_writeback_steps`'s own ``force`` -- populates the returned
+    batch's ``cand_forced_index`` at the pronoun step, which
+    :meth:`ClauseReactor._collapse` then uses to teacher-force the collapse
+    weights regardless of the resolver's own logits. Default ``None``
+    (inert) leaves ``cand_forced_index`` ``None`` for every batch, same
+    byte-identity guarantee every other optional field here makes.
     """
     cache: Dict[str, np.ndarray] = {}
     d = codec.dim
     q_pred = codec.filler_vec("pred:?")             # the question's (unknown) predicate
     z = np.zeros(d, np.float32)
     rows = []
+    forced_maps: List[Dict[int, int]] = []   # parallel to rows; see ClauseBatch.cand_forced_index
     for ep in episodes:
         cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
         sense_cand_sets: Dict[int, "membrane.SenseCandidateSet"] = {}
         hyp_cand_sets: Dict[int, "membrane.HypothesisCandidateSet"] = {}
+        forced_map: Dict[int, int] = {}
         if getattr(ep, "level", 0) >= 9 and ep.meta.get("query"):
             steps = _reasoning_steps(ep, resolver, codec, cache, meaning_source)   # L9-L11 reasoning stream
         elif ep.meta.get("homograph"):
@@ -759,6 +997,11 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
         elif ep.meta.get("garden_path"):
             steps, hyp_cand_sets = _garden_path_steps(ep, parser, resolver, codec, cache,
                                                         meaning_source, reading_bind)   # M55a/M55b garden-path stream
+        elif ep.meta.get("kind") == "writeback":
+            steps, cand_sets, forced_map = _writeback_steps(
+                ep, resolver, codec, cache, meaning_source,
+                cheat=writeback_cheat, no_gold=writeback_no_gold,
+                force=writeback_force)   # M57b write-back stream (v2)
         else:
             steps = []
             pronoun_idx = ep.meta.get("pronoun_sentence_index")
@@ -782,6 +1025,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
         opt = [_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
         rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0,
                      cand_sets, sense_cand_sets, hyp_cand_sets))
+        forced_maps.append(forced_map)
 
     b = len(rows)
     T = max(len(s) for s, _, _, _, _, _, _ in rows)
@@ -802,6 +1046,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
 
     cand_entity = cand_mask = cand_prior = cand_feature = cand_gold = None
     cand_feature_per_candidate = None
+    cand_addr_mask = None
     if any(cs for *_row, cs, _scs, _hcs in rows):
         Cmax = max((len(cs.candidates) for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values()),
                    default=1) or 1
@@ -833,6 +1078,34 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                     cand_gold[i, t] = cs.gold_index
                 if has_cand_features and cs.cand_features is not None:
                     cand_feature_per_candidate[i, t, :len(cs.candidates)] = torch.from_numpy(cs.cand_features)
+
+        # M57b: only allocated when at least one EntityCandidateSet in this
+        # batch actually carries addr_redirect=True (WriteBackCurriculumGenerator
+        # episodes only) -- mirrors has_cand_features/has_subject's "only if
+        # present" pattern exactly. A batch with only M53a/M53b
+        # value-redirect pronoun sets (addr_redirect always False, the
+        # dataclass default) leaves this None, byte-identical to pre-M57b.
+        has_addr_redirect = any(
+            cs.addr_redirect for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values())
+        if has_addr_redirect:
+            cand_addr_mask = torch.zeros(b, T)
+            for i, (steps, opt, a, ok, cs_map, _scs, _hcs) in enumerate(rows):
+                for t, cs in cs_map.items():
+                    if cs.addr_redirect:
+                        cand_addr_mask[i, t] = 1.0
+
+    # M57b (v2, honest validity machinery): cand_forced_index, built from
+    # forced_maps (parallel to rows, populated only by _writeback_steps'
+    # ``force`` today -- see ClauseBatch's field docstring). Only allocated
+    # when at least one episode's forced_map is non-empty, mirroring every
+    # other "only if present" optional-field pattern in this function --
+    # None (byte-identical to pre-v2/absent) otherwise.
+    cand_forced_index = None
+    if any(forced_maps):
+        cand_forced_index = torch.full((b, T), -1, dtype=torch.long)
+        for i, fm in enumerate(forced_maps):
+            for t, idx in fm.items():
+                cand_forced_index[i, t] = idx
 
     # M54: SAME shape/pattern as the cand_* block above, but for
     # nsm_ct.membrane.SenseCandidateSet -- a wholly SEPARATE tensor group
@@ -929,7 +1202,8 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                        sense_cand_context, sense_cand_gold,
                        sense_cand_subject, sense_cand_subject_rel,
                        hyp_cand_entity, hyp_cand_mask, hyp_cand_prior, hyp_cand_gold,
-                       hyp_cand_query_entity, hyp_cand_query_relation)
+                       hyp_cand_query_entity, hyp_cand_query_relation,
+                       cand_addr_mask, cand_forced_index)
 
 
 # ---------------------------------------------------------------------------
@@ -969,6 +1243,51 @@ class ClauseReactor(nn.Module):
     ``batch.sense_cand_mask`` is set, the sense-collapse branch never
     executes, so a batch/model with no sense involvement is untouched by
     M54 (verified alongside the M53 byte-identity regression).
+
+    M57b (resolver-driven write-BACK, CLAUDE.md's M57 memory-schema
+    decision): the ENTITY branch above (``self.resolver``, M53b) now does
+    TWO different things with its collapse weights depending on
+    ``batch.cand_addr_mask``, instead of always redirecting the value. Per
+    row, at a step with a real candidate set:
+      - ``cand_addr_mask`` falsy (or the whole field ``None`` -- every
+        pre-M57b batch, and M53a/M53b's own pronoun-antecedent-for-a-VALUE
+        sets) -- UNCHANGED: ``v <- Σ w · cand_mem_read`` (the resolved
+        VALUE replaces the placeholder value, e.g. "she found the ball ."
+        resolves WHERE the ball now is).
+      - ``cand_addr_mask`` truthy (write-back sets only) -- ``e <- Σ w ·
+        cand_entity`` (the resolved ADDRESS replaces the placeholder
+        entity -- the candidate atoms themselves, NOT their memory
+        readout, since a candidate's identity IS the address, unlike a
+        value) and ``v`` is left exactly as the batch stated it
+        (the clause asserts WHAT is true; the resolver only decides WHO
+        it is about).
+    Same resolver call, same masking, same soft-train/hard-eval collapse
+    weights either way -- ``cand_addr_mask`` only changes what the
+    ALREADY-COMPUTED weights get applied to. ``_collapse`` now returns the
+    (possibly redirected) entity alongside the value; ``forward`` threads
+    it into both the GRU input and the ``em.write`` call, so an
+    address-redirected write actually lands on the resolved node instead
+    of the step's own placeholder address. Resolver logits/margins are
+    recorded identically for address- and value-redirect steps (same
+    output keys, ``resolver_logits``/``resolver_margin``) -- a gold_index
+    aux loss supervises both the same way. A batch whose
+    ``cand_addr_mask`` is ``None`` (every pre-M57b batch) or all-falsy
+    reproduces the pre-M57b arithmetic exactly (regression-tested
+    alongside the M53 byte-identity check, see tests/test_writeback.py).
+
+    M57b v2 (RESEARCH_NOTES M57b, replacing the curriculum-level
+    ``wrong_binding`` aux-gold-corruption arm, which task pressure simply
+    overrode): ``batch.cand_forced_index`` -- per (row, step), ``-1`` = "not
+    forced" -- TEACHER-FORCES the entity branch's collapse weights ``w`` to
+    a one-hot at the given candidate index, REGARDLESS of the resolver's
+    own logits, in BOTH train and eval mode, for addr-redirect AND
+    value-redirect rows alike (generic machinery, not write-back-specific).
+    The resolver's real logits/margin are still computed and recorded
+    unchanged -- forcing only overrides what the collapse weights are
+    applied to, never what the aux loss/eval diagnostics see. ``None``
+    (every pre-v2 batch, and every batch built without
+    ``writeback_force=``) is byte-identical to an all-``-1`` tensor and to
+    this field being entirely absent.
     """
 
     def __init__(self, dim: int, hidden: int = 128, resolver: Optional[Resolver] = None,
@@ -1015,19 +1334,21 @@ class ClauseReactor(nn.Module):
         return margin
 
     def _collapse(self, memory: torch.Tensor, state: torch.Tensor, mem_read: torch.Tensor,
-                  r: torch.Tensor, v: torch.Tensor, batch: ClauseBatch, t: int):
-        """M53b/M54 collapse step for step ``t``: resolves ENTITY candidates
-        (M53b, arithmetic UNCHANGED from pre-M54) and then SENSE candidates
-        (M54, new) against the (possibly entity-collapsed) value. The two
-        kinds are always on DISJOINT (row, step) entries in every M54
-        curriculum (an ambiguity episode's step never also carries a pronoun
-        candidate set), so applying them in sequence is safe: each only
-        touches rows where its own ``has_cand`` is true, via ``torch.where``.
-        Returns ``(value, ent_logits, ent_margin, sense_logits, sense_margin,
-        hyp_logits, hyp_margin)`` -- any of the last six is ``None`` exactly
-        when the corresponding resolver/candidate data is absent (mirrors
-        the pre-M54 ``(v, None, None)`` contract for the no-resolver case
-        component-wise).
+                  e: torch.Tensor, r: torch.Tensor, v: torch.Tensor, batch: ClauseBatch, t: int):
+        """M53b/M54/M57b collapse step for step ``t``: resolves ENTITY
+        candidates (M53b/M57b) and then SENSE candidates (M54) against the
+        (possibly entity-collapsed) value, plus M55a's hypothesis branch.
+        The candidate kinds are always on DISJOINT (row, step) entries in
+        every curriculum (an ambiguity episode's step never also carries a
+        pronoun candidate set), so applying them in sequence is safe: each
+        only touches rows where its own ``has_cand`` is true, via
+        ``torch.where``. Returns ``(entity, value, ent_logits, ent_margin,
+        sense_logits, sense_margin, hyp_logits, hyp_margin)`` -- any of the
+        last six is ``None`` exactly when the corresponding
+        resolver/candidate data is absent (mirrors the pre-M54 ``(v, None,
+        None)`` contract for the no-resolver case component-wise); ``entity``
+        is ``e`` UNCHANGED whenever no address-redirect row applies (see the
+        ENTITY branch below and the M57b class-docstring paragraph).
 
         M55a's hypothesis branch (new) is arithmetically the ENTITY branch's
         twin, not the sense branch's: each candidate's per-candidate ``Addr``
@@ -1087,8 +1408,41 @@ class ClauseReactor(nn.Module):
             logits = logits.masked_fill(cm_t <= 0, -1e9)
             has_cand = cm_t.sum(-1) > 0                                          # [B]
             w = self._collapse_weights(logits, self.training)
+            # M57b (v2, honest validity machinery -- replaces corrupting the
+            # curriculum's own gold_index, which task pressure could simply
+            # override): ``cand_forced_index`` (per (row, step), ``-1`` =
+            # "not forced") TEACHER-FORCES the collapse weights to a one-hot
+            # at the given candidate index, REGARDLESS of the resolver's own
+            # logits -- identically in train and eval mode, and identically
+            # for addr-redirect and value-redirect rows (this override
+            # happens before the addr/value split below, so both branches
+            # see the SAME forced ``w``). ``logits``/``ent_margin`` below are
+            # still computed from the resolver's REAL (unforced) prediction
+            # -- forcing only changes what ``w`` gets applied to, not what is
+            # recorded for the aux loss / eval diagnostics.
+            if batch.cand_forced_index is not None:
+                forced_t = batch.cand_forced_index[:, t]                        # [B] long, -1 = not forced
+                forced_valid = has_cand & (forced_t >= 0)
+                C = w.shape[-1]
+                forced_onehot = F.one_hot(forced_t.clamp(min=0), num_classes=C).to(w.dtype)
+                w = torch.where(forced_valid.unsqueeze(-1), forced_onehot, w)
             resolved_v = (w.unsqueeze(-1) * cand_mem_read).sum(1)                # [B, d]
-            v = torch.where(has_cand.unsqueeze(-1), resolved_v, v)
+            # M57b: the SAME weights ``w`` also collapse the candidate ATOMS
+            # themselves (not their memory readout -- a candidate's identity
+            # IS the address it stands for) into a candidate ADDRESS.
+            # ``cand_addr_mask`` (per (row, step), None/falsy for every
+            # pre-M57b batch and every M53a/M53b value-redirect row) decides,
+            # per row, whether THIS step's collapse redirects the value
+            # (unchanged) or the entity/address (new) -- never both, and
+            # never neither when ``has_cand`` is true.
+            resolved_e = (w.unsqueeze(-1) * ce_t).sum(1)                         # [B, d]
+            if batch.cand_addr_mask is not None:
+                addr_row = has_cand & (batch.cand_addr_mask[:, t] > 0)
+            else:
+                addr_row = torch.zeros_like(has_cand)
+            value_row = has_cand & ~addr_row
+            v = torch.where(value_row.unsqueeze(-1), resolved_v, v)
+            e = torch.where(addr_row.unsqueeze(-1), resolved_e, e)
             ent_logits, ent_margin = logits, self._top2_margin(logits, has_cand, v)
 
         sense_logits = sense_margin = None
@@ -1125,9 +1479,9 @@ class ClauseReactor(nn.Module):
             v = torch.where(has_cand.unsqueeze(-1), resolved_v, v)
             hyp_logits, hyp_margin = logits, self._top2_margin(logits, has_cand, v)
 
-        return v, ent_logits, ent_margin, sense_logits, sense_margin, hyp_logits, hyp_margin
+        return e, v, ent_logits, ent_margin, sense_logits, sense_margin, hyp_logits, hyp_margin
 
-    def forward(self, batch: ClauseBatch) -> Dict[str, torch.Tensor]:
+    def forward(self, batch: ClauseBatch, return_memory: bool = False) -> Dict[str, torch.Tensor]:
         b, T, d = batch.entity.shape
         device = batch.entity.device
         state = torch.zeros(b, self.gru.hidden_size, device=device)
@@ -1145,10 +1499,15 @@ class ClauseReactor(nn.Module):
             e, r, v = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
             p, c = batch.pred[:, t], coord[:, t]
             real, isq = batch.mask[:, t], batch.is_q[:, t]
-            mem_read = em.query(memory, e, r)                          # [B, d]
-            (v, res_logits_t, res_margin_t, sense_logits_t, sense_margin_t,
+            mem_read = em.query(memory, e, r)                          # [B, d] -- ALWAYS from the pre-collapse address
+            (e, v, res_logits_t, res_margin_t, sense_logits_t, sense_margin_t,
              hyp_logits_t, hyp_margin_t) = self._collapse(
-                memory, state, mem_read, r, v, batch, t)
+                memory, state, mem_read, e, r, v, batch, t)
+            # M57b: `e` may now be the resolver's redirected address (see
+            # ClauseReactor's own docstring) -- threaded into BOTH the GRU
+            # input and the write below; `mem_read` above stays computed
+            # from the ORIGINAL pre-collapse address (no other arithmetic
+            # changes).
             state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
             stmt = real * (1.0 - isq)                                  # statement (write) step
             # write gate: statement steps only (questions carry no value)
@@ -1196,4 +1555,12 @@ class ClauseReactor(nn.Module):
         if have_hyp_data:
             out["hyp_resolver_logits"] = torch.stack(hyp_logits_all, dim=1)   # [B, T, C]
             out["hyp_resolver_margin"] = torch.stack(hyp_margin_all, dim=1)   # [B, T]
+        # M57b test seam: the final post-episode memory tensor, for tests
+        # that need to verify WHERE a write actually landed (e.g. an
+        # address-redirect: querying the resolved node vs. the pronoun's own
+        # placeholder address). Deliberately NOT part of the default output
+        # dict (``return_memory`` defaults False) -- no training/eval script
+        # reads it, this is purely a test-observability seam.
+        if return_memory:
+            out["_memory"] = memory
         return out

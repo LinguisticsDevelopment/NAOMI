@@ -2909,3 +2909,51 @@ M57b resolver-driven write-back ("she is tall" writes to MARY's node;
 gate = no-gold inference test) — the registry threading note is in the
 agent's report: clause_reactor grounds candidate keys via codec fillers
 today; instance ids ground via registry.lookup instead.
+
+### M57b — resolver-driven write-back: PROVEN at full scale, after one full-scale leak caught and fixed (MEASURED)
+
+The mechanism: `cand_addr_mask` on ClauseBatch — on flagged pronoun-
+subject steps the entity-collapse weights redirect the write ADDRESS
+(Σ w·candidate atoms; soft train / hard eval, same _collapse_weights),
+value left as stated. None everywhere = byte-identical (regression-
+tested). "She is tall" now physically writes tall to MARY's node.
+
+THE LEAK (v1 curriculum, 4th smoke/full-scale inversion on record):
+cheat arm (no candidates, no resolver) hit 1.000 at full scale vs 0.25
+smoke floor — the question ALWAYS asked about the pronoun's referent, so
+the pronoun sentence's attribute was ALWAYS the answer; the GRU carried
+it to the question step, no binding needed. Same design-law violation
+as M55b in a new costume: the answer-bearing statement was identifiable
+by surface form. Also: wrong-binding-via-corrupted-aux-gold is toothless
+— task pressure overrides the aux loss; forcing must hit the COLLAPSE.
+
+The fix (curriculum v2 + forcing machinery): every entity gets a named
+attribute first, the pronoun statement OVERWRITES the referent's slot
+(reactor's own learned overwrite gate — no special-casing), questions
+target either entity uniformly, stale attr kept in the options as the
+signature wrong answer; `cand_forced_index` teacher-forces the collapse
+one-hot (generic: addr and value rows; -1/None = byte-identity).
+
+Full scale (dim 48, 1500 eps, 60 epochs, Track A, aux on true gold),
+writeback kind / referent-targeted / other-targeted:
+| arm | task | ref-targeted | other-targeted |
+|---|---|---|---|
+| normal | 1.000 | 1.000 | 1.000 |
+| forced-gold | 1.000 | 1.000 | 1.000 |
+| forced-wrong | 0.000 | 0.000 | 0.000 |
+| cheat | 0.728 | 0.644 | 0.860 |
+| no-gold eval | 1.000 | 1.000 | 1.000 |
+
+The 1.000→0.000 forced-wrong crater (with kind-old intact at 0.882) is
+the proof the answer flows through where the write lands and nothing
+else. Binding accuracy 1.000 incl. anti-recency (n=77). NO-GOLD GATE
+PASSED: zero gold anywhere at eval, trained resolver alone. Cheat at
+0.644 on binding-critical questions is an honest M54c-style capacity
+note: the GRU partially binds in hidden state at single-episode scale —
+explicit machinery adds +0.36 where binding matters; necessity at scale
+rests on cross-passage memory, where hidden state cannot survive.
+
+Full suite 822 passed / 2 env-gated skips. Logs: runs/m57b_v2_*.log.
+Next: M57c — instance atoms (M57a registry) replace var: name atoms in
+the candidate sets, two-Marys + definite-description curricula,
+provenance wired into reactor writes, morphology signals, capacity curve.

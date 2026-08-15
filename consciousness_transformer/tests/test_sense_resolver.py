@@ -447,8 +447,8 @@ def test_sense_collapse_uses_candidate_vector_directly_not_memory_query():
         memory = em.init_memory(4, 16, torch.device("cpu"))
         e0, r0 = batch.entity[:, sense_t], batch.relation[:, sense_t]
         mem_read0 = em.query(memory, e0, r0)
-        v_out, *_ = model._collapse(memory, torch.zeros(4, model.gru.hidden_size),
-                                     mem_read0, r0, batch.value[:, sense_t], batch, sense_t)
+        _e_out, v_out, *_ = model._collapse(memory, torch.zeros(4, model.gru.hidden_size),
+                                             mem_read0, e0, r0, batch.value[:, sense_t], batch, sense_t)
     expected = batch.sense_cand_entity[:, sense_t, 0]     # candidate 0 wins (logit 10.0)
     assert torch.allclose(v_out, expected, atol=1e-5)
 

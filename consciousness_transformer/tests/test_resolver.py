@@ -194,6 +194,37 @@ def test_no_resolver_default_arg_matches_explicit_none():
         assert torch.equal(out1[k], out2[k])
 
 
+def test_resolver_installed_cand_addr_mask_none_byte_identical_to_absent():
+    """M57b byte-identity extension: a batch with ``cand_addr_mask=None``
+    (explicit) and one with the field entirely absent (the dataclass
+    default, no kwarg passed at all -- both are the SAME value, this just
+    documents both spellings are covered) must reproduce IDENTICAL forward
+    outputs, with a REAL resolver installed and REAL candidate data present
+    -- i.e. M57b's address-redirect branch must be a complete no-op for
+    every batch that predates it (every M53a/M53b pronoun-antecedent
+    value-redirect set never sets ``cand_addr_mask``)."""
+    torch.manual_seed(0)
+    batch_explicit, _ = _toy_batch_with_candidates(b=5, d=16, K=4, C=3, seed=20)
+    assert batch_explicit.cand_addr_mask is None   # the dataclass default, never set by this fixture
+    batch_absent, _ = _toy_batch_with_candidates(b=5, d=16, K=4, C=3, seed=20)
+
+    for track in ("A", "B"):
+        torch.manual_seed(3)
+        model = ClauseReactor(dim=16, resolver=make_resolver(track, 16, 128))
+        model.eval()
+        with torch.no_grad():
+            out_explicit = model(batch_explicit)
+            out_absent = model(batch_absent)
+        for k in out_explicit:
+            assert torch.equal(out_explicit[k], out_absent[k]), (track, k)
+
+        model.train()
+        out_explicit = model(batch_explicit)
+        out_absent = model(batch_absent)
+        for k in out_explicit:
+            assert torch.equal(out_explicit[k], out_absent[k]), (track, k, "train")
+
+
 def test_resolver_absent_on_candidate_free_batch_is_also_untouched():
     """A resolver CAN be installed, but if the batch carries no candidate data
     at all (cand_mask is None -- e.g. an old-curriculum-only batch), the
