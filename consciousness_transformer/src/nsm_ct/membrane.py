@@ -129,13 +129,31 @@ class EntityCandidateSet(CandidateSet):
     :func:`nsm_ct.clause_reactor.build_clause_batch` to populate
     ``ClauseBatch.cand_addr_mask`` -- see that field's docstring and
     :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse` for the
-    address-vs-value split this flag drives."""
+    address-vs-value split this flag drives.
+
+    M57c (instance atoms + definite-description referring expressions,
+    dev/MIND_INTERFACE.md's v2 addendum): ``evidence_relation`` -- default
+    ``None``, byte-identical for every pre-M57c caller -- names an
+    ATTRIBUTE (``"kind"``, ``"gender"``, ...; grounded downstream as
+    ``codec.filler_vec("attr:" + evidence_relation)``, the SAME convention
+    :func:`nsm_ct.instances.write_attribute`/``query_attribute`` already use)
+    whose LIVE value, read per-candidate straight out of the entity memory,
+    the resolver should score against, INSTEAD of the clause's own step
+    relation. This is how "the doctor" resolves (read each candidate's
+    ``attr:kind`` slot) and "she" resolves (read each candidate's
+    ``attr:gender`` slot) via the SAME collapse machinery that already
+    reads a clause-shared relation for M53a/M53b/M57b -- only the relation
+    being read differs; see
+    :func:`nsm_ct.clause_reactor.build_clause_batch`'s ``cand_evidence_relation``
+    field and :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse`'s entity
+    branch for where this is consumed."""
 
     surface: str = ""
     feature: Optional[np.ndarray] = None
     gold_index: Optional[int] = None
     cand_features: Optional[np.ndarray] = None
     addr_redirect: bool = False
+    evidence_relation: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

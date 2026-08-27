@@ -22,6 +22,7 @@ from . import entity_memory as em
 from . import membrane
 from .clause import extract_discourse
 from .episode import _NAMES
+from .instances import InstanceRegistry
 from .membrane import FEATURE_DIM
 from .resolver import Resolver, query_candidates, query_candidates_per_addr
 from .tpr import TPRCodec
@@ -682,6 +683,265 @@ def _writeback_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]
     return steps, cand_sets, forced_map
 
 
+# M57c (instance atoms + definite-description referring expressions,
+# dev/MIND_INTERFACE.md's v2 addendum, CLAUDE.md's M57 memory-schema
+# decision): an InstanceCurriculumGenerator episode (curriculum2.py --
+# gated on ``ep.meta["kind"] == "instance"``, a key no other generator
+# sets). Parser-free, sibling to :func:`_writeback_steps` for the SAME
+# reason: an attribute assertion's value is a genuine content word (parser
+# reliability was never the point), and the world here (3 instances, two
+# sharing a name) has no existing sentence-role vocabulary to parse anyway.
+#
+# The one thing this function does that NOTHING before it did: entity
+# atoms are minted by a FRESH :class:`nsm_ct.instances.InstanceRegistry`,
+# seeded from ``ep.meta["instance_seed"]`` (deterministic given that seed,
+# independent of dataset order/batching -- the whole point of M57a's
+# registry), NOT grounded from the codec's ``var:<name>`` hash. Two
+# instances sharing a name (the two-Marys premise) therefore mint to
+# genuinely DIFFERENT atoms (``inst:mary#1`` != ``inst:mary#2``) -- the
+# standing defect dev/MIND_INTERFACE.md's v2 addendum names explicitly.
+#
+# World (fixed roles "a"/"b"/"c", matching InstanceCurriculumGenerator's
+# own bookkeeping so curriculum meta never needs to touch instance ids or
+# atoms -- torch/codec stay out of curriculum2.py by that module's own
+# constraint): "a" and "b" share ``ep.meta["shared_name"]`` (two Marys),
+# "c" carries ``ep.meta["distinct_name"]``. Registration writes THREE
+# ordinary attribute facts per instance -- kind, gender, a named-place --
+# each addressed DIRECTLY via that instance's own minted atom (no
+# ambiguity in the WRITE itself: the curriculum always knows exactly which
+# instance a fact is about, even when two instances share a surface name;
+# mirrors :func:`_writeback_steps`'s S0-S3 "own fact, own atom" pattern).
+# Then every instance gets ONE baseline TRAIT statement (also direct-
+# addressed, establishing the "stale" value the OVERWRITE below will
+# clobber for exactly one of them -- the M57b overwrite shape, scaled from
+# 2 entities to 3, same reactor-owned overwrite gate, no special-casing).
+#
+# The OVERWRITE step (mirrors _writeback_steps' S4 exactly): a placeholder
+# (garbage) address; the real redirect data rides in the returned
+# EntityCandidateSet, ``addr_redirect=True``, ``evidence_relation`` set to
+# whichever attribute the referring device's evidence comes from:
+#   - "definite_description" ("the {kind} is {attr} .") -- evidence
+#     attr:kind, candidates = all three instances (kind is unique per
+#     instance by construction, so this is always cleanly resolvable).
+#   - "pronoun" ("she/he is {attr} .") -- evidence attr:gender, candidates
+#     = all three instances (genuinely ambiguous when the referent's
+#     gender ties with another instance's -- the harder case, left
+#     unfiltered on purpose: "perception never guesses beyond what it can
+#     support" would filter by gender, but the whole point of the evidence-
+#     relation mechanism is that the RESOLVER, not perception, does the
+#     matching against a LIVE memory read).
+#   - "ambiguous_name" ("{shared_name} is {attr} .") -- evidence attr:kind,
+#     candidates RESTRICTED to the two name-matched instances (a/b) only --
+#     c's distinct name is never ambiguous, so it is never a candidate
+#     here. The gold referent is whichever of a/b had the temporally
+#     CLOSEST preceding baseline statement (the generator places that
+#     instance's baseline last among the three) -- the SAME discourse-
+#     recency convention this codebase already uses for pronoun antecedents
+#     (WriteBackCurriculumGenerator's antecedent_first/antecedent_recency);
+#     recency legitimately DETERMINES the referent (that is how ambiguous
+#     repeated names actually get disambiguated in real discourse), it does
+#     not make the FINAL ANSWER surface-guessable -- the answer still
+#     requires correctly redirecting the write AND reading the right node's
+#     attribute afterward (CLAUDE.md's design law is about the
+#     answer-bearing statement's surface form, not about what legitimately
+#     determines a referent).
+#
+# The QUESTION step: ``ep.meta["question_mode"] == "target"`` asks "what is
+# {referring expression} like ?" about ONE of the three instances, phrased
+# with an UNAMBIGUOUS referring expression (c's own unique name -- direct
+# addressing, no candidates needed; a/b's definite description -- SAME
+# evidence-relation/addr_redirect machinery as the overwrite step, just at
+# a READ instead of a WRITE). This is safe to do at a question step with
+# ZERO forward()/em.write changes: a question step's ``stmt = real*(1-isq)``
+# is always 0, so ``gate`` is force-zeroed regardless of the (possibly
+# redirected) entity -- the write portion is an unconditional no-op. The
+# response-generation head does still read ``mem_read`` computed from the
+# PRE-collapse placeholder address (forward()'s existing, unmodified
+# ordering -- see ClauseReactor.forward's own comment, "ALWAYS from the
+# pre-collapse address"), so the correct answer must flow through the
+# controller's GRU STATE (which DOES incorporate the POST-collapse,
+# resolved entity atom, since the GRU update happens after _collapse at
+# the SAME step) rather than a literal re-read of the resolved node. This
+# is a genuine, disclosed capability ceiling -- not a new mechanism, the
+# SAME "recall via hidden state" capability this codebase already reports
+# on via its cheat baselines (M57b's cheat arm: 0.6-0.9 depending on
+# subset, RESEARCH_NOTES M57b) -- see this milestone's report for the seam
+# this leaves for M57d (a genuine post-collapse mem_read recompute would
+# need to be gated so it does not perturb M57b's already-proven writeback
+# arithmetic, which reuses this same addr_redirect flag at WRITE steps).
+#
+# ``ep.meta["question_mode"] == "inverse"`` ("who is {trait} ?") is a
+# DIFFERENT, deliberately simpler mechanism: no candidate/evidence-relation
+# machinery at all -- a pure generation-plus-contrastive-answer step (the
+# SAME mechanism every other MC curriculum in this codebase already uses),
+# entity = a fixed "who" marker, relation = attr:trait, value = the queried
+# trait word (so the controller sees WHAT is being asked directly, the
+# same way a reasoning-level query step already carries its query
+# (entity, relation) as the step's own address). The options are identity
+# vectors, not attribute words -- see :func:`_instance_option_vec`.
+def _instance_option_vec(opt: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                          meaning_source: MeaningSource) -> np.ndarray:
+    """Ground one inverse-query MC option. Convention (curriculum2.
+    InstanceCurriculumGenerator's own docstring documents this too):
+    ``"{name}"`` for an unambiguous (unique-named) instance, ``"{name} the
+    {kind}"`` for a name-matched-pair instance -- the kind suffix is what
+    keeps two same-named options DISTINCT meaning-vectors (the same
+    ``ent_vec(name)`` alone would collide for both Marys, exactly the
+    identity-fusion defect this whole milestone fixes, here showing up on
+    the ANSWER side instead of the memory side). Grounded as
+    ``ent_vec(name) + content_vec(kind)`` -- an ordinary vector-space sum,
+    the same "compose meanings by addition" convention TPR superposition
+    already relies on everywhere else in this codebase."""
+    if " the " in opt:
+        name_part, kind_part = opt.split(" the ", 1)
+        return (_ent_vec(name_part, resolver, codec, cache, meaning_source)
+                + _content_vec(kind_part, resolver, codec, cache, meaning_source))
+    return _ent_vec(opt, resolver, codec, cache, meaning_source)
+
+
+def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                     meaning_source: MeaningSource, cheat: bool = False,
+                     no_gold: bool = False, force: Optional[str] = None):
+    """Grounded stream + candidate-set map(s) + instance-atom lookup for one
+    :class:`~nsm_ct.curriculum2.InstanceCurriculumGenerator` episode. See
+    the module comment immediately above for the full design. Returns
+    ``(steps, cand_sets, forced_map, atom_lookup)`` -- ``atom_lookup`` (a
+    NEW fourth element, absent from every earlier ``_*_steps`` helper's
+    return shape) is ``{instance_id: atom_ndarray}`` for this episode's
+    freshly-minted registry, consumed by :func:`build_clause_batch`'s
+    candidate-grounding loop so a candidate KEY that is an instance id
+    (``"inst:mary#1"``, never in ``_NAMESET``, never a plain content word)
+    grounds to its OWN minted atom instead of falling through to
+    :func:`_ent_vec`'s name/content-word branches, which have no idea what
+    an instance id is.
+    """
+    d = codec.dim
+    z = np.zeros(d, np.float32)
+    pred_is = codec.filler_vec("pred:is")
+    q_pred = codec.filler_vec("pred:?")
+    kind_rel = codec.filler_vec("attr:kind")
+    gender_rel = codec.filler_vec("attr:gender")
+    place_rel = codec.filler_vec("attr:place")
+    trait_rel = codec.filler_vec("attr:trait")
+
+    registry = InstanceRegistry(dim=d, seed=ep.meta["instance_seed"])
+    shared_name = ep.meta["shared_name"]
+    distinct_name = ep.meta["distinct_name"]
+    id_a, atom_a = registry.mint(shared_name)
+    id_b, atom_b = registry.mint(shared_name)
+    id_c, atom_c = registry.mint(distinct_name)
+    ids = {"a": id_a, "b": id_b, "c": id_c}
+    atoms = {"a": atom_a.numpy(), "b": atom_b.numpy(), "c": atom_c.numpy()}
+    kinds = {r: ep.meta[f"kind_{r}"] for r in "abc"}
+    genders = {r: ep.meta[f"gender_{r}"] for r in "abc"}
+    places = {r: ep.meta[f"place_{r}"] for r in "abc"}
+    baselines = {r: ep.meta[f"baseline_{r}"] for r in "abc"}
+    overwrite_attr = ep.meta["overwrite_attr"]
+    device = ep.meta["referring_device"]
+    referent = ep.meta["referent_role"]
+
+    steps = []
+    # Registration: kind, gender, named-place -- direct addressing, own
+    # atom (see module comment above).
+    for r in ("a", "b", "c"):
+        kind_vec = codec.filler_vec("kind:" + kinds[r])
+        gender_vec = codec.filler_vec("gender:" + genders[r])
+        place_vec = _content_vec(places[r], resolver, codec, cache, meaning_source)
+        steps.append((atoms[r], kind_rel, kind_vec, pred_is, z, 0))
+        steps.append((atoms[r], gender_rel, gender_vec, pred_is, z, 0))
+        steps.append((atoms[r], place_rel, place_vec, pred_is, z, 0))
+
+    # Baseline trait statements -- one per instance, direct addressing.
+    # ``ambiguous_name`` places the referent's own baseline LAST (the
+    # recency convention -- see module comment above); every other device
+    # uses the fixed a/b/c order (irrelevant to those devices' resolution,
+    # which reads attr:kind/attr:gender, not recency).
+    baseline_order = ["a", "b", "c"]
+    if device == "ambiguous_name":
+        baseline_order = [r for r in baseline_order if r != referent] + [referent]
+    for r in baseline_order:
+        trait_vec = _content_vec(baselines[r], resolver, codec, cache, meaning_source)
+        steps.append((atoms[r], trait_rel, trait_vec, pred_is, z, 0))
+
+    cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
+    forced_map: Dict[int, int] = {}
+    atom_lookup: Dict[str, np.ndarray] = {ids[r]: atoms[r] for r in ("a", "b", "c")}
+
+    # Overwrite step.
+    if device == "pronoun":
+        pronoun = "she" if genders[referent] == "F" else "he"
+        placeholder = _ent_vec(pronoun, resolver, codec, cache, meaning_source)
+        evidence_rel_name = "gender"
+        cand_roles = ["a", "b", "c"]
+        mention_word = pronoun
+    elif device == "definite_description":
+        placeholder = _content_vec(kinds[referent], resolver, codec, cache, meaning_source)
+        evidence_rel_name = "kind"
+        cand_roles = ["a", "b", "c"]
+        mention_word = kinds[referent]
+    else:  # "ambiguous_name"
+        placeholder = _ent_vec(shared_name, resolver, codec, cache, meaning_source)
+        evidence_rel_name = "kind"
+        cand_roles = ["a", "b"]
+        mention_word = shared_name
+
+    overwrite_vec = _content_vec(overwrite_attr, resolver, codec, cache, meaning_source)
+    overwrite_step_idx = len(steps)
+    steps.append((placeholder, trait_rel, overwrite_vec, pred_is, z, 0))
+
+    if not cheat:
+        candidates = [membrane.Candidate(key=ids[r], prior=1.0 / len(cand_roles)) for r in cand_roles]
+        gold_index = None if no_gold else cand_roles.index(referent)
+        cs = membrane.EntityCandidateSet(
+            candidates=candidates,
+            provenance={"sentence_index": overwrite_step_idx, "kind": "instance", "device": device},
+            surface=mention_word,
+            feature=membrane.mention_feature_vector(mention_word),
+            gold_index=gold_index,
+            addr_redirect=True,
+            evidence_relation=evidence_rel_name,
+        )
+        cand_sets[overwrite_step_idx] = cs
+        if force is not None:
+            true_idx = cand_roles.index(referent)
+            wrong_idx = (true_idx + 1) % len(cand_roles)
+            forced_map[overwrite_step_idx] = true_idx if force == "gold" else wrong_idx
+
+    # Question step.
+    if ep.meta.get("question_mode") == "inverse":
+        who_vec = _content_vec("who", resolver, codec, cache, meaning_source)
+        query_vec = _content_vec(ep.meta["query_trait"], resolver, codec, cache, meaning_source)
+        steps.append((who_vec, trait_rel, query_vec, q_pred, z, 1))
+    else:
+        target = ep.meta["target_role"]
+        if target == "c":
+            steps.append((atoms["c"], trait_rel, z, q_pred, z, 1))
+        else:
+            q_placeholder = _content_vec(kinds[target], resolver, codec, cache, meaning_source)
+            q_step_idx = len(steps)
+            steps.append((q_placeholder, trait_rel, z, q_pred, z, 1))
+            if not cheat:
+                q_candidates = [membrane.Candidate(key=ids[r], prior=1.0 / 3) for r in ("a", "b", "c")]
+                q_gold_index = None if no_gold else ("a", "b", "c").index(target)
+                q_cs = membrane.EntityCandidateSet(
+                    candidates=q_candidates,
+                    provenance={"sentence_index": q_step_idx, "kind": "instance",
+                                "device": "definite_description", "question": True},
+                    surface=kinds[target],
+                    feature=membrane.mention_feature_vector(kinds[target]),
+                    gold_index=q_gold_index,
+                    addr_redirect=True,
+                    evidence_relation="kind",
+                )
+                cand_sets[q_step_idx] = q_cs
+                if force is not None:
+                    true_idx = ("a", "b", "c").index(target)
+                    wrong_idx = (true_idx + 1) % 3
+                    forced_map[q_step_idx] = true_idx if force == "gold" else wrong_idx
+
+    return steps, cand_sets, forced_map, atom_lookup
+
+
 # M52 v1 IN table ("queried role"): the relation a question is actually
 # asking about. "has" -> RECIPIENT (who now holds it -- the transfer_who
 # level); "where" -> PLACE, which is ALSO the fallback/default -- every
@@ -829,6 +1089,20 @@ class ClauseBatch:
     # populate it (today only :func:`_writeback_steps`/``writeback_force``
     # does, via :func:`build_clause_batch`).
     cand_forced_index: Optional[torch.Tensor] = None  # [B, T]  long; forced candidate index, -1 = not forced
+    # M57c (instance atoms + definite-description referring expressions,
+    # dev/MIND_INTERFACE.md's v2 addendum): ONE new field, kept deliberately
+    # separate from every cand_* tensor above (same "fourth optional field
+    # to guard" discipline the M57b fields already established) -- a batch
+    # with no evidence-relation candidate set (every pre-M57c batch, and
+    # every M53a/M53b/M57b candidate set, which never populates
+    # EntityCandidateSet.evidence_relation) leaves this None, byte-identical
+    # to every field above it. Per (row, step): the RELATION vector to read
+    # each candidate's LIVE memory slot under, REPLACING the step's own
+    # relation ``r`` for that one collapse computation only ("the doctor"
+    # reads attr:kind, "she" reads attr:gender -- see
+    # membrane.EntityCandidateSet.evidence_relation's docstring and
+    # ClauseReactor._collapse's entity branch for where this is consumed).
+    cand_evidence_relation: Optional[torch.Tensor] = None  # [B, T, d]
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
@@ -857,11 +1131,12 @@ class ClauseBatch:
         hcand = self._hyp_cand_fields(lambda t: t.to(device))
         addr_mask = self.cand_addr_mask.to(device) if self.cand_addr_mask is not None else None
         forced = self.cand_forced_index.to(device) if self.cand_forced_index is not None else None
+        evidence_rel = self.cand_evidence_relation.to(device) if self.cand_evidence_relation is not None else None
         return ClauseBatch(self.entity.to(device), self.relation.to(device),
                            self.value.to(device), self.pred.to(device),
                            self.is_q.to(device), self.mask.to(device),
                            self.options.to(device), self.answer.to(device), coord, ans_ok,
-                           *cand, *scand, *hcand, addr_mask, forced)
+                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
@@ -872,10 +1147,11 @@ class ClauseBatch:
         hcand = self._hyp_cand_fields(lambda t: t[idx])
         addr_mask = self.cand_addr_mask[idx] if self.cand_addr_mask is not None else None
         forced = self.cand_forced_index[idx] if self.cand_forced_index is not None else None
+        evidence_rel = self.cand_evidence_relation[idx] if self.cand_evidence_relation is not None else None
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
                            self.options[idx], self.answer[idx], coord, ans_ok,
-                           *cand, *scand, *hcand, addr_mask, forced)
+                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
@@ -977,6 +1253,26 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     weights regardless of the resolver's own logits. Default ``None``
     (inert) leaves ``cand_forced_index`` ``None`` for every batch, same
     byte-identity guarantee every other optional field here makes.
+
+    M57c (instance atoms + definite-description referring expressions,
+    dev/MIND_INTERFACE.md's v2 addendum): an episode whose meta carries
+    ``kind == "instance"`` (``curriculum2.InstanceCurriculumGenerator``
+    only) is routed WHOLESALE through :func:`_instance_steps` (see that
+    function's own extensive docstring for the full design: instance atoms
+    minted per-episode by a fresh :class:`nsm_ct.instances.InstanceRegistry`
+    instead of ``var:<name>`` codec hashes, so two same-named instances
+    genuinely differ; every referring expression -- definite description,
+    pronoun, ambiguous shared name -- resolves via the SAME ``cand_*``
+    fields M53a/M53b/M57b already use, plus the new
+    ``cand_evidence_relation`` field, which names the attribute (kind/gender)
+    each candidate's LIVE memory slot gets read under for scoring).
+    ``writeback_cheat``/``writeback_no_gold``/``writeback_force`` are
+    REUSED for instance episodes too (forwarded to :func:`_instance_steps`'s
+    own ``cheat``/``no_gold``/``force`` -- one arm setting applies across a
+    mixed writeback+instance batch in a single training run, matching how
+    a real training script mixes curricula in ONE arm); all three remain
+    complete no-ops for every episode without ``ep.meta["kind"] in
+    ("writeback", "instance")``.
     """
     cache: Dict[str, np.ndarray] = {}
     d = codec.dim
@@ -984,11 +1280,18 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     z = np.zeros(d, np.float32)
     rows = []
     forced_maps: List[Dict[int, int]] = []   # parallel to rows; see ClauseBatch.cand_forced_index
+    # M57c: parallel to rows, {instance_id: atom_ndarray} for episodes routed
+    # through _instance_steps, None for every other episode -- see that
+    # function's docstring for why the generic cand_entity-grounding loop
+    # below needs this (candidate keys are instance ids, not names/content
+    # words _ent_vec knows how to ground).
+    atom_lookups: List[Optional[Dict[str, np.ndarray]]] = []
     for ep in episodes:
         cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
         sense_cand_sets: Dict[int, "membrane.SenseCandidateSet"] = {}
         hyp_cand_sets: Dict[int, "membrane.HypothesisCandidateSet"] = {}
         forced_map: Dict[int, int] = {}
+        atom_lookup: Optional[Dict[str, np.ndarray]] = None
         if getattr(ep, "level", 0) >= 9 and ep.meta.get("query"):
             steps = _reasoning_steps(ep, resolver, codec, cache, meaning_source)   # L9-L11 reasoning stream
         elif ep.meta.get("homograph"):
@@ -1002,6 +1305,11 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                 ep, resolver, codec, cache, meaning_source,
                 cheat=writeback_cheat, no_gold=writeback_no_gold,
                 force=writeback_force)   # M57b write-back stream (v2)
+        elif ep.meta.get("kind") == "instance":
+            steps, cand_sets, forced_map, atom_lookup = _instance_steps(
+                ep, resolver, codec, cache, meaning_source,
+                cheat=writeback_cheat, no_gold=writeback_no_gold,
+                force=writeback_force)   # M57c instance-atom stream
         else:
             steps = []
             pronoun_idx = ep.meta.get("pronoun_sentence_index")
@@ -1022,10 +1330,19 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                           codec.filler_vec("rel:" + qrel), z, q_pred, z, 1))
             for sent in getattr(ep, "post_context", []) or []:
                 steps += _context_steps(sent, parser, resolver, codec, cache, meaning_source)
-        opt = [_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
+        # M57c: inverse-query instance episodes answer with IDENTITY options
+        # ("mary the doctor"), not content words -- see
+        # _instance_option_vec's docstring. Every other episode (including
+        # every "target"-mode instance episode, whose options are plain
+        # trait words) is grounded exactly as before.
+        if ep.meta.get("kind") == "instance" and ep.meta.get("question_mode") == "inverse":
+            opt = [_instance_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
+        else:
+            opt = [_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
         rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0,
                      cand_sets, sense_cand_sets, hyp_cand_sets))
         forced_maps.append(forced_map)
+        atom_lookups.append(atom_lookup)
 
     b = len(rows)
     T = max(len(s) for s, _, _, _, _, _, _ in rows)
@@ -1047,6 +1364,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     cand_entity = cand_mask = cand_prior = cand_feature = cand_gold = None
     cand_feature_per_candidate = None
     cand_addr_mask = None
+    cand_evidence_relation = None
     if any(cs for *_row, cs, _scs, _hcs in rows):
         Cmax = max((len(cs.candidates) for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values()),
                    default=1) or 1
@@ -1066,10 +1384,18 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
         if has_cand_features:
             cand_feature_per_candidate = torch.zeros(b, T, Cmax, membrane.FEATURE_DIM)
         for i, (steps, opt, a, ok, cs_map, _scs, _hcs) in enumerate(rows):
+            # M57c: an instance episode's candidate KEYS are instance ids
+            # ("inst:mary#1"), which _ent_vec has no branch for (not a
+            # var:<name> atom, not a content word) -- atom_lookups[i], when
+            # present, grounds those directly to their own minted atom;
+            # every other episode's atom_lookups[i] is None, so this is a
+            # no-op fallback straight to _ent_vec, byte-identical to pre-M57c.
+            lookup = atom_lookups[i] or {}
             for t, cs in cs_map.items():
                 for j, c in enumerate(cs.candidates):
-                    cand_entity[i, t, j] = torch.from_numpy(
-                        _ent_vec(c.key, resolver, codec, cache, meaning_source))
+                    vec = lookup[c.key] if c.key in lookup else _ent_vec(
+                        c.key, resolver, codec, cache, meaning_source)
+                    cand_entity[i, t, j] = torch.from_numpy(vec)
                     cand_mask[i, t, j] = 1.0
                     cand_prior[i, t, j] = c.prior
                 if cs.feature is not None:
@@ -1093,6 +1419,22 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                 for t, cs in cs_map.items():
                     if cs.addr_redirect:
                         cand_addr_mask[i, t] = 1.0
+
+        # M57c: only allocated when at least one EntityCandidateSet in this
+        # batch actually carries an evidence_relation (InstanceCurriculumGenerator
+        # episodes only, via _instance_steps) -- mirrors has_addr_redirect's
+        # "only if present" pattern exactly. A batch with only M53a/M53b/M57b
+        # candidate sets (evidence_relation always None, the dataclass
+        # default) leaves this None, byte-identical to pre-M57c.
+        has_evidence_relation = any(
+            cs.evidence_relation for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values())
+        if has_evidence_relation:
+            cand_evidence_relation = torch.zeros(b, T, d)
+            for i, (steps, opt, a, ok, cs_map, _scs, _hcs) in enumerate(rows):
+                for t, cs in cs_map.items():
+                    if cs.evidence_relation:
+                        cand_evidence_relation[i, t] = torch.from_numpy(
+                            codec.filler_vec("attr:" + cs.evidence_relation))
 
     # M57b (v2, honest validity machinery): cand_forced_index, built from
     # forced_maps (parallel to rows, populated only by _writeback_steps'
@@ -1203,7 +1545,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                        sense_cand_subject, sense_cand_subject_rel,
                        hyp_cand_entity, hyp_cand_mask, hyp_cand_prior, hyp_cand_gold,
                        hyp_cand_query_entity, hyp_cand_query_relation,
-                       cand_addr_mask, cand_forced_index)
+                       cand_addr_mask, cand_forced_index, cand_evidence_relation)
 
 
 # ---------------------------------------------------------------------------
@@ -1395,7 +1737,25 @@ class ClauseReactor(nn.Module):
         if self.resolver is not None and batch.cand_mask is not None:
             ce_t, cf_t = batch.cand_entity[:, t], batch.cand_feature[:, t]
             cp_t, cm_t = batch.cand_prior[:, t], batch.cand_mask[:, t]
-            cand_mem_read = query_candidates(memory, ce_t, r)                    # [B, C, d]
+            # M57c: a per-(row, step) EVIDENCE relation (e.g. attr:kind for
+            # "the doctor", attr:gender for "she") REPLACES the clause's own
+            # step relation `r` for this read only, when present -- see
+            # ClauseBatch.cand_evidence_relation's docstring. `r` unchanged
+            # (None everywhere) reproduces the pre-M57c read exactly, the
+            # fourth optional field guarded this way (cand_addr_mask,
+            # cand_forced_index, and now this one). The fallback is PER
+            # (row, step), not per batch: the build tensor is zero wherever a
+            # candidate set carries no evidence relation (M53a/M53b/M57b
+            # episodes mixed into the same batch as instance episodes), and a
+            # zero relation would zero those rows' candidate readouts --
+            # so rows without an evidence vector keep the step relation.
+            if batch.cand_evidence_relation is not None:
+                er_t = batch.cand_evidence_relation[:, t]
+                has_er = er_t.norm(dim=-1, keepdim=True) > 0
+                evidence_r = torch.where(has_er, er_t, r)
+            else:
+                evidence_r = r
+            cand_mem_read = query_candidates(memory, ce_t, evidence_r)           # [B, C, d]
             # M56b: pass the per-candidate feature register (§1.8) ONLY to a
             # resolver that opted in (`use_cand_feature=True` -- CorefHead
             # only today); SharedScorer/SenseHead are never called with this

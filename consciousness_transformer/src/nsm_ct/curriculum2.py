@@ -1246,6 +1246,259 @@ def generate_writeback_episodes(n: int, seed: int = 0, num_options: int = 4, *,
 
 
 # ---------------------------------------------------------------------------
+# M57c -- instance atoms + definite-description referring expressions
+# (dev/MIND_INTERFACE.md's v2 addendum, CLAUDE.md's M57 memory-schema
+# decision): the two-Marys curriculum.
+#
+# World, every episode: THREE person instances, roles fixed "a"/"b"/"c"
+# (matching nsm_ct.clause_reactor._instance_steps's own bookkeeping exactly,
+# so this module -- torch/codec-free by its own constraint -- never needs
+# to touch an instance id or atom; it only ever names ROLES). "a" and "b"
+# share ONE surface name (``shared_name`` -- the two-Marys premise) but
+# differ in KIND (occupation), which is always unique per instance by
+# construction -- a definite description ("the doctor") is therefore
+# ALWAYS unambiguous, the property this whole curriculum leans on. "c"
+# carries a DISTINCT name and kind. Gender is sampled independently, with
+# a/b sharing gender in EXACTLY half of episodes (alternated by episode
+# count parity, the same deterministic-50%-not-statistical-50% discipline
+# WriteBackCurriculumGenerator's ``antecedent_first`` already uses) --
+# "kind always disambiguates, gender sometimes does" (the milestone spec's
+# own phrase): a pronoun's evidence (attr:gender) is therefore sometimes a
+# clean single-candidate match and sometimes genuinely tied, while a
+# definite description's evidence (attr:kind) never ties.
+#
+# Context, in order: every instance is introduced with its own kind +
+# gender + named-place fact (three ordinary attribute writes, addressed
+# directly by :func:`nsm_ct.clause_reactor._instance_steps` via that
+# instance's own minted atom -- no ambiguity in the WRITE itself, even
+# though the SURFACE TEXT below may repeat a name); then every instance
+# gets ONE baseline TRAIT statement (the "stale" value); then ONE more
+# statement -- the OVERWRITE -- referring to exactly one instance (the
+# "referent") via a referring expression instead of a unique name, and
+# OVERWRITING that instance's trait slot (the M57b overwrite shape, scaled
+# from two entities to three, same reactor-owned gate, no special-casing).
+#
+# Referring devices (sampled uniformly per episode):
+#   - "definite_description" ("the {kind} is {attr} .") -- ALWAYS
+#     eligible, referent may be any of a/b/c.
+#   - "pronoun" ("she/he is {attr} .") -- referent may be any of a/b/c;
+#     evidence is attr:gender, genuinely tied when a/b share gender AND
+#     the referent's gender also matches c's (the harder, honest case,
+#     left in on purpose rather than filtered out).
+#   - "ambiguous_name" ("{shared_name} is {attr} .") -- referent restricted
+#     to {a, b} (c's name is never ambiguous). The gold referent is
+#     resolved by DISCOURSE RECENCY: the generator places whichever of a/b
+#     is the referent LAST among the three baseline statements (temporally
+#     closest to the overwrite) -- the SAME recency convention this
+#     codebase already uses for pronoun antecedents elsewhere
+#     (WriteBackCurriculumGenerator's antecedent_first/antecedent_recency).
+#     This is a legitimate discourse phenomenon (real ambiguous repeated
+#     names really do get disambiguated this way), not a surface-form leak
+#     of the FINAL ANSWER: answering correctly still requires the write to
+#     land on the right node and the question to read the right node
+#     afterward (CLAUDE.md's design law is about the answer-bearing
+#     statement's surface identifiability, not about what legitimately
+#     determines a referent -- see nsm_ct.clause_reactor._instance_steps's
+#     own docstring for the fuller argument).
+#
+# Question ("target" mode, ``inverse_frac`` fraction excluded -- see
+# below): "what is {referring expression} like ?", TARGET sampled
+# uniformly over a/b/c, INDEPENDENT of which instance is the referent
+# (mirrors WriteBackCurriculumGenerator's target_name independence: not
+# only WHO the referring expression names, but WHICH instance the
+# QUESTION asks about, must carry zero information about the answer on
+# its own). The referring expression is always UNAMBIGUOUS -- c's own
+# unique name, or a definite description for a/b -- but a/b's definite-
+# description question ALSO carries the same candidate/evidence-relation
+# machinery (nsm_ct.clause_reactor._instance_steps's question branch),
+# exercising the identical resolution mechanism at READ time that the
+# overwrite step exercises at WRITE time -- the unification
+# dev/MIND_INTERFACE.md's addendum promises. Answer: the OVERWRITE value
+# if target == referent (answerable only via a correct redirect +
+# overwrite, then a correct redirect + read), else the target's OWN
+# baseline value (the redirect-free control condition). ``stale_attr``
+# (the referent's own pre-overwrite baseline) is always among the MC
+# options, mirroring WriteBackCurriculumGenerator exactly.
+#
+# INVERSE-QUERY episodes ("who is {trait} ?", ``inverse_frac`` of the
+# mix): a DIFFERENT, deliberately simpler mechanism -- no candidate/
+# evidence-relation machinery at all, a pure generation-plus-contrastive
+# task (see _instance_steps's own docstring for why: the resolver
+# contract has no clean slot to carry an arbitrary trait word into the
+# collapse decision at the question step itself). ``query_trait`` is
+# sampled from the three CURRENTLY-HELD trait values only (the referent's
+# NEW overwrite value, or one of the other two instances' still-standing
+# baselines) -- the referent's own STALE value is excluded, since nobody
+# currently holds it after the overwrite (every inverse-query episode is
+# therefore always answerable). Options are IDENTITY vectors, one per
+# instance (a fixed 3, independent of ``num_options`` -- a deliberate
+# simplification, see :func:`nsm_ct.clause_reactor._instance_option_vec`):
+# c's own unique name, or "{shared_name} the {kind}" for a/b (the kind
+# suffix is what keeps the two Marys' OPTIONS distinct meaning-vectors,
+# mirroring how their own instance ATOMS are kept distinct on the memory
+# side -- the same identity-fusion fix, now on the answer side too).
+# ---------------------------------------------------------------------------
+_KIND_VALUES: List[str] = ["doctor", "teacher", "nurse", "pilot", "chef"]
+
+
+class InstanceCurriculumGenerator:
+    """M57c instance-atom episodes (the two-Marys curriculum). See the
+    module comment immediately above for the full design.
+
+    ``inverse_frac`` (default 0.3): the fraction of episodes generated as
+    inverse-query ("who is {trait} ?") rather than target-question ("what
+    is {referring expression} like ?") -- a single generator with a mixing
+    knob, per the milestone spec's "generate as a mixable fraction".
+    ``names``/``kinds``/``traits`` (default ``None`` = the module pools)
+    mirror :class:`WriteBackCurriculumGenerator`'s own override pattern.
+    """
+
+    def __init__(self, num_options: int = 4, seed: int = 0, *,
+                 inverse_frac: float = 0.3,
+                 names: Optional[List[str]] = None,
+                 kinds: Optional[List[str]] = None,
+                 traits: Optional[List[str]] = None) -> None:
+        self.num_options = num_options
+        self.inverse_frac = inverse_frac
+        self.rng = random.Random(seed)
+        self._count = 0
+        self._names = list(names) if names is not None else list(_NAMES)
+        self._kinds = list(kinds) if kinds is not None else list(_KIND_VALUES)
+        self._traits = list(traits) if traits is not None else list(_ATTR_VALUES)
+
+    def _mc_attrs(self, answer: str, required: List[str]):
+        opts = list(dict.fromkeys([answer, *required]))
+        pool = [a for a in self._traits if a not in opts]
+        while len(opts) < self.num_options and pool:
+            opts.append(pool.pop(self.rng.randrange(len(pool))))
+        opts = opts[: self.num_options]
+        self.rng.shuffle(opts)
+        return opts, opts.index(answer)
+
+    def _episode(self) -> Episode:
+        instance_seed = self._count
+        self._count += 1
+
+        shared_name, distinct_name = self.rng.sample(self._names, 2)
+        kind_a, kind_b, kind_c = self.rng.sample(self._kinds, 3)
+
+        # Gender: a/b share gender in EXACTLY half of episodes (parity
+        # alternation, not an RNG draw -- see module comment above);
+        # c's gender is independent.
+        same_gender_pair = (instance_seed % 2 == 0)
+        gender_a = self.rng.choice(["F", "M"])
+        gender_b = gender_a if same_gender_pair else ("M" if gender_a == "F" else "F")
+        gender_c = self.rng.choice(["F", "M"])
+
+        place_a, place_b, place_c = self.rng.sample(_PLACES, 3)
+        baseline_a, baseline_b, baseline_c, overwrite_attr = self.rng.sample(self._traits, 4)
+
+        device = self.rng.choice(["definite_description", "pronoun", "ambiguous_name"])
+        referent = self.rng.choice(["a", "b"] if device == "ambiguous_name" else ["a", "b", "c"])
+
+        # role -> (name, kind, gender, place, baseline_trait)
+        roles = {
+            "a": (shared_name, kind_a, gender_a, place_a, baseline_a),
+            "b": (shared_name, kind_b, gender_b, place_b, baseline_b),
+            "c": (distinct_name, kind_c, gender_c, place_c, baseline_c),
+        }
+        stale_attr = roles[referent][4]
+        registry_order = [f"inst:{shared_name}#1", f"inst:{shared_name}#2", f"inst:{distinct_name}#1"]
+        gold_instance_id = {"a": registry_order[0], "b": registry_order[1], "c": registry_order[2]}[referent]
+
+        meta: Dict[str, object] = {
+            "src": "curriculum2", "kind": "instance",
+            "instance_seed": instance_seed,
+            "shared_name": shared_name, "distinct_name": distinct_name,
+            "kind_a": kind_a, "kind_b": kind_b, "kind_c": kind_c,
+            "gender_a": gender_a, "gender_b": gender_b, "gender_c": gender_c,
+            "place_a": place_a, "place_b": place_b, "place_c": place_c,
+            "baseline_a": baseline_a, "baseline_b": baseline_b, "baseline_c": baseline_c,
+            "overwrite_attr": overwrite_attr,
+            "referring_device": device,
+            "referent_role": referent,
+            "stale_attr": stale_attr,
+            "registry_order": registry_order,
+            "gold_instance_id": gold_instance_id,
+            "same_gender_pair": same_gender_pair,
+        }
+
+        # Human-readable context text ONLY (curriculum2/_instance_steps is
+        # parser-free -- see that function's docstring -- these strings are
+        # never parsed, provenance/debugging only).
+        context: List[str] = []
+        for r in ("a", "b", "c"):
+            name, kind, gender, place, _b = roles[r]
+            context.append(f"{name} is a {kind} .")
+            context.append(f"{name} is {'female' if gender == 'F' else 'male'} .")
+            context.append(f"{name} went to the {place} .")
+        baseline_order = ["a", "b", "c"]
+        if device == "ambiguous_name":
+            baseline_order = [r for r in baseline_order if r != referent] + [referent]
+        for r in baseline_order:
+            name, kind, _g, _p, baseline = roles[r]
+            ref_text = f"the {kind}" if r in ("a", "b") else name
+            context.append(f"{ref_text} is {baseline} .")
+        if device == "pronoun":
+            mention = "she" if roles[referent][2] == "F" else "he"
+        elif device == "definite_description":
+            mention = f"the {roles[referent][1]}"
+        else:
+            mention = shared_name
+        context.append(f"{mention} is {overwrite_attr} .")
+
+        if self.rng.random() < self.inverse_frac:
+            # Currently-held trait values only (the referent's own STALE
+            # baseline was just overwritten-away -- nobody holds it, so
+            # it is never asked about; see module comment above).
+            currently_held = [("overwrite", referent, overwrite_attr)]
+            currently_held += [("baseline", r, roles[r][4]) for r in ("a", "b", "c") if r != referent]
+            _src, answer_role, query_trait = self.rng.choice(currently_held)
+
+            def _render(r: str) -> str:
+                name, kind = roles[r][0], roles[r][1]
+                return f"{name} the {kind}" if r in ("a", "b") else name
+
+            options = [_render(r) for r in ("a", "b", "c")]
+            answer = _render(answer_role)
+            answer_idx = options.index(answer)
+            question = f"who is {query_trait} ?"
+            meta["question_mode"] = "inverse"
+            meta["query_trait"] = query_trait
+            meta["answer_role"] = answer_role
+        else:
+            target = self.rng.choice(["a", "b", "c"])
+            targets_referent = target == referent
+            answer = overwrite_attr if targets_referent else roles[target][4]
+            options, answer_idx = self._mc_attrs(answer, [baseline_a, baseline_b, baseline_c, overwrite_attr])
+            target_ref_text = f"the {roles[target][1]}" if target in ("a", "b") else roles[target][0]
+            question = f"what is {target_ref_text} like ?"
+            meta["question_mode"] = "target"
+            meta["target_role"] = target
+            meta["question_targets_referent"] = targets_referent
+
+        return Episode(
+            context=context, question=question, answer_text=answer,
+            options=options, answer_idx=answer_idx, level=16, meta=meta,
+        )
+
+    def generate(self, n: int) -> List[Episode]:
+        return [self._episode() for _ in range(n)]
+
+
+def generate_instance_episodes(n: int, seed: int = 0, num_options: int = 4, *,
+                                inverse_frac: float = 0.3,
+                                names: Optional[List[str]] = None,
+                                kinds: Optional[List[str]] = None,
+                                traits: Optional[List[str]] = None) -> List[Episode]:
+    """``n`` M57c instance-atom episodes, deterministic given ``(n, seed,
+    num_options, inverse_frac, names, kinds, traits)``. See
+    :class:`InstanceCurriculumGenerator`."""
+    return InstanceCurriculumGenerator(num_options=num_options, seed=seed, inverse_frac=inverse_frac,
+                                        names=names, kinds=kinds, traits=traits).generate(n)
+
+
+# ---------------------------------------------------------------------------
 # M54b -- entity-keyed, binding-critical sense-ambiguity curriculum.
 #
 # RESEARCH_NOTES.md M54's finding: the M32/episode.py ambiguity curriculum
