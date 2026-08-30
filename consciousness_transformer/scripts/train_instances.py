@@ -45,7 +45,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 from _train_common import add_footprint_args, apply_threads, epoch_minibatches, eval_minibatched, peak_rss_mb  # noqa: E402
 from nsm_ct.clause_reactor import ClauseReactor, build_clause_batch  # noqa: E402
-from nsm_ct.curriculum2 import generate_instance_episodes, generate_writeback_episodes  # noqa: E402
+from nsm_ct.curriculum2 import (  # noqa: E402
+    generate_instance_episodes,
+    generate_rich_episodes,
+    generate_writeback_episodes,
+)
 from nsm_ct.episode import CurriculumGenerator, split_episodes  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402
@@ -58,19 +62,33 @@ from nsm_ct.tpr import TPRCodec  # noqa: E402
 AUX_WEIGHT = 0.5   # resolver cross-entropy weight added to the answer loss -- same constant train_writeback.py uses
 
 
-def build_instance_curriculum(n_episodes: int, seed: int, inverse_frac: float = 0.3):
+def build_instance_curriculum(n_episodes: int, seed: int, inverse_frac: float = 0.3,
+                               rich_frac: float = 0.0, rich_inverse_frac: float = 0.3):
     """~1/3 old L1-6 + ~1/3 write-back (M57b) + ~1/3 instance (M57c,
     target + inverse-query mixed via ``inverse_frac``) -- deterministic
-    given ``(n_episodes, seed, inverse_frac)``. Mirrors
-    scripts/train_writeback.py's ``build_writeback_curriculum`` exactly
-    (isolate the new capability; old L1-6 supplies the non-candidate-
-    bearing bulk of the mix), extended with the third kind."""
-    n_each = n_episodes // 3
-    n_old = n_episodes - 2 * n_each
+    given ``(n_episodes, seed, inverse_frac, rich_frac, rich_inverse_frac)``.
+    Mirrors scripts/train_writeback.py's ``build_writeback_curriculum``
+    exactly (isolate the new capability; old L1-6 supplies the
+    non-candidate-bearing bulk of the mix), extended with the third kind.
+
+    ``rich_frac`` (RICH-EPISODE curriculum, CLAUDE.md's 2026-08-30
+    reprioritization "stop requiring minimal episodes"): a FOURTH slice --
+    ``round(n_episodes * rich_frac)`` episodes from
+    ``nsm_ct.curriculum2.generate_rich_episodes`` -- added on top of the
+    old/writeback/instance thirds, which still split the REMAINING
+    episodes evenly (so ``rich_frac=0`` reproduces every pre-rich call of
+    this function exactly). ``rich_inverse_frac`` forwards to
+    ``generate_rich_episodes``'s own ``inverse_frac``."""
+    n_rich = int(round(n_episodes * rich_frac))
+    n_rest = n_episodes - n_rich
+    n_each = n_rest // 3
+    n_old = n_rest - 2 * n_each
     old = CurriculumGenerator(max_level=6, seed=seed).generate(n_old)
     wb = generate_writeback_episodes(n_each, seed=seed + 1)
     inst = generate_instance_episodes(n_each, seed=seed + 2, inverse_frac=inverse_frac)
-    episodes = old + wb + inst
+    rich = (generate_rich_episodes(n_rich, seed=seed + 4, inverse_frac=rich_inverse_frac)
+            if n_rich else [])
+    episodes = old + wb + inst + rich
     order = np.random.RandomState(seed + 3).permutation(len(episodes))
     return [episodes[i] for i in order]
 
@@ -238,6 +256,37 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
         print(f"    instance/inverse_query: {sum(inst_inverse)}/{len(inst_inverse)} "
               f"= {sum(inst_inverse)/len(inst_inverse):.3f}")
 
+    # RICH-EPISODE curriculum (kind=rich): per-(overwriting-device,
+    # overwritten/baseline) subset, per-n_entities accuracy, and
+    # inverse-query accuracy -- see nsm_ct.curriculum2.RichEpisodeGenerator's
+    # meta schema. "device" here is the device of the referring statement
+    # that overwrote the TARGETED slot (None/"none" when the question
+    # targets a never-overwritten, baseline slot -- there is no single
+    # "referent" in a rich episode the way there is in a writeback/instance
+    # episode, since K statements may target K different entities).
+    rich_device: dict = {}
+    rich_by_n: dict = {}
+    rich_inverse = []
+    for i, e in enumerate(va_eps):
+        if e.meta.get("kind") != "rich":
+            continue
+        hit = bool(pred[i] == gold_va[i])
+        rich_by_n.setdefault(e.meta["n_entities"], []).append(hit)
+        if e.meta.get("question_mode") == "inverse":
+            rich_inverse.append(hit)
+            continue
+        subset = "overwritten" if e.meta.get("question_targets_overwritten") else "baseline"
+        device = e.meta.get("question_device") or "none"
+        rich_device.setdefault((device, subset), []).append(hit)
+    for (device, subset), w in sorted(rich_device.items()):
+        print(f"    rich/{device}/{subset}: {sum(w)}/{len(w)} = {sum(w)/len(w):.3f}")
+    for n_e in sorted(rich_by_n):
+        w = rich_by_n[n_e]
+        print(f"    rich/by_n_entities/{n_e}: {sum(w)}/{len(w)} = {sum(w)/len(w):.3f}")
+    if rich_inverse:
+        print(f"    rich/inverse_query: {sum(rich_inverse)}/{len(rich_inverse)} "
+              f"= {sum(rich_inverse)/len(rich_inverse):.3f}")
+
     binding = binding_stats(out_va, va, va_eps)
     if binding is not None:
         m = np.array(binding["margins"]) if binding["margins"] else np.array([0.0])
@@ -277,20 +326,31 @@ def main() -> None:
     ap.add_argument("--inverse-frac", type=float, default=0.3,
                      help="Fraction of instance episodes that are inverse-query (\"who is X ?\") "
                           "rather than target-question (\"what is X like ?\").")
+    ap.add_argument("--rich-frac", type=float, default=0.0,
+                     help="Fraction of the mix that is RICH-EPISODE curriculum episodes "
+                          "(nsm_ct.curriculum2.RichEpisodeGenerator: N entities 3-8, K "
+                          "referring/overwrite statements 1-4) -- added on top of the "
+                          "old/writeback/instance thirds, which still split the remainder evenly. "
+                          "Default 0.0 = byte-identical to every pre-rich mix.")
+    ap.add_argument("--rich-inverse-frac", type=float, default=0.3,
+                     help="Fraction of rich episodes that are inverse-query (\"who is X ?\") "
+                          "rather than target-question, forwarded to generate_rich_episodes.")
     ap.add_argument("--seed", type=int, default=0)
     add_footprint_args(ap)
     args = ap.parse_args()
     apply_threads(args)
 
-    episodes = build_instance_curriculum(args.episodes, args.seed, inverse_frac=args.inverse_frac)
+    episodes = build_instance_curriculum(args.episodes, args.seed, inverse_frac=args.inverse_frac,
+                                          rich_frac=args.rich_frac, rich_inverse_frac=args.rich_inverse_frac)
     n_wb = sum(1 for e in episodes if e.meta.get("kind") == "writeback")
     n_inst = sum(1 for e in episodes if e.meta.get("kind") == "instance")
+    n_rich = sum(1 for e in episodes if e.meta.get("kind") == "rich")
     print(f"=== instance-mix "
           f"{f'(force-binding={args.force_binding}) ' if args.force_binding else ''}"
           f"{'(cheat) ' if args.cheat else ''}{'(no-gold-eval) ' if args.no_gold_eval else ''}"
           f"track={args.track}: {args.episodes} eps ({n_wb} writeback, {n_inst} instance, "
-          f"inverse_frac={args.inverse_frac}), dim={args.dim}, epochs={args.epochs}, "
-          f"batch_size={args.batch_size} ===", flush=True)
+          f"{n_rich} rich, inverse_frac={args.inverse_frac}, rich_frac={args.rich_frac}), "
+          f"dim={args.dim}, epochs={args.epochs}, batch_size={args.batch_size} ===", flush=True)
     run_arm(f"track-{args.track}", args.track, episodes, args.dim, args.epochs, args.seed, args.hidden,
              cheat=args.cheat, no_gold_eval=args.no_gold_eval, force_binding=args.force_binding,
              batch_size=args.batch_size)

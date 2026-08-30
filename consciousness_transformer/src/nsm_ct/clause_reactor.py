@@ -972,6 +972,169 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     return steps, cand_sets, forced_map, atom_lookup, inverse_step_idx
 
 
+# RICH-EPISODE curriculum (the "stop requiring minimal episodes" priority,
+# CLAUDE.md's 2026-08-30 reprioritization): a direct generalization of
+# _instance_steps above from the fixed 3-role/1-overwrite world to N
+# entities (curriculum-sampled 3-8) / K referring statements
+# (curriculum-sampled 1-4) -- see nsm_ct.curriculum2.RichEpisodeGenerator's
+# extensive module comment for the full design and its honesty machinery.
+# A NEW, sibling function -- _instance_steps itself is UNCHANGED, still
+# exclusively serving ep.meta["kind"] == "instance" -- matching this
+# codebase's own established convention (M54/M55a/M57b/M57c each added
+# their own dedicated _xxx_steps rather than editing an earlier, already-
+# proven one). Every mechanism (kind/gender/named-place registration,
+# DISTINCT-relation attribute facts, an EntityCandidateSet per referring
+# statement with addr_redirect=True + evidence_relation, the entity-axis
+# inverse read) is IDENTICAL to _instance_steps -- just looped over N
+# roles / K statements read from ep.meta instead of the fixed a/b/c
+# unrolling. Reuses EVERY existing ClauseBatch field (cand_entity's Cmax
+# dimension already pads a variable per-(row, step) candidate-set size
+# generically) -- no new tensor group needed.
+def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                 meaning_source: MeaningSource, cheat: bool = False,
+                 no_gold: bool = False, force: Optional[str] = None):
+    """Grounded stream + candidate-set map + instance-atom lookup for one
+    :class:`~nsm_ct.curriculum2.RichEpisodeGenerator` episode. Returns the
+    SAME five-element shape as :func:`_instance_steps`: ``(steps,
+    cand_sets, forced_map, atom_lookup, inverse_step_idx)``.
+
+    Exactly one question step per episode (the reactor's own per-episode
+    contract, preserved by :class:`~nsm_ct.curriculum2.RichEpisodeGenerator`
+    regardless of ``n_entities``/K), so ``inverse_step_idx`` is either
+    ``None`` (a "target"-mode episode) or a single step index --
+    ``ClauseBatch.inverse_mask``'s "at most one inverse step per episode"
+    seam holds by construction, never by convention alone.
+    """
+    d = codec.dim
+    z = np.zeros(d, np.float32)
+    pred_is = codec.filler_vec("pred:is")
+    q_pred = codec.filler_vec("pred:?")
+    kind_rel = codec.filler_vec("attr:kind")
+    gender_rel = codec.filler_vec("attr:gender")
+    place_rel = codec.filler_vec("attr:place")
+
+    n = ep.meta["n_entities"]
+    names = ep.meta["names"]
+    kinds = ep.meta["kinds"]
+    genders = ep.meta["genders"]
+    places = ep.meta["places"]
+    held_relations = ep.meta["held_relations"]
+    initial_values = ep.meta["initial_values"]
+    entity_order = ep.meta["entity_order"]
+    name_groups = ep.meta["name_groups"]
+
+    registry = InstanceRegistry(dim=d, seed=ep.meta["instance_seed"])
+    ids: Dict[int, str] = {}
+    atoms: Dict[int, np.ndarray] = {}
+    for i in entity_order:
+        iid, atom = registry.mint(names[i])
+        ids[i] = iid
+        atoms[i] = atom.numpy()
+
+    steps = []
+    # Registration: kind, gender, named-place, then every held attribute
+    # relation's baseline value -- direct addressing, own atom (mirrors
+    # _instance_steps' registration block exactly, generalized to N roles
+    # and a variable per-entity relation set).
+    for i in entity_order:
+        kind_vec = codec.filler_vec("kind:" + kinds[i])
+        gender_vec = codec.filler_vec("gender:" + genders[i])
+        place_vec = _content_vec(places[i], resolver, codec, cache, meaning_source)
+        steps.append((atoms[i], kind_rel, kind_vec, pred_is, z, 0))
+        steps.append((atoms[i], gender_rel, gender_vec, pred_is, z, 0))
+        steps.append((atoms[i], place_rel, place_vec, pred_is, z, 0))
+        for rel in held_relations[i]:
+            val_vec = _content_vec(initial_values[i][rel], resolver, codec, cache, meaning_source)
+            steps.append((atoms[i], codec.filler_vec("attr:" + rel), val_vec, pred_is, z, 0))
+
+    atom_lookup: Dict[str, np.ndarray] = {ids[i]: atoms[i] for i in range(n)}
+    cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
+    forced_map: Dict[int, int] = {}
+
+    # K referring/overwrite steps -- each mirrors _instance_steps' single
+    # overwrite step exactly, just looped.
+    for stmt in ep.meta["referring_statements"]:
+        referent = stmt["referent"]
+        rel = stmt["relation"]
+        device = stmt["device"]
+        attr_rel_vec = codec.filler_vec("attr:" + rel)
+        overwrite_vec = _content_vec(stmt["new_value"], resolver, codec, cache, meaning_source)
+
+        if device == "pronoun":
+            pronoun = "she" if genders[referent] == "F" else "he"
+            placeholder = _ent_vec(pronoun, resolver, codec, cache, meaning_source)
+            evidence_rel_name = "gender"
+            cand_roles = list(range(n))
+        elif device == "definite_description":
+            placeholder = _content_vec(kinds[referent], resolver, codec, cache, meaning_source)
+            evidence_rel_name = "kind"
+            cand_roles = list(range(n))
+        else:  # "ambiguous_name" -- candidates restricted to the name-matched pair
+            placeholder = _ent_vec(names[referent], resolver, codec, cache, meaning_source)
+            evidence_rel_name = "kind"
+            cand_roles = list(name_groups[names[referent]])
+
+        step_idx = len(steps)
+        steps.append((placeholder, attr_rel_vec, overwrite_vec, pred_is, z, 0))
+
+        if not cheat:
+            mention_word = stmt["mention_word"]
+            candidates = [membrane.Candidate(key=ids[r], prior=1.0 / len(cand_roles)) for r in cand_roles]
+            gold_index = None if no_gold else cand_roles.index(referent)
+            cs = membrane.EntityCandidateSet(
+                candidates=candidates,
+                provenance={"sentence_index": step_idx, "kind": "rich", "device": device},
+                surface=mention_word,
+                feature=membrane.mention_feature_vector(mention_word),
+                gold_index=gold_index,
+                addr_redirect=True,
+                evidence_relation=evidence_rel_name,
+            )
+            cand_sets[step_idx] = cs
+            if force is not None:
+                true_idx = cand_roles.index(referent)
+                wrong_idx = (true_idx + 1) % len(cand_roles)
+                forced_map[step_idx] = true_idx if force == "gold" else wrong_idx
+
+    # Question step.
+    inverse_step_idx: Optional[int] = None
+    if ep.meta.get("question_mode") == "inverse":
+        who_vec = _content_vec("who", resolver, codec, cache, meaning_source)
+        query_vec = _content_vec(ep.meta["query_value"], resolver, codec, cache, meaning_source)
+        query_rel_vec = codec.filler_vec("attr:" + ep.meta["query_relation"])
+        inverse_step_idx = len(steps)
+        steps.append((who_vec, query_rel_vec, query_vec, q_pred, z, 1))
+    else:
+        target = ep.meta["target_entity"]
+        target_rel = ep.meta["target_relation"]
+        attr_rel_vec = codec.filler_vec("attr:" + target_rel)
+        if names[target] not in name_groups:
+            steps.append((atoms[target], attr_rel_vec, z, q_pred, z, 1))
+        else:
+            q_placeholder = _content_vec(kinds[target], resolver, codec, cache, meaning_source)
+            q_step_idx = len(steps)
+            steps.append((q_placeholder, attr_rel_vec, z, q_pred, z, 1))
+            if not cheat:
+                q_candidates = [membrane.Candidate(key=ids[r], prior=1.0 / n) for r in range(n)]
+                q_gold_index = None if no_gold else target
+                q_cs = membrane.EntityCandidateSet(
+                    candidates=q_candidates,
+                    provenance={"sentence_index": q_step_idx, "kind": "rich",
+                                "device": "definite_description", "question": True},
+                    surface=kinds[target],
+                    feature=membrane.mention_feature_vector(kinds[target]),
+                    gold_index=q_gold_index,
+                    addr_redirect=True,
+                    evidence_relation="kind",
+                )
+                cand_sets[q_step_idx] = q_cs
+                if force is not None:
+                    wrong_idx = (target + 1) % n
+                    forced_map[q_step_idx] = target if force == "gold" else wrong_idx
+
+    return steps, cand_sets, forced_map, atom_lookup, inverse_step_idx
+
+
 # M52 v1 IN table ("queried role"): the relation a question is actually
 # asking about. "has" -> RECIPIENT (who now holds it -- the transfer_who
 # level); "where" -> PLACE, which is ALSO the fallback/default -- every
@@ -1327,6 +1490,21 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     ``ep.meta["registry_order"]`` order) rather than
     :func:`_instance_option_vec`'s composite name+kind vectors -- see that
     function's own docstring addendum for why.
+
+    RICH-EPISODE curriculum (CLAUDE.md's 2026-08-30 reprioritization, "stop
+    requiring minimal episodes"): an episode whose meta carries ``kind ==
+    "rich"`` (``curriculum2.RichEpisodeGenerator`` only) is routed WHOLESALE
+    through :func:`_rich_steps` -- a direct N-entity/K-statement
+    generalization of :func:`_instance_steps` (kept unchanged; see
+    :func:`_rich_steps`'s own docstring). ``writeback_cheat``/
+    ``writeback_no_gold``/``writeback_force`` are REUSED for rich episodes
+    too, exactly as they already are for writeback/instance episodes mixed
+    into the same batch. A rich inverse-query episode's MC options ground
+    the same way an instance inverse-query episode's do (real per-episode
+    instance atoms via ``atom_lookup``), keyed by ``ep.meta
+    ["inverse_option_ids"]`` (a curriculum-CHOSEN subset of up to
+    ``num_options`` entities, not every minted id -- ``n_entities`` may
+    exceed ``num_options``, unlike the fixed-3-entity instance world).
     """
     cache: Dict[str, np.ndarray] = {}
     d = codec.dim
@@ -1371,6 +1549,11 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                 ep, resolver, codec, cache, meaning_source,
                 cheat=writeback_cheat, no_gold=writeback_no_gold,
                 force=writeback_force)   # M57c instance-atom stream
+        elif ep.meta.get("kind") == "rich":
+            steps, cand_sets, forced_map, atom_lookup, inverse_step_idx = _rich_steps(
+                ep, resolver, codec, cache, meaning_source,
+                cheat=writeback_cheat, no_gold=writeback_no_gold,
+                force=writeback_force)   # RICH-EPISODE curriculum stream (N entities, K statements)
         else:
             steps = []
             pronoun_idx = ep.meta.get("pronoun_sentence_index")
@@ -1405,6 +1588,13 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
         # plain trait words) is grounded exactly as before.
         if ep.meta.get("kind") == "instance" and ep.meta.get("question_mode") == "inverse":
             opt = [atom_lookup[iid] for iid in ep.meta["registry_order"]]
+        elif ep.meta.get("kind") == "rich" and ep.meta.get("question_mode") == "inverse":
+            # RICH's inverse options are a SAMPLED 4-of-N subset (never
+            # "one option per entity" -- N may exceed num_options), keyed
+            # by ep.meta["inverse_option_ids"] rather than the full
+            # registry_order (mirrors the instance branch above exactly,
+            # just over a caller-chosen subset instead of every minted id).
+            opt = [atom_lookup[iid] for iid in ep.meta["inverse_option_ids"]]
         else:
             opt = [_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
         rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0,

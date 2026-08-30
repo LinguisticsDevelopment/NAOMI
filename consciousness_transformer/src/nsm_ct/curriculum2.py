@@ -29,7 +29,7 @@ the printed parse-success table.
 from __future__ import annotations
 
 import random
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -1496,6 +1496,496 @@ def generate_instance_episodes(n: int, seed: int = 0, num_options: int = 4, *,
     :class:`InstanceCurriculumGenerator`."""
     return InstanceCurriculumGenerator(num_options=num_options, seed=seed, inverse_frac=inverse_frac,
                                         names=names, kinds=kinds, traits=traits).generate(n)
+
+
+# ---------------------------------------------------------------------------
+# RICH-EPISODE curriculum (the "stop requiring minimal episodes" priority,
+# CLAUDE.md's 2026-08-30 reprioritization / dev/AURORA_SPRINT.md): a direct
+# generalization of M57c's two-Marys world (InstanceCurriculumGenerator,
+# fixed 3 entities / 1 overwrite statement) to N entities (3-8, sampled per
+# episode) and K referring/overwrite statements (1-4, sampled per episode),
+# with a richer attribute vocabulary (three DISTINCT attribute RELATIONS --
+# trait/mood/size -- not just one). The reactor-side generalization is
+# :func:`nsm_ct.clause_reactor._rich_steps`, a NEW function sibling to
+# :func:`nsm_ct.clause_reactor._instance_steps` rather than a refactor of it
+# -- ``_instance_steps`` is UNCHANGED (still exclusively serves
+# ``ep.meta["kind"] == "instance"``), matching this codebase's own
+# established convention (M54/M55a/M57b/M57c each added their own dedicated
+# ``_xxx_steps`` function rather than editing an earlier, already-proven
+# one). Every :class:`~nsm_ct.membrane.EntityCandidateSet` mechanism this
+# needs -- addr_redirect, evidence_relation, forced_index, the entity-axis
+# inverse read -- is REUSED unchanged; no new ``ClauseBatch`` field is
+# needed at all (``cand_entity``'s ``Cmax`` padding dimension already
+# handles a variable per-(row, step) candidate-set size generically).
+#
+# World, every episode: N person instances, roles are plain integer indices
+# 0..N-1 (curriculum2 stays torch/codec-free -- see instances.py's own
+# module docstring -- so, exactly like InstanceCurriculumGenerator, this
+# module only ever names ROLES; :func:`nsm_ct.clause_reactor._rich_steps`
+# mints the real per-episode :class:`~nsm_ct.instances.InstanceRegistry`
+# atoms). ``n_shared_name_pairs`` entities pair up sharing ONE surface name
+# (the two-Marys premise, generalized to 0-2 pairs); every OTHER entity has
+# its own name. KIND is always sampled WITHOUT REPLACEMENT across ALL N
+# entities (never just within a name-sharing pair), so a definite
+# description ("the {kind}") is ALWAYS globally unambiguous, exactly like
+# InstanceCurriculumGenerator's kind_a/kind_b/kind_c. GENDER is independent
+# per entity (F/M); a pronoun's evidence is therefore sometimes tied
+# (several entities sharing a gender) and sometimes not, same "kind always
+# disambiguates, gender sometimes does" texture M57c established -- but
+# UNLIKE M57c's pronoun device (which leaves a genuine gender tie in the
+# curriculum on purpose, "the harder case"), RICH's stricter honesty
+# contract (see below) means a pronoun referring statement is only ever
+# GENERATED when the referent's gender happens to be globally unique at
+# that point -- a tie simply makes that referent/device combination
+# ineligible for THIS statement, not an accepted ambiguous case.
+#
+# Each entity gets, besides kind/gender/a named place: 1-3 attribute facts
+# over DISTINCT attribute RELATIONS drawn from a small pool
+# (:data:`_RICH_ATTR_RELATIONS` -- trait/mood/size, each with its OWN value
+# pool, :data:`_RICH_ATTR_VALUES`) -- this is the literal fix for the
+# "just one value pool" limitation of WriteBack/InstanceCurriculumGenerator.
+# Values are DISTINCT within a relation across the whole episode (no two
+# entities ever hold the same trait value at the same time) -- enforced at
+# assignment time and re-enforced on every overwrite, so an inverse query
+# ("who is tall ?") is always unambiguous and a definite-description
+# question's multiple-choice distractors are never accidentally correct
+# for a different entity.
+#
+# K referring statements (1-4) each pick a DISTINCT (entity, relation) pair
+# still held by that entity, an ELIGIBLE referring device
+# (definite_description/pronoun/ambiguous_name), and a NEW value (distinct
+# from every value currently held under that relation) that OVERWRITES the
+# old one -- the M57b/M57c overwrite shape, scaled to K independent
+# overwrites instead of one. HONESTY, non-negotiable (locked design):
+#   1. The selecting evidence (kind for definite_description, gender for
+#      pronoun, discourse recency for ambiguous_name) carries ZERO
+#      information about the ANSWER -- it only ever determines WHICH
+#      entity a referring expression names, a question wholly independent
+#      of what attribute value that entity ends up holding (kind/gender
+#      are sampled before any attribute value; recency is a fact about
+#      discourse ORDER, not content).
+#   2. Every referring statement's referent is UNIQUELY DETERMINED by the
+#      evidence available at that point in the discourse --
+#      construct-and-verify, not filter-and-hope: :func:`_verify_unique_referent`
+#      (definite_description/pronoun) and :func:`_verify_recency_referent`
+#      (ambiguous_name) are called at generation time and RAISE on a
+#      genuine tie (see their own docstrings -- directly unit-testable by
+#      constructing a collision by hand). Eligibility is pre-filtered
+#      (only a referent with globally-unique gender is offered the
+#      "pronoun" device at all) so these should never actually fire in
+#      normal generation; they are the honesty contract's enforcement
+#      mechanism, not decoration. Once a name-sharing pair is referred to
+#      by ANY statement, BOTH members are excluded from every LATER
+#      referring statement in the episode -- otherwise an intervening
+#      mention could silently change which member is "more recent",
+#      corrupting the very recency evidence an earlier ambiguous_name
+#      statement already committed to.
+#   3. The answer is never recoverable from surface form alone: multiple
+#      referring statements over multiple relations, plus each entity's
+#      own NAMED baseline statements over the SAME relations, means no
+#      single sentence's surface shape predicts the question's answer (the
+#      M55b/M57b/M57c "the answer-bearing statement must not be surface-
+#      identifiable" law).
+#
+# The question (ONE per episode, the reactor's own per-episode contract --
+# see :func:`nsm_ct.clause_reactor._rich_steps`'s docstring for why this
+# means ``ClauseBatch.inverse_mask``'s "at most one inverse step per
+# episode" seam is automatically preserved): target entity sampled
+# UNIFORMLY over all N, target relation sampled uniformly over that
+# entity's OWN held relations, phrased with an UNAMBIGUOUS referring
+# expression (the entity's own unique name if it isn't name-sharing, else
+# "the {kind}" -- never a pronoun, mirroring InstanceCurriculumGenerator's
+# question phrasing exactly). Answer = the CURRENT (post-overwrite) value;
+# the STALE (pre-overwrite) value is always among the 4 MC options when the
+# targeted slot was in fact overwritten -- the signature wrong answer, same
+# convention as every earlier M57-family generator.
+#
+# An INVERSE-QUERY variant ("who is {value} ?") is a mixable fraction
+# (``inverse_frac``, default 0.0 -- opt-in, unlike ``question_mode`` for
+# InstanceCurriculumGenerator which defaults 0.3): a value CURRENTLY held by
+# some entity (post-overwrite state only -- an overwritten-away stale value
+# is never asked about, so every inverse episode is always answerable) is
+# sampled uniformly over every (entity, relation, value) triple in the
+# final state; the 4 MC options (``num_options``, NOT "one option per
+# entity" -- N may exceed 4) are the answering entity plus 3 distractors
+# sampled uniformly from the rest, rendered as unambiguous identity strings
+# ("{name} the {kind}" for a name-sharing entity, else the bare name) and
+# grounded downstream as the REAL per-episode instance atoms themselves
+# (:func:`nsm_ct.clause_reactor.build_clause_batch`'s M57c.2 inverse-option
+# grounding, extended one branch for ``kind == "rich"``).
+#
+# DEVIATION FROM A LITERAL "n_shared_name_pairs in [0, 2], n_entities in
+# [3, 8]" (recorded here, not silently reconciled): this module's fixed
+# name pool (``episode._NAMES``, 6 names) cannot supply 8 fully-distinct
+# entity names, so at ``n_entities == 8`` exactly 2 shared pairs are
+# REQUIRED (not merely allowed) to fit within the pool; at 7 entities at
+# least 1 pair is required. The generator computes this feasible range
+# itself (raising ``ValueError`` only for a caller-supplied name pool too
+# small for the requested ``max_entities``); the default configuration
+# (entities 3-8, pairs 0-2, the 6-name pool) is feasible for every sampled
+# ``n_entities`` without ever hitting the error path.
+# ---------------------------------------------------------------------------
+_RICH_KIND_VALUES: List[str] = [
+    "doctor", "teacher", "nurse", "pilot", "chef", "farmer", "artist",
+    "judge", "clerk", "diver",
+]
+_RICH_ATTR_RELATIONS: List[str] = ["trait", "mood", "size"]
+_RICH_ATTR_VALUES: Dict[str, List[str]] = {
+    "trait": ["tall", "quiet", "clever", "brave", "curious", "gentle",
+              "witty", "calm", "patient", "honest", "humble", "stubborn"],
+    "mood": ["happy", "anxious", "cheerful", "grumpy", "eager", "serene",
+             "nervous", "proud", "restless", "hopeful", "weary", "content"],
+    "size": ["large", "small", "tiny", "huge", "narrow", "wide",
+              "compact", "broad", "slender", "bulky", "thin", "massive"],
+}
+
+
+def _verify_unique_referent(device: str, referent: int, evidence: Dict[int, object]) -> None:
+    """Assert ``referent`` is the UNIQUE entity (among every key in
+    ``evidence``, e.g. every entity's kind for ``"definite_description"``,
+    every entity's gender for ``"pronoun"``) sharing ``evidence[referent]``'s
+    value -- the RICH curriculum's honesty contract, non-negotiable (see
+    the module comment above): every referring statement's referent must be
+    uniquely resolvable from the evidence available in the discourse, never
+    left as an accepted tie the way InstanceCurriculumGenerator's pronoun
+    device deliberately allows. Raises ``AssertionError`` on a genuine
+    collision -- directly testable by handing this a rigged ``evidence``
+    dict with two entities sharing a value.
+    """
+    val = evidence[referent]
+    matches = [i for i, v in evidence.items() if v == val]
+    assert matches == [referent], (
+        f"{device} evidence is not unique for referent {referent}: "
+        f"ties with {[m for m in matches if m != referent]}")
+
+
+def _verify_recency_referent(referent: int, partner: int, mention_order: Dict[int, int]) -> None:
+    """Assert ``referent``'s discourse position (``mention_order`` -- higher
+    = more recent) is STRICTLY more recent than ``partner``'s -- the
+    recency evidence an ``"ambiguous_name"`` referring statement relies on
+    to disambiguate a repeated name. Raises ``AssertionError`` otherwise;
+    directly testable with a rigged ``mention_order`` dict."""
+    assert mention_order[referent] > mention_order[partner], (
+        f"ambiguous_name referent {referent} (order {mention_order[referent]}) is not "
+        f"more recent than partner {partner} (order {mention_order[partner]})")
+
+
+def _predict_registry_ids(entity_order: List[int], names: List[str]) -> Dict[int, str]:
+    """The ``inst:<name>#<n>`` id :class:`nsm_ct.instances.InstanceRegistry`
+    will mint for each entity when :func:`nsm_ct.clause_reactor._rich_steps`
+    mints them in ``entity_order`` sequence -- computed here, in this
+    torch/codec-free module, by literally reproducing
+    :meth:`~nsm_ct.instances.InstanceRegistry.mint`'s id-format convention
+    (lowercase name, 1-based count of PRIOR mints of that same name),
+    exactly like :class:`InstanceCurriculumGenerator` predicts its own
+    fixed 3-role ``registry_order`` by hand. Returns ``{entity_index: id}``.
+    """
+    counts: Dict[str, int] = {}
+    ids: Dict[int, str] = {}
+    for i in entity_order:
+        key = names[i].lower()
+        counts[key] = counts.get(key, 0) + 1
+        ids[i] = f"inst:{key}#{counts[key]}"
+    return ids
+
+
+class RichEpisodeGenerator:
+    """RICH-EPISODE curriculum: N entities (3-8), K referring/overwrite
+    statements (1-4), a small pool of DISTINCT attribute relations
+    (trait/mood/size). See the module comment immediately above for the
+    full design and its honesty machinery.
+
+    Args:
+        min_entities, max_entities: per-episode entity-count range.
+        max_shared_name_pairs: upper bound on name-sharing pairs (0-2
+            default); the actual per-episode count is clamped up when the
+            name pool can't otherwise fit ``n_entities`` distinct names
+            (see the module comment's "DEVIATION" note).
+        min_referring, max_referring: per-episode referring/overwrite
+            statement count range (K).
+        min_attrs, max_attrs: per-entity distinct-attribute-relation count
+            range (clamped to ``len(attr_relations)``).
+        inverse_frac: fraction of episodes generated as an inverse-query
+            ("who is {value} ?") rather than a target question -- default
+            ``0.0`` (opt-in; InstanceCurriculumGenerator's own default is
+            0.3, kept different here since RICH is the newer, less-proven
+            curriculum -- callers/scripts choose their own mix).
+        names/kinds/attr_relations/attr_values: pool overrides, mirroring
+            every earlier M57-family generator's override pattern.
+    """
+
+    def __init__(self, num_options: int = 4, seed: int = 0, *,
+                 min_entities: int = 3, max_entities: int = 8,
+                 max_shared_name_pairs: int = 2,
+                 min_referring: int = 1, max_referring: int = 4,
+                 min_attrs: int = 1, max_attrs: int = 3,
+                 inverse_frac: float = 0.0,
+                 names: Optional[List[str]] = None,
+                 kinds: Optional[List[str]] = None,
+                 attr_relations: Optional[List[str]] = None,
+                 attr_values: Optional[Dict[str, List[str]]] = None) -> None:
+        if max_entities < min_entities:
+            raise ValueError(f"max_entities ({max_entities}) must be >= min_entities ({min_entities})")
+        if max_referring < min_referring:
+            raise ValueError(f"max_referring ({max_referring}) must be >= min_referring ({min_referring})")
+        self.num_options = num_options
+        self.rng = random.Random(seed)
+        self._count = 0
+        self.min_entities, self.max_entities = min_entities, max_entities
+        self.max_shared_name_pairs = max_shared_name_pairs
+        self.min_referring, self.max_referring = min_referring, max_referring
+        self.min_attrs, self.max_attrs = min_attrs, max_attrs
+        self.inverse_frac = inverse_frac
+        self._names = list(names) if names is not None else list(_NAMES)
+        self._kinds = list(kinds) if kinds is not None else list(_RICH_KIND_VALUES)
+        self._attr_relations = list(attr_relations) if attr_relations is not None else list(_RICH_ATTR_RELATIONS)
+        self._attr_values = ({k: list(v) for k, v in attr_values.items()} if attr_values is not None
+                              else {k: list(v) for k, v in _RICH_ATTR_VALUES.items()})
+        if self.max_entities > len(self._kinds):
+            raise ValueError("max_entities must be <= len(kinds pool) (kind is always globally unique)")
+        for rel in self._attr_relations:
+            if len(self._attr_values.get(rel, [])) < self.max_entities:
+                raise ValueError(f"attr_values[{rel!r}] pool must have >= max_entities distinct values")
+
+    def _mc_attr_options(self, relation: str, answer: str, required: List[str]):
+        opts = list(dict.fromkeys([answer, *required]))
+        pool = [v for v in self._attr_values[relation] if v not in opts]
+        while len(opts) < self.num_options and pool:
+            opts.append(pool.pop(self.rng.randrange(len(pool))))
+        opts = opts[: self.num_options]
+        self.rng.shuffle(opts)
+        return opts, opts.index(answer)
+
+    def _episode(self) -> Episode:
+        instance_seed = self._count
+        self._count += 1
+        rng = self.rng
+
+        n = rng.randint(self.min_entities, self.max_entities)
+
+        # -- names: n_shared_name_pairs clamped to what the fixed pool can
+        # fit (see class/module "DEVIATION" note).
+        pool_n = len(self._names)
+        lo_pairs = max(0, n - pool_n)
+        hi_pairs = min(self.max_shared_name_pairs, n // 2)
+        if lo_pairs > hi_pairs:
+            raise ValueError(f"cannot fit {n} entities in a {pool_n}-name pool with at most "
+                              f"{self.max_shared_name_pairs} shared pairs")
+        n_pairs = rng.randint(lo_pairs, hi_pairs)
+        n_solo = n - 2 * n_pairs
+        chosen = rng.sample(self._names, n_pairs + n_solo)
+        shared_names, solo_names = chosen[:n_pairs], chosen[n_pairs:]
+        names: List[str] = []
+        for nm in shared_names:
+            names += [nm, nm]
+        names += solo_names
+        name_groups: Dict[str, List[int]] = {}
+        for i, nm in enumerate(names):
+            if names.count(nm) == 2:
+                name_groups.setdefault(nm, []).append(i)
+
+        kinds = rng.sample(self._kinds, n)
+        genders = [rng.choice(["F", "M"]) for _ in range(n)]
+        gender_counts: Dict[str, int] = {}
+        for g in genders:
+            gender_counts[g] = gender_counts.get(g, 0) + 1
+        places = [rng.choice(_PLACES) for _ in range(n)]
+
+        held_relations: List[List[str]] = []
+        for _ in range(n):
+            k = rng.randint(min(self.min_attrs, len(self._attr_relations)),
+                             min(self.max_attrs, len(self._attr_relations)))
+            held_relations.append(rng.sample(self._attr_relations, k))
+
+        current_value: List[Dict[str, str]] = [{} for _ in range(n)]
+        relation_in_use: Dict[str, Set[str]] = {rel: set() for rel in self._attr_relations}
+        for rel in self._attr_relations:
+            holders = [i for i in range(n) if rel in held_relations[i]]
+            if not holders:
+                continue
+            vals = rng.sample(self._attr_values[rel], len(holders))
+            for i, v in zip(holders, vals):
+                current_value[i][rel] = v
+                relation_in_use[rel].add(v)
+        initial_values = [dict(dv) for dv in current_value]
+
+        # -- discourse order for registration/attribute facts (also the
+        # InstanceRegistry mint order -- see _rich_steps). Adjusted below,
+        # pair by pair, so an ambiguous_name referent is provably the more
+        # RECENT of its name-sharing pair.
+        entity_order = list(range(n))
+        rng.shuffle(entity_order)
+
+        held_pairs = [(i, rel) for i in range(n) for rel in held_relations[i]]
+        rng.shuffle(held_pairs)
+        n_referring = min(rng.randint(self.min_referring, self.max_referring), len(held_pairs))
+
+        used_name_groups: Set[str] = set()
+        used_pairs: Set[Tuple[int, str]] = set()
+        statements: List[dict] = []
+        for referent, rel in held_pairs:
+            if len(statements) >= n_referring:
+                break
+            group_name = names[referent]
+            group = name_groups.get(group_name)
+            if group is not None and group_name in used_name_groups:
+                continue   # group already touched -- protects a committed recency reading
+            eligible_devices = ["definite_description"]
+            if gender_counts[genders[referent]] == 1:
+                eligible_devices.append("pronoun")
+            if group is not None:
+                eligible_devices.append("ambiguous_name")
+            device = rng.choice(eligible_devices)
+
+            if device == "definite_description":
+                _verify_unique_referent(device, referent, dict(enumerate(kinds)))
+                mention_word = kinds[referent]
+            elif device == "pronoun":
+                _verify_unique_referent(device, referent, dict(enumerate(genders)))
+                mention_word = "she" if genders[referent] == "F" else "he"
+            else:
+                partner = next(j for j in group if j != referent)
+                if entity_order.index(referent) < entity_order.index(partner):
+                    pi, pj = entity_order.index(referent), entity_order.index(partner)
+                    entity_order[pi], entity_order[pj] = entity_order[pj], entity_order[pi]
+                _verify_recency_referent(referent, partner,
+                                          {e: pos for pos, e in enumerate(entity_order)})
+                mention_word = group_name
+
+            candidates_new = [v for v in self._attr_values[rel] if v not in relation_in_use[rel]]
+            if not candidates_new:
+                continue   # relation's value pool exhausted by holders -- try the next pair
+            new_value = rng.choice(candidates_new)
+            stale_value = current_value[referent][rel]
+            relation_in_use[rel].discard(stale_value)
+            relation_in_use[rel].add(new_value)
+            current_value[referent][rel] = new_value
+
+            statements.append({
+                "referent": referent, "relation": rel, "device": device,
+                "stale_value": stale_value, "new_value": new_value,
+                "mention_word": mention_word,
+            })
+            used_pairs.add((referent, rel))
+            if group is not None:
+                used_name_groups.add(group_name)
+
+        assert statements, "RichEpisodeGenerator produced zero referring statements"
+        final_values = current_value
+
+        registry_ids = _predict_registry_ids(entity_order, names)
+        registry_order = [registry_ids[i] for i in entity_order]
+        for stmt in statements:
+            stmt["gold_instance_id"] = registry_ids[stmt["referent"]]
+
+        # Human-readable context text ONLY -- like InstanceCurriculumGenerator,
+        # this module is parser-free by design; _rich_steps grounds every
+        # fact directly via minted atoms, never by parsing these strings.
+        context: List[str] = []
+        for i in entity_order:
+            context.append(f"{names[i]} is a {kinds[i]} .")
+            context.append(f"{names[i]} is {'female' if genders[i] == 'F' else 'male'} .")
+            context.append(f"{names[i]} went to the {places[i]} .")
+            for rel in held_relations[i]:
+                context.append(f"{names[i]} is {initial_values[i][rel]} .")
+        for stmt in statements:
+            referent = stmt["referent"]
+            if stmt["device"] == "pronoun":
+                mention = stmt["mention_word"]
+            elif stmt["device"] == "definite_description":
+                mention = f"the {stmt['mention_word']}"
+            else:
+                mention = stmt["mention_word"]
+            context.append(f"{mention} is {stmt['new_value']} .")
+
+        meta: Dict[str, object] = {
+            "src": "curriculum2", "kind": "rich",
+            "instance_seed": instance_seed,
+            "n_entities": n,
+            "n_shared_name_pairs": n_pairs,
+            "entity_order": list(entity_order),
+            "names": list(names),
+            "kinds": list(kinds),
+            "genders": list(genders),
+            "places": list(places),
+            "held_relations": [list(r) for r in held_relations],
+            "initial_values": initial_values,
+            "final_values": [dict(dv) for dv in final_values],
+            "name_groups": {k: list(v) for k, v in name_groups.items()},
+            "registry_order": registry_order,
+            "referring_statements": statements,
+            "n_referring_statements": len(statements),
+        }
+
+        def _render(i: int) -> str:
+            return f"{names[i]} the {kinds[i]}" if names[i] in name_groups else names[i]
+
+        if rng.random() < self.inverse_frac:
+            triples = [(i, rel, v) for i in range(n) for rel, v in final_values[i].items()]
+            answer_entity, query_relation, query_value = rng.choice(triples)
+            n_opts = min(self.num_options, n)
+            others = [j for j in range(n) if j != answer_entity]
+            distractors = rng.sample(others, n_opts - 1)
+            option_entities = distractors + [answer_entity]
+            rng.shuffle(option_entities)
+            options = [_render(i) for i in option_entities]
+            answer = _render(answer_entity)
+            answer_idx = option_entities.index(answer_entity)
+            question = f"who is {query_value} ?"
+            meta["question_mode"] = "inverse"
+            meta["query_value"] = query_value
+            meta["query_relation"] = query_relation
+            meta["answer_entity"] = answer_entity
+            meta["answer_instance_id"] = registry_ids[answer_entity]
+            meta["option_entities"] = option_entities
+            meta["inverse_option_ids"] = [registry_ids[i] for i in option_entities]
+        else:
+            target = rng.choice(range(n))
+            target_relation = rng.choice(held_relations[target])
+            answer = final_values[target][target_relation]
+            overwritten = (target, target_relation) in used_pairs
+            stale = initial_values[target].get(target_relation) if overwritten else None
+            required = [answer] + ([stale] if stale is not None else [])
+            options, answer_idx = self._mc_attr_options(target_relation, answer, required)
+            is_solo = names[target] not in name_groups
+            target_ref_text = names[target] if is_solo else f"the {kinds[target]}"
+            question = f"what is {target_ref_text} like ?"
+            overwriting_stmt = next((s for s in statements
+                                      if s["referent"] == target and s["relation"] == target_relation), None)
+            meta["question_mode"] = "target"
+            meta["target_entity"] = target
+            meta["target_relation"] = target_relation
+            meta["target_instance_id"] = registry_ids[target]
+            meta["question_targets_overwritten"] = overwritten
+            meta["stale_value_for_question"] = stale
+            meta["question_device"] = overwriting_stmt["device"] if overwriting_stmt else None
+
+        return Episode(
+            context=context, question=question, answer_text=answer,
+            options=options, answer_idx=answer_idx, level=17, meta=meta,
+        )
+
+    def generate(self, n: int) -> List[Episode]:
+        return [self._episode() for _ in range(n)]
+
+
+def generate_rich_episodes(n: int, seed: int = 0, num_options: int = 4, *,
+                            min_entities: int = 3, max_entities: int = 8,
+                            max_shared_name_pairs: int = 2,
+                            min_referring: int = 1, max_referring: int = 4,
+                            min_attrs: int = 1, max_attrs: int = 3,
+                            inverse_frac: float = 0.0,
+                            names: Optional[List[str]] = None,
+                            kinds: Optional[List[str]] = None,
+                            attr_relations: Optional[List[str]] = None,
+                            attr_values: Optional[Dict[str, List[str]]] = None) -> List[Episode]:
+    """``n`` RICH-EPISODE curriculum episodes, deterministic given all
+    keyword arguments. See :class:`RichEpisodeGenerator`."""
+    return RichEpisodeGenerator(
+        num_options=num_options, seed=seed, min_entities=min_entities, max_entities=max_entities,
+        max_shared_name_pairs=max_shared_name_pairs, min_referring=min_referring, max_referring=max_referring,
+        min_attrs=min_attrs, max_attrs=max_attrs, inverse_frac=inverse_frac, names=names, kinds=kinds,
+        attr_relations=attr_relations, attr_values=attr_values).generate(n)
 
 
 # ---------------------------------------------------------------------------
