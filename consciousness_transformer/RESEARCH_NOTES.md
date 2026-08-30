@@ -3129,3 +3129,37 @@ narration), no-relation-extracted 5.8% (needs a plain-OBJECT question
 template). Next round: route prose pronouns through the membrane
 resolver instead of treating them as parser failures — the architecture
 says this is the MIND's job, and the machinery exists.
+
+### M59 — episodic LTM PROVEN: consolidation carries facts across passages; identity linking 1.000 through the EXISTING resolver (MEASURED, M59 closes)
+
+Cloud battery #4, document curriculum (2 passages, 600 docs, dim 48, 40
+epochs, ~23 min/arm, 1.2GB — the B=1 DocumentRunner is fine at this
+scale). Logs: branch m59-battery-logs.
+
+| arm | overall | type i (LTM-only) | type ii (mention's fact) | type iii (original intact) | link |
+|---|---|---|---|---|---|
+| normal | 0.933 | 0.913 | 0.946 | 0.944 | 1.000 |
+| forced-gold | 0.933 | 0.913 | 0.946 | 0.944 | 1.000 |
+| forced-wrong | 0.492 | 0.913 | 0.268 | 0.111 | (forced) |
+| cheat | 0.517 | 0.391 | 0.732 | 0.167 | n/a |
+| no-ltm | 0.633 | 0.326 | 1.000 | 0.278 | 1.000 |
+| no-gold | 0.933 | 0.913 | 0.944 | 0.944 | n/a |
+
+(1) LTM contribution isolated: type i 0.913 vs the 0.326 no-ltm floor —
+cross-passage facts flow ONLY through consolidation. (2) Identity
+linking learns to 1.000 via the existing resolver contract + from_ltm
+feature (invariant #5 held; no new head); no-gold gate passed. (3) The
+forced-wrong crater is SELECTIVE — the fingerprint of a real mechanism:
+untouched facts survive (type i 0.913), identity-dependent answers
+collapse (ii 0.268, iii 0.111). Wrong linking corrupts exactly what
+wrong linking should. (4) Cheat 0.517: the GRU cannot fake cross-passage
+identity — LTM + registry live outside its state; explicit linking is
+structurally necessary, no caveat. Footnotes: forced-gold == normal
+(resolver already perfect); trust_ltm ran at default — the dial sweep
+(consolidation selectivity under trust gating) is built+unit-tested but
+NOT yet battery-proven; deferred with the LTM→Truth tier.
+
+The v2 memory organ chain is now: STM (proven) → episodic LTM (proven)
+→ truth memory (designed, tier-generic promote tested for genericity).
+Next: Track A confirmation battery with recency/cleanup at scale +
+--save (the frozen checkpoint M58b's zero-shot needs), executor Phase 2.
