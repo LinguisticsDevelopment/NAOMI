@@ -50,3 +50,11 @@ through the EXISTING resolver contract (from_ltm feature + link_threshold
 dial); consolidation as a named substate event (READING→WIND-DOWN→
 CONSOLIDATE) gated by trust_ltm on provenance; tier-generic consolidate op
 so truth-memory promotion reuses it later.
+
+## Executor decisions (user, 2026-08-30) — see dev/EXECUTOR_DESIGN.md §6
+D1: HARD (straight-through) selection for memory keys (Addr); soft only for
+Dist/Scalar. D2: the GRU self-loops per op-step as the program counter,
+fed CONTROL signals only (prev op, step, register types, scalar margins)
+— never register data vectors (Harvard split). Track A remains the
+tournament baseline; LOFO (leave-one-program-family-out) is Phase 2's
+first gate; PROVENANCE/FORCE are not selectable ops.

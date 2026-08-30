@@ -1,64 +1,131 @@
 # The learned EXECUTOR: Track C made concrete
 
-Decision doc, not a survey (2026-08-30). No code touched. For the lead's review before any executor code exists. Read order behind this doc: `dev/TRACK_C_DESIGN.md` (the M56 op-algebra spike this concretizes), `dev/OP_INVENTORY.md` (the built/proven/planned op table reused verbatim), `dev/MIND_INTERFACE.md` (invariants, dials), `dev/LTM_DESIGN_BRIEF.md` §5, `src/nsm_ct/clause_reactor.py` (`ClauseReactor.forward`/`_collapse`), `src/nsm_ct/resolver.py`.
+Decision doc, not a survey (2026-08-30; revised same day to fold in `dev/EXECUTOR_DESIGN_REVIEW.md` — every finding accepted, applied throughout, decisions in §6). For the lead's review before any executor code exists. Read order: `dev/TRACK_C_DESIGN.md` (§1.8/§1.10 — the "acid test" §1.1 now runs on all nine programs), `dev/OP_INVENTORY.md`, `dev/OP_LIBRARY_MAP.md`, `dev/MIND_INTERFACE.md`, `dev/LTM_DESIGN_BRIEF.md` §5, `src/nsm_ct/ops.py` (op signatures + `RegisterFile` trace format, used verbatim below), `src/nsm_ct/ltm.py` (M59a — LTM ops **built**), `src/nsm_ct/clause_reactor.py`, `src/nsm_ct/resolver.py`.
 
 ## 0. Framing
 
-Today's per-clause loop is **one fixed program**: `forward` runs `query -> _collapse -> GRU tick -> gate/overwrite/negate -> write -> respond`, one op each, same order every clause step (`clause_reactor.py:3007-3099`). The only "choice" is *which candidate branch is present* — a Python `if`, not a learned decision — and TRACK_C_DESIGN §1.9 already named the concrete place this hides a real routing decision ("EMIT's source register is hardcoded, not routed"). The executor makes op-selection and argument-selection themselves learned and budgeted, so today's sequence becomes one point in a space of programs, not the only program that exists.
+Today's per-clause loop is **one fixed program**: `forward` runs `query -> _collapse -> GRU tick -> gate/overwrite/negate -> write -> respond`, same order every clause step (`clause_reactor.py:3007-3099`). The only "choice" is *which candidate branch is present* — a Python `if`, not a learned decision (TRACK_C_DESIGN §1.9: "EMIT's source register is hardcoded, not routed"). The executor makes op- and argument-selection themselves learned and budgeted, so today's sequence becomes one point in a space of programs, not the only program that exists.
 
-**Why now.** TRACK_C_DESIGN's verdict (§7) was "more research," conditioned on three prerequisites: §1.8 (a per-candidate `Feat` register), §1.9 (routed `EMIT`), §1.10 (a per-candidate `Addr` register for `mem_query`). All three are now built and validated — §1.8/§1.9 by M56b/M56c (held-out-name pronoun binding restored to 1.000 via `membrane.EntityCandidateSet.cand_features`), §1.10 by M55a (`query_candidates_per_addr`, `resolver.py:66-81`). M57 then proved the op inventory works at rich scale **and is necessary**: cheat (GRU state-carry, no explicit binding) scores 0.500 vs. normal 0.938 at 8 entities (RESEARCH_NOTES "M57 battery #3") — the strongest evidence yet that this project's discourse cannot be solved by hidden-state shortcuts alone, which is the whole argument for a program-selecting controller over a bigger GRU. Every M53-M57 curriculum's `meta` already carries the gold binding used to score it (TRACK_C_DESIGN §4.1) — §2a's traces are *derived*, not authored.
+**Why now.** TRACK_C_DESIGN §7's verdict was "more research," conditioned on three prerequisites (§1.8 `Feat` register, §1.9 routed `EMIT`, §1.10 per-candidate `Addr`), all now built and validated (M56b/M56c, M55a). M57 then proved the op inventory works at scale **and is necessary**: cheat (GRU state-carry, no explicit binding) scores 0.500 vs. normal 0.938 at 8 entities (M57 battery #3) — the argument for a program-selecting controller over a bigger GRU, and the exact failure §1.3/§6 D2 below now also guards against *inside* the executor's own op loop.
 
-**What does not change.** MIND_INTERFACE.md's nine invariants hold unmodified: #1 (weights hold policy only — the executor learns *which op, which register*, never a fact), #5 (one resolver contract — the new `SCORE` op generalizes CorefHead/SenseHead/RankHead/SharedScorer, it does not add a fourth head), #6 (dials are explicit named scalars), #8 (compute is budgeted). Track A (today's fixed pipeline) remains the standing tournament baseline and deployed fallback regardless of outcome, per this project's kill-switch convention. No knowledge migrates into weights — the exact failure M56 caught (CorefHead's 1.000 was a six-name lookup table in weights) and §3's honesty machinery exists to keep catching it here.
-
-**The user's framing, verbatim, is this design's premise**: "perception is deterministic and grounded (USVS), structure is explicit (clauses, roles, candidate sets), memory ops are fixed and exact — so the executor learns SHORT programs over clean typed objects, unlike NPI/DNC/NMN which learned perception and programming at once." Transformer-style *training* on text at scale (M58) is in scope; transformer *architecture* inside this loop is not — ROADMAP_LONG_TERM.md's closed door stands: "attention only as a single readable select-over-explicit-objects op." Every attention mechanism below (§2) is exactly that: a pointer over a small, named, typed register file, never over an unbounded token sequence.
+**What does not change.** Invariants hold unmodified: #1 (weights hold policy, never a fact), #4 (every gated write logs, unconditionally, §1.2), #5 (`SCORE` generalizes existing heads, doesn't add a fourth), #6 (dials are named scalars), #8 (compute is budgeted, now with measured kill criteria, §3). Track A remains the tournament baseline and fallback regardless of outcome. No knowledge migrates into weights — §3's honesty machinery, extended here to the router itself, is what keeps catching it.
 
 ## 1. The machine
 
-### 1.1 Registers
+### 1.1 Registers — v0 register file (derived, then locked)
 
-Twelve global registers, typed per TRACK_C_DESIGN §1.2 (`Addr`/`Vec`/`Dist`/`Scalar`/`Mem`), plus per-candidate shadow registers sized to `C` (M57's richest curriculum used up to 8 entities):
+Per D3 (§6): TRACK_C_DESIGN §1.10's acid test — write every gold program out register-by-register, THEN freeze — run here on all **nine** programs this design commits to: six gold-program families plus the three Phase-3 transfer tasks (T1-T3, illustrative only — curricula not authored until Phase 3, after M59b, §3/§6 D5). `C` = candidate-set size, perception-enumerated, ≤8. `A_e/A_r/V_v` and per-candidate `addr/feat/prior` are **pre-loaded** per clause, never op-written; every other cell below is an op's output, verified per program (no read precedes its write). `state` (clause-level GRU) and `ctrl` (op-loop control counter, §1.3/D2) are not registers — neither carries facts.
 
-| register | type | count | pre-loaded per clause from |
+`X` = the address (`A_e` or `A_w`) a program reads/writes at. **EPILOGUE-W** (ends in a write): `TICK(X,A_r,V_v,V_read,state)→state; GATE/OVERWRITE/NEGATE(state,V_v)→S_gate,S_owr,S_neg; WRITE(M_mem,X,A_r,V_v,S_gate,S_owr,S_neg)→M_mem (**≤1/clause**, triggers unconditional `PROVENANCE`, §1.2/§1.3); RESPOND/RESPONSE(state,V_read)→answer; HALT`. **EPILOGUE-Q** (question, no write): same minus `GATE/OVERWRITE/NEGATE` and `WRITE`.
+
+| program | step | op | reads | writes | type |
+|---|---|---|---|---|---|
+| **1 plain fact** | 1 | QUERY | A_e,A_r | V_read | Addr,Addr→Vec |
+| | 2 | EPILOGUE-W[A_e] | | | GRU/Scalar/Mem/answer |
+| **2 pronoun value-redirect** | 1 | QUERY | A_e,A_r | V_read | →Vec |
+| | 2 | QUERY_CAND `[*]` | P.addr,A_r | P.mem | per-i→Vec |
+| | 3 | SCORE `[*]` (stack: addr,feat,prior,mem; rest 0) | P.*,V_ev | P.score | per-i→Scalar |
+| | 4 | SELECT | P.score | D_w | →Dist |
+| | 5 | EMIT | D_w,P.mem | V_v | →Vec |
+| | 6 | EPILOGUE-W[A_e] | | | |
+| **3 write-back addr-redirect** | 1 | QUERY | A_e,A_r | V_read | →Vec |
+| | 2 | QUERY_CAND `[*]` | P.addr,A_r | P.mem | per-i→Vec |
+| | 3 | SCORE `[*]` (addr,prior,mem; rest 0) | P.*,V_ev | P.score | per-i→Scalar |
+| | 4 | SELECT | P.score | D_w | →Dist |
+| | 5 | EMIT | D_w,P.addr | A_w | →Addr |
+| | 6 | REREAD | A_w,A_r | V_read | →Vec |
+| | 7 | EPILOGUE-W[A_w] | | | |
+| **4 definite-desc read** (Q) | 1 | CAND_FOR | M_mem,V_desc (="doctor") | P.addr,P.prior | per-i |
+| | 2 | QUERY_CAND `[*]` | P.addr,A_r | P.mem | per-i→Vec |
+| | 3 | INTERACT `[*]` | P.mem,V_ev | P.score_extra | per-i→Scalar |
+| | 4 | SCORE `[*]` (addr,prior,mem,score_extra) | P.*,state | P.score | per-i→Scalar |
+| | 5 | SELECT | P.score | D_w | →Dist |
+| | 6 | EMIT | D_w,P.addr | A_w | →Addr |
+| | 7 | REREAD | A_w,A_r | V_read | →Vec |
+| | 8 | EPILOGUE-Q[A_w] | | | |
+| **5 inverse query** (Q) | 1 | QUERY_ENTITY | A_r,V_v | V_read | Addr,Vec→Vec |
+| | 2 | EPILOGUE-Q[A_e] | | | |
+| **6 recall+link** (LTM, M59a, Q) | 1 | CAND_FOR | mem_total(M_mem,M_ltm),V_desc (="mary") | P.addr,P.from_ltm,P.prior | `ltm.py:173-201` |
+| | 2 | QUERY_CAND `[*]` | P.addr,A_r | P.mem | per-i→Vec |
+| | 3 | INTERACT `[*]` | P.mem,V_ev | P.score_extra | per-i→Scalar |
+| | 4 | SCORE `[*]`=`link` (addr,prior,mem,score_extra,from_ltm) | P.*,state | P.score | `ltm.py:322-348` |
+| | 5 | SELECT | P.score | D_w | below `LINK_THRESHOLD`→minted NEW, never a 4th atom |
+| | 6 | EMIT | D_w,P.addr | A_w | →Addr |
+| | 7 | REREAD | A_w,A_r | V_read | →Vec |
+| | 8 | EPILOGUE-Q[A_w] | | | |
+| **T1 inverse+cleanup** (Q, illustrative, composes 5+2's tail) | 1 | CAND_FOR/INVERSE_QUERY | M_mem,A_r,V_v | P.addr,P.prior | multi-match `QUERY_ENTITY` |
+| | 2 | QUERY_CAND `[*]` | P.addr,A_r | P.mem | per-i→Vec |
+| | 3 | SCORE `[*]` (addr,prior,mem) | P.*,V_ev | P.score | per-i→Scalar |
+| | 4 | SELECT | P.score | D_w | →Dist |
+| | 5 | EMIT | D_w,P.addr | A_w | →Addr |
+| | 6 | REREAD | A_w,A_r | V_read | →Vec |
+| | 7 | EPILOGUE-Q[A_w] | | | |
+| **T2 negation-over-LTM** (illustrative, composes 6+NEGATE+QUERY, 2 clauses) | 1-7 | = program 6 steps 1-7 | | A_w,V_read | |
+| | 8 | EPILOGUE-W[A_w], NEGATE dominant | state,V_v | S_neg,M_mem | retraction write, ≤1/clause |
+| | 9 | QUERY (next clause) | A_w,A_r′ | V_read | new relation, e.g. LOCATION |
+| | 10 | EPILOGUE-Q[A_w] | | | |
+| **T3 two-hop query** (Q, illustrative, composes 4+direct QUERY) | 1 | CAND_FOR | M_mem,V_desc (="tall") | P.addr,P.prior | per-i |
+| | 2 | QUERY_CAND `[*]` | P.addr,A_r | P.mem | per-i→Vec |
+| | 3 | SCORE `[*]` (addr,prior,mem) | P.*,V_ev | P.score | per-i→Scalar |
+| | 4 | SELECT | P.score | D_w | →Dist |
+| | 5 | EMIT | D_w,P.addr | A_w | hop 1 resolved |
+| | 6 | QUERY | A_w,A_r=PLACE | V_read | hop 2, direct read |
+| | 7 | EPILOGUE-Q[A_w] | | | |
+
+**Derivation.** Union of every reads/writes cell above, type-checked (every read is a pre-load or postdates its own program's write). `V_ctx`, `S_tmp`, `P.tmp[*]`, `P.query_addr/r[*]` (sense/garden-path branches only, not among these nine — RankHead is built-unproven, out of v0 scope) are dropped from the original draft's table, which listed 6 per-candidate slots and was wrong about it:
+
+| register | type | count | source |
 |---|---|---|---|
-| `A_e`, `A_r` | Addr | 2 | `batch.entity[:,t]`, `batch.relation[:,t]` |
-| `A_w` | Addr | 1 (scratch) | defaults to `A_e`; only `EMIT`/`ADDR_REDIRECT` write it |
-| `V_v` | Vec | 1 | `batch.value[:,t]` (empty on question steps) |
-| `V_read`, `V_ctx` | Vec | 2 (scratch) | last `QUERY`/`REREAD` result; `COMBINE` accumulator |
-| `S_gate`,`S_owr`,`S_neg`,`S_tmp` | Scalar | 4 | unset until `GATE`/`OVERWRITE`/`NEGATE`/scratch write them |
-| `D_w` | Dist | 1 | last `SELECT` result |
-| `M_mem` | Mem handle | 1 | `mem_total(memory, ltm)` (`clause_reactor.py:3017`), read-only, additive STM+LTM |
-| `P.addr/feat/prior/mem/tmp/score[i]` | mixed | 6×C | the active candidate set (entity/sense/hyp/LTM), if any |
+| `A_e`, `A_r` | Addr | 2 | pre-loaded, `batch.entity[:,t]`/`batch.relation[:,t]` |
+| `A_w` | Addr | 1 (scratch) | defaults to `A_e`; written only by `EMIT` (3,4,6,T1-T3) |
+| `V_v` | Vec | 1 | pre-loaded, `batch.value[:,t]` (empty on question steps) |
+| `V_read` | Vec | 1 (scratch) | written by `QUERY`/`QUERY_ENTITY`/`REREAD` |
+| `V_ev` | Vec | 1 | pre-loaded, current mention's evidence/feature content (unifies the draft's `mention_feat`/`evidence_target`) |
+| `V_desc` | Vec | 1 | pre-loaded, the description/name/attribute KEY fed to `CAND_FOR` (4,6,T2,T3 — closes program 4's missing-key gap) |
+| `S_gate`,`S_owr`,`S_neg` | Scalar | 3 | written by `GATE`/`OVERWRITE`/`NEGATE` — three distinct heads, not folded into `SCORE` |
+| `D_w` | Dist | 1 | written by `SELECT` |
+| `M_mem` | Mem | 1 | STM, read-write, `WRITE` ≤1/clause |
+| `M_ltm` | Mem | 1 | LTM (M59a), additive-read-only here (`ltm.mem_total`); consolidated end-of-passage, outside this loop |
+| `P.addr/feat/prior/mem/score/score_extra/from_ltm[i]` | mixed | 7×C | active candidate set; `addr/feat/prior` pre-loaded, rest op-written |
 
-`C` is pre-enumerated by perception (MIND_INTERFACE.md §1: "perception never guesses") — the executor scores and selects among candidates already handed over, never searches for them. This is the same "no open-ended addressing" restriction TRACK_C_DESIGN §1.4 committed to, now covering the whole clause loop — the thing that keeps this out of the DNC/stack-RNN graveyard (TRACK_C_DESIGN §2). The GRU controller state is **not** a register — it's the program counter `OpSelect` reads and `TICK` updates once per clause step (Decision 2, §6).
+**v0 register file — locked at end of Phase 1 (D3, §6).** Any register added after the freeze is a KILL-adjacent finding, ledgered in RESEARCH_NOTES, not a quiet table edit. `C` is pre-enumerated by perception — the executor scores among candidates already handed over, never searches for them (no open-ended addressing, TRACK_C_DESIGN §1.4 — what keeps this out of the DNC graveyard).
 
 ### 1.2 The op library
 
-Every row below is already `proven`/`built-unproven`/`planned` in OP_INVENTORY.md's table — this design adds no new fixed math, only routing.
+Every row is `proven`/`built`/`built-unproven`/`planned` in OP_INVENTORY.md or concretely implemented in `src/nsm_ct/ops.py` — this design adds routing, no new fixed math.
 
-- **Memory**: `QUERY` (bilinear read), `QUERY_ENTITY` (inverse), `QUERY_CAND`/`QUERY_CAND_PER_ADDR` (per-candidate read), `WRITE` (gated bind), `ADDR_REDIRECT`, `REREAD` (M57c.2 post-collapse re-read), `ATTR_WRITE`, `MINT`, `CAND_FOR`/`INVERSE_QUERY` (attribute-match candidate gen — flagged "not yet the live batch-build path" in OP_INVENTORY §5), `PROVENANCE` (audit log).
-- **Tiers** (LTM, `planned` — LTM_DESIGN_BRIEF §5): `RECALL` is not a separate op — it's `QUERY`/`QUERY_CAND` against `M_mem`, already the additive `mem_total(STM,LTM)` view; `LINK` (identity linking, reuses entity `SCORE`/`SELECT` with `P.from_ltm[i]` as an extra feature column); `CONSOLIDATE` (substate transition, end-of-passage); `PROMOTE` (tier-generic gated copy, `trust_ltm`/`trust_truth`).
-- **Control**: `SCORE` (the one learned reducer — generalizes CorefHead/SenseHead/RankHead/SharedScorer via which registers it reads), `INTERACT`, `COMBINE`, `FEATURE_MATCH`, `PRIOR`, `COMPARE` (cosine, output stage), `SELECT` (softmax/argmax over `P.score[*]`, unchanged `_collapse_weights`), `EMIT` (weighted sum into a named destination — the op TRACK_C_DESIGN §1.9 flagged hardcoded, now routed), `TICK` (GRU update, fixed, not itself selectable — Decision 2), `GATE`/`OVERWRITE`/`NEGATE` (the three existing scalar heads, reframed as `SCORE` ops targeting `S_gate`/`S_owr`/`S_neg`), `RESPOND`/`RESPONSE`, `FORCE` (test-only, never reachable at inference), `HALT` (budget cutoff, §1.3).
+- **Memory**: QUERY (`ops.unbind_query`), QUERY_ENTITY (`ops.inverse_query_entity`), QUERY_CAND/QUERY_CAND_PER_ADDR, WRITE (`ops.bind_write` — **≤1/clause**, §1.3), ADDR_REDIRECT, REREAD (M57c.2), ATTR_WRITE, MINT (`ops.allocate`), CAND_FOR/INVERSE_QUERY (offline-tested, not yet the live batch-build path, OP_INVENTORY §5).
+- **Tiers** (LTM — **built, M59a**, `src/nsm_ct/ltm.py`, re-exported `ops.py:52-54`): RECALL = QUERY/QUERY_CAND against `mem_total(M_mem,M_ltm)` (`ltm.py:173-201`, exact by bilinearity, not approximated); LINK (`ltm.link_decision`, `ltm.py:322-348`, `LINK_THRESHOLD=0.5`) reuses entity SCORE with `P.from_ltm[i]` as a stack column; CONSOLIDATE (substate transition, `DocumentRunner`, end-of-passage); PROMOTE (`ltm.promote`, `ltm.py:218-316`, tier-generic, `TRUST_LTM`/`trust_truth`). M59b (curriculum/loop integration) is open — the ops are not.
+- **Control**: SCORE (the one learned reducer, generalizing CorefHead/SenseHead/RankHead/SharedScorer — reads a FIXED-WIDTH stack of the 6 per-candidate columns `[addr,feat,prior,mem,score_extra,from_ltm]`, zero-padded per family not populating one, §1.1 — matches the reactor's existing `cand_feature_per_candidate` register, generalized not replaced; per-family heads were rejected as Track A's heads with a router bolted on, and M54c already measured an under-differentiated shared scorer plateau at 0.727-0.737 vs. 0.863 — the padded stack gives SCORE the per-family column signal that scorer lacked), FEATURE_MATCH/INTERACT/PRIOR/CAND_FOR (write SCORE's stack columns, not reducers themselves), COMPARE, SELECT (`_collapse_weights`), EMIT (routed, §1.9), TICK (fixed, not selectable, §1.3/§6 D2), GATE/OVERWRITE/NEGATE (`write_gate`/`overwrite_gate`/`decide_truth` — three distinct heads, kept separate, **not** folded into SCORE — that breaks §1.4's byte-identity gate and over-stretches invariant #5), RESPOND/RESPONSE, HALT (a selectable op — halting IS a learned choice; `K_max` is the safety net under it, not evidence halting is unlearned).
 
-A separate, unrelated `src/nsm_ct/mind/ops.py` VM (`PERCEIVE`/`RECALL`/`INFER`/`CONSOLIDATE`/`SUPERSEDE`/`RESPOND`/`HALT`) already exists — M1-M4 prior art over a different substrate (`MeaningGraph` nodes). LTM_DESIGN_BRIEF §0's instruction stands: reusable machinery, not this executor's format (Decision 4, §6).
+**Not in the learned vocabulary.** **PROVENANCE** is not selectable — every gated WRITE logs unconditionally (invariant #4); an op the executor could learn to skip would defeat the audit trail. **FORCE** is not selectable — it's the test harness's teacher-forcing mechanism, consumed only by §3's honesty arms, never reachable at inference.
+
+A separate `src/nsm_ct/mind/ops.py` VM already exists — unconnected M1-M4 prior art over a different substrate; reusable machinery, not this executor's format (§6 D4).
 
 ### 1.3 The per-clause loop
 
 ```
-op_id    = OpSelect(state, pool(registers))          # categorical, masked to type-legal ops
-arg_regs = ArgSelect(op_id, state, registers)         # pointer/attention per argument slot
-result   = execute(op_id, arg_regs)                   # fixed math or the SCORE head, never learned routing
+ctrl     = TICK_CTRL(ctrl, prev_op_id, step_idx, type_mask, margin, abstain_flag, K_max-step_count)
+op_id    = OpSelect(ctrl, pool(registers))            # categorical, masked to type-legal ops
+arg_regs = ArgSelect(op_id, ctrl, registers)           # per argument slot, over FEATURE columns
+result   = execute(op_id, arg_regs)                    # fixed math or SCORE, never learned routing
 registers[dest(op_id)] = result
+assert writes_this_clause_step <= 1                     # §1.3 constraint
 if op_id == HALT or step_count == K_max: emit_and_advance()
 else: step_count += 1; repeat
 ```
 
-`K_max` is this design's concrete implementation of the **`patience`** dial (named, stubbed in MIND_INTERFACE.md/OP_INVENTORY §3: "not set — no threshold exists in code"). Default `K_max = 12`: §1.4's hardwired trace runs 9-13 ops depending on which candidate branch fires (branches never stack — disjoint per `_collapse`'s own docstring), so 12 is one slack step over the longest existing program, the same rule TRACK_C_DESIGN §1.6 used for `K_max=6` on the collapse-only chain. At budget exhaustion an implicit `SELECT`+`EMIT`+`TICK` fires regardless of what was asked for, mirroring §1.6's hard-cutoff design (no learned halting probability — sidesteps the instability that sank Neural GPU/stack RNNs, TRACK_C_DESIGN §2). The **`caution`** dial (also stubbed) is a natural `HALT` consumer (a low-margin `SELECT` could route to an abstaining `HALT`) but wiring it is no-regret follow-on, not required for GO (§3).
+**Program counter, fixed (D2, DECIDED — lead).** The original `OpSelect(state, pool(registers))` was a defect: `state` updates once per CLAUSE, constant across the ≤12 op-loop steps — the selector could not see which step it was on, and the minimum-loss solution is a ~6-way clause-feature classifier reproducing §1.1's programs from memory, passing every §3 gate without routing at all. Fix: a GRU-shaped counter, `ctrl`, self-loops once per OP-STEP — it IS the program counter — but is strictly Harvard-split from the data path: control signals only (prev op id, step index, type mask, margin/abstain/halt-budget), **never register data**; `OpSelect` no longer reads the main clause-level `state` directly. This is not "a second recurrent state" in the sense the original decision warned against: that risk was a state that SEES register contents and silently computes the answer inside itself, reducing ops to decoration (M57's cheat, relocated inside a clause). A control-only recurrence has nothing to compute an answer from. `state` is untouched, still ticks once per clause via `TICK`, still feeds `GATE`/`OVERWRITE`/`NEGATE`/`RESPOND` — just no longer wired into the router.
 
-The answer is emitted unchanged: `RESPOND`/`RESPONSE` accumulate per-step logit + content vector, aggregated by softmax-weighted sum, then cosine-compared to option vectors (`clause_reactor.py:3101-3109`). This sits *outside* the op loop — scored once per episode, not once per op.
+**One memory WRITE per clause.** Today's reactor issues at most one `WRITE` per clause step (`clause_reactor.py:3066`); the executor must preserve this, enforced by the assert above, not left emergent — more than one opens a superposition cheat channel (blurred readout hides which bind mattered) and multiplies retained-tensor count against the memory kill criterion (§3). More than one write is a defect, not a discovery.
+
+`K_max` (default 12) is a HYPERPARAMETER baked into the training graph, not the `patience` dial MIND_INTERFACE.md names (a runtime scalar tunable without retraining, still a stub) — this design delivers a fixed cutoff under it, not the dial itself.
+
+The answer is emitted unchanged: `RESPOND`/`RESPONSE` accumulate per-step logit + content, softmax-weighted sum, cosine-compared to option vectors (`clause_reactor.py:3101-3109`) — outside the op loop, scored once per episode.
 
 ### 1.4 The bootstrap anchor: today's pipeline as one fixed trace
 
-**An executor with this trace forced must reproduce Track A byte-for-byte (or within float tolerance)** on every existing regression suite. Worst case (candidate families are mutually exclusive per row/step, so a real trace uses at most one bracketed block):
+**An executor with this trace forced must reproduce Track A byte-for-byte** on every existing regression suite (candidate families are mutually exclusive per row/step, so a real trace uses at most one bracket):
 
 ```
 QUERY(A_e,A_r) -> V_read                                                          # :3018
@@ -78,145 +145,74 @@ QUERY(A_e,A_r) -> V_read                                                        
 [if inverse]  QUERY_ENTITY(A_r,V_v)->V_read                                       # :3050-53
 TICK(A_e|A_w,A_r,V_v,p,c,V_read; state)->state                                    # GRU, :3056
 GATE(state)->S_gate; OVERWRITE(state)->S_owr; NEGATE(state,V_v)->S_neg            # :3059-65
-WRITE(M_mem,A_e|A_w,A_r,V_v,S_gate-S_neg,overwrite=S_owr)                         # :3066
-PROVENANCE(...)                                                                    # :3067-85, if enabled
+WRITE(M_mem,A_e|A_w,A_r,V_v,S_gate-S_neg,overwrite=S_owr)                         # :3066, ≤1/clause
+PROVENANCE(...)                                                                    # :3067-85, unconditional
 RESPOND(state)->rl; RESPONSE(state,V_read)->rv                                    # :3086-90
 ```
 
-Every branch condition is exactly the "hardcoded, not routed" fact TRACK_C_DESIGN §1.9 flagged. Forcing the op/arg-selector to reproduce this trace, step for step, is a mechanical zero-ambiguity regression test — if it doesn't reproduce Track A exactly, the execute-layer (not routing) has a bug, and that's caught in Phase 1 (§5) before any training starts.
+`[sense]`/`[hyp]` are Track A capabilities this trace must still reproduce but aren't among §1.1's nine registers-frozen programs — no v0 register was added for their `V_ctx`/`P.tmp`/`P.query_addr/r` needs. Forcing the op/arg-selector to reproduce this trace step-for-step is a mechanical zero-ambiguity regression test — a mismatch means the execute-layer (not routing) has a bug, caught in Phase 1 before any training starts.
 
 ## 2. Learning
 
-**Op selection**: a categorical head over the ~20-op vocabulary (§1.2), conditioned on `[state; pool(registers)]` (`pool` = fixed concat of named globals + mean/max over the active `P.*` bank, so input size doesn't grow with `C`). Masked to type-legal next ops given the last op's write and populated register types — TRACK_C_DESIGN §1.5's type table already prunes most of the space, so the head never learns illegal transitions from scratch, only which legal one to take.
+**Op selection**: a categorical head over the ~20-op vocabulary (§1.2, minus PROVENANCE/FORCE), conditioned on `[ctrl; pool(registers)]` — `ctrl` is the op-loop's control-only program counter (D2), never `state` directly (Harvard split); `pool` = fixed concat of named globals + mean/max over the active `P.*` bank, size-invariant in `C`. Masked to type-legal next ops given the last op's write and populated register types.
 
-**Argument selection**: for each slot the op needs, a small attention head scores every register of the required *type* (an `Addr` slot attends over `{A_e,A_r,A_w,P.addr[0..C-1]}`) and picks by softmax (train) / argmax (eval) — `_collapse_weights` generalized from "which candidate" to "which register," and exactly the "admissible attention" ROADMAP_LONG_TERM.md permits: select-over-explicit-objects, never over an unbounded sequence.
+**Argument selection**: for each slot, a small attention head scores registers of the required type, softmax(train)/argmax(eval) per D1's TYPE split (§6) — `_collapse_weights` generalized from "which candidate" to "which register." A per-candidate `Addr` slot attends over `P.feat[0..C-1]` (the FEATURE column), **never** `P.addr[0..C-1]`'s raw identity vectors as the key — that's M56b's memorization surface (a name→slot lookup table in weights, invisible until held-out atoms run); `P.addr[i]` is read only as the VALUE once a slot is chosen.
 
 ### 2a. Gold programs (trace-supervised targets)
 
-Derived mechanically from existing curricula's `meta` + the code paths that already compute the right answer (TRACK_C_DESIGN §4.1, extended past collapse to the whole clause loop). `[*]` = per-candidate op applied to every `i` in the active set.
+The six families' programs, and the three Phase-3 transfer tasks (illustrative), are §1.1's table — derived mechanically off `forward`'s own execution, extended past collapse to the whole clause loop; T1-T3's curricula are not authored until Phase 3, after M59b (§3, §6 D5).
 
-**1. Plain fact** ("mary went to the garden . where is mary ?" — no candidates):
-```
-QUERY(A_e,A_r)->V_read
-TICK(A_e,A_r,V_v,p,c,V_read)->state
-GATE(state)->S_gate; OVERWRITE(state)->S_owr; NEGATE(state,V_v)->S_neg
-WRITE(M_mem,A_e,A_r,V_v,S_gate-S_neg,overwrite=S_owr)
-RESPOND(state)->rl; RESPONSE(state,V_read)->rv
-HALT
-```
+**Training modes**: (a) trace-supervised — teacher-forced sequences from §1.1, per-step cross-entropy on both choices, plus intermediate register-value loss. (b) straight-through, traces annealed — selection goes hard per D1's TYPE split (`Addr` hard from step one; `Dist`/`Scalar` soft-to-hard as trace loss decays), not uniformly staged. Gate: match Stage-(a) with trace loss OFF, AND report D1's soft-vs-argmax delta at every gate. (c) task-loss-only (the cliff) — zero trace supervision; measured, never assumed.
 
-**2. Pronoun value-redirect** ("she found the ball" — TRACK_C_DESIGN §1.7, EMIT writes the VALUE):
-```
-QUERY(A_e,A_r)->V_read
-QUERY_CAND(P.addr[*],A_r)->P.mem[*]
-FEATURE_MATCH(mention_feat,P.feat[*])->P.score[*]; PRIOR(P.addr[*])-> combine into P.score[*]  (inert, uniform)
-SELECT(P.score[*])->D_w
-EMIT(D_w,P.mem[*])->V_v
-TICK(A_e,A_r,V_v,p,c,V_read)->state
-GATE/OVERWRITE/NEGATE(...)->S_gate,S_owr,S_neg
-WRITE(M_mem,A_e,A_r,V_v,S_gate-S_neg,overwrite=S_owr)
-RESPOND/RESPONSE(state,V_read)
-HALT
-```
-
-**3. Write-back address-redirect** ("she is tall" — M57b, EMIT writes the ADDRESS):
-```
-QUERY(A_e,A_r)->V_read
-QUERY_CAND(P.addr[*],evidence_r)->P.mem[*]; FEATURE_MATCH/SCORE(...)->P.score[*]
-SELECT(P.score[*])->D_w
-EMIT(D_w,P.addr[*])->A_w
-REREAD(A_w,A_r)->V_read
-TICK(A_w,A_r,V_v,p,c,V_read)->state
-GATE/OVERWRITE/NEGATE(...)->S_gate,S_owr,S_neg
-WRITE(M_mem,A_w,A_r,V_v,S_gate-S_neg,overwrite=S_owr)
-PROVENANCE(A_w,A_r,V_v,S_gate,S_owr,S_neg,redirected=True)
-HALT
-```
-
-**4. Definite-description read** ("what is the doctor like ?" — `candidates_for(kind=doctor)` + M57c.2 read-side redirect, question step, no write):
-```
-CAND_FOR(M_mem,kind=doctor)->P.addr[*],P.prior[*]
-QUERY_CAND(P.addr[*],evidence_r)->P.mem[*]; INTERACT(P.mem[*],evidence_target)->P.score_extra[*]
-SCORE(P.addr[*],P.mem[*],P.score_extra[*],state)->P.score[*]
-SELECT(P.score[*])->D_w
-EMIT(D_w,P.addr[*])->A_w
-REREAD(A_w,A_r)->V_read
-TICK(A_w,A_r,-,p,c,V_read)->state    # V_v empty: question step
-RESPOND/RESPONSE(state,V_read)
-HALT
-```
-
-**5. Inverse query** ("who is tall ?" — M57c.2 entity-axis unbind):
-```
-QUERY_ENTITY(A_r,V_v)->V_read
-TICK(A_e,A_r,-,p,c,V_read)->state
-RESPOND/RESPONSE(state,V_read)
-HALT
-```
-
-**6. Cross-passage recall+link** (LTM, `planned` — LTM_DESIGN_BRIEF §5; passage 2's "mary" must LINK to passage 1's `mary#1`):
-```
-CAND_FOR(STM,name=mary)->P.addr_stm[*]; CAND_FOR(LTM,name=mary)->P.addr_ltm[*]; tag P.from_ltm[*]=1
-[union into P.addr[*],P.from_ltm[*],P.feat[*]]
-QUERY_CAND(P.addr[*],evidence_r)->P.mem[*]           # additive: mem_total already sums STM+LTM
-INTERACT(P.mem[*],evidence_target)->P.score_extra[*]
-SCORE(P.addr[*],P.mem[*],P.feat[*],P.from_ltm[*],P.score_extra[*],state)->P.score[*]   # LINK op
-SELECT(P.score[*])->D_w        # below link_threshold -> selects "new instance"
-EMIT(D_w,P.addr[*])->A_w
-REREAD(A_w,A_r)->V_read
-TICK(A_w,A_r,-,p,c,V_read)->state
-RESPOND/RESPONSE(state,V_read)
-HALT
-```
-
-**Training modes**: **(a) trace-supervised** — teacher-forced (op, arg-register) sequences from above, per-step cross-entropy on both choices, plus an intermediate register-value loss (cosine/MSE against hand-execution) — TRACK_C_DESIGN §4.2 unchanged, what makes it a genuine trace, not a final-answer label in disguise. **(b) straight-through, traces annealed** — `OpSelect`/`ArgSelect` go hard (argmax forward, soft gradient backward) while the trace loss decays to zero (TRACK_C_DESIGN §4.3's Stage 2, extended: selection itself goes hard here, not just collapse weights). Gate: match Stage-(a) numbers with trace loss OFF. **(c) task-loss-only (the cliff)** — zero trace supervision, the TerpreT regime TRACK_C_DESIGN §2 names as the sharpest failure mode. Measured, never assumed: run it and report the number, whatever it is.
-
-**Credit assignment**: at each of ≤12 steps the discrete action space is a handful of ops × a handful of type-legal register bindings — TRACK_C_DESIGN §1.5's type table prunes most of the space before learning starts, the same "tiny discrete space, dense supervision" regime that made NPI's imitation tractable where TerpreT's sparse IO-only search wasn't. What would show blur: (i) op-usage histograms flatten toward uniform across episode kinds (router collapse, TRACK_C_DESIGN §6 risk 2); (ii) intermediate register-value loss stays high while task loss drops (task loss satisfied through a path bypassing nominal register contents — TerpreT recurring); (iii) the forced-WRONG-trace arm (§3) fails to crater — the chosen sequence doesn't determine the outcome, the same diagnostic M57b/M57's forced-wrong arms already use (1.000→0.000 pattern).
+**Credit assignment**: ≤12 steps, a handful of ops × type-legal bindings (§1.2's masking prunes most before learning starts). What would show blur: (i) op-usage histograms flatten toward uniform; (ii) intermediate register-value loss stays high while task loss drops; (iii) `H(program | clause-type features)` ≈0 on eval — a dispatch table by measurement, D2's own failure mode if left unfixed; (iv) forced-WRONG-trace (§3) fails to crater.
 
 ## 3. Honesty machinery (mandatory)
 
-- **Forced-trace (gold)**: force §2a's exact trace, train and eval. Must reproduce §1.4's bootstrap numbers.
-- **Forced-WRONG-trace**: force a wrong op or wrong arg-register at one decisive step. Must **crater** — the standing proof pattern (M57b/M57: 1.000→0.000, 0.938→0.812).
-- **Cheat (no executor)**: Track A's hardwired pipeline, run as-is — the tournament floor, not a disabled-mechanism probe (§4).
-- **No-trace eval**: trained executor (Stage b/c), zero trace supervision, zero forcing at eval — must hold at/near normal, same "no-gold gate" every M57 battery is scored on.
-- **Held-out atoms**: names/instances never seen in training (M56b/M56c's precedent).
-- **Compositional transfer gate**: below.
+- **Forced-trace (gold)**: force §1.1's exact program. Must reproduce §1.4's bootstrap numbers.
+- **Forced-WRONG-trace**: force a wrong op/arg-register at one decisive step. Must **crater** (1.000→0.000, 0.938→0.812 pattern).
+- **Cheat (no executor)**: Track A's pipeline run as-is — the TOURNAMENT floor (§4), **not** the per-family floor arm below — two different quantities, previously conflated.
+- **No-trace eval**: trained executor (b/c), zero trace supervision, zero forcing at eval — must hold at/near normal.
+- **Held-out atoms**: names/instances unseen in training, run specifically on `ArgSelect` (§2's `P.feat`-not-identity fix).
+- **Shuffled-selector arm**: keep `execute()`/SCORE weights, replace trained `OpSelect` with a uniform type-legal sampler — if accuracy holds, routing is decorative (forced-WRONG-trace alone only proves the ops are load-bearing, not the selector).
+- **Register/slot permutation invariance**: at eval, permute candidate slot order, rename scratch registers. A composer is invariant; a positional memorizer craters.
+- **Departure metrics** (measured every Phase-2/3 report): departure rate (fraction of correct episodes whose op sequence differs from Track A's) and shortcut discovery (dropping a provably-dead op more than a random type-legal walk would) — with no phase rewarding departure from §1.4's program, a GO is indistinguishable from "Track A re-implemented as a 12×-slower interpreter" unless these move.
 
-**Three held-out task types**, each constructible from §1.2's ops with zero new primitives:
+**Compute kill criteria.** Per-clause wall-clock ≤ `K_max` × Track A's own measured per-step cost; peak training memory ≤ 1.5× Track A's at the same batch (Track A: 6.4GB at T≈50, unfinished — M57 battery #3). **KILL if either is exceeded**, measured first at Phase 1's end — before transfer work, since an unaffordable per-step cost makes every later phase moot under CLAUDE.md's one-run-at-a-time rule.
 
-- **T1 — inverse + cleanup**: "who is tall in passage 1?" = `QUERY_ENTITY` (inverse read) then `SELECT`+`EMIT` over its own candidate set when more than one entity matches (composes gold programs 5 and 2's tail).
-- **T2 — negation-over-LTM**: "mary no longer lives in the kitchen — where does she live?" across two passages = `LINK` (gold program 6) + the existing trained `NEGATE` op + `QUERY`.
-- **T3 — two-hop query**: "where is the person who is tall?" = `CAND_FOR`(tall) → `QUERY_ENTITY` → `QUERY`(instance, PLACE) — composes gold programs 4 and 5, the literal recombination test TRACK_C_DESIGN §4.4 names as the real bar.
+**Phase 2's FIRST gate — leave-one-family-out (LOFO):** Train with traces from five of §1.1's six gold-program families; measure the sixth with **no traces** (the program-level analogue of M56b's held-out-atom test — the cheapest, most decisive experiment here, runs on existing curricula, no new data). Report per held-out family. GO/KILL are defined relative to two arms measured alongside it, never as an absolute number: (a) a **hand-written-program oracle** — the executor forced to the held-out family's own §1.1 gold trace; (b) a **real floor arm** — the executor with op selection frozen to the plain-fact program (§1.1 #1), **never** Track A (that's the tournament's floor, §4). **GO: ≥0.5 of the oracle-floor gap on ≥4 of 6 held-out families. KILL: <0.2 of the gap on all 6.** An intermediate result is reported honestly, not forced into either bucket, and does not clear Phase 2 alone.
 
-**GO**: ≥0.8 task accuracy on ≥2 of 3 transfer tasks with ≤10 trace-supervised episodes each, AND the zero-trace condition beats cheat by a margin proportionally comparable to A's own 66% floor-to-ceiling closure on senses (M54b) — TRACK_C_DESIGN §5's yardstick. **KILL** if: no transfer task clears cheat+0.1 after 20 trace-supervised episodes, OR entropy fails to sharpen over Stage-(b) training on any of the three, OR the only way to reach transfer is a per-task op or register addition (TRACK_C_DESIGN §4.5, extended to registers — Decision 3).
+T1-T3's curricula (§1.1) move to **Phase 3, after M59b** — they ride `CAND_FOR` (never run in a training loop) and, for T2, `link`/`consolidate` (built M59a, not curriculum-integrated); gating on them before LOFO risked a false KILL from a gap the executor didn't cause (T1/T3 compose a 0.677-0.710 op with a ~0.90 op, ceiling ~0.63, below a flat 0.8 bar). Phase 3 reuses LOFO's oracle/floor-arm framing, not a second absolute bar, and adds blind curriculum authoring (T1-T3 rewritten by an agent not shown OP_INVENTORY — the tasks as written here were reverse-engineered from the ops).
 
-Standard parity gates (reused from TRACK_C_DESIGN §5 / M57, "within noise" unless stated): pronoun task ≥0.90, binding ≥0.98/≥0.98 anti-recency (A: 0.913, 1.000/1.000); sense task ≥0.84, binding ≥0.65/≥0.60 flipped (A: 0.863, 0.680/0.629); writeback 1.000/1.000/1.000 with forced-wrong ≤0.000 (A: M57b); rich task ≥0.78, binding ≥0.90 (A: 0.816/0.954); rich@8-entities task ≥0.90 with forced-wrong ≤0.85 (A: 0.938/0.812, the necessity gap); instance task ≥0.68, binding ≥0.78 (A: 0.716/0.819); inverse-query ≥0.60 (A: 0.677-0.710, explicitly "not saturated" — parity means matching A's own headroom).
+Standard parity gates (reused from TRACK_C_DESIGN §5/M57, "within noise" unless stated): pronoun ≥0.90, binding ≥0.98/≥0.98 (A: 0.913, 1.000/1.000); sense ≥0.84, binding ≥0.65/≥0.60 (A: 0.863, 0.680/0.629); writeback 1.000/1.000/1.000, forced-wrong ≤0.000 (A: M57b); rich ≥0.78, binding ≥0.90 (A: 0.816/0.954); rich@8-entities ≥0.90, forced-wrong ≤0.85 (A: 0.938/0.812); instance ≥0.68, binding ≥0.78 (A: 0.716/0.819); inverse ≥0.60 (A: 0.677-0.710, "not saturated").
 
 ## 4. The A-vs-C tournament
 
-Compared: Track A's fixed pipeline (§1.4) vs. the executor (§1-2), on the full M53-M57 mix (held-out names/instances by default). "C wins" requires **both**: (1) parity on every solved task at §3's thresholds, under no-trace/held-out/forced-wrong arms, not just forced-gold; (2) clearing the transfer gate (§3) on tasks Track A **cannot do at all** without new specialist-head code (T1-T3 have no existing head to call — the point of choosing them). Parity alone, without transfer, is a legibility/param-count result worth recording honestly, not sufficient to change the tournament outcome — Track A already gets full credit as the simpler, proven "cheat" baseline in that case.
+Compared: Track A (§1.4) vs. the executor (§1-2), on the full M53-M57 mix. "C wins" requires **both**: (1) parity on every solved task at §3's thresholds under no-trace/held-out/forced-wrong arms, not just forced-gold; (2) clearing LOFO and, once reached, the Phase-3 transfer bar on tasks Track A **cannot do at all**. Parity alone, without transfer, is a legibility/param-count result worth recording, not sufficient to change the outcome — Track A keeps full credit as the proven "cheat" baseline.
 
 ## 5. Plan
 
 | phase | ships | gate |
 |---|---|---|
-| 0 (no-regret, now) | register-file dataclass, op-legality type table (pure Python), trace-extraction instrumented off `forward`'s own execution (§1.4, mechanical, not hand-authored); wire `candidates_for`/`inverse_query` into the live batch-build path (OP_INVENTORY §5's gap) | unit tests only, zero training-loop risk |
-| 1 — bootstrap | executor scaffold + `execute()` dispatch for every §1.2 op | forced §1.4 trace reproduces Track A byte-for-byte / within tolerance on all existing suites |
-| 2 — trace-supervised | Stage (a) on §2a's six families, full mix | forced-trace + forced-WRONG + parity thresholds (§3), under forcing |
-| 3 — trace-weaning | Stage (b) straight-through + annealing | Stage-2 numbers held with trace loss OFF + held-out atoms + forced-wrong still craters |
-| 4 — compositional transfer | T1-T3 curricula, zero-trace/few-trace eval | §3's GO/KILL numbers |
-| 5 (GO only) | A-vs-C tournament write-up | §4's two-part bar; Track A ships as fallback regardless |
+| 0 (no-regret, now) | `RegisterFile` dataclass (`ops.py:711-804`), op-legality table, trace-extraction off `forward`'s own execution; wire `CAND_FOR`/`INVERSE_QUERY` into the live batch-build path | unit tests only |
+| 1 — bootstrap | `execute()` dispatch for every §1.2 op; v0 register file FROZEN at phase end (D3) | forced §1.4 trace byte-for-byte; compute kill criteria (§3) measured first |
+| 2 — trace-supervised | Stage (a) on §1.1's six families | LOFO FIRST, then forced-trace/forced-WRONG/parity, under D1's per-type split |
+| 3 — trace-weaning + transfer | Stage (b) straight-through; T1-T3 (blind-authored), after M59b | Stage-2 held with trace loss OFF + held-out atoms + T1-T3 oracle/floor thresholds |
+| 4 (GO only) | A-vs-C tournament write-up | §4's two-part bar; Track A ships as fallback regardless |
 
-Estimated agent-scale work: TRACK_C_DESIGN §5's collapse-only sketch was 400-700 lines across 4-5 files, one M53b/M54-sized build. This widens scope from collapse-only to the whole clause pipeline plus transfer curricula: roughly **1,000-1,500 changed/new lines across 6-8 files**, five to six Sonnet-agent-scale milestones (Phases 0-4), each gated and RESEARCH_NOTES-ledgered, win or lose. Track A stays deployed through every phase; it is only ever a *candidate* for replacement after a Phase 5 GO, and stays in the codebase as fallback even then.
+Estimated agent-scale work: ~1,000-1,500 changed/new lines across 6-8 files, five Sonnet-agent-scale milestones, each gated and RESEARCH_NOTES-ledgered, win or lose. Track A stays deployed throughout.
 
 ## 6. Decisions for the lead
 
-**D1 — Soft vs. hard op/argument selection during training?** Default: soft through Stage (a), straight-through hard only at Stage (b)/(c), mirroring `_collapse_weights`'s existing pattern. Consequence of hard-from-the-start: faster to a legible discrete program, but risks the exact TerpreT gradient-through-discreteness failure the graveyard survey calls this design's sharpest kill signal. **HYPER-CRITICAL.**
+**D1 — Soft vs. hard selection. DECIDED (lead, 2026-08-30): hard (straight-through) for any slot whose value becomes a memory KEY (`Addr`), soft only where mixture is already the semantics (`Dist`/`Scalar`).** Required reporting: a soft-vs-argmax delta at EVERY Phase-2 gate. Rationale kept as the record:
+- For: a soft `Addr` mixture is an interference-contaminated bilinear key (exact only for orthonormal keys) — it trains a semantics that doesn't exist at eval, relocating the M57#3 cheat (0.500/0.938) into `ArgSelect`.
+- For: trace supervision is cross-entropy on the selector distribution — it needs no soft execution to work at all.
+- Against: straight-through-from-the-start is the TerpreT gradient dynamic this design calls its sharpest kill signal; early hard `Addr` may under-explore.
+- Against: soft-key/hard-elsewhere has no precedent battery on this codebase.
 
-**D2 — Does the executor get its own recurrent state, or does the GRU stay the single program counter?** Default: GRU stays the only recurrence; the op-selector reads it, `TICK` still updates it once per clause step. Consequence of a second state: doubles the recurrent parameter surface and reopens the M53 "state entanglement" question M54c already retired as a capacity confound, not architectural — risks reintroducing it before there's evidence it's needed. **HYPER-CRITICAL** — touches invariant #1 and the A/B experiment's own logic.
+**D2 — Second recurrent state? DECIDED (lead, 2026-08-30): no second data-carrying recurrent state — the GRU self-loops once per OP-STEP as the program counter (`ctrl`, §1.3), fed CONTROL SIGNALS ONLY.** Inputs: previous op id, step index, register TYPE mask, and scalar summaries (margin/abstain flag/halt budget) — **never register data vectors**; `OpSelect` no longer reads `state` directly (Harvard split: control path vs. data path). Why: a recurrent state that sees register CONTENTS can compute the answer internally and reduce the ops to decoration — the M57 state-carry cheat, relocated inside a clause where no existing crater test catches it. This fixes "the selector can't see which step it's on" (the actual defect) without reopening the M53 entanglement question a second general-purpose, data-carrying recurrent state would.
 
-**D3 — Is the register file (§1.1) locked for the gate's duration, or open to grow per-task?** Default: locked, mirroring TRACK_C_DESIGN §4.5's "no per-task op additions," extended to registers. Consequence of leaving it open: any transfer "success" (§3) becomes unfalsifiable. **ROUTINE** to decide, but the transfer gate's honesty depends on the answer being "locked."
+**D3 — Register file locked? Decided: YES, at end of Phase 1** — only after writing out all nine programs (§1.1) and type-checking the union first (the §1.10 acid test), not before. Any post-freeze register is a KILL-adjacent finding, ledgered in RESEARCH_NOTES, per TRACK_C_DESIGN §4.5's "no per-task op additions" extended to registers.
 
-**D4 — Does the (op, register) trace format live in a new module, or reuse `src/nsm_ct/mind/ops.py`'s `Op`/`TraceStep`?** Default: new module — `mind/ops.py` is a coarser 8-op VM over a different substrate, unconnected M1-M4 prior art (LTM_DESIGN_BRIEF §0). Consequence of reusing it: inherits a granularity that doesn't type-check against `Addr`/`Vec`/`Dist`/`Scalar`, forcing a redesign of ITS vocabulary first — more work, and conflates two separate "more research" verdicts. **ROUTINE.**
+**D4 — Trace module: new, separate from `mind/ops.py`. Decided: new module** (`ops.py`'s `RegisterFile`, already built) — `mind/ops.py`'s 8-op VM is unconnected M1-M4 prior art over a different substrate (LTM_DESIGN_BRIEF §0); reusing it would force a redesign of ITS vocabulary first. `mind/ops.py` gets an OP_INVENTORY header note that it is not this executor's instruction set.
 
-**D5 — Does the compositional transfer gate (§3) run before or after M58's real-text prose milestone?** Default: before — TRACK_C_DESIGN §4.4 already proposed folding a transfer test into the existing arc, and OP_INVENTORY's closing sequence is "op inventory, then LTM, then M58 prose." Consequence of running it after: M58 gets built entirely on today's fixed pipeline, and a later-successful executor reopens transfer-to-prose as a second wave instead of a built-in property. Consequence of an even earlier slot (ahead of LTM): further delays multi-passage reading, already AURORA_SPRINT priority 2. **HYPER-CRITICAL** — a sequencing call the director owns per CLAUDE.md's orchestration model.
+**D5 — Transfer gate before or after M58? Decided: split.** The paper type-check (§1.1) and LOFO (§3) run NOW, before LTM/M58 — existing data, zero curriculum cost, removes the false-KILL risk of an arithmetic-ceiling bar. The T1-T3 CURRICULUM gate moves to Phase 3, after M59b — T2 rides `link`/`consolidate` (built, not curriculum-integrated), T1/T3 ride `CAND_FOR` (never run in a training loop). Track A ships as fallback through every phase regardless of outcome.
