@@ -197,3 +197,26 @@ Decisions the lead must make:
   for salvageable pieces (Horn-rule storage, disk save/load format) BEFORE
   option B/C's graph component is scoped in detail — cheaper to know now
   whether persistence is reusable than to rediscover it mid-build.
+
+## 5. DECISIONS (user, 2026-08-30) — locked
+
+1. **Separate LTM tensor.** STM keeps its per-episode reset; LTM is a second
+   order-3 memory that persists across passages of a document/session.
+   Reads are ADDITIVE: mem_read = query(STM) + query(LTM) (one vector
+   space; a fact in either store is readable). Writes go to STM only.
+2. **Identity linking reuses the existing resolver contract** (invariant
+   #5): LTM instances join the ENTITY candidate set with a "from_ltm"
+   feature and a named `link_threshold` dial; scored by the same head
+   that resolves "she"/"the doctor". No new head.
+3. **Consolidation is a substate machine**, not a per-clause gate:
+   READING → WIND-DOWN → CONSOLIDATE, fired at end of passage (later:
+   when the patience budget winds down). A named `consolidate` op pushes
+   only facts worth keeping — provenance trust ≥ `trust_ltm` dial —
+   into LTM, merging the registry (instance ids persist) and appending
+   provenance records tagged with the consolidation event.
+4. **Episodic LTM first; truth-memory promotion after** — but the
+   consolidate op is TIER-GENERIC from day one (tier N → N+1 with a dial
+   and an evidence criterion), so LTM→Truth later reuses the same code
+   with `trust_truth` + a corroboration-count criterion.
+5. Capacity probe: DONE standalone (dev/CAPACITY_CURVE.md) before any
+   consolidation training — resolved.

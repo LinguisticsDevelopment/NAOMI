@@ -43,3 +43,10 @@
   order for the design docs is in there).
 - Sprint clock + priorities: `consciousness_transformer/dev/AURORA_SPRINT.md`.
 - Venv recipe if missing: `uv venv` + torch-cpu + nltk wordnet/omw-1.4.
+
+## LTM decisions (user, 2026-08-30) — see dev/LTM_DESIGN_BRIEF.md §5
+Separate LTM tensor (additive reads, STM-only writes); identity linking
+through the EXISTING resolver contract (from_ltm feature + link_threshold
+dial); consolidation as a named substate event (READING→WIND-DOWN→
+CONSOLIDATE) gated by trust_ltm on provenance; tier-generic consolidate op
+so truth-memory promotion reuses it later.
