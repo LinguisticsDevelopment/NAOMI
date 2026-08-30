@@ -143,6 +143,7 @@ import torch.nn.functional as F
 
 from . import entity_memory as em
 from . import ops
+from . import op_select as op_select_mod
 from .clause_reactor import ClauseBatch, ClauseReactor
 from .ltm import mem_total
 from .membrane import FEATURE_DIM
@@ -151,6 +152,13 @@ from . import programs as programs_mod
 from .programs import Step, program_for_step
 
 __all__ = ["Executor"]
+
+# EXECUTOR PHASE 2: each family's op-loop ENTRY op (dev/EXECUTOR_DESIGN.md
+# Sec.1.1's Step[0] per program) -- see src/nsm_ct/op_select.py's module
+# docstring point 1 for what this drives (OpSelect's gold target) and does
+# not drive (execution, which stays the SAME structural dispatch run()
+# already uses).
+FAMILY_ENTRY_OP: Dict[str, str] = {name: prog[0].op for name, prog in programs_mod.GOLD_PROGRAMS.items()}
 
 
 class Executor:
@@ -214,8 +222,19 @@ class Executor:
     def run(self, batch: ClauseBatch, programs: Optional[List[List[str]]] = None, *,
             ltm: Optional[torch.Tensor] = None, return_write_trace: bool = False,
             return_memory: bool = False, return_mem_read: bool = False,
-            return_registers: bool = False) -> Dict[str, torch.Tensor]:
+            return_registers: bool = False, force_plain_fact: bool = False) -> Dict[str, torch.Tensor]:
         """Reproduce ``ClauseReactor.forward(batch, ltm=ltm, ...)``.
+        ``force_plain_fact`` (EXECUTOR PHASE 2, dev/EXECUTOR_DESIGN.md
+        Sec.3's LOFO floor arm -- "op selection frozen to the plain-fact
+        program"): when ``True``, every candidate-collapse branch AND the
+        inverse-query branch are skipped UNCONDITIONALLY regardless of what
+        the batch's own structural flags say -- every clause step runs
+        ONLY program 1 (``QUERY(A_e,A_r)->EPILOGUE-W[A_e]``), exactly
+        :data:`nsm_ct.programs.PLAIN_FACT`. Default ``False`` is
+        byte-identical to every pre-Phase-2 call site. This is the ``run()``
+        vs ``run_learned()`` floor -- NOT Track A's own "cheat" arm
+        (Sec.3: "a real floor arm... never Track A, that's the tournament's
+        floor, Sec.4").
         ``programs`` (optional) is the ``[T][B]`` gold-family-label
         structure from :func:`nsm_ct.programs.program_for_step_batch` (or a
         caller override of the same shape) -- Phase 1 has no learned
@@ -238,7 +257,7 @@ class Executor:
         memory = em.init_memory(b, d, device)
 
         coord = batch._coord()
-        have_resolver_data = model.resolver is not None and batch.cand_mask is not None
+        have_resolver_data = model.resolver is not None and batch.cand_mask is not None and not force_plain_fact
         if model.sense_resolver is not None and batch.sense_cand_mask is not None:
             raise NotImplementedError(
                 "Executor Phase 1 does not implement the sense-collapse branch "
@@ -399,7 +418,7 @@ class Executor:
                 rf.write("V_read", _pad(v_read), step=gstep, op_name="REREAD", args=("A_w", "A_r")); gstep += 1
 
             # QUERY_ENTITY: entity-axis inverse read.
-            if batch.inverse_mask is not None:
+            if batch.inverse_mask is not None and not force_plain_fact:
                 inv_row = batch.inverse_mask[:, t] > 0
                 if bool(inv_row.any()):
                     inv_readout_t = ops.inverse_query_entity(mem_total_t, r, v)
@@ -513,6 +532,337 @@ class Executor:
         out["_program_family"] = family_all
         out["_trace"] = rf.trace
         out["_control_signal"] = control_signals
+        return out
+
+    # ==================================================================
+    # EXECUTOR PHASE 2: run_learned() -- learned op/argument selection
+    # with trace supervision, over the SAME Phase-1 dispatch run() uses.
+    # See src/nsm_ct/op_select.py's module docstring for the exact scope
+    # of what is learned here (two decision points: the entry op, and
+    # EMIT's destination register) and why the frozen v0 register table
+    # (D3) leaves no further op/arg ambiguity at this granularity -- this
+    # is a deliberate, documented scoping decision (see this milestone's
+    # RESEARCH_NOTES entry), not an oversight: RegisterFile has no native
+    # per-candidate ``P.*`` slot (Phase 1 finding 2), so a per-candidate
+    # ArgSelect is a Phase-3-or-later, register-file-unfreezing need.
+    # ==================================================================
+    def run_learned(self, batch: ClauseBatch, op_select: "op_select_mod.OpSelect",
+                     arg_select: "op_select_mod.ArgSelect", *,
+                     ltm: Optional[torch.Tensor] = None,
+                     lofo_family: Optional[str] = None,
+                     teacher_force: bool = True,
+                     trace_weight: float = 1.0,
+                     dest_mode: str = "hard",
+                     return_write_trace: bool = False,
+                     return_memory: bool = False) -> Dict[str, torch.Tensor]:
+        """PHASE 2 (dev/EXECUTOR_DESIGN.md Sec.2/Sec.3). See
+        src/nsm_ct/op_select.py's module docstring for the two learned
+        decisions (entry op, EMIT destination) this method trains, and
+        this module's own D1/D2 paragraphs for the policy both obey.
+
+        ``lofo_family`` (Sec.3's LOFO gate): every step whose gold family
+        (:func:`nsm_ct.programs.family_of_step`) equals this name gets
+        ZERO trace loss (no op/arg cross-entropy supervision) -- but its
+        EMIT-destination decision, unlike every other family's, is driven
+        by ArgSelect's OWN (straight-through) prediction rather than the
+        gold ``cand_addr_mask`` flag, so TASK loss alone can still shape
+        that family's routing ("its steps get NO trace loss, only task
+        loss"). ``teacher_force=False`` (the "no-trace eval" honesty arm)
+        extends learned-driven execution to EVERY family regardless of
+        ``lofo_family``, and trace loss is not computed for any step.
+
+        ``dest_mode``: ``"hard"`` (default, D1) -- whenever a row's
+        EMIT-destination decision is learned-driven, it is
+        straight-through (hard argmax forward, soft gradient backward).
+        ``"soft"`` -- a pure differentiable blend by the raw softmax
+        weight instead, for the ``--soft-report`` soft-vs-argmax delta
+        ONLY (D1 forbids this as the real policy; never the default).
+
+        Returns everything ``run()`` returns for the branches this method
+        covers (``answer_logits``, ``response``, ``respond_gates``,
+        ``respond_position``; ``_memory``/``_write_trace`` when
+        requested), PLUS:
+          - ``trace_loss``: scalar tensor (entry-op CE + EMIT-dest CE,
+            each averaged over its own real/non-LOFO'd/has-candidate
+            mask, summed, scaled by ``trace_weight``).
+          - ``op_acc`` / ``arg_acc``: ``{family: (correct, total)}`` --
+            entry-op / EMIT-dest accuracy against the gold family, over
+            every real step this batch contains (INCLUDING the LOFO'd
+            family -- accuracy is measured there, just never trained on
+            directly via trace loss).
+          - ``write_violations``: ``int``, always ``0`` here -- this
+            method's task computation reuses ``run()``'s own single
+            ``ops.bind_write`` call site per clause step, the SAME
+            "holds by construction" guarantee Phase 1 documents; see
+            :func:`nsm_ct.op_select.mask_second_write` for the general
+            masking mechanism (exercised directly by
+            tests/test_executor_phase2.py on a synthetic sequence).
+          - ``gold_program_length_histogram``: ``{op_loop_length: count}``
+            over every real step's OWN gold family's
+            ``Executor.program_length`` -- this milestone does not
+            implement variable-length LEARNED halting (see module note
+            above), so this reports the honest analogue: how long the
+            gold program each step is teacher-forced against actually is.
+        """
+        model = self.model
+        if model.resolver is None:
+            raise ValueError(
+                "Executor.run_learned needs a model with a resolver installed -- the "
+                "EMIT-destination decision it trains has nothing to score candidates with "
+                "otherwise; use run(force_plain_fact=True) for the floor arm instead.")
+        b, T, d = batch.entity.shape
+        device = batch.entity.device
+        state = torch.zeros(b, model.gru.hidden_size, device=device)
+        memory = em.init_memory(b, d, device)
+        coord = batch._coord()
+        have_cand_data = batch.cand_mask is not None
+
+        prev_op_id = torch.zeros(b, dtype=torch.long, device=device)  # 0 = sentinel, "no previous op"
+        type_mask_const = torch.tensor([1, 1, 0, 1, 1], dtype=torch.float32, device=device)
+        entry_legal_mask = torch.zeros(len(op_select_mod.OP_VOCAB), dtype=torch.bool, device=device)
+        for _op in op_select_mod.ENTRY_OPS:
+            entry_legal_mask[op_select_mod.OP_INDEX[_op]] = True
+        emit_op_id_const = torch.full((b,), op_select_mod.OP_INDEX["EMIT"] + 1, dtype=torch.long, device=device)
+
+        resp_logits, resp_vecs = [], []
+        gate_trace: List[torch.Tensor] = []
+        overwrite_trace: List[torch.Tensor] = []
+        neg_trace: List[torch.Tensor] = []
+        redirected_trace: List[torch.Tensor] = []
+        resolved_idx_trace: List[torch.Tensor] = []
+
+        trace_loss = torch.zeros((), device=device)
+        op_correct: Dict[str, int] = {}
+        op_total: Dict[str, int] = {}
+        arg_correct: Dict[str, int] = {}
+        arg_total: Dict[str, int] = {}
+        length_hist: Dict[int, int] = {}
+
+        for t in range(T):
+            e0, r, v0 = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
+            p, c = batch.pred[:, t], coord[:, t]
+            real, isq = batch.mask[:, t], batch.is_q[:, t]
+            real_bool = real > 0
+
+            family_t = programs_mod.family_of_step(batch, t)   # list[str], len B
+            for fam, is_real in zip(family_t, real_bool.tolist()):
+                if is_real:
+                    L = self.program_length(programs_mod.GOLD_PROGRAMS[fam])
+                    length_hist[L] = length_hist.get(L, 0) + 1
+
+            keep = op_select_mod.lofo_keep_mask(family_t, lofo_family)
+            lofo_row = ~torch.tensor(keep, dtype=torch.bool, device=device)
+
+            mem_total_t = mem_total(memory, ltm)
+            v_read = ops.unbind_query(mem_total_t, e0, r)
+
+            # -- Decision A: entry op (observational, see module note). --
+            entry_gold_idx = torch.tensor(
+                [op_select_mod.OP_INDEX[FAMILY_ENTRY_OP[f]] for f in family_t], device=device)
+            ctrl_a = op_select_mod.control_signal_to_tensor(self.build_control_signal(
+                prev_op_id=prev_op_id, step_idx=t, type_mask=type_mask_const,
+                margin=torch.zeros(b, device=device),
+                abstain_flag=torch.zeros(b, dtype=torch.bool, device=device),
+                halt_budget=self.k_max), batch=b, device=device)
+            logits_a, _ctrl_vec_a = op_select(ctrl_a, legal_mask=entry_legal_mask)
+
+            trace_row_a = (real_bool & ~lofo_row) if teacher_force else torch.zeros(b, dtype=torch.bool, device=device)
+            if bool(trace_row_a.any()):
+                ce_a = F.cross_entropy(logits_a, entry_gold_idx, reduction="none")
+                trace_loss = trace_loss + trace_weight * (
+                    (ce_a * trace_row_a.float()).sum() / trace_row_a.float().sum())
+            pred_a = logits_a.argmax(-1)
+            ok_a = (pred_a == entry_gold_idx)
+            for fam, ok, is_real in zip(family_t, ok_a.tolist(), real_bool.tolist()):
+                if is_real:
+                    op_total[fam] = op_total.get(fam, 0) + 1
+                    op_correct[fam] = op_correct.get(fam, 0) + int(ok)
+            prev_op_id = entry_gold_idx + 1   # teacher-forced recurrence, see module docstring
+
+            e, v = e0, v0
+            addr_row_bool = torch.zeros(b, dtype=torch.bool, device=device)
+            resolved_idx_t = torch.full((b,), -1, dtype=torch.long, device=device)
+
+            if have_cand_data:
+                ce_t, cf_t = batch.cand_entity[:, t], batch.cand_feature[:, t]
+                cp_t, cm_t = batch.cand_prior[:, t], batch.cand_mask[:, t]
+                if batch.cand_evidence_relation is not None:
+                    er_t = batch.cand_evidence_relation[:, t]
+                    has_er = er_t.norm(dim=-1, keepdim=True) > 0
+                    evidence_r = torch.where(has_er, er_t, r)
+                else:
+                    evidence_r = r
+                cand_mem_read = query_candidates(mem_total_t, ce_t, evidence_r)
+
+                s_c = None
+                if batch.cand_evidence_target is not None:
+                    et_t = batch.cand_evidence_target[:, t]
+                    s_c = evidence_interaction(cand_mem_read, et_t).unsqueeze(-1)
+                if s_c is not None and model.evidence_prior_beta is not None:
+                    boost_logits = (s_c.squeeze(-1) * model.evidence_prior_beta).masked_fill(cm_t <= 0, -1e9)
+                    cp_t = cp_t * torch.softmax(boost_logits, dim=-1)
+
+                extra: Dict[str, torch.Tensor] = {}
+                if getattr(model.resolver, "use_cand_feature", False) and batch.cand_feature_per_candidate is not None:
+                    extra["cand_feature_per_candidate"] = batch.cand_feature_per_candidate[:, t]
+                extra_cols = []
+                if s_c is not None:
+                    extra_cols.append(s_c)
+                if batch.cand_from_ltm is not None:
+                    extra_cols.append(batch.cand_from_ltm[:, t].unsqueeze(-1).to(ce_t.dtype))
+                if batch.cand_recency is not None:
+                    extra_cols.append(batch.cand_recency[:, t].to(ce_t.dtype))
+                # NOTE (Executor Phase 2 fix, run_learned only -- run()
+                # above is untouched, pinned by the Phase 1 anchor tests,
+                # and never hits this combination): pad whenever
+                # `extra_width > 0`, NOT only when `extra_cols` is
+                # non-empty. A shared resolver trained across a MIXED
+                # corpus (this method's whole point) can have
+                # `cand_feature_extra > 0` while a given family populates
+                # `cand_feature_per_candidate` (width FEATURE_DIM, e.g.
+                # WriteBackCurriculumGenerator's candidate sets) but
+                # supplies NONE of the optional extra scalar columns
+                # (evidence-interaction/from_ltm/recency) -- `extra_cols`
+                # empty in that case must still zero-pad up to
+                # `resolver._cfpc_width`, or the resolver's declared
+                # (construction-time) input width and what actually gets
+                # concatenated here silently diverge (a real bug, found
+                # via this milestone's own mixed-corpus training/tests).
+                extra_width = getattr(model.resolver, "cand_feature_extra", 0)
+                if extra_width > 0:
+                    cfpc = extra.get("cand_feature_per_candidate")
+                    if cfpc is None:
+                        b_, C_, _d_ = ce_t.shape
+                        cfpc = ce_t.new_zeros(b_, C_, FEATURE_DIM)
+                    stacked_extra = (torch.cat(extra_cols, dim=-1) if extra_cols
+                                      else cfpc.new_zeros(*cfpc.shape[:-1], 0))
+                    k = stacked_extra.shape[-1]
+                    if k < extra_width:
+                        pad = cfpc.new_zeros(*stacked_extra.shape[:-1], extra_width - k)
+                        stacked_extra = torch.cat([stacked_extra, pad], dim=-1)
+                    elif k > extra_width:
+                        stacked_extra = stacked_extra[..., :extra_width]
+                    extra["cand_feature_per_candidate"] = torch.cat([cfpc, stacked_extra], dim=-1)
+
+                logits = model.resolver(ce_t, cf_t, cp_t, cm_t, cand_mem_read, state, **extra)
+                logits = logits.masked_fill(cm_t <= 0, -1e9)
+                has_cand = cm_t.sum(-1) > 0
+                w = ClauseReactor._collapse_weights(logits, model.training)
+
+                resolved_idx_t = torch.where(has_cand, w.argmax(-1), resolved_idx_t)
+                resolved_v = (w.unsqueeze(-1) * cand_mem_read).sum(1)
+                resolved_e = (w.unsqueeze(-1) * ce_t).sum(1)
+                res_margin_t = ClauseReactor._top2_margin(logits, has_cand, v)
+
+                # -- Decision B: EMIT's destination register (A_w vs V_v). --
+                gold_addr_row = (has_cand & (batch.cand_addr_mask[:, t] > 0)) if batch.cand_addr_mask is not None \
+                    else torch.zeros_like(has_cand)
+                dest_gold_idx = (~gold_addr_row).long()   # 0 -> A_w (addr redirect), 1 -> V_v (value redirect)
+                abstain_t = res_margin_t < ops.CAUTION
+                ctrl_b = op_select_mod.control_signal_to_tensor(self.build_control_signal(
+                    prev_op_id=prev_op_id, step_idx=t, type_mask=type_mask_const,
+                    margin=res_margin_t, abstain_flag=abstain_t,
+                    halt_budget=self.k_max - 1), batch=b, device=device)
+                _logits_b, ctrl_vec_b = op_select(ctrl_b)
+                dest_logits = arg_select(ctrl_vec_b, emit_op_id_const, op_select_mod.ARG_SIGNATURES["EMIT"])
+                dest_soft = torch.softmax(dest_logits, dim=-1)
+                dest_pred_idx = dest_logits.argmax(-1)
+
+                trace_row_b = (has_cand & real_bool & ~lofo_row) if teacher_force \
+                    else torch.zeros(b, dtype=torch.bool, device=device)
+                if bool(trace_row_b.any()):
+                    ce_b = F.cross_entropy(dest_logits, dest_gold_idx, reduction="none")
+                    trace_loss = trace_loss + trace_weight * (
+                        (ce_b * trace_row_b.float()).sum() / trace_row_b.float().sum())
+                ok_b = (dest_pred_idx == dest_gold_idx) & has_cand & real_bool
+                for fam, ok, hc, is_real in zip(family_t, ok_b.tolist(), has_cand.tolist(), real_bool.tolist()):
+                    if is_real and hc:
+                        arg_total[fam] = arg_total.get(fam, 0) + 1
+                        arg_correct[fam] = arg_correct.get(fam, 0) + int(ok)
+
+                # D1: straight-through whenever this row's decision is
+                # learned-driven (LOFO'd family, or teacher_force=False);
+                # gold otherwise (Stage-a teacher forcing).
+                dest_soft_addr = dest_soft[:, 0]
+                if dest_mode == "soft":
+                    pred_addr_ind = dest_soft_addr
+                elif dest_mode == "hard":
+                    hard_addr = (dest_pred_idx == 0).float()
+                    pred_addr_ind = hard_addr + (dest_soft_addr - dest_soft_addr.detach())
+                else:
+                    raise ValueError(f"run_learned: unknown dest_mode {dest_mode!r}, expected 'hard' or 'soft'")
+                use_learned_row = lofo_row if teacher_force else torch.ones(b, dtype=torch.bool, device=device)
+                addr_indicator = torch.where(use_learned_row, pred_addr_ind, gold_addr_row.float())
+
+                addr_w = addr_indicator * has_cand.float()
+                value_w = (1.0 - addr_indicator) * has_cand.float()
+                e = e0 * (1.0 - addr_w).unsqueeze(-1) + resolved_e * addr_w.unsqueeze(-1)
+                v = v0 * (1.0 - value_w).unsqueeze(-1) + resolved_v * value_w.unsqueeze(-1)
+                addr_row_bool = addr_w > 0.5
+
+                prev_op_id = torch.where(has_cand, emit_op_id_const, prev_op_id)
+
+            # REREAD: post-collapse re-read at the resolved address.
+            if bool(addr_row_bool.any()):
+                reread = ops.unbind_query(mem_total_t, e, r)
+                v_read = torch.where(addr_row_bool.unsqueeze(-1), reread, v_read)
+
+            # QUERY_ENTITY: entity-axis inverse read -- structural DATA
+            # (batch.inverse_mask), not a learned choice; see module note.
+            if batch.inverse_mask is not None:
+                inv_row = batch.inverse_mask[:, t] > 0
+                if bool(inv_row.any()):
+                    inv_readout_t = ops.inverse_query_entity(mem_total_t, r, v)
+                    v_read = torch.where(inv_row.unsqueeze(-1), inv_readout_t, v_read)
+
+            # TICK / GATE / OVERWRITE / NEGATE / WRITE / RESPOND / RESPONSE
+            # -- unchanged from run()'s own Phase-1 dispatch.
+            state = model.gru(torch.cat([e, r, v, p, c, v_read], dim=-1), state)
+            stmt = real * (1.0 - isq)
+            gate = torch.sigmoid(model.write_gate(state)).squeeze(-1) * stmt
+            owr = torch.sigmoid(model.overwrite_gate(state)).squeeze(-1) * gate
+            neg = torch.sigmoid(model.decide_truth(torch.cat([state, v], dim=-1))).squeeze(-1) * stmt
+            memory = ops.bind_write(memory, e, r, v, gate - neg, overwrite=owr)   # <=1 WRITE call site
+
+            rl = model.respond(state).squeeze(-1)
+            rl = rl.masked_fill(real <= 0, float("-inf"))
+            resp_logits.append(rl)
+            resp_vecs.append(model.response(torch.cat([state, v_read], dim=-1)))
+
+            if return_write_trace:
+                gate_trace.append(gate)
+                overwrite_trace.append(owr)
+                neg_trace.append(neg)
+                redirected_trace.append(addr_row_bool)
+                resolved_idx_trace.append(resolved_idx_t)
+
+        RL = torch.stack(resp_logits, dim=1)
+        RV = torch.stack(resp_vecs, dim=1)
+        wA = torch.softmax(RL, dim=1)
+        resp = (wA.unsqueeze(-1) * RV).sum(dim=1)
+        rn = resp / (resp.norm(dim=-1, keepdim=True) + 1e-8)
+        on = batch.options / (batch.options.norm(dim=-1, keepdim=True) + 1e-8)
+        answer_logits = torch.einsum("bd,bkd->bk", rn, on) * 10.0
+
+        out: Dict[str, torch.Tensor] = {
+            "answer_logits": answer_logits, "response": resp,
+            "respond_gates": wA, "respond_position": (wA * batch.is_q).sum(1),
+            "trace_loss": trace_loss,
+            "op_acc": {fam: (op_correct.get(fam, 0), op_total.get(fam, 0)) for fam in op_total},
+            "arg_acc": {fam: (arg_correct.get(fam, 0), arg_total.get(fam, 0)) for fam in arg_total},
+            "write_violations": 0,
+            "gold_program_length_histogram": length_hist,
+        }
+        if return_memory:
+            out["_memory"] = memory
+        if return_write_trace:
+            out["_write_trace"] = {
+                "gate": torch.stack(gate_trace, dim=1),
+                "overwrite": torch.stack(overwrite_trace, dim=1),
+                "neg": torch.stack(neg_trace, dim=1),
+                "redirected": torch.stack(redirected_trace, dim=1),
+                "resolved_index": torch.stack(resolved_idx_trace, dim=1),
+            }
         return out
 
     # ==================================================================
