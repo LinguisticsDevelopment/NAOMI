@@ -1,0 +1,65 @@
+# SYNTHETIC PROSE (M58a) -- hand-authored graded-reader-style paragraphs,
+# NOT drawn from any real corpus. One blank-line-separated block = one
+# passage. Simple English about people, places, objects, and attributes,
+# with pronouns and definite descriptions mixed in on purpose so the
+# converter's taxonomy shows real gaps even on controlled text.
+
+Mary is in the garden. She likes the roses. The garden has a small pond. Birds visit the pond every morning.
+
+John gave Mary the book. Mary put the book on the table. The book is about old ships. John found the book in the library.
+
+Tom moved to the office. The office is on the second floor. Tom works at a big desk. He answers the phone all day.
+
+The tall man is in the kitchen. He is cooking soup. The kitchen smells like onions. His apron is blue.
+
+Ann and Paul are in the garden. They are planting flowers. Ann brought the seeds. Paul dug the small holes.
+
+Sue handed Bill the keys. Bill opened the front door. The house was quiet inside. Bill hung the keys on a hook.
+
+The old dog is in the yard. It is sleeping under a tree. The yard has a wooden fence. A cat watches from the fence.
+
+Kate is in the library. She is reading a thick book. The library is very quiet. A clock on the wall ticks softly.
+
+Rosa passed Noah the ball. Noah threw the ball across the yard. The ball rolled into the bushes. A boy found the ball.
+
+The teacher is in the classroom. She wrote on the board. The classroom has twenty desks. Every desk has a chair.
+
+Lucy went to the market. The market sells fresh fruit. She bought three apples. The apples were bright red.
+
+The baker is in the shop. He bakes bread every morning. The shop smells wonderful. Customers line up outside.
+
+Mark gave Alice the flowers. Alice put them in a vase. The vase sat on the window. Sunlight warmed the room.
+
+The small boy is in the park. He is flying a kite. The park has a long path. Joggers use the path each day.
+
+A nurse is in the clinic. She checks a patient's arm. The clinic is bright and clean. A poster hangs on the wall.
+
+The farmer is in the barn. He is feeding the horses. The barn smells of fresh hay. Chickens peck near the door.
+
+Emma handed David the letter. David read it by the window. The letter was from his brother. He smiled at the news.
+
+The pilot is in the cockpit. She checks every switch. The plane sits on the runway. Engines hum in the distance.
+
+The old woman is in the chapel. She lights a small candle. The chapel is cool and silent. Stone walls hold the quiet.
+
+A fisherman is by the river. He casts his line at dawn. The river moves slowly past the rocks. Fish rise near the bank.
+
+Grace gave Peter the map. Peter studied it near the fire. The map showed an old trail. He traced it with his finger.
+
+The scientist is in the lab. She records the results. The lab is full of glass jars. A chart hangs above her desk.
+
+The gardener is in the greenhouse. He waters the young plants. The greenhouse traps the warm air. Tomatoes grow along the wall.
+
+Henry passed Clara the note. Clara hid it in her pocket. The note had a short message. She read it after class.
+
+The captain is on the ship. He watches the open sea. The ship rocks with the waves. Sailors coil rope on the deck.
+
+The child is in the nursery. She stacks small wooden blocks. The nursery has a soft rug. A mobile spins above the crib.
+
+The chef is in the kitchen. He tastes the simmering soup. The kitchen rings with clattering pans. Steam rises from the pot.
+
+Oliver gave Sophie the ticket. Sophie kept it in her bag. The ticket was for a late train. She checked the platform sign.
+
+The postman is on the street. He delivers letters to each house. The street is lined with tall trees. Dogs bark as he passes.
+
+The librarian is at the desk. She stamps a returned book. The desk has a small brass lamp. Quiet footsteps cross the floor.

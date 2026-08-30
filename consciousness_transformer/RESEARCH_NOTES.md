@@ -3071,3 +3071,33 @@ write-back, resolved reads, inverse reads, provenance, morphology,
 capacity curve, rich episodes — all in, all measured. Next: the op
 inventory doc (explicit ops + learned parameters, per the lead), then
 LTM per the locked decisions, then M58 prose.
+
+### M58a — corpus→episode converter + the prose failure taxonomy: real text parses 5.8% (MEASURED; perception is the bottleneck)
+
+src/nsm_ct/corpus.py + scripts/convert_corpus.py: sentence splitting, the
+SAME parser path _context_steps uses, a 6-code failure taxonomy, and
+self-generated QA by holding out a clause and asking it through the M52
+queried-role table (PLACE/RECIPIENT/AGENT). Two corpora through one
+pipeline: 30 authored graded-reader paragraphs (synthetic prose) and 22
+real paragraphs (Burgess 1920, Gutenberg).
+
+| corpus | sentences | parsed ok | episodes |
+|---|---|---|---|
+| synthetic | 120 | 55.0% | 29 |
+| real | 86 | 5.8% | 4 |
+
+Real-text failures: unknown-word 54.7% (hyphenated compounds, closed-
+class gaps e.g. "until"), multiple-parses-unresolved 23.3% (scorer
+saturation on long sentences: 4 hypotheses, margin 0.000), no-parse 8.1%
+(quotation fragments), pronoun-unresolvable 4.7%, unsupported 3.5%.
+Bug surfaced: _PREP_RELATION maps "to"→PLACE unconditionally, so the
+prepositional dative ("gave the ball to john") mis-roles the recipient;
+curricula only ever used the double-object form.
+
+Verdict: the roadmap's prediction holds — on wild text the gap localizes
+to PERCEPTION and is inspectable. A zero-shot comprehension number at
+5.8% coverage would be meaningless; dev/PROSE_FAILURE_TAXONOMY.md is
+the worklist: (1) lexicon coverage (compounds, closed-class table), (2)
+parse-tie breaking (hypothesis membrane + margins), (3) the dative role
+map, (4) quotation/fragment handling. Then M58b: zero-shot on a SAVED
+checkpoint (next battery adds --save) over converted episodes.
