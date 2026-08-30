@@ -3031,3 +3031,43 @@ NECESSITY must be shown where state-carry breaks — rich episodes (8
 entities, T=50), the next battery's job. Definite descriptions at 0.692
 even under forced-gold: the question-side re-read still competes with
 stale GRU recall; watch in battery #3.
+
+### M57 battery #3 — the schema PROVEN on rich episodes; explicit binding shown NECESSARY at 8 entities (MEASURED, M57 closes)
+
+Cloud routine; instance mix + rich_frac 0.3 (350 writeback / 350 instance
+/ 450 rich, 3-8 entities, 1-4 overwriting referring statements), dim 48,
+60 epochs, batch 64, Track A with M57c.3's interaction feature. ~100
+min/arm, peak 6.4GB (T≈50). Logs: branch m57b3-battery-logs.
+
+| kind / arm | normal | forced-gold | forced-wrong | cheat | no-gold | evprior |
+|---|---|---|---|---|---|---|
+| rich | 0.816 | 0.816 | 0.551 | 0.531 | 0.816 | 0.816 |
+| rich @8 entities | 0.938 | 0.938 | 0.812 | 0.500 | 0.938 | 0.750 |
+| instance | 0.716 | 0.910 | 0.403 | 0.522 | 0.716 | 0.657 |
+| writeback | 1.000 | 1.000 | 0.368 | 1.000 | 1.000 | 1.000 |
+| rich inverse | 0.677 | 0.645 | 0.548 | 0.581 | 0.677 | 0.710 |
+Binding accuracy (normal): rich 0.954 (n=261), instance 0.819 (was 0.486
+in battery #2), writeback 1.000.
+
+(1) The resolver LEARNS instance binding with the evidence·target
+interaction: rich binding 0.954; normal == forced-gold on rich episodes
+(the gold no longer adds anything). M57c.3's diagnosis confirmed at scale.
+(2) NECESSITY of explicit binding, finally measured: the GRU state-carry
+shortcut that solves 2-entity writeback (cheat 1.000) BREAKS on rich
+discourse — cheat 0.531 vs 0.816 overall, 0.500 vs 0.938 at 8 entities.
+Longer discourse ⇒ the explicit memory mechanism carries more of the
+task. The architecture's central bet is now a measured curve.
+(3) No-gold gate passed on the rich world (0.816 == normal).
+Gaps recorded: recency-only cases (ambiguous name / same-gender pronoun,
+n=4-5) stay low — resolver has no recency feature (add one); definite-
+description questions about OVERWRITTEN slots cap ~0.64 in rich even
+under forced-gold — a read-side limit (post-collapse re-read competes
+with stale recall), not binding; inverse queries mid-60s (route the
+entity readout directly to the answer); --evidence-prior dial adds
+nothing (stays off); footprint at T≈50 is 6.4GB — not finished.
+
+VERDICT: M57 robust memory schema PROVEN. Instances, attribute facts,
+write-back, resolved reads, inverse reads, provenance, morphology,
+capacity curve, rich episodes — all in, all measured. Next: the op
+inventory doc (explicit ops + learned parameters, per the lead), then
+LTM per the locked decisions, then M58 prose.
