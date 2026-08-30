@@ -107,6 +107,53 @@ def eval_minibatched(model, batch, batch_size) -> dict:
     return buffers
 
 
+def build_model(config: dict):
+    """Builds a :class:`~nsm_ct.clause_reactor.ClauseReactor` (with its
+    resolver installed, per ``config``) via the SAME constructor calls
+    scripts/train_instances.py's and scripts/train_writeback.py's own
+    ``run_arm`` already used inline before M57 checkpointing -- both scripts
+    now call THIS function instead, and
+    ``nsm_ct.checkpoint.load_checkpoint`` reconstructs a frozen model
+    through it too, so there is exactly ONE code path from a config dict to
+    a model (not a second hand-rolled one at load time that could drift
+    from the training-time construction).
+
+    Reads:
+      - ``dim`` (required), ``hidden`` (default 128)
+      - ``track`` (``"A"`` | ``"B"`` | falsy/absent -- no resolver
+        installed, matching every script's own ``if track else None``)
+      - ``use_cand_feature`` (default ``False``), ``cand_feature_extra``
+        (default ``0``) -- forwarded to ``make_resolver`` (Track A only;
+        ignored for Track B, same contract ``make_resolver`` itself has)
+      - ``evidence_prior_beta`` (default ``None``)
+
+    Any other config key (codec dim/max_pos, meaning_source, curriculum
+    flags, seed, git commit, argv, ...) is ignored here -- this function
+    builds only the ``nn.Module``, not the data pipeline around it.
+    Construction order (resolver, THEN the reactor) matches every pre-M57
+    call site exactly, so a fixed ``torch.manual_seed`` before calling this
+    reproduces the same initial weights a training script's own inline
+    construction did before this refactor.
+    """
+    # Deferred import (not module-level): keeps this module importable
+    # before a caller has put ``src/`` on ``sys.path`` (every call site
+    # does so before it actually CALLS this function, not necessarily
+    # before it imports this module).
+    from nsm_ct.clause_reactor import ClauseReactor
+    from nsm_ct.resolver import make_resolver
+
+    dim = config["dim"]
+    hidden = config.get("hidden", 128)
+    track = config.get("track")
+    resolver = None
+    if track:
+        resolver = make_resolver(track, dim, hidden,
+                                  use_cand_feature=config.get("use_cand_feature", False),
+                                  cand_feature_extra=config.get("cand_feature_extra", 0))
+    return ClauseReactor(dim=dim, hidden=hidden, resolver=resolver,
+                          evidence_prior_beta=config.get("evidence_prior_beta"))
+
+
 def peak_rss_mb() -> float:
     """Peak resident set size in MB for this process (RUSAGE_SELF) since
     it started. ``ru_maxrss`` is reported in KB on Linux (the target

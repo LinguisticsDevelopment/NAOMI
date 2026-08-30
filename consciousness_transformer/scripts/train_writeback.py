@@ -62,14 +62,16 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 
-from _train_common import add_footprint_args, apply_threads, epoch_minibatches, eval_minibatched, peak_rss_mb  # noqa: E402
-from nsm_ct.clause_reactor import ClauseReactor, build_clause_batch  # noqa: E402
+from _train_common import (  # noqa: E402
+    add_footprint_args, apply_threads, build_model, epoch_minibatches, eval_minibatched, peak_rss_mb,
+)
+from nsm_ct.checkpoint import git_commit, load_checkpoint, save_checkpoint  # noqa: E402
+from nsm_ct.clause_reactor import build_clause_batch  # noqa: E402
 from nsm_ct.curriculum2 import generate_writeback_episodes  # noqa: E402
 from nsm_ct.episode import CurriculumGenerator, split_episodes  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402
 from nsm_ct.nsm_primes import PRIME_NAMES  # noqa: E402
-from nsm_ct.resolver import make_resolver  # noqa: E402
 from nsm_ct.structure import PARSE_LABELS  # noqa: E402
 from nsm_ct.tokenizer import SimpleTokenizer  # noqa: E402
 from nsm_ct.tpr import TPRCodec  # noqa: E402
@@ -136,7 +138,7 @@ def writeback_binding_stats(out, batch, va_eps):
 
 def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden: int = 128,
             cheat: bool = False, no_gold_eval: bool = False, force_binding: str = None,
-            batch_size: int = 64) -> dict:
+            batch_size: int = 64, load: str = None) -> dict:
     """``track``: "A" | "B" | None (None = no resolver installed at all --
     with no resolver, the write-back step's entity NEVER redirects, so this
     is a genuine floor arm too, distinct from ``--cheat`` -- see the README
@@ -168,6 +170,15 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
     no-grad, so it aggregates the exact same per-row predictions a
     full-batch eval would, just without ever materializing the whole
     val set's memory tensor at once.
+
+    ``load`` (M57 checkpointing, RESEARCH_NOTES M-ES1 "once checkpointing
+    lands"): a checkpoint path -- when given, TRAINING IS SKIPPED entirely
+    and the model is reconstructed by ``nsm_ct.checkpoint.load_checkpoint``
+    (through ``_train_common.build_model``, the SAME code path this
+    function otherwise uses inline below), already in eval mode. ``dim``/
+    ``hidden`` are then OVERRIDDEN from the checkpoint's own config.
+    Everything from the held-out eval split onward runs exactly as it does
+    after training -- one report implementation either way.
     """
     texts = [t for e in episodes for t in e.context + [e.question] + (e.options or [])]
     tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
@@ -176,50 +187,68 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
         print("quantum_parser unavailable in this environment; skipping.")
         return {}
     meaning_resolver = NSMMeaningResolver()
-    codec = TPRCodec(dim=dim)
-
     tr_eps, va_eps = split_episodes(episodes, 0.2, seed=0)
-    tr = build_clause_batch(tr_eps, parser, meaning_resolver, codec, writeback_cheat=cheat)
+    gold_va = torch.tensor([e.answer_idx for e in va_eps])
+
+    model_config = {"dim": dim, "hidden": hidden, "track": track}
+
+    if load:
+        model, ckpt_config, _ckpt_extra = load_checkpoint(load)
+        if ckpt_config.get("dim") != dim or ckpt_config.get("hidden", 128) != hidden:
+            print(f"  [{name}] NOTE: overriding --dim/--hidden ({dim}/{hidden}) with the "
+                  f"checkpoint's own dim={ckpt_config.get('dim')} "
+                  f"hidden={ckpt_config.get('hidden', 128)}", flush=True)
+        dim = ckpt_config.get("dim", dim)
+        hidden = ckpt_config.get("hidden", hidden)
+        model_config = ckpt_config
+        resolver = model.resolver
+    codec = TPRCodec(dim=dim)
     va = build_clause_batch(va_eps, parser, meaning_resolver, codec, writeback_cheat=cheat,
                              writeback_no_gold=no_gold_eval, writeback_force=force_binding)
 
-    torch.manual_seed(seed)
-    resolver = make_resolver(track, dim, hidden) if track else None
-    model = ClauseReactor(dim=dim, hidden=hidden, resolver=resolver)
-    n_resolver_params = sum(p.numel() for p in resolver.parameters()) if resolver is not None else 0
+    if load:
+        n_resolver_params = sum(p.numel() for p in resolver.parameters()) if resolver is not None else 0
+        elapsed_min = 0.0
+        losses: list = []
+    else:
+        tr = build_clause_batch(tr_eps, parser, meaning_resolver, codec, writeback_cheat=cheat)
 
-    opt = torch.optim.Adam(model.parameters(), lr=3e-3)
-    gold_tr = torch.tensor([e.answer_idx for e in tr_eps])
-    gold_va = torch.tensor([e.answer_idx for e in va_eps])
+        torch.manual_seed(seed)
+        model = build_model(model_config)
+        resolver = model.resolver
+        n_resolver_params = sum(p.numel() for p in resolver.parameters()) if resolver is not None else 0
 
-    n_tr = len(tr_eps)
-    t0 = time.time()
-    model.train()
-    losses = []
-    for i in range(epochs):
-        epoch_losses = []
-        for mb_idx in epoch_minibatches(n_tr, batch_size, seed, i):
-            idx_t = torch.from_numpy(mb_idx)
-            sub = tr.subset(idx_t)
-            sub_gold = gold_tr[idx_t]
-            out = model(sub)
-            loss = F.cross_entropy(out["answer_logits"], sub_gold)
-            if resolver is not None and "resolver_logits" in out:
-                cg = sub.cand_gold
-                has_cand = cg >= 0
-                if bool(has_cand.any()):
-                    aux = F.cross_entropy(out["resolver_logits"][has_cand], cg[has_cand])
-                    loss = loss + AUX_WEIGHT * aux
-            opt.zero_grad(); loss.backward(); opt.step()
-            epoch_losses.append(float(loss.item()))
-        last_loss = epoch_losses[-1]
-        losses.append(last_loss)
-        if (i + 1) % 20 == 0 or i == 0:
-            model.eval()
-            acc = (eval_minibatched(model, va, batch_size)["answer_logits"].argmax(-1) == gold_va).float().mean()
-            model.train()
-            print(f"  [{name}] epoch {i+1:3d} loss={last_loss:.3f} val={acc:.3f}", flush=True)
-    elapsed_min = (time.time() - t0) / 60
+        opt = torch.optim.Adam(model.parameters(), lr=3e-3)
+        gold_tr = torch.tensor([e.answer_idx for e in tr_eps])
+
+        n_tr = len(tr_eps)
+        t0 = time.time()
+        model.train()
+        losses = []
+        for i in range(epochs):
+            epoch_losses = []
+            for mb_idx in epoch_minibatches(n_tr, batch_size, seed, i):
+                idx_t = torch.from_numpy(mb_idx)
+                sub = tr.subset(idx_t)
+                sub_gold = gold_tr[idx_t]
+                out = model(sub)
+                loss = F.cross_entropy(out["answer_logits"], sub_gold)
+                if resolver is not None and "resolver_logits" in out:
+                    cg = sub.cand_gold
+                    has_cand = cg >= 0
+                    if bool(has_cand.any()):
+                        aux = F.cross_entropy(out["resolver_logits"][has_cand], cg[has_cand])
+                        loss = loss + AUX_WEIGHT * aux
+                opt.zero_grad(); loss.backward(); opt.step()
+                epoch_losses.append(float(loss.item()))
+            last_loss = epoch_losses[-1]
+            losses.append(last_loss)
+            if (i + 1) % 20 == 0 or i == 0:
+                model.eval()
+                acc = (eval_minibatched(model, va, batch_size)["answer_logits"].argmax(-1) == gold_va).float().mean()
+                model.train()
+                print(f"  [{name}] epoch {i+1:3d} loss={last_loss:.3f} val={acc:.3f}", flush=True)
+        elapsed_min = (time.time() - t0) / 60
 
     model.eval()
     out_va = eval_minibatched(model, va, batch_size)
@@ -262,7 +291,9 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
 
     return {"losses": losses, "total_acc": total_acc, "n_resolver_params": n_resolver_params, "binding": binding,
             "writeback_subsets": {k: (sum(v) / len(v) if v else float("nan")) for k, v in wb_subsets.items()},
-            "peak_rss_mb": peak_rss_mb(), "elapsed_min": elapsed_min}
+            "peak_rss_mb": peak_rss_mb(), "elapsed_min": elapsed_min,
+            # M57 checkpointing: see train_instances.py's identical addition.
+            "model": model, "model_config": model_config}
 
 
 def main() -> None:
@@ -294,20 +325,49 @@ def main() -> None:
     ap.add_argument("--hidden", type=int, default=128)
     ap.add_argument("--epochs", type=int, default=60)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--save", type=str, default=None,
+                     help="M57 checkpointing (RESEARCH_NOTES M-ES1 'once checkpointing lands'): after "
+                          "training + final eval, save the reactor+resolver to this path via "
+                          "nsm_ct.checkpoint.save_checkpoint. Ignored when --load is given.")
+    ap.add_argument("--load", type=str, default=None,
+                     help="M57 checkpointing: load a checkpoint from this path instead of training, "
+                          "then run this script's own eval/report on it (the FROZEN-model path). "
+                          "Mutually exclusive with --save.")
     add_footprint_args(ap)
     args = ap.parse_args()
     apply_threads(args)
+    if args.save and args.load:
+        ap.error("--save and --load are mutually exclusive (there is nothing new to save when loading)")
 
     episodes = build_writeback_curriculum(args.episodes, args.seed)
     n_wb = sum(1 for e in episodes if e.meta.get("kind") == "writeback")
     print(f"=== write-back "
           f"{f'(force-binding={args.force_binding}) ' if args.force_binding else ''}"
           f"{'(cheat) ' if args.cheat else ''}{'(no-gold-eval) ' if args.no_gold_eval else ''}"
+          f"{'(load) ' if args.load else ''}"
           f"track={args.track}: {args.episodes} eps ({n_wb} write-back), dim={args.dim}, "
           f"epochs={args.epochs}, batch_size={args.batch_size} ===", flush=True)
-    run_arm(f"track-{args.track}", args.track, episodes, args.dim, args.epochs, args.seed, args.hidden,
-             cheat=args.cheat, no_gold_eval=args.no_gold_eval, force_binding=args.force_binding,
-             batch_size=args.batch_size)
+    result = run_arm(f"track-{args.track}", args.track, episodes, args.dim, args.epochs, args.seed, args.hidden,
+                      cheat=args.cheat, no_gold_eval=args.no_gold_eval, force_binding=args.force_binding,
+                      batch_size=args.batch_size, load=args.load)
+
+    if args.save and result:
+        config = dict(result["model_config"])
+        config.update({
+            "codec_dim": args.dim,
+            "codec_max_pos": 64,  # TPRCodec's own default; this script never overrides it
+            "meaning_source": "usvs",  # build_clause_batch's own default, unchanged by this script
+            "episodes": args.episodes, "seed": args.seed, "epochs": args.epochs,
+            "batch_size": args.batch_size, "cheat": args.cheat, "no_gold_eval": args.no_gold_eval,
+            "force_binding": args.force_binding,
+            "git_commit": git_commit(), "argv": sys.argv[:],
+        })
+        extra = {"total_acc": result["total_acc"], "n_resolver_params": result["n_resolver_params"],
+                 "binding": result["binding"], "writeback_subsets": result["writeback_subsets"],
+                 "peak_rss_mb": result["peak_rss_mb"], "elapsed_min": result["elapsed_min"]}
+        save_checkpoint(args.save, result["model"], config=config, extra=extra)
+        size = os.path.getsize(args.save)
+        print(f"  saved checkpoint to {args.save} ({size} bytes)", flush=True)
 
 
 if __name__ == "__main__":
