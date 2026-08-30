@@ -1,0 +1,30 @@
+=== instance-mix (no-gold-eval) track=A: 1500 eps (350 writeback, 350 instance, 450 rich, inverse_frac=0.3, rich_frac=0.3), dim=48, epochs=60, batch_size=64 ===
+  [track-A] epoch   1 loss=2.122 val=0.277
+  [track-A] epoch  20 loss=0.182 val=0.797
+  [track-A] epoch  40 loss=0.186 val=0.810
+  [track-A] epoch  60 loss=0.090 val=0.853
+  [track-A] val total=0.853  resolver_params=2689  time=98.24 min  peak_rss_mb=6381.5
+    kind instance: 48/67 = 0.716
+    kind old: 60/67 = 0.896
+    kind rich: 80/98 = 0.816
+    kind writeback: 68/68 = 1.000
+    writeback/referent_targeted: 36/36 = 1.000
+    writeback/other_targeted: 32/32 = 1.000
+    instance/ambiguous_name/other_targeted: 7/8 = 0.875
+    instance/ambiguous_name/referent_targeted: 1/4 = 0.250
+    instance/definite_description/other_targeted: 11/11 = 1.000
+    instance/definite_description/referent_targeted: 9/10 = 0.900
+    instance/pronoun/other_targeted: 11/15 = 0.733
+    instance/pronoun/referent_targeted: 1/5 = 0.200
+    instance/inverse_query: 8/14 = 0.571
+    rich/ambiguous_name/overwritten: 2/2 = 1.000
+    rich/definite_description/overwritten: 7/11 = 0.636
+    rich/none/baseline: 49/53 = 0.925
+    rich/pronoun/overwritten: 1/1 = 1.000
+    rich/by_n_entities/3: 12/17 = 0.706
+    rich/by_n_entities/4: 18/22 = 0.818
+    rich/by_n_entities/5: 7/10 = 0.700
+    rich/by_n_entities/6: 18/21 = 0.857
+    rich/by_n_entities/7: 10/12 = 0.833
+    rich/by_n_entities/8: 15/16 = 0.938
+    rich/inverse_query: 21/31 = 0.677
