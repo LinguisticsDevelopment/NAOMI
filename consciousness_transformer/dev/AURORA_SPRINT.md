@@ -65,3 +65,20 @@ machinery, parser round beyond what zero-shot demands.
   synthetic task is hard to pose honestly in our controlled world; real
   text supplies natural garden paths later. Design law retained; v1
   membrane recorded as 2.5/3, acceptable for the sprint.
+
+## Reprioritization 2026-08-30 (user decision): the clock is dropped
+The Sept-15 Aurora deadline no longer governs sequencing; Aurora may not
+happen and that is acceptable. Standing priorities, in order:
+1. The system must stop requiring MINIMAL episodes — long, many-entity,
+   many-fact discourse with mixed referring devices and many question
+   types. Training memory footprint (the order-3 memory is B×d³ per step
+   with autograd history; ~5-8GB per arm at 1500 eps) is a direct
+   blocker for longer episodes and gets engineered down first.
+2. The memory becomes COMPREHENSIVE for the v2 design: provenance wired
+   into live reactor writes (invariant #4 real), morphology attributes,
+   inverse queries, capacity curves, and episodic LTM + consolidation
+   (multi-passage reading needs it) — the full M57 reprioritization list
+   plus the LTM organ, not the minimal cut.
+3. THEN the prose test (M58 corpus→episode converter + zero-shot number).
+Local machine is for unit tests/smokes only; full-scale validation runs
+in the cloud routine (never on the user's machine). Ops rules unchanged.
