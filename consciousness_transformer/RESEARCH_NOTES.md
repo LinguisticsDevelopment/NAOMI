@@ -2995,3 +2995,39 @@ on redirected question steps + entity-axis inverse read. Ops: each arm
 5-8GB RSS (B×d³ memory tensor with autograd across T) — 4 parallel arms
 OOM'd on 15GB; footprint engineering is now priority 1 per the
 2026-08-30 reprioritization (longer episodes are impossible otherwise).
+
+### M57c battery #2 — read path PROVEN (forced-gold 0.423→0.856); resolver does not learn instance binding — it lacks an evidence·target interaction (MEASURED, honest partial)
+
+Cloud routine, minibatched (--batch-size 64, 2 arms concurrent, OMP 2):
+33 min/arm, 2.5GB peak (was 180 min, 5-8GB). Same mix as battery #1.
+
+| kind / arm | normal | forced-gold | forced-wrong | cheat | no-gold |
+|---|---|---|---|---|---|
+| instance | 0.567 | 0.856 | 0.442 | 0.577 | 0.567 |
+| inverse_query | 0.621 | 0.724 | 0.483 | 0.690 | 0.621 |
+| writeback | 1.000 | 1.000 | 0.217 | 1.000 | 1.000 |
+| old | 0.913 | 0.913 | 0.913 | 0.894 | 0.913 |
+Forced-gold per device (ref-targeted): ambiguous name 1.000, pronoun
+1.000, definite description 0.692; inverse 0.724.
+
+(1) M57c.2's post-collapse read is PROVEN: with the correct referent
+handed over, the instance world is solved (0.423→0.856; names/pronouns at
+ceiling); the entity-axis read lifts inverse queries from 0.138 to 0.72.
+(2) The resolver does NOT learn instance binding (binding/instance 0.486,
+normal≈cheat): "normal low, forced-gold high, forced-wrong low" = honest
+curriculum + working mechanism + resolver not learning. Cause (by
+inspection of _collapse): the resolver sees each candidate's attr:kind /
+attr:gender READOUT but never the referring expression's TARGET vector
+("doctor") to compare against — M54c's lesson repeated: senses needed an
+INTERACTION PRIOR; instance binding needs a per-candidate
+cos(evidence_readout, target) feature. Pronouns bound in M53 only
+because gender rode in the explicit feature register. Next: M57c.3 =
+cand_evidence_target + per-candidate interaction feature into the
+resolver (M56b register path), aux on gold_index.
+(3) Cheat = 1.000 on 2-entity writeback now (was 0.652): better
+optimization lets the GRU bind internally in SHORT episodes. Forced-wrong
+still craters (0.217) so the explicit path is used when present;
+NECESSITY must be shown where state-carry breaks — rich episodes (8
+entities, T=50), the next battery's job. Definite descriptions at 0.692
+even under forced-gold: the question-side re-read still competes with
+stale GRU recall; watch in battery #3.
