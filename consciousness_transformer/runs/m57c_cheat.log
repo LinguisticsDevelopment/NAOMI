@@ -1,0 +1,18 @@
+=== instance-mix (cheat) track=A: 1500 eps (500 writeback, 500 instance, inverse_frac=0.3), dim=48, epochs=60 ===
+  [track-A] epoch   1 loss=1.820 val=0.280
+  [track-A] epoch  20 loss=1.147 val=0.433
+  [track-A] epoch  40 loss=0.771 val=0.557
+  [track-A] epoch  60 loss=0.483 val=0.613
+  [track-A] val total=0.613  resolver_params=2521  time=57.14 min
+    kind instance: 33/104 = 0.317
+    kind old: 91/104 = 0.875
+    kind writeback: 60/92 = 0.652
+    writeback/referent_targeted: 20/44 = 0.455
+    writeback/other_targeted: 40/48 = 0.833
+    instance/ambiguous_name/other_targeted: 7/18 = 0.389
+    instance/ambiguous_name/referent_targeted: 5/9 = 0.556
+    instance/definite_description/other_targeted: 5/18 = 0.278
+    instance/definite_description/referent_targeted: 6/13 = 0.462
+    instance/pronoun/other_targeted: 4/11 = 0.364
+    instance/pronoun/referent_targeted: 1/6 = 0.167
+    instance/inverse_query: 5/29 = 0.172

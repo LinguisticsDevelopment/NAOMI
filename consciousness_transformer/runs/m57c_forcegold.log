@@ -1,0 +1,22 @@
+=== instance-mix (force-binding=gold) track=A: 1500 eps (500 writeback, 500 instance, inverse_frac=0.3), dim=48, epochs=60 ===
+  [track-A] epoch   1 loss=2.260 val=0.270
+  [track-A] epoch  20 loss=1.573 val=0.453
+  [track-A] epoch  40 loss=1.031 val=0.770
+  [track-A] epoch  60 loss=0.614 val=0.753
+  [track-A] val total=0.753  resolver_params=2521  time=130.09 min
+    kind instance: 44/104 = 0.423
+    kind old: 90/104 = 0.865
+    kind writeback: 92/92 = 1.000
+    writeback/referent_targeted: 44/44 = 1.000
+    writeback/other_targeted: 48/48 = 1.000
+    instance/ambiguous_name/other_targeted: 12/18 = 0.667
+    instance/ambiguous_name/referent_targeted: 3/9 = 0.333
+    instance/definite_description/other_targeted: 9/18 = 0.500
+    instance/definite_description/referent_targeted: 6/13 = 0.462
+    instance/pronoun/other_targeted: 3/11 = 0.273
+    instance/pronoun/referent_targeted: 5/6 = 0.833
+    instance/inverse_query: 6/29 = 0.207
+  [track-A] BINDING ACCURACY overall=0.655 (n=238) vs baseline chance
+    binding/instance: acc=0.438 (n=146)
+    binding/writeback: acc=1.000 (n=92)
+  [track-A] margin distribution: min=0.000 p25=0.320 median=0.677 p75=0.857 max=1.914
