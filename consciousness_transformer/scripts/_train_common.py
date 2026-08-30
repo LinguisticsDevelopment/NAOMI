@@ -14,9 +14,19 @@ copies of the same shuffle-and-stitch code.
 reachable (rather than removed) so the old and new code paths can be
 measured against each other from the same script, per CLAUDE.md's ops
 rule against unverified "should be faster" claims.
+
+M59a (episodic LTM, CLAUDE.md's "LTM decisions"): this module also hosts
+:class:`DocumentRunner`, the wind-down/consolidate substate machine
+(dev/OP_INVENTORY.md's "wind-down / consolidate" row) that drives
+multi-passage documents through :class:`~nsm_ct.clause_reactor.
+ClauseReactor` with a persisted LTM tensor -- see :mod:`nsm_ct.ltm`'s
+module docstring for the full document/passage/registry contract, and
+:class:`DocumentRunner`'s own docstring for the substate machine itself.
 """
 
 from __future__ import annotations
+
+from typing import Callable, List, Optional, Sequence, Tuple
 
 import resource
 
@@ -161,3 +171,183 @@ def peak_rss_mb() -> float:
     macOS's bytes convention, since every training run this instruments
     happens on the Linux cloud box."""
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+
+
+# ---------------------------------------------------------------------------
+# M59a: the wind-down/consolidate substate machine (episodic LTM).
+# ---------------------------------------------------------------------------
+class DocumentRunner:
+    """Drives ONE document (an ordered list of per-passage
+    :class:`~nsm_ct.clause_reactor.ClauseBatch`\\ es, already grouped/built
+    by the caller -- see :mod:`nsm_ct.ltm`'s module docstring, "Interface
+    contract for the curriculum agent", for the full document/passage/
+    registry contract) through a small, explicit substate machine per
+    passage:
+
+    - **READING**: run :meth:`nsm_ct.clause_reactor.ClauseReactor.forward`
+      on this passage's batch, with the document's LTM tensor (accumulated
+      from every EARLIER passage's consolidation, ``None`` for passage 0)
+      threaded in as ``ltm=`` -- every read this passage's forward pass
+      performs is therefore additive over STM+LTM (:func:`nsm_ct.ltm.
+      mem_total`), while every write still lands only in this passage's own
+      fresh STM.
+    - **WIND_DOWN**: a NAMED event, fired unconditionally at the end of
+      every passage's reading -- a v1 NO-OP (recorded in the passage's
+      report under ``"events"``), the hook for a future ``patience`` dial
+      (dev/OP_INVENTORY.md's dials table: "not set" today) that would let a
+      passage's reading run stop early/late based on the controller's own
+      state instead of always running every step of the batch.
+    - **CONSOLIDATE**: :func:`nsm_ct.ltm.promote` copies this passage's OWN
+      new provenance records (this passage's STM writes, gated by
+      ``trust_ltm``) into the document's LTM tensor -- ``dial_name=
+      "trust_ltm"`` (the tier tag LTM->Truth will later reuse this SAME
+      function with ``dial_name="trust_truth"`` for). The registry and log
+      passed to :meth:`run_document` PERSIST across every passage of the
+      document (constructed once by the caller, per the interface
+      contract) -- this is what lets a later passage's instance ids
+      resolve against an EARLIER passage's minted atoms.
+
+    Works identically for training (``train=True`` -- gradients flow,
+    ``loss_fn`` accumulates a ``total_loss`` SUMMED over passages, a
+    single tensor a script calls ``.backward()`` on once after the whole
+    document) and eval (``train=False`` -- every passage's forward pass
+    runs under ``torch.no_grad()``, ``loss_fn`` is typically omitted).
+    ``run_document`` returns ``(reports, total_loss)`` -- see this class's
+    module (:mod:`nsm_ct.ltm`'s docstring) for the exact per-passage report
+    key list; a script computing per-passage answer accuracy reads
+    ``report["out"]["answer_logits"]`` against that passage's own
+    ``batch.answer``.
+    """
+
+    def __init__(self, model, *, trust_ltm: Optional[float] = None,
+                 ltm_detach: Optional[bool] = None) -> None:
+        # Deferred import (not module-level): mirrors build_model's own
+        # "keeps this module importable before src/ is on sys.path" seam.
+        from nsm_ct.ltm import LTM_DETACH, TRUST_LTM
+
+        self.model = model
+        self.trust_ltm = TRUST_LTM if trust_ltm is None else trust_ltm
+        # M59a: detach the LTM tensor between passages -- bounds autograd.
+        # Without this, a document's Nth passage's backward pass would walk
+        # through EVERY earlier passage's promote() write (each one itself
+        # built from that passage's own forward pass's full order-3 STM
+        # tensor), so the retained graph would grow with the NUMBER OF
+        # PASSAGES CONSOLIDATED SO FAR on top of the existing per-step
+        # B*T*d^3 footprint this module's own docstring already flags as
+        # the dominant training-memory cost (RESEARCH_NOTES tail,
+        # dev/LTM_DESIGN_BRIEF.md Sec.2's capacity-probe note: "an LTM
+        # tensor that accumulates across MANY episodes inside one training
+        # run is a second, likely worse instance of the same footprint
+        # problem"). Detaching ``ltm`` after each passage's CONSOLIDATE
+        # step cuts the graph there: the NEXT passage's forward pass reads
+        # ``ltm`` as a plain (non-differentiable) tensor value, so ITS
+        # backward pass only ever walks that ONE passage's own STM
+        # computation -- the model's SHARED weights still receive a
+        # gradient from every passage's own loss (nothing about the
+        # parameters is detached, only the LTM VALUE passed between
+        # passages), so training still learns from the whole document, at
+        # bounded (not passage-count-multiplied) peak memory.
+        self.ltm_detach = LTM_DETACH if ltm_detach is None else ltm_detach
+
+    def run_document(self, passages: Sequence, registry, log, codec, *,
+                      train: bool, loss_fn: Optional[Callable] = None,
+                      source: str = "reactor", language: str = "en",
+                      timestamp_base: float = 0.0) -> Tuple[List[dict], Optional["torch.Tensor"]]:
+        """Run every passage of ONE document in order. ``passages`` is the
+        already-ordered, already-grouped list of that document's per-
+        passage ``ClauseBatch``es (see this module's own docstring and
+        :mod:`nsm_ct.ltm`'s "Interface contract" -- grouping episodes by
+        ``doc_id``/``passage_index`` into this list is the CALLER's job,
+        not this method's). ``registry``/``log`` are the ONE
+        :class:`~nsm_ct.instances.InstanceRegistry`/:class:`~nsm_ct.
+        instances.ProvenanceLog` pair for this document, constructed by
+        the caller BEFORE the first passage and reused across every
+        passage (so instance ids persist). ``codec`` is the
+        :class:`~nsm_ct.tpr.TPRCodec` used to build the passages'
+        batches (needed by :func:`nsm_ct.ltm.promote` to ground each
+        promoted relation's filler vector).
+
+        Each passage's batch may carry ``B > 1`` rows -- every row in
+        EVERY passage of this call shares the SAME ``registry``/``log``
+        (instance ids are looked up by string, so this is only correct
+        when every row genuinely belongs to the one document these
+        registry/log objects were built for; a training script processing
+        MANY independent documents in parallel calls ``run_document`` once
+        PER document, each with its own registry/log -- registries are
+        document-scoped by construction, see :mod:`nsm_ct.instances`'s own
+        "unbatched by design" module docstring).
+
+        ``loss_fn(out, batch) -> Tensor`` (optional), called once per
+        passage under the SAME grad/no-grad context as that passage's
+        forward pass; its return values are summed into ``total_loss``
+        (``None`` when ``loss_fn`` is omitted -- the eval-only path).
+        Returns ``(reports, total_loss)`` -- see :mod:`nsm_ct.ltm`'s module
+        docstring for ``reports``' exact per-passage key list.
+        """
+        from nsm_ct import provenance as provenance_mod
+        from nsm_ct.ltm import promote
+
+        self.model.train(train)
+        ltm_tensor = None   # [B, d, d, d] or None before the first CONSOLIDATE
+        reports: List[dict] = []
+        total_loss = None
+
+        for p_idx, batch in enumerate(passages):
+            grad_ctx = torch.enable_grad() if train else torch.no_grad()
+            with grad_ctx:
+                out = self.model(batch, ltm=ltm_tensor, return_write_trace=True,
+                                  return_memory=True, return_mem_read=True)
+                passage_loss = loss_fn(out, batch) if loss_fn is not None else None
+            if passage_loss is not None:
+                total_loss = passage_loss if total_loss is None else total_loss + passage_loss
+
+            events = ["reading", "wind_down"]   # WIND_DOWN: v1 no-op, see class docstring
+
+            b = batch.entity.shape[0]
+            final_memory = out["_memory"]        # [B, d, d, d] -- this passage's own STM
+            passage_timestamp = timestamp_base + p_idx
+            new_ltm_rows = []
+            n_records_total = 0
+            n_promoted_total = 0
+            for i in range(b):
+                # Per-row provenance for THIS passage only (never the whole
+                # historical log) -- record_writes is called on a ONE-ROW
+                # subset so ``records=`` below is exactly this row's new
+                # writes, matching promote()'s "records from the passage"
+                # contract.
+                row_idx = torch.tensor([i])
+                row_batch = batch.subset(row_idx)
+                row_trace = {k: v[i:i + 1] for k, v in out["_write_trace"].items()}
+                start = len(log)
+                provenance_mod.record_writes(
+                    row_batch, {"_write_trace": row_trace}, log,
+                    source=source, language=language, timestamp_base=passage_timestamp)
+                row_records = log.records[start:]
+                n_records_total += len(row_records)
+
+                target_i = ltm_tensor[i] if ltm_tensor is not None else torch.zeros_like(final_memory[i])
+                new_target_i, n_i = promote(
+                    final_memory[i], target_i, registry, log,
+                    records=row_records, dial=self.trust_ltm, dial_name="trust_ltm",
+                    codec=codec, timestamp=passage_timestamp,
+                )
+                new_ltm_rows.append(new_target_i)
+                n_promoted_total += n_i
+
+            new_ltm = torch.stack(new_ltm_rows, dim=0)
+            events.append("consolidate")
+            if self.ltm_detach:
+                new_ltm = new_ltm.detach()
+            ltm_tensor = new_ltm
+
+            reports.append({
+                "passage_index": p_idx,
+                "out": out,
+                "ltm": ltm_tensor,
+                "n_records": n_records_total,
+                "n_promoted": n_promoted_total,
+                "events": events,
+                "loss": passage_loss,
+            })
+
+        return reports, total_loss

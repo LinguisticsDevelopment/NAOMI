@@ -23,6 +23,7 @@ from . import membrane
 from .clause import extract_discourse
 from .episode import _NAMES
 from .instances import InstanceRegistry
+from .ltm import mem_total
 from .membrane import FEATURE_DIM
 from .resolver import Resolver, evidence_interaction, query_candidates, query_candidates_per_addr
 from .tpr import TPRCodec
@@ -1636,6 +1637,27 @@ class ClauseBatch:
     # never by :meth:`ClauseReactor.forward` itself (no arithmetic reads
     # this field -- it rides alongside the tensors, not through them).
     step_meta: Optional[List[List[Optional[dict]]]] = None  # [B][T] plain dicts
+    # M59a (episodic LTM, CLAUDE.md's "LTM decisions" / dev/LTM_DESIGN_BRIEF.md
+    # Sec.5 point 2 -- "identity linking through the EXISTING resolver
+    # contract"): ONE new field, appended LAST (after step_meta) so every
+    # pre-M59a POSITIONAL ``ClauseBatch(...)`` call site (build_clause_batch's
+    # own return statement included) is untouched -- it simply defaults to
+    # ``None``, byte-identical to every batch built before this milestone.
+    # Per (row, step, candidate): 1 = this entity candidate's only source is
+    # a prior passage's already-consolidated LTM (see
+    # ``membrane.EntityCandidateSet.from_ltm``'s docstring for the full
+    # cross-passage candidate-set contract), 0 = an ordinary same-passage
+    # STM candidate. Consumed by :meth:`ClauseReactor._collapse`'s entity
+    # branch as ONE MORE per-candidate feature column, appended onto the
+    # SAME ``cand_feature_per_candidate`` register M57c.3's
+    # ``evidence_interaction`` scalar already widens (``resolver.
+    # cand_feature_extra`` grows to cover however many extra columns are
+    # actually present this batch -- see ``_collapse`` for the concat
+    # logic). Not yet populated by :func:`build_clause_batch` (M59b's
+    # curriculum-generator job); ``None`` here for every batch this
+    # milestone builds, same "hand this to the next milestone" contract
+    # ``membrane.EntityCandidateSet.from_ltm`` documents on its own field.
+    cand_from_ltm: Optional[torch.Tensor] = None  # [B, T, C]  0/1, 0 elsewhere
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
@@ -1667,6 +1689,7 @@ class ClauseBatch:
         evidence_rel = self.cand_evidence_relation.to(device) if self.cand_evidence_relation is not None else None
         evidence_target = self.cand_evidence_target.to(device) if self.cand_evidence_target is not None else None
         inv_mask = self.inverse_mask.to(device) if self.inverse_mask is not None else None
+        from_ltm = self.cand_from_ltm.to(device) if self.cand_from_ltm is not None else None
         # M57d: step_meta is plain Python (no device), carried through
         # unchanged -- mirrors nothing else in this method living off-device.
         return ClauseBatch(self.entity.to(device), self.relation.to(device),
@@ -1674,7 +1697,7 @@ class ClauseBatch:
                            self.is_q.to(device), self.mask.to(device),
                            self.options.to(device), self.answer.to(device), coord, ans_ok,
                            *cand, *scand, *hcand, addr_mask, forced, evidence_rel, evidence_target,
-                           inv_mask, self.step_meta)
+                           inv_mask, self.step_meta, from_ltm)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
@@ -1696,11 +1719,12 @@ class ClauseBatch:
             step_meta = [self.step_meta[i] for i in idx_list]
         else:
             step_meta = None
+        from_ltm = self.cand_from_ltm[idx] if self.cand_from_ltm is not None else None
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
                            self.options[idx], self.answer[idx], coord, ans_ok,
                            *cand, *scand, *hcand, addr_mask, forced, evidence_rel, evidence_target,
-                           inv_mask, step_meta)
+                           inv_mask, step_meta, from_ltm)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
@@ -2319,6 +2343,30 @@ class ClauseReactor(nn.Module):
         address-keyed :func:`~nsm_ct.entity_memory.query`. ``None``/all-
         falsy (every batch without an instance inverse-query episode) is a
         no-op.
+
+    M59a (episodic LTM, CLAUDE.md's "LTM decisions" / dev/LTM_DESIGN_BRIEF.md
+    Sec.5): :meth:`forward`'s new optional ``ltm`` argument -- when set, every
+    READ in this class (the step ``mem_read``, the post-collapse re-read
+    above, the entity-axis inverse read, and every read INSIDE this method:
+    ``query_candidates``'s candidate-evidence reads and
+    ``query_candidates_per_addr``'s per-hypothesis reads) queries
+    :func:`nsm_ct.ltm.mem_total`'s ``memory + ltm`` view instead of
+    ``memory`` alone -- :meth:`forward` computes this ONCE per step and
+    passes the COMBINED tensor into this method AS ``memory``, so nothing
+    in this method's own body needs to change; every ``memory``-reading
+    line above already reads the LTM-inclusive view for free. WRITES
+    (``forward``'s own ``em.write`` call, downstream of this method) are
+    UNCHANGED -- they still land only in STM, never in ``ltm`` itself, per
+    the locked "STM-only writes" design. ``ltm=None`` (the default) makes
+    ``mem_total`` return ``memory`` unchanged, so this method's behavior is
+    byte-identical to pre-M59a whenever no LTM tensor is threaded in.
+
+    M59a's SECOND, independent addition here: ``batch.cand_from_ltm`` (see
+    that field's own docstring) widens the entity branch's per-candidate
+    feature register with one more column (the **link** op's scorer
+    feature) via the SAME ``resolver.cand_feature_extra``-driven concat
+    path M57c.3's ``evidence_interaction`` scalar already uses -- see the
+    ``extra_cols`` block below.
     """
 
     def __init__(self, dim: int, hidden: int = 128, resolver: Optional[Resolver] = None,
@@ -2525,13 +2573,40 @@ class ClauseReactor(nn.Module):
             # interaction feature computed above. Building a fresh zero
             # register when no cand_feature_per_candidate exists yet mirrors
             # CorefHead.forward's own defensive-zeros fallback exactly.
+            # M59a (episodic LTM): a SECOND optional extra column,
+            # ``batch.cand_from_ltm`` (0/1 per candidate, "link" op's
+            # scorer feature -- see nsm_ct.ltm's module docstring and
+            # membrane.EntityCandidateSet.from_ltm) -- concatenated
+            # alongside ``s_c`` (M57c.3's interaction scalar) rather than
+            # replacing it, so a resolver can see both. Whichever of the
+            # two extras is present this batch is gathered into
+            # ``extra_cols`` and concatenated onto ``cfpc`` in ONE cat,
+            # widened/truncated to ``resolver.cand_feature_extra`` (a plain
+            # int, unchanged in resolver.py -- CorefHead's constructor
+            # already takes an arbitrary width; this is the caller-side
+            # generalization "keep it parameterized" asks for). A batch
+            # with NEITHER extra (every pre-M59a batch, and every M57c.3
+            # batch with no evidence_target) leaves ``extra_cols`` empty --
+            # byte-identical no-op, same as before this milestone.
+            extra_cols = []
+            if s_c is not None:
+                extra_cols.append(s_c)                                       # [B, C, 1]
+            if batch.cand_from_ltm is not None:
+                extra_cols.append(batch.cand_from_ltm[:, t].unsqueeze(-1).to(ce_t.dtype))  # [B, C, 1]
             extra_width = getattr(self.resolver, "cand_feature_extra", 0)
-            if extra_width > 0 and s_c is not None:
+            if extra_width > 0 and extra_cols:
                 cfpc = extra.get("cand_feature_per_candidate")
                 if cfpc is None:
                     b_, C_, _d_ = ce_t.shape
                     cfpc = ce_t.new_zeros(b_, C_, FEATURE_DIM)
-                extra["cand_feature_per_candidate"] = torch.cat([cfpc, s_c], dim=-1)
+                stacked_extra = torch.cat(extra_cols, dim=-1)                # [B, C, k]
+                k = stacked_extra.shape[-1]
+                if k < extra_width:
+                    pad = ce_t.new_zeros(*stacked_extra.shape[:-1], extra_width - k)
+                    stacked_extra = torch.cat([stacked_extra, pad], dim=-1)
+                elif k > extra_width:
+                    stacked_extra = stacked_extra[..., :extra_width]
+                extra["cand_feature_per_candidate"] = torch.cat([cfpc, stacked_extra], dim=-1)
             logits = self.resolver(ce_t, cf_t, cp_t, cm_t, cand_mem_read, state, **extra)  # [B, C]
             logits = logits.masked_fill(cm_t <= 0, -1e9)
             has_cand = cm_t.sum(-1) > 0                                          # [B]
@@ -2626,7 +2701,19 @@ class ClauseReactor(nn.Module):
                 addr_row_out, resolved_idx_out)
 
     def forward(self, batch: ClauseBatch, return_memory: bool = False,
-                return_mem_read: bool = False, return_write_trace: bool = False) -> Dict[str, torch.Tensor]:
+                return_mem_read: bool = False, return_write_trace: bool = False,
+                ltm: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
+        """See the class docstring's M59a paragraph for ``ltm``'s full
+        contract. ``ltm`` is an optional ``[B, d, d, d]`` per-row long-term
+        memory tensor (one document's persisted LTM slice per row --
+        ``scripts._train_common.DocumentRunner`` is the intended caller).
+        When set, every read this method performs -- directly, and inside
+        :meth:`_collapse` -- queries :func:`nsm_ct.ltm.mem_total`'s ``memory
+        + ltm`` view; every write still lands only in STM's ``memory``
+        (unchanged, per the locked "STM-only writes" design). ``ltm=None``
+        (the default) is byte-identical to pre-M59a ``forward()`` --
+        regression-tested in ``tests/test_ltm.py``.
+        """
         b, T, d = batch.entity.shape
         device = batch.entity.device
         state = torch.zeros(b, self.gru.hidden_size, device=device)
@@ -2656,10 +2743,17 @@ class ClauseReactor(nn.Module):
             e, r, v = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
             p, c = batch.pred[:, t], coord[:, t]
             real, isq = batch.mask[:, t], batch.is_q[:, t]
-            mem_read = em.query(memory, e, r)                          # [B, d] -- the pre-collapse address's reading
+            # M59a: the additive STM+LTM read view (nsm_ct.ltm.mem_total,
+            # the "recall" op) -- computed ONCE per step and reused for
+            # EVERY read this step (mem_read, the post-collapse re-read
+            # below, and every read inside _collapse), never re-added per
+            # read site. `ltm=None` (every pre-M59a call) makes this
+            # exactly `memory`, byte-identical to before.
+            mem_total_t = mem_total(memory, ltm)
+            mem_read = em.query(mem_total_t, e, r)                     # [B, d] -- the pre-collapse address's reading
             (e, v, res_logits_t, res_margin_t, sense_logits_t, sense_margin_t,
              hyp_logits_t, hyp_margin_t, addr_row_t, resolved_idx_t) = self._collapse(
-                memory, state, mem_read, e, r, v, batch, t)
+                mem_total_t, state, mem_read, e, r, v, batch, t)
             # M57c.2 (RESEARCH_NOTES "M57c battery #1" -- the measured gap:
             # a description/pronoun QUESTION step's read never reached the
             # resolved node, only the write did): `e` may now be the
@@ -2678,7 +2772,7 @@ class ClauseReactor(nn.Module):
             # but `cand_addr_mask` is absent/falsy -- both leave `mem_read`
             # byte-identical to before M57c.2.
             if addr_row_t is not None and bool(addr_row_t.any()):
-                mem_read = torch.where(addr_row_t.unsqueeze(-1), em.query(memory, e, r), mem_read)
+                mem_read = torch.where(addr_row_t.unsqueeze(-1), em.query(mem_total_t, e, r), mem_read)
             # M57c.2: entity-axis inverse read. An inverse-query question
             # step ("who is tall ?") has no memory ADDRESS at all -- its own
             # "entity" is a fixed "who" marker atom, never written to -- so
@@ -2691,7 +2785,7 @@ class ClauseReactor(nn.Module):
             if batch.inverse_mask is not None:
                 inv_row = batch.inverse_mask[:, t] > 0
                 if bool(inv_row.any()):
-                    mem_read = torch.where(inv_row.unsqueeze(-1), em.query_entity(memory, r, v), mem_read)
+                    mem_read = torch.where(inv_row.unsqueeze(-1), em.query_entity(mem_total_t, r, v), mem_read)
             if return_mem_read:
                 mem_read_all.append(mem_read)
             state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)

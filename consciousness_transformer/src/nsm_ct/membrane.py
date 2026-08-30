@@ -167,7 +167,29 @@ class EntityCandidateSet(CandidateSet):
     vectors, not just seeing them both. See
     :func:`nsm_ct.clause_reactor.build_clause_batch`'s ``cand_evidence_target``
     field and :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse`'s entity
-    branch for where this is consumed."""
+    branch for where this is consumed.
+
+    M59a (episodic LTM, CLAUDE.md's "LTM decisions" / dev/LTM_DESIGN_BRIEF.md
+    Sec.5 point 2, "identity linking through the EXISTING resolver
+    contract"): ``from_ltm`` -- default ``None``, byte-identical for every
+    pre-M59a caller (every M53a/M53b/M57b/M57c set built before this
+    milestone never populates it) -- shape ``(len(candidates),)``, one 0/1
+    flag per candidate: 1 marks a candidate whose only source is a PRIOR
+    PASSAGE's already-consolidated LTM (this passage has never seen it
+    before), 0 marks an ordinary same-passage STM candidate. Both kinds
+    live in the SAME candidate list (mirrors ``addr_redirect``'s "one
+    field, both kinds share it" discipline) -- this is a SCORER FEATURE,
+    not a filter. Not consumed by anything in ``build_clause_batch`` yet
+    (that plumbing -- turning this array into
+    :attr:`nsm_ct.clause_reactor.ClauseBatch.cand_from_ltm` -- is M59b's
+    curriculum-generator work); the field exists here now so M59b has
+    somewhere to put the flag it computes. See :mod:`nsm_ct.ltm`'s module
+    docstring ("Interface contract for the curriculum agent") for the full
+    cross-passage candidate-set contract this flag is part of, and
+    :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse`'s entity branch
+    for how ``ClauseBatch.cand_from_ltm`` (once populated) is consumed --
+    the SAME per-candidate feature-register path M57c.3's
+    ``evidence_interaction`` scalar already uses."""
 
     surface: str = ""
     feature: Optional[np.ndarray] = None
@@ -176,6 +198,7 @@ class EntityCandidateSet(CandidateSet):
     addr_redirect: bool = False
     evidence_relation: Optional[str] = None
     evidence_target: Optional[str] = None
+    from_ltm: Optional[np.ndarray] = None
 
 
 # ---------------------------------------------------------------------------
