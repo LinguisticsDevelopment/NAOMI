@@ -93,6 +93,15 @@ def _ground_evidence_target(target: str, resolver, codec: TPRCodec, cache: Dict[
     is NOT attribute-decidable (see curriculum2's own "discourse recency
     for ambiguous_name" note); it disambiguates via a genuinely different
     channel (discourse order), out of scope for this interaction feature.
+
+    M57e (morphology signals): ``"number:sg"``/``"number:pl"`` targets (the
+    plural-pronoun referring/question steps :func:`_rich_steps` builds for a
+    :class:`~nsm_ct.curriculum2.RichEpisodeGenerator` group episode) fall
+    straight through to the generic ``codec.filler_vec(target)`` branch
+    below -- no new branch needed, since ``"number:"`` is just another
+    attribute-value grounding prefix in the SAME convention as ``"kind:"``/
+    ``"gender:"``, reproducing exactly the vector every candidate's own
+    attr:number fact was written with.
     """
     if target.startswith("name:"):
         return _ent_vec(target[len("name:"):], resolver, codec, cache, meaning_source)
@@ -1053,6 +1062,13 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     initial_values = ep.meta["initial_values"]
     entity_order = ep.meta["entity_order"]
     name_groups = ep.meta["name_groups"]
+    # M57e (morphology signals): True only for an episode
+    # nsm_ct.curriculum2.RichEpisodeGenerator built with plural_frac > 0
+    # THAT ALSO SAMPLED a group this episode -- absent/False for every
+    # pre-M57e episode (and every plural_frac == 0.0 episode), so
+    # everything gated on it below is a strict no-op then, byte-identical
+    # to before this milestone.
+    has_group = bool(ep.meta.get("has_group"))
 
     registry = InstanceRegistry(dim=d, seed=ep.meta["instance_seed"])
     ids: Dict[int, str] = {}
@@ -1062,11 +1078,31 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
         ids[i] = iid
         atoms[i] = atom.numpy()
 
+    # PLURAL group referent (see nsm_ct.curriculum2.RichEpisodeGenerator's
+    # "optional PLURAL group" comment for the full design): minted AFTER
+    # every individual, always the registry's first (only) "group" mint --
+    # curriculum2's own group_instance_id prediction ("inst:group#1")
+    # depends on this exact ordering.
+    group_id: Optional[str] = None
+    group_atom: Optional[np.ndarray] = None
+    if has_group:
+        group_id, group_atom_t = registry.mint("group")
+        group_atom = group_atom_t.numpy()
+
+    def _id_for(role) -> str:
+        return group_id if role == "group" else ids[role]
+
     steps = []
     # Registration: kind, gender, named-place, then every held attribute
     # relation's baseline value -- direct addressing, own atom (mirrors
     # _instance_steps' registration block exactly, generalized to N roles
-    # and a variable per-entity relation set).
+    # and a variable per-entity relation set). When this episode has a
+    # PLURAL group, every individual ALSO gets an attr:number=sg fact here
+    # (only then -- see module comment) so the group's own attr:number=pl
+    # (written below) is genuinely discriminating: candidates_for/
+    # evidence_interaction can only tell singular and plural instances
+    # apart if EVERY candidate carries the fact, not just the plural one.
+    number_rel = codec.filler_vec("attr:number") if has_group else None
     for i in entity_order:
         kind_vec = codec.filler_vec("kind:" + kinds[i])
         gender_vec = codec.filler_vec("gender:" + genders[i])
@@ -1077,8 +1113,12 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
         for rel in held_relations[i]:
             val_vec = _content_vec(initial_values[i][rel], resolver, codec, cache, meaning_source)
             steps.append((atoms[i], codec.filler_vec("attr:" + rel), val_vec, pred_is, z, 0))
+        if has_group:
+            steps.append((atoms[i], number_rel, codec.filler_vec("number:sg"), pred_is, z, 0))
 
     atom_lookup: Dict[str, np.ndarray] = {ids[i]: atoms[i] for i in range(n)}
+    if has_group:
+        atom_lookup[group_id] = group_atom
     cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
     forced_map: Dict[int, int] = {}
 
@@ -1131,6 +1171,53 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                 wrong_idx = (true_idx + 1) % len(cand_roles)
                 forced_map[step_idx] = true_idx if force == "gold" else wrong_idx
 
+    # PLURAL group facts + overwrite statement (see nsm_ct.curriculum2.
+    # RichEpisodeGenerator's "optional PLURAL group" comment). The
+    # coordination sentence's group mint carries attr:number=pl plus one
+    # attr:member fact per member -- entity_memory write/overwrite is keyed
+    # by (entity, relation), so two facts under the literal same relation
+    # would clobber each other (the SECOND write's ``_last[key]`` subtract-
+    # then-add erases the first); "member_0"/"member_1" (distinct relation
+    # names) is this milestone's concrete answer to that, a deviation from
+    # the design note's singular "attr:member" phrasing recorded in the
+    # report, not silently reconciled. The plural-pronoun ("they are
+    # {value} .") overwrite step then mirrors every K referring statement's
+    # own evidence-relation mechanism exactly, with "number" standing in
+    # for "kind"/"gender" and candidates = every individual PLUS the group.
+    if has_group:
+        m0, m1 = ep.meta["group_members"]
+        steps.append((group_atom, number_rel, codec.filler_vec("number:pl"), pred_is, z, 0))
+        steps.append((group_atom, codec.filler_vec("attr:member_0"), atoms[m0], pred_is, z, 0))
+        steps.append((group_atom, codec.filler_vec("attr:member_1"), atoms[m1], pred_is, z, 0))
+
+        group_relation = ep.meta["group_relation"]
+        group_value = ep.meta["group_value"]
+        group_attr_rel_vec = codec.filler_vec("attr:" + group_relation)
+        group_overwrite_vec = _content_vec(group_value, resolver, codec, cache, meaning_source)
+        group_placeholder = _ent_vec("they", resolver, codec, cache, meaning_source)
+        group_cand_roles: List[object] = list(range(n)) + ["group"]
+        group_step_idx = len(steps)
+        steps.append((group_placeholder, group_attr_rel_vec, group_overwrite_vec, pred_is, z, 0))
+        if not cheat:
+            group_candidates = [membrane.Candidate(key=_id_for(r), prior=1.0 / len(group_cand_roles))
+                                 for r in group_cand_roles]
+            group_gold_index = None if no_gold else group_cand_roles.index("group")
+            group_cs = membrane.EntityCandidateSet(
+                candidates=group_candidates,
+                provenance={"sentence_index": group_step_idx, "kind": "rich", "device": "plural_pronoun"},
+                surface="they",
+                feature=membrane.mention_feature_vector("they"),
+                gold_index=group_gold_index,
+                addr_redirect=True,
+                evidence_relation="number",
+                evidence_target="number:pl",
+            )
+            cand_sets[group_step_idx] = group_cs
+            if force is not None:
+                true_idx = group_cand_roles.index("group")
+                wrong_idx = (true_idx + 1) % len(group_cand_roles)
+                forced_map[group_step_idx] = true_idx if force == "gold" else wrong_idx
+
     # Question step.
     inverse_step_idx: Optional[int] = None
     if ep.meta.get("question_mode") == "inverse":
@@ -1139,6 +1226,33 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
         query_rel_vec = codec.filler_vec("attr:" + ep.meta["query_relation"])
         inverse_step_idx = len(steps)
         steps.append((who_vec, query_rel_vec, query_vec, q_pred, z, 1))
+    elif ep.meta.get("target_is_group"):
+        group_relation = ep.meta["group_relation"]
+        attr_rel_vec = codec.filler_vec("attr:" + group_relation)
+        q_placeholder = _ent_vec("they", resolver, codec, cache, meaning_source)
+        q_step_idx = len(steps)
+        steps.append((q_placeholder, attr_rel_vec, z, q_pred, z, 1))
+        if not cheat:
+            q_cand_roles: List[object] = list(range(n)) + ["group"]
+            q_candidates = [membrane.Candidate(key=_id_for(r), prior=1.0 / len(q_cand_roles))
+                             for r in q_cand_roles]
+            q_gold_index = None if no_gold else q_cand_roles.index("group")
+            q_cs = membrane.EntityCandidateSet(
+                candidates=q_candidates,
+                provenance={"sentence_index": q_step_idx, "kind": "rich",
+                            "device": "plural_pronoun", "question": True},
+                surface="they",
+                feature=membrane.mention_feature_vector("they"),
+                gold_index=q_gold_index,
+                addr_redirect=True,
+                evidence_relation="number",
+                evidence_target="number:pl",
+            )
+            cand_sets[q_step_idx] = q_cs
+            if force is not None:
+                true_idx = q_cand_roles.index("group")
+                wrong_idx = (true_idx + 1) % len(q_cand_roles)
+                forced_map[q_step_idx] = true_idx if force == "gold" else wrong_idx
     else:
         target = ep.meta["target_entity"]
         target_rel = ep.meta["target_relation"]
@@ -1242,14 +1356,15 @@ def _instance_step_labels(ep, cand_sets: Dict[int, "membrane.EntityCandidateSet"
 
 
 def _rich_step_labels(ep, cand_sets: Dict[int, "membrane.EntityCandidateSet"]):
-    """Mirrors :func:`_rich_steps`'s registration/referring-statement order
-    exactly (the question step, if any, is excluded -- see module comment
-    above)."""
+    """Mirrors :func:`_rich_steps`'s registration/referring-statement/
+    PLURAL-group order exactly (the question step, if any, is excluded --
+    see module comment above)."""
     m = ep.meta
     entity_order = m["entity_order"]
     kinds, genders, places = m["kinds"], m["genders"], m["places"]
     held_relations, initial_values = m["held_relations"], m["initial_values"]
     ids = dict(zip(entity_order, m["registry_order"]))
+    has_group = bool(m.get("has_group"))
     labels = []
     for i in entity_order:
         labels.append((ids[i], "attr:kind", kinds[i], [], None))
@@ -1257,11 +1372,23 @@ def _rich_step_labels(ep, cand_sets: Dict[int, "membrane.EntityCandidateSet"]):
         labels.append((ids[i], "attr:place", places[i], [], None))
         for rel in held_relations[i]:
             labels.append((ids[i], "attr:" + rel, initial_values[i][rel], [], None))
+        if has_group:
+            labels.append((ids[i], "attr:number", "sg", [], None))
     for stmt in m["referring_statements"]:
         t = len(labels)
         cs = cand_sets.get(t)
         cand_ids = list(cs.keys) if cs is not None else []
         labels.append((None, "attr:" + stmt["relation"], stmt["new_value"], cand_ids, stmt["device"]))
+    if has_group:
+        group_id = m["group_instance_id"]
+        m0, m1 = m["group_members"]
+        labels.append((group_id, "attr:number", "pl", [], None))
+        labels.append((group_id, "attr:member_0", ids[m0], [], None))
+        labels.append((group_id, "attr:member_1", ids[m1], [], None))
+        t = len(labels)
+        cs = cand_sets.get(t)
+        cand_ids = list(cs.keys) if cs is not None else []
+        labels.append((None, "attr:" + m["group_relation"], m["group_value"], cand_ids, "plural_pronoun"))
     return labels
 
 

@@ -26,8 +26,21 @@ from .tpr import TPRCodec
 
 # Entities are *variables* (referents), not meanings: explicit names + pronouns.
 _ENTITY_NAMES = {n.lower() for n in _NAMES}
+# M57e (morphology signals, dev/AURORA_SPRINT.md's 2026-08-11
+# reprioritization): the English set is UNCHANGED (byte-identical --
+# tests/test_morphology.py's English-parsing regression checks this); the
+# Spanish 3rd-person personal pronouns (M-ES1's reported blocker: "they
+# don't know ella/él") are ADDED so a Spanish pronoun-subject clause is
+# recognized as an entity mention by is_entity() below, exactly like an
+# English pronoun already is. Object clitics (le/la/lo/los/las) are
+# deliberately NOT added here -- a different grammatical slot (they
+# precede the verb rather than filling SUBJECT/OBJECT node positions the
+# way this codebase's curriculum-scoped parser extracts them), out of
+# scope for this milestone; see nsm_ct.membrane.PRONOUN_MORPHOLOGY, which
+# DOES cover them (a lookup table has no such scoping constraint).
 _PRONOUNS = {"i", "you", "he", "she", "it", "we", "they",
-             "him", "her", "them", "us", "me"}
+             "him", "her", "them", "us", "me",
+             "él", "ella", "ellos", "ellas", "ello"}
 _PUNCT = set(".?!,;:")
 # A person's place: treat both locative ("in") and directional ("to") as PLACE,
 # so "is in the kitchen" then "went to the office" update the same slot.

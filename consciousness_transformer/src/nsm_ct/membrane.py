@@ -224,6 +224,19 @@ _PRONOUN_EXTRA: Dict[str, Dict[str, float]] = {
     "we":   {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 1.0},
     "us":   {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 1.0},
     "me":   {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 0.0},
+    # M57e (morphology signals): clause.py's _PRONOUNS gained the Spanish
+    # 3rd-person personal pronouns (M-ES1's blocker) -- these MUST have a
+    # matching entry here too, or the invariant assertion right below fires
+    # (see the module's own Spanish-Freeze-Test comment further down, which
+    # documents exactly this coupling and why _PRONOUN_EXTRA_ES was kept
+    # separate UNTIL clause.py's _PRONOUNS was actually extended). Values
+    # mirror _PRONOUN_EXTRA_ES's own él/ella/ellos/ellas profiles exactly;
+    # "ello" (Spanish neuter "it", not in _PRONOUN_EXTRA_ES) mirrors "it".
+    "él":    {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 1.0, "NONPERSON": 0.0, "PLURAL": 0.0},
+    "ella":  {"PERSON": 1.0, "GENDER_F": 1.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 0.0},
+    "ellos": {"PERSON": 1.0, "GENDER_F": 0.0, "GENDER_M": 1.0, "NONPERSON": 0.0, "PLURAL": 1.0},
+    "ellas": {"PERSON": 1.0, "GENDER_F": 1.0, "GENDER_M": 0.0, "NONPERSON": 0.0, "PLURAL": 1.0},
+    "ello":  {"PERSON": 0.0, "GENDER_F": 0.0, "GENDER_M": 0.0, "NONPERSON": 1.0, "PLURAL": 0.0},
 }
 assert set(_PRONOUN_EXTRA) == _PRONOUNS, "every clause.py pronoun needs a feature profile"
 
@@ -543,3 +556,55 @@ def mention_feature_vector_es(word: str) -> np.ndarray:
     else:
         extra = {d: 0.0 for d in _EXTRA_DIMS}
     return np.array([0.0] + [extra[d] for d in _EXTRA_DIMS], dtype=np.float32)
+
+
+# ---------------------------------------------------------------------------
+# M57e (morphology signals -- number + gender subtypes,
+# dev/AURORA_SPRINT.md's 2026-08-11 reprioritization: "morphological
+# signals (number/gender subtypes) flowing parser->membrane->memory
+# attributes"): a small, explicit surface-form -> (gender, number, person)
+# lookup, English AND Spanish, the LOCKED-DESIGN table this task names.
+#
+# Distinct from _PRONOUN_EXTRA/_PRONOUN_EXTRA_ES above (the 5-dim
+# FEATURE_DIM profiles consumed by mention_feature_vector*): this table is
+# the morphology LOOKUP itself -- what nsm_ct.clause_reactor's rich-episode
+# group machinery (and any future caller) uses to ask "what person/number/
+# gender does THIS surface form carry" without re-deriving it from the
+# feature vector's dims. "unknown" (never guessed) marks a genuinely
+# under-determined axis for a given form -- English "it"/"they"/"them" and
+# Spanish "ello"/"le"/"lo" don't carry a recoverable GENDER from the
+# pronoun alone (Spanish "lo"/"le" are object clitics whose gender is not
+# recoverable from the clitic itself -- the "leave ambiguous forms
+# 'unknown'" instruction this table follows); every listed form's NUMBER
+# and PERSON are always grammatically fixed, so those two axes are never
+# 'unknown' here. Not consulted by _feature_tuple/mention_feature_vector
+# (kept a completely separate, append-only table, same discipline
+# _PRONOUN_EXTRA_ES's own module note already established) -- adding a new
+# axis here never touches FEATURE_DIM or any existing caller.
+# ---------------------------------------------------------------------------
+PronounMorphology = Tuple[str, str, str]   # (gender, number, person)
+
+PRONOUN_MORPHOLOGY: Dict[str, PronounMorphology] = {
+    # English
+    "he":    ("M", "sg", "3"),
+    "she":   ("F", "sg", "3"),
+    "it":    ("unknown", "sg", "3"),
+    "they":  ("unknown", "pl", "3"),
+    "him":   ("M", "sg", "3"),
+    "her":   ("F", "sg", "3"),
+    "them":  ("unknown", "pl", "3"),
+    "his":   ("M", "sg", "3"),
+    "hers":  ("F", "sg", "3"),
+    "their": ("unknown", "pl", "3"),
+    # Spanish
+    "él":    ("M", "sg", "3"),
+    "ella":  ("F", "sg", "3"),
+    "ellos": ("M", "pl", "3"),
+    "ellas": ("F", "pl", "3"),
+    "ello":  ("unknown", "sg", "3"),
+    "le":    ("unknown", "sg", "3"),
+    "la":    ("F", "sg", "3"),
+    "lo":    ("unknown", "sg", "3"),
+    "los":   ("M", "pl", "3"),
+    "las":   ("F", "pl", "3"),
+}

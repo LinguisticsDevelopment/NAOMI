@@ -1720,6 +1720,7 @@ class RichEpisodeGenerator:
                  min_referring: int = 1, max_referring: int = 4,
                  min_attrs: int = 1, max_attrs: int = 3,
                  inverse_frac: float = 0.0,
+                 plural_frac: float = 0.0,
                  names: Optional[List[str]] = None,
                  kinds: Optional[List[str]] = None,
                  attr_relations: Optional[List[str]] = None,
@@ -1736,6 +1737,17 @@ class RichEpisodeGenerator:
         self.min_referring, self.max_referring = min_referring, max_referring
         self.min_attrs, self.max_attrs = min_attrs, max_attrs
         self.inverse_frac = inverse_frac
+        # M57e (morphology signals, dev/AURORA_SPRINT.md's 2026-08-11
+        # reprioritization): fraction of episodes that additionally mint a
+        # PLURAL group referent (the DRT move, dev/MIND_INTERFACE.md's v2
+        # addendum) from an explicit coordination sentence -- see the
+        # "optional PLURAL group" block in :meth:`_episode` for the full
+        # mechanism. Default ``0.0`` -- opt-in, like ``inverse_frac`` --
+        # AND, critically, zero EXTRA rng draws at exactly 0.0 (the `and`
+        # short-circuit there), so every episode this generator already
+        # produced is byte-identical (tests/test_morphology.py's
+        # plural_frac=0 regression checks this against a fixed seed).
+        self.plural_frac = plural_frac
         self._names = list(names) if names is not None else list(_NAMES)
         self._kinds = list(kinds) if kinds is not None else list(_RICH_KIND_VALUES)
         self._attr_relations = list(attr_relations) if attr_relations is not None else list(_RICH_ATTR_RELATIONS)
@@ -1878,6 +1890,58 @@ class RichEpisodeGenerator:
         for stmt in statements:
             stmt["gold_instance_id"] = registry_ids[stmt["referent"]]
 
+        # -- optional PLURAL group (M57e, dev/AURORA_SPRINT.md's 2026-08-11
+        # reprioritization "morphological signals (number/gender subtypes)
+        # flowing parser->membrane->memory attributes"): an explicit
+        # coordination sentence ("A and B went to the park .") mints a NEW
+        # group discourse referent (the DRT move, dev/MIND_INTERFACE.md's v2
+        # addendum) holding attr:number=pl plus one attr:member fact per
+        # member (nsm_ct.clause_reactor._rich_steps mints it and writes
+        # those facts -- see that function), followed by a plural-pronoun
+        # overwrite statement ("they are {value} .") whose gold referent is
+        # the group -- resolved via NUMBER evidence (attr:number) instead of
+        # kind/gender, mirroring every K referring statement's own
+        # evidence-relation mechanism exactly. ``self.plural_frac > 0 and
+        # rng.random() < ...`` short-circuits: at the default ``0.0`` no rng
+        # draw happens AT ALL, so every existing draw sequence is
+        # byte-identical (tests/test_morphology.py's plural_frac=0
+        # regression checks this).
+        has_group = self.plural_frac > 0 and n >= 2 and rng.random() < self.plural_frac
+        group_members: Optional[Tuple[int, int]] = None
+        group_relation: Optional[str] = None
+        group_value: Optional[str] = None
+        group_instance_id: Optional[str] = None
+        if has_group:
+            # Members must have DISTINCT surface names -- "john and john
+            # went to the park ." is nonsense prose (and would silently
+            # reuse a name-sharing pair's own identity-disambiguation
+            # premise for an unrelated purpose). Skip the group entirely if
+            # every pair in this episode happens to share a name (only
+            # possible at n==2 with the two sharing a name, since
+            # name-sharing pairs are LIMITED TO 2 members each).
+            distinct_pairs = [(i, j) for i in range(n) for j in range(i + 1, n) if names[i] != names[j]]
+            if not distinct_pairs:
+                has_group = False
+        if has_group:
+            m0, m1 = rng.choice(distinct_pairs)
+            group_relation = rng.choice(self._attr_relations)
+            candidates_new = [v for v in self._attr_values[group_relation]
+                               if v not in relation_in_use[group_relation]]
+            if not candidates_new:
+                has_group = False   # relation pool exhausted -- skip, mirrors the K-statement "continue"
+            else:
+                group_members = (m0, m1)
+                group_value = rng.choice(candidates_new)
+                relation_in_use[group_relation].add(group_value)
+                # _rich_steps mints the group AFTER every individual (see its
+                # own comment) -- always its first (only) mint, so this is a
+                # closed-form prediction, exactly like _predict_registry_ids
+                # above predicts the individuals' ids.
+                group_instance_id = "inst:group#1"
+                _verify_unique_referent(
+                    "plural_pronoun", "group",
+                    {**{i: "sg" for i in range(n)}, "group": "pl"})
+
         # Human-readable context text ONLY -- like InstanceCurriculumGenerator,
         # this module is parser-free by design; _rich_steps grounds every
         # fact directly via minted atoms, never by parsing these strings.
@@ -1897,6 +1961,10 @@ class RichEpisodeGenerator:
             else:
                 mention = stmt["mention_word"]
             context.append(f"{mention} is {stmt['new_value']} .")
+        if has_group:
+            m0, m1 = group_members
+            context.append(f"{names[m0]} and {names[m1]} went to the park .")
+            context.append(f"they are {group_value} .")
 
         meta: Dict[str, object] = {
             "src": "curriculum2", "kind": "rich",
@@ -1915,6 +1983,11 @@ class RichEpisodeGenerator:
             "registry_order": registry_order,
             "referring_statements": statements,
             "n_referring_statements": len(statements),
+            "has_group": has_group,
+            "group_members": list(group_members) if group_members is not None else None,
+            "group_relation": group_relation,
+            "group_value": group_value,
+            "group_instance_id": group_instance_id,
         }
 
         def _render(i: int) -> str:
@@ -1940,25 +2013,49 @@ class RichEpisodeGenerator:
             meta["option_entities"] = option_entities
             meta["inverse_option_ids"] = [registry_ids[i] for i in option_entities]
         else:
-            target = rng.choice(range(n))
-            target_relation = rng.choice(held_relations[target])
-            answer = final_values[target][target_relation]
-            overwritten = (target, target_relation) in used_pairs
-            stale = initial_values[target].get(target_relation) if overwritten else None
-            required = [answer] + ([stale] if stale is not None else [])
-            options, answer_idx = self._mc_attr_options(target_relation, answer, required)
-            is_solo = names[target] not in name_groups
-            target_ref_text = names[target] if is_solo else f"the {kinds[target]}"
-            question = f"what is {target_ref_text} like ?"
-            overwriting_stmt = next((s for s in statements
-                                      if s["referent"] == target and s["relation"] == target_relation), None)
+            # M57e: a "target"-mode question MAY ask about the plural group
+            # instead of a single entity ("what are A and B like ?") --
+            # gated the same way (has_group and rng.random() < 0.5) so a
+            # non-group episode, or plural_frac == 0.0, never draws this rng
+            # call at all. The group has no prior value (its ONE statement
+            # is the first and only write to it), so there is never a stale
+            # option here -- unlike an individual target, which may or may
+            # not have been overwritten.
+            target_is_group = has_group and rng.random() < 0.5
+            if target_is_group:
+                target = None
+                target_relation = group_relation
+                answer = group_value
+                overwritten = False
+                stale = None
+                options, answer_idx = self._mc_attr_options(target_relation, answer, [answer])
+                m0, m1 = group_members
+                question = f"what are {names[m0]} and {names[m1]} like ?"
+                question_device = "plural_pronoun"
+                target_instance_id = group_instance_id
+            else:
+                target = rng.choice(range(n))
+                target_relation = rng.choice(held_relations[target])
+                answer = final_values[target][target_relation]
+                overwritten = (target, target_relation) in used_pairs
+                stale = initial_values[target].get(target_relation) if overwritten else None
+                required = [answer] + ([stale] if stale is not None else [])
+                options, answer_idx = self._mc_attr_options(target_relation, answer, required)
+                is_solo = names[target] not in name_groups
+                target_ref_text = names[target] if is_solo else f"the {kinds[target]}"
+                question = f"what is {target_ref_text} like ?"
+                overwriting_stmt = next((s for s in statements
+                                          if s["referent"] == target and s["relation"] == target_relation), None)
+                question_device = overwriting_stmt["device"] if overwriting_stmt else None
+                target_instance_id = registry_ids[target]
             meta["question_mode"] = "target"
             meta["target_entity"] = target
             meta["target_relation"] = target_relation
-            meta["target_instance_id"] = registry_ids[target]
+            meta["target_instance_id"] = target_instance_id
             meta["question_targets_overwritten"] = overwritten
             meta["stale_value_for_question"] = stale
-            meta["question_device"] = overwriting_stmt["device"] if overwriting_stmt else None
+            meta["question_device"] = question_device
+            meta["target_is_group"] = target_is_group
 
         return Episode(
             context=context, question=question, answer_text=answer,
@@ -1975,6 +2072,7 @@ def generate_rich_episodes(n: int, seed: int = 0, num_options: int = 4, *,
                             min_referring: int = 1, max_referring: int = 4,
                             min_attrs: int = 1, max_attrs: int = 3,
                             inverse_frac: float = 0.0,
+                            plural_frac: float = 0.0,
                             names: Optional[List[str]] = None,
                             kinds: Optional[List[str]] = None,
                             attr_relations: Optional[List[str]] = None,
@@ -1984,7 +2082,8 @@ def generate_rich_episodes(n: int, seed: int = 0, num_options: int = 4, *,
     return RichEpisodeGenerator(
         num_options=num_options, seed=seed, min_entities=min_entities, max_entities=max_entities,
         max_shared_name_pairs=max_shared_name_pairs, min_referring=min_referring, max_referring=max_referring,
-        min_attrs=min_attrs, max_attrs=max_attrs, inverse_frac=inverse_frac, names=names, kinds=kinds,
+        min_attrs=min_attrs, max_attrs=max_attrs, inverse_frac=inverse_frac, plural_frac=plural_frac,
+        names=names, kinds=kinds,
         attr_relations=attr_relations, attr_values=attr_values).generate(n)
 
 
