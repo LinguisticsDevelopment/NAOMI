@@ -1135,6 +1135,136 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     return steps, cand_sets, forced_map, atom_lookup, inverse_step_idx
 
 
+# ---------------------------------------------------------------------------
+# M57d (PROVENANCE wiring into the live reactor, CLAUDE.md's M57
+# memory-schema decision): STEP LABELS -- a sibling to _writeback_steps/
+# _instance_steps/_rich_steps for EACH of those three functions, mirroring
+# this codebase's own established convention (M54/M55a/M57b/M57c each added
+# a dedicated sibling function rather than editing an earlier, already-
+# proven one). These do NOT build grounded vectors at all -- they replay
+# the EXACT SAME step-construction order as their vector-building sibling,
+# emitting human-readable LABELS instead (entity_label, relation_label,
+# value_label, candidate_ids, referring_device) for every STATEMENT step,
+# in step order. build_clause_batch zips this label stream against the
+# episode's own ``steps``/``cand_sets``/``ep.context`` to build
+# ``ClauseBatch.step_meta`` -- see that field's own docstring for why this
+# lives in build_clause_batch rather than as a new return value threaded
+# through _writeback_steps/_instance_steps/_rich_steps themselves (their
+# existing 3/5-tuple return shapes are unpacked positionally by
+# tests/test_instance_curriculum.py and tests/test_writeback.py; adding a
+# new element there would break every direct caller for a purely
+# membrane-side bookkeeping concern that has nothing to do with the
+# reactor's own arithmetic).
+#
+# Each helper returns ``[(entity_label_or_None, relation_label,
+# value_label, candidate_ids, referring_device_or_None)]``, one tuple per
+# STATEMENT step (the question step is never included -- it never writes,
+# so it never appears in ``ClauseBatch.step_meta`` either). ``entity_label``
+# is the statically-known address (an instance id, for instance/rich; a
+# plain name, for writeback) when the step addresses directly, ``None``
+# when it addresses via a referring expression instead (candidate_ids
+# non-empty in that case).
+# ---------------------------------------------------------------------------
+def _writeback_step_labels(ep, cand_sets: Dict[int, "membrane.EntityCandidateSet"]):
+    """Mirrors :func:`_writeback_steps`'s S0-S4 order exactly."""
+    m = ep.meta
+    labels = [
+        (m["name_a"], "rel:PLACE", m["place_a"], [], None),
+        (m["name_b"], "rel:PLACE", m["place_b"], [], None),
+        (m["true_antecedent"], "rel:ATTR", m["stale_attr"], [], None),
+        (m["other_entity"], "rel:ATTR", m["other_attr"], [], None),
+    ]
+    pronoun_idx = len(labels)
+    cs = cand_sets.get(pronoun_idx)
+    cand_ids = list(cs.keys) if cs is not None else [m["name_a"], m["name_b"]]
+    labels.append((None, "rel:ATTR", m["pronoun_attr"], cand_ids, "pronoun"))
+    return labels
+
+
+def _instance_step_labels(ep, cand_sets: Dict[int, "membrane.EntityCandidateSet"]):
+    """Mirrors :func:`_instance_steps`'s registration/baseline/overwrite
+    order exactly (the question step, if any, is excluded -- see module
+    comment above)."""
+    m = ep.meta
+    ids = {"a": m["registry_order"][0], "b": m["registry_order"][1], "c": m["registry_order"][2]}
+    labels = []
+    for r in ("a", "b", "c"):
+        labels.append((ids[r], "attr:kind", m[f"kind_{r}"], [], None))
+        labels.append((ids[r], "attr:gender", m[f"gender_{r}"], [], None))
+        labels.append((ids[r], "attr:place", m[f"place_{r}"], [], None))
+    baseline_order = ["a", "b", "c"]
+    if m["referring_device"] == "ambiguous_name":
+        ref = m["referent_role"]
+        baseline_order = [r for r in baseline_order if r != ref] + [ref]
+    for r in baseline_order:
+        labels.append((ids[r], "attr:trait", m[f"baseline_{r}"], [], None))
+    overwrite_idx = len(labels)
+    cs = cand_sets.get(overwrite_idx)
+    cand_ids = list(cs.keys) if cs is not None else []
+    labels.append((None, "attr:trait", m["overwrite_attr"], cand_ids, m["referring_device"]))
+    return labels
+
+
+def _rich_step_labels(ep, cand_sets: Dict[int, "membrane.EntityCandidateSet"]):
+    """Mirrors :func:`_rich_steps`'s registration/referring-statement order
+    exactly (the question step, if any, is excluded -- see module comment
+    above)."""
+    m = ep.meta
+    entity_order = m["entity_order"]
+    kinds, genders, places = m["kinds"], m["genders"], m["places"]
+    held_relations, initial_values = m["held_relations"], m["initial_values"]
+    ids = dict(zip(entity_order, m["registry_order"]))
+    labels = []
+    for i in entity_order:
+        labels.append((ids[i], "attr:kind", kinds[i], [], None))
+        labels.append((ids[i], "attr:gender", genders[i], [], None))
+        labels.append((ids[i], "attr:place", places[i], [], None))
+        for rel in held_relations[i]:
+            labels.append((ids[i], "attr:" + rel, initial_values[i][rel], [], None))
+    for stmt in m["referring_statements"]:
+        t = len(labels)
+        cs = cand_sets.get(t)
+        cand_ids = list(cs.keys) if cs is not None else []
+        labels.append((None, "attr:" + stmt["relation"], stmt["new_value"], cand_ids, stmt["device"]))
+    return labels
+
+
+_STEP_LABEL_BUILDERS = {
+    "writeback": _writeback_step_labels,
+    "instance": _instance_step_labels,
+    "rich": _rich_step_labels,
+}
+
+
+def _step_meta_for_row(ep, cand_sets: Dict[int, "membrane.EntityCandidateSet"],
+                        episode_index: int) -> Optional[List[Optional[dict]]]:
+    """``[Optional[dict]]`` for one episode's ROW-LOCAL step indices --
+    ``None`` at every index this episode's kind doesn't label (including
+    every question step) -- see ``ClauseBatch.step_meta``'s own docstring
+    for the full field contract and :func:`nsm_ct.provenance.record_writes`
+    for the consumer. Returns ``None`` (not a list) for a kind with no
+    label builder at all (old/reasoning/ambiguity/garden-path episodes)."""
+    builder = _STEP_LABEL_BUILDERS.get(ep.meta.get("kind"))
+    if builder is None:
+        return None
+    labels = builder(ep, cand_sets)
+    context = ep.context
+    return [
+        {
+            "sentence_index": t,
+            "surface": context[t] if t < len(context) else None,
+            "relation_label": relation_label,
+            "value_label": value_label,
+            "entity_label": entity_label,
+            "candidate_ids": candidate_ids,
+            "referring_device": referring_device,
+            "episode_index": episode_index,
+        }
+        for t, (entity_label, relation_label, value_label, candidate_ids, referring_device)
+        in enumerate(labels)
+    ]
+
+
 # M52 v1 IN table ("queried role"): the relation a question is actually
 # asking about. "has" -> RECIPIENT (who now holds it -- the transfer_who
 # level); "where" -> PLACE, which is ALSO the fallback/default -- every
@@ -1308,6 +1438,23 @@ class ClauseBatch:
     # :func:`nsm_ct.clause_reactor._instance_steps` (inverse-query episodes)
     # ever sets this; every other curriculum leaves it ``None``.
     inverse_mask: Optional[torch.Tensor] = None  # [B, T]
+    # M57d (PROVENANCE wiring into the live reactor, CLAUDE.md's M57
+    # memory-schema decision -- "provenance is a membrane-side, append-only
+    # log, one record per gated write"): a Python-side (NOT a tensor) field,
+    # [B][T], entries ``None`` where no statement/write happens at that
+    # step (every question step, and every episode kind this milestone
+    # doesn't label -- old L1-6, reasoning, ambiguity, garden-path). Kept
+    # OUT of every tensor group above deliberately: superposing labels into
+    # the memory tensor is exactly what MIND_INTERFACE.md invariant #4 says
+    # the audit trail must NOT do (see instances.py's own module
+    # docstring). Populated by :func:`build_clause_batch` for writeback/
+    # instance/rich episodes only; ``None`` (the default) for every batch
+    # that doesn't populate it -- byte-identical to every pre-M57d batch,
+    # same "optional field, guarded" discipline every field above
+    # establishes. Consumed by :func:`nsm_ct.provenance.record_writes`,
+    # never by :meth:`ClauseReactor.forward` itself (no arithmetic reads
+    # this field -- it rides alongside the tensors, not through them).
+    step_meta: Optional[List[List[Optional[dict]]]] = None  # [B][T] plain dicts
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
@@ -1338,11 +1485,14 @@ class ClauseBatch:
         forced = self.cand_forced_index.to(device) if self.cand_forced_index is not None else None
         evidence_rel = self.cand_evidence_relation.to(device) if self.cand_evidence_relation is not None else None
         inv_mask = self.inverse_mask.to(device) if self.inverse_mask is not None else None
+        # M57d: step_meta is plain Python (no device), carried through
+        # unchanged -- mirrors nothing else in this method living off-device.
         return ClauseBatch(self.entity.to(device), self.relation.to(device),
                            self.value.to(device), self.pred.to(device),
                            self.is_q.to(device), self.mask.to(device),
                            self.options.to(device), self.answer.to(device), coord, ans_ok,
-                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, inv_mask)
+                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, inv_mask,
+                           self.step_meta)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
@@ -1355,10 +1505,19 @@ class ClauseBatch:
         forced = self.cand_forced_index[idx] if self.cand_forced_index is not None else None
         evidence_rel = self.cand_evidence_relation[idx] if self.cand_evidence_relation is not None else None
         inv_mask = self.inverse_mask[idx] if self.inverse_mask is not None else None
+        # M57d: step_meta is a plain Python list, not a tensor -- index it
+        # by hand (torch fancy-indexing doesn't apply) so a minibatch
+        # subset keeps its per-row alignment with every tensor field above.
+        if self.step_meta is not None:
+            idx_list = idx.tolist() if torch.is_tensor(idx) else list(idx)
+            step_meta = [self.step_meta[i] for i in idx_list]
+        else:
+            step_meta = None
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
                            self.options[idx], self.answer[idx], coord, ans_ok,
-                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, inv_mask)
+                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, inv_mask,
+                           step_meta)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
@@ -1524,6 +1683,12 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     # its own tensor rather than folding into the cand_* groups (there is no
     # candidate set at this step at all).
     inverse_step_indices: List[Optional[int]] = []
+    # M57d: parallel to rows, one row-local step-label list (or None) per
+    # episode -- see ClauseBatch.step_meta's own docstring and
+    # _step_meta_for_row's for why this is computed here (from cand_sets,
+    # already built above) rather than threaded through
+    # _writeback_steps/_instance_steps/_rich_steps themselves.
+    step_metas: List[Optional[List[Optional[dict]]]] = []
     for ep in episodes:
         cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
         sense_cand_sets: Dict[int, "membrane.SenseCandidateSet"] = {}
@@ -1597,6 +1762,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
             opt = [atom_lookup[iid] for iid in ep.meta["inverse_option_ids"]]
         else:
             opt = [_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
+        step_metas.append(_step_meta_for_row(ep, cand_sets, len(rows)))
         rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0,
                      cand_sets, sense_cand_sets, hyp_cand_sets))
         forced_maps.append(forced_map)
@@ -1809,6 +1975,20 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                 if hcs.gold_index is not None:
                     hyp_cand_gold[i, t] = hcs.gold_index
 
+    # M57d: only allocated when at least one episode actually labeled a row
+    # (writeback/instance/rich) -- the same "only if present" pattern every
+    # optional field above establishes; None (byte-identical to absent) for
+    # a batch built entirely from old/reasoning/ambiguity/garden-path
+    # episodes. Padded to T with None, mirroring the tensor fields' own
+    # zero-padding (a padded step never has a candidate/gate to record).
+    step_meta = None
+    if any(m is not None for m in step_metas):
+        step_meta = []
+        for row_m in step_metas:
+            row = list(row_m) if row_m is not None else []
+            row += [None] * (T - len(row))
+            step_meta.append(row)
+
     return ClauseBatch(ent, rel, val, prd, is_q, mask, opts, ans, crd, ans_ok,
                        cand_entity, cand_mask, cand_prior, cand_feature, cand_gold,
                        cand_feature_per_candidate,
@@ -1817,7 +1997,8 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                        sense_cand_subject, sense_cand_subject_rel,
                        hyp_cand_entity, hyp_cand_mask, hyp_cand_prior, hyp_cand_gold,
                        hyp_cand_query_entity, hyp_cand_query_relation,
-                       cand_addr_mask, cand_forced_index, cand_evidence_relation, inverse_mask)
+                       cand_addr_mask, cand_forced_index, cand_evidence_relation, inverse_mask,
+                       step_meta)
 
 
 # ---------------------------------------------------------------------------
@@ -1979,13 +2160,14 @@ class ClauseReactor(nn.Module):
         pronoun candidate set), so applying them in sequence is safe: each
         only touches rows where its own ``has_cand`` is true, via
         ``torch.where``. Returns ``(entity, value, ent_logits, ent_margin,
-        sense_logits, sense_margin, hyp_logits, hyp_margin, addr_row)`` --
-        any of the middle six is ``None`` exactly when the corresponding
-        resolver/candidate data is absent (mirrors the pre-M54 ``(v, None,
-        None)`` contract for the no-resolver case component-wise); ``entity``
-        is ``e`` UNCHANGED whenever no address-redirect row applies (see the
-        ENTITY branch below and the M57b class-docstring paragraph).
-        ``addr_row`` (M57c.2, a NEW ninth element) is the ``[B]`` bool mask
+        sense_logits, sense_margin, hyp_logits, hyp_margin, addr_row,
+        resolved_idx)`` -- any of the middle six is ``None`` exactly when the
+        corresponding resolver/candidate data is absent (mirrors the pre-M54
+        ``(v, None, None)`` contract for the no-resolver case component-wise);
+        ``entity`` is ``e`` UNCHANGED whenever no address-redirect row
+        applies (see the ENTITY branch below and the M57b class-docstring
+        paragraph).
+        ``addr_row`` (M57c.2, a ninth element) is the ``[B]`` bool mask
         of rows whose address was JUST redirected at this step (``None``
         whenever the entity branch didn't run at all, i.e. no resolver or no
         ``batch.cand_mask`` -- an ALL-``False`` tensor, not ``None``, when the
@@ -1994,6 +2176,21 @@ class ClauseReactor(nn.Module):
         "M57c battery #1": a description/pronoun QUESTION step read memory
         at the PRE-collapse placeholder address, so the doctor's own node was
         never actually read even after a correct redirect).
+        ``resolved_idx`` (M57d, PROVENANCE wiring, a tenth element) is the
+        ``[B]`` long candidate index the entity branch's collapse weights
+        ``w`` ACTUALLY APPLIED this step (``w.argmax(-1)`` where
+        ``has_cand``, ``-1`` elsewhere) -- ``None`` under the same "entity
+        branch didn't run" condition as ``addr_row``. Computed from ``w``
+        AFTER ``cand_forced_index``'s override (unlike ``ent_logits``, which
+        stays the resolver's raw, pre-force prediction by design -- see the
+        M57b v2 paragraph above): coincides exactly with
+        ``ent_logits.argmax(-1)`` whenever this step isn't forced (softmax,
+        and the eval-mode hard-argmax collapse, are both order-preserving
+        over logits), and reflects the FORCED index instead wherever
+        forcing overrode ``w`` -- the audit trail
+        (:mod:`nsm_ct.provenance`) needs what the write ACTUALLY did, not
+        an untrained (or, under forcing, entirely bypassed) resolver's raw
+        guess.
 
         M55a's hypothesis branch (new) is arithmetically the ENTITY branch's
         twin, not the sense branch's: each candidate's per-candidate ``Addr``
@@ -2038,6 +2235,7 @@ class ClauseReactor(nn.Module):
         """
         ent_logits = ent_margin = None
         addr_row_out = None    # M57c.2: [B] bool, which rows got address-redirected THIS step
+        resolved_idx_out = None    # M57d: [B] long, the ACTUALLY APPLIED candidate index (post-force)
         if self.resolver is not None and batch.cand_mask is not None:
             ce_t, cf_t = batch.cand_entity[:, t], batch.cand_feature[:, t]
             cp_t, cm_t = batch.cand_prior[:, t], batch.cand_mask[:, t]
@@ -2090,6 +2288,20 @@ class ClauseReactor(nn.Module):
                 C = w.shape[-1]
                 forced_onehot = F.one_hot(forced_t.clamp(min=0), num_classes=C).to(w.dtype)
                 w = torch.where(forced_valid.unsqueeze(-1), forced_onehot, w)
+            # M57d (PROVENANCE wiring): the candidate index THIS step's
+            # collapse actually applied -- ``w``'s own argmax, AFTER the
+            # forced-index override above, not the resolver's raw (possibly
+            # forced-overridden-away) ``logits``. Coincides exactly with
+            # ``logits.argmax(-1)`` whenever ``cand_forced_index`` is absent/
+            # not-forced-here (softmax and the eval-mode hard-argmax collapse
+            # are both order-preserving over ``logits``), and reflects the
+            # FORCED index instead wherever forcing overrode ``w`` above --
+            # an audit trail must record what the write actually did, not an
+            # untrained resolver's raw (and, under forcing, entirely
+            # bypassed) guess. See nsm_ct.provenance.record_writes, the sole
+            # consumer (via ClauseReactor.forward's ``return_write_trace``).
+            resolved_idx_out = torch.where(
+                has_cand, w.argmax(-1), torch.full_like(has_cand, -1, dtype=torch.long))
             resolved_v = (w.unsqueeze(-1) * cand_mem_read).sum(1)                # [B, d]
             # M57b: the SAME weights ``w`` also collapse the candidate ATOMS
             # themselves (not their memory readout -- a candidate's identity
@@ -2144,10 +2356,11 @@ class ClauseReactor(nn.Module):
             v = torch.where(has_cand.unsqueeze(-1), resolved_v, v)
             hyp_logits, hyp_margin = logits, self._top2_margin(logits, has_cand, v)
 
-        return e, v, ent_logits, ent_margin, sense_logits, sense_margin, hyp_logits, hyp_margin, addr_row_out
+        return (e, v, ent_logits, ent_margin, sense_logits, sense_margin, hyp_logits, hyp_margin,
+                addr_row_out, resolved_idx_out)
 
     def forward(self, batch: ClauseBatch, return_memory: bool = False,
-                return_mem_read: bool = False) -> Dict[str, torch.Tensor]:
+                return_mem_read: bool = False, return_write_trace: bool = False) -> Dict[str, torch.Tensor]:
         b, T, d = batch.entity.shape
         device = batch.entity.device
         state = torch.zeros(b, self.gru.hidden_size, device=device)
@@ -2162,13 +2375,24 @@ class ClauseReactor(nn.Module):
         sense_logits_all, sense_margin_all = [], []
         hyp_logits_all, hyp_margin_all = [], []
         mem_read_all = []
+        # M57d (PROVENANCE wiring, CLAUDE.md's M57 memory-schema decision):
+        # per-step write-trace accumulators, only ever consumed when
+        # ``return_write_trace`` is True (see the end of this method) --
+        # appending to a list nobody reads back is a no-op on every other
+        # output, which is exactly what keeps ``return_write_trace=False``
+        # (the default) byte-identical to pre-M57d forward().
+        gate_trace: List[torch.Tensor] = []
+        overwrite_trace: List[torch.Tensor] = []
+        neg_trace: List[torch.Tensor] = []
+        redirected_trace: List[torch.Tensor] = []
+        resolved_idx_trace: List[torch.Tensor] = []
         for t in range(T):
             e, r, v = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
             p, c = batch.pred[:, t], coord[:, t]
             real, isq = batch.mask[:, t], batch.is_q[:, t]
             mem_read = em.query(memory, e, r)                          # [B, d] -- the pre-collapse address's reading
             (e, v, res_logits_t, res_margin_t, sense_logits_t, sense_margin_t,
-             hyp_logits_t, hyp_margin_t, addr_row_t) = self._collapse(
+             hyp_logits_t, hyp_margin_t, addr_row_t, resolved_idx_t) = self._collapse(
                 memory, state, mem_read, e, r, v, batch, t)
             # M57c.2 (RESEARCH_NOTES "M57c battery #1" -- the measured gap:
             # a description/pronoun QUESTION step's read never reached the
@@ -2215,6 +2439,25 @@ class ClauseReactor(nn.Module):
             # negative, so a negated value cancels a previously-voted one (A or B, not A → B).
             neg = torch.sigmoid(self.decide_truth(torch.cat([state, v], dim=-1))).squeeze(-1) * stmt
             memory = em.write(memory, e, r, v, gate - neg, overwrite=owr)
+            if return_write_trace:
+                # M57d write trace: gate/overwrite/neg are exactly the
+                # values just fed to em.write above (the write this step
+                # ACTUALLY performed); redirected/resolved_index describe
+                # the entity branch's collapse -- see forward()'s own
+                # docstring paragraph, _collapse's resolved_idx_out
+                # paragraph, and nsm_ct.provenance.record_writes (the sole
+                # consumer). Both default to False/-1 whenever the entity
+                # branch never ran at all (no resolver, or no
+                # batch.cand_mask) -- _collapse returns None for both in
+                # that case.
+                gate_trace.append(gate)
+                overwrite_trace.append(owr)
+                neg_trace.append(neg)
+                redirected_trace.append(
+                    addr_row_t if addr_row_t is not None else torch.zeros(b, dtype=torch.bool, device=device))
+                resolved_idx_trace.append(
+                    resolved_idx_t if resolved_idx_t is not None
+                    else torch.full((b,), -1, dtype=torch.long, device=device))
             # respond weight (timing) + generated response meaning-vector
             rl = self.respond(state).squeeze(-1)
             rl = rl.masked_fill(real <= 0, float("-inf"))
@@ -2268,4 +2511,21 @@ class ClauseReactor(nn.Module):
         # False) -- no training/eval script reads it.
         if return_mem_read:
             out["_mem_read"] = torch.stack(mem_read_all, dim=1)   # [B, T, d]
+        # M57d test/provenance seam (mirrors return_memory/return_mem_read
+        # exactly): per-step write bookkeeping -- gate/overwrite/neg are the
+        # SAME values just fed to every em.write call this pass, redirected/
+        # resolved_index describe the entity branch's collapse. Deliberately
+        # NOT part of the default output dict (``return_write_trace``
+        # defaults False, so this whole block is inert and the rest of
+        # ``out`` -- and every arithmetic path above -- is byte-identical to
+        # pre-M57d forward()); nsm_ct.provenance.record_writes is the sole
+        # consumer.
+        if return_write_trace:
+            out["_write_trace"] = {
+                "gate": torch.stack(gate_trace, dim=1),                    # [B, T] float
+                "overwrite": torch.stack(overwrite_trace, dim=1),          # [B, T] float
+                "neg": torch.stack(neg_trace, dim=1),                      # [B, T] float
+                "redirected": torch.stack(redirected_trace, dim=1),        # [B, T] bool
+                "resolved_index": torch.stack(resolved_idx_trace, dim=1),  # [B, T] long, -1 = no candidate set
+            }
         return out

@@ -191,6 +191,20 @@ class ProvenanceRecord:
     timestamp: float
     trust: float
     step: Optional[int] = None
+    # M57d (PROVENANCE wiring into the live reactor, CLAUDE.md's M57
+    # memory-schema decision): two OPTIONAL fields, both defaulting to
+    # ``None`` -- every pre-M57d caller of :func:`write_attribute` (which
+    # never sets these) is unaffected. ``surface`` is the human-readable
+    # context-sentence text the write came from (when the caller has one);
+    # ``candidate_ids`` is the ordered tuple of candidate instance ids the
+    # write's address was resolved AMONG (only meaningful for a redirected
+    # write -- ``None``/empty for a directly-addressed one). Together they
+    # are what :func:`nsm_ct.provenance.explain` needs to render a readable
+    # audit line ("... resolved from [inst:mary#1, inst:mary#2]") that the
+    # bare (instance_id, relation, value_label) fields above cannot supply
+    # on their own.
+    surface: Optional[str] = None
+    candidate_ids: Optional[Tuple[str, ...]] = None
 
 
 class ProvenanceLog:

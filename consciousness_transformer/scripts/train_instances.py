@@ -52,8 +52,10 @@ from nsm_ct.curriculum2 import (  # noqa: E402
 )
 from nsm_ct.episode import CurriculumGenerator, split_episodes  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
+from nsm_ct.instances import ProvenanceLog  # noqa: E402
 from nsm_ct.meaning import NSMMeaningResolver  # noqa: E402
 from nsm_ct.nsm_primes import PRIME_NAMES  # noqa: E402
+from nsm_ct.provenance import explain, record_writes  # noqa: E402
 from nsm_ct.resolver import make_resolver  # noqa: E402
 from nsm_ct.structure import PARSE_LABELS  # noqa: E402
 from nsm_ct.tokenizer import SimpleTokenizer  # noqa: E402
@@ -136,7 +138,7 @@ def binding_stats(out, batch, eps):
 
 def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden: int = 128,
             cheat: bool = False, no_gold_eval: bool = False, force_binding: str = None,
-            batch_size: int = 64) -> dict:
+            batch_size: int = 64, audit: int = 0) -> dict:
     """``track``: "A" | "B" | None (None = no resolver installed -- both
     writeback's address-redirect AND instance's evidence-relation
     resolution never fire at all, a genuine floor arm).
@@ -297,6 +299,32 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
         print(f"  [{name}] margin distribution: min={m.min():.3f} p25={np.percentile(m, 25):.3f} "
               f"median={np.median(m):.3f} p75={np.percentile(m, 75):.3f} max={m.max():.3f}", flush=True)
 
+    # M57d (PROVENANCE wiring, CLAUDE.md's M57 memory-schema decision): run
+    # record_writes over the FIRST `audit` held-out eval episodes (eval
+    # mode, return_write_trace=True -- same `va`/`model` this arm already
+    # trained/evaluated, no separate batch build) and print one explain()
+    # trail per episode + the total record count. A no-op (prints nothing,
+    # doesn't touch the returned dict's keys) when audit <= 0, the default.
+    if audit > 0:
+        n_audit = min(audit, len(va_eps))
+        sub = va.subset(torch.arange(n_audit))
+        with torch.no_grad():
+            out_audit = model(sub, return_write_trace=True)
+        log = ProvenanceLog()
+        total = record_writes(sub, out_audit, log, source=name)
+        print(f"  [{name}] AUDIT: {total} provenance records over {n_audit} episodes", flush=True)
+        for i in range(n_audit):
+            ep = va_eps[i]
+            prefix = f"{name}:ep{i}:"
+            ids = sorted({r.instance_id for r in log.records if r.source.startswith(prefix)})
+            if not ids:
+                print(f"    ep{i} ({ep.meta.get('kind')}): no gated writes recorded")
+                continue
+            iid = ids[0]
+            print(f"    ep{i} ({ep.meta.get('kind')}) instance={iid}:")
+            for line in explain(log, iid).splitlines():
+                print(f"      {line}")
+
     return {"losses": losses, "total_acc": total_acc, "n_resolver_params": n_resolver_params,
             "binding": binding, "peak_rss_mb": peak_rss_mb(), "elapsed_min": elapsed_min}
 
@@ -336,6 +364,11 @@ def main() -> None:
                      help="Fraction of rich episodes that are inverse-query (\"who is X ?\") "
                           "rather than target-question, forwarded to generate_rich_episodes.")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--audit", type=int, default=0,
+                     help="M57d: after final eval, run nsm_ct.provenance.record_writes on the first N "
+                          "held-out eval episodes (eval mode, return_write_trace=True) and print an "
+                          "explain() trail for one instance per episode plus the total record count. "
+                          "0 (default) = no-op.")
     add_footprint_args(ap)
     args = ap.parse_args()
     apply_threads(args)
@@ -353,7 +386,7 @@ def main() -> None:
           f"dim={args.dim}, epochs={args.epochs}, batch_size={args.batch_size} ===", flush=True)
     run_arm(f"track-{args.track}", args.track, episodes, args.dim, args.epochs, args.seed, args.hidden,
              cheat=args.cheat, no_gold_eval=args.no_gold_eval, force_binding=args.force_binding,
-             batch_size=args.batch_size)
+             batch_size=args.batch_size, audit=args.audit)
 
 
 if __name__ == "__main__":
