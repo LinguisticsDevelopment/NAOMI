@@ -317,6 +317,16 @@ def query_attribute(
 # ("mary" -> name=mary instances, "the doctor" -> kind=doctor instances)
 # becomes an enumerate-and-score pass over the registry.
 # ---------------------------------------------------------------------------
+def _dot(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    """Row-wise dot product, ``[..., d] x [..., d] -> [...]`` -- magnitude-
+    AWARE, unlike :func:`_cosine`. See :func:`candidates_for`'s docstring
+    (``score`` kwarg) for why this is now the default: a candidate whose
+    readout is a small SCALED COPY of the target direction (the
+    single-writer interference case) ties :func:`_cosine` at ~1.0 with the
+    true match but is correctly discounted here."""
+    return (a * b).sum(dim=-1)
+
+
 def candidates_for(
     memory: torch.Tensor,
     registry: InstanceRegistry,
@@ -325,17 +335,32 @@ def candidates_for(
     attr_name: str,
     target_vec,
     threshold: float = 0.5,
+    score: str = "dot",
 ) -> Tuple[List[str], torch.Tensor, torch.Tensor]:
     """Enumerate every minted instance, read its ``attr_name`` slot back out
-    of ``memory``, cosine-score against ``target_vec``, and keep the ones at
-    or above ``threshold`` -- the general mechanism behind EVERY referring
+    of ``memory``, score against ``target_vec``, and keep the ones at or
+    above ``threshold`` -- the general mechanism behind EVERY referring
     expression in the v2 addendum's design: "mary" is
     ``candidates_for(attr_name="name", target_vec=vec("mary"))`` (two Marys
     = a real 2-candidate set), "the doctor" is
     ``candidates_for(attr_name="kind", target_vec=vec("doctor"))``.
 
+    ``score`` -- ``"dot"`` (default) or ``"cosine"``. Recorded gap this
+    fixes (dev/OP_INVENTORY.md Sec.5, "``candidates_for`` has no tie-
+    break"): when a relation has exactly ONE writer in the whole memory,
+    every OTHER instance's readout at that relation is a small SCALED COPY
+    of the writer's value (interference term ``(other_atom . writer_atom) *
+    value``, same direction, tiny magnitude) -- ``cosine`` normalizes the
+    scale away and reports ~1.0 for BOTH the true writer and the scaled
+    copy, a false-positive tie; ``dot`` is magnitude-aware and correctly
+    scores the scaled copy near zero. ``"cosine"`` is kept for callers that
+    want the old direction-only behavior (e.g. comparing candidates whose
+    readouts legitimately differ in norm for reasons other than
+    interference). See :func:`nsm_ct.ops.similarity` for the shared
+    dot+cosine primitive this mirrors.
+
     Returns ``(ids, atoms, scores)`` -- the matching instance ids, their
-    ``[K, dim]`` stacked atoms, and their ``[K]`` cosine scores, in registry
+    ``[K, dim]`` stacked atoms, and their ``[K]`` scores, in registry
     (mint) order restricted to matches. Empty (``K=0``) tensors, never an
     error, when nothing clears ``threshold`` or the registry is empty. See
     :func:`to_candidate_set` for the thin adapter onto
@@ -352,7 +377,12 @@ def candidates_for(
     mem_batch = memory.unsqueeze(0).expand(n, -1, -1, -1)               # [N, d, d, d] (view)
     values = em.query(mem_batch, atoms, relation)                       # [N, d]
     target = _as_tensor(target_vec, memory.dtype).unsqueeze(0).expand(n, -1)
-    scores = _cosine(values, target)                                    # [N]
+    if score == "dot":
+        scores = _dot(values, target)                                   # [N]
+    elif score == "cosine":
+        scores = _cosine(values, target)                                # [N]
+    else:
+        raise ValueError(f"candidates_for: unknown score {score!r}, expected 'dot' or 'cosine'")
     keep = scores >= threshold
     kept_ids = [i for i, k in zip(ids, keep.tolist()) if k]
     return kept_ids, atoms[keep], scores[keep]
@@ -364,14 +394,18 @@ def inverse_query(
     codec: TPRCodec,
     attr_name: str,
     value_vec,
+    *,
+    score: str = "dot",
 ) -> Tuple[List[str], torch.Tensor]:
     """"Who is a doctor?" -- the same enumerate-and-score machinery as
     :func:`candidates_for`, but returns scores over EVERY minted instance,
     unthresholded (the caller decides how many to keep / where the margin
-    is, e.g. by taking the top-K). Returns ``(ids, scores)`` in registry
-    (mint) order; ``scores`` is ``[N]``, empty if the registry is empty."""
+    is, e.g. by taking the top-K). ``score`` -- see :func:`candidates_for`
+    (``"dot"`` default, magnitude-aware). Returns ``(ids, scores)`` in
+    registry (mint) order; ``scores`` is ``[N]``, empty if the registry is
+    empty."""
     ids, atoms, scores = candidates_for(
-        memory, registry, codec, attr_name=attr_name, target_vec=value_vec, threshold=-1.0,
+        memory, registry, codec, attr_name=attr_name, target_vec=value_vec, threshold=-1.0, score=score,
     )
     return ids, scores
 
