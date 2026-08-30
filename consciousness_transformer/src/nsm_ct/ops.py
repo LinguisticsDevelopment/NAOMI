@@ -83,7 +83,7 @@ FORGET_DECAY: float = 1.0
 """`forget_decay`'s multiplicative rate; `1.0` = off (identity, byte-
 exact no-op) -- MIND_INTERFACE.md's "byte-identical by default" rule."""
 
-PATIENCE: int = 6
+PATIENCE: int = 12  # raised 6->12 (director, 2026-08-30): K_max must fit the longest gold program (writeback_addr_redirect = 12 op-steps; EXECUTOR_DESIGN Sec 1.3)
 """`halt`'s thinking-budget cutoff -- matches dev/TRACK_C_DESIGN.md
 Sec.1.6's `K_max = 6` ("one slack step over the longest known [4-5 step]
 gold program"), the same `patience` dial MIND_INTERFACE.md names."""
