@@ -220,13 +220,23 @@ class DocumentRunner:
     """
 
     def __init__(self, model, *, trust_ltm: Optional[float] = None,
-                 ltm_detach: Optional[bool] = None) -> None:
+                 ltm_detach: Optional[bool] = None, zero_ltm: bool = False) -> None:
         # Deferred import (not module-level): mirrors build_model's own
         # "keeps this module importable before src/ is on sys.path" seam.
         from nsm_ct.ltm import LTM_DETACH, TRUST_LTM
 
         self.model = model
         self.trust_ltm = TRUST_LTM if trust_ltm is None else trust_ltm
+        # M59b (--no-ltm, "the consolidate nothing floor"): when True, every
+        # passage's forward pass READS ltm=None regardless of what was
+        # accumulated -- consolidation/promotion/provenance bookkeeping
+        # still runs NORMALLY below (n_records/n_promoted stay comparable
+        # across arms), only the READ side is starved. This is what makes
+        # --no-ltm a genuine floor arm: the model has STM only, every
+        # passage, exactly as if no earlier passage had ever been
+        # consolidated. Default False -- byte-identical to every pre-M59b
+        # DocumentRunner call (every existing test in tests/test_ltm.py).
+        self.zero_ltm = zero_ltm
         # M59a: detach the LTM tensor between passages -- bounds autograd.
         # Without this, a document's Nth passage's backward pass would walk
         # through EVERY earlier passage's promote() write (each one itself
@@ -294,8 +304,9 @@ class DocumentRunner:
 
         for p_idx, batch in enumerate(passages):
             grad_ctx = torch.enable_grad() if train else torch.no_grad()
+            read_ltm = None if self.zero_ltm else ltm_tensor
             with grad_ctx:
-                out = self.model(batch, ltm=ltm_tensor, return_write_trace=True,
+                out = self.model(batch, ltm=read_ltm, return_write_trace=True,
                                   return_memory=True, return_mem_read=True)
                 passage_loss = loss_fn(out, batch) if loss_fn is not None else None
             if passage_loss is not None:

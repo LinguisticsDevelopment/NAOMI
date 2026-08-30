@@ -1287,6 +1287,177 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
 
 
 # ---------------------------------------------------------------------------
+# M59b (CROSS-PASSAGE document curriculum for episodic LTM, M59a): a NEW,
+# sibling function to _instance_steps/_rich_steps above -- see
+# nsm_ct.curriculum2.DocumentGenerator's extensive module comment for the
+# full design and its honesty machinery, and src/nsm_ct/ltm.py's module
+# docstring ("Interface contract for the curriculum agent") for the binding
+# contract this function's caller (build_clause_batch) must satisfy.
+#
+# UNLIKE _instance_steps/_rich_steps, this function does NOT construct its
+# own InstanceRegistry -- it takes one, CALLER-SUPPLIED, threaded through
+# EVERY passage of one document (the ltm.py contract's "one registry per
+# document, constructed once"). The caller MUST build a document's passages'
+# batches IN PASSAGE ORDER (passage 0 before passage 1, etc.) so this
+# passage's ``registry.lookup``/id-prediction calls resolve atoms an EARLIER
+# passage's build_clause_batch call already minted -- scripts/train_ltm.py's
+# document-processing loop is the reference caller.
+# ---------------------------------------------------------------------------
+def _document_steps(ep, registry: InstanceRegistry, resolver, codec: TPRCodec,
+                     cache: Dict[str, np.ndarray], meaning_source: MeaningSource,
+                     cheat: bool = False, no_gold: bool = False, force: Optional[str] = None):
+    """Grounded stream + candidate-set map for ONE PASSAGE of a
+    :class:`~nsm_ct.curriculum2.DocumentGenerator` document. Returns the
+    SAME five-element shape as :func:`_instance_steps`/:func:`_rich_steps`:
+    ``(steps, cand_sets, forced_map, atom_lookup, inverse_step_idx)`` --
+    ``inverse_step_idx`` is always ``None`` (this curriculum has no
+    inverse-query mode).
+
+    Three passage kinds, dispatched on ``ep.meta["passage_index"]``:
+      - **passage 0** (registration): every passage-0 entity is minted and
+        registered (kind/gender/place + its held attribute-relation facts),
+        direct addressing only, no candidate sets -- mirrors
+        :func:`_rich_steps`' own registration block.
+      - **a filler passage** (``0 < passage_index < n_passages - 1``, only
+        when ``n_passages == 3``): 1-2 unrelated distractor entities,
+        registered the same way, no attribute facts, no candidate sets.
+      - **the final passage** (``passage_index == n_passages - 1``): the
+        mention (ONE :class:`~nsm_ct.membrane.EntityCandidateSet`,
+        candidates = ``[referent's own LTM instance id, a freshly-minted NEW
+        instance id]``, ``from_ltm=[1, 0]``, ``addr_redirect=True``) followed
+        by ONE question, addressed DIRECTLY (never a second candidate set --
+        see the module comment on :class:`~nsm_ct.curriculum2.
+        DocumentGenerator` for why "the {kind}" is always globally
+        unambiguous by construction).
+    """
+    d = codec.dim
+    z = np.zeros(d, np.float32)
+    pred_is = codec.filler_vec("pred:is")
+    q_pred = codec.filler_vec("pred:?")
+    kind_rel = codec.filler_vec("attr:kind")
+    gender_rel = codec.filler_vec("attr:gender")
+    place_rel = codec.filler_vec("attr:place")
+
+    m = ep.meta
+    passage_index = m["passage_index"]
+    n_passages = m["n_passages"]
+    steps = []
+    cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
+    forced_map: Dict[int, int] = {}
+    atom_lookup: Dict[str, np.ndarray] = {}
+
+    def _register(name: str, kind: str, gender: str, place: str,
+                   relations: Tuple[str, ...] = (), values: Tuple[str, ...] = ()) -> None:
+        iid, atom = registry.mint(name)
+        atom_np = atom.numpy()
+        atom_lookup[iid] = atom_np
+        place_vec = _content_vec(place, resolver, codec, cache, meaning_source)
+        steps.append((atom_np, kind_rel, codec.filler_vec("kind:" + kind), pred_is, z, 0))
+        steps.append((atom_np, gender_rel, codec.filler_vec("gender:" + gender), pred_is, z, 0))
+        steps.append((atom_np, place_rel, place_vec, pred_is, z, 0))
+        for rel, val in zip(relations, values):
+            val_vec = _content_vec(val, resolver, codec, cache, meaning_source)
+            steps.append((atom_np, codec.filler_vec("attr:" + rel), val_vec, pred_is, z, 0))
+
+    if passage_index == 0:
+        names, kinds, genders, places = m["names"], m["kinds"], m["genders"], m["places"]
+        held_relations, initial_values = m["held_relations"], m["initial_values"]
+        for i in m["entity_order"]:
+            _register(names[i], kinds[i], genders[i], places[i],
+                       tuple(held_relations[i]),
+                       tuple(initial_values[i][r] for r in held_relations[i]))
+        return steps, cand_sets, forced_map, atom_lookup, None
+
+    if passage_index != n_passages - 1:
+        # Filler passage (n_passages == 3 only) -- registration only.
+        for fe in m["filler_entities"]:
+            _register(fe["name"], fe["kind"], fe["gender"], fe["place"])
+        return steps, cand_sets, forced_map, atom_lookup, None
+
+    # Final passage: mention + question.
+    referent_id = m["referent_instance_id"]
+    shared_name = m["shared_name"]
+    original_kind = m["original_kind"]
+    condition = m["condition"]
+    has_description = m["has_description"]
+    new_kind = m["new_kind"]
+    mention_relation = m["mention_relation"]
+    mention_new_value = m["mention_new_value"]
+    gold_id = m["gold_link"]
+
+    referent_atom = registry.lookup(referent_id).numpy()
+    atom_lookup[referent_id] = referent_atom
+    new_id, new_atom_t = registry.mint(shared_name)   # ALWAYS minted -- uniform candidate-set shape
+    new_atom = new_atom_t.numpy()
+    atom_lookup[new_id] = new_atom
+
+    if condition == "new":
+        # Register the NEW instance's own kind fact -- "a doctor named
+        # mary" introduces + attributes in one beat, so the mention step's
+        # own evidence-relation (attr:kind) read sees it.
+        steps.append((new_atom, kind_rel, codec.filler_vec("kind:" + new_kind), pred_is, z, 0))
+        evidence_target_key = "kind:" + new_kind
+    elif has_description:
+        evidence_target_key = "kind:" + original_kind
+    else:
+        # Bare name, "same" condition: NO kind evidence available at all --
+        # see DocumentGenerator's honesty invariant #2. "name:" grounds via
+        # _ent_vec (nsm_ct.clause_reactor._ground_evidence_target), which by
+        # construction does not correlate with either candidate's attr:kind
+        # readout: the resolver must lean on cand_from_ltm/recency instead.
+        evidence_target_key = "name:" + shared_name
+
+    mention_word = shared_name
+    placeholder = _ent_vec(shared_name, resolver, codec, cache, meaning_source)
+    if has_description:
+        placeholder = placeholder + _content_vec(original_kind, resolver, codec, cache, meaning_source)
+
+    cand_roles = [referent_id, new_id]
+    attr_rel_vec = codec.filler_vec("attr:" + mention_relation)
+    overwrite_vec = _content_vec(mention_new_value, resolver, codec, cache, meaning_source)
+    step_idx = len(steps)
+    steps.append((placeholder, attr_rel_vec, overwrite_vec, pred_is, z, 0))
+
+    if not cheat:
+        candidates = [membrane.Candidate(key=cid, prior=0.5) for cid in cand_roles]
+        gold_index = None if no_gold else cand_roles.index(gold_id)
+        # from_ltm: [1, 0] -- the referent's own atom is the ONLY candidate
+        # sourced from a prior (already-consolidated) passage; the freshly
+        # minted NEW candidate is never from_ltm (see nsm_ct.ltm's module
+        # docstring / nsm_ct.membrane.EntityCandidateSet.from_ltm).
+        from_ltm_arr = np.array([1.0, 0.0], dtype=np.float32)
+        cs = membrane.EntityCandidateSet(
+            candidates=candidates,
+            provenance={"sentence_index": step_idx, "kind": "document", "condition": condition},
+            surface=mention_word,
+            feature=membrane.mention_feature_vector(mention_word),
+            gold_index=gold_index,
+            addr_redirect=True,
+            evidence_relation="kind",
+            evidence_target=evidence_target_key,
+            from_ltm=from_ltm_arr,
+        )
+        cand_sets[step_idx] = cs
+        if force is not None:
+            true_idx = cand_roles.index(gold_id)
+            wrong_idx = 1 - true_idx
+            forced_map[step_idx] = true_idx if force == "gold" else wrong_idx
+
+    # Question: DIRECT address (never a second candidate set -- see module
+    # comment above and DocumentGenerator's own docstring).
+    question_type = m["question_type"]
+    q_target_id = gold_id if question_type == "ii" else referent_id
+    q_relation = m["untouched_relation"] if question_type == "i" else mention_relation
+    q_atom = atom_lookup.get(q_target_id)
+    if q_atom is None:
+        q_atom = registry.lookup(q_target_id).numpy()
+    q_rel_vec = codec.filler_vec("attr:" + q_relation)
+    steps.append((q_atom, q_rel_vec, z, q_pred, z, 1))
+
+    return steps, cand_sets, forced_map, atom_lookup, None
+
+
+# ---------------------------------------------------------------------------
 # M57d (PROVENANCE wiring into the live reactor, CLAUDE.md's M57
 # memory-schema decision): STEP LABELS -- a sibling to _writeback_steps/
 # _instance_steps/_rich_steps for EACH of those three functions, mirroring
@@ -1393,9 +1564,55 @@ def _rich_step_labels(ep, cand_sets: Dict[int, "membrane.EntityCandidateSet"]):
     return labels
 
 
+def _document_step_labels(ep, cand_sets: Dict[int, "membrane.EntityCandidateSet"]):
+    """Mirrors :func:`_document_steps`'s per-passage step order exactly (the
+    question step is excluded, like every other ``_*_step_labels`` sibling).
+    Critical plumbing, not decoration: without this, :func:`nsm_ct.
+    provenance.record_writes` produces zero records for every document
+    passage, so :func:`nsm_ct.ltm.promote` never has anything to consolidate
+    -- the whole cross-passage recall mechanism depends on this."""
+    m = ep.meta
+    passage_index = m["passage_index"]
+    n_passages = m["n_passages"]
+    labels = []
+
+    def _reg(iid, kind, gender, place, relations=(), values=()):
+        labels.append((iid, "attr:kind", kind, [], None))
+        labels.append((iid, "attr:gender", gender, [], None))
+        labels.append((iid, "attr:place", place, [], None))
+        for rel, val in zip(relations, values):
+            labels.append((iid, "attr:" + rel, val, [], None))
+
+    if passage_index == 0:
+        names, kinds, genders, places = m["names"], m["kinds"], m["genders"], m["places"]
+        held_relations, initial_values = m["held_relations"], m["initial_values"]
+        ids = dict(zip(m["entity_order"], m["registry_order"]))
+        for i in m["entity_order"]:
+            _reg(ids[i], kinds[i], genders[i], places[i],
+                 held_relations[i], [initial_values[i][r] for r in held_relations[i]])
+        return labels
+
+    if passage_index != n_passages - 1:
+        for fe in m["filler_entities"]:
+            _reg(fe["id"], fe["kind"], fe["gender"], fe["place"])
+        return labels
+
+    # Final passage.
+    if m["condition"] == "new":
+        new_id = m["link_candidates"][1]
+        labels.append((new_id, "attr:kind", m["new_kind"], [], None))
+    t = len(labels)
+    cs = cand_sets.get(t)
+    cand_ids = list(cs.keys) if cs is not None else list(m["link_candidates"])
+    labels.append((None, "attr:" + m["mention_relation"], m["mention_new_value"], cand_ids,
+                    "cross_passage_mention"))
+    return labels
+
+
 _STEP_LABEL_BUILDERS = {
     "writeback": _writeback_step_labels,
     "instance": _instance_step_labels,
+    "document": _document_step_labels,
     "rich": _rich_step_labels,
 }
 
@@ -1733,7 +1950,8 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                         reading_bind: str = "gold",
                         writeback_cheat: bool = False,
                         writeback_no_gold: bool = False,
-                        writeback_force: Optional[str] = None) -> ClauseBatch:
+                        writeback_force: Optional[str] = None,
+                        document_registry: Optional[InstanceRegistry] = None) -> ClauseBatch:
     """Encode curriculum episodes into grounded clause-triple streams (fixed).
 
     Each step is ``(entity, relation, value, pred, coord, is_q)``; ``coord`` carries
@@ -1884,6 +2102,30 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     ["inverse_option_ids"]`` (a curriculum-CHOSEN subset of up to
     ``num_options`` entities, not every minted id -- ``n_entities`` may
     exceed ``num_options``, unlike the fixed-3-entity instance world).
+
+    M59b (CROSS-PASSAGE document curriculum, episodic LTM): an episode whose
+    meta carries ``kind == "document"`` (``curriculum2.DocumentGenerator``
+    only) is routed WHOLESALE through :func:`_document_steps`, exactly like
+    the instance/rich branches above -- EXCEPT its
+    :class:`~nsm_ct.instances.InstanceRegistry` is NOT built internally: the
+    caller passes it in as ``document_registry`` (``None`` by default,
+    inert for every non-document batch), one registry PER DOCUMENT, threaded
+    through this function once per passage of that document (see
+    ``src/nsm_ct/ltm.py``'s module docstring, "Interface contract for the
+    curriculum agent" -- a document's passages must be built, in passage
+    order, via SEPARATE calls to this function sharing the same
+    ``document_registry``; a single call never mixes rows from more than one
+    document when ``document_registry`` is set). Its
+    :class:`~nsm_ct.membrane.EntityCandidateSet` (``addr_redirect=True``,
+    exactly 2 candidates: the referent's own instance id and a freshly
+    minted "NEW" id) rides through the SAME ``cand_*`` fields every other
+    ``EntityCandidateSet`` uses, PLUS the new ``cand_from_ltm`` field
+    (populated here from ``EntityCandidateSet.from_ltm`` -- ``None`` for
+    every batch with no ``from_ltm``-bearing candidate set, the same
+    "only if present" discipline every optional field above establishes).
+    ``writeback_cheat``/``writeback_no_gold``/``writeback_force`` are REUSED
+    for document episodes too, forwarded to :func:`_document_steps`'s own
+    ``cheat``/``no_gold``/``force``.
     """
     cache: Dict[str, np.ndarray] = {}
     d = codec.dim
@@ -1939,6 +2181,11 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                 ep, resolver, codec, cache, meaning_source,
                 cheat=writeback_cheat, no_gold=writeback_no_gold,
                 force=writeback_force)   # RICH-EPISODE curriculum stream (N entities, K statements)
+        elif ep.meta.get("kind") == "document":
+            steps, cand_sets, forced_map, atom_lookup, inverse_step_idx = _document_steps(
+                ep, document_registry, resolver, codec, cache, meaning_source,
+                cheat=writeback_cheat, no_gold=writeback_no_gold,
+                force=writeback_force)   # M59b cross-passage document stream (episodic LTM)
         else:
             steps = []
             pronoun_idx = ep.meta.get("pronoun_sentence_index")
@@ -2011,6 +2258,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     cand_addr_mask = None
     cand_evidence_relation = None
     cand_evidence_target = None
+    cand_from_ltm = None
     if any(cs for *_row, cs, _scs, _hcs in rows):
         Cmax = max((len(cs.candidates) for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values()),
                    default=1) or 1
@@ -2098,6 +2346,23 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                     if cs.evidence_target:
                         cand_evidence_target[i, t] = torch.from_numpy(
                             _ground_evidence_target(cs.evidence_target, resolver, codec, cache, meaning_source))
+
+        # M59b (episodic LTM curriculum wiring): cand_from_ltm, only
+        # allocated when at least one EntityCandidateSet in this batch
+        # actually carries a from_ltm array (curriculum2.DocumentGenerator's
+        # mention-step candidate sets, via _document_steps, only) -- mirrors
+        # has_evidence_target's "only if present" pattern exactly. A batch
+        # with only pre-M59b candidate sets (from_ltm always None, the
+        # membrane dataclass default) leaves this None, byte-identical to
+        # every pre-M59b batch.
+        has_from_ltm = any(
+            cs.from_ltm is not None for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values())
+        if has_from_ltm:
+            cand_from_ltm = torch.zeros(b, T, Cmax)
+            for i, (steps, opt, a, ok, cs_map, _scs, _hcs) in enumerate(rows):
+                for t, cs in cs_map.items():
+                    if cs.from_ltm is not None:
+                        cand_from_ltm[i, t, :len(cs.candidates)] = torch.from_numpy(cs.from_ltm)
 
     # M57b (v2, honest validity machinery): cand_forced_index, built from
     # forced_maps (parallel to rows, populated only by _writeback_steps'
@@ -2236,7 +2501,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                        hyp_cand_entity, hyp_cand_mask, hyp_cand_prior, hyp_cand_gold,
                        hyp_cand_query_entity, hyp_cand_query_relation,
                        cand_addr_mask, cand_forced_index, cand_evidence_relation, cand_evidence_target,
-                       inverse_mask, step_meta)
+                       inverse_mask, step_meta, cand_from_ltm)
 
 
 # ---------------------------------------------------------------------------

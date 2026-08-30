@@ -2088,6 +2088,385 @@ def generate_rich_episodes(n: int, seed: int = 0, num_options: int = 4, *,
 
 
 # ---------------------------------------------------------------------------
+# M59b -- CROSS-PASSAGE document curriculum for episodic LTM (M59a). See
+# src/nsm_ct/ltm.py's module docstring ("Interface contract for the
+# curriculum agent") for the binding contract this generator's output must
+# satisfy -- nothing here builds LTM, this is the SHAPE the curriculum has to
+# hand back -- and dev/LTM_DESIGN_BRIEF.md Sec.5 for the locked LTM design
+# this milestone tests.
+#
+# A DOCUMENT is an ORDERED list of PASSAGES: Episodes sharing one
+# ``meta["doc_id"]``, each carrying its position via ``meta["passage_index"]``
+# (0-based, contiguous). Every entity mentioned anywhere in a document is
+# minted from the SAME :class:`~nsm_ct.instances.InstanceRegistry`,
+# constructed once by the CALLER (curriculum2 stays torch/codec-free -- see
+# every earlier generator's own module comment -- so this module only ever
+# PREDICTS the ids :func:`nsm_ct.clause_reactor._document_steps` will mint,
+# the same way :func:`_predict_registry_ids` already does for
+# :class:`RichEpisodeGenerator`).
+#
+# Two-passage default (``n_passages``, configurable to 3):
+#   passage 0 (REGISTRATION): N entities (``min_entities``-``max_entities``,
+#     default 3-5), ALL DISTINCT NAMES (no internal name-sharing -- the
+#     interesting collision this curriculum tests is ACROSS passages, not
+#     within passage 0), each with kind/gender/place + 2-3 attribute facts
+#     (the trait/mood/size relation pool :class:`RichEpisodeGenerator`
+#     already uses) -- no referring statements, every entity addressed
+#     directly by its own freshly-minted atom.
+#   [passage 1, ONLY when ``n_passages == 3``]: a FILLER passage -- 1-2
+#     unrelated distractor entities, registered the same way (kind/gender/
+#     place only, no attribute facts, no candidate sets) -- purely to
+#     exercise an EXTRA consolidation hop between the referent's
+#     introduction and its cross-passage mention.
+#   final passage (MENTION + QUESTION, index ``n_passages - 1``): re-mentions
+#     ONE passage-0 entity (the "referent") by NAME, under one of two
+#     conditions sampled 50/50:
+#       - "same": the SAME referent -- no contradicting kind; an OPTIONAL
+#         confirming description ("mary the doctor", ~50% of "same"
+#         episodes).
+#       - "new": a DIFFERENT person introduced under the SAME name, with a
+#         kind that NEVER matches any kind already used in the document
+#         ("a doctor named mary").
+#     Exactly ONE :class:`~nsm_ct.membrane.EntityCandidateSet`
+#     (``addr_redirect=True``) at the mention step: candidates = [the
+#     referent's own LTM instance id (``from_ltm=1``), a freshly-minted NEW
+#     instance id (``from_ltm=0``)] -- ALWAYS both, regardless of which
+#     condition was realized (honesty invariant #1 below: the candidate
+#     SET's shape never reveals the condition). The mention statement then
+#     writes ONE attribute fact (relation R, a fresh value) onto whichever
+#     candidate the gold link names; R is always a relation the REFERENT
+#     already held in passage 0 (so a type-(iii) question is always
+#     constructible).
+#   Then ONE question, sampled among (availability-gated):
+#     (i) a passage-0 fact about the referent under a DIFFERENT relation
+#       than R (never touched this passage) -- answerable ONLY via the
+#       additive LTM read (this passage's own STM starts at zero and never
+#       states it).
+#     (ii) relation R's CURRENT value on whoever the mention actually linked
+#       to (the referent, "same"; the NEW instance, "new") -- tests that the
+#       WRITE landed on the correct address, not just that recall works.
+#       Options include the OTHER candidate's own R value as a "wrong
+#       identity" distractor.
+#     (iii) ("new" condition only) relation R's value on the ORIGINAL
+#       referent, whom this passage's mention statement did NOT touch (it
+#       wrote to the NEW instance's own address instead) -- options include
+#       the NEW instance's just-written value as the competing distractor,
+#       checking the referent's LTM slot was not clobbered.
+#   Every question addresses its target entity DIRECTLY (via "the {kind}",
+#   globally unique across passage 0 + the NEW instance by construction) --
+#   never a second candidate set: the cross-passage LINK decision is tested
+#   exactly once, at the mention step.
+#
+# HONESTY (non-negotiable, mirrors RichEpisodeGenerator's own contract):
+#   1. Zero mutual information between CONDITION and the eventual ANSWER
+#      value: attribute values are sampled the same way regardless of which
+#      condition was drawn, so knowing the condition alone never predicts
+#      the specific value -- only WHOSE slot it lands on.
+#   2. The link decision is uniquely determined by the evidence actually
+#      available to the mention: a "kind" description names a kind that
+#      matches EXACTLY ONE of the two candidates' live ``attr:kind`` slot,
+#      asserted at generation (see the assertion in :meth:`_episode_group`,
+#      the same contract :func:`_verify_unique_referent` enforces for
+#      :class:`RichEpisodeGenerator`). A BARE name mention ("same", no
+#      description) carries NO kind evidence at all -- its
+#      ``evidence_target`` grounds via the "name:" convention
+#      (:func:`nsm_ct.clause_reactor._ground_evidence_target`), which by
+#      construction does NOT correlate with either candidate's ``attr:kind``
+#      readout, so the resolver must lean on ``cand_from_ltm``/recency
+#      instead of a leaked kind signal -- documented here, not silently
+#      smoothed over.
+#   3. The answer is never recoverable from surface form alone: the mention
+#      word is the SAME string ("mary") whether the condition is "same" or
+#      "new"; only the (possibly absent) description and the live memory
+#      state disambiguate.
+# ---------------------------------------------------------------------------
+def _predict_document_new_id(passage0_names: List[str], shared_name: str) -> str:
+    """The instance id :meth:`nsm_ct.instances.InstanceRegistry.mint` will
+    assign to the freshly-minted "NEW" candidate a document's mention step
+    always mints (see the module comment above): passage 0 mints
+    ``passage0_names`` in order, each name DISTINCT (this generator's own
+    construction), so the mention's own mint is the SECOND mint of
+    ``shared_name`` -- ``"inst:<shared_name>#2"`` -- deterministically,
+    mirroring :func:`_predict_registry_ids`'s own id-format reproduction."""
+    key = shared_name.lower()
+    n = sum(1 for nm in passage0_names if nm.lower() == key) + 1
+    return f"inst:{key}#{n}"
+
+
+class DocumentGenerator:
+    """M59b cross-passage document curriculum: episodic LTM's curriculum
+    generator. See the module comment immediately above for the full design
+    and its honesty machinery. ``generate(n)`` returns ``n`` DOCUMENTS'
+    worth of episodes flattened into one list (``n * n_passages`` episodes
+    total) -- the caller groups them back into documents by
+    ``meta["doc_id"]``, sorted by ``meta["passage_index"]`` (see
+    src/nsm_ct/ltm.py's module docstring; ``scripts/train_ltm.py`` is the
+    reference caller).
+
+    Args:
+        n_passages: 2 (default) or 3 -- see the module comment's passage
+            layout.
+        min_entities, max_entities: passage-0 entity-count range (default
+            3-5).
+        min_attrs, max_attrs: per-entity distinct-attribute-relation count
+            range (default 2-3 -- >= 2 so a type-(i) question, which needs a
+            relation DIFFERENT from the mention's own R, is always
+            constructible for the referent).
+        names/kinds/attr_relations/attr_values: pool overrides, mirroring
+            every earlier M57-family generator's override pattern.
+    """
+
+    def __init__(self, num_options: int = 4, seed: int = 0, *,
+                 n_passages: int = 2,
+                 min_entities: int = 3, max_entities: int = 5,
+                 min_attrs: int = 2, max_attrs: int = 3,
+                 names: Optional[List[str]] = None,
+                 kinds: Optional[List[str]] = None,
+                 attr_relations: Optional[List[str]] = None,
+                 attr_values: Optional[Dict[str, List[str]]] = None) -> None:
+        if n_passages not in (2, 3):
+            raise ValueError(f"n_passages must be 2 or 3, got {n_passages}")
+        if max_entities < min_entities:
+            raise ValueError(f"max_entities ({max_entities}) must be >= min_entities ({min_entities})")
+        if max_attrs < min_attrs:
+            raise ValueError(f"max_attrs ({max_attrs}) must be >= min_attrs ({min_attrs})")
+        self.num_options = num_options
+        self.rng = random.Random(seed)
+        self._count = 0
+        self.n_passages = n_passages
+        self.min_entities, self.max_entities = min_entities, max_entities
+        self.min_attrs, self.max_attrs = min_attrs, max_attrs
+        self._names = list(names) if names is not None else list(_NAMES)
+        self._kinds = list(kinds) if kinds is not None else list(_RICH_KIND_VALUES)
+        self._attr_relations = list(attr_relations) if attr_relations is not None else list(_RICH_ATTR_RELATIONS)
+        self._attr_values = ({k: list(v) for k, v in attr_values.items()} if attr_values is not None
+                              else {k: list(v) for k, v in _RICH_ATTR_VALUES.items()})
+        # +3: passage-0 entities, the NEW candidate's own kind, and up to 2
+        # filler entities (n_passages == 3) must ALL carry globally distinct
+        # kinds (see module comment: "the {kind}" must stay unambiguous).
+        if self.max_entities + 3 > len(self._kinds):
+            raise ValueError("kinds pool too small for max_entities + the NEW candidate + filler entities "
+                              f"(need > {self.max_entities + 3}, have {len(self._kinds)})")
+        for rel in self._attr_relations:
+            if len(self._attr_values.get(rel, [])) < self.max_entities:
+                raise ValueError(f"attr_values[{rel!r}] pool must have >= max_entities distinct values")
+
+    def _mc_attr_options(self, relation: str, answer: str, required: List[str]):
+        opts = list(dict.fromkeys([answer, *required]))
+        pool = [v for v in self._attr_values[relation] if v not in opts]
+        while len(opts) < self.num_options and pool:
+            opts.append(pool.pop(self.rng.randrange(len(pool))))
+        opts = opts[: self.num_options]
+        self.rng.shuffle(opts)
+        return opts, opts.index(answer)
+
+    def _episode_group(self) -> List[Episode]:
+        rng = self.rng
+        doc_seed = self._count
+        self._count += 1
+        doc_id = f"doc:{doc_seed}"
+
+        n = rng.randint(self.min_entities, self.max_entities)
+        names = rng.sample(self._names, n)                       # distinct within passage 0
+        kinds = rng.sample(self._kinds, n)                       # globally unique so far
+        genders = [rng.choice(["F", "M"]) for _ in range(n)]
+        places = [rng.choice(_PLACES) for _ in range(n)]
+        held_relations: List[List[str]] = [
+            rng.sample(self._attr_relations,
+                       rng.randint(min(self.min_attrs, len(self._attr_relations)),
+                                   min(self.max_attrs, len(self._attr_relations))))
+            for _ in range(n)
+        ]
+        current_value: List[Dict[str, str]] = [{} for _ in range(n)]
+        relation_in_use: Dict[str, Set[str]] = {rel: set() for rel in self._attr_relations}
+        for rel in self._attr_relations:
+            holders = [i for i in range(n) if rel in held_relations[i]]
+            if not holders:
+                continue
+            vals = rng.sample(self._attr_values[rel], len(holders))
+            for i, v in zip(holders, vals):
+                current_value[i][rel] = v
+                relation_in_use[rel].add(v)
+        initial_values = [dict(dv) for dv in current_value]
+
+        entity_order = list(range(n))
+        rng.shuffle(entity_order)
+        registry_ids = _predict_registry_ids(entity_order, names)
+        registry_order = [registry_ids[i] for i in entity_order]
+
+        used_kinds: Set[str] = set(kinds)
+
+        # -- optional filler passage (n_passages == 3 only): see module
+        # comment. Predicts each filler entity's own registry id the same
+        # way _predict_registry_ids does (each is the FIRST -- only -- mint
+        # of its own name, since filler names never collide with passage-0's
+        # or each other's).
+        filler_entities: List[Dict[str, object]] = []
+        if self.n_passages == 3:
+            n_filler = rng.randint(1, 2)
+            filler_name_pool = [nm for nm in self._names if nm not in names]
+            filler_names = (rng.sample(filler_name_pool, min(n_filler, len(filler_name_pool)))
+                             if filler_name_pool else [])
+            filler_kind_pool = [k for k in self._kinds if k not in used_kinds]
+            filler_kinds = rng.sample(filler_kind_pool, len(filler_names))
+            used_kinds |= set(filler_kinds)
+            for nm, kd in zip(filler_names, filler_kinds):
+                filler_entities.append({
+                    "id": f"inst:{nm.lower()}#1",
+                    "name": nm, "kind": kd,
+                    "gender": rng.choice(["F", "M"]), "place": rng.choice(_PLACES),
+                })
+
+        # -- the referent + mention (final passage).
+        referent = rng.randrange(n)
+        shared_name = names[referent]
+        original_kind = kinds[referent]
+        referent_instance_id = registry_ids[referent]
+        mention_relation = rng.choice(held_relations[referent])
+        other_relations = [r for r in held_relations[referent] if r != mention_relation]
+        has_untouched = bool(other_relations)
+        untouched_relation = rng.choice(other_relations) if has_untouched else None
+
+        condition = "same" if rng.random() < 0.5 else "new"
+        has_description = condition == "same" and rng.random() < 0.5
+
+        new_kind: Optional[str] = None
+        if condition == "new":
+            new_kind_pool = [k for k in self._kinds if k not in used_kinds]
+            new_kind = rng.choice(new_kind_pool)
+            used_kinds.add(new_kind)
+
+        value_before = initial_values[referent][mention_relation]
+        pool_mention_value = [v for v in self._attr_values[mention_relation]
+                               if v not in relation_in_use[mention_relation]]
+        mention_new_value = rng.choice(pool_mention_value)
+
+        new_id = _predict_document_new_id(names, shared_name)
+        link_candidates = [referent_instance_id, new_id]
+        gold_link = referent_instance_id if condition == "same" else new_id
+
+        # Honesty invariant #2 (see module comment): when kind evidence IS
+        # offered (a description, or the "new" condition), it must uniquely
+        # pick out the gold link -- a genuine construct-and-verify assertion,
+        # not decoration (mirrors _verify_unique_referent's own contract).
+        if condition == "new" or has_description:
+            evidence_kind = new_kind if condition == "new" else original_kind
+            kind_of = {referent_instance_id: original_kind,
+                       new_id: (new_kind if condition == "new" else None)}
+            matches = [cid for cid, k in kind_of.items() if k == evidence_kind]
+            assert matches == [gold_link], (
+                f"document link evidence not unique for doc {doc_id}: {matches} vs gold {gold_link}")
+
+        available_types = (["i"] if has_untouched else []) + ["ii"]
+        if condition == "new" and has_untouched:
+            available_types.append("iii")
+        question_type = rng.choice(available_types)
+
+        if question_type == "i":
+            q_target_kind = original_kind
+            answer = initial_values[referent][untouched_relation]
+            required = [answer]
+            question_relation = untouched_relation
+        elif question_type == "ii":
+            q_target_kind = original_kind if condition == "same" else new_kind
+            answer = mention_new_value
+            required = [answer, value_before]
+            question_relation = mention_relation
+        else:  # "iii"
+            q_target_kind = original_kind
+            answer = value_before
+            required = [answer, mention_new_value]
+            question_relation = mention_relation
+        options, answer_idx = self._mc_attr_options(question_relation, answer, required)
+        question = f"what is the {q_target_kind} like ?"
+
+        base_meta: dict = {
+            "src": "curriculum2", "kind": "document",
+            "doc_id": doc_id, "n_passages": self.n_passages,
+            "instance_seed": doc_seed,
+            "n_entities": n, "entity_order": list(entity_order),
+            "names": list(names), "kinds": list(kinds), "genders": list(genders), "places": list(places),
+            "held_relations": [list(r) for r in held_relations],
+            "initial_values": initial_values,
+            "registry_order": registry_order,
+            "filler_entities": filler_entities,
+            "referent": referent, "shared_name": shared_name, "original_kind": original_kind,
+            "referent_instance_id": referent_instance_id,
+            "condition": condition, "has_description": has_description,
+            "new_kind": new_kind,
+            "mention_relation": mention_relation, "mention_new_value": mention_new_value,
+            "value_before": value_before,
+            "untouched_relation": untouched_relation,
+            "link_candidates": link_candidates, "gold_link": gold_link,
+            "question_type": question_type,
+        }
+
+        episodes: List[Episode] = []
+        p0_context: List[str] = []
+        for i in entity_order:
+            p0_context.append(f"{names[i]} is a {kinds[i]} .")
+            p0_context.append(f"{names[i]} is {'female' if genders[i] == 'F' else 'male'} .")
+            p0_context.append(f"{names[i]} went to the {places[i]} .")
+            for rel in held_relations[i]:
+                p0_context.append(f"{names[i]} is {initial_values[i][rel]} .")
+        episodes.append(Episode(
+            context=p0_context, question="(registration passage; no question)",
+            answer_text="idk", options=["idk"], answer_idx=0, level=18,
+            meta=dict(base_meta, passage_index=0),
+        ))
+
+        if self.n_passages == 3:
+            fp_context: List[str] = []
+            for fe in filler_entities:
+                fp_context.append(f"{fe['name']} is a {fe['kind']} .")
+                fp_context.append(f"{fe['name']} is {'female' if fe['gender'] == 'F' else 'male'} .")
+                fp_context.append(f"{fe['name']} went to the {fe['place']} .")
+            episodes.append(Episode(
+                context=fp_context, question="(filler passage; no question)",
+                answer_text="idk", options=["idk"], answer_idx=0, level=18,
+                meta=dict(base_meta, passage_index=1),
+            ))
+
+        pf_context: List[str] = []
+        if condition == "new":
+            pf_context.append(f"a {new_kind} named {shared_name} .")
+        mention_text = f"{shared_name} the {original_kind}" if has_description else shared_name
+        pf_context.append(f"{mention_text} is {mention_new_value} .")
+        episodes.append(Episode(
+            context=pf_context, question=question, answer_text=answer,
+            options=options, answer_idx=answer_idx, level=18,
+            meta=dict(base_meta, passage_index=self.n_passages - 1),
+        ))
+
+        return episodes
+
+    def generate(self, n: int) -> List[Episode]:
+        episodes: List[Episode] = []
+        for _ in range(n):
+            episodes += self._episode_group()
+        return episodes
+
+
+def generate_document_episodes(n: int, seed: int = 0, num_options: int = 4, *,
+                                n_passages: int = 2,
+                                min_entities: int = 3, max_entities: int = 5,
+                                min_attrs: int = 2, max_attrs: int = 3,
+                                names: Optional[List[str]] = None,
+                                kinds: Optional[List[str]] = None,
+                                attr_relations: Optional[List[str]] = None,
+                                attr_values: Optional[Dict[str, List[str]]] = None) -> List[Episode]:
+    """``n`` M59b DOCUMENTS' worth of episodes (``n * n_passages`` episodes
+    total, flattened -- group by ``meta["doc_id"]`` to recover documents),
+    deterministic given all keyword arguments. See :class:`DocumentGenerator`.
+    """
+    return DocumentGenerator(
+        num_options=num_options, seed=seed, n_passages=n_passages,
+        min_entities=min_entities, max_entities=max_entities,
+        min_attrs=min_attrs, max_attrs=max_attrs,
+        names=names, kinds=kinds, attr_relations=attr_relations, attr_values=attr_values).generate(n)
+
+
+# ---------------------------------------------------------------------------
 # M54b -- entity-keyed, binding-critical sense-ambiguity curriculum.
 #
 # RESEARCH_NOTES.md M54's finding: the M32/episode.py ambiguity curriculum
