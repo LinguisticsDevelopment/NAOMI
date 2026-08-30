@@ -1,0 +1,24 @@
+=== document (LTM) (no-ltm) track=A: 600 documents (n_passages=2), dim=48, epochs=40, batch_size=32, trust_ltm=None ===
+/home/user/NAOMI/consciousness_transformer/scripts/../src/nsm_ct/provenance.py:88: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:822.)
+  g = float(gate[i, t])
+  [track-A] epoch   1 loss=1.635 val_acc=0.350 link_acc=0.683
+  [track-A] epoch   5 loss=0.900 val_acc=0.583 link_acc=0.917
+  [track-A] epoch  10 loss=0.229 val_acc=0.592 link_acc=0.967
+  [track-A] epoch  15 loss=0.109 val_acc=0.633 link_acc=1.000
+  [track-A] epoch  20 loss=0.065 val_acc=0.633 link_acc=1.000
+  [track-A] epoch  25 loss=0.063 val_acc=0.625 link_acc=1.000
+  [track-A] epoch  30 loss=0.052 val_acc=0.633 link_acc=1.000
+  [track-A] epoch  35 loss=0.042 val_acc=0.658 link_acc=1.000
+  [track-A] epoch  40 loss=0.048 val_acc=0.633 link_acc=1.000
+  [track-A] FINAL n_documents=600 (train=480, val=120) resolver_params=2713 time=23.56 min peak_rss_mb=1224.1
+  [track-A] kind document: total_acc=0.633 (n=120)
+    document/i: 0.326 (n=46)
+    document/ii: 1.000 (n=56)
+    document/iii: 0.278 (n=18)
+    document/new: 0.581 (n=62)
+    document/same: 0.690 (n=58)
+  [track-A] LINK ACCURACY: 1.000 (n=120) NEW-rate=0.517
+  [track-A] n_promoted mean=11.85
+    per_passage/0: 1.000
+    per_passage/1: 0.633
