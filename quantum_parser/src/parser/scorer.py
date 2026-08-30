@@ -131,6 +131,22 @@ def completeness_key(hypothesis: Hypothesis):
     sort_hypotheses() -- consulted only when `.score` is exactly equal, so it
     can re-order same-score ties but never change the winner across a real
     score difference.
+
+    M58c note (dev/PROSE_FAILURE_TAXONOMY.md's "multiple-parses-unresolved"
+    real-text failure class): a fewer-unattached-tokens/shorter-dependency-
+    span tie-break was TRIED here and reverted -- measured regression
+    (tests/test_clause_round3.py::test_bare_passive_yields_a_subject_only_clause
+    flipped "the window was broken ." from predicate=broken to predicate=was).
+    `sort_hypotheses()` runs at MULTIPLE points during chart parsing, not
+    just once at the end (pruning between grammar-rule steps), so even a
+    strictly-refining extra tie-break component here can change which
+    hypothesis survives an intermediate prune -- "only consulted on already-
+    tied keys" does NOT imply "can't change the final winner" once pruning
+    is in the loop. The equivalent tie-break is instead applied LOCALLY,
+    downstream, over the top-K candidates :meth:`ParserInputEncoder.
+    _parse_topk_one` already returns (see nsm_ct.corpus._rerank_topk) --
+    that re-ranks a fixed, already-complete candidate list post-hoc and can
+    never feed back into parsing/pruning, so it carries none of this risk.
     """
     from .enums import ConnectionType
     subject_count = sum(1 for e in hypothesis.edges if e.type == ConnectionType.SUBJECT)

@@ -171,7 +171,14 @@ def test_question_marker_false_on_declarative(parser):
 def test_two_pps_both_survive_extraction(parser):
     """The headline fix: 'mary gave the ball to john in the garden .' has
     TWO PPs ('to john', 'in the garden') plus a direct OBJECT ('ball') --
-    all three must now be in the clause, not just the first PP."""
+    all three must now be in the clause, not just the first PP.
+
+    M58c update: 'to john' now resolves to RECIPIENT, not PLACE -- the
+    dative-role fix (dev/PROSE_FAILURE_TAXONOMY.md's "Bug surfaced": "to"
+    after a TRANSFER verb with an entity object is the recipient, not a
+    place). This test predates that fix and asserted the bug's own output;
+    only the expected ROLE for 'john' changes here, nothing about the
+    2-PP-survive structure this test is actually about."""
     graph = parser._parse_graph("mary gave the ball to john in the garden .")
     clauses, _links = extract_discourse(graph)
     cl = _any_clause(clauses, "gave")
@@ -179,7 +186,7 @@ def test_two_pps_both_survive_extraction(parser):
     tokens = {(rel, tok) for rel, tok in _args(cl)}
     assert ("SUBJECT", "mary") in tokens
     assert ("OBJECT", "ball") in tokens
-    assert ("PLACE", "john") in tokens
+    assert ("RECIPIENT", "john") in tokens
     assert ("PLACE", "garden") in tokens
     assert len(cl.args) == 4
 
@@ -187,13 +194,18 @@ def test_two_pps_both_survive_extraction(parser):
 def test_primary_role_ordering_preserved(parser):
     """The primary (first non-SUBJECT) role must stay exactly what it was
     before the multi-arg fix -- args[0] is SUBJECT, args[1] is the first PP
-    ('to john'), and the second PP is appended AFTER it, never reordered."""
+    ('to john'), and the second PP is appended AFTER it, never reordered.
+
+    M58c update: 'to john' resolves to RECIPIENT now (see
+    test_two_pps_both_survive_extraction's docstring) -- the ORDERING
+    assertion this test is actually about (args[1] is still the first PP,
+    unmoved) is unaffected."""
     graph = parser._parse_graph("mary gave the ball to john in the garden .")
     clauses, _links = extract_discourse(graph)
     cl = _any_clause(clauses, "gave")
     assert cl is not None
     assert cl.args[0][0] == "SUBJECT" and cl.args[0][1].token == "mary"
-    assert cl.args[1][0] == "PLACE" and cl.args[1][1].token == "john"
+    assert cl.args[1][0] == "RECIPIENT" and cl.args[1][1].token == "john"
 
 
 def test_bare_transitive_object_no_longer_dropped(parser):

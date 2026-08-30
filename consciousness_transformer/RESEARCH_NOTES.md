@@ -3101,3 +3101,31 @@ the worklist: (1) lexicon coverage (compounds, closed-class table), (2)
 parse-tie breaking (hypothesis membrane + margins), (3) the dative role
 map, (4) quotation/fragment handling. Then M58b: zero-shot on a SAVED
 checkpoint (next battery adds --save) over converted episodes.
+
+### M58c — parser round #1: real-text parse rate 5.8% → 18.6% strict / 52.3% usable (MEASURED)
+
+Five additive perception-side fixes, all regression-gated (curriculum
+parsing proven unchanged; quantum_parser 134/134): hyphen-compound tail
+tagging + WordNet de-inflected fallback + NAME/NUM tiers + closed-class
+additions (unknown-word on real text 54.7%→2.3%); parse TIES now emitted
+as HypothesisCandidateSet with margins under a new "parsed-ambiguous"
+code instead of failing (the M55a membrane's first real-text use); the
+prepositional-dative fix ("gave the ball to john" → RECIPIENT when the
+verb is a transfer verb — three pre-existing tests had enshrined the bug
+and were corrected); quotation stripping + fragment-skipped; a passage-
+level pronoun registry. A scorer-level tie-break was tried, caught by a
+regression test, REVERTED, and re-implemented as corpus-local reranking
+— the gate machinery working as designed.
+
+| corpus | ok before | ok after | ok+ambiguous | episodes |
+|---|---|---|---|---|
+| synthetic | 55.0% | 63.3% | 71.7% | 29→30 |
+| real | 5.8% | 18.6% | 52.3% | 4→18 |
+
+Remaining real-text buckets: pronoun-unresolvable 24.4% (needs real
+coreference — the mind's own resolver, once prose episodes carry
+candidate sets), unsupported-construction 11.6% (attribution-wrapped
+narration), no-relation-extracted 5.8% (needs a plain-OBJECT question
+template). Next round: route prose pronouns through the membrane
+resolver instead of treating them as parser failures — the architecture
+says this is the MIND's job, and the machinery exists.

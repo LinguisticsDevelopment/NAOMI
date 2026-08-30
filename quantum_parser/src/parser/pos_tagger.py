@@ -14,6 +14,44 @@ Two layers:
    the context-free default); the scorer picks the reading that completes a
    tree. If the file is absent, behavior degrades to the old suffix
    heuristics — never an error.
+
+M58c (real-text parser round, dev/PROSE_FAILURE_TAXONOMY.md) adds three
+MORE fallback tiers below the static lexicon, all inside
+``lexicon_entry`` so every existing caller (this tagger's own
+``simple_tag``/``get_possible_tags`` AND ``nsm_ct.corpus._is_known_word``,
+which calls ``lexicon_entry`` directly) benefits with no other code
+changes. Deliberately kept OUT of build_parser_lexicon.py / the static
+``.json.gz`` file: tests/test_spanish_freeze.py pins the generated
+English lexicon's exact fingerprint+count, so any change to what that
+BUILD SCRIPT emits would be a regression by definition -- these tiers are
+pure runtime fallback, consulted only when the static file (and the hand
+dict) both miss:
+
+  (a) hyphenated compounds -- split on "-", look the TAIL token up through
+      this same chain (so "pine-tree" resolves via "tree", "brown-coated"
+      via "coated" -- recursive but the tail never itself contains "-", so
+      one level deep always terminates);
+  (b) on-demand WordNet consult (``_wordnet_entry``) -- nltk is optional
+      and imported lazily; a handful of cheap de-inflection guesses (plural
+      -s/-es, verb -ed/-ing, comparative/superlative -er/-est/-ier/-iest)
+      are tried against WordNet when the bare word isn't a lemma itself
+      (WordNet only stores base forms) -- this is what recovers real
+      inflected open-class vocabulary the static generator's own
+      inflection rules didn't produce for (e.g. multi-syllable -en/-er
+      verbs, where the generator's naive CVC-doubling heuristic is wrong:
+      "happened"/"listened"/"clattered" -- a real, separate bug, left
+      exactly as-is in build_parser_lexicon.py for the fingerprint-pin
+      reason above; this runtime tier is the actual fix);
+  (c) the NAME/NUM fallback (``is_bare_name_token`` / ``looks_like_number``)
+      -- a token with NO coverage anywhere above AND no inflectional shape
+      (doesn't end -ly/-ing/-ed/-s) is overwhelmingly a proper name in real
+      narrative prose (measured: 9 of 11 residual unknown-word tokens in
+      the Buster Bear sample are character names -- alice, sammy, blacky,
+      joe, kate, ...), so it is treated as known/NAME rather than failing;
+      a digit sequence is NUM. Genuine unknown vocabulary that DOES carry
+      an inflectional suffix (rare archaic words, typos) still falls
+      through to the old suffix heuristics/default-noun path untouched, so
+      the "unknown-word" signal keeps catching that class.
 """
 
 import gzip
@@ -81,8 +119,147 @@ def _load_es_lexicon() -> Dict[str, List[Tuple[Tag, List[SubType]]]]:
 
 
 def lexicon_entry(text_lower: str) -> Optional[List[Tuple[Tag, List[SubType]]]]:
-    """The word's open-class lexicon entries (frequency-ordered), or None."""
-    return _load_lexicon().get(text_lower)
+    """The word's open-class lexicon entries (frequency-ordered), or None.
+
+    M58c: three additive fallback tiers run when the exact word is absent
+    from the static generated lexicon (see the module docstring's "M58c"
+    section for why these live here rather than in the static file) --
+    (1) hyphenated-compound tail lookup, (2) on-demand WordNet consult with
+    light de-inflection. Each returns the SAME ``[(Tag, [SubType, ...]), ...]``
+    shape as a real static-lexicon hit, so every caller (this tagger's
+    ``simple_tag``/``get_possible_tags`` and ``nsm_ct.corpus._is_known_word``)
+    is none the wiser. Tier (3), the bare NAME/NUM fallback, does NOT fit
+    this shape (it isn't a WordNet POS reading) -- see
+    :func:`is_bare_name_token`/:func:`looks_like_number`, consulted
+    separately by ``simple_tag`` and by callers that want the "is this word
+    covered at all" answer without a specific tag.
+    """
+    entry = _load_lexicon().get(text_lower)
+    if entry:
+        return entry
+    if "-" in text_lower:
+        head, _sep, tail = text_lower.rpartition("-")
+        if tail and head:
+            entry = lexicon_entry(tail)  # tail never contains "-": terminates in one recursion
+            if entry:
+                return entry
+    return _wordnet_entry(text_lower)
+
+
+# -- M58c tier (b): on-demand WordNet consult (lazy nltk import; see module
+#    docstring) ----------------------------------------------------------
+_wn_module = None          # lazily bound to nltk.corpus.wordnet, or False if unavailable
+_wn_entry_cache: Dict[str, Optional[List[Tuple[Tag, List[SubType]]]]] = {}
+
+_WN_POS_TO_TAG = {"n": Tag.NOUN, "v": Tag.VERB, "a": Tag.ADJ, "s": Tag.ADJ, "r": Tag.ADV}
+
+
+def _get_wn():
+    global _wn_module
+    if _wn_module is None:
+        try:
+            from nltk.corpus import wordnet as wn  # local import: optional dependency
+            wn.synsets("test")  # touch the data; raises if the corpus isn't installed
+            _wn_module = wn
+        except Exception:
+            _wn_module = False
+    return _wn_module or None
+
+
+def _wn_direct(word: str) -> Optional[List[Tuple[Tag, List[SubType]]]]:
+    """``word`` looked up AS-IS against WordNet (no de-inflection); tags
+    ordered by total lemma frequency (SemCor ``lemma.count()``, same
+    frequency signal build_parser_lexicon.py's static generation uses),
+    highest first -- deterministic given a fixed WordNet install."""
+    wn = _get_wn()
+    if wn is None:
+        return None
+    try:
+        synsets = wn.synsets(word)
+    except Exception:
+        return None
+    freq: Dict[Tag, int] = {}
+    for syn in synsets:
+        tag = _WN_POS_TO_TAG.get(syn.pos())
+        if tag is None:
+            continue
+        n = sum(lem.count() for lem in syn.lemmas() if lem.name().lower() == word)
+        freq[tag] = freq.get(tag, 0) + n + 1  # +1: a sense with zero SemCor count still counts
+    if not freq:
+        return None
+    ordered = sorted(freq.items(), key=lambda kv: (-kv[1], kv[0].name))
+    return [(tag, []) for tag, _n in ordered]
+
+
+# De-inflection guesses tried (in order) when the bare word isn't a WordNet
+# lemma itself -- WordNet only stores base/dictionary forms. Each entry is
+# (suffix, replacement, forced_tag): forced_tag overrides whatever POS the
+# stem's OWN senses would rank highest, because the SUFFIX is the actual
+# evidence for what part of speech this occurrence is (a comparative/
+# superlative reads ADJ regardless of "deep"'s own noun senses).
+_DEINFLECT = (
+    ("iest", "y", Tag.ADJ), ("ier", "y", Tag.ADJ),
+    ("est", "", Tag.ADJ), ("er", "", None),
+    ("ies", "y", None), ("ied", "y", Tag.VERB),
+    ("ing", "", Tag.VERB), ("ing", "e", Tag.VERB),
+    ("ed", "", Tag.VERB), ("ed", "e", Tag.VERB),
+    ("es", "", None), ("s", "", None),
+)
+
+
+def _wordnet_entry(word: str) -> Optional[List[Tuple[Tag, List[SubType]]]]:
+    """M58c tier (b): the word as-is, then de-inflected, against WordNet."""
+    if not word or not word.isalpha():
+        return None
+    if word in _wn_entry_cache:
+        return _wn_entry_cache[word]
+    entry = _wn_direct(word)
+    if entry is None:
+        for suffix, replacement, forced_tag in _DEINFLECT:
+            if not word.endswith(suffix) or len(word) <= len(suffix) + 1:
+                continue
+            stem = word[: -len(suffix)] + replacement
+            if len(stem) < 2:
+                continue
+            hit = _wn_direct(stem)
+            if hit:
+                entry = [(forced_tag, [])] if forced_tag is not None else hit
+                break
+    _wn_entry_cache[word] = entry
+    return entry
+
+
+def looks_like_number(text_lower: str) -> bool:
+    """True for a bare digit sequence (optionally with internal ``,``/``.``/
+    ``-``/``/`` -- plain numbers, decimals, simple dates) -- M58c's NUM tier."""
+    core = text_lower.replace(",", "").replace(".", "").replace("-", "").replace("/", "")
+    return core.isdigit() and len(core) > 0
+
+
+def is_bare_name_token(text_lower: str) -> bool:
+    """M58c tier (c): true for a word this tagger has NO real coverage for
+    (hand dict, static lexicon, hyphen-compound, on-demand WordNet) AND
+    that matches none of the inflectional-suffix heuristics either
+    (-ly/-ing/-ed/-s) -- a bare root-looking token. In real narrative prose
+    this is overwhelmingly a proper name (character names recur constantly;
+    see the module docstring's measured count) rather than genuine unknown
+    vocabulary, so callers may treat it as known/NAME rather than failing.
+    Shared by :func:`simple_tag` (tags it PROPN) and
+    ``nsm_ct.corpus._is_known_word`` (counts it as known) -- one source of
+    truth for the boundary between the two.
+    """
+    w = text_lower
+    if not w or not w.isalpha():
+        return False
+    if w in WORD_TAG_DICT or w in AMBIGUOUS_WORDS:
+        return False
+    if lexicon_entry(w):
+        return False
+    if w.endswith(("ly", "ing", "ed")):
+        return False
+    if w.endswith("s") and not w.endswith("ss"):
+        return False
+    return True
 
 
 def lexicon_subtypes(text_lower: str, tag: Tag) -> List[SubType]:
@@ -158,6 +335,21 @@ WORD_TAG_DICT = {
     "they": Tag.PRON, "me": Tag.PRON, "him": Tag.PRON, "her": Tag.PRON,
     "them": Tag.PRON, "us": Tag.PRON, "it": Tag.PRON,
 
+    # Reflexive pronouns (M58c closed-class-gap audit -- "himself"/"myself"/
+    # "themselves" were the single most common unknown-word hit in the real
+    # Buster Bear sample; not WordNet lemmas, so only a hand entry fixes
+    # them).
+    "myself": Tag.PRON, "yourself": Tag.PRON, "himself": Tag.PRON,
+    "herself": Tag.PRON, "itself": Tag.PRON, "oneself": Tag.PRON,
+    "ourselves": Tag.PRON, "yourselves": Tag.PRON, "themselves": Tag.PRON,
+
+    # Indefinite pronouns (M58c: none of these are WordNet lemmas either --
+    # "anything"/"everything"/"else" measured unknown-word hits).
+    "anything": Tag.PRON, "everything": Tag.PRON, "something": Tag.PRON,
+    "nothing": Tag.PRON, "anyone": Tag.PRON, "everyone": Tag.PRON,
+    "someone": Tag.PRON, "nobody": Tag.PRON, "everybody": Tag.PRON,
+    "somebody": Tag.PRON,
+
     # Common adjectives
     "big": Tag.ADJ, "small": Tag.ADJ, "red": Tag.ADJ,
     "blue": Tag.ADJ, "green": Tag.ADJ, "yellow": Tag.ADJ,
@@ -209,13 +401,28 @@ WORD_TAG_DICT = {
     # AMBIGUOUS_WORDS as [ADP, PART] so the parser can branch contextually.
     "not": Tag.PART, "n't": Tag.PART, "'s": Tag.PART,
 
+    # Contraction particles (M58c closed-class-gap audit): "n't"/"'s" were
+    # already covered above, but "'ll"/"'d"/"'m"/"'re"/"'ve" (will/would-or-
+    # had/am/are/have) were not -- corpus.py's tokenizer
+    # (nsm_ct.corpus._tokenize_words) already splits these off their host
+    # word as their own token ("i'm" -> "i" "'m"), so real dialogue prose
+    # hits this gap constantly ("i'm going fishing").
+    "'ll": Tag.AUX, "'d": Tag.AUX, "'m": Tag.AUX, "'re": Tag.AUX, "'ve": Tag.AUX,
+
     # Subordinating conjunctions (SCONJ → NodeType.SUBOORD)
     # "that" overrides earlier DET/PRON entries; kept in AMBIGUOUS_WORDS
     # as [PRON, SCONJ] to preserve relative-clause behaviour.
     "because": Tag.SCONJ, "if": Tag.SCONJ,
     "although": Tag.SCONJ, "though": Tag.SCONJ, "while": Tag.SCONJ,
     "since": Tag.SCONJ, "unless": Tag.SCONJ, "whether": Tag.SCONJ,
+    # "until": M58c -- measured unknown-word hit ("he yawned until it
+    # seemed..."), not a WordNet lemma, genuinely closed-class.
+    "until": Tag.SCONJ,
     "said": Tag.VERB,
+
+    # "else" (M58c): adverb/particle after an indefinite pronoun ("anything
+    # else"); not a WordNet lemma.
+    "else": Tag.ADV,
 
     # Common nouns
     "dog": Tag.NOUN, "dogs": Tag.NOUN, "cat": Tag.NOUN, "cats": Tag.NOUN,
@@ -330,6 +537,13 @@ WORD_SUBTYPES = {
     "were": [SubType.PROGRESSIVE],
     "been": [SubType.PROGRESSIVE],
     "being": [SubType.PROGRESSIVE],
+
+    # Contraction auxiliaries (M58c): mirror their expanded form's subtype
+    # so grammar rules keyed on MODAL/PERFECT/PROGRESSIVE (e.g. aux1) see
+    # "i'm" the same way they'd see "i am".
+    "'ll": [SubType.MODAL], "'d": [SubType.MODAL],
+    "'ve": [SubType.PERFECT],
+    "'m": [SubType.PROGRESSIVE], "'re": [SubType.PROGRESSIVE],
 
     # Past participles (round-2 passive: be + PAST_PARTICIPLE -> aux1 passive rule)
     "found": [SubType.PAST_PARTICIPLE],
@@ -931,12 +1145,17 @@ def simple_tag(text: str) -> Tag:
     if text[0].isupper() and text not in ["I", "A"]:
         return Tag.PROPN
 
-    # Open-class lexicon (generated from WordNet): entry [0] is the
-    # frequency-ordered context-free default; the lattice can still branch to
-    # the other tags via get_possible_tags.
+    # Open-class lexicon (generated from WordNet, PLUS the M58c hyphen-
+    # compound/on-demand-WordNet fallback tiers -- see lexicon_entry's own
+    # docstring): entry [0] is the frequency-ordered context-free default;
+    # the lattice can still branch to the other tags via get_possible_tags.
     entry = lexicon_entry(text_lower)
     if entry:
         return entry[0][0]
+
+    # M58c: a bare digit sequence/date -> NUM, never an open-class fallback.
+    if looks_like_number(text_lower):
+        return Tag.NUM
 
     # Simple heuristics
 
@@ -956,6 +1175,14 @@ def simple_tag(text: str) -> Tag:
     if text_lower.endswith("s") and not text_lower.endswith("ss"):
         # Default to noun (plural)
         return Tag.NOUN
+
+    # M58c: a word with NO coverage anywhere above and no recognizable
+    # inflectional shape either -> assume proper NAME (see
+    # is_bare_name_token's docstring; this is the tail of the SAME check,
+    # just re-derived here since we've already consumed the suffix cases
+    # above rather than calling the standalone helper twice).
+    if text_lower.isalpha():
+        return Tag.PROPN
 
     # Default: noun
     return Tag.NOUN

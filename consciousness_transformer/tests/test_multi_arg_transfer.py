@@ -51,10 +51,16 @@ def test_transfer_templates_all_roles_correct():
 
 
 def test_dative_pp_landmine_is_real_not_assumed():
-    """The literal spec template "gave the X to Y in the Z" mislabels Y as
-    PLACE (clause.py's "to"->PLACE convention for "moved to the office"),
-    which is why TRANSFER_TEMPLATES uses double-object phrasing instead.
-    Confirms this empirically so the deviation stays justified, not stale."""
+    """The literal spec template "gave the X to Y in the Z" USED TO mislabel
+    Y as PLACE (clause.py's "to"->PLACE convention for "moved to the
+    office"), which is why TRANSFER_TEMPLATES uses double-object phrasing
+    instead. M58c (dev/PROSE_FAILURE_TAXONOMY.md's "Bug surfaced") fixed
+    this: "to" after a TRANSFER verb with an entity object now resolves to
+    RECIPIENT. TRANSFER_TEMPLATES still deliberately keeps the double-object
+    phrasing (a harmless, still-valid design choice, not something this fix
+    requires reverting -- see curriculum2.py's own landmine-avoided note);
+    this test now confirms the underlying bug is FIXED rather than merely
+    documenting the workaround."""
     from nsm_ct.clause import extract_discourse
     from nsm_ct.input_encoder import ParserInputEncoder
     from nsm_ct.nsm_primes import PRIME_NAMES
@@ -70,9 +76,9 @@ def test_dative_pp_landmine_is_real_not_assumed():
     graph = parser._parse_graph(sent)
     clauses, _links = extract_discourse(graph)
     roles = {rel: (arg.token or "").lower() for cl in clauses for rel, arg in cl.args}
-    # the landmine: "john" comes out PLACE, not INDIRECT_OBJECT/RECIPIENT
-    assert roles.get("PLACE") in ("john", "garden")
-    assert "INDIRECT_OBJECT" not in roles or roles["INDIRECT_OBJECT"] != "john"
+    # the fix: "john" now comes out RECIPIENT, "garden" stays PLACE.
+    assert roles.get("RECIPIENT") == "john"
+    assert roles.get("PLACE") == "garden"
 
 
 # ---------------------------------------------------------------------------

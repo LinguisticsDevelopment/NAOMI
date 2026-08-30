@@ -60,19 +60,54 @@ _PREP_RELATION = {"in": "PLACE", "on": "PLACE", "at": "PLACE", "inside": "PLACE"
                   "to": "PLACE", "into": "PLACE", "from": "SOURCE",
                   "by": "PLACE", "near": "PLACE"}
 
+# M58c (dev/PROSE_FAILURE_TAXONOMY.md, "Bug surfaced"): a second landmine in
+# the same family as the agentive-"by" one above. "to" unconditionally maps
+# to PLACE, which is right for a motion PP ("moved to the office") but wrong
+# for the PREPOSITIONAL DATIVE ("gave the ball to john" -- "to john" is the
+# RECIPIENT, not a place). curriculum2.py's TRANSFER_TEMPLATES comment
+# documents this exact bug as a LANDMINE AVOIDED by template choice (the
+# curriculum only ever uses the double-object form, "gave john the ball",
+# specifically BECAUSE this was out of scope for that milestone) -- so
+# fixing it here cannot change any existing curriculum parse; no curriculum
+# sentence exercises "TRANSFER-VERB ... to ENTITY".
+#
+# Scoped narrowly, mirroring the "by" guard's own reasoning: only fires when
+# BOTH (a) the clause's predicate is a give/hand/pass verb AND (b) the PP's
+# object is an ENTITY (:func:`is_entity` -- a name or pronoun). A genuine
+# locative "to" ("went to the office") never has an entity object in this
+# grammar's PP shape (the object of a motion "to" is a place noun, not a
+# person), so this can never re-label a real PLACE PP.
+_TRANSFER_VERBS = {"give", "gave", "gives", "given", "giving",
+                    "hand", "handed", "hands", "handing",
+                    "pass", "passed", "passes", "passing"}
+
+
+def _is_dative_to(predicate_tok: Optional[str], prep_tok: str, obj_tok: Optional[str]) -> bool:
+    return (prep_tok == "to"
+            and (predicate_tok or "").lower() in _TRANSFER_VERBS
+            and is_entity(obj_tok or ""))
+
 
 def _prep_relation(graph, predicate_idx: Optional[int], prep_token: Optional[str],
-                    default: str) -> str:
-    """``_PREP_RELATION`` lookup with the agentive-"by" guard (see the module-
-    level landmine note above): a "by" PP attached to a PASSIVE-flagged
-    predicate is the passive agent ("the ball was found by mary" -> AGENT),
-    not a place. ``predicate_idx`` is the graph node whose PASSIVE flag (if
-    any) governs the guard; ``None`` (no known predicate node) never triggers
-    it, so every existing non-passive call site is unaffected.
+                    default: str, obj_token: Optional[str] = None) -> str:
+    """``_PREP_RELATION`` lookup with two guards (see the module-level
+    landmine notes above): a "by" PP attached to a PASSIVE-flagged predicate
+    is the passive agent ("the ball was found by mary" -> AGENT), not a
+    place; a "to" PP on a TRANSFER-verb predicate whose object is an entity
+    is the RECIPIENT ("gave the ball to john"), not a place. ``predicate_idx``
+    is the graph node whose PASSIVE flag/token (if any) governs both guards;
+    ``None`` (no known predicate node) never triggers either, so every
+    existing call site that doesn't pass one is unaffected. ``obj_token``
+    (the PP's own object surface form) is ``None`` by default -- every
+    existing call site that doesn't pass it never triggers the dative guard
+    either, byte-identical to before this guard existed.
     """
     tok = (prep_token or "").lower()
     if tok == "by" and predicate_idx is not None and "PASSIVE" in graph.flags_of(predicate_idx):
         return "AGENT"
+    pred_tok = graph.token(predicate_idx) if predicate_idx is not None else None
+    if _is_dative_to(pred_tok, tok, obj_token):
+        return "RECIPIENT"
     return _PREP_RELATION.get(tok, default)
 
 
@@ -125,6 +160,8 @@ def _clause_from_node(node: ParseNode) -> Clause:
                 prep_tok = (ch.token or "").lower()
                 if prep_tok == "by" and "PASSIVE" in node.flags:
                     rel = "AGENT"
+                elif _is_dative_to(node.token, prep_tok, obj.token):
+                    rel = "RECIPIENT"
                 else:
                     rel = _PREP_RELATION.get(prep_tok, (ch.token or "PREP").upper())
                 args.append((rel, obj))
@@ -316,7 +353,8 @@ def _relation_for(graph, idx: int, predicate_idx: Optional[int] = None) -> str:
     """
     for p, c in graph.edges_of("PREPOSITION"):
         if c == idx:
-            return _prep_relation(graph, predicate_idx, graph.token(p), "PLACE")
+            return _prep_relation(graph, predicate_idx, graph.token(p), "PLACE",
+                                   obj_token=graph.token(idx))
     for t, _p, c in graph.edges:
         if c == idx and t in ("OBJECT", "INDIRECT_OBJECT", "SUBJECT"):
             return t
@@ -386,7 +424,8 @@ def _extra_args(graph, clause_idx: int, primary_val_idx: Optional[int] = None,
             seen.add(val_idx)
             prep_tok = graph.token(c)
             rel = _prep_relation(graph, clause_idx, prep_tok,
-                                  (prep_tok or "PREP").upper() if prep_tok else "PREP")
+                                  (prep_tok or "PREP").upper() if prep_tok else "PREP",
+                                  obj_token=graph.token(val_idx))
             found.append((val_idx, rel, _syn(graph.label(val_idx) or "NOUN", graph.token(val_idx), rel)))
     found.sort(key=lambda item: item[0])
     return [(rel, node) for _idx, rel, node in found]
@@ -433,7 +472,8 @@ def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx:
             prep = next(((p, c) for (p, c) in graph.edges_of("PREPOSITION") if p == pp_idx), None)
             if prep is not None:
                 _p, val_idx = prep
-                rel = _prep_relation(graph, c_idx, graph.token(pp_idx), "PLACE")
+                rel = _prep_relation(graph, c_idx, graph.token(pp_idx), "PLACE",
+                                      obj_token=graph.token(val_idx))
         if val_idx is None:
             obj_idx = next((c for (t, p, c) in graph.edges
                             if t in ("OBJECT", "INDIRECT_OBJECT") and p == c_idx
@@ -494,7 +534,8 @@ def _recover_coordinated_clause_orphans(graph) -> List[Clause]:
         subj = graph.token(max(elements))
         if subj is None:
             continue
-        rel = _prep_relation(graph, idx, graph.token(pp_idx), "PLACE")
+        rel = _prep_relation(graph, idx, graph.token(pp_idx), "PLACE",
+                              obj_token=graph.token(val_idx))
         extra = _extra_args(graph, idx, primary_val_idx=val_idx, exclude={val_idx})
         out.append(_fact_clause(graph, subj, tok, rel, val_idx, extra,
                                  is_question=_is_question(graph, idx)))
@@ -570,7 +611,8 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
     prep_edges = graph.edges_of("PREPOSITION")
     if neg and subj is not None and prep_edges:
         prep_node, val_idx = prep_edges[0]
-        rel = _prep_relation(graph, clause_idx, graph.token(prep_node), "PLACE")
+        rel = _prep_relation(graph, clause_idx, graph.token(prep_node), "PLACE",
+                              obj_token=graph.token(val_idx))
         extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx})
         return [_fact_clause(graph, subj, pred, rel, val_idx, extra, is_q)], [DiscourseLink("NOT", "NOT", 0, 0)]
 
@@ -578,7 +620,8 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
     if subj is not None and prep_edges:
         prep_node, val_idx = prep_edges[0]
         default = (graph.token(prep_node) or "PREP").upper()
-        rel = _prep_relation(graph, clause_idx, graph.token(prep_node), default)
+        rel = _prep_relation(graph, clause_idx, graph.token(prep_node), default,
+                              obj_token=graph.token(val_idx))
         extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx})
         return [_fact_clause(graph, subj, pred, rel, val_idx, extra, is_q)], []
 
