@@ -2957,3 +2957,41 @@ Full suite 822 passed / 2 env-gated skips. Logs: runs/m57b_v2_*.log.
 Next: M57c — instance atoms (M57a registry) replace var: name atoms in
 the candidate sets, two-Marys + definite-description curricula,
 provenance wired into reactor writes, morphology signals, capacity curve.
+
+### M57c battery #1 — write-back replicates in the mix; instance episodes fail EVEN UNDER FORCED-GOLD: the read path is the gap (MEASURED, honest partial)
+
+First cloud-routine battery (Anthropic cloud, 4 cores/15GB; logs on
+branch m57c-battery-logs). Instance mix: 1500 eps (500 old / 500
+writeback / 500 instance, inverse_frac 0.3), dim 48, 60 epochs, Track A.
+
+| kind / arm | normal | forced-gold | forced-wrong | cheat | no-gold |
+|---|---|---|---|---|---|
+| writeback | 1.000 | 1.000 | 0.000 | 0.652 | 1.000 |
+| instance | 0.356 | 0.423 | 0.279 | 0.317 | 0.356 |
+| old | 0.865 | 0.865 | 0.865 | 0.875 | 0.865 |
+| inverse_query | 0.138 | 0.207 | 0.138 | 0.172 | 0.138 |
+
+(1) M57b's proof REPLICATES inside the mixed batch, cell for cell —
+the director's per-(row,step) evidence-relation fallback held.
+(2) Instance episodes (chance 0.25) fail in EVERY arm including
+forced-gold 0.423 — the decision-table cell that says "mechanism, not
+curriculum, not resolver": handing over the correct referent for free
+does not solve the task. Cause = the seam the M57c build disclosed:
+QUESTION steps that refer by description/pronoun/ambiguous name still
+read memory at the PRE-collapse address (mem_read computed before
+_collapse; write-side redirect only), so "what is the doctor like?"
+never reads the doctor's node and must answer from GRU recall. Resolver
+instance-binding at chance (0.438) is downstream: with the read path
+broken, correct binding earns no reward. Per-device subsets confirm:
+unique-name other-targeted questions do best (ambiguous_name/other
+0.722), description/pronoun referent-targeted worst (0.231/0.500 at
+n=13/6). (3) inverse_query BELOW chance: no entity-axis read exists —
+"who is tall?" needs the tensor unbound along the entity axis
+(einsum bijk,bj,bk->bi), then contrastive over instance atoms.
+
+Verdict: M57c NOT proven; mechanism incomplete, not leaky. Fix is
+implementation, not redesign: M57c.2 = post-collapse mem_read recompute
+on redirected question steps + entity-axis inverse read. Ops: each arm
+5-8GB RSS (B×d³ memory tensor with autograd across T) — 4 parallel arms
+OOM'd on 15GB; footprint engineering is now priority 1 per the
+2026-08-30 reprioritization (longer episodes are impossible otherwise).
