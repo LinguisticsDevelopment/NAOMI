@@ -1,26 +1,32 @@
-# Session handoff (2026-08-11)
+# Session handoff (2026-08-30)
 
-Branch: claude/m27-m28-cleanup @ 5863ead, all pushed. Worktree:
-.claude/worktrees/repo-cleanup. Venv: /home/will/.claude/jobs/eb5a4538/tmp/venv
-(rebuild if gone: uv venv + torch-cpu + nltk wordnet/omw-1.4).
+Branch: claude/m27-m28-cleanup (local worktree branch `m57-work` in
+.claude/worktrees/repo-cleanup), all pushed. Venv:
+/home/will/.claude/jobs/eb5a4538/tmp/venv (rebuild: uv venv + torch-cpu +
+nltk wordnet/omw-1.4; USVS artifact via scripts/build_usvs.py).
 
 Read in this order:
-1. dev/AURORA_SPRINT.md      — the clock (cluster until ~Sept 15) + current priorities incl. final reprioritization section
-2. RESEARCH_NOTES.md         — tail from M52 onward (M55 gate, M56b/c, M-ES1 are load-bearing)
-3. dev/MIND_INTERFACE.md     — the signed-off architecture + v2 addenda (entity instances, memory-as-graph)
-4. dev/TRACK_C_DESIGN.md     — op-algebra spike (parked: more-research verdict)
-5. dev/NEXT_ARC_PLAN.md      — the arc map (partially superseded by AURORA_SPRINT reprioritization)
+1. CLAUDE.md (repo root)      — working agreement: director/Sonnet-agent model, ops rules, M57 schema decision
+2. dev/AURORA_SPRINT.md       — final section: 2026-08-30 reprioritization (clock DROPPED; depth first)
+3. RESEARCH_NOTES.md tail     — M57a, M57b (PROVEN), "M57c battery #1" (read-path diagnosis)
+4. dev/LTM_DESIGN_BRIEF.md    — the lead's 5 pending decisions on episodic LTM
+5. dev/CAPACITY_CURVE.md      — dim48 holds ~256 facts @0.95 forward recall
+6. dev/MIND_INTERFACE.md      — v2 locked design + entity-instance addendum
 
-NEXT TASK: M57 robust memory schema — spec is the AURORA_SPRINT
-reprioritization section + MIND_INTERFACE v2 addenda + the write-back gap
-(RESEARCH_NOTES M55-era chat decision: resolver redirects VALUE not
-ADDRESS today; "she is tall" must write to MARY's node; gate = no-gold
-inference test). Then M58 corpus converter + zero-shot.
+STATE: M57a (instances) and M57b (write-back) proven. M57c.2 (post-collapse
+read at the resolved address + entity-axis inverse read) committed 7edb00d,
+GATE PENDING on cloud battery #2 (routine trig_01Hwopgsf2TGfoJUEE1oWuhu;
+logs land on branch m57c2-battery-logs). Also shipped since: minibatched
+training (--batch-size/--threads, peak RSS), capacity curve, rich-episode
+curriculum (3-8 entities, --rich-frac), provenance wired into live writes
+(--audit). Next: battery with --rich-frac in the mix; LTM after the lead's
+decisions; then M58 corpus converter + zero-shot prose number.
 
-Ops rules that matter (learned hard): one training run at a time, nohup+
-nice to runs/*.log, watchers grep the run's UNIQUE script name; agents
-foreground-only, no git, smokes ≤2.5min; smoke results NEVER gate
-curriculum validity — full-scale wrong-binding arms do (3 inversions on
-record); every capability curriculum needs its cheat-baseline at floor;
-held-out-atom tests for perfect-looking results; commit+push per
-milestone with ledger entry, win or lose.
+OPS (learned hard): user's machine is for unit tests/smokes ONLY — full-
+scale training runs in the cloud routine (Agent isolation:"remote" silently
+falls back to LOCAL — never trust it). Push the branch BEFORE any cloud
+run. Cloud box = 4 cores/15GB: ≤2 arms concurrent, OMP_NUM_THREADS=2,
+--batch-size 64; cloud agents must poll with foreground sleeps (wakeups
+fire hours late). Earlier ops rules unchanged: smoke results never gate
+validity — full-scale forced-wrong arms do; cheat baselines; held-out
+atoms; commit+push per milestone with a ledger entry, win or lose.
