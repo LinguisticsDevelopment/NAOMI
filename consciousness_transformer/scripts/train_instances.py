@@ -69,6 +69,17 @@ AUX_WEIGHT = 0.5   # resolver cross-entropy weight added to the answer loss -- s
 # --evidence-prior structural-prior mix (softmax(s_c * beta)) -- see
 # ClauseReactor's own evidence_prior_beta docstring paragraph.
 EVIDENCE_PRIOR_BETA = 5.0
+# M60 (op-library integration, dev/OP_LIBRARY_MAP.md's ``recency`` row):
+# nsm_ct.ops.recency always contributes exactly THREE extra per-candidate
+# register columns (steps_since, log_count, is_most_recent) -- see
+# ClauseBatch.cand_recency's own docstring. Added UNCONDITIONALLY to
+# CorefHead's cand_feature_extra, on top of the ONE evidence_interaction
+# column this script already always widens for (M57c.3) -- mirrors that
+# earlier decision exactly ("the register widening itself is unconditional
+# for Track A ... harmless no-op for a batch/track that never carries
+# one" -- recency is equally harmless when a batch carries no
+# mention_steps at all, see ClauseReactor._collapse's extra_cols block).
+RECENCY_EXTRA = 3
 
 
 def build_instance_curriculum(n_episodes: int, seed: int, inverse_frac: float = 0.3,
@@ -146,7 +157,7 @@ def binding_stats(out, batch, eps):
 def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden: int = 128,
             cheat: bool = False, no_gold_eval: bool = False, force_binding: str = None,
             batch_size: int = 64, audit: int = 0, evidence_prior: bool = False,
-            load: str = None) -> dict:
+            load: str = None, cleanup: bool = False) -> dict:
     """``track``: "A" | "B" | None (None = no resolver installed -- both
     writeback's address-redirect AND instance's evidence-relation
     resolution never fire at all, a genuine floor arm).
@@ -213,7 +224,7 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
 
     model_config = {
         "dim": dim, "hidden": hidden, "track": track,
-        "use_cand_feature": True, "cand_feature_extra": 1,
+        "use_cand_feature": True, "cand_feature_extra": 1 + RECENCY_EXTRA,
         "evidence_prior_beta": EVIDENCE_PRIOR_BETA if evidence_prior else None,
     }
 
@@ -275,12 +286,32 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
                 print(f"  [{name}] epoch {i+1:3d} loss={last_loss:.3f} val={acc:.3f}", flush=True)
         elapsed_min = (time.time() - t0) / 60
 
+    # M60 (op-library integration -- CLEANUP): set the flag only NOW, for
+    # the FINAL held-out eval below -- ClauseReactor.forward's own gate
+    # (``self.cleanup and not self.training``) already makes this an
+    # eval-only computation, but setting the attribute this late also
+    # keeps every periodic mid-training val print above (which reuses this
+    # SAME model object) exactly as it was pre-M60 -- "do NOT change
+    # training" read literally, not just the loss.
+    model.cleanup = cleanup
     model.eval()
     out_va = eval_minibatched(model, va, batch_size)
     pred = out_va["answer_logits"].argmax(-1)
     total_acc = float((pred == gold_va).float().mean())
     print(f"  [{name}] val total={total_acc:.3f}  resolver_params={n_resolver_params}"
           f"  time={elapsed_min:.2f} min  peak_rss_mb={peak_rss_mb():.1f}", flush=True)
+
+    if "cleanup_index" in out_va:
+        assert bool((out_va["cleanup_index"] == pred).all()), \
+            "cleanup changed the argmax prediction -- see ops.cleanup's docstring, it must not"
+        cleanup_abstain = out_va["cleanup_abstain"].bool()
+        abstain_rate = float(cleanup_abstain.float().mean())
+        confident = ~cleanup_abstain
+        acc_confident = (float((pred[confident] == gold_va[confident]).float().mean())
+                         if bool(confident.any()) else float("nan"))
+        print(f"  [{name}] CLEANUP: abstain_rate={abstain_rate:.3f} "
+              f"acc_when_confident={acc_confident:.3f} (n={int(confident.sum())}) "
+              f"vs overall={total_acc:.3f} (n={len(pred)})", flush=True)
 
     per_kind: dict = {}
     for i, e in enumerate(va_eps):
@@ -301,6 +332,14 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
         if w:
             print(f"    writeback/{k}: {sum(w)}/{len(w)} = {sum(w)/len(w):.3f}")
 
+    # M60 (op-library integration -- inverse-read routing, LOCKED DESIGN
+    # item 3): the DIRECT route's own prediction, when this eval batch
+    # carried any inverse-query step at all -- gathered per-kind alongside
+    # the learned-head inverse-query accuracy below, NOT folded into
+    # ``pred``/``total_acc`` (no change to the learned path).
+    inverse_direct_pred = out_va["inverse_direct_logits"].argmax(-1) if "inverse_direct_logits" in out_va else None
+    inverse_direct_hits: list = []
+
     # instance per-(referring_device, referent/other) subset (target-mode
     # only) + inverse-query accuracy on its own.
     inst_device: dict = {}
@@ -311,6 +350,8 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
         hit = bool(pred[i] == gold_va[i])
         if e.meta.get("question_mode") == "inverse":
             inst_inverse.append(hit)
+            if inverse_direct_pred is not None:
+                inverse_direct_hits.append(bool(inverse_direct_pred[i] == gold_va[i]))
             continue
         device = e.meta.get("referring_device")
         subset = "referent_targeted" if e.meta.get("question_targets_referent") else "other_targeted"
@@ -339,6 +380,8 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
         rich_by_n.setdefault(e.meta["n_entities"], []).append(hit)
         if e.meta.get("question_mode") == "inverse":
             rich_inverse.append(hit)
+            if inverse_direct_pred is not None:
+                inverse_direct_hits.append(bool(inverse_direct_pred[i] == gold_va[i]))
             continue
         subset = "overwritten" if e.meta.get("question_targets_overwritten") else "baseline"
         device = e.meta.get("question_device") or "none"
@@ -351,6 +394,12 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
     if rich_inverse:
         print(f"    rich/inverse_query: {sum(rich_inverse)}/{len(rich_inverse)} "
               f"= {sum(rich_inverse)/len(rich_inverse):.3f}")
+    if inverse_direct_hits:
+        n_dir = len(inverse_direct_hits)
+        acc_dir = sum(inverse_direct_hits) / n_dir
+        print(f"  [{name}] inverse_direct_acc: {sum(inverse_direct_hits)}/{n_dir} = {acc_dir:.3f}  "
+              f"(direct similarity(query_entity_readout, options) route, vs the learned-head "
+              f"instance/inverse_query + rich/inverse_query accuracy above)", flush=True)
 
     binding = binding_stats(out_va, va, va_eps)
     if binding is not None:
@@ -420,6 +469,12 @@ def main() -> None:
                           f"(softmax(s_c * {EVIDENCE_PRIOR_BETA}) multiplied into cand_prior) -- the "
                           "'perception never guesses' prior, on top of (not instead of) the learned "
                           "per-candidate interaction feature Track A always gets now.")
+    ap.add_argument("--cleanup", action="store_true",
+                     help="M60: install nsm_ct.ops.cleanup on the answer path (eval only) -- reports "
+                          "the top1-top2 margin and a CAUTION-gated abstain flag alongside the "
+                          "existing answer_logits argmax (never changes it -- see ClauseReactor's own "
+                          "cleanup docstring paragraph). Prints abstain_rate and "
+                          "acc_when_confident vs overall after the final held-out eval.")
     ap.add_argument("--episodes", type=int, default=1500)
     ap.add_argument("--dim", type=int, default=48)
     ap.add_argument("--hidden", type=int, default=128)
@@ -474,7 +529,7 @@ def main() -> None:
     result = run_arm(f"track-{args.track}", args.track, episodes, args.dim, args.epochs, args.seed, args.hidden,
                       cheat=args.cheat, no_gold_eval=args.no_gold_eval, force_binding=args.force_binding,
                       batch_size=args.batch_size, audit=args.audit, evidence_prior=args.evidence_prior,
-                      load=args.load)
+                      load=args.load, cleanup=args.cleanup)
 
     if args.save and result:
         config = dict(result["model_config"])
@@ -487,6 +542,7 @@ def main() -> None:
             "seed": args.seed, "epochs": args.epochs, "batch_size": args.batch_size,
             "cheat": args.cheat, "no_gold_eval": args.no_gold_eval,
             "force_binding": args.force_binding, "evidence_prior": args.evidence_prior,
+            "cleanup": args.cleanup,
             "git_commit": git_commit(), "argv": sys.argv[:],
         })
         extra = {"total_acc": result["total_acc"], "n_resolver_params": result["n_resolver_params"],

@@ -189,7 +189,34 @@ class EntityCandidateSet(CandidateSet):
     :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse`'s entity branch
     for how ``ClauseBatch.cand_from_ltm`` (once populated) is consumed --
     the SAME per-candidate feature-register path M57c.3's
-    ``evidence_interaction`` scalar already uses."""
+    ``evidence_interaction`` scalar already uses.
+
+    M60 (op-library integration, dev/OP_LIBRARY_MAP.md's ``recency`` row --
+    RESEARCH_NOTES "M57 battery #3": recency-only referent cases, e.g. the
+    ``ambiguous_name`` device tested here, sit at chance because nothing in
+    the register carries discourse-order salience at all -- see
+    tests/test_evidence_interaction.py's ``_train_short`` docstring, which
+    excludes this exact device from its own interaction-feature test for
+    this reason): ``mention_steps``/``mention_counts`` -- both default
+    ``None``, byte-identical for every pre-M60 caller -- shape
+    ``(len(candidates),)`` each, one entry per candidate IN THE SAME ORDER
+    as ``candidates``. ``mention_steps[j]`` is the row-local STEP INDEX
+    this candidate's own atom was last the ENTITY of a statement BEFORE
+    this candidate set's own step (``-1`` = never mentioned this episode,
+    :data:`nsm_ct.ops.RECENCY_NEVER`'s sentinel convention upstream);
+    ``mention_counts[j]`` is how many times it was. Computed by the
+    ``_xxx_steps`` helper that builds this candidate set (it already knows
+    every step's own entity as it appends the step, so it is the natural
+    place to log this -- see :func:`nsm_ct.clause_reactor._instance_steps`/
+    :func:`~nsm_ct.clause_reactor._rich_steps`'s own ``mention_log``
+    bookkeeping), NOT reconstructed generically downstream (there is no
+    generic way to tell "this candidate's atom" apart from an arbitrary
+    grounded vector once it is just a float32 array). Consumed by
+    :func:`nsm_ct.clause_reactor.build_clause_batch` via
+    :func:`nsm_ct.ops.recency` into the new
+    :attr:`~nsm_ct.clause_reactor.ClauseBatch.cand_recency` field -- the
+    SAME per-candidate feature-register path ``evidence_interaction``/
+    ``from_ltm`` already use."""
 
     surface: str = ""
     feature: Optional[np.ndarray] = None
@@ -199,6 +226,8 @@ class EntityCandidateSet(CandidateSet):
     evidence_relation: Optional[str] = None
     evidence_target: Optional[str] = None
     from_ltm: Optional[np.ndarray] = None
+    mention_steps: Optional[np.ndarray] = None
+    mention_counts: Optional[np.ndarray] = None
 
 
 # ---------------------------------------------------------------------------

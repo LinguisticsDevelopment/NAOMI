@@ -20,6 +20,7 @@ import torch.nn.functional as F
 
 from . import entity_memory as em
 from . import membrane
+from . import ops
 from .clause import extract_discourse
 from .episode import _NAMES
 from .instances import InstanceRegistry
@@ -905,12 +906,33 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     referent = ep.meta["referent_role"]
 
     steps = []
+    # M60 (op-library integration -- RECENCY): row-local mention log, one
+    # entry per step index at which a candidate's OWN atom was the step's
+    # ENTITY (subject position) -- the "ambiguous_name" device's ONLY
+    # disambiguating channel (its evidence_relation/evidence_target compare
+    # against no useful signal at all, see EntityCandidateSet.evidence_target's
+    # M57c.3 docstring paragraph and tests/test_evidence_interaction.py's
+    # ``_train_short`` docstring, which excludes this device from the
+    # interaction-feature test for exactly this reason). Built here (not
+    # reconstructed downstream) because this function already knows, at
+    # every ``steps.append`` call, exactly which candidate id that step's
+    # entity is -- see :func:`_recency_fields` below and
+    # membrane.EntityCandidateSet.mention_steps's own docstring.
+    mention_log: Dict[str, List[int]] = {ids[r]: [] for r in ("a", "b", "c")}
+
+    def _recency_fields(roles):
+        ms = np.array([(mention_log[ids[r]][-1] if mention_log[ids[r]] else -1) for r in roles],
+                       dtype=np.float32)
+        mc = np.array([len(mention_log[ids[r]]) for r in roles], dtype=np.float32)
+        return ms, mc
+
     # Registration: kind, gender, named-place -- direct addressing, own
     # atom (see module comment above).
     for r in ("a", "b", "c"):
         kind_vec = codec.filler_vec("kind:" + kinds[r])
         gender_vec = codec.filler_vec("gender:" + genders[r])
         place_vec = _content_vec(places[r], resolver, codec, cache, meaning_source)
+        mention_log[ids[r]] += [len(steps), len(steps) + 1, len(steps) + 2]
         steps.append((atoms[r], kind_rel, kind_vec, pred_is, z, 0))
         steps.append((atoms[r], gender_rel, gender_vec, pred_is, z, 0))
         steps.append((atoms[r], place_rel, place_vec, pred_is, z, 0))
@@ -925,6 +947,7 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
         baseline_order = [r for r in baseline_order if r != referent] + [referent]
     for r in baseline_order:
         trait_vec = _content_vec(baselines[r], resolver, codec, cache, meaning_source)
+        mention_log[ids[r]].append(len(steps))
         steps.append((atoms[r], trait_rel, trait_vec, pred_is, z, 0))
 
     cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
@@ -959,6 +982,7 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     if not cheat:
         candidates = [membrane.Candidate(key=ids[r], prior=1.0 / len(cand_roles)) for r in cand_roles]
         gold_index = None if no_gold else cand_roles.index(referent)
+        rec_steps, rec_counts = _recency_fields(cand_roles)
         cs = membrane.EntityCandidateSet(
             candidates=candidates,
             provenance={"sentence_index": overwrite_step_idx, "kind": "instance", "device": device},
@@ -968,6 +992,8 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
             addr_redirect=True,
             evidence_relation=evidence_rel_name,
             evidence_target=evidence_target_key,
+            mention_steps=rec_steps,
+            mention_counts=rec_counts,
         )
         cand_sets[overwrite_step_idx] = cs
         if force is not None:
@@ -993,6 +1019,7 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
             if not cheat:
                 q_candidates = [membrane.Candidate(key=ids[r], prior=1.0 / 3) for r in ("a", "b", "c")]
                 q_gold_index = None if no_gold else ("a", "b", "c").index(target)
+                q_rec_steps, q_rec_counts = _recency_fields(("a", "b", "c"))
                 q_cs = membrane.EntityCandidateSet(
                     candidates=q_candidates,
                     provenance={"sentence_index": q_step_idx, "kind": "instance",
@@ -1003,6 +1030,8 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                     addr_redirect=True,
                     evidence_relation="kind",
                     evidence_target="kind:" + kinds[target],
+                    mention_steps=q_rec_steps,
+                    mention_counts=q_rec_counts,
                 )
                 cand_sets[q_step_idx] = q_cs
                 if force is not None:
@@ -1093,6 +1122,20 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     def _id_for(role) -> str:
         return group_id if role == "group" else ids[role]
 
+    # M60 (op-library integration -- RECENCY): SAME row-local mention log
+    # _instance_steps builds (see that function's own docstring paragraph),
+    # generalized over N roles + the optional group id -- one entry per
+    # step index at which a candidate's own atom was the step's ENTITY.
+    mention_log: Dict[str, List[int]] = {ids[i]: [] for i in range(n)}
+    if has_group:
+        mention_log[group_id] = []
+
+    def _recency_fields(roles):
+        ms = np.array([(mention_log[_id_for(r)][-1] if mention_log[_id_for(r)] else -1)
+                        for r in roles], dtype=np.float32)
+        mc = np.array([len(mention_log[_id_for(r)]) for r in roles], dtype=np.float32)
+        return ms, mc
+
     steps = []
     # Registration: kind, gender, named-place, then every held attribute
     # relation's baseline value -- direct addressing, own atom (mirrors
@@ -1108,13 +1151,16 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
         kind_vec = codec.filler_vec("kind:" + kinds[i])
         gender_vec = codec.filler_vec("gender:" + genders[i])
         place_vec = _content_vec(places[i], resolver, codec, cache, meaning_source)
+        mention_log[ids[i]] += [len(steps), len(steps) + 1, len(steps) + 2]
         steps.append((atoms[i], kind_rel, kind_vec, pred_is, z, 0))
         steps.append((atoms[i], gender_rel, gender_vec, pred_is, z, 0))
         steps.append((atoms[i], place_rel, place_vec, pred_is, z, 0))
         for rel in held_relations[i]:
             val_vec = _content_vec(initial_values[i][rel], resolver, codec, cache, meaning_source)
+            mention_log[ids[i]].append(len(steps))
             steps.append((atoms[i], codec.filler_vec("attr:" + rel), val_vec, pred_is, z, 0))
         if has_group:
+            mention_log[ids[i]].append(len(steps))
             steps.append((atoms[i], number_rel, codec.filler_vec("number:sg"), pred_is, z, 0))
 
     atom_lookup: Dict[str, np.ndarray] = {ids[i]: atoms[i] for i in range(n)}
@@ -1156,6 +1202,7 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
             mention_word = stmt["mention_word"]
             candidates = [membrane.Candidate(key=ids[r], prior=1.0 / len(cand_roles)) for r in cand_roles]
             gold_index = None if no_gold else cand_roles.index(referent)
+            rec_steps, rec_counts = _recency_fields(cand_roles)
             cs = membrane.EntityCandidateSet(
                 candidates=candidates,
                 provenance={"sentence_index": step_idx, "kind": "rich", "device": device},
@@ -1165,6 +1212,8 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                 addr_redirect=True,
                 evidence_relation=evidence_rel_name,
                 evidence_target=evidence_target_key,
+                mention_steps=rec_steps,
+                mention_counts=rec_counts,
             )
             cand_sets[step_idx] = cs
             if force is not None:
@@ -1187,6 +1236,7 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     # for "kind"/"gender" and candidates = every individual PLUS the group.
     if has_group:
         m0, m1 = ep.meta["group_members"]
+        mention_log[group_id] += [len(steps), len(steps) + 1, len(steps) + 2]
         steps.append((group_atom, number_rel, codec.filler_vec("number:pl"), pred_is, z, 0))
         steps.append((group_atom, codec.filler_vec("attr:member_0"), atoms[m0], pred_is, z, 0))
         steps.append((group_atom, codec.filler_vec("attr:member_1"), atoms[m1], pred_is, z, 0))
@@ -1203,6 +1253,7 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
             group_candidates = [membrane.Candidate(key=_id_for(r), prior=1.0 / len(group_cand_roles))
                                  for r in group_cand_roles]
             group_gold_index = None if no_gold else group_cand_roles.index("group")
+            group_rec_steps, group_rec_counts = _recency_fields(group_cand_roles)
             group_cs = membrane.EntityCandidateSet(
                 candidates=group_candidates,
                 provenance={"sentence_index": group_step_idx, "kind": "rich", "device": "plural_pronoun"},
@@ -1212,6 +1263,8 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                 addr_redirect=True,
                 evidence_relation="number",
                 evidence_target="number:pl",
+                mention_steps=group_rec_steps,
+                mention_counts=group_rec_counts,
             )
             cand_sets[group_step_idx] = group_cs
             if force is not None:
@@ -1238,6 +1291,7 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
             q_candidates = [membrane.Candidate(key=_id_for(r), prior=1.0 / len(q_cand_roles))
                              for r in q_cand_roles]
             q_gold_index = None if no_gold else q_cand_roles.index("group")
+            q_rec_steps, q_rec_counts = _recency_fields(q_cand_roles)
             q_cs = membrane.EntityCandidateSet(
                 candidates=q_candidates,
                 provenance={"sentence_index": q_step_idx, "kind": "rich",
@@ -1248,6 +1302,8 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                 addr_redirect=True,
                 evidence_relation="number",
                 evidence_target="number:pl",
+                mention_steps=q_rec_steps,
+                mention_counts=q_rec_counts,
             )
             cand_sets[q_step_idx] = q_cs
             if force is not None:
@@ -1267,6 +1323,7 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
             if not cheat:
                 q_candidates = [membrane.Candidate(key=ids[r], prior=1.0 / n) for r in range(n)]
                 q_gold_index = None if no_gold else target
+                q_rec_steps, q_rec_counts = _recency_fields(range(n))
                 q_cs = membrane.EntityCandidateSet(
                     candidates=q_candidates,
                     provenance={"sentence_index": q_step_idx, "kind": "rich",
@@ -1277,6 +1334,8 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                     addr_redirect=True,
                     evidence_relation="kind",
                     evidence_target="kind:" + kinds[target],
+                    mention_steps=q_rec_steps,
+                    mention_counts=q_rec_counts,
                 )
                 cand_sets[q_step_idx] = q_cs
                 if force is not None:
@@ -1875,6 +1934,27 @@ class ClauseBatch:
     # milestone builds, same "hand this to the next milestone" contract
     # ``membrane.EntityCandidateSet.from_ltm`` documents on its own field.
     cand_from_ltm: Optional[torch.Tensor] = None  # [B, T, C]  0/1, 0 elsewhere
+    # M60 (op-library integration, dev/OP_LIBRARY_MAP.md's ``recency`` row --
+    # RESEARCH_NOTES "M57 battery #3": recency-only referent cases, e.g. the
+    # "ambiguous_name" instance/rich device, sit at chance): ONE new field,
+    # appended LAST (after cand_from_ltm) so every pre-M60 POSITIONAL
+    # ``ClauseBatch(...)`` call site is untouched -- defaults to ``None``,
+    # byte-identical to every batch built before this milestone. Per (row,
+    # step, candidate, [steps_since, log_count, is_most_recent]): the THREE
+    # :func:`nsm_ct.ops.recency` features, computed at batch-build time from
+    # each candidate set's ``mention_steps``/``mention_counts`` (see
+    # membrane.EntityCandidateSet's own docstring paragraph) against the
+    # step's own index -- deterministic, no learned parameters (centering-
+    # theory salience, dev/OP_INVENTORY.md's DNC temporal-link-style
+    # ordering). ``None`` for every batch with no candidate set carrying
+    # ``mention_steps`` at all -- the SAME "only if present" discipline
+    # every optional field above establishes. Consumed by
+    # :meth:`ClauseReactor._collapse`'s entity branch as a THIRD optional
+    # extra-column group, appended onto ``cand_feature_per_candidate``
+    # alongside ``evidence_interaction``'s scalar and ``cand_from_ltm``'s
+    # flag (``resolver.cand_feature_extra`` widens to cover however many of
+    # the three are actually present this batch).
+    cand_recency: Optional[torch.Tensor] = None  # [B, T, C, 3]
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
@@ -1907,6 +1987,7 @@ class ClauseBatch:
         evidence_target = self.cand_evidence_target.to(device) if self.cand_evidence_target is not None else None
         inv_mask = self.inverse_mask.to(device) if self.inverse_mask is not None else None
         from_ltm = self.cand_from_ltm.to(device) if self.cand_from_ltm is not None else None
+        recency = self.cand_recency.to(device) if self.cand_recency is not None else None
         # M57d: step_meta is plain Python (no device), carried through
         # unchanged -- mirrors nothing else in this method living off-device.
         return ClauseBatch(self.entity.to(device), self.relation.to(device),
@@ -1914,7 +1995,7 @@ class ClauseBatch:
                            self.is_q.to(device), self.mask.to(device),
                            self.options.to(device), self.answer.to(device), coord, ans_ok,
                            *cand, *scand, *hcand, addr_mask, forced, evidence_rel, evidence_target,
-                           inv_mask, self.step_meta, from_ltm)
+                           inv_mask, self.step_meta, from_ltm, recency)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
@@ -1937,11 +2018,12 @@ class ClauseBatch:
         else:
             step_meta = None
         from_ltm = self.cand_from_ltm[idx] if self.cand_from_ltm is not None else None
+        recency = self.cand_recency[idx] if self.cand_recency is not None else None
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
                            self.options[idx], self.answer[idx], coord, ans_ok,
                            *cand, *scand, *hcand, addr_mask, forced, evidence_rel, evidence_target,
-                           inv_mask, step_meta, from_ltm)
+                           inv_mask, step_meta, from_ltm, recency)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
@@ -2259,6 +2341,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     cand_evidence_relation = None
     cand_evidence_target = None
     cand_from_ltm = None
+    cand_recency = None
     if any(cs for *_row, cs, _scs, _hcs in rows):
         Cmax = max((len(cs.candidates) for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values()),
                    default=1) or 1
@@ -2363,6 +2446,34 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                 for t, cs in cs_map.items():
                     if cs.from_ltm is not None:
                         cand_from_ltm[i, t, :len(cs.candidates)] = torch.from_numpy(cs.from_ltm)
+
+        # M60 (op-library integration -- RECENCY, dev/OP_LIBRARY_MAP.md's
+        # ``recency`` row): cand_recency, only allocated when at least one
+        # EntityCandidateSet in this batch actually carries mention_steps
+        # (_instance_steps/_rich_steps's overwrite/question candidate sets
+        # only -- see membrane.EntityCandidateSet.mention_steps's own
+        # docstring) -- mirrors has_from_ltm's "only if present" pattern
+        # exactly. A batch with only pre-M60 candidate sets (mention_steps
+        # always None, the membrane dataclass default) leaves this None,
+        # byte-identical to every pre-M60 batch. :func:`nsm_ct.ops.recency`
+        # is deterministic (no learned parameters); ``current_step`` is
+        # this candidate set's own step index ``t``.
+        has_recency = any(
+            cs.mention_steps is not None for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values())
+        if has_recency:
+            cand_recency = torch.zeros(b, T, Cmax, 3)
+            for i, (steps, opt, a, ok, cs_map, _scs, _hcs) in enumerate(rows):
+                for t, cs in cs_map.items():
+                    if cs.mention_steps is None:
+                        continue
+                    n_c = len(cs.candidates)
+                    ms = torch.from_numpy(cs.mention_steps[:n_c]).unsqueeze(0)          # [1, C]
+                    mc = (torch.from_numpy(cs.mention_counts[:n_c]).unsqueeze(0)
+                          if cs.mention_counts is not None else None)
+                    feats = ops.recency(ms, float(t), mention_counts=mc)
+                    cand_recency[i, t, :n_c, 0] = feats.steps_since[0]
+                    cand_recency[i, t, :n_c, 1] = feats.log_count[0]
+                    cand_recency[i, t, :n_c, 2] = feats.is_most_recent[0].to(torch.float32)
 
     # M57b (v2, honest validity machinery): cand_forced_index, built from
     # forced_maps (parallel to rows, populated only by _writeback_steps'
@@ -2501,7 +2612,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                        hyp_cand_entity, hyp_cand_mask, hyp_cand_prior, hyp_cand_gold,
                        hyp_cand_query_entity, hyp_cand_query_relation,
                        cand_addr_mask, cand_forced_index, cand_evidence_relation, cand_evidence_target,
-                       inverse_mask, step_meta, cand_from_ltm)
+                       inverse_mask, step_meta, cand_from_ltm, cand_recency)
 
 
 # ---------------------------------------------------------------------------
@@ -2637,7 +2748,8 @@ class ClauseReactor(nn.Module):
     def __init__(self, dim: int, hidden: int = 128, resolver: Optional[Resolver] = None,
                  sense_resolver: Optional[Resolver] = None,
                  hyp_resolver: Optional[Resolver] = None,
-                 evidence_prior_beta: Optional[float] = None) -> None:
+                 evidence_prior_beta: Optional[float] = None,
+                 cleanup: bool = False) -> None:
         super().__init__()
         self.dim = dim
         # (entity, relation, value, predicate, coord, mem_read)
@@ -2666,6 +2778,20 @@ class ClauseReactor(nn.Module):
         # Default ``None`` -- byte-identical to every pre-M57c.3 forward:
         # the whole block is skipped whenever this is ``None``.
         self.evidence_prior_beta = evidence_prior_beta
+        # M60 (op-library integration -- CLEANUP, dev/OP_LIBRARY_MAP.md's
+        # ``cleanup`` row / dev/OP_INVENTORY.md's "caution never gates
+        # anything" gap): when ``True`` AND the model is in EVAL mode
+        # (``not self.training`` -- "at eval only", never during training),
+        # ``forward`` runs :func:`nsm_ct.ops.cleanup` over the final
+        # response vector against each row's own options codebook and
+        # reports the top1-top2 margin + a :data:`nsm_ct.ops.CAUTION`-gated
+        # abstain flag ALONGSIDE the existing ``answer_logits`` argmax --
+        # never in place of it (the argmax over options already IS the
+        # answer; ``cleanup`` never changes it, see ``forward``'s own
+        # paragraph). Default ``False`` -- byte-identical to every
+        # pre-M60 forward: the whole block below is skipped whenever this
+        # is ``False``.
+        self.cleanup = cleanup
 
     @staticmethod
     def _collapse_weights(logits: torch.Tensor, training: bool) -> torch.Tensor:
@@ -2858,6 +2984,14 @@ class ClauseReactor(nn.Module):
                 extra_cols.append(s_c)                                       # [B, C, 1]
             if batch.cand_from_ltm is not None:
                 extra_cols.append(batch.cand_from_ltm[:, t].unsqueeze(-1).to(ce_t.dtype))  # [B, C, 1]
+            # M60 (op-library integration -- RECENCY): a THIRD optional
+            # extra-column group, the deterministic centering-theory
+            # salience features (see ClauseBatch.cand_recency's own
+            # docstring) -- concatenated alongside s_c/cand_from_ltm rather
+            # than replacing either, same "gather whichever extras this
+            # batch actually carries" discipline established above.
+            if batch.cand_recency is not None:
+                extra_cols.append(batch.cand_recency[:, t].to(ce_t.dtype))    # [B, C, 3]
             extra_width = getattr(self.resolver, "cand_feature_extra", 0)
             if extra_width > 0 and extra_cols:
                 cfpc = extra.get("cand_feature_per_candidate")
@@ -2988,6 +3122,12 @@ class ClauseReactor(nn.Module):
         have_resolver_data = self.resolver is not None and batch.cand_mask is not None
         have_sense_data = self.sense_resolver is not None and batch.sense_cand_mask is not None
         have_hyp_data = self.hyp_resolver is not None and batch.hyp_cand_mask is not None
+        # M60 (op-library integration -- inverse-read routing, LOCKED DESIGN
+        # item 3): accumulates the entity-axis inverse readout at whichever
+        # step ``batch.inverse_mask`` flags this row (see the entity-axis
+        # inverse read below, unchanged) -- ``None`` whenever the batch has
+        # no inverse-query step at all, byte-identical no-op then.
+        inverse_readout = torch.zeros(b, d, device=device) if batch.inverse_mask is not None else None
         resp_logits, resp_vecs = [], []
         resolver_logits_all, resolver_margin_all = [], []
         sense_logits_all, sense_margin_all = [], []
@@ -3050,7 +3190,13 @@ class ClauseReactor(nn.Module):
             if batch.inverse_mask is not None:
                 inv_row = batch.inverse_mask[:, t] > 0
                 if bool(inv_row.any()):
-                    mem_read = torch.where(inv_row.unsqueeze(-1), em.query_entity(mem_total_t, r, v), mem_read)
+                    inv_readout_t = em.query_entity(mem_total_t, r, v)
+                    mem_read = torch.where(inv_row.unsqueeze(-1), inv_readout_t, mem_read)
+                    # M60 (inverse-read routing): stash the SAME entity-axis
+                    # readout for the direct-similarity route below -- no
+                    # extra memory access, just captured alongside the
+                    # existing GRU-input override.
+                    inverse_readout = torch.where(inv_row.unsqueeze(-1), inv_readout_t, inverse_readout)
             if return_mem_read:
                 mem_read_all.append(mem_read)
             state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
@@ -3119,6 +3265,40 @@ class ClauseReactor(nn.Module):
         if have_hyp_data:
             out["hyp_resolver_logits"] = torch.stack(hyp_logits_all, dim=1)   # [B, T, C]
             out["hyp_resolver_margin"] = torch.stack(hyp_margin_all, dim=1)   # [B, T]
+        # M60 (op-library integration -- inverse-read routing, LOCKED DESIGN
+        # item 3): a SECOND, independent answer route for inverse-query
+        # steps -- direct :func:`nsm_ct.ops.similarity` between the entity-
+        # axis readout captured above and each row's own option atoms, NOT
+        # threaded back into ``answer_logits``/the learned response head at
+        # all (no change to the learned path). ``None`` whenever the batch
+        # has no inverse-query step (``inverse_readout is None``), the same
+        # "only if present" discipline every optional output here follows.
+        if inverse_readout is not None:
+            out["inverse_direct_logits"] = ops.similarity(
+                inverse_readout.unsqueeze(1), batch.options).cosine     # [B, K]
+        # M60 (op-library integration -- CLEANUP, LOCKED DESIGN item 2): at
+        # EVAL only (``not self.training``), run :func:`nsm_ct.ops.cleanup`
+        # per row (each row has its OWN options codebook, unlike ``cleanup``'s
+        # single-shared-codebook signature) over the SAME response vector
+        # ``r``/options ``batch.options`` the contrastive answer above
+        # already scores -- the argmax over options IS the answer already
+        # (``cleanup_index`` coincides with ``answer_logits.argmax(-1)`` up
+        # to float rounding, asserted in tests/test_ops_integration.py); the
+        # value here is ``cleanup_margin``/``cleanup_abstain``, the
+        # :data:`nsm_ct.ops.CAUTION`-gated "the mind may abstain" dial made
+        # real (dev/OP_INVENTORY.md's "caution never gates anything" gap).
+        # Default ``self.cleanup=False`` skips this block entirely --
+        # byte-identical to pre-M60 ``out`` for every existing caller.
+        if self.cleanup and not self.training:
+            idxs, margins, abstains = [], [], []
+            for i in range(b):
+                idx_i, _clean_i, margin_i, abstain_i = ops.cleanup(r[i], batch.options[i])
+                idxs.append(idx_i)
+                margins.append(margin_i)
+                abstains.append(abstain_i)
+            out["cleanup_index"] = torch.stack(idxs)
+            out["cleanup_margin"] = torch.stack(margins)
+            out["cleanup_abstain"] = torch.stack(abstains)
         # M57b test seam: the final post-episode memory tensor, for tests
         # that need to verify WHERE a write actually landed (e.g. an
         # address-redirect: querying the resolved node vs. the pronoun's own
