@@ -146,6 +146,27 @@ class EntityCandidateSet(CandidateSet):
     being read differs; see
     :func:`nsm_ct.clause_reactor.build_clause_batch`'s ``cand_evidence_relation``
     field and :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse`'s entity
+    branch for where this is consumed.
+
+    M57c.3 (RESEARCH_NOTES "M57c battery #2" -- forced-gold PROVES the read
+    path (0.423->0.856) but the trained resolver binds instance candidates
+    at CHANCE: it receives each candidate's ``evidence_relation`` READOUT
+    but never the referring expression's own TARGET vector to compare it
+    against): ``evidence_target`` -- default ``None``, byte-identical for
+    every pre-M57c.3 caller -- a grounding KEY (not a bare word: it carries
+    its OWN prefix telling the grounder which convention to use, e.g.
+    ``"kind:doctor"``, ``"gender:F"``, ``"name:mary"``) for the referring
+    expression's TARGET value, grounded with the SAME vector the matching
+    attribute fact was WRITTEN with (the ``"kind:"``/``"gender:"`` prefix
+    reproduces ``codec.filler_vec`` exactly; ``"name:"`` grounds via the
+    ordinary entity-vector convention instead -- see
+    :func:`nsm_ct.clause_reactor._ground_evidence_target`) so that
+    ``cos(readout, target)`` is a MEANINGFUL per-candidate interaction
+    feature -- M54c's lesson repeated: a shared/specialist head needs an
+    explicit INTERACTION PRIOR when the task requires comparing two
+    vectors, not just seeing them both. See
+    :func:`nsm_ct.clause_reactor.build_clause_batch`'s ``cand_evidence_target``
+    field and :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse`'s entity
     branch for where this is consumed."""
 
     surface: str = ""
@@ -154,6 +175,7 @@ class EntityCandidateSet(CandidateSet):
     cand_features: Optional[np.ndarray] = None
     addr_redirect: bool = False
     evidence_relation: Optional[str] = None
+    evidence_target: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

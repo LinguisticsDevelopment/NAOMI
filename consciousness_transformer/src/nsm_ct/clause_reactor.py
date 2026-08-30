@@ -24,7 +24,7 @@ from .clause import extract_discourse
 from .episode import _NAMES
 from .instances import InstanceRegistry
 from .membrane import FEATURE_DIM
-from .resolver import Resolver, query_candidates, query_candidates_per_addr
+from .resolver import Resolver, evidence_interaction, query_candidates, query_candidates_per_addr
 from .tpr import TPRCodec
 from .usvs_bridge import usvs_handle, usvs_sense_handle
 
@@ -71,6 +71,32 @@ def _ent_vec(name: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     """Ground an entity/value: a person → its variable atom; a concept → its meaning."""
     return (codec.filler_vec("var:" + name) if name in _NAMESET
             else _content_vec(name, resolver, codec, cache, meaning_source))
+
+
+def _ground_evidence_target(target: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                             meaning_source: MeaningSource = "usvs") -> np.ndarray:
+    """M57c.3: ground a :attr:`nsm_ct.membrane.EntityCandidateSet.evidence_target`
+    key into the SAME vector the matching attribute fact was WRITTEN with,
+    so :func:`nsm_ct.resolver.evidence_interaction`'s ``cos(readout, target)``
+    is meaningful (RESEARCH_NOTES "M57c battery #2"'s diagnosis: the
+    resolver never had a target to compare a candidate's evidence readout
+    against). ``target`` carries its OWN grounding-convention prefix:
+    ``"kind:doctor"``/``"gender:F"`` reproduce ``codec.filler_vec`` EXACTLY
+    (the identical call :func:`nsm_ct.clause_reactor._instance_steps`/
+    :func:`_rich_steps` make when WRITING that attribute's value, e.g.
+    ``codec.filler_vec("kind:" + kinds[r])``); ``"name:mary"`` (the
+    ambiguous-shared-name device, whose evidence_relation reads attr:kind
+    but whose referring expression names no kind at all) grounds via the
+    ordinary entity-vector convention (:func:`_ent_vec`) instead -- by
+    construction this does NOT correlate with the attr:kind readout it is
+    compared against, correctly reflecting that ambiguous-name resolution
+    is NOT attribute-decidable (see curriculum2's own "discourse recency
+    for ambiguous_name" note); it disambiguates via a genuinely different
+    channel (discourse order), out of scope for this interaction feature.
+    """
+    if target.startswith("name:"):
+        return _ent_vec(target[len("name:"):], resolver, codec, cache, meaning_source)
+    return codec.filler_vec(target)
 
 
 def _reasoning_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
@@ -900,16 +926,19 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
         pronoun = "she" if genders[referent] == "F" else "he"
         placeholder = _ent_vec(pronoun, resolver, codec, cache, meaning_source)
         evidence_rel_name = "gender"
+        evidence_target_key = "gender:" + genders[referent]
         cand_roles = ["a", "b", "c"]
         mention_word = pronoun
     elif device == "definite_description":
         placeholder = _content_vec(kinds[referent], resolver, codec, cache, meaning_source)
         evidence_rel_name = "kind"
+        evidence_target_key = "kind:" + kinds[referent]
         cand_roles = ["a", "b", "c"]
         mention_word = kinds[referent]
     else:  # "ambiguous_name"
         placeholder = _ent_vec(shared_name, resolver, codec, cache, meaning_source)
         evidence_rel_name = "kind"
+        evidence_target_key = "name:" + shared_name
         cand_roles = ["a", "b"]
         mention_word = shared_name
 
@@ -928,6 +957,7 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
             gold_index=gold_index,
             addr_redirect=True,
             evidence_relation=evidence_rel_name,
+            evidence_target=evidence_target_key,
         )
         cand_sets[overwrite_step_idx] = cs
         if force is not None:
@@ -962,6 +992,7 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                     gold_index=q_gold_index,
                     addr_redirect=True,
                     evidence_relation="kind",
+                    evidence_target="kind:" + kinds[target],
                 )
                 cand_sets[q_step_idx] = q_cs
                 if force is not None:
@@ -1064,14 +1095,17 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
             pronoun = "she" if genders[referent] == "F" else "he"
             placeholder = _ent_vec(pronoun, resolver, codec, cache, meaning_source)
             evidence_rel_name = "gender"
+            evidence_target_key = "gender:" + genders[referent]
             cand_roles = list(range(n))
         elif device == "definite_description":
             placeholder = _content_vec(kinds[referent], resolver, codec, cache, meaning_source)
             evidence_rel_name = "kind"
+            evidence_target_key = "kind:" + kinds[referent]
             cand_roles = list(range(n))
         else:  # "ambiguous_name" -- candidates restricted to the name-matched pair
             placeholder = _ent_vec(names[referent], resolver, codec, cache, meaning_source)
             evidence_rel_name = "kind"
+            evidence_target_key = "name:" + names[referent]
             cand_roles = list(name_groups[names[referent]])
 
         step_idx = len(steps)
@@ -1089,6 +1123,7 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                 gold_index=gold_index,
                 addr_redirect=True,
                 evidence_relation=evidence_rel_name,
+                evidence_target=evidence_target_key,
             )
             cand_sets[step_idx] = cs
             if force is not None:
@@ -1126,6 +1161,7 @@ def _rich_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                     gold_index=q_gold_index,
                     addr_redirect=True,
                     evidence_relation="kind",
+                    evidence_target="kind:" + kinds[target],
                 )
                 cand_sets[q_step_idx] = q_cs
                 if force is not None:
@@ -1426,6 +1462,24 @@ class ClauseBatch:
     # membrane.EntityCandidateSet.evidence_relation's docstring and
     # ClauseReactor._collapse's entity branch for where this is consumed).
     cand_evidence_relation: Optional[torch.Tensor] = None  # [B, T, d]
+    # M57c.3 (RESEARCH_NOTES "M57c battery #2" -- forced-gold PROVES the read
+    # path but the trained resolver binds instance candidates at CHANCE: it
+    # sees each candidate's evidence READOUT but never the referring
+    # expression's own TARGET vector to compare it against): ONE new field,
+    # the SAME "optional, None whenever no candidate set in the batch
+    # populates EntityCandidateSet.evidence_target" discipline
+    # cand_evidence_relation itself establishes -- a batch built entirely
+    # from pre-M57c.3 candidate sets (every M53a/M53b/M57b/M57c set, and
+    # every instance/rich set built before this milestone) leaves this
+    # None, byte-identical to every field above it. Per (row, step): the
+    # GROUNDED target vector ("doctor"'s kind vec, "F"'s gender atom, the
+    # ambiguous shared name's own entity atom -- see
+    # membrane.EntityCandidateSet.evidence_target's docstring and
+    # :func:`_ground_evidence_target`) the resolver should compare each
+    # candidate's evidence readout against
+    # (:func:`nsm_ct.resolver.evidence_interaction`) -- see
+    # ClauseReactor._collapse's entity branch for where this is consumed.
+    cand_evidence_target: Optional[torch.Tensor] = None  # [B, T, d]
     # M57c.2 (RESEARCH_NOTES "M57c battery #1" -- inverse_query measured
     # BELOW chance because no entity-axis read existed): ONE new field, the
     # SAME "optional field defaults None, byte-identical for every batch
@@ -1484,6 +1538,7 @@ class ClauseBatch:
         addr_mask = self.cand_addr_mask.to(device) if self.cand_addr_mask is not None else None
         forced = self.cand_forced_index.to(device) if self.cand_forced_index is not None else None
         evidence_rel = self.cand_evidence_relation.to(device) if self.cand_evidence_relation is not None else None
+        evidence_target = self.cand_evidence_target.to(device) if self.cand_evidence_target is not None else None
         inv_mask = self.inverse_mask.to(device) if self.inverse_mask is not None else None
         # M57d: step_meta is plain Python (no device), carried through
         # unchanged -- mirrors nothing else in this method living off-device.
@@ -1491,8 +1546,8 @@ class ClauseBatch:
                            self.value.to(device), self.pred.to(device),
                            self.is_q.to(device), self.mask.to(device),
                            self.options.to(device), self.answer.to(device), coord, ans_ok,
-                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, inv_mask,
-                           self.step_meta)
+                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, evidence_target,
+                           inv_mask, self.step_meta)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
@@ -1504,6 +1559,7 @@ class ClauseBatch:
         addr_mask = self.cand_addr_mask[idx] if self.cand_addr_mask is not None else None
         forced = self.cand_forced_index[idx] if self.cand_forced_index is not None else None
         evidence_rel = self.cand_evidence_relation[idx] if self.cand_evidence_relation is not None else None
+        evidence_target = self.cand_evidence_target[idx] if self.cand_evidence_target is not None else None
         inv_mask = self.inverse_mask[idx] if self.inverse_mask is not None else None
         # M57d: step_meta is a plain Python list, not a tensor -- index it
         # by hand (torch fancy-indexing doesn't apply) so a minibatch
@@ -1516,8 +1572,8 @@ class ClauseBatch:
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
                            self.options[idx], self.answer[idx], coord, ans_ok,
-                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, inv_mask,
-                           step_meta)
+                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, evidence_target,
+                           inv_mask, step_meta)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
@@ -1649,6 +1705,19 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     ``ep.meta["registry_order"]`` order) rather than
     :func:`_instance_option_vec`'s composite name+kind vectors -- see that
     function's own docstring addendum for why.
+
+    M57c.3 (RESEARCH_NOTES "M57c battery #2" -- forced-gold PROVES the read
+    path, but the TRAINED resolver binds instance candidates at CHANCE: it
+    never had the referring expression's own TARGET vector to compare a
+    candidate's evidence readout against): whenever an
+    :class:`nsm_ct.membrane.EntityCandidateSet` carries an
+    ``evidence_target`` (``_instance_steps``/``_rich_steps`` only), it is
+    grounded via :func:`_ground_evidence_target` into the new
+    ``cand_evidence_target`` field -- ``None`` for every batch built
+    without one, the same "only if present" discipline
+    ``cand_evidence_relation`` itself establishes. See
+    :meth:`ClauseReactor._collapse`'s entity branch for how this drives
+    :func:`nsm_ct.resolver.evidence_interaction`.
 
     RICH-EPISODE curriculum (CLAUDE.md's 2026-08-30 reprioritization, "stop
     requiring minimal episodes"): an episode whose meta carries ``kind ==
@@ -1790,6 +1859,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     cand_feature_per_candidate = None
     cand_addr_mask = None
     cand_evidence_relation = None
+    cand_evidence_target = None
     if any(cs for *_row, cs, _scs, _hcs in rows):
         Cmax = max((len(cs.candidates) for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values()),
                    default=1) or 1
@@ -1860,6 +1930,23 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                     if cs.evidence_relation:
                         cand_evidence_relation[i, t] = torch.from_numpy(
                             codec.filler_vec("attr:" + cs.evidence_relation))
+
+        # M57c.3: only allocated when at least one EntityCandidateSet in this
+        # batch actually carries an evidence_target (instance/rich episodes
+        # built by this milestone's _instance_steps/_rich_steps only) --
+        # mirrors has_evidence_relation's "only if present" pattern exactly.
+        # A batch with only pre-M57c.3 candidate sets (evidence_target
+        # always None, the dataclass default) leaves this None,
+        # byte-identical to every pre-M57c.3 batch.
+        has_evidence_target = any(
+            cs.evidence_target for *_row, cs_map, _scs, _hcs in rows for cs in cs_map.values())
+        if has_evidence_target:
+            cand_evidence_target = torch.zeros(b, T, d)
+            for i, (steps, opt, a, ok, cs_map, _scs, _hcs) in enumerate(rows):
+                for t, cs in cs_map.items():
+                    if cs.evidence_target:
+                        cand_evidence_target[i, t] = torch.from_numpy(
+                            _ground_evidence_target(cs.evidence_target, resolver, codec, cache, meaning_source))
 
     # M57b (v2, honest validity machinery): cand_forced_index, built from
     # forced_maps (parallel to rows, populated only by _writeback_steps'
@@ -1997,8 +2084,8 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                        sense_cand_subject, sense_cand_subject_rel,
                        hyp_cand_entity, hyp_cand_mask, hyp_cand_prior, hyp_cand_gold,
                        hyp_cand_query_entity, hyp_cand_query_relation,
-                       cand_addr_mask, cand_forced_index, cand_evidence_relation, inverse_mask,
-                       step_meta)
+                       cand_addr_mask, cand_forced_index, cand_evidence_relation, cand_evidence_target,
+                       inverse_mask, step_meta)
 
 
 # ---------------------------------------------------------------------------
@@ -2109,7 +2196,8 @@ class ClauseReactor(nn.Module):
 
     def __init__(self, dim: int, hidden: int = 128, resolver: Optional[Resolver] = None,
                  sense_resolver: Optional[Resolver] = None,
-                 hyp_resolver: Optional[Resolver] = None) -> None:
+                 hyp_resolver: Optional[Resolver] = None,
+                 evidence_prior_beta: Optional[float] = None) -> None:
         super().__init__()
         self.dim = dim
         # (entity, relation, value, predicate, coord, mem_read)
@@ -2129,6 +2217,15 @@ class ClauseReactor(nn.Module):
         # batch/model without one is untouched (verified alongside the
         # M53/M54 byte-identity regressions).
         self.hyp_resolver = hyp_resolver
+        # M57c.3 (RESEARCH_NOTES "M57c battery #2", CLAUDE.md invariant #6
+        # "dials are explicit named scalars"): the DETERMINISTIC "perception
+        # never guesses" structural-prior option -- when set, the entity
+        # branch's ``cand_prior`` gets multiplied by
+        # ``softmax(evidence_interaction(...) * evidence_prior_beta)`` before
+        # the resolver ever sees it (see ``_collapse``'s own paragraph).
+        # Default ``None`` -- byte-identical to every pre-M57c.3 forward:
+        # the whole block is skipped whenever this is ``None``.
+        self.evidence_prior_beta = evidence_prior_beta
 
     @staticmethod
     def _collapse_weights(logits: torch.Tensor, training: bool) -> torch.Tensor:
@@ -2258,6 +2355,35 @@ class ClauseReactor(nn.Module):
             else:
                 evidence_r = r
             cand_mem_read = query_candidates(memory, ce_t, evidence_r)           # [B, C, d]
+            # M57c.3 (RESEARCH_NOTES "M57c battery #2" -- the resolver never
+            # had the referring expression's own TARGET to compare a
+            # candidate's evidence readout against, so instance binding sat
+            # at chance): per-candidate ``cos(cand_mem_read_c, target)`` --
+            # see nsm_ct.resolver.evidence_interaction and
+            # ClauseBatch.cand_evidence_target's docstring. ``s_c`` is
+            # ``None`` (this whole feature inert) whenever the batch carries
+            # NO evidence-target vectors at all -- byte-identical to
+            # pre-M57c.3 for every such batch (every batch built before this
+            # milestone, and every M53a/M53b/M57b pronoun/writeback-only
+            # batch mixed alongside instance/rich episodes that DO carry
+            # one -- the per-(row, step) zero-vector floor in
+            # ``evidence_interaction`` handles rows without one).
+            s_c = None
+            if batch.cand_evidence_target is not None:
+                et_t = batch.cand_evidence_target[:, t]                          # [B, d]
+                s_c = evidence_interaction(cand_mem_read, et_t).unsqueeze(-1)     # [B, C, 1]
+            # M57c.3 (--evidence-prior, scripts/train_instances.py): the
+            # deterministic "perception never guesses" structural-prior
+            # option -- multiplies ``cand_prior`` by
+            # ``softmax(s_c * evidence_prior_beta)`` over the REAL
+            # candidates only, BEFORE the resolver (either track) ever sees
+            # it. The learned head can still override this (it is only ONE
+            # of the resolver's inputs, never a hard mask). Inert (byte-
+            # identical) unless BOTH ``s_c`` exists AND
+            # ``self.evidence_prior_beta`` is set (``None`` by default).
+            if s_c is not None and self.evidence_prior_beta is not None:
+                boost_logits = (s_c.squeeze(-1) * self.evidence_prior_beta).masked_fill(cm_t <= 0, -1e9)
+                cp_t = cp_t * torch.softmax(boost_logits, dim=-1)
             # M56b: pass the per-candidate feature register (§1.8) ONLY to a
             # resolver that opted in (`use_cand_feature=True` -- CorefHead
             # only today); SharedScorer/SenseHead are never called with this
@@ -2266,6 +2392,19 @@ class ClauseReactor(nn.Module):
             extra = {}
             if getattr(self.resolver, "use_cand_feature", False) and batch.cand_feature_per_candidate is not None:
                 extra["cand_feature_per_candidate"] = batch.cand_feature_per_candidate[:, t]
+            # M57c.3: widen the register by ``resolver.cand_feature_extra``
+            # columns (CorefHead only -- 0 for every other resolver/every
+            # pre-M57c.3 CorefHead, so this is a no-op there) with the
+            # interaction feature computed above. Building a fresh zero
+            # register when no cand_feature_per_candidate exists yet mirrors
+            # CorefHead.forward's own defensive-zeros fallback exactly.
+            extra_width = getattr(self.resolver, "cand_feature_extra", 0)
+            if extra_width > 0 and s_c is not None:
+                cfpc = extra.get("cand_feature_per_candidate")
+                if cfpc is None:
+                    b_, C_, _d_ = ce_t.shape
+                    cfpc = ce_t.new_zeros(b_, C_, FEATURE_DIM)
+                extra["cand_feature_per_candidate"] = torch.cat([cfpc, s_c], dim=-1)
             logits = self.resolver(ce_t, cf_t, cp_t, cm_t, cand_mem_read, state, **extra)  # [B, C]
             logits = logits.masked_fill(cm_t <= 0, -1e9)
             has_cand = cm_t.sum(-1) > 0                                          # [B]

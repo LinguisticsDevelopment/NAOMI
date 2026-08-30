@@ -38,13 +38,14 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from . import entity_memory as em
 from .membrane import FEATURE_DIM
 
 __all__ = ["Resolver", "CorefHead", "SharedScorer", "SenseHead", "RankHead", "query_candidates",
-           "query_candidates_per_addr", "make_resolver", "make_sense_resolver",
-           "make_hyp_resolver", "shared_scorer_for_budget"]
+           "query_candidates_per_addr", "evidence_interaction", "make_resolver",
+           "make_sense_resolver", "make_hyp_resolver", "shared_scorer_for_budget"]
 
 
 def query_candidates(memory: torch.Tensor, cand_entity: torch.Tensor,
@@ -78,6 +79,23 @@ def query_candidates_per_addr(memory: torch.Tensor, cand_query_entity: torch.Ten
         return cand_query_entity.new_zeros(b, 0, d)
     return torch.stack([em.query(memory, cand_query_entity[:, j], cand_query_relation[:, j])
                          for j in range(C)], dim=1)
+
+
+def evidence_interaction(cand_mem_read: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    """M57c.3 (RESEARCH_NOTES "M57c battery #2" -- the resolver saw each
+    candidate's evidence READOUT but never the referring expression's own
+    TARGET vector to compare it against, so it never learned to bind):
+    per-candidate ``cos(cand_mem_read[:, c], target)`` -- ``cand_mem_read``
+    ``[B, C, d]``, ``target`` ``[B, d]``, returns ``[B, C]``.
+
+    ``F.cosine_similarity``'s own zero-vector floor (``eps`` in the
+    denominator, ``0`` in the numerator when either vector is exactly
+    zero) makes this 0 automatically wherever ``target`` carries no real
+    evidence-target vector (``ClauseBatch.cand_evidence_target``'s
+    "zeros where absent" convention) -- no separate masking needed, and
+    identical to M56c's "rows without a target get s_c = 0" requirement.
+    """
+    return F.cosine_similarity(cand_mem_read, target.unsqueeze(1).expand_as(cand_mem_read), dim=-1)
 
 
 class Resolver(nn.Module):
@@ -132,12 +150,33 @@ class CorefHead(Resolver):
     vectors sit side by side in one linear layer's input) rather than a name
     the net has no way to compute. ``in_dim`` grows to
     ``2*dim + 2*FEATURE_DIM + 1`` only when the flag is set.
+
+    M57c.3 (RESEARCH_NOTES "M57c battery #2" -- instance binding stuck at
+    chance because nothing in the register compared a candidate's evidence
+    readout against the referring expression's TARGET): ``cand_feature_extra``
+    (default ``0`` -- byte-identical to every pre-M57c.3 call site, same
+    ``in_dim``/submodule construction as before) WIDENS the per-candidate
+    feature register by this many extra scalar columns, ONLY when
+    ``use_cand_feature=True``. The caller
+    (:meth:`nsm_ct.clause_reactor.ClauseReactor._collapse`) reads this
+    attribute back (``getattr(resolver, "cand_feature_extra", 0)``) to
+    decide how many extra columns to concatenate onto
+    ``cand_feature_per_candidate`` (today exactly one:
+    :func:`evidence_interaction`'s ``cos(readout, target)`` scalar) --
+    ``do NOT change SharedScorer`` (M54c's hard constraint) is honored by
+    keeping this a Track-A-only constructor arg, never touching
+    :class:`SharedScorer`'s fixed call shape at all; Track B simply never
+    receives the interaction feature (documented, not silently dropped).
     """
 
-    def __init__(self, dim: int, hidden: int = 24, use_cand_feature: bool = False) -> None:
+    def __init__(self, dim: int, hidden: int = 24, use_cand_feature: bool = False,
+                 cand_feature_extra: int = 0) -> None:
         super().__init__()
         self.use_cand_feature = use_cand_feature
-        in_dim = 2 * dim + FEATURE_DIM + 1 + (FEATURE_DIM if use_cand_feature else 0)
+        self.cand_feature_extra = cand_feature_extra if use_cand_feature else 0
+        cfpc_width = FEATURE_DIM + self.cand_feature_extra
+        in_dim = 2 * dim + FEATURE_DIM + 1 + (cfpc_width if use_cand_feature else 0)
+        self._cfpc_width = cfpc_width
         self.net = nn.Sequential(nn.Linear(in_dim, hidden), nn.Tanh(), nn.Linear(hidden, 1))
 
     def forward(self, cand_entity, cand_feature, cand_prior, cand_mask, mem_read, state,
@@ -149,7 +188,7 @@ class CorefHead(Resolver):
         if self.use_cand_feature:
             cfpc = cand_feature_per_candidate
             if cfpc is None:                                    # defensive: no per-candidate data available
-                cfpc = cand_entity.new_zeros(b, C, FEATURE_DIM)
+                cfpc = cand_entity.new_zeros(b, C, self._cfpc_width)
             parts.append(cfpc)
         parts.append(prior)
         x = torch.cat(parts, dim=-1)
@@ -251,17 +290,20 @@ def shared_scorer_for_budget(dim: int, hidden: int, target_params: int, *,
     return SharedScorer(dim, hidden, state_proj=state_proj, mlp_hidden=m, use_state=use_state)
 
 
-def make_resolver(track: str, dim: int, hidden: int = 128, *, use_cand_feature: bool = False) -> Resolver:
+def make_resolver(track: str, dim: int, hidden: int = 128, *, use_cand_feature: bool = False,
+                   cand_feature_extra: int = 0) -> Resolver:
     """Convenience factory: ``track`` is ``"A"`` (:class:`CorefHead`) or ``"B"``
     (:class:`SharedScorer`, needs the controller's ``hidden`` size for its state
     projection). Used by ``scripts/train_resolver.py``'s ``--track`` flag.
     ``use_cand_feature`` (M56b, Track A only -- ignored for "B", since "Do NOT
     change SharedScorer" is a hard constraint) forwards to
     :class:`CorefHead`'s own flag; default ``False`` keeps this factory's
-    pre-M56b behavior exactly."""
+    pre-M56b behavior exactly. ``cand_feature_extra`` (M57c.3, Track A only,
+    same "ignored for B" rule) forwards to :class:`CorefHead`'s own flag;
+    default ``0`` keeps this factory's pre-M57c.3 behavior exactly."""
     t = track.strip().upper()
     if t == "A":
-        return CorefHead(dim, use_cand_feature=use_cand_feature)
+        return CorefHead(dim, use_cand_feature=use_cand_feature, cand_feature_extra=cand_feature_extra)
     if t == "B":
         return SharedScorer(dim, hidden)
     raise ValueError(f"unknown track {track!r}, expected 'A' or 'B'")

@@ -62,6 +62,11 @@ from nsm_ct.tokenizer import SimpleTokenizer  # noqa: E402
 from nsm_ct.tpr import TPRCodec  # noqa: E402
 
 AUX_WEIGHT = 0.5   # resolver cross-entropy weight added to the answer loss -- same constant train_writeback.py uses
+# M57c.3 (RESEARCH_NOTES "M57c battery #2", CLAUDE.md invariant #6 "dials
+# are explicit named scalars"): the fixed sharpness of the deterministic
+# --evidence-prior structural-prior mix (softmax(s_c * beta)) -- see
+# ClauseReactor's own evidence_prior_beta docstring paragraph.
+EVIDENCE_PRIOR_BETA = 5.0
 
 
 def build_instance_curriculum(n_episodes: int, seed: int, inverse_frac: float = 0.3,
@@ -138,7 +143,7 @@ def binding_stats(out, batch, eps):
 
 def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden: int = 128,
             cheat: bool = False, no_gold_eval: bool = False, force_binding: str = None,
-            batch_size: int = 64, audit: int = 0) -> dict:
+            batch_size: int = 64, audit: int = 0, evidence_prior: bool = False) -> dict:
     """``track``: "A" | "B" | None (None = no resolver installed -- both
     writeback's address-redirect AND instance's evidence-relation
     resolution never fire at all, a genuine floor arm).
@@ -159,7 +164,25 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
     measurement). Evaluation (periodic val print + final held-out eval)
     is minibatched too, via ``_train_common.eval_minibatched`` (no-grad,
     row order preserved -- value-for-value equivalent of a full-batch
-    eval)."""
+    eval).
+
+    M57c.3 (RESEARCH_NOTES "M57c battery #2"): Track A is now ALWAYS built
+    with ``use_cand_feature=True, cand_feature_extra=1`` -- the resolver
+    always gets the per-candidate evidence*target interaction feature
+    (:func:`nsm_ct.resolver.evidence_interaction`) as a register column
+    whenever the batch carries one, regardless of ``evidence_prior``
+    (Track B is unaffected -- ``cand_feature_extra`` is a Track-A-only
+    :class:`~nsm_ct.resolver.CorefHead` constructor arg, "do NOT change
+    SharedScorer" holds literally). ``evidence_prior`` (``--evidence-prior``)
+    is a SEPARATE, additional mechanism -- it installs the deterministic
+    structural-prior mix (``ClauseReactor(evidence_prior_beta=
+    EVIDENCE_PRIOR_BETA)``), multiplying ``cand_prior`` before either
+    track's resolver sees it. Default ``False`` -- byte-identical to
+    pre-M57c.3 for the prior-mix mechanism (``evidence_prior_beta=None``);
+    the register widening itself is unconditional for Track A as of this
+    milestone (harmless no-op for a batch/track that never carries an
+    evidence target -- ``s_c`` is ``None`` whenever
+    ``batch.cand_evidence_target`` is, so the register never widens)."""
     texts = [t for e in episodes for t in e.context + [e.question] + (e.options or [])]
     tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
     parser = ParserInputEncoder(tok)
@@ -175,8 +198,11 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
                              writeback_no_gold=no_gold_eval, writeback_force=force_binding)
 
     torch.manual_seed(seed)
-    resolver = make_resolver(track, dim, hidden) if track else None
-    model = ClauseReactor(dim=dim, hidden=hidden, resolver=resolver)
+    resolver = (make_resolver(track, dim, hidden, use_cand_feature=True, cand_feature_extra=1)
+                if track else None)
+    evidence_prior_beta = EVIDENCE_PRIOR_BETA if evidence_prior else None
+    model = ClauseReactor(dim=dim, hidden=hidden, resolver=resolver,
+                           evidence_prior_beta=evidence_prior_beta)
     n_resolver_params = sum(p.numel() for p in resolver.parameters()) if resolver is not None else 0
 
     opt = torch.optim.Adam(model.parameters(), lr=3e-3)
@@ -347,6 +373,11 @@ def main() -> None:
     ap.add_argument("--no-gold-eval", action="store_true",
                      help="THE GATE: the EVAL batch only is built with no gold grounding anywhere "
                           "(candidates + the TRAINED resolver only). Training is unaffected.")
+    ap.add_argument("--evidence-prior", action="store_true",
+                     help="M57c.3: install the deterministic evidence*target structural-prior mix "
+                          f"(softmax(s_c * {EVIDENCE_PRIOR_BETA}) multiplied into cand_prior) -- the "
+                          "'perception never guesses' prior, on top of (not instead of) the learned "
+                          "per-candidate interaction feature Track A always gets now.")
     ap.add_argument("--episodes", type=int, default=1500)
     ap.add_argument("--dim", type=int, default=48)
     ap.add_argument("--hidden", type=int, default=128)
@@ -381,12 +412,13 @@ def main() -> None:
     print(f"=== instance-mix "
           f"{f'(force-binding={args.force_binding}) ' if args.force_binding else ''}"
           f"{'(cheat) ' if args.cheat else ''}{'(no-gold-eval) ' if args.no_gold_eval else ''}"
+          f"{'(evidence-prior) ' if args.evidence_prior else ''}"
           f"track={args.track}: {args.episodes} eps ({n_wb} writeback, {n_inst} instance, "
           f"{n_rich} rich, inverse_frac={args.inverse_frac}, rich_frac={args.rich_frac}), "
           f"dim={args.dim}, epochs={args.epochs}, batch_size={args.batch_size} ===", flush=True)
     run_arm(f"track-{args.track}", args.track, episodes, args.dim, args.epochs, args.seed, args.hidden,
              cheat=args.cheat, no_gold_eval=args.no_gold_eval, force_binding=args.force_binding,
-             batch_size=args.batch_size, audit=args.audit)
+             batch_size=args.batch_size, audit=args.audit, evidence_prior=args.evidence_prior)
 
 
 if __name__ == "__main__":
