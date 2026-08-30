@@ -1,0 +1,18 @@
+=== instance-mix (no-gold-eval) track=A: 1500 eps (500 writeback, 500 instance, inverse_frac=0.3), dim=48, epochs=60, batch_size=64 ===
+  [track-A] epoch   1 loss=1.897 val=0.370
+  [track-A] epoch  20 loss=0.246 val=0.837
+  [track-A] epoch  40 loss=0.209 val=0.813
+  [track-A] epoch  60 loss=0.080 val=0.820
+  [track-A] val total=0.820  resolver_params=2521  time=30.92 min  peak_rss_mb=2575.1
+    kind instance: 59/104 = 0.567
+    kind old: 95/104 = 0.913
+    kind writeback: 92/92 = 1.000
+    writeback/referent_targeted: 44/44 = 1.000
+    writeback/other_targeted: 48/48 = 1.000
+    instance/ambiguous_name/other_targeted: 13/18 = 0.722
+    instance/ambiguous_name/referent_targeted: 5/9 = 0.556
+    instance/definite_description/other_targeted: 8/18 = 0.444
+    instance/definite_description/referent_targeted: 7/13 = 0.538
+    instance/pronoun/other_targeted: 5/11 = 0.455
+    instance/pronoun/referent_targeted: 3/6 = 0.500
+    instance/inverse_query: 18/29 = 0.621
