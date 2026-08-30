@@ -136,3 +136,31 @@ Reframes the A/B experiment's stakes: every specialist head A forces us to
 keep is evidence the executor isn't universal yet; every capability that
 falls out of B's shared mechanism is a step toward the interpreter that
 only needs explaining.
+
+## The Grammar-as-Memory arc (far scope, user-specified 2026-08-30)
+
+Two configurations of ONE machine, to be tested as arms: (a) word-by-word
+incremental — ingest and thinking in the same loop (natural discussion,
+interruptions = hypothesis revision + the patience dial; the M55
+hypothesis membrane is the substrate); (b) two-stage — tree builder runs
+to completion, then the mind loop (text). The only difference is whether
+ingest and thinking are together or separate: a configuration, not a fork.
+
+Grammar rules move from files into an addressable MEMORY SPACE: rule
+application = collapse over a candidate set of applicable rules (rules
+match abstract categories, not words — proven by M-ES1's spanish.json
+clone). A small learned policy selects rules (the executor pattern at the
+perception layer; trace supervision free from the deterministic parser's
+own successful parses). Spanglish/code-switching = two rulesets active,
+selection switching mid-tree.
+
+Consequence: grammar INDUCTION rides the existing promotion machinery —
+propose rule from evidence → store low-trust → corroborate/contradict
+against parsing success → promote via the tier-generic op with a trust
+dial. Learning a new language = writing rules into memory (the Advice
+Test applied to grammar). Gate when we get there: the SPANISH INDUCTION
+TEST — induce Spanish rules from text with the mind frozen and compare
+against the hand-authored spanish.json as gold (the Freeze Test in
+reverse). Sequencing: hold until deterministic parser rounds measurably
+plateau (coverage-per-round curve); the learned rule-selection parser
+(stage 5) comes first and is a prerequisite.
