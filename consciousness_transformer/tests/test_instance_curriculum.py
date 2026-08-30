@@ -15,6 +15,8 @@ the mechanics tests build ClauseBatch objects by hand.
 
 from __future__ import annotations
 
+import contextlib
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -39,6 +41,7 @@ from nsm_ct.meaning import NSMMeaningResolver
 from nsm_ct.membrane import EntityCandidateSet
 from nsm_ct.resolver import make_resolver
 from nsm_ct.tpr import TPRCodec
+from test_resolver import _toy_batch_with_candidates
 
 DIM = 32
 
@@ -185,7 +188,8 @@ def test_two_marys_minting_distinct_atoms_and_restricted_candidate_set():
     assert amb_eps, "expected at least one ambiguous_name episode at this seed"
     ep = amb_eps[0]
 
-    steps, cand_sets, forced_map, atom_lookup = _instance_steps(ep, meaning, codec, {}, "usvs")
+    steps, cand_sets, forced_map, atom_lookup, inverse_step_idx = _instance_steps(ep, meaning, codec, {}, "usvs")
+    assert inverse_step_idx is None    # target-mode episode -- no inverse-query step
     t = next(iter(cand_sets))
     cs = cand_sets[t]
     assert isinstance(cs, EntityCandidateSet)
@@ -215,8 +219,12 @@ def test_instance_registry_determinism_matches_curriculum_bookkeeping():
     codec = _codec()
     eps = generate_instance_episodes(15, seed=7)
     for ep in eps:
-        steps, cand_sets, forced_map, atom_lookup = _instance_steps(ep, meaning, codec, {}, "usvs")
+        steps, cand_sets, forced_map, atom_lookup, inverse_step_idx = _instance_steps(ep, meaning, codec, {}, "usvs")
         assert sorted(atom_lookup.keys()) == sorted(ep.meta["registry_order"])
+        is_inverse = ep.meta["question_mode"] == "inverse"
+        assert (inverse_step_idx is not None) == is_inverse
+        if is_inverse:
+            assert steps[inverse_step_idx][5] == 1   # is_q=1 at the marked step
         # independent re-mint with the SAME seed reproduces the SAME atoms.
         reg = InstanceRegistry(dim=codec.dim, seed=ep.meta["instance_seed"])
         id_a, atom_a = reg.mint(ep.meta["shared_name"])
@@ -512,3 +520,245 @@ def test_mixed_batch_writeback_rows_unaffected_by_evidence_relation_tensor():
     assert torch.allclose(out_wb["resolver_logits"],
                           out_mix["resolver_logits"][:, :T_wb, :C], atol=1e-6)
     assert torch.allclose(out_wb["answer_logits"], out_mix["answer_logits"], atol=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# M57c.2: post-collapse read on redirected steps + the entity-axis inverse
+# read (RESEARCH_NOTES "M57c battery #1" -- instance episodes failed EVEN
+# under forced-gold collapse because a description/pronoun QUESTION step's
+# read never followed the redirect, only the write did; inverse_query
+# scored BELOW chance because no entity-axis read existed at all).
+# ---------------------------------------------------------------------------
+def _reference_forward_pre_m57c2(model: ClauseReactor, batch: ClauseBatch):
+    """Reimplementation of ClauseReactor.forward AS IT WAS BEFORE M57c.2:
+    no post-collapse mem_read recompute, no entity-axis inverse override.
+    Calls the SAME (already-patched) model._collapse -- its only change is
+    an extra, here-ignored ninth return value (addr_row), not its
+    arithmetic -- so this isolates exactly M57c.2's two new mem_read lines
+    in forward() (mirrors tests/test_resolver.py's own
+    _reference_forward_no_resolver technique)."""
+    b, T, d = batch.entity.shape
+    device = batch.entity.device
+    state = torch.zeros(b, model.gru.hidden_size, device=device)
+    memory = em.init_memory(b, d, device)
+    coord = batch._coord()
+    have_resolver_data = model.resolver is not None and batch.cand_mask is not None
+    resp_logits, resp_vecs = [], []
+    resolver_logits_all, resolver_margin_all = [], []
+    for t in range(T):
+        e, r, v = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
+        p, c = batch.pred[:, t], coord[:, t]
+        real, isq = batch.mask[:, t], batch.is_q[:, t]
+        mem_read = em.query(memory, e, r)
+        e, v, res_logits_t, res_margin_t, *_rest = model._collapse(memory, state, mem_read, e, r, v, batch, t)
+        state = model.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
+        stmt = real * (1.0 - isq)
+        gate = torch.sigmoid(model.write_gate(state)).squeeze(-1) * stmt
+        owr = torch.sigmoid(model.overwrite_gate(state)).squeeze(-1) * gate
+        neg = torch.sigmoid(model.decide_truth(torch.cat([state, v], dim=-1))).squeeze(-1) * stmt
+        memory = em.write(memory, e, r, v, gate - neg, overwrite=owr)
+        rl = model.respond(state).squeeze(-1)
+        rl = rl.masked_fill(real <= 0, float("-inf"))
+        resp_logits.append(rl)
+        resp_vecs.append(model.response(torch.cat([state, mem_read], dim=-1)))
+        if have_resolver_data:
+            resolver_logits_all.append(res_logits_t)
+            resolver_margin_all.append(res_margin_t)
+    RL = torch.stack(resp_logits, dim=1)
+    RV = torch.stack(resp_vecs, dim=1)
+    w = torch.softmax(RL, dim=1)
+    r_agg = (w.unsqueeze(-1) * RV).sum(dim=1)
+    rn = r_agg / (r_agg.norm(dim=-1, keepdim=True) + 1e-8)
+    on = batch.options / (batch.options.norm(dim=-1, keepdim=True) + 1e-8)
+    answer_logits = torch.einsum("bd,bkd->bk", rn, on) * 10.0
+    out = {"answer_logits": answer_logits, "response": r_agg, "respond_gates": w,
+           "respond_position": (w * batch.is_q).sum(1)}
+    if have_resolver_data:
+        out["resolver_logits"] = torch.stack(resolver_logits_all, dim=1)
+        out["resolver_margin"] = torch.stack(resolver_margin_all, dim=1)
+    return out
+
+
+def test_m57c2_byte_identical_when_addr_mask_and_inverse_mask_none():
+    """M57c.2's two new mem_read-adjustment lines in forward() must be a
+    complete no-op for every batch with ``cand_addr_mask=None`` AND
+    ``inverse_mask=None`` (both the dataclass default) -- exactly the
+    M53a/M53b pronoun-VALUE-redirect shape, and every batch built before
+    this milestone."""
+    torch.manual_seed(0)
+    batch, _pronoun_t = _toy_batch_with_candidates(b=6, d=16, K=4, C=3, seed=11)
+    assert batch.cand_addr_mask is None
+    assert batch.inverse_mask is None
+    for track in ("A", "B"):
+        for mode in ("eval", "train"):
+            torch.manual_seed(3)
+            model = ClauseReactor(dim=16, resolver=make_resolver(track, 16, 128))
+            getattr(model, mode)()
+            ctx = torch.no_grad() if mode == "eval" else contextlib.nullcontext()
+            with ctx:
+                out = model(batch)
+                ref = _reference_forward_pre_m57c2(model, batch)
+            for k in ref:
+                assert torch.equal(out[k], ref[k]), (track, mode, k)
+
+
+def test_post_collapse_read_recovers_resolved_node_not_placeholder():
+    """Hand-built: a description-targeted QUESTION step, forced-gold
+    collapse. The mem_read ACTUALLY FED into the GRU/response head at that
+    step (``out["_mem_read"]``) must equal ``em.query(memory, referent_atom,
+    r)`` -- the resolved node's own reading -- NOT the pre-collapse
+    placeholder address's (unwritten, near-zero) reading. This is precisely
+    the RESEARCH_NOTES "M57c battery #1" gap: "what is the doctor like ?"
+    never actually read the doctor's own node even after a correct
+    redirect."""
+    torch.manual_seed(0)
+    d = 16
+    g = torch.Generator().manual_seed(0)
+    atom_a = F.normalize(torch.randn(1, d, generator=g), dim=-1)
+    atom_b = F.normalize(torch.randn(1, d, generator=g), dim=-1)
+    placeholder = F.normalize(torch.randn(1, d, generator=g), dim=-1)   # "the doctor" -- distinct from A/B
+    trait_rel = F.normalize(torch.randn(1, d, generator=g), dim=-1)
+    val_a = F.normalize(torch.randn(1, d, generator=g), dim=-1)
+    val_b = F.normalize(torch.randn(1, d, generator=g), dim=-1)
+
+    T = 3
+    entity = torch.zeros(1, T, d); relation = torch.zeros(1, T, d); value = torch.zeros(1, T, d)
+    pred = torch.zeros(1, T, d); is_q = torch.zeros(1, T); mask = torch.ones(1, T)
+    entity[0, 0], relation[0, 0], value[0, 0] = atom_a, trait_rel, val_a   # "the doctor is old ."
+    entity[0, 1], relation[0, 1], value[0, 1] = atom_b, trait_rel, val_b   # "the nurse is quiet ."
+    entity[0, 2], relation[0, 2], is_q[0, 2] = placeholder, trait_rel, 1.0   # "what is the doctor like ?"
+
+    C = 2
+    cand_entity = torch.zeros(1, T, C, d)
+    cand_mask = torch.zeros(1, T, C)
+    cand_prior = torch.full((1, T, C), 0.5)
+    cand_feature = torch.zeros(1, T, 6)
+    cand_gold = torch.full((1, T), -1, dtype=torch.long)
+    cand_addr_mask = torch.zeros(1, T)
+    cand_forced_index = torch.full((1, T), -1, dtype=torch.long)
+    cand_entity[0, 2] = torch.cat([atom_a, atom_b], dim=0)
+    cand_mask[0, 2] = 1.0
+    cand_gold[0, 2] = 0
+    cand_addr_mask[0, 2] = 1.0
+    cand_forced_index[0, 2] = 0   # forced-gold -> candidate 0 = atom_a (the doctor)
+
+    options = torch.randn(1, 2, d)
+    answer = torch.zeros(1, dtype=torch.long)
+
+    batch = ClauseBatch(entity, relation, value, pred, is_q, mask, options, answer,
+                         cand_entity=cand_entity, cand_mask=cand_mask, cand_prior=cand_prior,
+                         cand_feature=cand_feature, cand_gold=cand_gold,
+                         cand_addr_mask=cand_addr_mask, cand_forced_index=cand_forced_index)
+
+    model = ClauseReactor(dim=d, hidden=16, resolver=make_resolver("A", d, 16))
+    model.eval()
+    _force_full_write_gate(model)
+    with torch.no_grad():
+        out = model(batch, return_memory=True, return_mem_read=True)
+
+    memory = out["_memory"]
+    mem_read_q = out["_mem_read"][:, 2]                        # what actually fed the GRU/response head
+    expected = em.query(memory, atom_a, trait_rel)             # the RESOLVED node's own reading
+    pre_collapse = em.query(memory, placeholder, trait_rel)    # the OLD (battery #1) placeholder reading
+
+    assert F.cosine_similarity(mem_read_q, expected).item() > 0.99
+    # not vacuous: the placeholder address never received a write, so its
+    # reading is a genuinely DIFFERENT vector from the resolved node's.
+    assert F.cosine_similarity(mem_read_q, pre_collapse).item() < 0.5
+
+
+def _freeze_write_mechanics(model: ClauseReactor):
+    """Force the write gate to 1 (full overwrite) and FREEZE it -- plus
+    overwrite/decide_truth -- so a short training pass below only shapes
+    the response/GRU heads, isolating exactly the read-path fix this
+    milestone is about (write-side redirection was already proven at full
+    scale in M57b/M57c battery #1)."""
+    _force_full_write_gate(model)
+    for p in (model.write_gate.weight, model.write_gate.bias,
+              model.overwrite_gate.weight, model.overwrite_gate.bias,
+              model.decide_truth.weight, model.decide_truth.bias):
+        p.requires_grad_(False)
+
+
+def test_end_to_end_forced_gold_description_targeted_question_answers_correctly():
+    """The measured RESEARCH_NOTES "M57c battery #1" failure cell,
+    reproduced and fixed: forced-gold collapse (BOTH the overwrite step
+    AND a definite-description QUESTION step that targets the OVERWRITTEN
+    referent -- description/pronoun referent-targeted questions were the
+    worst subset, 0.231 at full scale) with the write gate frozen at 1. A
+    brief training pass on the response/GRU heads only (the resolver's own
+    logits are irrelevant under forcing) must now reach near-ceiling eval
+    accuracy on this exact subset -- it failed even under forced-gold
+    before this milestone (0.423 vs 0.25 chance)."""
+    meaning = _meaning()
+    codec = TPRCodec(dim=24)   # smaller than the file default DIM -- keeps this test fast
+    gen = InstanceCurriculumGenerator(seed=21, inverse_frac=0.0)
+    all_eps = gen.generate(2000)
+    eps = [e for e in all_eps
+           if e.meta["referring_device"] == "definite_description"
+           and e.meta["question_mode"] == "target"
+           and e.meta["target_role"] in ("a", "b")
+           and e.meta["question_targets_referent"]]
+    assert len(eps) >= 100, "expected enough matching episodes at this seed"
+    train_eps, eval_eps = eps[:-30], eps[-30:]
+
+    torch.manual_seed(0)
+    model = ClauseReactor(dim=24, hidden=32, resolver=make_resolver("A", 24, 32))
+    _freeze_write_mechanics(model)
+    opt = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=0.01)
+
+    batch_train = build_clause_batch(train_eps, None, meaning, codec, writeback_force="gold")
+    model.train()
+    for _ in range(150):
+        opt.zero_grad()
+        out = model(batch_train)
+        loss = F.cross_entropy(out["answer_logits"], batch_train.answer)
+        loss.backward()
+        opt.step()
+
+    batch_eval = build_clause_batch(eval_eps, None, meaning, codec, writeback_force="gold")
+    model.eval()
+    with torch.no_grad():
+        out = model(batch_eval)
+    acc = float((out["answer_logits"].argmax(-1) == batch_eval.answer).float().mean())
+    assert acc >= 0.9, acc
+
+
+def test_end_to_end_inverse_query_forced_writes_answers_correctly():
+    """The OTHER measured RESEARCH_NOTES "M57c battery #1" failure:
+    inverse_query scored BELOW chance (0.138 vs 0.333) because no
+    entity-axis read existed at all. Forced-gold writes (the overwrite
+    step's own redirect -- there is no candidate set at the inverse
+    question step itself, see ClauseBatch.inverse_mask's docstring) + a
+    brief training pass on the response/GRU heads (write gate frozen at 1)
+    must now reach well above chance on an inverse-query-only episode set,
+    with options grounded as the real instance atoms (see
+    build_clause_batch's inverse-option grounding)."""
+    meaning = _meaning()
+    codec = TPRCodec(dim=24)   # smaller than the file default DIM -- keeps this test fast
+    gen = InstanceCurriculumGenerator(seed=22, inverse_frac=1.0)
+    all_eps = gen.generate(300)
+    train_eps, eval_eps = all_eps[:-30], all_eps[-30:]
+
+    torch.manual_seed(0)
+    model = ClauseReactor(dim=24, hidden=32, resolver=make_resolver("A", 24, 32))
+    _freeze_write_mechanics(model)
+    opt = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=0.01)
+
+    batch_train = build_clause_batch(train_eps, None, meaning, codec, writeback_force="gold")
+    assert batch_train.inverse_mask is not None
+    model.train()
+    for _ in range(150):
+        opt.zero_grad()
+        out = model(batch_train)
+        loss = F.cross_entropy(out["answer_logits"], batch_train.answer)
+        loss.backward()
+        opt.step()
+
+    batch_eval = build_clause_batch(eval_eps, None, meaning, codec, writeback_force="gold")
+    assert batch_eval.inverse_mask is not None
+    model.eval()
+    with torch.no_grad():
+        out = model(batch_eval)
+    acc = float((out["answer_logits"].argmax(-1) == batch_eval.answer).float().mean())
+    assert acc >= 0.6, acc   # chance = 1/3; measured 0.733 at these settings

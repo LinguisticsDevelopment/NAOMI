@@ -43,8 +43,7 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 
-torch.set_num_threads(1)
-
+from _train_common import add_footprint_args, apply_threads, epoch_minibatches, eval_minibatched, peak_rss_mb  # noqa: E402
 from nsm_ct.clause_reactor import ClauseReactor, build_clause_batch  # noqa: E402
 from nsm_ct.curriculum2 import generate_instance_episodes, generate_writeback_episodes  # noqa: E402
 from nsm_ct.episode import CurriculumGenerator, split_episodes  # noqa: E402
@@ -118,7 +117,8 @@ def binding_stats(out, batch, eps):
 
 
 def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden: int = 128,
-            cheat: bool = False, no_gold_eval: bool = False, force_binding: str = None) -> dict:
+            cheat: bool = False, no_gold_eval: bool = False, force_binding: str = None,
+            batch_size: int = 64) -> dict:
     """``track``: "A" | "B" | None (None = no resolver installed -- both
     writeback's address-redirect AND instance's evidence-relation
     resolution never fire at all, a genuine floor arm).
@@ -128,7 +128,18 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
     ``writeback_force`` -- see nsm_ct.clause_reactor.build_clause_batch's
     M57c docstring paragraph: these flags are REUSED verbatim for instance
     episodes (one arm setting applies across the whole mixed batch, same
-    as scripts/train_writeback.py's own contract for writeback alone)."""
+    as scripts/train_writeback.py's own contract for writeback alone).
+
+    ``batch_size`` (M57c footprint fix, same contract as
+    scripts/train_writeback.py's ``run_arm``): each epoch shuffles
+    ``tr_eps``' indices (``_train_common.epoch_minibatches``, seeded by
+    ``seed`` and the epoch number) and steps the optimizer once per
+    minibatch instead of once over the whole training set; ``0`` =
+    full-batch (the pre-fix behavior, kept reachable for before/after
+    measurement). Evaluation (periodic val print + final held-out eval)
+    is minibatched too, via ``_train_common.eval_minibatched`` (no-grad,
+    row order preserved -- value-for-value equivalent of a full-batch
+    eval)."""
     texts = [t for e in episodes for t in e.context + [e.question] + (e.options or [])]
     tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
     parser = ParserInputEncoder(tok)
@@ -152,35 +163,41 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
     gold_tr = torch.tensor([e.answer_idx for e in tr_eps])
     gold_va = torch.tensor([e.answer_idx for e in va_eps])
 
+    n_tr = len(tr_eps)
     t0 = time.time()
     model.train()
     losses = []
     for i in range(epochs):
-        out = model(tr)
-        loss = F.cross_entropy(out["answer_logits"], gold_tr)
-        if resolver is not None and "resolver_logits" in out:
-            cg = tr.cand_gold
-            has_cand = cg >= 0
-            if bool(has_cand.any()):
-                aux = F.cross_entropy(out["resolver_logits"][has_cand], cg[has_cand])
-                loss = loss + AUX_WEIGHT * aux
-        opt.zero_grad(); loss.backward(); opt.step()
-        losses.append(float(loss.item()))
+        epoch_losses = []
+        for mb_idx in epoch_minibatches(n_tr, batch_size, seed, i):
+            idx_t = torch.from_numpy(mb_idx)
+            sub = tr.subset(idx_t)
+            sub_gold = gold_tr[idx_t]
+            out = model(sub)
+            loss = F.cross_entropy(out["answer_logits"], sub_gold)
+            if resolver is not None and "resolver_logits" in out:
+                cg = sub.cand_gold
+                has_cand = cg >= 0
+                if bool(has_cand.any()):
+                    aux = F.cross_entropy(out["resolver_logits"][has_cand], cg[has_cand])
+                    loss = loss + AUX_WEIGHT * aux
+            opt.zero_grad(); loss.backward(); opt.step()
+            epoch_losses.append(float(loss.item()))
+        last_loss = epoch_losses[-1]
+        losses.append(last_loss)
         if (i + 1) % 20 == 0 or i == 0:
             model.eval()
-            with torch.no_grad():
-                acc = (model(va)["answer_logits"].argmax(-1) == gold_va).float().mean()
+            acc = (eval_minibatched(model, va, batch_size)["answer_logits"].argmax(-1) == gold_va).float().mean()
             model.train()
-            print(f"  [{name}] epoch {i+1:3d} loss={loss.item():.3f} val={acc:.3f}", flush=True)
+            print(f"  [{name}] epoch {i+1:3d} loss={last_loss:.3f} val={acc:.3f}", flush=True)
     elapsed_min = (time.time() - t0) / 60
 
     model.eval()
-    with torch.no_grad():
-        out_va = model(va)
+    out_va = eval_minibatched(model, va, batch_size)
     pred = out_va["answer_logits"].argmax(-1)
     total_acc = float((pred == gold_va).float().mean())
     print(f"  [{name}] val total={total_acc:.3f}  resolver_params={n_resolver_params}"
-          f"  time={elapsed_min:.2f} min", flush=True)
+          f"  time={elapsed_min:.2f} min  peak_rss_mb={peak_rss_mb():.1f}", flush=True)
 
     per_kind: dict = {}
     for i, e in enumerate(va_eps):
@@ -232,7 +249,7 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
               f"median={np.median(m):.3f} p75={np.percentile(m, 75):.3f} max={m.max():.3f}", flush=True)
 
     return {"losses": losses, "total_acc": total_acc, "n_resolver_params": n_resolver_params,
-            "binding": binding}
+            "binding": binding, "peak_rss_mb": peak_rss_mb(), "elapsed_min": elapsed_min}
 
 
 def main() -> None:
@@ -261,7 +278,9 @@ def main() -> None:
                      help="Fraction of instance episodes that are inverse-query (\"who is X ?\") "
                           "rather than target-question (\"what is X like ?\").")
     ap.add_argument("--seed", type=int, default=0)
+    add_footprint_args(ap)
     args = ap.parse_args()
+    apply_threads(args)
 
     episodes = build_instance_curriculum(args.episodes, args.seed, inverse_frac=args.inverse_frac)
     n_wb = sum(1 for e in episodes if e.meta.get("kind") == "writeback")
@@ -270,9 +289,11 @@ def main() -> None:
           f"{f'(force-binding={args.force_binding}) ' if args.force_binding else ''}"
           f"{'(cheat) ' if args.cheat else ''}{'(no-gold-eval) ' if args.no_gold_eval else ''}"
           f"track={args.track}: {args.episodes} eps ({n_wb} writeback, {n_inst} instance, "
-          f"inverse_frac={args.inverse_frac}), dim={args.dim}, epochs={args.epochs} ===", flush=True)
+          f"inverse_frac={args.inverse_frac}), dim={args.dim}, epochs={args.epochs}, "
+          f"batch_size={args.batch_size} ===", flush=True)
     run_arm(f"track-{args.track}", args.track, episodes, args.dim, args.epochs, args.seed, args.hidden,
-             cheat=args.cheat, no_gold_eval=args.no_gold_eval, force_binding=args.force_binding)
+             cheat=args.cheat, no_gold_eval=args.no_gold_eval, force_binding=args.force_binding,
+             batch_size=args.batch_size)
 
 
 if __name__ == "__main__":

@@ -74,8 +74,7 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 
-torch.set_num_threads(1)
-
+from _train_common import add_footprint_args, apply_threads, epoch_minibatches, eval_minibatched, peak_rss_mb  # noqa: E402
 from nsm_ct.clause_reactor import ClauseReactor, build_clause_batch  # noqa: E402
 from nsm_ct.curriculum2 import (  # noqa: E402
     _FEMALE_NAMES,
@@ -580,7 +579,8 @@ def run_held_out_name_ablation(n_episodes: int, epochs: int, dim: int, seed: int
 
 
 def report_eval(name: str, model, va, va_eps, gold_va, n_resolver_params: int, n_sense_params: int,
-                 shared: bool, elapsed_min: "float | None" = None, n_hyp_params: int = 0):
+                 shared: bool, elapsed_min: "float | None" = None, n_hyp_params: int = 0,
+                 batch_size: int = 0):
     """Shared eval + report tail for :func:`run_arm` and (M54c)
     :func:`run_distilled_arm`: task accuracy (overall + per curriculum kind),
     RESOLVER/SENSE/READING BINDING ACCURACY (M53/M54/M55b's own metrics) +
@@ -588,15 +588,19 @@ def report_eval(name: str, model, va, va_eps, gold_va, n_resolver_params: int, n
     :func:`run_arm`'s post-training tail UNCHANGED (same prints, same dict
     shape) purely so the M54c distillation arm's stage-3 output doesn't
     duplicate ~35 lines of reporting logic. ``n_hyp_params`` defaults 0 so
-    callers that never install a hyp_resolver need no change."""
+    callers that never install a hyp_resolver need no change. ``batch_size``
+    (M57c footprint fix; default 0 = full-batch, unchanged for callers that
+    don't pass it): forwarded to ``_train_common.eval_minibatched`` so this
+    shared eval tail never has to materialize the whole val set's order-3
+    memory tensor at once when a caller opts in."""
     model.eval()
-    with torch.no_grad():
-        out_va = model(va)
+    out_va = eval_minibatched(model, va, batch_size)
     pred = out_va["answer_logits"].argmax(-1)
     total_acc = float((pred == gold_va).float().mean())
     time_str = f"  time={elapsed_min:.2f} min" if elapsed_min is not None else ""
     print(f"  [{name}] val total={total_acc:.3f}  resolver_params={n_resolver_params} "
-          f"sense_resolver_params={n_sense_params} hyp_resolver_params={n_hyp_params}"
+          f"sense_resolver_params={n_sense_params} hyp_resolver_params={n_hyp_params}  "
+          f"peak_rss_mb={peak_rss_mb():.1f}"
           f"{' (SHARED, same instance)' if shared else ''}"
           f"{time_str}", flush=True)
 
@@ -640,7 +644,7 @@ def report_eval(name: str, model, va, va_eps, gold_va, n_resolver_params: int, n
 
 
 def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden: int = 128,
-            sense_bind: str = "gold", reading_bind: str = "gold"):
+            sense_bind: str = "gold", reading_bind: str = "gold", batch_size: int = 64):
     """``track``: "A" | "B" | None (None = --gold-binding / --mfs-floor /
     --wrong-binding, no resolver).
 
@@ -659,6 +663,16 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
     ceiling, ``"wrong"`` = the M55b floor probe -- forces the OPPOSITE
     reading); pronoun steps always placeholder-bind to the gold antecedent
     regardless (there is no MFS/wrong-equivalent floor for coreference).
+
+    ``batch_size`` (M57c footprint fix, same contract as
+    scripts/train_writeback.py's ``run_arm``): each epoch shuffles
+    ``tr_eps``' indices (``_train_common.epoch_minibatches``, seeded by
+    ``seed`` and the epoch number) and steps the optimizer once per
+    minibatch instead of once over the whole training set; ``0`` =
+    full-batch (the pre-fix behavior, kept reachable for before/after
+    measurement). Evaluation is minibatched too, via
+    ``_train_common.eval_minibatched`` (forwarded through
+    :func:`report_eval`).
     """
     texts = [t for e in episodes for t in e.context + [e.question] + (e.options or [])]
     tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
@@ -694,40 +708,46 @@ def run_arm(name: str, track, episodes, dim: int, epochs: int, seed: int, hidden
     gold_tr = torch.tensor([e.answer_idx for e in tr_eps])
     gold_va = torch.tensor([e.answer_idx for e in va_eps])
 
+    n_tr = len(tr_eps)
     t0 = time.time()
     model.train()
+    last_loss = None
     for i in range(epochs):
-        out = model(tr)
-        loss = F.cross_entropy(out["answer_logits"], gold_tr)
-        if resolver is not None and "resolver_logits" in out:
-            cg = tr.cand_gold
-            has_cand = cg >= 0
-            if bool(has_cand.any()):
-                aux = F.cross_entropy(out["resolver_logits"][has_cand], cg[has_cand])
-                loss = loss + AUX_WEIGHT * aux
-        if sense_resolver is not None and "sense_resolver_logits" in out:
-            scg = tr.sense_cand_gold
-            has_scand = scg >= 0
-            if bool(has_scand.any()):
-                saux = F.cross_entropy(out["sense_resolver_logits"][has_scand], scg[has_scand])
-                loss = loss + AUX_WEIGHT * saux
-        if hyp_resolver is not None and "hyp_resolver_logits" in out:
-            hcg = tr.hyp_cand_gold
-            has_hcand = hcg >= 0
-            if bool(has_hcand.any()):
-                haux = F.cross_entropy(out["hyp_resolver_logits"][has_hcand], hcg[has_hcand])
-                loss = loss + AUX_WEIGHT * haux
-        opt.zero_grad(); loss.backward(); opt.step()
+        for mb_idx in epoch_minibatches(n_tr, batch_size, seed, i):
+            idx_t = torch.from_numpy(mb_idx)
+            sub = tr.subset(idx_t)
+            sub_gold = gold_tr[idx_t]
+            out = model(sub)
+            loss = F.cross_entropy(out["answer_logits"], sub_gold)
+            if resolver is not None and "resolver_logits" in out:
+                cg = sub.cand_gold
+                has_cand = cg >= 0
+                if bool(has_cand.any()):
+                    aux = F.cross_entropy(out["resolver_logits"][has_cand], cg[has_cand])
+                    loss = loss + AUX_WEIGHT * aux
+            if sense_resolver is not None and "sense_resolver_logits" in out:
+                scg = sub.sense_cand_gold
+                has_scand = scg >= 0
+                if bool(has_scand.any()):
+                    saux = F.cross_entropy(out["sense_resolver_logits"][has_scand], scg[has_scand])
+                    loss = loss + AUX_WEIGHT * saux
+            if hyp_resolver is not None and "hyp_resolver_logits" in out:
+                hcg = sub.hyp_cand_gold
+                has_hcand = hcg >= 0
+                if bool(has_hcand.any()):
+                    haux = F.cross_entropy(out["hyp_resolver_logits"][has_hcand], hcg[has_hcand])
+                    loss = loss + AUX_WEIGHT * haux
+            opt.zero_grad(); loss.backward(); opt.step()
+            last_loss = float(loss.item())
         if (i + 1) % 20 == 0 or i == 0:
             model.eval()
-            with torch.no_grad():
-                acc = (model(va)["answer_logits"].argmax(-1) == gold_va).float().mean()
+            acc = (eval_minibatched(model, va, batch_size)["answer_logits"].argmax(-1) == gold_va).float().mean()
             model.train()
-            print(f"  [{name}] epoch {i+1:3d} loss={loss.item():.3f} val={acc:.3f}", flush=True)
+            print(f"  [{name}] epoch {i+1:3d} loss={last_loss:.3f} val={acc:.3f}", flush=True)
 
     elapsed_min = (time.time() - t0) / 60
     return report_eval(name, model, va, va_eps, gold_va, n_resolver_params, n_sense_params,
-                        shared, elapsed_min, n_hyp_params=n_hyp_params)
+                        shared, elapsed_min, n_hyp_params=n_hyp_params, batch_size=batch_size)
 
 
 def run_distilled_arm(name: str, episodes, dim: int, seed: int, hidden: int = 128,
@@ -899,7 +919,9 @@ def main() -> None:
                      help="--held-out-name-ablation only: which curriculum2._MALE_NAMES entry to hold out")
     ap.add_argument("--ablation-heads", default="old,fixed",
                      help="--held-out-name-ablation only: comma-separated subset of {old,fixed} to run")
+    add_footprint_args(ap)
     args = ap.parse_args()
+    apply_threads(args)
 
     if args.held_out_name_ablation:
         heads = tuple(h.strip() for h in args.ablation_heads.split(",") if h.strip())
@@ -947,19 +969,19 @@ def main() -> None:
 
     if args.gold_binding:
         print(f"=== gold-binding ceiling: no resolver, {args.episodes} eps, dim={args.dim}, "
-              f"mix={args.mix} ===", flush=True)
+              f"mix={args.mix}, batch_size={args.batch_size} ===", flush=True)
         run_arm("gold-binding", None, episodes, args.dim, args.epochs, args.seed, args.hidden,
-                 sense_bind="gold", reading_bind="gold")
+                 sense_bind="gold", reading_bind="gold", batch_size=args.batch_size)
     elif args.mfs_floor:
         print(f"=== mfs-floor: no resolver, {args.episodes} eps, dim={args.dim}, "
-              f"mix={args.mix} ===", flush=True)
+              f"mix={args.mix}, batch_size={args.batch_size} ===", flush=True)
         run_arm("mfs-floor", None, episodes, args.dim, args.epochs, args.seed, args.hidden,
-                 sense_bind="mfs", reading_bind="gold")
+                 sense_bind="mfs", reading_bind="gold", batch_size=args.batch_size)
     elif args.wrong_binding:
         print(f"=== wrong-binding floor: no resolver, {args.episodes} eps, dim={args.dim}, "
-              f"mix={args.mix} ===", flush=True)
+              f"mix={args.mix}, batch_size={args.batch_size} ===", flush=True)
         run_arm("wrong-binding", None, episodes, args.dim, args.epochs, args.seed, args.hidden,
-                 sense_bind="gold", reading_bind="wrong")
+                 sense_bind="gold", reading_bind="wrong", batch_size=args.batch_size)
     elif args.track == "B-distilled":
         s1 = args.distill_stage1_epochs if args.distill_stage1_epochs is not None else args.epochs
         s2 = args.distill_stage2_epochs if args.distill_stage2_epochs is not None else args.epochs
@@ -972,10 +994,10 @@ def main() -> None:
                            stage1_epochs=s1, stage2_epochs=s2, stage3_epochs=s3,
                            b_track=args.distill_b_track, distill_weight=args.distill_weight)
     else:
-        print(f"=== track {args.track}: {args.episodes} eps, dim={args.dim}, mix={args.mix} ===",
-              flush=True)
+        print(f"=== track {args.track}: {args.episodes} eps, dim={args.dim}, mix={args.mix}, "
+              f"batch_size={args.batch_size} ===", flush=True)
         run_arm(f"track-{args.track}", args.track, episodes, args.dim, args.epochs, args.seed,
-                 args.hidden)
+                 args.hidden, batch_size=args.batch_size)
 
 
 if __name__ == "__main__":

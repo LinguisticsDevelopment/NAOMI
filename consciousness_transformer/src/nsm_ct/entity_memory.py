@@ -27,6 +27,21 @@ def query(memory: torch.Tensor, entity: torch.Tensor, relation: torch.Tensor) ->
     return torch.einsum("bijk,bi,bj->bk", memory, entity, relation)
 
 
+def query_entity(memory: torch.Tensor, relation: torch.Tensor, value: torch.Tensor) -> torch.Tensor:
+    """Recover the ENTITY bound to (relation, value): ``[B, d]`` -- the entity-axis
+    twin of :func:`query`, unbinding along the FIRST (entity) axis instead of the
+    THIRD (value) axis. ``query`` answers "what does entity/relation hold?" (a
+    known address, an unknown value); this answers "who holds relation/value?" (a
+    known relation+value, an unknown address) -- the M57c.2 inverse-query read
+    ("who is tall?" needs the entity dimension unbound, not a value read off an
+    address that doesn't exist yet).
+
+    Exact when the stored (relation, value) keys are orthonormal; otherwise noisy
+    (interference from other bindings), same caveat as :func:`query`.
+    """
+    return torch.einsum("bijk,bj,bk->bi", memory, relation, value)
+
+
 def write(
     memory: torch.Tensor,
     entity: torch.Tensor,

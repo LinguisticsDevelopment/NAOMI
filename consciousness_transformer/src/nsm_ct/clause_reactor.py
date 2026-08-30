@@ -779,6 +779,22 @@ def _writeback_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]
 # same way a reasoning-level query step already carries its query
 # (entity, relation) as the step's own address). The options are identity
 # vectors, not attribute words -- see :func:`_instance_option_vec`.
+#
+# M57c.2 (RESEARCH_NOTES "M57c battery #1" -- inverse_query measured BELOW
+# chance because no entity-axis read existed): the READ side now matches
+# that "identity vectors" framing literally. :func:`build_clause_batch`
+# grounds an inverse-query episode's options as the per-episode INSTANCE
+# ATOMS themselves (``atom_lookup[iid] for iid in ep.meta["registry_order"]``
+# -- the exact atoms :func:`_instance_steps` minted, in a/b/c order, which
+# is also ``ep.options``'s order by construction), NOT
+# :func:`_instance_option_vec`'s composite ``ent_vec(name) +
+# content_vec(kind)`` sum below -- so the contrastive answer compares
+# :func:`nsm_ct.entity_memory.query_entity`'s entity-axis readout against
+# REAL candidate atoms, the same space it was unbound from, instead of a
+# separately-grounded meaning-vector that only correlates with the right
+# instance. :func:`_instance_option_vec` itself is UNCHANGED (still
+# exercised by its own unit test) -- it is simply no longer the grounding
+# path :func:`build_clause_batch` uses for inverse-query options.
 def _instance_option_vec(opt: str, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                           meaning_source: MeaningSource) -> np.ndarray:
     """Ground one inverse-query MC option. Convention (curriculum2.
@@ -805,7 +821,8 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     """Grounded stream + candidate-set map(s) + instance-atom lookup for one
     :class:`~nsm_ct.curriculum2.InstanceCurriculumGenerator` episode. See
     the module comment immediately above for the full design. Returns
-    ``(steps, cand_sets, forced_map, atom_lookup)`` -- ``atom_lookup`` (a
+    ``(steps, cand_sets, forced_map, atom_lookup, inverse_step_idx)`` --
+    ``atom_lookup`` (a
     NEW fourth element, absent from every earlier ``_*_steps`` helper's
     return shape) is ``{instance_id: atom_ndarray}`` for this episode's
     freshly-minted registry, consumed by :func:`build_clause_batch`'s
@@ -814,6 +831,17 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
     grounds to its OWN minted atom instead of falling through to
     :func:`_ent_vec`'s name/content-word branches, which have no idea what
     an instance id is.
+
+    M57c.2 (RESEARCH_NOTES "M57c battery #1"): a FIFTH element,
+    ``inverse_step_idx`` -- the step index of the "who is {trait} ?"
+    question step for an inverse-query episode, ``None`` for every
+    "target"-mode episode. :func:`build_clause_batch` uses it to populate
+    ``ClauseBatch.inverse_mask`` (that step's ENTITY-axis read: see
+    :func:`nsm_ct.entity_memory.query_entity` and
+    :meth:`ClauseReactor.forward`'s inverse-read paragraph) -- a fixed
+    "who" marker atom is not a memory address, so there is no candidate
+    set to redirect here, just a flag on the one step whose read must use
+    the entity-axis unbind instead of the ordinary value read.
     """
     d = codec.dim
     z = np.zeros(d, np.float32)
@@ -908,9 +936,11 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
             forced_map[overwrite_step_idx] = true_idx if force == "gold" else wrong_idx
 
     # Question step.
+    inverse_step_idx: Optional[int] = None
     if ep.meta.get("question_mode") == "inverse":
         who_vec = _content_vec("who", resolver, codec, cache, meaning_source)
         query_vec = _content_vec(ep.meta["query_trait"], resolver, codec, cache, meaning_source)
+        inverse_step_idx = len(steps)
         steps.append((who_vec, trait_rel, query_vec, q_pred, z, 1))
     else:
         target = ep.meta["target_role"]
@@ -939,7 +969,7 @@ def _instance_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
                     wrong_idx = (true_idx + 1) % 3
                     forced_map[q_step_idx] = true_idx if force == "gold" else wrong_idx
 
-    return steps, cand_sets, forced_map, atom_lookup
+    return steps, cand_sets, forced_map, atom_lookup, inverse_step_idx
 
 
 # M52 v1 IN table ("queried role"): the relation a question is actually
@@ -1103,6 +1133,18 @@ class ClauseBatch:
     # membrane.EntityCandidateSet.evidence_relation's docstring and
     # ClauseReactor._collapse's entity branch for where this is consumed).
     cand_evidence_relation: Optional[torch.Tensor] = None  # [B, T, d]
+    # M57c.2 (RESEARCH_NOTES "M57c battery #1" -- inverse_query measured
+    # BELOW chance because no entity-axis read existed): ONE new field, the
+    # SAME "optional field defaults None, byte-identical for every batch
+    # that doesn't populate it" discipline every field above establishes.
+    # Truthy at (row, step) means: this step's read has NO memory address
+    # to query at all (an inverse-query "who is {trait} ?" step's own
+    # "entity" is a fixed marker atom, never written to) -- ClauseReactor.
+    # forward must instead unbind the ENTITY axis from THIS step's own
+    # (relation, value) via :func:`nsm_ct.entity_memory.query_entity`. Only
+    # :func:`nsm_ct.clause_reactor._instance_steps` (inverse-query episodes)
+    # ever sets this; every other curriculum leaves it ``None``.
+    inverse_mask: Optional[torch.Tensor] = None  # [B, T]
 
     def _coord(self) -> torch.Tensor:
         return self.coord if self.coord is not None else torch.zeros_like(self.entity)
@@ -1132,11 +1174,12 @@ class ClauseBatch:
         addr_mask = self.cand_addr_mask.to(device) if self.cand_addr_mask is not None else None
         forced = self.cand_forced_index.to(device) if self.cand_forced_index is not None else None
         evidence_rel = self.cand_evidence_relation.to(device) if self.cand_evidence_relation is not None else None
+        inv_mask = self.inverse_mask.to(device) if self.inverse_mask is not None else None
         return ClauseBatch(self.entity.to(device), self.relation.to(device),
                            self.value.to(device), self.pred.to(device),
                            self.is_q.to(device), self.mask.to(device),
                            self.options.to(device), self.answer.to(device), coord, ans_ok,
-                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel)
+                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, inv_mask)
 
     def subset(self, idx) -> "ClauseBatch":
         """A minibatch over the leading (episode) dimension."""
@@ -1148,10 +1191,11 @@ class ClauseBatch:
         addr_mask = self.cand_addr_mask[idx] if self.cand_addr_mask is not None else None
         forced = self.cand_forced_index[idx] if self.cand_forced_index is not None else None
         evidence_rel = self.cand_evidence_relation[idx] if self.cand_evidence_relation is not None else None
+        inv_mask = self.inverse_mask[idx] if self.inverse_mask is not None else None
         return ClauseBatch(self.entity[idx], self.relation[idx], self.value[idx],
                            self.pred[idx], self.is_q[idx], self.mask[idx],
                            self.options[idx], self.answer[idx], coord, ans_ok,
-                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel)
+                           *cand, *scand, *hcand, addr_mask, forced, evidence_rel, inv_mask)
 
 
 def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
@@ -1273,6 +1317,16 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     a real training script mixes curricula in ONE arm); all three remain
     complete no-ops for every episode without ``ep.meta["kind"] in
     ("writeback", "instance")``.
+
+    M57c.2 (RESEARCH_NOTES "M57c battery #1"): an inverse-query instance
+    episode's question step (``_instance_steps``'s ``inverse_step_idx``)
+    populates the new ``inverse_mask`` field (``None`` for every batch
+    without one -- the same "only if present" discipline every optional
+    field above establishes), and its MC options are grounded as the
+    per-episode INSTANCE ATOMS THEMSELVES (``atom_lookup`` in
+    ``ep.meta["registry_order"]`` order) rather than
+    :func:`_instance_option_vec`'s composite name+kind vectors -- see that
+    function's own docstring addendum for why.
     """
     cache: Dict[str, np.ndarray] = {}
     d = codec.dim
@@ -1286,12 +1340,19 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     # below needs this (candidate keys are instance ids, not names/content
     # words _ent_vec knows how to ground).
     atom_lookups: List[Optional[Dict[str, np.ndarray]]] = []
+    # M57c.2: parallel to rows, the (row-local) step index of an
+    # inverse-query episode's "who is {trait} ?" step, None for every other
+    # episode -- see ClauseBatch.inverse_mask's docstring for why this needs
+    # its own tensor rather than folding into the cand_* groups (there is no
+    # candidate set at this step at all).
+    inverse_step_indices: List[Optional[int]] = []
     for ep in episodes:
         cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
         sense_cand_sets: Dict[int, "membrane.SenseCandidateSet"] = {}
         hyp_cand_sets: Dict[int, "membrane.HypothesisCandidateSet"] = {}
         forced_map: Dict[int, int] = {}
         atom_lookup: Optional[Dict[str, np.ndarray]] = None
+        inverse_step_idx: Optional[int] = None
         if getattr(ep, "level", 0) >= 9 and ep.meta.get("query"):
             steps = _reasoning_steps(ep, resolver, codec, cache, meaning_source)   # L9-L11 reasoning stream
         elif ep.meta.get("homograph"):
@@ -1306,7 +1367,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                 cheat=writeback_cheat, no_gold=writeback_no_gold,
                 force=writeback_force)   # M57b write-back stream (v2)
         elif ep.meta.get("kind") == "instance":
-            steps, cand_sets, forced_map, atom_lookup = _instance_steps(
+            steps, cand_sets, forced_map, atom_lookup, inverse_step_idx = _instance_steps(
                 ep, resolver, codec, cache, meaning_source,
                 cheat=writeback_cheat, no_gold=writeback_no_gold,
                 force=writeback_force)   # M57c instance-atom stream
@@ -1331,18 +1392,26 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
             for sent in getattr(ep, "post_context", []) or []:
                 steps += _context_steps(sent, parser, resolver, codec, cache, meaning_source)
         # M57c: inverse-query instance episodes answer with IDENTITY options
-        # ("mary the doctor"), not content words -- see
-        # _instance_option_vec's docstring. Every other episode (including
-        # every "target"-mode instance episode, whose options are plain
-        # trait words) is grounded exactly as before.
+        # ("mary the doctor"), not content words. M57c.2: grounded as the
+        # per-episode INSTANCE ATOMS THEMSELVES (``atom_lookup`` -- the exact
+        # atoms _instance_steps just minted), keyed by ``ep.meta
+        # ["registry_order"]`` (a/b/c mint order, which is also ep.options's
+        # order by construction -- see the module comment above
+        # _instance_option_vec) -- NOT _instance_option_vec's composite
+        # ent_vec(name)+content_vec(kind) sum, so the contrastive answer
+        # compares query_entity's entity-axis readout against REAL candidate
+        # atoms, the same space it was unbound from. Every other episode
+        # (including every "target"-mode instance episode, whose options are
+        # plain trait words) is grounded exactly as before.
         if ep.meta.get("kind") == "instance" and ep.meta.get("question_mode") == "inverse":
-            opt = [_instance_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
+            opt = [atom_lookup[iid] for iid in ep.meta["registry_order"]]
         else:
             opt = [_option_vec(o, resolver, codec, cache, meaning_source) for o in ep.options]
         rows.append((steps, opt, ep.answer_idx, 1.0 if getattr(ep, "answerable", True) else 0.0,
                      cand_sets, sense_cand_sets, hyp_cand_sets))
         forced_maps.append(forced_map)
         atom_lookups.append(atom_lookup)
+        inverse_step_indices.append(inverse_step_idx)
 
     b = len(rows)
     T = max(len(s) for s, _, _, _, _, _, _ in rows)
@@ -1449,6 +1518,19 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
             for t, idx in fm.items():
                 cand_forced_index[i, t] = idx
 
+    # M57c.2: inverse_mask, built from inverse_step_indices (parallel to
+    # rows, populated only by _instance_steps for inverse-query episodes --
+    # see ClauseBatch.inverse_mask's docstring). Only allocated when at
+    # least one episode actually has an inverse-query step, same "only if
+    # present" pattern as cand_forced_index above -- None (byte-identical to
+    # absent) for every batch without one.
+    inverse_mask = None
+    if any(idx is not None for idx in inverse_step_indices):
+        inverse_mask = torch.zeros(b, T)
+        for i, idx in enumerate(inverse_step_indices):
+            if idx is not None:
+                inverse_mask[i, idx] = 1.0
+
     # M54: SAME shape/pattern as the cand_* block above, but for
     # nsm_ct.membrane.SenseCandidateSet -- a wholly SEPARATE tensor group
     # (see ClauseBatch's field comment for why), so an ambiguity-free batch
@@ -1545,7 +1627,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                        sense_cand_subject, sense_cand_subject_rel,
                        hyp_cand_entity, hyp_cand_mask, hyp_cand_prior, hyp_cand_gold,
                        hyp_cand_query_entity, hyp_cand_query_relation,
-                       cand_addr_mask, cand_forced_index, cand_evidence_relation)
+                       cand_addr_mask, cand_forced_index, cand_evidence_relation, inverse_mask)
 
 
 # ---------------------------------------------------------------------------
@@ -1630,6 +1712,28 @@ class ClauseReactor(nn.Module):
     (every pre-v2 batch, and every batch built without
     ``writeback_force=``) is byte-identical to an all-``-1`` tensor and to
     this field being entirely absent.
+
+    M57c.2 (RESEARCH_NOTES "M57c battery #1": instance episodes failed even
+    under forced-gold collapse because a description/pronoun QUESTION step's
+    read never followed the redirect -- only the WRITE did): two fixes,
+    both gated so a batch that predates them is untouched.
+      - Post-collapse read: on every (row, step) where ``_collapse``'s
+        entity branch just redirected the address (its new ``addr_row``
+        return value), :meth:`forward` recomputes ``mem_read`` at the
+        RESOLVED node under the step's own relation and feeds THAT into
+        both the GRU input and the response head, replacing the pre-collapse
+        placeholder address's reading. Applies uniformly to statement and
+        question steps. A row with no redirect this step (``addr_row``
+        ``None``/all-``False`` -- every pre-M57c.2 batch) keeps the original
+        pre-collapse ``mem_read``, byte-identical to before.
+      - Entity-axis inverse read: ``batch.inverse_mask`` (truthy at an
+        inverse-query "who is {trait} ?" step, which has no memory address
+        at all) swaps ``mem_read`` for
+        :func:`nsm_ct.entity_memory.query_entity`'s entity-axis unbind of
+        THAT step's own (relation, value) instead of the ordinary
+        address-keyed :func:`~nsm_ct.entity_memory.query`. ``None``/all-
+        falsy (every batch without an instance inverse-query episode) is a
+        no-op.
     """
 
     def __init__(self, dim: int, hidden: int = 128, resolver: Optional[Resolver] = None,
@@ -1685,12 +1789,21 @@ class ClauseReactor(nn.Module):
         pronoun candidate set), so applying them in sequence is safe: each
         only touches rows where its own ``has_cand`` is true, via
         ``torch.where``. Returns ``(entity, value, ent_logits, ent_margin,
-        sense_logits, sense_margin, hyp_logits, hyp_margin)`` -- any of the
-        last six is ``None`` exactly when the corresponding
+        sense_logits, sense_margin, hyp_logits, hyp_margin, addr_row)`` --
+        any of the middle six is ``None`` exactly when the corresponding
         resolver/candidate data is absent (mirrors the pre-M54 ``(v, None,
         None)`` contract for the no-resolver case component-wise); ``entity``
         is ``e`` UNCHANGED whenever no address-redirect row applies (see the
         ENTITY branch below and the M57b class-docstring paragraph).
+        ``addr_row`` (M57c.2, a NEW ninth element) is the ``[B]`` bool mask
+        of rows whose address was JUST redirected at this step (``None``
+        whenever the entity branch didn't run at all, i.e. no resolver or no
+        ``batch.cand_mask`` -- an ALL-``False`` tensor, not ``None``, when the
+        branch ran but ``cand_addr_mask`` is absent/falsy) -- consumed by
+        :meth:`ClauseReactor.forward`'s post-collapse read (RESEARCH_NOTES
+        "M57c battery #1": a description/pronoun QUESTION step read memory
+        at the PRE-collapse placeholder address, so the doctor's own node was
+        never actually read even after a correct redirect).
 
         M55a's hypothesis branch (new) is arithmetically the ENTITY branch's
         twin, not the sense branch's: each candidate's per-candidate ``Addr``
@@ -1734,6 +1847,7 @@ class ClauseReactor(nn.Module):
           a sense candidate's vector already IS the resolved meaning).
         """
         ent_logits = ent_margin = None
+        addr_row_out = None    # M57c.2: [B] bool, which rows got address-redirected THIS step
         if self.resolver is not None and batch.cand_mask is not None:
             ce_t, cf_t = batch.cand_entity[:, t], batch.cand_feature[:, t]
             cp_t, cm_t = batch.cand_prior[:, t], batch.cand_mask[:, t]
@@ -1804,6 +1918,7 @@ class ClauseReactor(nn.Module):
             v = torch.where(value_row.unsqueeze(-1), resolved_v, v)
             e = torch.where(addr_row.unsqueeze(-1), resolved_e, e)
             ent_logits, ent_margin = logits, self._top2_margin(logits, has_cand, v)
+            addr_row_out = addr_row
 
         sense_logits = sense_margin = None
         if self.sense_resolver is not None and batch.sense_cand_mask is not None:
@@ -1839,9 +1954,10 @@ class ClauseReactor(nn.Module):
             v = torch.where(has_cand.unsqueeze(-1), resolved_v, v)
             hyp_logits, hyp_margin = logits, self._top2_margin(logits, has_cand, v)
 
-        return e, v, ent_logits, ent_margin, sense_logits, sense_margin, hyp_logits, hyp_margin
+        return e, v, ent_logits, ent_margin, sense_logits, sense_margin, hyp_logits, hyp_margin, addr_row_out
 
-    def forward(self, batch: ClauseBatch, return_memory: bool = False) -> Dict[str, torch.Tensor]:
+    def forward(self, batch: ClauseBatch, return_memory: bool = False,
+                return_mem_read: bool = False) -> Dict[str, torch.Tensor]:
         b, T, d = batch.entity.shape
         device = batch.entity.device
         state = torch.zeros(b, self.gru.hidden_size, device=device)
@@ -1855,19 +1971,49 @@ class ClauseReactor(nn.Module):
         resolver_logits_all, resolver_margin_all = [], []
         sense_logits_all, sense_margin_all = [], []
         hyp_logits_all, hyp_margin_all = [], []
+        mem_read_all = []
         for t in range(T):
             e, r, v = batch.entity[:, t], batch.relation[:, t], batch.value[:, t]
             p, c = batch.pred[:, t], coord[:, t]
             real, isq = batch.mask[:, t], batch.is_q[:, t]
-            mem_read = em.query(memory, e, r)                          # [B, d] -- ALWAYS from the pre-collapse address
+            mem_read = em.query(memory, e, r)                          # [B, d] -- the pre-collapse address's reading
             (e, v, res_logits_t, res_margin_t, sense_logits_t, sense_margin_t,
-             hyp_logits_t, hyp_margin_t) = self._collapse(
+             hyp_logits_t, hyp_margin_t, addr_row_t) = self._collapse(
                 memory, state, mem_read, e, r, v, batch, t)
-            # M57b: `e` may now be the resolver's redirected address (see
-            # ClauseReactor's own docstring) -- threaded into BOTH the GRU
-            # input and the write below; `mem_read` above stays computed
-            # from the ORIGINAL pre-collapse address (no other arithmetic
-            # changes).
+            # M57c.2 (RESEARCH_NOTES "M57c battery #1" -- the measured gap:
+            # a description/pronoun QUESTION step's read never reached the
+            # resolved node, only the write did): `e` may now be the
+            # resolver's redirected address (see ClauseReactor's own
+            # docstring). On exactly the rows THIS step redirected
+            # (`addr_row_t`), recompute `mem_read` AT that resolved node
+            # under the step's own relation `r` and use THAT for the GRU
+            # input and the response head below, instead of the pre-collapse
+            # placeholder address's (almost always empty) reading -- applies
+            # to statement AND question steps alike (the GRU should see the
+            # content already at the resolved node before deciding whether
+            # to overwrite it, too). Rows with no redirect this step keep the
+            # original `mem_read` untouched: `addr_row_t` is `None` whenever
+            # the entity/M57b branch never ran (no resolver, or no
+            # `batch.cand_mask`), and an all-`False` tensor whenever it ran
+            # but `cand_addr_mask` is absent/falsy -- both leave `mem_read`
+            # byte-identical to before M57c.2.
+            if addr_row_t is not None and bool(addr_row_t.any()):
+                mem_read = torch.where(addr_row_t.unsqueeze(-1), em.query(memory, e, r), mem_read)
+            # M57c.2: entity-axis inverse read. An inverse-query question
+            # step ("who is tall ?") has no memory ADDRESS at all -- its own
+            # "entity" is a fixed "who" marker atom, never written to -- so
+            # there is nothing for `em.query` to usefully read. What it needs
+            # instead is the ENTITY unbound from THIS step's own (relation,
+            # value) via :func:`nsm_ct.entity_memory.query_entity`'s
+            # entity-axis einsum. `batch.inverse_mask` is `None`/all-falsy
+            # for every batch without an InstanceCurriculumGenerator
+            # inverse-query episode, leaving `mem_read` untouched.
+            if batch.inverse_mask is not None:
+                inv_row = batch.inverse_mask[:, t] > 0
+                if bool(inv_row.any()):
+                    mem_read = torch.where(inv_row.unsqueeze(-1), em.query_entity(memory, r, v), mem_read)
+            if return_mem_read:
+                mem_read_all.append(mem_read)
             state = self.gru(torch.cat([e, r, v, p, c, mem_read], dim=-1), state)
             stmt = real * (1.0 - isq)                                  # statement (write) step
             # write gate: statement steps only (questions carry no value)
@@ -1923,4 +2069,13 @@ class ClauseReactor(nn.Module):
         # reads it, this is purely a test-observability seam.
         if return_memory:
             out["_memory"] = memory
+        # M57c.2 test seam (mirrors ``return_memory`` exactly): the per-step
+        # ``mem_read`` actually fed into the GRU/response head, AFTER the
+        # post-collapse recompute / entity-axis inverse override -- lets a
+        # test check directly that a redirected question step reads the
+        # RESOLVED node, not the pre-collapse placeholder. Deliberately NOT
+        # part of the default output dict (``return_mem_read`` defaults
+        # False) -- no training/eval script reads it.
+        if return_mem_read:
+            out["_mem_read"] = torch.stack(mem_read_all, dim=1)   # [B, T, d]
         return out
