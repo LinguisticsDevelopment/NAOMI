@@ -26,3 +26,27 @@ path is NOT switched to the direct route; diagnosis queued (suspects:
 the negate/overwrite gates reshaping stored values; write-address soft/
 hard train-eval mismatch on inverse-relevant slots).
 Next: M58b zero-shot prose on the frozen checkpoint.
+
+### Executor LOFO gate #1 — INCONCLUSIVE AS INSTRUMENTED: two full-gap recoveries, four gap-less cells, one oracle inversion (MEASURED, no GO/KILL declared)
+
+7 cloud runs (500 eps/family, dim 48, 60 epochs, ~90 min each). Logs:
+branch executor-lofo-logs. Per held-out family (learned/oracle/floor):
+writeback 0.960/0.960/0.460 (100% of a 0.50 gap recovered traceless —
+the 12-step program, composed from task loss + straight-through alone);
+recall_link 0.440/0.440/0.250 (100% of 0.19); plain_fact 0.270/=/=,
+defdesc 0.470/0.470/0.460, inverse 0.510/0.510/0.470 (no gap →
+uninformative); pronoun 1.000/0.170/0.960 (ORACLE BELOW FLOOR —
+invalid cell, red flag). The GO/KILL criteria are unevaluable with 4/6
+cells gap-less; declaring either would be dishonest.
+
+Instrument defects identified: (1) entry-op selector majority-collapses
+even WITH traces (baseline defdesc/inverse op_acc 0.000; plain_fact is
+87% of steps — trace loss needs family/class balancing); (2) the shared
+resolver was built use_cand_feature=False (Phase 2's documented
+sidestep), flattening exactly the families whose oracle edge needs the
+interaction feature; (3) the pronoun gold program or forced-trace eval
+is broken at scale (oracle 0.170 < floor 0.960) — diagnose before
+re-running. Clean positives: write_violations 0 across ~40k clauses;
+wall-clock ratio ~1.0x; soft-vs-argmax delta 0.000 everywhere (D1
+hard-for-keys costs nothing). Next: LOFO instrument repair, then gate
+re-run.
