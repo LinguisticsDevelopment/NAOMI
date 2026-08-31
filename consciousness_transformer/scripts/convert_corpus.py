@@ -99,12 +99,16 @@ def convert(in_glob: str, seed: int = 0):
 
     # Pass 2: make_episodes per passage, seeded deterministically per doc_id.
     episodes: List[Episode] = []
+    reject_counts: Dict[str, Counter] = defaultdict(Counter)  # M58d: episode-quality-filter rejections, per group
     for i, p in enumerate(passages):
         own_ids = {id(r) for r in p["results"]}
         pool = [c for c in all_clauses if id(c) not in own_ids]
+        group_stats = Counter()
         eps = make_episodes(p["results"], holdout="last", seed=seed + i,
-                             doc_id=p["doc_id"], distractor_pool=pool)
+                             doc_id=p["doc_id"], distractor_pool=pool, reject_stats=group_stats)
         episodes.extend(eps)
+        reject_counts[p["group"]] += group_stats
+        reject_counts["all"] += group_stats
 
     # Stats, split by group.
     group_taxonomy: Dict[str, Counter] = defaultdict(Counter)
@@ -126,10 +130,11 @@ def convert(in_glob: str, seed: int = 0):
         relation_counts[grp][ep.meta["relation"]] += 1
         relation_counts["all"][ep.meta["relation"]] += 1
 
-    return episodes, group_taxonomy, group_sentence_total, failure_examples, relation_counts, passages
+    return episodes, group_taxonomy, group_sentence_total, failure_examples, relation_counts, passages, reject_counts
 
 
-def print_stats(group_taxonomy, group_sentence_total, relation_counts, episodes):
+def print_stats(group_taxonomy, group_sentence_total, relation_counts, episodes, reject_counts=None):
+    reject_counts = reject_counts or {}
     for grp in ("all", "synthetic", "real"):
         if group_sentence_total.get(grp, 0) == 0:
             continue
@@ -149,6 +154,9 @@ def print_stats(group_taxonomy, group_sentence_total, relation_counts, episodes)
                     or (grp == "synthetic" and ep.meta.get("source_doc", "").startswith("synthetic_"))
                     or (grp == "real" and not ep.meta.get("source_doc", "").startswith("synthetic_")))
         print(f"episodes produced: {n_eps}")
+        rejected = reject_counts.get(grp, Counter()).get("episode-rejected-quality", 0)
+        if rejected:
+            print(f"episode-rejected-quality: {rejected}  (candidate clauses rejected by the M58d quality filter)")
         print("questions per relation:")
         for rel, c in sorted(relation_counts[grp].items(), key=lambda kv: -kv[1]):
             print(f"  {rel:<12} {c}")
@@ -206,7 +214,7 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
-    episodes, group_taxonomy, group_sentence_total, failure_examples, relation_counts, _ = \
+    episodes, group_taxonomy, group_sentence_total, failure_examples, relation_counts, _, reject_counts = \
         convert(args.in_glob, seed=args.seed)
 
     out_path = Path(args.out)
@@ -220,7 +228,7 @@ def main():
     print(f"Wrote failure taxonomy to {args.taxonomy_out}")
 
     if args.stats:
-        print_stats(group_taxonomy, group_sentence_total, relation_counts, episodes)
+        print_stats(group_taxonomy, group_sentence_total, relation_counts, episodes, reject_counts)
 
     return 0
 

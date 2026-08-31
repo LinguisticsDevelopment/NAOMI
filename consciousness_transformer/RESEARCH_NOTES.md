@@ -3245,3 +3245,26 @@ text) THROUGH a perception layer that parses only 18.6% of wild
 sentences strictly, with honest abstention on the rest. The number will
 move with perception, exactly as the architecture predicts. M58d: fix
 the PLACE grounding bug + episode-quality filter, re-measure.
+
+### M58d — grounding fix + quality filter: the eval got MORE honest, the frozen number moved sideways (MEASURED; retraining is the lever)
+
+Fix 1 (one line): bare-PLACE writes now ground the entity via _ent_vec —
+the same function the question reads through — cosine(write,read) = 1.0
+by construction everywhere (was -0.28 for non-curriculum subjects).
+Curriculum batches proven BYTE-IDENTICAL (torch.equal over ~100 episodes
+across four generators vs the pre-fix builder). Fix 2: episode-quality
+filter (pronoun/reflexive/verb-primary/closed-class held-outs rejected;
+27 of 75 candidates) with a new taxonomy code.
+
+Zero-shot re-measure, same frozen checkpoint: overall 0.583→0.558
+(n 48→43); synthetic 0.700→0.741; real 0.389→0.250 (n=16 — noise
+territory); PLACE 0.500→0.615; acc-when-confident 0.615→0.731.
+Reading: the filter removed junk the model was rightly abstaining on
+(abstain 0.458→0.395, confident-accuracy up), and the corrected PLACE
+grounding is now structurally right but OUT-OF-DISTRIBUTION for a
+checkpoint whose PLACE circuit only ever saw var: atoms in training.
+The fix pays at the NEXT training run, not on a frozen model — recorded
+as the honest residual, not a regression. Residual noted: the distractor
+pool is unfiltered (noise words as wrong options) — future item.
+Next: corpus scale-up (statistical power) → retrain on corrected
+grounding → re-measure zero-shot on held-out documents.

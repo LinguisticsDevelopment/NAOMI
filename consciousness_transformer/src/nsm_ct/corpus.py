@@ -76,7 +76,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 from .clause import _PRONOUNS, extract_discourse, is_entity
 from .clause_reactor import _TRANSFER_ROLE_MAP
 from .episode import Episode
-from .membrane import HypothesisCandidateSet, hypothesis_candidate_set
+from .membrane import PRONOUN_MORPHOLOGY, HypothesisCandidateSet, hypothesis_candidate_set
 
 # ---------------------------------------------------------------------------
 # 1. sentence splitting + tokenization (matches the curriculum convention:
@@ -721,9 +721,86 @@ _RELATION_QUESTION_TEMPLATE: Dict[str, str] = {
 }
 
 
+# M58d item 2 (the episode-quality filter, RESEARCH_NOTES "M58b"'s first
+# diagnosed defect): a self-generated episode is only as good as the
+# held-out clause it quizzes -- extraction NOISE surviving into the
+# episode's entity/value turns the question into "where is the himself ?"
+# or the gold answer into "got", testing memory of nonsense rather than
+# comprehension. :func:`_quality_reject_reason` below is consulted ONLY
+# from :func:`make_episodes`'s own candidate loop (never from the
+# curriculum's own step-builders in clause_reactor.py -- this filter has
+# no effect on any curriculum path). Reported under the new
+# "episode-rejected-quality" taxonomy code (see :data:`make_episodes`'s
+# ``reject_stats`` kwarg), a distinct namespace from :data:`FAILURE_REASONS`
+# (a per-SENTENCE parse outcome; this is a per-CANDIDATE episode-quality
+# gate over already-parsed clauses, so it does not join that tuple).
+EPISODE_QUALITY_CODE = "episode-rejected-quality"
+
+# himself/herself/itself/themselves: reflexives are NOT in clause.py's
+# _PRONOUNS (a different grammatical role -- see that module's own note),
+# so _extract_triples's pronoun-resolution branch never catches them; they
+# pass straight through as a literal entity/value string instead of being
+# resolved or flagged "pronoun-unresolvable". membrane.PRONOUN_MORPHOLOGY
+# additionally catches every other unresolved pronominal form _extract_triples
+# also lets through unresolved (possessives "his"/"her"/"their", Spanish
+# clitics "le"/"la"/"lo"/"los"/"las") -- everything _PRONOUNS itself already
+# resolves-or-drops never reaches here as a held-out entity/value at all.
+_REFLEXIVES = {"himself", "herself", "itself", "themselves"}
+
+
+def _is_pronoun_or_reflexive(word: str) -> bool:
+    w = (word or "").lower()
+    return w in PRONOUN_MORPHOLOGY or w in _REFLEXIVES
+
+
+def _is_verb_tagged(word: str) -> bool:
+    """True if ``word``'s PRIMARY tagger reading is VERB/AUX -- extraction
+    noise surviving as a held-out value (e.g. gold="got", a mis-extracted
+    verb, not a place/recipient/agent). Uses the PRIMARY (first) candidate
+    tag, not "any" reading, so an ordinary place-noun that also happens to
+    have a secondary verb sense ("garden", "house", "table" -- all NOUN-
+    primary in the lexicon) is never rejected; only words whose tagger
+    entry itself ranks VERB/AUX first (walked, ran, got, watched) are.
+    """
+    if not _load_tagger_tables():
+        return False
+    from src.parser.enums import Tag  # type: ignore  # local import: qp_root already on sys.path
+
+    tags = _word_tag_candidates(word)
+    return bool(tags) and tags[0] in (Tag.VERB, Tag.AUX)
+
+
+def _is_closed_class(word: str) -> bool:
+    """True if ``word`` is one of the tagger's ~300 closed-class function
+    words (determiners, prepositions, conjunctions, ...) -- asking a
+    question about one ("where is the to ?") means the entity token itself
+    is extraction noise, not a real referring expression.
+    """
+    if not _load_tagger_tables():
+        return False
+    return (word or "").lower() in _word_tag_dict
+
+
+def _quality_reject_reason(held: ParsedClause) -> Optional[str]:
+    """None if ``held`` is fit to be a held-out episode clause, else a short
+    reason code (for tests/debugging -- callers only need the None/not-None
+    signal). See the three checks' own docstrings for what each catches.
+    """
+    if _is_pronoun_or_reflexive(held.entity):
+        return "entity-pronoun"
+    if _is_pronoun_or_reflexive(held.value):
+        return "value-pronoun"
+    if _is_verb_tagged(held.value):
+        return "value-verb"
+    if _is_closed_class(held.entity):
+        return "entity-closed-class"
+    return None
+
+
 def make_episodes(passage_clauses: Sequence[ParseOutcome], *, holdout: str = "last",
                    seed: int = 0, doc_id: str = "",
-                   distractor_pool: Optional[Sequence[ParsedClause]] = None) -> List[Episode]:
+                   distractor_pool: Optional[Sequence[ParsedClause]] = None,
+                   reject_stats: Optional[Counter] = None) -> List[Episode]:
     """Hold out one eligible clause of the passage and ask a self-generated question.
 
     ``passage_clauses`` is one passage's full :func:`parse_passage` output
@@ -748,6 +825,14 @@ def make_episodes(passage_clauses: Sequence[ParseOutcome], *, holdout: str = "la
     ``distractor_pool``: extra :class:`ParsedClause` values (e.g. from other
     passages of the same corpus) to draw same-relation distractors from when
     the passage alone doesn't have enough ("elsewhere in the passage/corpus").
+
+    ``reject_stats``: an optional :class:`collections.Counter` the caller
+    passes in to accumulate the M58d episode-quality filter's rejections
+    (:data:`EPISODE_QUALITY_CODE`, one increment per candidate clause
+    :func:`_quality_reject_reason` flags, whether or not the passage goes
+    on to yield an episode from a later candidate) -- corpus-wide honesty
+    for a code that, unlike :data:`FAILURE_REASONS`, is per-CANDIDATE
+    rather than per-sentence and so can't live in :func:`taxonomy_counts`.
     """
     if holdout not in ("last", "random"):
         raise ValueError(f"holdout must be 'last' or 'random', got {holdout!r}")
@@ -774,6 +859,10 @@ def make_episodes(passage_clauses: Sequence[ParseOutcome], *, holdout: str = "la
         rng.shuffle(candidates)
 
     for held in candidates:
+        if _quality_reject_reason(held) is not None:
+            if reject_stats is not None:
+                reject_stats[EPISODE_QUALITY_CODE] += 1
+            continue
         gold = held.value
         seen = {gold}
         distractor_values: List[str] = []

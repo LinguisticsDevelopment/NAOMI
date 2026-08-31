@@ -204,7 +204,7 @@ def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str
                 place = (arg.token or "").lower()
         if not (subj and place):
             continue
-        steps.append((codec.filler_vec("var:" + subj), codec.filler_vec("rel:PLACE"),
+        steps.append((_ent_vec(subj, resolver, codec, cache, meaning_source), codec.filler_vec("rel:PLACE"),
                       _content_vec(place, resolver, codec, cache, meaning_source),
                       pred_vec, coordv, 0))
     return steps
