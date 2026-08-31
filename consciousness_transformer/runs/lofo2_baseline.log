@@ -1,0 +1,97 @@
+OpSelect params=917 ArgSelect params=928 combined=1701 (budget: <=10000)
+family_of_step coverage (train split): {'plain_fact': 27831, 'writeback_addr_redirect': 1805, 'definite_desc_read': 316, 'inverse_query': 254, 'recall_link': 400, 'pronoun_value_redirect': 400}
+family_balance_weight (repair #1, inverse-frequency, global): {'plain_fact': 0.657, 'writeback_addr_redirect': 2.579, 'definite_desc_read': 6.163, 'inverse_query': 6.874, 'recall_link': 5.478, 'pronoun_value_redirect': 5.478}
+/usr/local/lib/python3.11/dist-packages/torch/_compile.py:54: UserWarning: optimizer contains a parameter group with duplicate parameters; in future, this will cause an error; see github.com/pytorch/pytorch/issues/40967 for more information
+  return disable_fn(*args, **kwargs)
+/home/user/NAOMI/consciousness_transformer/scripts/../src/nsm_ct/provenance.py:88: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:822.)
+  g = float(gate[i, t])
+epoch   1/60 mean_loss=3.5214 trace_weight=1.000
+epoch   2/60 mean_loss=1.9916 trace_weight=1.000
+epoch   3/60 mean_loss=1.5388 trace_weight=1.000
+epoch   4/60 mean_loss=1.4274 trace_weight=1.000
+epoch   5/60 mean_loss=1.0566 trace_weight=1.000
+epoch   6/60 mean_loss=0.9009 trace_weight=1.000
+epoch   7/60 mean_loss=0.8584 trace_weight=1.000
+epoch   8/60 mean_loss=0.7274 trace_weight=1.000
+epoch   9/60 mean_loss=0.6731 trace_weight=1.000
+epoch  10/60 mean_loss=0.5954 trace_weight=1.000
+epoch  11/60 mean_loss=0.5525 trace_weight=1.000
+epoch  12/60 mean_loss=0.5620 trace_weight=1.000
+epoch  13/60 mean_loss=0.6287 trace_weight=1.000
+epoch  14/60 mean_loss=0.5586 trace_weight=1.000
+epoch  15/60 mean_loss=0.5118 trace_weight=1.000
+epoch  16/60 mean_loss=0.4049 trace_weight=1.000
+epoch  17/60 mean_loss=0.4680 trace_weight=1.000
+epoch  18/60 mean_loss=0.3957 trace_weight=1.000
+epoch  19/60 mean_loss=0.3222 trace_weight=1.000
+epoch  20/60 mean_loss=0.3804 trace_weight=1.000
+epoch  21/60 mean_loss=0.3905 trace_weight=1.000
+epoch  22/60 mean_loss=0.3264 trace_weight=1.000
+epoch  23/60 mean_loss=0.2455 trace_weight=1.000
+epoch  24/60 mean_loss=0.2104 trace_weight=1.000
+epoch  25/60 mean_loss=0.2274 trace_weight=1.000
+epoch  26/60 mean_loss=0.2855 trace_weight=1.000
+epoch  27/60 mean_loss=0.2516 trace_weight=1.000
+epoch  28/60 mean_loss=0.2258 trace_weight=1.000
+epoch  29/60 mean_loss=0.2098 trace_weight=1.000
+epoch  30/60 mean_loss=0.2484 trace_weight=1.000
+epoch  31/60 mean_loss=0.2148 trace_weight=1.000
+epoch  32/60 mean_loss=0.1542 trace_weight=1.000
+epoch  33/60 mean_loss=0.1290 trace_weight=1.000
+epoch  34/60 mean_loss=0.1201 trace_weight=1.000
+epoch  35/60 mean_loss=0.1150 trace_weight=1.000
+epoch  36/60 mean_loss=0.1101 trace_weight=1.000
+epoch  37/60 mean_loss=0.1070 trace_weight=1.000
+epoch  38/60 mean_loss=0.1039 trace_weight=1.000
+epoch  39/60 mean_loss=0.1021 trace_weight=1.000
+epoch  40/60 mean_loss=0.0993 trace_weight=1.000
+epoch  41/60 mean_loss=0.0956 trace_weight=1.000
+epoch  42/60 mean_loss=0.0988 trace_weight=1.000
+epoch  43/60 mean_loss=0.0963 trace_weight=1.000
+epoch  44/60 mean_loss=0.0897 trace_weight=1.000
+epoch  45/60 mean_loss=0.0850 trace_weight=1.000
+epoch  46/60 mean_loss=0.0816 trace_weight=1.000
+epoch  47/60 mean_loss=0.0784 trace_weight=1.000
+epoch  48/60 mean_loss=0.0757 trace_weight=1.000
+epoch  49/60 mean_loss=0.0735 trace_weight=1.000
+epoch  50/60 mean_loss=0.0722 trace_weight=1.000
+epoch  51/60 mean_loss=0.0729 trace_weight=1.000
+epoch  52/60 mean_loss=0.0743 trace_weight=1.000
+epoch  53/60 mean_loss=0.0727 trace_weight=1.000
+epoch  54/60 mean_loss=0.0683 trace_weight=1.000
+epoch  55/60 mean_loss=0.0650 trace_weight=1.000
+epoch  56/60 mean_loss=0.0612 trace_weight=1.000
+epoch  57/60 mean_loss=0.0587 trace_weight=1.000
+epoch  58/60 mean_loss=0.0584 trace_weight=1.000
+epoch  59/60 mean_loss=0.0575 trace_weight=1.000
+epoch  60/60 mean_loss=0.0562 trace_weight=1.000
+training wall-clock: 95.80 min
+
+=== EVAL ===
+corpus        learned   oracle    floor      gap
+old_l1_6        0.260    0.260    0.260   +0.000  WARN: cell uninformative (|gap|<0.05)
+writeback       1.000    1.000    0.470   +0.530
+instance        0.810    0.810    0.530   +0.280
+rich            0.740    0.740    0.410   +0.330
+pronoun         0.940    0.940    0.780   +0.160
+document        0.530    0.530    0.310   +0.220
+-- per-program-family op/arg-selection accuracy (vs gold trace), family-balanced (repair #1) --
+  plain_fact                 weight= 0.657 op_acc= 1.000 (n=4916) arg_acc=   n/a (n=0)
+  pronoun_value_redirect     weight= 5.478 op_acc= 1.000 (n=100 ) arg_acc= 1.000 (n=100)
+  writeback_addr_redirect    weight= 2.579 op_acc= 1.000 (n=431 ) arg_acc= 1.000 (n=431)
+  definite_desc_read         weight= 6.163 op_acc= 0.935 (n=77  ) arg_acc= 1.000 (n=77)
+  inverse_query              weight= 6.874 op_acc= 1.000 (n=53  ) arg_acc=   n/a (n=0)
+  recall_link                weight= 5.478 op_acc= 1.000 (n=100 ) arg_acc= 1.000 (n=100)
+write_violations (total)=0
+
+=== --soft-report: soft vs argmax (D1) delta, per corpus source ===
+  old_l1_6     hard=0.260 soft=0.260 delta=+0.000
+  writeback    hard=1.000 soft=1.000 delta=+0.000
+  instance     hard=0.810 soft=0.810 delta=+0.000
+  rich         hard=0.740 soft=0.740 delta=+0.000
+  pronoun      hard=0.940 soft=0.940 delta=+0.000
+  document     hard=0.530 soft=0.530 delta=+0.000
+
+[kill-criteria] forward/clause=145.8001ms run_learned/clause=151.3278ms ratio=1.04x k_max=12 peak_rss_mb=7140.4
+Saved checkpoint to runs/executor_p2b_baseline.pt
