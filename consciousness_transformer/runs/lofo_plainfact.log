@@ -1,0 +1,89 @@
+OpSelect params=821 ArgSelect params=832 combined=1509 (budget: <=10000)
+family_of_step coverage (train split): {'plain_fact': 27831, 'writeback_addr_redirect': 1805, 'definite_desc_read': 316, 'inverse_query': 254, 'recall_link': 400, 'pronoun_value_redirect': 400}
+/usr/local/lib/python3.11/dist-packages/torch/_compile.py:54: UserWarning: optimizer contains a parameter group with duplicate parameters; in future, this will cause an error; see github.com/pytorch/pytorch/issues/40967 for more information
+  return disable_fn(*args, **kwargs)
+/home/user/NAOMI/consciousness_transformer/scripts/../src/nsm_ct/provenance.py:88: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:822.)
+  g = float(gate[i, t])
+epoch   1/60 mean_loss=3.4845 trace_weight=1.000
+epoch   2/60 mean_loss=2.5868 trace_weight=1.000
+epoch   3/60 mean_loss=1.8956 trace_weight=1.000
+epoch   4/60 mean_loss=1.7013 trace_weight=1.000
+epoch   5/60 mean_loss=1.4255 trace_weight=1.000
+epoch   6/60 mean_loss=1.5346 trace_weight=1.000
+epoch   7/60 mean_loss=1.1825 trace_weight=1.000
+epoch   8/60 mean_loss=1.0301 trace_weight=1.000
+epoch   9/60 mean_loss=0.9187 trace_weight=1.000
+epoch  10/60 mean_loss=0.8240 trace_weight=1.000
+epoch  11/60 mean_loss=0.8747 trace_weight=1.000
+epoch  12/60 mean_loss=0.8383 trace_weight=1.000
+epoch  13/60 mean_loss=0.8166 trace_weight=1.000
+epoch  14/60 mean_loss=0.7336 trace_weight=1.000
+epoch  15/60 mean_loss=0.7489 trace_weight=1.000
+epoch  16/60 mean_loss=0.7367 trace_weight=1.000
+epoch  17/60 mean_loss=0.6944 trace_weight=1.000
+epoch  18/60 mean_loss=0.6848 trace_weight=1.000
+epoch  19/60 mean_loss=0.6449 trace_weight=1.000
+epoch  20/60 mean_loss=0.6630 trace_weight=1.000
+epoch  21/60 mean_loss=0.6365 trace_weight=1.000
+epoch  22/60 mean_loss=0.6465 trace_weight=1.000
+epoch  23/60 mean_loss=0.6757 trace_weight=1.000
+epoch  24/60 mean_loss=0.6507 trace_weight=1.000
+epoch  25/60 mean_loss=0.6276 trace_weight=1.000
+epoch  26/60 mean_loss=0.7542 trace_weight=1.000
+epoch  27/60 mean_loss=0.6868 trace_weight=1.000
+epoch  28/60 mean_loss=0.6078 trace_weight=1.000
+epoch  29/60 mean_loss=0.5773 trace_weight=1.000
+epoch  30/60 mean_loss=0.5843 trace_weight=1.000
+epoch  31/60 mean_loss=0.6026 trace_weight=1.000
+epoch  32/60 mean_loss=0.5538 trace_weight=1.000
+epoch  33/60 mean_loss=0.5379 trace_weight=1.000
+epoch  34/60 mean_loss=0.6192 trace_weight=1.000
+epoch  35/60 mean_loss=0.7066 trace_weight=1.000
+epoch  36/60 mean_loss=0.6051 trace_weight=1.000
+epoch  37/60 mean_loss=0.5423 trace_weight=1.000
+epoch  38/60 mean_loss=0.5234 trace_weight=1.000
+epoch  39/60 mean_loss=0.4993 trace_weight=1.000
+epoch  40/60 mean_loss=0.4950 trace_weight=1.000
+epoch  41/60 mean_loss=0.4837 trace_weight=1.000
+epoch  42/60 mean_loss=0.4873 trace_weight=1.000
+epoch  43/60 mean_loss=0.4795 trace_weight=1.000
+epoch  44/60 mean_loss=0.4775 trace_weight=1.000
+epoch  45/60 mean_loss=0.4719 trace_weight=1.000
+epoch  46/60 mean_loss=0.4628 trace_weight=1.000
+epoch  47/60 mean_loss=0.4603 trace_weight=1.000
+epoch  48/60 mean_loss=0.4675 trace_weight=1.000
+epoch  49/60 mean_loss=0.4696 trace_weight=1.000
+epoch  50/60 mean_loss=0.4633 trace_weight=1.000
+epoch  51/60 mean_loss=0.4599 trace_weight=1.000
+epoch  52/60 mean_loss=0.4640 trace_weight=1.000
+epoch  53/60 mean_loss=0.4549 trace_weight=1.000
+epoch  54/60 mean_loss=0.4542 trace_weight=1.000
+epoch  55/60 mean_loss=0.4432 trace_weight=1.000
+epoch  56/60 mean_loss=0.4575 trace_weight=1.000
+epoch  57/60 mean_loss=0.4410 trace_weight=1.000
+epoch  58/60 mean_loss=0.4510 trace_weight=1.000
+epoch  59/60 mean_loss=0.4350 trace_weight=1.000
+epoch  60/60 mean_loss=0.4490 trace_weight=1.000
+training wall-clock: 87.71 min
+
+=== EVAL (LOFO held-out family: plain_fact) ===
+corpus        learned   oracle    floor
+old_l1_6        0.270    0.270    0.270
+writeback       0.970    0.970    0.460
+instance        0.480    0.480    0.500
+rich            0.500    0.500    0.390
+pronoun         0.520    0.520    0.910
+document        0.460    0.460    0.270
+-- per-program-family op/arg-selection accuracy (vs gold trace) --
+  plain_fact                 op_acc= 0.573 (n=4916) arg_acc=   n/a (n=0)
+  pronoun_value_redirect     op_acc= 1.000 (n=100 ) arg_acc= 1.000 (n=100)
+  writeback_addr_redirect    op_acc= 1.000 (n=431 ) arg_acc= 1.000 (n=431)
+  definite_desc_read         op_acc= 0.000 (n=77  ) arg_acc= 1.000 (n=77)
+  inverse_query              op_acc= 0.000 (n=53  ) arg_acc=   n/a (n=0)
+  recall_link                op_acc= 1.000 (n=100 ) arg_acc= 1.000 (n=100)
+write_violations (total)=0
+
+[LOFO SMOKE NUMBERS -- do NOT gate on these] held-out family='plain_fact' (primary corpus source='old_l1_6'): learned_acc=0.270 oracle_acc=0.270 floor_acc=0.270
+
+[kill-criteria] forward/clause=122.6779ms run_learned/clause=127.2947ms ratio=1.04x k_max=12 peak_rss_mb=7155.6
