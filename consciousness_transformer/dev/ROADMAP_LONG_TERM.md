@@ -164,3 +164,24 @@ against the hand-authored spanish.json as gold (the Freeze Test in
 reverse). Sequencing: hold until deterministic parser rounds measurably
 plateau (coverage-per-round curve); the learned rule-selection parser
 (stage 5) comes first and is a prerequisite.
+
+## The two claims (user-articulated 2026-08-31, sharpened on ledger evidence)
+
+1. SMALL-POLICY COMPREHENSION: bAbI/Memory-Networks-class QA (entities,
+   places, coreference, multi-hop, cross-passage) from a sub-MB policy
+   (~700KB total, 2.7k-param resolver) — three orders of magnitude below
+   that lineage — with measured OUT-OF-DISTRIBUTION transfer to real
+   prose (M58b: 0.583 vs 0.250 floor, zero prose in training) and
+   adversarial validation that lineage never ran.
+2. NO CONFABULATION BY CONSTRUCTION: the system can be wrong but cannot
+   hallucinate — every answer is a tensor read of things that were
+   written, so errors always have locatable causes (parse, binding,
+   interference), each diagnosable. Deterministic AND tracked (the
+   executor anchor replays the pipeline bit-for-bit; provenance answers
+   "why do you believe X"). Third leg: honest abstention under
+   uncertainty (M58b: 46% abstain on prose, error-correlated; rises
+   under sabotage). Inference is hard-argmax throughout — the
+   determinism claim holds exactly at answer time.
+Facts learn on the edge (gated writes at inference, auditable), and the
+current numbers are the FLOOR: before prose training, before LTM/truth
+population at scale, behind a parser reading 18.6% of wild sentences.
