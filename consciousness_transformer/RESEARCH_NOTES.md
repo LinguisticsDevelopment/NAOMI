@@ -3163,3 +3163,85 @@ The v2 memory organ chain is now: STM (proven) → episodic LTM (proven)
 → truth memory (designed, tier-generic promote tested for genericity).
 Next: Track A confirmation battery with recency/cleanup at scale +
 --save (the frozen checkpoint M58b's zero-shot needs), executor Phase 2.
+
+### M60 — Track A confirmation: recency + abstain PROVEN at scale; frozen checkpoint shipped; a direct-route anomaly recorded (MEASURED)
+
+Rich mix + --cleanup, 4 arms, ~3h/arm (full-thread rich episodes). Logs +
+checkpoint: branch m60-battery-logs (m60_checkpoint.pt, 700KB — the
+sub-MB policy invariant holds with margin).
+
+| kind/arm | normal | forced-wrong | cheat | no-gold |
+|---|---|---|---|---|
+| overall | 0.887 | 0.550 | 0.710 | 0.887 |
+| instance | 0.836 | 0.403 | 0.478 | 0.836 |
+| rich | 0.837 | 0.561 | 0.541 | 0.837 |
+| ambiguous_name ref | 1.000 | 0.500 | 0.000 | 1.000 |
+
+(1) RECENCY closes the M57#3 gap at full scale: ambiguous-name
+referent-targeted 0.250 → 1.000; binding rich 1.000, instance 0.914.
+(2) ABSTAIN (caution dial) works at scale: 9.3% abstain, 0.926
+when-confident vs 0.887 overall — and rises to 17% under forced-wrong,
+i.e. the margin knows when the model is being sabotaged.
+(3) ANOMALY, recorded not resolved: inverse_direct_acc = 0.000 (0/45,
+systematic) in resolver-trained arms vs 0.822 in cheat vs 1.000 at
+smoke. The learned head still answers inverse queries (~0.6-0.7); only
+the raw entity-axis readout anti-correlates with the correct option
+under the full model. The smoke finding did NOT replicate → the inverse
+path is NOT switched to the direct route; diagnosis queued (suspects:
+the negate/overwrite gates reshaping stored values; write-address soft/
+hard train-eval mismatch on inverse-relevant slots).
+Next: M58b zero-shot prose on the frozen checkpoint.
+
+### Executor LOFO gate #1 — INCONCLUSIVE AS INSTRUMENTED: two full-gap recoveries, four gap-less cells, one oracle inversion (MEASURED, no GO/KILL declared)
+
+7 cloud runs (500 eps/family, dim 48, 60 epochs, ~90 min each). Logs:
+branch executor-lofo-logs. Per held-out family (learned/oracle/floor):
+writeback 0.960/0.960/0.460 (100% of a 0.50 gap recovered traceless —
+the 12-step program, composed from task loss + straight-through alone);
+recall_link 0.440/0.440/0.250 (100% of 0.19); plain_fact 0.270/=/=,
+defdesc 0.470/0.470/0.460, inverse 0.510/0.510/0.470 (no gap →
+uninformative); pronoun 1.000/0.170/0.960 (ORACLE BELOW FLOOR —
+invalid cell, red flag). The GO/KILL criteria are unevaluable with 4/6
+cells gap-less; declaring either would be dishonest.
+
+Instrument defects identified: (1) entry-op selector majority-collapses
+even WITH traces (baseline defdesc/inverse op_acc 0.000; plain_fact is
+87% of steps — trace loss needs family/class balancing); (2) the shared
+resolver was built use_cand_feature=False (Phase 2's documented
+sidestep), flattening exactly the families whose oracle edge needs the
+interaction feature; (3) the pronoun gold program or forced-trace eval
+is broken at scale (oracle 0.170 < floor 0.960) — diagnose before
+re-running. Clean positives: write_violations 0 across ~40k clauses;
+wall-clock ratio ~1.0x; soft-vs-argmax delta 0.000 everywhere (D1
+hard-for-keys costs nothing). Next: LOFO instrument repair, then gate
+re-run.
+
+### M58b — THE ZERO-SHOT PROSE NUMBER: 0.583 overall vs 0.250 floor; wild text 0.389; the system abstains honestly (MEASURED — the sprint's central measurement exists)
+
+Frozen M60 checkpoint (700KB, zero prose in training, zero gold at eval)
+over 48 converter episodes (30 synthetic-prose / 18 real Gutenberg),
+current M58c parser, 0 build failures. scripts/eval_prose.py.
+
+overall 0.583 (floor 0.250, majority 0.042); synthetic 0.700, real
+0.389; AGENT 0.577 (n=26), PLACE 0.500 (n=16), RECIPIENT 0.833 (n=6);
+abstain_rate 0.458 with 0.615-when-confident — on out-of-distribution
+prose the caution dial fires 5x more often than on curricula (0.093)
+and correctly.
+
+What bounds the number (both precisely diagnosed, both perception-side):
+(1) extraction noise survives into episode CONTENT — pronouns/verbs
+mis-extracted as held-out entities ("where is the himself ?") make some
+episodes test memory-of-nonsense; the converter needs an episode-quality
+filter. (2) A real grounding BUG in bare PLACE clauses:
+_context_steps writes entity = codec.filler_vec("var:"+subj)
+unconditionally while the question reads via _ent_vec (var: only for
+the 6 curriculum names) — measured cosine(write,read) = -0.28 for
+non-curriculum subjects: those questions are structurally unanswerable.
+AGENT/RECIPIENT don't share the bug (both sides use _ent_vec).
+
+Verdict: the controlled-English claim survives first contact with real
+text — comprehension transfers zero-shot at 2.3x floor (1.6x on wild
+text) THROUGH a perception layer that parses only 18.6% of wild
+sentences strictly, with honest abstention on the rest. The number will
+move with perception, exactly as the architecture predicts. M58d: fix
+the PLACE grounding bug + episode-quality filter, re-measure.
