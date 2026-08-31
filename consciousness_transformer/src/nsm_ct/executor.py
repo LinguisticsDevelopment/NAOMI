@@ -209,17 +209,24 @@ class Executor:
     @staticmethod
     def build_control_signal(*, prev_op_id: int, step_idx: int, type_mask: torch.Tensor,
                               margin: torch.Tensor, abstain_flag: torch.Tensor,
-                              halt_budget: int) -> Dict[str, torch.Tensor]:
+                              halt_budget: int, struct_flags: torch.Tensor) -> Dict[str, torch.Tensor]:
         """D2's ``ctrl`` input: previous op id, the op-loop step index,
         a type mask over Track C's five register types
-        (Addr/Vec/Feat/Scalar/Dist, ``type_mask`` order), and scalar
+        (Addr/Vec/Feat/Scalar/Dist, ``type_mask`` order), scalar
         summaries (top1-top2 collapse margin, an abstain flag, remaining
-        halt budget) -- CONTROL SIGNALS ONLY, never register DATA vectors
-        (the Harvard split D2 requires: ``OpSelect`` "no longer reads the
-        main clause-level `state` directly"). Returns a plain dict (not a
-        RegisterFile entry -- ``ctrl`` is explicitly "not a register" per
-        Sec.1.1: "`state`... and `ctrl`... are not registers -- neither
-        carries facts")."""
+        halt budget), and ``struct_flags`` (:data:`nsm_ct.op_select.
+        STRUCT_FLAG_NAMES`, ``[B, 6]`` -- see :meth:`structural_flags`) --
+        CONTROL SIGNALS ONLY, never register DATA vectors (the Harvard
+        split D2 requires: ``OpSelect`` "no longer reads the main
+        clause-level `state` directly"). ``struct_flags`` is this
+        milestone's director-ruled EXTENSION (RESEARCH_NOTES "LOFO
+        instrument repair"): the split forbids register CONTENTS, not
+        perception-side STRUCTURE, so a batch's own mask/None-ness facts
+        (the SAME ones :func:`nsm_ct.programs.program_for_step`'s
+        dispatcher reads) are D2-consistent control. Returns a plain dict
+        (not a RegisterFile entry -- ``ctrl`` is explicitly "not a
+        register" per Sec.1.1: "`state`... and `ctrl`... are not
+        registers -- neither carries facts")."""
         return {
             "prev_op_id": torch.as_tensor(prev_op_id),
             "step_idx": torch.as_tensor(step_idx),
@@ -227,7 +234,54 @@ class Executor:
             "margin": margin,
             "abstain_flag": abstain_flag,
             "halt_budget_remaining": torch.as_tensor(halt_budget - step_idx),
+            "struct_flags": struct_flags,
         }
+
+    # ------------------------------------------------------------------
+    # D2 EXTENSION (director ruling, RESEARCH_NOTES "LOFO instrument
+    # repair"): the structural batch-flag vector, computed ONLY from batch
+    # STRUCTURE (masks/None-ness) -- never register/register-candidate
+    # VALUES. Exactly the six flags :func:`nsm_ct.programs.program_for_step`
+    # itself reads, in :data:`nsm_ct.op_select.STRUCT_FLAG_NAMES` order:
+    # is_q, has_candidates, addr_mask_flag, inverse_mask_flag,
+    # evidence_relation_present, from_ltm_present.
+    # ------------------------------------------------------------------
+    @staticmethod
+    def structural_flags(batch: ClauseBatch, t: int, *, device=None) -> torch.Tensor:
+        """``[B, 6]`` float 0/1 tensor, :data:`nsm_ct.op_select.
+        STRUCT_FLAG_NAMES` order, for clause step ``t`` of ``batch``. Every
+        flag is a presence/truthiness check against the batch's own
+        STRUCTURAL tensors (a mask row, or whether an optional field is
+        ``None`` at all) -- never a read of a register's/candidate's
+        live DATA vector, keeping the D2 Harvard split intact (see
+        :meth:`build_control_signal`'s docstring)."""
+        b = batch.entity.shape[0]
+        dev = device if device is not None else batch.entity.device
+        zeros = torch.zeros(b, device=dev)
+
+        is_q = (batch.is_q[:, t] > 0).float()
+
+        has_cand = (batch.cand_mask[:, t].sum(-1) > 0).float() if batch.cand_mask is not None else zeros
+
+        addr_mask_flag = (batch.cand_addr_mask[:, t] > 0).float() \
+            if batch.cand_addr_mask is not None else zeros
+
+        inverse_mask_flag = (batch.inverse_mask[:, t] > 0).float() \
+            if batch.inverse_mask is not None else zeros
+
+        er_present = (batch.cand_evidence_relation[:, t].norm(dim=-1) > 0).float() \
+            if batch.cand_evidence_relation is not None else zeros
+        et_present = (batch.cand_evidence_target[:, t].norm(dim=-1) > 0).float() \
+            if batch.cand_evidence_target is not None else zeros
+        evidence_relation_present = torch.maximum(er_present, et_present)
+
+        from_ltm_present = (batch.cand_from_ltm[:, t].sum(-1) > 0).float() \
+            if batch.cand_from_ltm is not None else zeros
+
+        return torch.stack([
+            is_q, has_cand, addr_mask_flag, inverse_mask_flag,
+            evidence_relation_present, from_ltm_present,
+        ], dim=-1).to(device=dev)
 
     # ==================================================================
     # Tier 1: run() -- reproduces forward() at forward()'s own per-clause,
@@ -479,9 +533,10 @@ class Executor:
             margin_t = res_margin_t if res_margin_t is not None else torch.zeros(b, device=device)
             abstain_t = margin_t < ops.CAUTION
             type_mask = torch.tensor([1, 1, 0, 1, 1], dtype=torch.float32)  # Addr,Vec,Feat,Scalar,Dist
+            struct_flags_t = self.structural_flags(batch, t, device=device)
             control_signals.append(self.build_control_signal(
                 prev_op_id=0, step_idx=t, type_mask=type_mask, margin=margin_t,
-                abstain_flag=abstain_t, halt_budget=self.k_max))
+                abstain_flag=abstain_t, halt_budget=self.k_max, struct_flags=struct_flags_t))
 
             # TICK
             state = model.gru(torch.cat([e, r, v, p, c, v_read], dim=-1), state)
@@ -601,6 +656,16 @@ class Executor:
         src/nsm_ct/op_select.py's module docstring for the two learned
         decisions (entry op, EMIT destination) this method trains, and
         this module's own D1/D2 paragraphs for the policy both obey.
+
+        Both decisions' control signal now includes :meth:`structural_flags`
+        (director ruling, RESEARCH_NOTES "LOFO instrument repair" --
+        D2-consistent structural batch flags, computed ONCE per step ``t``
+        and shared by ctrl_a/ctrl_b below): without it,
+        ``definite_desc_read``/``inverse_query`` were an unresolvable
+        information bottleneck (byte-identical control traces until the
+        final step, op_acc pinned at 0.000 for that pair regardless of
+        balance/scale) -- the extension is what makes those two families
+        distinguishable from the control signal at all.
 
         ``lofo_family`` (Sec.3's LOFO gate): every step whose gold family
         (:func:`nsm_ct.programs.family_of_step`) equals this name gets
@@ -735,6 +800,14 @@ class Executor:
             mem_total_t = mem_total(memory, ltm)
             v_read = ops.unbind_query(mem_total_t, e0, r)
 
+            # D2 EXTENSION (director ruling, RESEARCH_NOTES "LOFO instrument
+            # repair"): this step's structural batch-flag vector, shared by
+            # BOTH decisions below (entry op, EMIT destination) -- one
+            # control signal per op-loop step, see OpSelect.forward's own
+            # "ctrl_vec is handed back" note for the analogous EMIT-side
+            # sharing.
+            struct_flags_t = self.structural_flags(batch, t, device=device)
+
             # -- Decision A: entry op (observational, see module note). --
             entry_gold_idx = torch.tensor(
                 [op_select_mod.OP_INDEX[FAMILY_ENTRY_OP[f]] for f in family_t], device=device)
@@ -742,7 +815,7 @@ class Executor:
                 prev_op_id=prev_op_id, step_idx=t, type_mask=type_mask_const,
                 margin=torch.zeros(b, device=device),
                 abstain_flag=torch.zeros(b, dtype=torch.bool, device=device),
-                halt_budget=self.k_max), batch=b, device=device)
+                halt_budget=self.k_max, struct_flags=struct_flags_t), batch=b, device=device)
             logits_a, _ctrl_vec_a = op_select(ctrl_a, legal_mask=entry_legal_mask)
 
             w_fam = self._family_weight_row(family_t, family_weight, device=device)
@@ -844,7 +917,7 @@ class Executor:
                 ctrl_b = op_select_mod.control_signal_to_tensor(self.build_control_signal(
                     prev_op_id=prev_op_id, step_idx=t, type_mask=type_mask_const,
                     margin=res_margin_t, abstain_flag=abstain_t,
-                    halt_budget=self.k_max - 1), batch=b, device=device)
+                    halt_budget=self.k_max - 1, struct_flags=struct_flags_t), batch=b, device=device)
                 _logits_b, ctrl_vec_b = op_select(ctrl_b)
                 dest_logits = arg_select(ctrl_vec_b, emit_op_id_const, op_select_mod.ARG_SIGNATURES["EMIT"])
                 dest_soft = torch.softmax(dest_logits, dim=-1)

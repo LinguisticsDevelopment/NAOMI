@@ -61,7 +61,7 @@ from . import programs as programs_mod
 
 __all__ = [
     "OP_VOCAB", "OP_INDEX", "ENTRY_OPS", "REGISTER_SLOTS", "REGISTER_TYPES",
-    "ADDR_TYPED", "ARG_SIGNATURES", "CONTROL_TYPE_ORDER",
+    "ADDR_TYPED", "ARG_SIGNATURES", "CONTROL_TYPE_ORDER", "STRUCT_FLAG_NAMES",
     "control_signal_to_tensor", "OpSelect", "ArgSelect", "count_params",
     "mask_second_write", "lofo_keep_mask", "family_balance_weights",
 ]
@@ -109,6 +109,31 @@ ARG_SIGNATURES: Dict[str, Tuple[str, ...]] = {
 
 CONTROL_TYPE_ORDER: Tuple[str, ...] = ("Addr", "Vec", "Feat", "Scalar", "Dist")
 
+# ---------------------------------------------------------------------------
+# STRUCTURAL BATCH FLAGS -- director ruling, RESEARCH_NOTES "LOFO instrument
+# repair" entry: definite_desc_read and inverse_query share a byte-identical
+# control-signal trace until the final step (an information bottleneck, not
+# a training defect -- op_acc pinned at 0.000 for that pair regardless of
+# balance/scale). RULING (D2-consistent): the control signal MAY carry
+# structural batch flags -- perception-side facts about a clause step's
+# SHAPE, the SAME facts :func:`nsm_ct.programs.program_for_step` itself
+# branches on to pick a family -- because the D2 Harvard split forbids
+# register CONTENTS (e.g. a candidate's own atom/value vector), not
+# STRUCTURE (whether a mask/tensor is present, and its per-row truthiness).
+# Exactly the six flags ``program_for_step``'s dispatcher reads, no more:
+# is_q, has_candidates (cand_mask row-sum > 0), addr_mask_flag
+# (cand_addr_mask), inverse_mask_flag (inverse_mask), evidence_relation_
+# present (cand_evidence_relation OR cand_evidence_target row-wise nonzero
+# -- the INTERACT/SCORE evidence step's own presence, not its VALUE), and
+# from_ltm_present (cand_from_ltm row-sum > 0). See
+# :meth:`nsm_ct.executor.Executor.structural_flags` for the batch ->
+# ``[B, 6]`` computation (STRUCTURE/None-ness only, never register data).
+# ---------------------------------------------------------------------------
+STRUCT_FLAG_NAMES: Tuple[str, ...] = (
+    "is_q", "has_candidates", "addr_mask_flag", "inverse_mask_flag",
+    "evidence_relation_present", "from_ltm_present",
+)
+
 
 def _broadcast(x, batch: int, device) -> torch.Tensor:
     t = torch.as_tensor(x, device=device)
@@ -125,13 +150,18 @@ def control_signal_to_tensor(ctrl: Dict[str, torch.Tensor], *, batch: int,
     ``prev_op_id``/margin/abstain are ``[B]``, ``step_idx``/
     ``halt_budget_remaining`` are shared clause-step scalars) into
     UNIFORMLY batched tensors -- ``[B]`` for every scalar field, ``[B, 5]``
-    for ``type_mask``. CONTROL SIGNALS ONLY (D2) -- every value here is
-    either an op id, a step index, a type flag, or a scalar summary; never
-    a register data vector.
+    for ``type_mask``, ``[B, 6]`` for ``struct_flags`` (:data:`STRUCT_FLAG_
+    NAMES` order -- the director's D2-consistent structural-flag ruling,
+    RESEARCH_NOTES "LOFO instrument repair"). CONTROL SIGNALS ONLY (D2) --
+    every value here is either an op id, a step index, a type/structural
+    flag, or a scalar summary; never a register data vector.
     """
     type_mask = ctrl["type_mask"]
     if type_mask.dim() == 1:
         type_mask = type_mask.unsqueeze(0).expand(batch, -1)
+    struct_flags = ctrl["struct_flags"]
+    if struct_flags.dim() == 1:
+        struct_flags = struct_flags.unsqueeze(0).expand(batch, -1)
     return {
         "prev_op_id": _broadcast(ctrl["prev_op_id"], batch, device).long(),
         "step_idx": _broadcast(ctrl["step_idx"], batch, device).long(),
@@ -139,23 +169,39 @@ def control_signal_to_tensor(ctrl: Dict[str, torch.Tensor], *, batch: int,
         "margin": _broadcast(ctrl["margin"], batch, device).float(),
         "abstain_flag": _broadcast(ctrl["abstain_flag"], batch, device).float(),
         "halt_budget_remaining": _broadcast(ctrl["halt_budget_remaining"], batch, device).float(),
+        "struct_flags": struct_flags.to(device=device).float(),
     }
 
 
 class OpSelect(nn.Module):
     """Categorical op-selection head: a small MLP over the D2 control
     signal ONLY (prev-op embedding + step-index embedding + register-type
-    mask + scalar summaries) -- NEVER register data. Emits logits over
-    :data:`OP_VOCAB` (PROVENANCE/FORCE excluded by construction, see
-    module docstring), masked to type/structurally-legal next ops by the
-    caller (``run_learned`` passes an entry-op mask; see that method).
+    mask + scalar summaries + the structural batch-flag vector) -- NEVER
+    register data. Emits logits over :data:`OP_VOCAB` (PROVENANCE/FORCE
+    excluded by construction, see module docstring), masked to
+    type/structurally-legal next ops by the caller (``run_learned`` passes
+    an entry-op mask; see that method).
+
+    ``struct_flags`` (:data:`STRUCT_FLAG_NAMES`, width 6) is the director's
+    D2-consistent ruling (RESEARCH_NOTES "LOFO instrument repair"):
+    ``definite_desc_read``/``inverse_query`` share a byte-identical control
+    trace until the final step without it (an information bottleneck, not
+    a training defect -- see that entry). These six flags are STRUCTURAL
+    facts about the current clause step's SHAPE (is it a question, does it
+    carry a candidate set, is collapse address- vs value-redirected, is it
+    an inverse read, does it carry an evidence step, does it draw on LTM)
+    -- exactly the facts :func:`nsm_ct.programs.program_for_step`'s own
+    dispatcher branches on, never a register's live CONTENTS. See
+    :meth:`nsm_ct.executor.Executor.structural_flags` for the batch ->
+    ``[B, 6]`` computation.
 
     Parameter budget: with the defaults below (``op_embed_dim=8``,
     ``step_embed_dim=4``, ``hidden=16``) and ``k_max=12``,
-    ``len(OP_VOCAB)=17``: op-embedding ``18*8=144``, step-embedding
-    ``13*4=52``, MLP ``(28*16+16)+(16*17+17)=464+289=753``; total 949
-    params -- see :func:`count_params` for the exact count at whatever
-    ``k_max``/vocab size a caller actually builds with.
+    ``len(OP_VOCAB)=17``: ``ctrl_dim = 8+4+5+3+6 = 26``; op-embedding
+    ``18*8=144``, step-embedding ``13*4=52``, MLP
+    ``(26*16+16)+(16*17+17)=432+289=721``; total 917 params -- see
+    :func:`count_params` for the exact count at whatever ``k_max``/vocab
+    size a caller actually builds with.
     """
 
     def __init__(self, *, k_max: int, op_embed_dim: int = 8, step_embed_dim: int = 4,
@@ -167,7 +213,8 @@ class OpSelect(nn.Module):
         # index is OP_INDEX[op] + 1 everywhere in this module.
         self.op_embed = nn.Embedding(len(OP_VOCAB) + 1, op_embed_dim)
         self.step_embed = nn.Embedding(k_max + 1, step_embed_dim)
-        self.ctrl_dim = op_embed_dim + step_embed_dim + len(CONTROL_TYPE_ORDER) + 3
+        self.ctrl_dim = (op_embed_dim + step_embed_dim + len(CONTROL_TYPE_ORDER) + 3
+                          + len(STRUCT_FLAG_NAMES))
         self.net = nn.Sequential(
             nn.Linear(self.ctrl_dim, hidden), nn.Tanh(), nn.Linear(hidden, len(OP_VOCAB)),
         )
@@ -188,6 +235,7 @@ class OpSelect(nn.Module):
             ctrl["margin"].unsqueeze(-1),
             ctrl["abstain_flag"].unsqueeze(-1),
             (ctrl["halt_budget_remaining"] / max(self.k_max, 1)).unsqueeze(-1),
+            ctrl["struct_flags"],
         ], dim=-1)
         assert vec.shape[-1] == self.ctrl_dim, (
             f"OpSelect.encode: control-signal vector width {vec.shape[-1]} != "
@@ -224,10 +272,12 @@ class ArgSelect(nn.Module):
     instance (passed in, not reconstructed) -- one op-identity concept,
     not two independently-learned ones; keeps the combined parameter
     budget down too. Parameter budget: with ``slot_embed_dim=8``,
-    ``query_hidden=16``, ``ctrl_dim=28`` (this module's own defaults):
-    slot-embedding ``11*8=88``, query MLP ``(36*16+16)+(16*8+8)=592+136=728``;
-    total 816 (own params only -- the shared ``op_embed`` table's params
-    are already counted once, in ``OpSelect``).
+    ``query_hidden=16``, ``ctrl_dim=26`` (:class:`OpSelect`'s own default,
+    now including the 6-wide structural-flag vector -- see that class's
+    docstring): slot-embedding ``11*8=88``, query MLP
+    ``(34*16+16)+(16*8+8)=560+136=696``; total 784 (own params only -- the
+    shared ``op_embed`` table's params are already counted once, in
+    ``OpSelect``).
     """
 
     def __init__(self, op_embed: nn.Embedding, *, ctrl_dim: int,
