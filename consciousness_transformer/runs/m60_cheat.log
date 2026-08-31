@@ -1,0 +1,32 @@
+=== instance-mix (cheat) track=A: 1500 eps (350 writeback, 350 instance, 450 rich, inverse_frac=0.3, rich_frac=0.3), dim=48, epochs=60, batch_size=64 ===
+  [track-A] epoch   1 loss=1.580 val=0.287
+  [track-A] epoch  20 loss=0.076 val=0.683
+  [track-A] epoch  40 loss=0.093 val=0.693
+  [track-A] epoch  60 loss=0.046 val=0.710
+  [track-A] val total=0.710  resolver_params=2761  time=46.68 min  peak_rss_mb=2661.2
+  [track-A] CLEANUP: abstain_rate=0.177 acc_when_confident=0.781 (n=247) vs overall=0.710 (n=300)
+    kind instance: 32/67 = 0.478
+    kind old: 60/67 = 0.896
+    kind rich: 53/98 = 0.541
+    kind writeback: 68/68 = 1.000
+    writeback/referent_targeted: 36/36 = 1.000
+    writeback/other_targeted: 32/32 = 1.000
+    instance/ambiguous_name/other_targeted: 7/8 = 0.875
+    instance/ambiguous_name/referent_targeted: 0/4 = 0.000
+    instance/definite_description/other_targeted: 5/11 = 0.455
+    instance/definite_description/referent_targeted: 5/10 = 0.500
+    instance/pronoun/other_targeted: 4/15 = 0.267
+    instance/pronoun/referent_targeted: 1/5 = 0.200
+    instance/inverse_query: 10/14 = 0.714
+    rich/ambiguous_name/overwritten: 2/2 = 1.000
+    rich/definite_description/overwritten: 1/11 = 0.091
+    rich/none/baseline: 32/53 = 0.604
+    rich/pronoun/overwritten: 0/1 = 0.000
+    rich/by_n_entities/3: 10/17 = 0.588
+    rich/by_n_entities/4: 11/22 = 0.500
+    rich/by_n_entities/5: 2/10 = 0.200
+    rich/by_n_entities/6: 13/21 = 0.619
+    rich/by_n_entities/7: 9/12 = 0.750
+    rich/by_n_entities/8: 8/16 = 0.500
+    rich/inverse_query: 18/31 = 0.581
+  [track-A] inverse_direct_acc: 37/45 = 0.822  (direct similarity(query_entity_readout, options) route, vs the learned-head instance/inverse_query + rich/inverse_query accuracy above)

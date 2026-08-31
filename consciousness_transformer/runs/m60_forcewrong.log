@@ -1,0 +1,37 @@
+=== instance-mix (force-binding=wrong) track=A: 1500 eps (350 writeback, 350 instance, 450 rich, inverse_frac=0.3, rich_frac=0.3), dim=48, epochs=60, batch_size=64 ===
+  [track-A] epoch   1 loss=2.179 val=0.300
+  [track-A] epoch  20 loss=0.113 val=0.523
+  [track-A] epoch  40 loss=0.105 val=0.560
+  [track-A] epoch  60 loss=0.051 val=0.550
+  [track-A] val total=0.550  resolver_params=2761  time=183.14 min  peak_rss_mb=6609.7
+  [track-A] CLEANUP: abstain_rate=0.170 acc_when_confident=0.582 (n=249) vs overall=0.550 (n=300)
+    kind instance: 27/67 = 0.403
+    kind old: 60/67 = 0.896
+    kind rich: 55/98 = 0.561
+    kind writeback: 23/68 = 0.338
+    writeback/referent_targeted: 23/36 = 0.639
+    writeback/other_targeted: 0/32 = 0.000
+    instance/ambiguous_name/other_targeted: 4/8 = 0.500
+    instance/ambiguous_name/referent_targeted: 2/4 = 0.500
+    instance/definite_description/other_targeted: 2/11 = 0.182
+    instance/definite_description/referent_targeted: 9/10 = 0.900
+    instance/pronoun/other_targeted: 1/15 = 0.067
+    instance/pronoun/referent_targeted: 3/5 = 0.600
+    instance/inverse_query: 6/14 = 0.429
+    rich/ambiguous_name/overwritten: 1/2 = 0.500
+    rich/definite_description/overwritten: 4/11 = 0.364
+    rich/none/baseline: 32/53 = 0.604
+    rich/pronoun/overwritten: 0/1 = 0.000
+    rich/by_n_entities/3: 9/17 = 0.529
+    rich/by_n_entities/4: 10/22 = 0.455
+    rich/by_n_entities/5: 7/10 = 0.700
+    rich/by_n_entities/6: 9/21 = 0.429
+    rich/by_n_entities/7: 9/12 = 0.750
+    rich/by_n_entities/8: 11/16 = 0.688
+    rich/inverse_query: 18/31 = 0.581
+  [track-A] inverse_direct_acc: 1/45 = 0.022  (direct similarity(query_entity_readout, options) route, vs the learned-head instance/inverse_query + rich/inverse_query accuracy above)
+  [track-A] BINDING ACCURACY overall=0.979 (n=434) vs baseline chance
+    binding/instance: acc=0.914 (n=105)
+    binding/rich: acc=1.000 (n=261)
+    binding/writeback: acc=1.000 (n=68)
+  [track-A] margin distribution: min=0.175 p25=6.604 median=8.092 p75=9.299 max=15.177
