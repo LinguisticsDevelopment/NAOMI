@@ -189,6 +189,20 @@ class Executor:
         return sum(1 for s in program if s.op not in ("RESPOND", "RESPONSE"))
 
     # ------------------------------------------------------------------
+    # EXECUTOR LOFO GATE REPAIR #1: per-row family weight lookup, shared by
+    # run_learned's entry-op and EMIT-dest trace-loss computations. A plain
+    # tensor gather (not a torch.where chain) since `family_weight` is a
+    # small python dict keyed by family NAME, not something that can be
+    # vectorized directly against the batch's own tensors.
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _family_weight_row(families: Sequence[str], family_weight: Optional[Dict[str, float]], *,
+                            device) -> torch.Tensor:
+        if family_weight is None:
+            return torch.ones(len(families), device=device)
+        return torch.tensor([family_weight.get(f, 1.0) for f in families], device=device, dtype=torch.float32)
+
+    # ------------------------------------------------------------------
     # D2: the control-only signal an OpSelect head will read in Phase 2.
     # Built and exposed here; consumed by nothing yet (no OpSelect exists).
     # ------------------------------------------------------------------
@@ -357,16 +371,43 @@ class Executor:
                     extra_cols.append(batch.cand_from_ltm[:, t].unsqueeze(-1).to(ce_t.dtype))
                 if batch.cand_recency is not None:
                     extra_cols.append(batch.cand_recency[:, t].to(ce_t.dtype))
+                # EXECUTOR LOFO GATE REPAIR #2 (RESEARCH_NOTES "Executor
+                # LOFO gate #1", extending -- not sidestepping -- the fix
+                # run_learned already carries, see that method's own "NOTE
+                # (Executor Phase 2 fix..." comment): pad whenever
+                # `extra_width > 0`, NOT only when `extra_cols` is
+                # non-empty. Gate #1's own comment here claimed run()
+                # "never hits this combination" -- true ONLY while
+                # use_cand_feature stayed off (gate #1's own sidestep);
+                # repair #2 turns it back on, and a family that populates
+                # `cand_feature_per_candidate` (the per-candidate gender/
+                # kind feature, e.g. PronounCurriculumGenerator's mention
+                # feature) but supplies NONE of the optional extra scalar
+                # columns (evidence-interaction/from_ltm/recency -- exactly
+                # the pronoun/writeback case) DOES reach this exact width
+                # mismatch through Executor.run() too, via
+                # scripts/train_executor.py's evaluate() oracle/floor arms
+                # -- caught by this milestone's own mixed-corpus smoke
+                # (test_pronoun_oracle_at_or_above_floor_smoke). The Phase 1
+                # anchor's own generator battery (tests/test_executor_
+                # phase1.py) never exercises this combination -- every one
+                # of its use_cand_feature=True batches (instance, document_
+                # single_passage) always populates cand_evidence_target, so
+                # extra_cols there is never empty and this widened
+                # condition is byte-identical to the old one for those
+                # tests; only a batch/resolver combination gate #1 never
+                # actually ran changes behavior here.
                 extra_width = getattr(model.resolver, "cand_feature_extra", 0)
-                if extra_width > 0 and extra_cols:
+                if extra_width > 0:
                     cfpc = extra.get("cand_feature_per_candidate")
                     if cfpc is None:
                         b_, C_, _d_ = ce_t.shape
                         cfpc = ce_t.new_zeros(b_, C_, FEATURE_DIM)
-                    stacked_extra = torch.cat(extra_cols, dim=-1)
+                    stacked_extra = (torch.cat(extra_cols, dim=-1) if extra_cols
+                                      else cfpc.new_zeros(*cfpc.shape[:-1], 0))
                     k = stacked_extra.shape[-1]
                     if k < extra_width:
-                        pad = ce_t.new_zeros(*stacked_extra.shape[:-1], extra_width - k)
+                        pad = cfpc.new_zeros(*stacked_extra.shape[:-1], extra_width - k)
                         stacked_extra = torch.cat([stacked_extra, pad], dim=-1)
                     elif k > extra_width:
                         stacked_extra = stacked_extra[..., :extra_width]
@@ -552,6 +593,7 @@ class Executor:
                      lofo_family: Optional[str] = None,
                      teacher_force: bool = True,
                      trace_weight: float = 1.0,
+                     family_weight: Optional[Dict[str, float]] = None,
                      dest_mode: str = "hard",
                      return_write_trace: bool = False,
                      return_memory: bool = False) -> Dict[str, torch.Tensor]:
@@ -570,6 +612,20 @@ class Executor:
         loss"). ``teacher_force=False`` (the "no-trace eval" honesty arm)
         extends learned-driven execution to EVERY family regardless of
         ``lofo_family``, and trace loss is not computed for any step.
+
+        ``family_weight`` (EXECUTOR LOFO GATE REPAIR #1, RESEARCH_NOTES
+        "Executor LOFO gate #1" instrument defect (1) -- see
+        :func:`nsm_ct.op_select.family_balance_weights`): an optional
+        ``{family: weight}`` table applied to BOTH the entry-op and
+        EMIT-destination trace cross-entropies, per real step, keyed by
+        that step's own gold family. ``None`` (default) is UNWEIGHTED --
+        byte-identical to every pre-repair call site (every existing
+        caller/test that doesn't pass this argument sees no behavior
+        change). A family absent from the table falls back to weight
+        ``1.0``. This is what fixes gate #1's majority-collapse: without
+        it, ``plain_fact`` (~87% of real steps) swamps the unweighted mean
+        cross-entropy and minority families never get real gradient even
+        though their traces are present.
 
         ``dest_mode``: ``"hard"`` (default, D1) -- whenever a row's
         EMIT-destination decision is learned-driven, it is
@@ -631,7 +687,30 @@ class Executor:
         redirected_trace: List[torch.Tensor] = []
         resolved_idx_trace: List[torch.Tensor] = []
 
+        # EXECUTOR LOFO GATE REPAIR #1 continued (RESEARCH_NOTES "Executor
+        # LOFO gate #1"): trace_loss must be ONE global weighted mean over
+        # every (row, clause-step) this call sees, not a SUM of T separate
+        # per-step-column means. The pre-repair code added a freshly
+        # mask-normalized mean INSIDE the `for t in range(T)` loop every
+        # step -- since most curricula place a given family's step at a
+        # FIXED structural column (e.g. the pronoun-redirect step always
+        # sits at the SAME t across every row of a pronoun batch), a
+        # single call's T columns are each near family-HOMOGENEOUS, so
+        # per-column mask-normalization already divides out any per-row
+        # weight before the T column-means get summed -- `family_weight`
+        # could not fix the imbalance this way: a corpus with 5
+        # plain_fact-family columns and 1 definite_desc_read-family column
+        # sums 5 (near-unweighted) plain_fact terms against 1
+        # (heavily-upweighted) defdesc term, not a genuinely BALANCED
+        # combination. Accumulating raw weighted-CE and weight-mass sums
+        # across the whole loop, then dividing ONCE after it, restores the
+        # textbook "one global weighted mean" semantics
+        # `family_balance_weights`'s own docstring promises.
         trace_loss = torch.zeros((), device=device)
+        trace_ce_a_sum = torch.zeros((), device=device)
+        trace_mask_a_sum = torch.zeros((), device=device)
+        trace_ce_b_sum = torch.zeros((), device=device)
+        trace_mask_b_sum = torch.zeros((), device=device)
         op_correct: Dict[str, int] = {}
         op_total: Dict[str, int] = {}
         arg_correct: Dict[str, int] = {}
@@ -666,11 +745,14 @@ class Executor:
                 halt_budget=self.k_max), batch=b, device=device)
             logits_a, _ctrl_vec_a = op_select(ctrl_a, legal_mask=entry_legal_mask)
 
+            w_fam = self._family_weight_row(family_t, family_weight, device=device)
+
             trace_row_a = (real_bool & ~lofo_row) if teacher_force else torch.zeros(b, dtype=torch.bool, device=device)
             if bool(trace_row_a.any()):
                 ce_a = F.cross_entropy(logits_a, entry_gold_idx, reduction="none")
-                trace_loss = trace_loss + trace_weight * (
-                    (ce_a * trace_row_a.float()).sum() / trace_row_a.float().sum())
+                mask_a = trace_row_a.float() * w_fam
+                trace_ce_a_sum = trace_ce_a_sum + (ce_a * mask_a).sum()
+                trace_mask_a_sum = trace_mask_a_sum + mask_a.sum()
             pred_a = logits_a.argmax(-1)
             ok_a = (pred_a == entry_gold_idx)
             for fam, ok, is_real in zip(family_t, ok_a.tolist(), real_bool.tolist()):
@@ -772,8 +854,9 @@ class Executor:
                     else torch.zeros(b, dtype=torch.bool, device=device)
                 if bool(trace_row_b.any()):
                     ce_b = F.cross_entropy(dest_logits, dest_gold_idx, reduction="none")
-                    trace_loss = trace_loss + trace_weight * (
-                        (ce_b * trace_row_b.float()).sum() / trace_row_b.float().sum())
+                    mask_b = trace_row_b.float() * w_fam
+                    trace_ce_b_sum = trace_ce_b_sum + (ce_b * mask_b).sum()
+                    trace_mask_b_sum = trace_mask_b_sum + mask_b.sum()
                 ok_b = (dest_pred_idx == dest_gold_idx) & has_cand & real_bool
                 for fam, ok, hc, is_real in zip(family_t, ok_b.tolist(), has_cand.tolist(), real_bool.tolist()):
                     if is_real and hc:
@@ -835,6 +918,13 @@ class Executor:
                 neg_trace.append(neg)
                 redirected_trace.append(addr_row_bool)
                 resolved_idx_trace.append(resolved_idx_t)
+
+        # One global weighted mean each for entry-op / EMIT-dest, THEN
+        # combined -- see the accumulator-init comment above.
+        if trace_mask_a_sum > 0:
+            trace_loss = trace_loss + trace_weight * (trace_ce_a_sum / trace_mask_a_sum.clamp(min=1e-8))
+        if trace_mask_b_sum > 0:
+            trace_loss = trace_loss + trace_weight * (trace_ce_b_sum / trace_mask_b_sum.clamp(min=1e-8))
 
         RL = torch.stack(resp_logits, dim=1)
         RV = torch.stack(resp_vecs, dim=1)

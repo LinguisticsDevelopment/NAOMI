@@ -63,7 +63,7 @@ __all__ = [
     "OP_VOCAB", "OP_INDEX", "ENTRY_OPS", "REGISTER_SLOTS", "REGISTER_TYPES",
     "ADDR_TYPED", "ARG_SIGNATURES", "CONTROL_TYPE_ORDER",
     "control_signal_to_tensor", "OpSelect", "ArgSelect", "count_params",
-    "mask_second_write", "lofo_keep_mask",
+    "mask_second_write", "lofo_keep_mask", "family_balance_weights",
 ]
 
 # ---------------------------------------------------------------------------
@@ -291,6 +291,61 @@ def lofo_keep_mask(families: Sequence[str], lofo_family: Optional[str]) -> List[
     if lofo_family is None:
         return [True] * len(families)
     return [f != lofo_family for f in families]
+
+
+def family_balance_weights(counts: Dict[str, int], *, power: float = 0.5) -> Dict[str, float]:
+    """EXECUTOR LOFO GATE REPAIR #1 (RESEARCH_NOTES "Executor LOFO gate #1"
+    instrument defect (1)): inverse-family-frequency per-step weights for
+    :meth:`nsm_ct.executor.Executor.run_learned`'s trace cross-entropy.
+
+    Gate #1's diagnosis: ``plain_fact`` is ~87% of every real clause step
+    (``family_of_step`` coverage), so the entry-op selector's UNWEIGHTED
+    mean cross-entropy is dominated by ``plain_fact``'s own loss and the
+    minority families (``definite_desc_read`` n=316, ``inverse_query``
+    n=254 out of ~30k in gate #1's own corpus) get gradient too small to
+    move their op_acc off 0.000, even with traces present. This is the
+    standard CLASS-BALANCED reweighting fix (not a resampled step mix --
+    resampling would need restructuring ``train_epoch``'s per-corpus-source
+    minibatch loop, which processes one curriculum's own batch per
+    optimizer step; a loss weight is a one-line change at the SAME
+    granularity trace loss already averages over, and is exactly as
+    documented "family/class balancing" in gate #1's instrument-defect
+    note).
+
+    ``weight[f] = total * counts[f]**(-power) / sum_g(counts[g]**(1-power))``
+    -- chosen so that (a) every family's TOTAL weighted mass across one
+    full pass over ``counts`` is IDENTICAL (``weight[f] * counts[f]**power``
+    is the SAME constant for every family present, directly unit-testable
+    regardless of ``power``), and (b) the GRAND total weighted mass across
+    all families equals ``total`` unchanged (``sum(weight[f]*counts[f]) ==
+    total`` -- also regardless of ``power``), so this reweighting shifts
+    the trace loss's per-family BALANCE without silently rescaling its
+    overall magnitude (no separate ``trace_weight`` retuning needed).
+    Families with zero count are dropped (never divide by zero); a
+    caller's ``.get(fam, 1.0)`` lookup handles a family absent from
+    ``counts`` (e.g. an empty minibatch) falling back to unweighted.
+
+    ``power`` (default ``0.5``, inverse-SQUARE-ROOT frequency -- a
+    standard NLP class-imbalance dampening, e.g. subsampled-frequent-word
+    ratios): ``power=1.0`` is the textbook FULL inverse-frequency scheme
+    (every family's total mass exactly equalized) -- measured, at this
+    milestone's own smoke scale (``scripts/train_executor.py
+    --episodes-per-family 60 --dim 24 --epochs 15 --batch-size 16``), to
+    be TOO aggressive: a ~110x max/min weight ratio (``plain_fact``
+    n=3105 vs ``inverse_query`` n=28) destabilized the MAJORITY family's
+    own convergence inside the smoke battery's short epoch budget
+    (``plain_fact`` op_acc fell from 0.998 unweighted to 0.52 at
+    ``power=1.0``, even as the minority families rose off 0.000).
+    ``power=0.5`` keeps every family within roughly a ``sqrt`` of that
+    ratio (~10x here) and converges every family without depressing the
+    majority one (this milestone's report has the before/after table).
+    """
+    counts = {f: c for f, c in counts.items() if c > 0}
+    if not counts:
+        return {}
+    total = sum(counts.values())
+    denom = sum(c ** (1.0 - power) for c in counts.values())
+    return {f: total * (c ** -power) / denom for f, c in counts.items()}
 
 
 def mask_second_write(op_sequence: Sequence[str]) -> Tuple[List[str], int]:

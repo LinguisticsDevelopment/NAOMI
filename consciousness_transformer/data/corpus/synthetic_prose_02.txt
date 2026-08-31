@@ -1,0 +1,64 @@
+# SYNTHETIC PROSE (corpus scale-up) -- hand-authored graded-reader-style paragraphs,
+# NOT drawn from any real corpus, matching the style of synthetic_prose_01.txt (M58a)
+# but with entirely new entities/places/objects. One blank-line-separated block = one
+# passage.
+
+Ben is in the workshop. He repairs old clocks. The workshop smells of oil and wood. Sunlight falls through a dusty window.
+
+Carl gave Nina the lantern. Nina carried it down the stairs. The lantern flickered in the draft. She set it on the windowsill.
+
+The old sailor is on the dock. He coils a length of rope. The dock creaks under his boots. Gulls circle above the harbor.
+
+Dana and Leo are in the orchard. They are picking apples. Dana filled a wooden crate. Leo climbed the tallest tree.
+
+Ruth handed Sam the parcel. Sam untied the string carefully. The parcel held a small clock. He wound it and listened.
+
+The blacksmith is in the forge. He hammers a glowing bar. The forge glows with orange light. Sparks scatter across the floor.
+
+Ivy is in the meadow. She watches the grazing sheep. The meadow stretches to the hills. A lark sings somewhere overhead.
+
+Max passed Zoe the ribbon. Zoe tied it around the basket. The ribbon was a deep red. She hung the basket by the door.
+
+The old potter is in the studio. He shapes a lump of clay. The studio is lined with shelves. Finished bowls dry in the sun.
+
+Owen is in the stable. He brushes a grey mare. The stable smells of hay and leather. A cat naps in the corner.
+
+Rita gave Jack the compass. Jack studied the spinning needle. The compass pointed toward the north. He tucked it into his coat.
+
+Fiona is in the lighthouse. She climbs the narrow stairs. The lighthouse stands on a rocky point. Waves crash against the base below.
+
+Ray and Nora are in the vineyard. They are trimming the vines. Ray carried the wooden ladder. Nora gathered the fallen leaves.
+
+Eli handed Wendy the scarf. Wendy wrapped it around her neck. The scarf was soft grey wool. She thanked him with a smile.
+
+The weaver is in the cottage. She works at a tall loom. The cottage is warm and quiet. Thread spools line the far wall.
+
+Hugo is in the courtyard. He sweeps the fallen leaves. The courtyard has a stone fountain. Pigeons gather near the water.
+
+June gave Otto the medallion. Otto held it up to the light. The medallion bore an old crest. He slipped it into his pocket.
+
+The miner is in the quarry. He loads stone onto a cart. The quarry echoes with distant hammering. Dust rises in the still air.
+
+Vera is in the greenhouse. She tends rows of young herbs. The greenhouse traps the morning heat. Bees drift among the blossoms.
+
+Dean passed Lola the kettle. Lola set it on the stove. The kettle began to hiss softly. Steam curled toward the ceiling.
+
+The cobbler is in the workshop. He stitches a worn boot. The workshop is cluttered with leather. A bell hangs above the door.
+
+Gus is in the pasture. He counts the grazing cattle. The pasture runs along the river. A hawk circles high above.
+
+Mia gave Ted the quill. Ted dipped it in dark ink. The quill scratched across the page. He signed his name at the bottom.
+
+The innkeeper is in the tavern. He wipes down the long counter. The tavern is loud in the evening. A fire crackles in the hearth.
+
+Freya is in the attic. She sorts through an old trunk. The attic is thick with dust. Light slips through a small window.
+
+Kim handed Arlo the coin. Arlo turned it over twice. The coin was worn nearly smooth. He dropped it in his purse.
+
+The shepherd is in the pasture. He watches the newborn lambs. The pasture is fenced with grey stone. Clouds drift low over the hills.
+
+Nadia is in the cellar. She stacks the wine barrels. The cellar is cool and dark. A single lamp hangs from a hook.
+
+Silas gave Priya the satchel. Priya slung it over her shoulder. The satchel was heavy with books. She set off down the road.
+
+The watchman is on the tower. He scans the road below. The tower rises above the town wall. Torches burn along the ramparts.

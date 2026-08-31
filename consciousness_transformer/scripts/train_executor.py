@@ -140,24 +140,45 @@ def build_corpus(episodes_per_family: int, dim: int, hidden: int, seed: int):
     that environment, same as every other script in this repo does."""
     meaning = NSMMeaningResolver()
     codec = TPRCodec(dim=dim)
-    # use_cand_feature=False (deviation from train_ltm.py's own
-    # use_cand_feature=True/cand_feature_extra=2 document-only config,
-    # documented here): ClauseReactor._collapse's (and Executor.run()'s
-    # verbatim copy of it -- both READ-ONLY for this milestone, pinned by
-    # the Phase 1 anchor tests) extra-column zero-padding is only applied
-    # when at least one optional extra column (evidence-interaction/
-    # from_ltm/recency) is ACTUALLY present that step -- WriteBackCurriculumGenerator's
-    # candidate sets populate `cand_features` (the per-candidate slot)
-    # but supply NONE of those extra columns, so a resolver built with
-    # `cand_feature_extra > 0` and shared across this mixed corpus hits a
-    # width mismatch the moment a writeback step reaches `ClauseReactor.
-    # forward`/`Executor.run` (Executor.run_learned's OWN copy of this
-    # block is fixed, see executor.py; forward()/run() are not, by
-    # design, this milestone). Dropping `use_cand_feature` entirely here
-    # sidesteps the whole code path for every family -- a documented
-    # simplification (this milestone's report), not a workaround for a
-    # bug this milestone's files are responsible for.
-    resolver = make_resolver("A", dim, hidden)
+    # EXECUTOR LOFO GATE REPAIR #2 (RESEARCH_NOTES "Executor LOFO gate #1"
+    # instrument defect (2)): use_cand_feature=True, RESTORED. Gate #1
+    # shipped with `use_cand_feature=False` because `ClauseReactor.forward`/
+    # `Executor.run`'s own extra-column padding (Phase 1 bootstrap-anchor-
+    # pinned) only widened `cand_feature_per_candidate` when at least one
+    # OPTIONAL extra column (evidence-interaction/from_ltm/recency) was
+    # actually present that step -- a resolver built with
+    # `cand_feature_extra > 0` and shared across this SIX-family mixed
+    # corpus hits a width mismatch the moment a writeback/pronoun step
+    # (neither ever populates an optional extra column, but PRONOUN DOES
+    # populate the BASE `cand_feature_per_candidate` itself -- the mention
+    # gender feature `pronoun_entity_candidate_set` sets) reaches
+    # `forward`/`run`. `Executor.run_learned` (the method this script
+    # trains with) already had the fix (pad whenever `extra_width > 0`,
+    # zero-cols or not); `Executor.run()` (this script's `evaluate()` calls
+    # it for the oracle/floor arms) did NOT -- turning `use_cand_feature`
+    # back on for the first time EXPOSED a real crash there (a
+    # `mat1`/`mat2` shape mismatch, caught building this milestone's own
+    # pronoun test), fixed in `executor.py`'s `run()` alongside
+    # `run_learned`'s pre-existing fix (same pad-whenever-`extra_width>0`
+    # logic, both now agree) -- see
+    # `test_run_learned_padding_regression_widened_register` (run_learned)
+    # and `test_pronoun_oracle_run_does_not_crash_with_widened_register`
+    # (run()) in tests/test_executor_phase2.py, plus
+    # tests/test_executor_phase1.py's untouched anchor tests (the fix only
+    # changes behavior when `extra_width>0` AND `extra_cols` is empty, a
+    # combination none of Phase 1's own generator battery ever hits).
+    #
+    # cand_feature_extra=4 -- the union, across every corpus source this
+    # script mixes, of the widest single-source combination actually
+    # needed: `evidence_interaction` (1 col, most families) +
+    # `cand_recency` (3 cols, instance/rich's mention-step candidate sets
+    # only) = 4; `cand_from_ltm` (1 col, document/recall_link only) never
+    # co-occurs with recency in one source, so document's own need (1+1=2)
+    # fits under 4 with room to spare -- `run_learned`'s padding
+    # zero-fills the shortfall. Matches `scripts/train_instances.py`'s own
+    # `1 + RECENCY_EXTRA` precedent (`RECENCY_EXTRA=3`) exactly, the
+    # closest existing curriculum mix to this one.
+    resolver = make_resolver("A", dim, hidden, use_cand_feature=True, cand_feature_extra=4)
     model = ClauseReactor(dim=dim, hidden=hidden, resolver=resolver)
 
     n_val = max(1, episodes_per_family // 5)
@@ -235,7 +256,7 @@ def _document_ltm(model, item: dict, codec: TPRCodec, *, train: bool):
 
 def train_epoch(model, ex: Executor, op_sel, arg_sel, opt, corpus: dict, codec: TPRCodec, *,
                  batch_size: int, seed: int, epoch: int, lofo_family: Optional[str],
-                 trace_weight: float) -> float:
+                 trace_weight: float, family_weight: Optional[Dict[str, float]] = None) -> float:
     model.train()
     total_loss, n_steps = 0.0, 0
     for name in FLAT_FAMILIES:
@@ -247,7 +268,8 @@ def train_epoch(model, ex: Executor, op_sel, arg_sel, opt, corpus: dict, codec: 
             sub = batch.subset(torch.as_tensor(idx))
             opt.zero_grad()
             out = ex.run_learned(sub, op_sel, arg_sel, lofo_family=lofo_family,
-                                  teacher_force=True, trace_weight=trace_weight)
+                                  teacher_force=True, trace_weight=trace_weight,
+                                  family_weight=family_weight)
             task_loss = F.cross_entropy(out["answer_logits"], sub.answer)
             loss = task_loss + out["trace_loss"]
             loss.backward()
@@ -266,7 +288,8 @@ def train_epoch(model, ex: Executor, op_sel, arg_sel, opt, corpus: dict, codec: 
         for item in chunk:
             ltm_tensor = _document_ltm(model, item, codec, train=True)
             out = ex.run_learned(item["final_batch"], op_sel, arg_sel, ltm=ltm_tensor,
-                                  lofo_family=lofo_family, teacher_force=True, trace_weight=trace_weight)
+                                  lofo_family=lofo_family, teacher_force=True, trace_weight=trace_weight,
+                                  family_weight=family_weight)
             task_loss = F.cross_entropy(out["answer_logits"], item["final_batch"].answer)
             doc_loss = task_loss + out["trace_loss"]
             doc_loss.backward()
@@ -337,12 +360,25 @@ def evaluate(model, ex: Executor, op_sel, arg_sel, corpus: dict, codec: TPRCodec
     return results
 
 
-def print_report(results: Dict[str, dict], *, title: str) -> None:
+GAP_UNINFORMATIVE_THRESHOLD = 0.05
+"""EXECUTOR LOFO GATE REPAIR #4 (RESEARCH_NOTES "Executor LOFO gate #1":
+"4/6 cells gap-less" made the GO/KILL criteria unevaluable): the same
+"no gap -> uninformative" call gate #1's own hand-written report made
+about plain_fact/defdesc/inverse, now made BY THE SCRIPT ITSELF so every
+future gate run self-reports which cells count before a human has to."""
+
+
+def print_report(results: Dict[str, dict], *, title: str,
+                  family_weight: Optional[Dict[str, float]] = None) -> None:
     print(f"\n=== {title} ===")
-    print(f"{'corpus':<12} {'learned':>8} {'oracle':>8} {'floor':>8}")
+    print(f"{'corpus':<12} {'learned':>8} {'oracle':>8} {'floor':>8} {'gap':>8}")
     for name, r in results.items():
-        print(f"{name:<12} {r['learned_acc']:>8.3f} {r['oracle_acc']:>8.3f} {r['floor_acc']:>8.3f}")
-    print("-- per-program-family op/arg-selection accuracy (vs gold trace) --")
+        gap = r["oracle_acc"] - r["floor_acc"]
+        warn = f"  WARN: cell uninformative (|gap|<{GAP_UNINFORMATIVE_THRESHOLD:.2f})" \
+            if abs(gap) < GAP_UNINFORMATIVE_THRESHOLD else ""
+        print(f"{name:<12} {r['learned_acc']:>8.3f} {r['oracle_acc']:>8.3f} {r['floor_acc']:>8.3f} "
+              f"{gap:>+8.3f}{warn}")
+    print("-- per-program-family op/arg-selection accuracy (vs gold trace), family-balanced (repair #1) --")
     fam_op: Dict[str, list] = {}
     fam_arg: Dict[str, list] = {}
     for r in results.values():
@@ -357,7 +393,9 @@ def print_report(results: Dict[str, dict], *, title: str) -> None:
         ac, an = fam_arg.get(fam, [0, 0])
         op_str = f"{c / n:.3f}" if n else "n/a"
         arg_str = f"{ac / an:.3f}" if an else "n/a"
-        print(f"  {fam:<26} op_acc={op_str:>6} (n={n:<4}) arg_acc={arg_str:>6} (n={an})")
+        w = family_weight.get(fam) if family_weight else None
+        w_str = f"{w:.3f}" if w is not None else "n/a"
+        print(f"  {fam:<26} weight={w_str:>6} op_acc={op_str:>6} (n={n:<4}) arg_acc={arg_str:>6} (n={an})")
     write_violations = sum(r["write_violations"] for r in results.values())
     print(f"write_violations (total)={write_violations}")
 
@@ -431,6 +469,16 @@ def main() -> None:
         if hist.get(fam, 0) == 0:
             print(f"  WARNING: family {fam!r} has ZERO coverage in this corpus.")
 
+    # EXECUTOR LOFO GATE REPAIR #1: global inverse-family-frequency trace-loss
+    # weights, computed ONCE off the full training corpus's own family
+    # histogram (not re-derived per minibatch -- each minibatch is drawn from
+    # ONE corpus source at a time, train_epoch's own FLAT_FAMILIES loop, so a
+    # per-minibatch weight would be noisy/undefined for single-family
+    # minibatches; a single global table is stable across the whole run).
+    family_weight = osl.family_balance_weights(dict(hist))
+    print("family_balance_weight (repair #1, inverse-frequency, global):",
+          {f: round(w, 3) for f, w in family_weight.items()})
+
     if args.load:
         ckpt = torch.load(args.load, map_location="cpu")
         model.load_state_dict(ckpt["model"])
@@ -446,13 +494,13 @@ def main() -> None:
             tw = args.trace_weight + (tw_final - args.trace_weight) * (epoch / max(args.epochs - 1, 1))
             mean_loss = train_epoch(model, ex, op_sel, arg_sel, opt, corpus, codec,
                                      batch_size=args.batch_size, seed=args.seed, epoch=epoch,
-                                     lofo_family=args.lofo, trace_weight=tw)
+                                     lofo_family=args.lofo, trace_weight=tw, family_weight=family_weight)
             print(f"epoch {epoch + 1:3d}/{args.epochs} mean_loss={mean_loss:.4f} trace_weight={tw:.3f}")
         print(f"training wall-clock: {(time.time() - t0) / 60:.2f} min")
 
     results = evaluate(model, ex, op_sel, arg_sel, corpus, codec)
     title = "EVAL" if not args.lofo else f"EVAL (LOFO held-out family: {args.lofo})"
-    print_report(results, title=title)
+    print_report(results, title=title, family_weight=family_weight)
 
     if args.lofo and args.lofo in dict(hist) and hist.get(args.lofo, 0) > 0:
         # Locate which corpus source(s) actually exercise the held-out
@@ -466,10 +514,13 @@ def main() -> None:
                    "inverse_query": "instance", "recall_link": "document"}.get(args.lofo)
         if primary and primary in results:
             r = results[primary]
+            gap = r["oracle_acc"] - r["floor_acc"]
+            warn = f" WARN: cell uninformative (|gap|<{GAP_UNINFORMATIVE_THRESHOLD:.2f})" \
+                if abs(gap) < GAP_UNINFORMATIVE_THRESHOLD else ""
             print(f"\n[LOFO SMOKE NUMBERS -- do NOT gate on these] held-out family={args.lofo!r} "
                   f"(primary corpus source={primary!r}): "
                   f"learned_acc={r['learned_acc']:.3f} oracle_acc={r['oracle_acc']:.3f} "
-                  f"floor_acc={r['floor_acc']:.3f}")
+                  f"floor_acc={r['floor_acc']:.3f} gap={gap:+.3f}{warn}")
 
     if args.soft_report:
         soft_results = evaluate(model, ex, op_sel, arg_sel, corpus, codec, dest_mode="soft")

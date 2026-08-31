@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import os
 import sys
+from collections import Counter
 
+import pytest
 import torch
 import torch.nn.functional as F
 
@@ -327,3 +329,235 @@ def test_short_end_to_end_lofo_smoke():
     assert 0.0 <= r["learned_acc"] <= 1.0
     assert 0.0 <= r["oracle_acc"] <= 1.0
     assert 0.0 <= r["floor_acc"] <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# 9. EXECUTOR LOFO GATE REPAIR #1: class-balanced trace loss
+#    (RESEARCH_NOTES "Executor LOFO gate #1" instrument defect (1) --
+#    op_select.family_balance_weights).
+# ---------------------------------------------------------------------------
+def test_family_balance_weights_sum_correctly():
+    """The inverse-frequency normalization's own invariant, at the default
+    ``power=0.5`` (inverse-square-root, see the function's own docstring
+    for why ``power=1.0``'s FULL equalization proved too aggressive at
+    this milestone's smoke scale): every present family's weighted mass
+    ``weight[f] * counts[f]**power`` is IDENTICAL across families, and the
+    grand total weighted mass across all families equals the raw total
+    unchanged (the reweighting rebalances, it does not rescale). A
+    zero-count family is dropped, never divides by zero. The same
+    invariants hold at ANY ``power`` (parametrized below), including the
+    ``power=1.0`` full-equalization case."""
+    counts = {"plain_fact": 8000, "writeback_addr_redirect": 500,
+              "definite_desc_read": 80, "inverse_query": 40, "recall_link": 0}
+    present = [f for f in counts if f != "recall_link"]
+    total = sum(counts[f] for f in present)
+
+    for power in (0.5, 1.0, 0.25):
+        w = osl.family_balance_weights(counts, power=power)
+        assert "recall_link" not in w  # zero-count family dropped, no div-by-zero
+        per_family_mass = [w[f] * counts[f] ** power for f in present]
+        target = per_family_mass[0]
+        for f, mass in zip(present, per_family_mass):
+            assert abs(mass - target) < 1e-6, f"power={power} {f}: weighted mass {mass} != {target}"
+        assert abs(sum(w[f] * counts[f] for f in present) - total) < 1e-6
+        # Minority families get a LARGER weight than the majority family.
+        assert w["inverse_query"] > w["definite_desc_read"] > w["writeback_addr_redirect"] > w["plain_fact"]
+
+    # power=1.0 is the textbook full-equalization special case: every
+    # family's TOTAL mass (weight[f]*counts[f], not weight[f]*counts[f]**1
+    # written out) is exactly total/k.
+    w_full = osl.family_balance_weights(counts, power=1.0)
+    k = len(present)
+    for f in present:
+        assert abs(w_full[f] * counts[f] - total / k) < 1e-6
+
+    # Uniform counts -> uniform (all-1.0) weights, at any power.
+    uniform = osl.family_balance_weights({"a": 10, "b": 10, "c": 10}, power=0.5)
+    assert all(abs(v - 1.0) < 1e-6 for v in uniform.values())
+
+    assert osl.family_balance_weights({}) == {}
+
+
+def test_family_balanced_loss_converges_on_minority_family():
+    """Gate #1's own failure mode, reproduced and then fixed: a heavily
+    imbalanced two-corpus stream (old L1-6, almost entirely ``plain_fact``,
+    mixed with a SMALL, PURE-inverse InstanceCurriculumGenerator slice --
+    ``inverse_frac=1.0`` so no ``definite_desc_read`` episode is ever
+    generated) trains an entry-op selector whose op_acc on the minority
+    family (``inverse_query``) converges to >0.9 WITH ``family_weight``
+    applied -- ONE combined batch/call (both corpora's episodes built
+    together, so their steps compete WITHIN THE SAME trace-loss
+    computation, the genuine gate #1 failure mode: two SEPARATE
+    per-corpus calls, each with its own optimizer step -- tried first --
+    turned out NOT to reproduce it, since a rare family trained via its
+    OWN dedicated call converges fine regardless of weighting when
+    nothing else competes inside that call).
+
+    NOTE on scope (this milestone's report has the full finding): a
+    SEPARATE, deeper defect exists when TWO CANDIDATE-BEARING families
+    share an identical preceding control-signal trace within the SAME
+    corpus (``definite_desc_read`` vs ``inverse_query``, both riding
+    InstanceCurriculumGenerator/RichEpisodeGenerator's own target-question
+    vs inverse-question branching, which happens ENTIRELY at the final
+    step with no earlier structural difference) -- OpSelect's D2-mandated
+    Harvard-split control-only input (prev_op_id/step_idx/margin=0-pre-
+    resolver/abstain=0/a CONSTANT type_mask) has no way to discriminate
+    them at that shared step, so op_acc for that specific PAIR stays near
+    0.000 regardless of loss weighting (measured: does not resolve even
+    at --episodes-per-family 80/dim 24/epochs 25). That is a genuine
+    information-bottleneck finding, not a class-imbalance one -- this
+    test isolates and proves the CLASS-IMBALANCE mechanism repair #1
+    actually targets and fixes, using a family (``inverse_query`` alone,
+    no ``definite_desc_read`` competing for the same column) that is NOT
+    subject to that separate collision."""
+    torch.manual_seed(0)
+    meaning = NSMMeaningResolver()
+    codec = TPRCodec(dim=DIM)
+    from nsm_ct.episode import CurriculumGenerator
+    majority_eps = CurriculumGenerator(max_level=4, seed=0).generate(80)
+    minority_eps = InstanceCurriculumGenerator(seed=2, inverse_frac=1.0).generate(10)
+    batch = build_clause_batch(majority_eps + minority_eps, None, meaning, codec)
+
+    hist: Counter = Counter()
+    for t in range(batch.entity.shape[1]):
+        hist.update(programs.family_of_step(batch, t))
+    n_minority = hist.get("inverse_query", 0)
+    assert n_minority >= 5, f"test setup: too few inverse_query steps to measure ({n_minority})"
+    minority_frac = n_minority / sum(hist.values())
+    assert minority_frac < 0.15, f"test setup not imbalanced enough: {minority_frac:.3f}"
+    # power=1.0 (full inverse-frequency, not the module default power=0.5 --
+    # see family_balance_weights's own docstring): this test isolates and
+    # demonstrates repair #1's MECHANISM at full strength; scripts/
+    # train_executor.py's own six-family mixed corpus uses the gentler
+    # default for overall multi-family training stability (that trade-off
+    # is this milestone's own reported finding).
+    family_weight = osl.family_balance_weights(dict(hist), power=1.0)
+
+    # Measured at a SMOKE-scale step budget (30 steps, checkpointed every
+    # 5): both arms eventually reach the minority family's op_acc -- pure
+    # class imbalance (no collision partner) is not, by itself, a hard
+    # classification problem once a family owns its own unrivaled column
+    # (see the docstring above). The measured DIFFERENCE is training
+    # STABILITY under a bounded budget: unweighted dips back to 0.000
+    # between early checkpoints (the majority family's gradient still
+    # dominates the SHARED parameters early on) before eventually
+    # recovering by chance; weighted reaches and STAYS at >=0.9 from the
+    # very first checkpoint on. This milestone's report quotes the exact
+    # trace this assertion is pinned to.
+    def _train(weight):
+        torch.manual_seed(1)
+        resolver = make_resolver("A", DIM, HIDDEN, use_cand_feature=True, cand_feature_extra=1)
+        model = ClauseReactor(dim=DIM, hidden=HIDDEN, resolver=resolver)
+        ex = Executor(model)
+        op_sel, arg_sel = _heads(ex)
+        params = list(model.parameters()) + list(op_sel.parameters()) + list(arg_sel.parameters())
+        opt = torch.optim.Adam(params, lr=5e-3)
+        checkpoints = []
+        for step in range(30):
+            opt.zero_grad()
+            out = ex.run_learned(batch, op_sel, arg_sel, teacher_force=True, family_weight=weight)
+            out["trace_loss"].backward()
+            opt.step()
+            if (step + 1) % 5 == 0:
+                c, n = out["op_acc"].get("inverse_query", (0, 0))
+                checkpoints.append(c / n if n else 0.0)
+        return checkpoints
+
+    unweighted_checkpoints = _train(None)
+    weighted_checkpoints = _train(family_weight)
+    weighted_acc = weighted_checkpoints[-1]
+    assert weighted_acc > 0.9, (
+        f"family-balanced trace loss failed to converge the minority family: {weighted_acc:.3f}")
+    assert min(weighted_checkpoints) >= 0.9, (
+        f"family-balanced weighting was not STABLE across checkpoints: {weighted_checkpoints}")
+    assert min(weighted_checkpoints) > min(unweighted_checkpoints), (
+        f"balanced weighting (checkpoints={weighted_checkpoints}) was not more stable than "
+        f"unweighted (checkpoints={unweighted_checkpoints})")
+
+
+# ---------------------------------------------------------------------------
+# 10. EXECUTOR LOFO GATE REPAIR #2: the interaction-feature padding fix,
+#     verified (not sidestepped) -- a family that populates NONE of the
+#     optional extra scalar columns must still run cleanly through
+#     run_learned when the shared resolver is built with a WIDENED
+#     cand_feature_extra (RESEARCH_NOTES "Executor LOFO gate #1"
+#     instrument defect (2)).
+# ---------------------------------------------------------------------------
+def test_run_learned_padding_regression_widened_register():
+    """A writeback batch never populates cand_evidence_target/
+    cand_from_ltm/cand_recency (WriteBackCurriculumGenerator sets none of
+    them) -- with the shared resolver built ``cand_feature_extra=4`` (the
+    mixed six-family corpus's own width, scripts/train_executor.py's
+    build_corpus), run_learned must still zero-pad up to that width
+    rather than hitting a torch.cat width mismatch."""
+    batch, _unused_model = _writeback_batch()
+    resolver = make_resolver("A", DIM, HIDDEN, use_cand_feature=True, cand_feature_extra=4)
+    model = ClauseReactor(dim=DIM, hidden=HIDDEN, resolver=resolver)
+    ex = Executor(model)
+    op_sel, arg_sel = _heads(ex)
+    out = ex.run_learned(batch, op_sel, arg_sel, teacher_force=True)
+    assert out["answer_logits"].shape[0] == batch.entity.shape[0]
+    assert torch.isfinite(out["trace_loss"])
+    assert out["write_violations"] == 0
+    # A backward pass must also work end to end (the padded columns are a
+    # real, differentiable part of the graph, not a detached patch).
+    loss = F.cross_entropy(out["answer_logits"], batch.answer) + out["trace_loss"]
+    loss.backward()
+    assert model.resolver.net[0].weight.grad is not None
+
+
+# ---------------------------------------------------------------------------
+# 11. EXECUTOR LOFO GATE REPAIR #3 (mechanics test, not a curriculum-
+#     validity gate -- CLAUDE.md: "Smoke-scale results NEVER gate
+#     curriculum validity"): the pronoun oracle-below-floor inversion
+#     (RESEARCH_NOTES "Executor LOFO gate #1": oracle 0.170 << floor
+#     0.960). Diagnosis (this milestone's report has the full write-up):
+#     PronounCurriculumGenerator's placeholder VALUE (``ep.meta[
+#     "gold_place"]``, M53a's "ground the sentence's TRUE meaning
+#     directly" design) is ALREADY the correct answer -- the floor arm
+#     trivially scores near-ceiling by never touching it. The oracle arm
+#     (Executor.run(), correct STRUCTURAL routing but the SAME shared
+#     resolver's own candidate pick) discards that correct placeholder for
+#     whichever candidate the resolver scores highest; with an unbalanced
+#     trace loss and no per-candidate gender feature (gate #1's own
+#     instrument defects), that pick was near chance, sinking oracle below
+#     floor. BEFORE even reaching that comparison, gate #1's own sidestep
+#     (use_cand_feature=False) meant `Executor.run()`'s oracle/floor arms
+#     never hit the widened-register code path at all; turning it back on
+#     (repair #2) exposed a REAL crash (mat1/mat2 shape mismatch) in
+#     run()'s own extra-column padding -- fixed above alongside
+#     run_learned's own copy of the same fix. This test is the crash
+#     regression for `Executor.run()` specifically (test #10 above already
+#     covers `run_learned`); it does NOT assert a training-convergence
+#     threshold -- at tiny (noisy, single-digit-n_val) smoke scale a
+#     seeded oracle-vs-floor A/B swung EITHER direction run to run in this
+#     milestone's own exploration (small-sample variance, not a directional
+#     finding), so per CLAUDE.md's smoke-scale rule that comparison is
+#     reported (not asserted) in this milestone's own report instead,
+#     using the real smoke battery's own numbers.
+# ---------------------------------------------------------------------------
+def test_pronoun_oracle_run_does_not_crash_with_widened_register():
+    """A pronoun batch (PronounCurriculumGenerator's own
+    ``cand_feature_per_candidate`` -- the mention's gender/kind feature --
+    populated, no evidence-interaction/from_ltm/recency columns, exactly
+    the empty-extra_cols case repair #2 exposed) must run cleanly through
+    ``Executor.run()``'s oracle AND floor arms once the shared resolver is
+    built with a WIDENED ``cand_feature_extra`` (untrained weights are
+    fine -- this is a forward-pass shape regression, not a convergence
+    claim, so it needs no training loop and carries none of that noise)."""
+    meaning = NSMMeaningResolver()
+    codec = TPRCodec(dim=DIM)
+    import train_executor as _te  # noqa: E402  (re-import for build_pronoun_batch)
+    batch = _te.build_pronoun_batch(10, seed=3, meaning=meaning, codec=codec)
+    if batch is None:
+        pytest.skip("quantum_parser unavailable in this environment -- pronoun family untestable")
+    resolver = make_resolver("A", DIM, HIDDEN, use_cand_feature=True, cand_feature_extra=4)
+    model = ClauseReactor(dim=DIM, hidden=HIDDEN, resolver=resolver)
+    model.eval()
+    ex = Executor(model)
+    with torch.no_grad():
+        oracle = ex.run(batch)
+        floor = ex.run(batch, force_plain_fact=True)
+    assert torch.isfinite(oracle["answer_logits"]).all()
+    assert torch.isfinite(floor["answer_logits"]).all()
+    assert oracle["answer_logits"].shape == floor["answer_logits"].shape == (batch.entity.shape[0], batch.options.shape[1])

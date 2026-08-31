@@ -1,0 +1,65 @@
+# SYNTHETIC PROSE (corpus scale-up) -- hand-authored graded-reader-style paragraphs,
+# NOT drawn from any real corpus, matching the style of synthetic_prose_01.txt (M58a),
+# continuing synthetic_prose_02.txt with further new/reused entities (people move
+# between rooms and hand each other objects across both files, same as real narrative
+# text would). One blank-line-separated block = one passage.
+
+Otto is in the printshop. He sets type by hand. The printshop smells of fresh ink. Presses clatter through the afternoon.
+
+Priya gave Silas the brooch. Silas pinned it to his coat. The brooch caught the lamplight. He admired it in the mirror.
+
+The herbalist is in the garden. She gathers sprigs of mint. The garden is bordered by low hedges. Bees hum among the flowers.
+
+Nadia and Otto are in the cellar. They are counting the barrels. Nadia marked each one with chalk. Otto rolled the last barrel aside.
+
+Wendy handed Eli the ledger. Eli opened it on the desk. The ledger listed every sale. He checked the numbers twice.
+
+The ferryman is on the river. He guides the boat across. The river runs fast and cold. Mist hangs low over the water.
+
+Zoe is in the depot. She stacks crates by the door. The depot echoes with rolling wheels. A whistle sounds from the yard.
+
+Jack gave Rita the feather. Rita placed it in a book. The feather was pale and long. She pressed the pages shut.
+
+The ranger is in the forest. He marks a trail with paint. The forest is thick with pine. A deer watches from the shade.
+
+Sam and Ruth are in the orchard. They are stacking the crates. Sam counted the apples twice. Ruth swept the fallen leaves.
+
+Lola handed Dean the spool. Dean threaded it through the loom. The spool held fine blue thread. He began to weave a pattern.
+
+The cartographer is in the study. She traces a line on the map. The study is stacked with old charts. Ink stains cover her fingers.
+
+Arlo is in the hangar. He checks the engine gauges. The hangar is cold before dawn. A single bulb lights the workbench.
+
+Ted gave Mia the token. Mia turned it in her palm. The token bore a small star. She kept it in a pouch.
+
+The glassblower is in the workshop. He shapes a glowing bulb. The workshop hums with the furnace. Colored glass lines the shelves.
+
+Nora and Ray are on the terrace. They are watering the plants. Nora filled the tin cans. Ray trimmed the drooping stems.
+
+Vera handed Gus the jar. Gus sealed it with wax. The jar held dark honey. He set it on the shelf.
+
+The falconer is in the field. She releases a waiting hawk. The field stretches beneath open sky. The hawk climbs in wide circles.
+
+Fiona is in the cove. She searches the wet sand. The cove is quiet at low tide. Shells scatter along the shoreline.
+
+Leo gave Dana the bell. Dana hung it above the gate. The bell rang softly in the wind. She smiled at the sound.
+
+The midwife is in the cottage. She checks on the sleeping baby. The cottage is warm by the fire. A kettle simmers on the stove.
+
+Owen and Fiona are in the harbor. They are loading the crates. Owen counted every box. Fiona checked the ship's manifest.
+
+Nina gave Carl the cloak. Carl wrapped it around his shoulders. The cloak was heavy grey wool. He stepped out into the rain.
+
+The beekeeper is in the meadow. He lifts a frame from the hive. The meadow buzzes with a steady sound. Golden wax drips from his gloves.
+
+Otto handed Vera the spool. Vera set it beside the loom. The spool was wound with red thread. She began the morning's weaving.
+
+The observatory keeper is on the tower. He adjusts the great telescope. The tower stands above the quiet town. Stars gather thick overhead.
+
+Hugo and June are in the plaza. They are hanging paper lanterns. Hugo climbed the wooden ladder. June handed up the string of lights.
+
+Dean gave Nadia the hammer. Nadia struck the loose nail. The hammer rang against the wood. She checked the shelf for balance.
+
+The carpenter is in the workshop. He planes a long plank smooth. The workshop is filled with sawdust. Sunlight falls across the bench.
+
+Priya and Ted are in the den. They are sorting old letters. Priya read one aloud. Ted filed the rest away.
