@@ -221,10 +221,40 @@ def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str
 # mentioned first, filtered to those gender-compatible with ``pronoun``
 # (membrane.PRONOUN_MORPHOLOGY + membrane.NAME_GENDER -- unknown on either
 # side never excludes a candidate).
+# converter-memfix (eval-side): _prose_steps/_prose_pronoun_candidates are
+# the ONLY clause_reactor.py callers that ever see raw, uncurated real-prose
+# text (every other _*_steps function grounds curriculum-generated
+# sentences, which parse in milliseconds by construction -- see
+# tests/test_parser_round.py/test_parser_round2.py's own byte-identity
+# gates, which this helper must never affect). ``nsm_ct.corpus`` diagnosed
+# and bounded the exact same quantum_parser combinatorics blowup for its
+# OWN parse calls (CORPUS_MAX_HYPOTHESES/CORPUS_MAX_PARSE_SECONDS,
+# ParseResourceExceeded); this reuses those SAME dials rather than
+# inventing new ones. Local import: nsm_ct.corpus already imports FROM this
+# module (``_TRANSFER_ROLE_MAP``, see the comment below), so a top-of-file
+# import here would be circular.
+def _prose_parse_graph(parser, sent: str):
+    """``parser._parse_graph(sent)``, capped exactly like
+    :func:`nsm_ct.corpus`'s own parse calls. A ``ParseResourceExceeded`` is
+    NOT caught here -- it propagates out of ``_prose_steps``/
+    ``_prose_pronoun_candidates``, out of ``build_clause_batch``, to
+    ``scripts/eval_prose.py``'s ``build_one`` per-episode try/except, which
+    already treats any exception as an honest BUILD FAILURE (never a crash,
+    never a hang) -- the same "give up on purpose, count it" contract
+    corpus.py's own ``_parse_one_sentence`` wrapper gives conversion-time
+    sentences.
+    """
+    if not hasattr(parser, "_parse_graph"):
+        return None
+    from .corpus import CORPUS_MAX_HYPOTHESES, CORPUS_MAX_PARSE_SECONDS  # local import
+    return parser._parse_graph(sent, max_hypotheses=CORPUS_MAX_HYPOTHESES,
+                                max_seconds=CORPUS_MAX_PARSE_SECONDS)
+
+
 def _prose_pronoun_candidates(pronoun: str, context_sentences, parser) -> List[str]:
     recent: List[str] = []
     for sent in context_sentences:
-        graph = parser._parse_graph(sent) if hasattr(parser, "_parse_graph") else None
+        graph = _prose_parse_graph(parser, sent)
         clauses, _links = extract_discourse(graph)
         for cl in clauses:
             for _rel, arg in cl.args:
@@ -301,7 +331,7 @@ def _prose_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndar
         return ms, mc
 
     for si, sent in enumerate(ep.context):
-        graph = parser._parse_graph(sent) if hasattr(parser, "_parse_graph") else None
+        graph = _prose_parse_graph(parser, sent)
         clauses, links = extract_discourse(graph)
         if not clauses:
             continue

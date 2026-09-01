@@ -238,22 +238,46 @@ class ParserInputEncoder(AbstractInputEncoder):
             self._note(f"parse failed ({exc}); feeding tokens without structure.")
             return None
 
-    def _parse_graph_one(self, sentence: str):
+    def _parse_graph_one(self, sentence: str, max_hypotheses: Optional[int] = None,
+                          max_seconds: Optional[float] = None):
         """Best-effort flat hypothesis graph for a SINGLE sentence.
 
         Returns ``None`` on any failure (the parser is untrusted).
+
+        ``max_hypotheses``/``max_seconds`` mirror :meth:`_parse_topk_one`'s
+        own opt-in resource-cap kwargs exactly (both ``None``/disabled by
+        default -- every pre-existing caller sees byte-identical behavior):
+        when given, a one-off ``config_override`` bounds
+        ``self._parser.parse``'s ambiguous-anchor combinatorics, and a
+        ``ParseResourceExceeded`` is re-raised (not swallowed by the broad
+        ``except Exception`` below) so the caller can tag it honestly --
+        see :meth:`_parse_topk_one`'s docstring for why this can't be
+        caught here.
         """
+        from src.parser.quantum_parser import ParseResourceExceeded as _ParseResourceExceeded  # local import
+
+        config_override = None
+        if max_hypotheses is not None or max_seconds is not None:
+            import dataclasses
+            config_override = dataclasses.replace(
+                self._parser.config,
+                max_ruleset_hypotheses=max_hypotheses,
+                max_parse_seconds=max_seconds,
+            )
         try:
             from .quantum_adapter import hypothesis_to_graph  # local import
 
             words = self._tag(sentence)
-            hyp = self._parser.parse(words).best_hypothesis()
+            hyp = self._parser.parse(words, config_override=config_override).best_hypothesis()
             return hypothesis_to_graph(hyp) if hyp is not None else None
+        except _ParseResourceExceeded:
+            raise
         except Exception as exc:  # pragma: no cover - parser is experimental
             self._note(f"graph parse failed ({exc}); no discourse structure.")
             return None
 
-    def _parse_graph(self, sentence: str):
+    def _parse_graph(self, sentence: str, max_hypotheses: Optional[int] = None,
+                      max_seconds: Optional[float] = None):
         """Best-effort flat hypothesis graph (keeps coordination/negation edges).
 
         The tree view (:meth:`_parse_tree`) drops inter-clause structure; this
@@ -270,13 +294,19 @@ class ParserInputEncoder(AbstractInputEncoder):
         one graph. Single-sentence input takes the exact same path as before
         this existed (``_split_sentences`` returns one segment) — byte-
         identical behavior for every existing caller.
+
+        ``max_hypotheses``/``max_seconds`` (see :meth:`_parse_graph_one`) are
+        threaded through to every per-sentence call unchanged; a
+        ``ParseResourceExceeded`` on any one sentence propagates straight
+        out of this method (not caught here either).
         """
         if getattr(self, "_parser", None) is None:
             return None
         sentences = _split_sentences(sentence)
         if len(sentences) <= 1:
-            return self._parse_graph_one(sentence)
-        graphs = [g for g in (self._parse_graph_one(s) for s in sentences) if g is not None]
+            return self._parse_graph_one(sentence, max_hypotheses=max_hypotheses, max_seconds=max_seconds)
+        graphs = [g for g in (self._parse_graph_one(s, max_hypotheses=max_hypotheses, max_seconds=max_seconds)
+                              for s in sentences) if g is not None]
         if not graphs:
             return None
         if len(graphs) == 1:

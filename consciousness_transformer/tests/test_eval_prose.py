@@ -14,6 +14,16 @@ Three tiers, matching the module's own shape:
      Accuracy near the random floor is EXPECTED at this scale/an untrained
      model -- this tier only asserts the report's shape (keys exist,
      counts match), not that the number is any good.
+  4. converter-memfix (eval-side): the SAME quantum_parser combinatorics
+     cap ``nsm_ct.corpus`` uses at conversion time (CORPUS_MAX_HYPOTHESES/
+     CORPUS_MAX_PARSE_SECONDS, ``ParseResourceExceeded``) now also bounds
+     ``_prose_steps``/``_prose_pronoun_candidates`` (the ONLY
+     ``clause_reactor.py`` callers that ever see raw real-prose text) via
+     ``ParserInputEncoder._parse_graph``'s new opt-in ``max_hypotheses``/
+     ``max_seconds`` kwargs -- see that method's docstring. A tiny
+     TEST-ONLY cap (not the real 4000/10.0s production dials) proves a
+     pathologically-ambiguous-for-that-cap sentence surfaces as
+     ``build_one``'s existing honest build-failure, not a hang or a crash.
 """
 
 from __future__ import annotations
@@ -265,3 +275,58 @@ def test_end_to_end_fresh_checkpoint_on_five_prose_episodes(tmp_path, capsys):
     assert "per-source:" in captured
     # the per-episode dump (--verbose) prints each buildable episode's question
     assert "predicted:" in captured and "gold:" in captured
+
+
+# ---------------------------------------------------------------------------
+# 4. converter-memfix (eval-side): capped prose parsing is a build-failure,
+#    never a hang.
+# ---------------------------------------------------------------------------
+def test_capped_prose_sentence_is_build_failure_not_hang(monkeypatch):
+    """A sentence that trips a (tiny, test-only) ``max_ruleset_hypotheses``
+    cap must come back from ``eval_prose.build_one`` as an honest
+    ``(None, reason)`` build failure -- never raise past it (which would
+    crash the whole eval run) and never hang (which is what the UNCAPPED
+    ``_prose_steps``/``_prose_pronoun_candidates`` parse calls this same
+    task fixed actually did on real prose, before this change).
+
+    ``mary is in the garden .`` is not pathological on its own -- it's an
+    ordinary two-content-word context sentence, same shape
+    ``_make_episode`` always uses. What makes it "pathological" here is the
+    monkeypatched cap: ``CORPUS_MAX_HYPOTHESES=1`` means the FIRST grammar
+    rule application that grows the hypothesis chart past one entry trips
+    ``ParseResourceExceeded``, which every ordinary sentence with any
+    lexical ambiguity does almost immediately -- so this test is fast and
+    deterministic without needing to reconstruct the genuinely-huge
+    (56M-tuple) Alice-corpus sentence the original bug was diagnosed on.
+    """
+    if not _quantum_parser_available():
+        pytest.skip("quantum_parser unavailable in this environment")
+
+    import nsm_ct.corpus as corpus_mod
+    from nsm_ct.input_encoder import ParserInputEncoder
+    from nsm_ct.meaning import NSMMeaningResolver
+    from nsm_ct.nsm_primes import PRIME_NAMES
+    from nsm_ct.structure import PARSE_LABELS
+    from nsm_ct.tokenizer import SimpleTokenizer
+    from nsm_ct.tpr import TPRCodec
+
+    ep = _make_episode("where is mary ?", "garden", ["garden", "kitchen"], "PLACE", "test_doc")
+
+    texts = ep.context + [ep.question] + ep.options
+    tok = SimpleTokenizer.build(texts, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    parser = ParserInputEncoder(tok, lang="en")
+    meaning_resolver = NSMMeaningResolver()
+    codec = TPRCodec(dim=24)
+
+    # Sanity/positive control: the SAME episode builds fine under the real
+    # (uncapped-for-this-sentence) production dials -- proves the failure
+    # below is the monkeypatched cap binding, not something else broken.
+    batch, reason = eval_prose.build_one(ep, parser, meaning_resolver, codec)
+    assert reason is None
+    assert batch is not None
+
+    monkeypatch.setattr(corpus_mod, "CORPUS_MAX_HYPOTHESES", 1)
+    batch, reason = eval_prose.build_one(ep, parser, meaning_resolver, codec)
+    assert batch is None
+    assert reason is not None
+    assert "ParseResourceExceeded" in reason
