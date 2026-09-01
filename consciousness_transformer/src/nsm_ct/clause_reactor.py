@@ -21,7 +21,7 @@ import torch.nn.functional as F
 from . import entity_memory as em
 from . import membrane
 from . import ops
-from .clause import extract_discourse
+from .clause import _PRONOUNS, extract_discourse
 from .episode import _NAMES
 from .instances import InstanceRegistry
 from .ltm import mem_total
@@ -208,6 +208,165 @@ def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str
                       _content_vec(place, resolver, codec, cache, meaning_source),
                       pred_vec, coordv, 0))
     return steps
+
+
+# Round 2 item 1 (PROSE PRONOUNS TO THE RESOLVER): the batch-grounding half
+# of nsm_ct.corpus's own registry-broadening + gender-compatibility logic
+# (see that module's ``_is_registrable_entity``/``_gender_compatible``) --
+# duplicated here in miniature rather than imported: nsm_ct.corpus already
+# imports FROM this module (``_TRANSFER_ROLE_MAP``), so the reverse import
+# would be circular. Every non-pronoun argument token mentioned by
+# ``context_sentences`` (any role -- mirrors nsm_ct.corpus._PassageRegistry.
+# register's own "any arg, not just SUBJECT" scope), most-recently-
+# mentioned first, filtered to those gender-compatible with ``pronoun``
+# (membrane.PRONOUN_MORPHOLOGY + membrane.NAME_GENDER -- unknown on either
+# side never excludes a candidate).
+def _prose_pronoun_candidates(pronoun: str, context_sentences, parser) -> List[str]:
+    recent: List[str] = []
+    for sent in context_sentences:
+        graph = parser._parse_graph(sent) if hasattr(parser, "_parse_graph") else None
+        clauses, _links = extract_discourse(graph)
+        for cl in clauses:
+            for _rel, arg in cl.args:
+                tok = (arg.token or "").lower()
+                if tok and tok not in _PRONOUNS:
+                    if tok in recent:
+                        recent.remove(tok)
+                    recent.append(tok)
+    candidates = list(reversed(recent))
+    p_gender = membrane.PRONOUN_MORPHOLOGY.get(pronoun, ("unknown", "sg", "3"))[0]
+
+    def _compat(name: str) -> bool:
+        n_gender = membrane.NAME_GENDER.get(name)
+        return p_gender == "unknown" or n_gender is None or p_gender == n_gender
+
+    return [n for n in candidates if _compat(n)]
+
+
+def _prose_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray],
+                  meaning_source: MeaningSource):
+    """Round 2 item 1: the ``kind == "prose"`` (``nsm_ct.corpus.
+    make_episodes`` only) counterpart of :func:`_context_steps`.
+
+    Every clause shape :func:`_context_steps` already grounds is grounded
+    HERE IDENTICALLY: an OBJECT-bearing transfer clause (unrolled one step
+    per other role, byte-for-byte the same as :func:`_context_steps` --
+    including a pronoun-bearing OTHER role, which stays on
+    :func:`_context_steps`'s own naive grounding: there the unresolved slot
+    is the triple's VALUE, an address the collapse machinery has no
+    contract for redirecting, only the ENTITY axis can be -- see
+    :func:`nsm_ct.corpus._extract_triples`'s own note on this exact
+    asymmetry); a SUBJECT+PLACE clause, or (round 2 item 3) a SUBJECT+
+    single-other-role clause more generally, whose SUBJECT is a NAMED
+    entity.
+
+    The one behavioral difference: a SUBJECT+single-other-role clause whose
+    SUBJECT is a PERSONAL PRONOUN. Instead of naively grounding the pronoun
+    as its own fixed content atom (what :func:`_context_steps` does for
+    every caller -- correct there, since no curriculum generator ever
+    routes a pronoun-subject sentence through it uninterceped), a
+    gender-compatible antecedent candidate set
+    (:class:`nsm_ct.membrane.EntityCandidateSet`, ``addr_redirect=True``,
+    ``evidence_relation="gender"``, its target the pronoun's OWN gender
+    atom) is built from the entities mentioned earlier in ``ep.context``
+    (:func:`_prose_pronoun_candidates`, most-recent-first) -- mirroring
+    :func:`_instance_steps`/:func:`_rich_steps`'s own "pronoun device"
+    contract exactly: a placeholder (garbage) entity address, the clause's
+    real (known) relation+value, and the candidate set's resolver-owned
+    ``addr_redirect`` deciding which entity's node the write actually lands
+    on. ``gold_antecedent`` is never supplied -- prose carries no ground
+    truth for which candidate is correct (mirrors ``nsm_ct.corpus``'s own
+    "parsed-pronoun-resolved" taxonomy code; this is that same design's
+    batch-grounding half). A pronoun with NO gender-compatible antecedent
+    yet falls back to :func:`_context_steps`'s own naive grounding -- there
+    is nothing better to offer the resolver.
+
+    Returns ``(steps, cand_sets)`` -- ``cand_sets`` maps a row-local step
+    index to its :class:`~nsm_ct.membrane.EntityCandidateSet`, ``{}`` (not
+    ``None``) for a prose episode with no pronoun-redirect step at all,
+    matching every other step-builder's "empty dict, not None" convention
+    for :func:`build_clause_batch`'s per-episode ``cand_sets`` local.
+    """
+    z = np.zeros(codec.dim, np.float32)
+    steps = []
+    cand_sets: Dict[int, "membrane.EntityCandidateSet"] = {}
+    mention_log: Dict[str, List[int]] = {}
+
+    def _register_mention(name: str) -> None:
+        mention_log.setdefault(name, []).append(len(steps))
+
+    def _recency_fields(names: List[str]):
+        ms = np.array([(mention_log[n][-1] if mention_log.get(n) else -1) for n in names], dtype=np.float32)
+        mc = np.array([len(mention_log.get(n, [])) for n in names], dtype=np.float32)
+        return ms, mc
+
+    for si, sent in enumerate(ep.context):
+        graph = parser._parse_graph(sent) if hasattr(parser, "_parse_graph") else None
+        clauses, links = extract_discourse(graph)
+        if not clauses:
+            continue
+        prime = links[0].prime if links else None
+        coordv = codec.filler_vec(prime) if prime else z
+        for cl in clauses:
+            pred_vec = codec.filler_vec("pred:" + (cl.predicate or "").lower())
+            obj_tok = next(((arg.token or "").lower() for rel, arg in cl.args if rel == "OBJECT"), None)
+            if obj_tok:
+                # Unchanged from _context_steps -- see docstring.
+                entity_vec = _ent_vec(obj_tok, resolver, codec, cache, meaning_source)
+                for rel, arg in cl.args:
+                    if rel == "OBJECT":
+                        continue
+                    tok = (arg.token or "").lower()
+                    if not tok:
+                        continue
+                    mapped = _TRANSFER_ROLE_MAP.get(rel, rel)
+                    steps.append((entity_vec, codec.filler_vec("rel:" + mapped),
+                                  _ent_vec(tok, resolver, codec, cache, meaning_source),
+                                  pred_vec, coordv, 0))
+                    if tok not in _PRONOUNS:
+                        _register_mention(tok)
+                continue
+            subj = place = None
+            for rel, arg in cl.args:
+                if rel == "SUBJECT":
+                    subj = (arg.token or "").lower()
+                elif rel == "PLACE":
+                    place = (arg.token or "").lower()
+            other_non_place = [(rel, arg) for rel, arg in cl.args if rel not in ("SUBJECT", "PLACE")]
+            if subj and place:
+                out_rel, other_val = "PLACE", place
+            elif subj and place is None and len(other_non_place) == 1:
+                out_rel = "OBJECT"
+                other_val = (other_non_place[0][1].token or "").lower()
+            else:
+                continue
+            if not other_val:
+                continue
+            value_vec = _content_vec(other_val, resolver, codec, cache, meaning_source)
+            if subj in _PRONOUNS:
+                candidates = _prose_pronoun_candidates(subj, ep.context[:si], parser)
+                if candidates:
+                    placeholder = _ent_vec(subj, resolver, codec, cache, meaning_source)
+                    step_idx = len(steps)
+                    steps.append((placeholder, codec.filler_vec("rel:" + out_rel), value_vec,
+                                  pred_vec, coordv, 0))
+                    cand = membrane.pronoun_entity_candidate_set(
+                        subj, candidates, gold_antecedent=None,
+                        provenance={"sentence_index": si, "sentence": sent, "kind": "prose"},
+                        addr_redirect=True)
+                    p_gender = membrane.PRONOUN_MORPHOLOGY.get(subj, ("unknown", "sg", "3"))[0]
+                    cand.evidence_relation = "gender"
+                    cand.evidence_target = "gender:" + p_gender
+                    cand.mention_steps, cand.mention_counts = _recency_fields(candidates)
+                    cand_sets[step_idx] = cand
+                    continue
+                # no compatible antecedent yet -- fall through to the same
+                # naive grounding _context_steps would use.
+            entity_vec = _ent_vec(subj, resolver, codec, cache, meaning_source)
+            steps.append((entity_vec, codec.filler_vec("rel:" + out_rel), value_vec, pred_vec, coordv, 0))
+            if subj not in _PRONOUNS:
+                _register_mention(subj)
+    return steps, cand_sets
 
 
 # M53a (RESOLVER_BUILD_PLAN Phase 2, "Agent 2"): a pronoun-subject context
@@ -2268,6 +2427,20 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                 ep, document_registry, resolver, codec, cache, meaning_source,
                 cheat=writeback_cheat, no_gold=writeback_no_gold,
                 force=writeback_force)   # M59b cross-passage document stream (episodic LTM)
+        elif ep.meta.get("kind") == "prose":
+            # round 2 item 1: prose pronoun stream (_context_steps' prose
+            # counterpart) -- the QUESTION step reuses _question_entity/
+            # _queried_role exactly as the old/default path below does
+            # (corpus.py's own self-generated questions are plain "where is
+            # the X ?"-style text, not a bespoke shape like writeback/
+            # instance/rich/document's own internally-built question steps).
+            steps, cand_sets = _prose_steps(ep, parser, resolver, codec, cache, meaning_source)
+            qent = _question_entity(ep.question)
+            if qent is None:
+                continue
+            qrel = _queried_role(ep.question)
+            steps.append((_ent_vec(qent, resolver, codec, cache, meaning_source),
+                          codec.filler_vec("rel:" + qrel), z, q_pred, z, 1))
         else:
             steps = []
             pronoun_idx = ep.meta.get("pronoun_sentence_index")

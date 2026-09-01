@@ -16,7 +16,7 @@ Prototype: numpy, deterministic, not wired into the model. See
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -123,6 +123,69 @@ def _is_question(graph, idx: Optional[int]) -> bool:
 # often non-locative, "left the meeting" vs "the box"). Only consulted when
 # there is no PREPOSITION edge at all, so it never overrides a real PP.
 _LOCATIVE_TRANSITIVE_VERBS = {"entered", "exited", "reached"}
+
+# Parser round 2, item 2 (ATTRIBUTION-WRAPPED NARRATION): a small, closed set
+# of speech/attribution verbs -- narration wrapped around a quoted clause
+# ("said mary", "mary said", "he cried") carries no grammatical content this
+# curriculum-scoped grammar models. Recognizing the verb lets the CORE quoted
+# clause be parsed on its own (nsm_ct.corpus already has a quoted-SPAN
+# fallback; this table is what lets that fallback also identify WHO said it,
+# tagging the resulting ParsedClause's source with the speaker instead of a
+# bare generic "quoted"). Deliberately minimal and closed-class, same
+# discipline as _TRANSFER_VERBS/_LOCATIVE_TRANSITIVE_VERBS above.
+ATTRIBUTION_VERBS = {"said", "replied", "cried", "asked", "answered", "shouted",
+                     "whispered", "exclaimed", "muttered", "called", "added"}
+
+_QUOTE_TOKENS = {'"', "``", "''", "'"}
+
+
+def strip_attribution(tokens: Sequence[str]) -> Optional[Tuple[List[str], Optional[str]]]:
+    """Recognize + remove a narration/attribution frame wrapped around a
+    quoted core clause.
+
+    Two shapes, both closed over :data:`ATTRIBUTION_VERBS`:
+
+    - narration AFTER the quote ("quote-comma-said-X"): ``" ... " , said
+      mary .`` / ``" ... " said he in his deep voice .`` -- the attribution
+      verb (optionally preceded by a comma) immediately follows the closing
+      quote mark, optionally followed by a subject (name or pronoun) and
+      further trailing narration (discarded).
+    - narration BEFORE the quote ("X-said-quote"): ``mary said , " ... " .``
+      -- a subject + attribution verb (optionally followed by a comma)
+      immediately precede the opening quote mark.
+
+    Returns ``(core_tokens, speaker)`` -- ``core_tokens`` is the token span
+    between the outermost quote marks (mirroring
+    :func:`nsm_ct.corpus._quoted_span`'s own span convention), ``speaker``
+    is the attribution's subject token (lowercased) if one was found, else
+    ``None``. Returns ``None`` (not a tuple) when no attribution-verb
+    pattern is recognized at all, or the quoted span itself is empty --
+    callers fall through to their normal failure classification.
+    """
+    toks = [t for t in tokens if t]
+    quote_idxs = [i for i, t in enumerate(toks) if t in _QUOTE_TOKENS]
+    if not quote_idxs:
+        return None
+    first, last = quote_idxs[0], quote_idxs[-1]
+    core = [t for t in toks[first + 1: last] if t not in _QUOTE_TOKENS] if last > first else []
+    if not core:
+        return None
+
+    def _speaker(word: Optional[str]) -> Optional[str]:
+        w = (word or "").lower()
+        return w if is_entity(w) else None
+
+    # Shape A: narration after the quote.
+    after = [t for t in toks[last + 1:] if t != ","]
+    if after and after[0].lower() in ATTRIBUTION_VERBS:
+        return core, _speaker(after[1]) if len(after) > 1 else None
+
+    # Shape B: narration before the quote.
+    before = [t for t in toks[:first] if t != ","]
+    if len(before) >= 2 and before[-1].lower() in ATTRIBUTION_VERBS:
+        return core, _speaker(before[-2])
+
+    return None
 
 
 @dataclass

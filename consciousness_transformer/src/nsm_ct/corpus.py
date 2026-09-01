@@ -73,10 +73,11 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-from .clause import _PRONOUNS, extract_discourse, is_entity
+from .clause import _PRONOUNS, extract_discourse, is_entity, strip_attribution
 from .clause_reactor import _TRANSFER_ROLE_MAP
 from .episode import Episode
-from .membrane import PRONOUN_MORPHOLOGY, HypothesisCandidateSet, hypothesis_candidate_set
+from .membrane import (NAME_GENDER, PRONOUN_MORPHOLOGY, HypothesisCandidateSet,
+                        hypothesis_candidate_set)
 
 # ---------------------------------------------------------------------------
 # 1. sentence splitting + tokenization (matches the curriculum convention:
@@ -409,6 +410,48 @@ def _no_verb_token(content_tokens: Sequence[str]) -> bool:
     return True
 
 
+# Round 2 item 1: is_entity() alone (clause.is_entity) only ever recognizes
+# the 6 FIXED curriculum names (episode._NAMES) plus pronouns -- on real
+# prose, a character introduced by an ordinary proper name ("alice",
+# "buster", "otter") NEVER matches it, so the passage registry it gates
+# stays empty for almost every real passage. This is the measured root
+# cause of the pronoun-unresolvable bucket's size on real text
+# (RESEARCH_NOTES M58c): the registry existed (M58c item 5) but had almost
+# nothing to register. quantum_parser's own M58c "bare name" fallback tier
+# (``is_bare_name_token`` -- see ``_is_known_word``'s docstring) already
+# identifies exactly this class of token for a DIFFERENT purpose (lexicon
+# coverage): a word the tagger has no closed-class/WordNet/number coverage
+# for, that doesn't match a common inflectional suffix either -- "in real
+# narrative prose this is overwhelmingly a proper name" (that function's own
+# docstring). Reusing it here widens the registry to real-text proper names
+# too, purely additively (every is_entity() match still matches).
+def _is_registrable_entity(word: str) -> bool:
+    if is_entity(word):
+        return True
+    if not _load_tagger_tables():
+        return False
+    return bool(_is_bare_name(word))
+
+
+# Round 2 item 1: gender compatibility between a pronoun and a candidate
+# antecedent NAME, via membrane.PRONOUN_MORPHOLOGY (the pronoun's own
+# gender) and membrane.NAME_GENDER (a name's gender -- ONLY known for the 6
+# fixed curriculum names; real-text names carry no gender signal at all).
+# Unknown on EITHER side never rules a candidate out (perception "never
+# guesses" a contradiction it can't support) -- this only EXCLUDES a
+# candidate when both sides are known and genuinely conflict (a curriculum
+# name of the wrong gender re-appearing in prose). For the overwhelming
+# majority of real-text names (gender unknown), every antecedent stays
+# compatible; the real filtering job is left to the resolver (evidence
+# attr:gender), per the LOCKED design.
+def _gender_compatible(pronoun: str, name: str) -> bool:
+    p_gender = PRONOUN_MORPHOLOGY.get(pronoun, ("unknown", "sg", "3"))[0]
+    n_gender = NAME_GENDER.get(name)
+    if p_gender == "unknown" or n_gender is None:
+        return True
+    return p_gender == n_gender
+
+
 class _PassageRegistry:
     """A simple passage-level entity registry (M58c item 5): the most
     recently mentioned entity NAME, threaded through :func:`parse_passage`
@@ -426,11 +469,17 @@ class _PassageRegistry:
     def nearest(self) -> Optional[str]:
         return self._recent[-1] if self._recent else None
 
+    def candidates(self) -> List[str]:
+        """Every registered antecedent, MOST-RECENTLY-MENTIONED FIRST (round
+        2 item 1's own candidate-set ordering) -- the reverse of
+        ``_recent``'s append-order/move-to-end bookkeeping."""
+        return list(reversed(self._recent))
+
     def register(self, clauses) -> None:
         for cl in clauses:
             for _rel, arg in cl.args:
                 tok = (arg.token or "").lower()
-                if tok and tok not in _PRONOUNS and is_entity(tok):
+                if tok and tok not in _PRONOUNS and _is_registrable_entity(tok):
                     if tok in self._recent:
                         self._recent.remove(tok)
                     self._recent.append(tok)
@@ -451,10 +500,21 @@ class ParsedClause:
     # still what's extracted; this is the "we weren't sure" flag
     # taxonomy_counts reads to report "parsed-ambiguous" instead of "ok".
     hypotheses: Optional[HypothesisCandidateSet] = field(default=None, repr=False)
-    # M58c item 4: "text" (default) or "quoted" -- set when this clause came
-    # from a quoted SPAN inside a longer sentence rather than the sentence
-    # as a whole (speaker attribution is out of scope -- see module docstring).
+    # M58c item 4: "text" (default), "quoted" (a bare quoted span, speaker
+    # unknown), or (round 2 item 2) "quoted:<speaker>" -- set when this
+    # clause came from a quoted SPAN inside a longer sentence rather than
+    # the sentence as a whole; "quoted:<speaker>" additionally names the
+    # attribution frame's speaker (see clause.strip_attribution).
     source: str = "text"
+    # Round 2 item 1 (PROSE PRONOUNS TO THE RESOLVER): non-None marks this
+    # clause's ENTITY as a personal pronoun resolved against the passage
+    # registry rather than a literal name mentioned in this sentence --
+    # the gender-compatible antecedent candidates (most-recent-first;
+    # ``entity`` itself is just candidates[0], kept for backward-compatible
+    # question/quality-filter use -- see make_episodes' own note on why
+    # this is safe). ``None`` (the default) for every ordinary clause,
+    # keeping this byte-identical for every pre-round-2 caller.
+    pronoun_candidates: Optional[Tuple[str, ...]] = None
 
 
 @dataclass
@@ -474,16 +534,58 @@ class ParseFailure:
 ParseOutcome = Union[ParsedClause, ParseFailure]
 
 
+def _pronoun_candidates_for(subj: str, registry: Optional["_PassageRegistry"]) -> List[str]:
+    """Round 2 item 1: gender-compatible antecedents for pronoun ``subj``,
+    most-recently-mentioned first -- ``[]`` (never ``None``) when there is
+    no registry or no compatible candidate, so callers can test truthiness
+    directly."""
+    if registry is None:
+        return []
+    return [n for n in registry.candidates() if _gender_compatible(subj, n)]
+
+
 def _extract_triples(idx: int, sent: str, clauses, registry: Optional["_PassageRegistry"],
                       source: str = "text") -> Tuple[List[ParsedClause], bool]:
     """Mirrors nsm_ct.clause_reactor._context_steps's own extraction exactly
     (OBJECT-bearing transfer clause -> one step per other role; plain
-    SUBJECT+PLACE clause -> one step). A pronoun-bearing role is resolved
-    against ``registry``'s nearest antecedent (M58c item 5 -- an entity
-    mentioned in an EARLIER sentence) when one is available; otherwise it's
-    reported via the returned ``pronoun_hit`` flag exactly as before this
-    registry existed (``registry=None`` reproduces the old behavior exactly:
-    every pronoun role is unresolved).
+    SUBJECT+single-other-role clause -> one step). A pronoun-bearing role is
+    resolved against ``registry``'s nearest antecedent (M58c item 5 -- an
+    entity mentioned in an EARLIER sentence) when one is available;
+    otherwise it's reported via the returned ``pronoun_hit`` flag exactly as
+    before this registry existed (``registry=None`` reproduces the old
+    behavior exactly: every pronoun role is unresolved).
+
+    Round 2 item 1 (PROSE PRONOUNS TO THE RESOLVER): a pronoun filling the
+    SUBJECT+single-other-role shape's SUBJECT (an ADDRESS-position slot --
+    see nsm_ct.clause_reactor._prose_steps' own docstring for why only this
+    shape, not the OBJECT-bearing one below, is redirect-eligible) is
+    resolved via :func:`_pronoun_candidates_for` (gender-compatible,
+    most-recent-first) rather than a single deterministic guess:
+    ``entity`` is bound to the single MOST RECENT candidate (so question
+    generation/quality-filtering/distractor-pooling downstream still see an
+    ordinary named entity -- see make_episodes' own note on why this can
+    never leak a pronoun token into a held-out question) but
+    ``pronoun_candidates`` carries the FULL compatible list, which is what
+    :func:`nsm_ct.clause_reactor._prose_steps` actually grounds through the
+    resolver (no gold index -- prose carries no ground truth for which
+    candidate is correct). Zero compatible candidates -> ``pronoun_hit``
+    (the pre-existing "pronoun-unresolvable" outcome), unchanged.
+
+    Round 2 item 3 (PLAIN-OBJECT QUESTIONS): the OBJECT-bearing branch's
+    pronoun-bearing OTHER roles keep the OLD deterministic
+    ``registry.nearest()`` substitution -- there, the unresolved slot is the
+    triple's VALUE (e.g. "he ate the apple" -> entity=apple, value=he's
+    antecedent), an address the resolver's collapse machinery has no
+    contract for redirecting (only the ENTITY axis can be redirected); see
+    module docstring. A "clean" transitive clause (SUBJECT + a single OBJECT
+    argument, nothing else -- e.g. "the man ate the apple") additionally
+    gets the COMPLEMENTARY fact in the other direction (entity=SUBJECT,
+    relation=OBJECT, value=the object word), askable via the existing
+    "what" -> OBJECT :func:`nsm_ct.clause_reactor._queried_role` convention
+    -- purely additive (never replaces the AGENT-direction triple already
+    extracted above), and skipped when the subject is itself a pronoun (out
+    of scope -- see item 1's own address-vs-value note; the AGENT-direction
+    triple above already covers that case).
     """
     triples: List[ParsedClause] = []
     pronoun_hit = False
@@ -496,9 +598,8 @@ def _extract_triples(idx: int, sent: str, clauses, registry: Optional["_PassageR
                 # john") -- not covered by the (person-name) registry.
                 pronoun_hit = True
                 continue
-            for rel, arg in cl.args:
-                if rel == "OBJECT":
-                    continue
+            other_roles = [(rel, arg) for rel, arg in cl.args if rel != "OBJECT"]
+            for rel, arg in other_roles:
                 tok = (arg.token or "").lower()
                 if not tok:
                     continue
@@ -510,6 +611,12 @@ def _extract_triples(idx: int, sent: str, clauses, registry: Optional["_PassageR
                         pronoun_hit = True
                         continue
                 triples.append(ParsedClause(idx, sent, obj_tok, mapped, resolved, pred, source=source))
+            # item 3: the complementary OBJECT-direction fact for a CLEAN
+            # transitive clause (subject + this one object, nothing else).
+            if len(other_roles) == 1 and other_roles[0][0] == "SUBJECT":
+                subj_tok = (other_roles[0][1].token or "").lower()
+                if subj_tok and subj_tok not in _PRONOUNS:
+                    triples.append(ParsedClause(idx, sent, subj_tok, "OBJECT", obj_tok, pred, source=source))
             continue
         subj = place = None
         for rel, arg in cl.args:
@@ -517,14 +624,40 @@ def _extract_triples(idx: int, sent: str, clauses, registry: Optional["_PassageR
                 subj = (arg.token or "").lower()
             elif rel == "PLACE":
                 place = (arg.token or "").lower()
+        # item 3: a "clean" catch-all fact for a clause with a SUBJECT and
+        # EXACTLY ONE other role that ISN'T "PLACE" (SOURCE, or any raw
+        # preposition relation _prep_relation passes through unmapped --
+        # "about"/"with"/"through"/... -- see module docstring) -- asked via
+        # the existing "what" -> OBJECT queried-role convention. Scoped to
+        # "PLACE absent, exactly one other role" so it never overrides or
+        # duplicates the dedicated PLACE branch below, and never fires
+        # alongside extra structure this module doesn't otherwise model.
+        other_non_place = [(rel, arg) for rel, arg in cl.args if rel not in ("SUBJECT", "PLACE")]
+        if place is None and subj and len(other_non_place) == 1:
+            value = (other_non_place[0][1].token or "").lower()
+            if value:
+                if subj in _PRONOUNS:
+                    compatible = _pronoun_candidates_for(subj, registry)
+                    if compatible:
+                        triples.append(ParsedClause(idx, sent, compatible[0], "OBJECT", value, pred,
+                                                     source=source, pronoun_candidates=tuple(compatible)))
+                    else:
+                        pronoun_hit = True
+                else:
+                    triples.append(ParsedClause(idx, sent, subj, "OBJECT", value, pred, source=source))
+            continue
         if subj and place:
             resolved_subj = subj
+            pronoun_candidates = None
             if subj in _PRONOUNS:
-                resolved_subj = registry.nearest() if registry is not None else None
-                if not resolved_subj:
+                compatible = _pronoun_candidates_for(subj, registry)
+                if not compatible:
                     pronoun_hit = True
                     continue
-            triples.append(ParsedClause(idx, sent, resolved_subj, "PLACE", place, pred, source=source))
+                resolved_subj = compatible[0]
+                pronoun_candidates = tuple(compatible)
+            triples.append(ParsedClause(idx, sent, resolved_subj, "PLACE", place, pred, source=source,
+                                         pronoun_candidates=pronoun_candidates))
     return triples, pronoun_hit
 
 
@@ -599,6 +732,38 @@ def _quoted_fallback(idx: int, sent: str, tokens: Sequence[str], parser,
     return triples
 
 
+# Round 2 item 2 (ATTRIBUTION-WRAPPED NARRATION): a strengthened cousin of
+# _quoted_fallback above -- tries clause.strip_attribution's recognized
+# quote-comma-said-X / X-said-quote frames FIRST (see that function's own
+# docstring for the two shapes), which additionally identifies WHO said the
+# quoted clause. Falls back to the plain quoted-SPAN behavior (speaker
+# unknown) when no attribution-verb pattern is recognized at all -- callers
+# try this BEFORE _quoted_fallback so a genuine attribution frame is always
+# tagged with its speaker rather than silently downgraded to the generic
+# "quoted" source.
+def _attribution_fallback(idx: int, sent: str, tokens: Sequence[str], parser,
+                           registry: Optional["_PassageRegistry"]) -> Optional[List[ParsedClause]]:
+    stripped = strip_attribution(tokens)
+    if stripped is None:
+        return None
+    core, speaker = stripped
+    if not core:
+        return None
+    graphs, _scores, _margin = parser._parse_topk_one(" ".join(core), k=4)
+    if not graphs:
+        return None
+    clauses, _links = extract_discourse(graphs[0])
+    if not clauses:
+        return None
+    tag = f"quoted:{speaker}" if speaker else "quoted"
+    triples, _pronoun_hit = _extract_triples(idx, sent, clauses, registry, source=tag)
+    if not triples:
+        return None
+    if registry is not None:
+        registry.register(clauses)
+    return triples
+
+
 def _parse_one_sentence(idx: int, sent: str, parser,
                          registry: Optional["_PassageRegistry"] = None) -> List[ParseOutcome]:
     tokens = sent.split()
@@ -623,7 +788,8 @@ def _parse_one_sentence(idx: int, sent: str, parser,
     if not graphs:
         if _no_verb_token(content_tokens):
             return [ParseFailure(idx, sent, "fragment-skipped")]
-        fallback = _quoted_fallback(idx, sent, tokens, parser, registry)
+        fallback = _attribution_fallback(idx, sent, tokens, parser, registry) or \
+            _quoted_fallback(idx, sent, tokens, parser, registry)
         if fallback:
             return fallback
         return [ParseFailure(idx, sent, "no-parse")]
@@ -638,7 +804,8 @@ def _parse_one_sentence(idx: int, sent: str, parser,
     if not clauses:
         if _no_verb_token(content_tokens):
             return [ParseFailure(idx, sent, "fragment-skipped")]
-        fallback = _quoted_fallback(idx, sent, tokens, parser, registry)
+        fallback = _attribution_fallback(idx, sent, tokens, parser, registry) or \
+            _quoted_fallback(idx, sent, tokens, parser, registry)
         if fallback:
             return fallback
         sig = _unsupported_signal(tokens)
@@ -659,7 +826,8 @@ def _parse_one_sentence(idx: int, sent: str, parser,
         return triples
     if pronoun_hit:
         return [ParseFailure(idx, sent, "pronoun-unresolvable")]
-    fallback = _quoted_fallback(idx, sent, tokens, parser, registry)
+    fallback = _attribution_fallback(idx, sent, tokens, parser, registry) or \
+        _quoted_fallback(idx, sent, tokens, parser, registry)
     if fallback:
         return fallback
     sig = _unsupported_signal(tokens)
@@ -688,16 +856,26 @@ def parse_passage(sentences: Sequence[str], parser) -> List[ParseOutcome]:
 
 def taxonomy_counts(results: Sequence[ParseOutcome]) -> Counter:
     """One outcome per ``sentence_index``: ``"ok"`` if it produced any
-    (non-ambiguous) :class:`ParsedClause`, ``"parsed-ambiguous"`` if its
-    clause(s) came from a low-margin top-K (M58c item 2 --
-    :attr:`ParsedClause.hypotheses` set), else its (single, consistent)
-    failure reason. Exhaustive over :data:`FAILURE_REASONS` +
-    ``{"ok", "parsed-ambiguous"}``.
+    (non-ambiguous, non-pronoun-resolved) :class:`ParsedClause`,
+    ``"parsed-ambiguous"`` if its clause(s) came from a low-margin top-K
+    (M58c item 2 -- :attr:`ParsedClause.hypotheses` set), ``"parsed-
+    pronoun-resolved"`` if its clause's entity is a pronoun resolved
+    against the passage registry (round 2 item 1 --
+    :attr:`ParsedClause.pronoun_candidates` set; checked after ambiguity so
+    a clause that happens to be BOTH is reported as ambiguous, the rarer
+    and more informative of the two), else its (single, consistent) failure
+    reason. Exhaustive over :data:`FAILURE_REASONS` +
+    ``{"ok", "parsed-ambiguous", "parsed-pronoun-resolved"}``.
     """
     outcomes: Dict[int, str] = {}
     for r in results:
         if isinstance(r, ParsedClause):
-            outcomes[r.sentence_index] = "parsed-ambiguous" if r.hypotheses is not None else "ok"
+            if r.hypotheses is not None:
+                outcomes[r.sentence_index] = "parsed-ambiguous"
+            elif r.pronoun_candidates is not None:
+                outcomes[r.sentence_index] = "parsed-pronoun-resolved"
+            else:
+                outcomes[r.sentence_index] = "ok"
         elif r.sentence_index not in outcomes:
             outcomes[r.sentence_index] = r.reason
     return Counter(outcomes.values())
@@ -710,14 +888,21 @@ def taxonomy_counts(results: Sequence[ParseOutcome]) -> Counter:
 # ---------------------------------------------------------------------------
 
 # Only relations nsm_ct.clause_reactor._queried_role can actually recover
-# from question text get a template -- SOURCE (and any raw preposition
-# label _context_steps might pass through unmapped) has no keyword in that
-# table and is deliberately left un-askable rather than inventing a new
-# keyword the rest of the (frozen) pipeline doesn't know about.
+# from question text get a template. Round 2 item 3 (PLAIN-OBJECT
+# QUESTIONS) adds "OBJECT", using the "what" -> OBJECT keyword that table
+# already reserves for exactly this ("not yet exercised by any curriculum
+# level but resolvable here", its own comment says) -- no clause_reactor.py
+# change needed. Every other raw preposition label _extract_triples's
+# catch-all might pass through (SOURCE included) is grounded as "OBJECT" by
+# that same catch-all, so this one template covers all of them; anything
+# _extract_triples doesn't map to PLACE/RECIPIENT/AGENT/OBJECT at all is
+# deliberately left un-askable rather than inventing a keyword the rest of
+# the (frozen) pipeline doesn't know about.
 _RELATION_QUESTION_TEMPLATE: Dict[str, str] = {
     "PLACE": "where is the {e} ?",
     "RECIPIENT": "who has the {e} ?",
     "AGENT": "who gave the {e} ?",
+    "OBJECT": "what does the {e} have ?",
 }
 
 
@@ -845,6 +1030,19 @@ def make_episodes(passage_clauses: Sequence[ParseOutcome], *, holdout: str = "la
     context = [by_idx[i] for i in sorted(by_idx)]
 
     clauses = [r for r in passage_clauses if isinstance(r, ParsedClause)]
+    # Round 2 item 1: a pronoun-resolved clause's ``entity`` is the passage
+    # registry's own MOST-RECENT gender-compatible candidate
+    # (_extract_triples), never the literal pronoun token -- holding one
+    # out asks "where is the {e} ?" naming a NAMED entity exactly as any
+    # other clause would (no "where is the he ?" is possible), and
+    # _quality_reject_reason's own entity-pronoun/entity-closed-class
+    # checks below re-confirm this defensively. This is what makes holding
+    # such a clause out safe despite the resolver's own gold_index being
+    # withheld (pronoun_candidates carries the full candidate list for the
+    # BATCH-BUILD resolver step, gold_antecedent=None; this module's own
+    # "most-recent" pick is an ordinary heuristic used ONLY for question/
+    # distractor bookkeeping here, never fed to the resolver as supervision
+    # -- no gold leakage).
     eligible = [c for c in clauses if c.relation in _RELATION_QUESTION_TEMPLATE]
     if not eligible:
         return []
