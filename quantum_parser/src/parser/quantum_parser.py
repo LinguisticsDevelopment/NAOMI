@@ -6,6 +6,7 @@ interpretations simultaneously.
 """
 
 import itertools
+import time
 from typing import List, Optional
 from copy import deepcopy
 
@@ -17,6 +18,23 @@ from .dsl import Grammar, Rule, load_grammar
 from .matcher import find_matches, Match
 from .scorer import score_hypothesis
 from .enums import ConnectionType
+
+
+class ParseResourceExceeded(Exception):
+    """Raised by :meth:`QuantumParser.parse` when a resource cap set on
+    ``ParserConfig`` (``max_ruleset_hypotheses`` / ``max_parse_seconds``,
+    both ``None``/disabled by default) is hit mid-parse.
+
+    Opt-in only: this can never be raised unless a caller explicitly passes
+    a ``config_override`` (or otherwise builds a ``ParserConfig``) with one
+    of those fields set -- every existing caller that relies on the default
+    ``ParserConfig()`` sees byte-identical behavior, cap or no cap.
+    """
+
+    def __init__(self, message: str, ruleset_name: str, hypothesis_count: int):
+        super().__init__(message)
+        self.ruleset_name = ruleset_name
+        self.hypothesis_count = hypothesis_count
 
 
 class QuantumParser:
@@ -39,34 +57,73 @@ class QuantumParser:
         self.grammar = load_grammar(grammar_path)
         self.config = config if config is not None else ParserConfig()
 
-    def parse(self, words: List[Word]) -> ParseChart:
+    def parse(self, words: List[Word], config_override: Optional[ParserConfig] = None) -> ParseChart:
         """
         Parse a list of words into a ParseChart with multiple hypotheses.
 
         Args:
             words: Input sentence as list of Word objects
+            config_override: use this config instead of ``self.config`` for
+                this call only (``self.config``/every other caller is
+                untouched). Additive, opt-in hook for
+                ``max_ruleset_hypotheses``/``max_parse_seconds`` -- passing
+                ``None`` (the default) is byte-identical to before this
+                parameter existed.
 
         Returns:
             ParseChart containing all viable parse hypotheses, ranked by score
+
+        Raises:
+            ParseResourceExceeded: only possible when ``config_override`` (or
+                ``self.config``) sets ``max_ruleset_hypotheses`` or
+                ``max_parse_seconds`` -- both ``None``/disabled by default.
         """
+        config = config_override if config_override is not None else self.config
+
         # Validate input
         if not words:
             raise ValueError("Cannot parse empty sentence")
 
-        if len(words) > self.config.max_sentence_length:
-            raise ValueError(f"Sentence too long ({len(words)} > {self.config.max_sentence_length})")
+        if len(words) > config.max_sentence_length:
+            raise ValueError(f"Sentence too long ({len(words)} > {config.max_sentence_length})")
 
         # Create initial chart
-        chart = create_initial_chart(words, self.config)
+        chart = create_initial_chart(words, config)
+
+        start_time = time.monotonic()
+        deadline = start_time + config.max_parse_seconds if config.max_parse_seconds is not None else None
 
         # Apply rulesets in order
         for ruleset_name in self.grammar.order:
             ruleset = self.grammar.rulesets[ruleset_name]
 
+            if config.max_parse_seconds is not None and time.monotonic() - start_time > config.max_parse_seconds:
+                raise ParseResourceExceeded(
+                    f"parse exceeded {config.max_parse_seconds}s wall-clock cap "
+                    f"(at ruleset {ruleset_name!r})",
+                    ruleset_name, len(chart.hypotheses),
+                )
+
             # Generate new hypotheses by applying rules
             new_hypotheses = []
 
             for current_hyp in chart.hypotheses:
+                # Per-hypothesis time check (not just per-ruleset/per-combo):
+                # a single non-combinatorial hypothesis can still be slow on
+                # its own (e.g. apply_ruleset_recursively's up-to-100-iteration
+                # inner loop against a large/complex hypothesis), with no
+                # itertools.product combo ever entered for the time check
+                # below to catch -- measured on a real 60-word corpus
+                # sentence that ran well past this ruleset's time budget with
+                # zero ambiguous branching involved.
+                if (config.max_parse_seconds is not None
+                        and time.monotonic() - start_time > config.max_parse_seconds):
+                    raise ParseResourceExceeded(
+                        f"parse exceeded {config.max_parse_seconds}s wall-clock cap "
+                        f"(mid-ruleset {ruleset_name!r}, per-hypothesis check)",
+                        ruleset_name, len(new_hypotheses),
+                    )
+
                 # Collect ALL possible rule matches for this hypothesis
                 all_matches = []
 
@@ -106,7 +163,8 @@ class QuantumParser:
                         for match in matches:
                             result = apply_rule(result, match)
                             if match.rule.recursive:
-                                result = apply_ruleset_recursively(result, ruleset)
+                                result = apply_ruleset_recursively(result, ruleset, deadline=deadline,
+                                                                    ruleset_name=ruleset_name)
                         return result
 
                     if not ambiguous_groups:
@@ -115,10 +173,34 @@ class QuantumParser:
                     else:
                         # Branch only over the ambiguous anchors' alternatives;
                         # independent matches still land on every branch.
+                        # Bounded (opt-in): the Cartesian product itself is
+                        # what runs away on a long/highly-ambiguous sentence
+                        # (a handful of ambiguous anchors each with a few
+                        # alternatives multiplies out fast -- see
+                        # ParseResourceExceeded's docstring); checking the
+                        # running count INSIDE this loop, not after building
+                        # the full product, is what keeps this from ever
+                        # materializing more than max_ruleset_hypotheses+1
+                        # deep-copied Hypothesis objects for one ruleset pass.
                         for combo in itertools.product(*ambiguous_groups):
                             new_hyp = _apply_all(current_hyp, independent_matches)
                             new_hyp = _apply_all(new_hyp, combo)
                             new_hypotheses.append(new_hyp)
+                            if (config.max_ruleset_hypotheses is not None
+                                    and len(new_hypotheses) > config.max_ruleset_hypotheses):
+                                raise ParseResourceExceeded(
+                                    f"ruleset {ruleset_name!r} exceeded "
+                                    f"max_ruleset_hypotheses={config.max_ruleset_hypotheses} "
+                                    "(unbounded ambiguous-anchor combinatorics)",
+                                    ruleset_name, len(new_hypotheses),
+                                )
+                            if (config.max_parse_seconds is not None
+                                    and time.monotonic() - start_time > config.max_parse_seconds):
+                                raise ParseResourceExceeded(
+                                    f"parse exceeded {config.max_parse_seconds}s wall-clock cap "
+                                    f"(mid-ruleset {ruleset_name!r})",
+                                    ruleset_name, len(new_hypotheses),
+                                )
 
                 elif len(all_matches) == 1:
                     # SINGLE MATCH: No ambiguity, just transform in-place
@@ -127,7 +209,8 @@ class QuantumParser:
 
                     # If recursive rule, keep applying until no more matches
                     if match.rule.recursive:
-                        new_hyp = apply_ruleset_recursively(new_hyp, ruleset)
+                        new_hyp = apply_ruleset_recursively(new_hyp, ruleset, deadline=deadline,
+                                                             ruleset_name=ruleset_name)
 
                     new_hypotheses.append(new_hyp)
 
@@ -300,16 +383,33 @@ def resolve_reference(ref: str, match: Match) -> List[int]:
         raise ValueError(f"Invalid node reference: {ref}")
 
 
-def apply_ruleset_recursively(hypothesis: Hypothesis, ruleset) -> Hypothesis:
+def apply_ruleset_recursively(hypothesis: Hypothesis, ruleset,
+                               deadline: Optional[float] = None,
+                               ruleset_name: str = "") -> Hypothesis:
     """
     Keep applying a ruleset until no more matches are found.
 
     Args:
         hypothesis: Starting hypothesis
         ruleset: Ruleset to apply recursively
+        deadline: opt-in wall-clock cap (``time.monotonic()`` timestamp,
+            ``None``/disabled by default -- every caller not passing this
+            gets byte-identical behavior). Checked once per outer iteration
+            (up to ``max_iterations`` of them, each itself doing up to
+            ``len(unconsumed) * len(ruleset.rules)`` ``find_matches`` calls)
+            because THIS loop, not just the Cartesian-product branching in
+            :meth:`QuantumParser.parse`, measured as the actual site of a
+            real corpus sentence running well past its parse deadline with
+            no ambiguous branching involved at all -- a long/complex
+            hypothesis's ``find_matches`` cost across many iterations, not
+            any combinatorial blowup.
+        ruleset_name: only used in the ``ParseResourceExceeded`` message.
 
     Returns:
         Hypothesis after exhaustive rule application
+
+    Raises:
+        ParseResourceExceeded: only possible when ``deadline`` is given.
     """
     max_iterations = 100  # Prevent infinite loops
     iterations = 0
@@ -318,6 +418,12 @@ def apply_ruleset_recursively(hypothesis: Hypothesis, ruleset) -> Hypothesis:
 
     while iterations < max_iterations:
         iterations += 1
+        if deadline is not None and time.monotonic() > deadline:
+            raise ParseResourceExceeded(
+                f"parse exceeded wall-clock cap inside apply_ruleset_recursively "
+                f"(ruleset {ruleset_name!r}, iteration {iterations})",
+                ruleset_name, iterations,
+            )
         matched = False
 
         # Try to find a match

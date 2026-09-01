@@ -283,7 +283,9 @@ class ParserInputEncoder(AbstractInputEncoder):
             return graphs[0]
         return _merge_graphs(graphs)
 
-    def _parse_topk_one(self, sentence: str, k: int = 4) -> Tuple[List["object"], List[float], float]:
+    def _parse_topk_one(self, sentence: str, k: int = 4,
+                         max_hypotheses: Optional[int] = None,
+                         max_seconds: Optional[float] = None) -> Tuple[List["object"], List[float], float]:
         """M55a opt-in path (default OFF -- purely additive; no existing
         caller of ``_parse_graph``/``_parse_graph_one``/``_parse_tree`` is
         touched): the top-``k`` parse hypotheses for a SINGLE sentence, with
@@ -308,21 +310,46 @@ class ParserInputEncoder(AbstractInputEncoder):
         parser has no cross-sentence grammar rule -- see :meth:`_parse_graph`'s
         docstring; top-K exposure is single-sentence only, which is all any
         garden-path sentence needs).
+
+        ``max_hypotheses``/``max_seconds`` (both ``None``/disabled by
+        default -- every pre-existing caller, curriculum generation
+        included, passes neither and sees byte-identical behavior): when
+        given, builds a one-off ``ParserConfig`` copy with
+        ``max_ruleset_hypotheses``/``max_parse_seconds`` set and passes it
+        as ``config_override`` to :meth:`QuantumParser.parse`, WITHOUT
+        touching ``self._parser.config`` (so no other caller sharing this
+        same ``ParserInputEncoder``/``QuantumParser`` is ever affected).
+        Raises :class:`~parser.quantum_parser.ParseResourceExceeded`
+        (re-raised, not swallowed by the broad ``except Exception`` below)
+        when the cap is hit -- the only caller of this today,
+        :mod:`nsm_ct.corpus`, catches it to tag the sentence
+        ``"parse-resource-capped"`` instead of crashing or hanging.
         """
         if getattr(self, "_parser", None) is None:
             return [], [], 0.0
         if len(_split_sentences(sentence)) > 1:
             return [], [], 0.0
-        try:
-            from .quantum_adapter import hypothesis_to_graph  # local import
+        from .quantum_adapter import hypothesis_to_graph  # local import
+        from src.parser.quantum_parser import ParseResourceExceeded as _ParseResourceExceeded  # local import
 
+        config_override = None
+        if max_hypotheses is not None or max_seconds is not None:
+            import dataclasses
+            config_override = dataclasses.replace(
+                self._parser.config,
+                max_ruleset_hypotheses=max_hypotheses,
+                max_parse_seconds=max_seconds,
+            )
+        try:
             words = self._tag(sentence)
-            chart = self._parser.parse(words)
+            chart = self._parser.parse(words, config_override=config_override)
             hyps = chart.hypotheses[:k]
             graphs = [hypothesis_to_graph(h) for h in hyps]
             scores = [float(h.score) for h in hyps]
             margin = (scores[0] - scores[1]) if len(scores) > 1 else 0.0
             return graphs, scores, margin
+        except _ParseResourceExceeded:
+            raise
         except Exception as exc:  # pragma: no cover - parser is experimental
             self._note(f"top-k parse failed ({exc}); no hypotheses.")
             return [], [], 0.0

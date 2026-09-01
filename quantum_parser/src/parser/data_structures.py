@@ -217,6 +217,16 @@ class ParserConfig:
     max_sentence_length: int = 100    # Reject sentences longer than this
     max_initial_hypotheses: int = 50  # Cap on POS combination hypotheses
     enable_pos_ambiguity: bool = True # Enable POS ambiguity handling
+    # Opt-in resource caps (default None == disabled, byte-identical to prior
+    # behavior for every existing caller). When set, QuantumParser.parse
+    # raises ParseResourceExceeded instead of letting a single ruleset's
+    # itertools.product(*ambiguous_groups) branching (see quantum_parser.py's
+    # main loop) grow without bound on a long/highly-ambiguous sentence --
+    # see nsm_ct.corpus's CORPUS_MAX_HYPOTHESES / CORPUS_MAX_PARSE_SECONDS,
+    # the only caller that currently sets these (via a config_override, not
+    # by mutating a shared QuantumParser's own .config).
+    max_ruleset_hypotheses: Optional[int] = None   # Cap pre-dedup hypotheses generated in one ruleset pass
+    max_parse_seconds: Optional[float] = None      # Wall-clock cap for one parse() call
 
 
 @dataclass
@@ -340,15 +350,22 @@ def create_initial_chart(words: List[Word], config: ParserConfig = None) -> Pars
         tags = get_possible_tags(word)
         possible_tags_per_word.append(tags)
 
-    # Generate all combinations of POS assignments
-    tag_combinations = list(itertools.product(*possible_tags_per_word))
-
-    # Limit number of combinations
-    if len(tag_combinations) > config.max_initial_hypotheses:
-        # Use simple heuristic: prefer combinations with more common tags
-        # For now, just take first N combinations
-        # TODO: Could use tag frequency or bigram probability for better selection
-        tag_combinations = tag_combinations[:config.max_initial_hypotheses]
+    # Generate all combinations of POS assignments -- ONLY as many as
+    # max_initial_hypotheses actually needs. itertools.product() is
+    # deterministic/lexicographic in its factors' order, so islice-ing it to
+    # N gives EXACTLY the same first N tuples the old
+    # "list(product(...))[:N]" produced -- byte-identical output for every
+    # sentence that previously completed. The bug this fixes: a real
+    # multi-clause corpus sentence with ~25 ambiguously-tagged words (2-3
+    # POS candidates each) has a FULL product in the tens of millions
+    # (measured: 56,623,104 for one 61-word Alice sentence) -- materializing
+    # that whole list before truncating it is what actually OOM'd the
+    # converter, not anything downstream in the chart-parsing loop. Every
+    # short/simple sentence (curriculum generation's own -- see
+    # test_parser_round.py/test_parser_round2.py's signature gates) has a
+    # small enough product that this was never observed there.
+    tag_combinations = list(itertools.islice(
+        itertools.product(*possible_tags_per_word), config.max_initial_hypotheses))
 
     # Create one hypothesis for each POS assignment
     hypotheses = []

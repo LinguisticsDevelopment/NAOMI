@@ -66,6 +66,7 @@ top of the above, none of which change the shape just described:
 
 from __future__ import annotations
 
+import gc
 import os
 import random
 import sys
@@ -78,6 +79,31 @@ from .clause_reactor import _TRANSFER_ROLE_MAP
 from .episode import Episode
 from .membrane import (NAME_GENDER, PRONOUN_MORPHOLOGY, HypothesisCandidateSet,
                         hypothesis_candidate_set)
+
+# Diagnosed memory blowup (see dev/ RESEARCH_NOTES / the converter-memfix
+# work): quantum_parser's chart-parsing loop (src/parser/quantum_parser.py)
+# branches over the FULL Cartesian product of a ruleset's ambiguous-anchor
+# alternatives (``itertools.product(*ambiguous_groups)``) before dedup/prune
+# ever runs. A handful of ambiguous anchors in a long, multi-clause,
+# parenthetical-heavy real-prose sentence (measured on
+# data/corpus/real_gutenberg_alice.txt: several of its first ~50 sentences
+# individually blew a 2GB address-space cap or ran past 15s of pure
+# CPU-bound Hypothesis deep-copying, in complete isolation from every other
+# sentence/file) multiplies out to tens of thousands of deep-copied
+# Hypothesis objects for ONE ruleset pass of ONE sentence -- that's what hit
+# ~14GB on the ~180KB corpus, not accumulation across files.
+#
+# These are the "named module-level dial" caps the task asks for: additive
+# (quantum_parser's default ParserConfig()/every non-corpus caller is
+# untouched -- see ParserConfig.max_ruleset_hypotheses/max_parse_seconds and
+# QuantumParser.parse's config_override parameter), applied ONLY to the
+# corpus-conversion parse calls below via ParserInputEncoder._parse_topk_one's
+# optional max_hypotheses/max_seconds kwargs. A sentence that hits either cap
+# raises ParseResourceExceeded, caught here and tagged with the honest
+# "parse-resource-capped" failure reason (not a crash, not a silent drop --
+# see FAILURE_REASONS and taxonomy_counts).
+CORPUS_MAX_HYPOTHESES = 4000
+CORPUS_MAX_PARSE_SECONDS = 10.0
 
 # ---------------------------------------------------------------------------
 # 1. sentence splitting + tokenization (matches the curriculum convention:
@@ -182,6 +208,12 @@ FAILURE_REASONS: Tuple[str, ...] = (
     # sentence was never expected to carry a fact in the first place; see
     # _no_verb_token.
     "fragment-skipped",
+    # converter-memfix: quantum_parser's ParseResourceExceeded fired --
+    # CORPUS_MAX_HYPOTHESES/CORPUS_MAX_PARSE_SECONDS capped this sentence's
+    # ambiguous-anchor combinatorics before it could run away with memory or
+    # time. An honest "we gave up on purpose" outcome, not "no-parse" (the
+    # grammar may well have found a reading eventually) and not a crash.
+    "parse-resource-capped",
 )
 
 # Ambiguity gate for "multiple-parses-unresolved": >=2 COMPLETE hypotheses
@@ -718,7 +750,8 @@ def _quoted_fallback(idx: int, sent: str, tokens: Sequence[str], parser,
     span = _quoted_span(tokens)
     if not span:
         return None
-    graphs, _scores, _margin = parser._parse_topk_one(span, k=4)
+    graphs, _scores, _margin = parser._parse_topk_one(
+        span, k=4, max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=CORPUS_MAX_PARSE_SECONDS)
     if not graphs:
         return None
     clauses, _links = extract_discourse(graphs[0])
@@ -749,7 +782,8 @@ def _attribution_fallback(idx: int, sent: str, tokens: Sequence[str], parser,
     core, speaker = stripped
     if not core:
         return None
-    graphs, _scores, _margin = parser._parse_topk_one(" ".join(core), k=4)
+    graphs, _scores, _margin = parser._parse_topk_one(
+        " ".join(core), k=4, max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=CORPUS_MAX_PARSE_SECONDS)
     if not graphs:
         return None
     clauses, _links = extract_discourse(graphs[0])
@@ -766,6 +800,37 @@ def _attribution_fallback(idx: int, sent: str, tokens: Sequence[str], parser,
 
 def _parse_one_sentence(idx: int, sent: str, parser,
                          registry: Optional["_PassageRegistry"] = None) -> List[ParseOutcome]:
+    """Wraps :func:`_parse_one_sentence_uncapped` so a
+    ``ParseResourceExceeded`` (CORPUS_MAX_HYPOTHESES/CORPUS_MAX_PARSE_SECONDS
+    tripped by quantum_parser on this sentence's ambiguous-anchor
+    combinatorics -- see this module's docstring for those dials) becomes an
+    honest ``"parse-resource-capped"`` taxonomy outcome instead of an
+    uncaught exception/OOM. Caught here (one place) rather than in each of
+    ``_parse_one_sentence_uncapped``/``_quoted_fallback``/
+    ``_attribution_fallback`` since all three share the same per-sentence
+    call stack and the same fallback-exhausted meaning: this sentence's
+    parse was too combinatorially expensive, full stop.
+    """
+    # Local import: quantum_parser's repo root only lands on sys.path once
+    # ParserInputEncoder._init_adapter runs (module load time of
+    # nsm_ct.corpus is too early to import it at the top of this file).
+    from src.parser.quantum_parser import ParseResourceExceeded
+    try:
+        return _parse_one_sentence_uncapped(idx, sent, parser, registry=registry)
+    except ParseResourceExceeded as exc:
+        return [ParseFailure(idx, sent, "parse-resource-capped", detail=str(exc))]
+    finally:
+        # Eager release (task requirement): a capped sentence can leave
+        # thousands of deep-copied Hypothesis objects reachable only via the
+        # exception's traceback frames until those frames unwind -- gc.collect()
+        # here (cheap relative to parsing) guarantees they're actually freed
+        # before the next sentence starts, rather than drifting to whenever
+        # the cyclic collector next runs on its own.
+        gc.collect()
+
+
+def _parse_one_sentence_uncapped(idx: int, sent: str, parser,
+                                  registry: Optional["_PassageRegistry"] = None) -> List[ParseOutcome]:
     tokens = sent.split()
     content_tokens = [t for t in tokens if t not in _PUNCT_TOKENS and any(c.isalpha() for c in t)]
     unknown = sorted({t for t in content_tokens if not _is_known_word(t)})
@@ -778,7 +843,8 @@ def _parse_one_sentence(idx: int, sent: str, parser,
     # M58c item 4: quotation marks are stripped before the PARSE call only --
     # `sent`/`tokens` (kept for context/detail text and the unsupported-
     # construction/quoted-span checks) are untouched.
-    graphs, scores, margin = parser._parse_topk_one(_strip_quotes(sent), k=4)
+    graphs, scores, margin = parser._parse_topk_one(
+        _strip_quotes(sent), k=4, max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=CORPUS_MAX_PARSE_SECONDS)
     # M58c item 2's tie-breaker (see _rerank_topk's own docstring for why it
     # lives here rather than in quantum_parser's scorer): re-picks "top1"
     # among score-tied candidates only; margin is recomputed since the
