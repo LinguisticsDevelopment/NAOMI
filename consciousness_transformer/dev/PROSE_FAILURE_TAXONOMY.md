@@ -9,49 +9,55 @@ dev/AURORA_SPRINT.md "Week 2").
 
 ## Histogram
 
-### all (206 sentences)
+### all (1838 sentences)
 
-- ok: 92 (44.7%)
-- unknown-word: 2 (1.0%)
-- no-parse: 1 (0.5%)
+- ok: 459 (25.0%)
+- unknown-word: 219 (11.9%)
+- no-parse: 47 (2.6%)
 - multiple-parses-unresolved: 0 (0.0%)
-- unsupported-construction: 10 (4.9%)
-- pronoun-unresolvable: 36 (17.5%)
-- no-relation-extracted: 24 (11.7%)
-- fragment-skipped: 2 (1.0%)
+- unsupported-construction: 111 (6.0%)
+- pronoun-unresolvable: 203 (11.0%)
+- no-relation-extracted: 97 (5.3%)
+- fragment-skipped: 49 (2.7%)
+- parse-resource-capped: 58 (3.2%)
 
-### synthetic (120 sentences)
+### synthetic (360 sentences)
 
-- ok: 76 (63.3%)
-- unknown-word: 0 (0.0%)
+- ok: 248 (68.9%)
+- unknown-word: 3 (0.8%)
 - no-parse: 0 (0.0%)
 - multiple-parses-unresolved: 0 (0.0%)
 - unsupported-construction: 0 (0.0%)
-- pronoun-unresolvable: 15 (12.5%)
-- no-relation-extracted: 19 (15.8%)
-- fragment-skipped: 0 (0.0%)
+- pronoun-unresolvable: 42 (11.7%)
+- no-relation-extracted: 16 (4.4%)
+- fragment-skipped: 1 (0.3%)
+- parse-resource-capped: 0 (0.0%)
 
-### real (86 sentences)
+### real (1478 sentences)
 
-- ok: 16 (18.6%)
-- unknown-word: 2 (2.3%)
-- no-parse: 1 (1.2%)
+- ok: 211 (14.3%)
+- unknown-word: 216 (14.6%)
+- no-parse: 47 (3.2%)
 - multiple-parses-unresolved: 0 (0.0%)
-- unsupported-construction: 10 (11.6%)
-- pronoun-unresolvable: 21 (24.4%)
-- no-relation-extracted: 5 (5.8%)
-- fragment-skipped: 2 (2.3%)
+- unsupported-construction: 111 (7.5%)
+- pronoun-unresolvable: 161 (10.9%)
+- no-relation-extracted: 81 (5.5%)
+- fragment-skipped: 48 (3.2%)
+- parse-resource-capped: 58 (3.9%)
 
 ## Examples (up to 3 verbatim per failure class, corpus-wide)
 
 ### unknown-word
 
-- `real_gutenberg_busterbear#4`: "" i 'm going fishing , " said he in his deep grumbly-rumbly voice to no one in particular ." -- grumbly-rumbly
-- `real_gutenberg_busterbear#6`: "said he in his deepest , most grumbly-rumbly voice ." -- grumbly-rumbly
+- `real_gutenberg_alice#0`: "alice was beginning to get very tired of sitting by her sister on the bank , and of having nothing to do : once or twice she had peeped into the book her sister was reading , but it had no pictures or conversations in it , 'and what is the use of a book , ' thought alice 'without pictures or conversation ? '" -- 'and,'without
+- `real_gutenberg_alice#0`: "there was nothing so very remarkable in that ; nor did alice think it so very much out of the way to hear the rabbit say to itself , 'oh dear !" -- 'oh
+- `real_gutenberg_alice#0`: "she took down a jar from one of the shelves as she passed ; it was labelled 'orange marmalade' , but to her great disappointment it was empty : she did not like to drop the jar for fear of killing somebody , so managed to put it into one of the cupboards as she fell past it ." -- 'orange,marmalade'
 
 ### no-parse
 
-- `real_gutenberg_busterbear#8`: "" here 's your trout , mr . otter , " said he , as little joe put his head out of water to see who had frightened him so ."
+- `real_gutenberg_alice#0`: "( when she thought it over afterwards , it occurred to her that she ought to have wondered at this , but at the time it all seemed quite natural ) ; but when the rabbit actually took a watch out of its waistcoat-pocket , and looked at it , and then hurried on , alice started to her feet , for it flashed across her mind that she had never before seen a rabbit with either a waistcoat-pocket , or a watch to take out of it , and burning with curiosity , she ran across the field after it , and fortunately was just in time to see it pop down a large rabbit-hole under the hedge ."
+- `real_gutenberg_alice#0`: "( which was very likely true . ) down , down , down ."
+- `real_gutenberg_alice#0`: "( alice had no idea what latitude was , or longitude either , but thought they were nice grand words to say . )"
 
 ### multiple-parses-unresolved
 
@@ -59,24 +65,31 @@ _(no occurrences in this corpus)_
 
 ### unsupported-construction
 
-- `real_gutenberg_busterbear#1`: "and grinned ." -- coordination
-- `real_gutenberg_busterbear#6`: "" that 's a very fine looking trout ." -- quotation
-- `real_gutenberg_busterbear#8`: "" come and get it . "" -- quotation
+- `real_gutenberg_alice#1`: "when suddenly , thump !" -- subordinate_clause
+- `real_gutenberg_alice#4`: "ah , that 's the great puzzle ! '" -- subordinate_clause
+- `real_gutenberg_alice#5`: "it 'll be no use their putting their heads down and saying " come up again , dear ! "" -- quotation
 
 ### pronoun-unresolvable
 
-- `real_gutenberg_busterbear#0`: "then he walked over to a big pine-tree , stood up on his hind legs , reached as high up on the trunk of the tree as he could , and scratched the bark with his great claws ."
-- `real_gutenberg_busterbear#0`: "after that he yawned until it seemed as if his jaws would crack , and then sat down to think what he wanted for breakfast ."
-- `real_gutenberg_busterbear#3`: "and as buster listened it suddenly came to him just what he wanted for breakfast ."
+- `real_gutenberg_alice#0`: "how brave they 'll all think me at home !"
+- `real_gutenberg_alice#0`: "why , i would n't say anything about it , even if i fell off the top of the house ! '"
+- `real_gutenberg_alice#1`: "( and she tried to curtsey as she spoke -- fancy curtseying as you 're falling through the air !"
 
 ### no-relation-extracted
 
-- `real_gutenberg_busterbear#5`: "why , little joe otter to be sure ."
-- `real_gutenberg_busterbear#9`: "the fact is , he was afraid to ."
-- `real_gutenberg_busterbear#9`: "buster did n't seem to mind ."
+- `real_gutenberg_alice#0`: "i shall be late ! '"
+- `real_gutenberg_alice#0`: "she said aloud ."
+- `real_gutenberg_alice#1`: "presently she began again ."
 
 ### fragment-skipped
 
-- `real_gutenberg_busterbear#1`: "thief ! ""
-- `real_gutenberg_busterbear#6`: "" woof , woof ! ""
+- `real_gutenberg_alice#0`: "oh dear !"
+- `real_gutenberg_alice#1`: "dinah my dear !"
+- `real_gutenberg_alice#3`: "good-bye , feet ! '"
+
+### parse-resource-capped
+
+- `real_gutenberg_alice#0`: "so she was considering in her own mind ( as well as she could , for the hot day made her feel very sleepy and stupid ) , whether the pleasure of making a daisy-chain would be worth the trouble of getting up and picking the daisies , when suddenly a white rabbit with pink eyes ran close by her ." -- parse exceeded 10.0s wall-clock cap (at ruleset 'predicate2')
+- `real_gutenberg_alice#0`: "let me see : that would be four thousand miles down , i think -- ' ( for , you see , alice had learnt several things of this sort in her lessons in the schoolroom , and though this was not a very good opportunity for showing off her knowledge , as there was no one to listen to her , still it was good practice to say it over ) ' -- yes , that 's about the right distance -- but then i wonder what latitude or longitude i 've got to ? '" -- parse exceeded 10.0s wall-clock cap (mid-ruleset 'predicate1')
+- `real_gutenberg_alice#3`: "when she got to the door , she found she had forgotten the little golden key , and when she went back to the table for it , she found she could not possibly reach it : she could see it quite plainly through the glass , and she tried her best to climb up one of the legs of the table , but it was too slippery ; and when she had tired herself out with trying , the poor little thing sat down and cried ." -- parse exceeded 10.0s wall-clock cap (mid-ruleset 'predicate1')
 
