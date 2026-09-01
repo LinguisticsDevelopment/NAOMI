@@ -19,7 +19,7 @@ dev/AURORA_SPRINT.md "Week 2").
 - pronoun-unresolvable: 203 (11.0%)
 - no-relation-extracted: 97 (5.3%)
 - fragment-skipped: 49 (2.7%)
-- parse-resource-capped: 58 (3.2%)
+- parse-resource-capped: 55 (3.0%)
 
 ### synthetic (360 sentences)
 
@@ -43,7 +43,7 @@ dev/AURORA_SPRINT.md "Week 2").
 - pronoun-unresolvable: 161 (10.9%)
 - no-relation-extracted: 81 (5.5%)
 - fragment-skipped: 48 (3.2%)
-- parse-resource-capped: 58 (3.9%)
+- parse-resource-capped: 55 (3.7%)
 
 ## Examples (up to 3 verbatim per failure class, corpus-wide)
 
