@@ -11,15 +11,15 @@ dev/AURORA_SPRINT.md "Week 2").
 
 ### all (1838 sentences)
 
-- ok: 459 (25.0%)
+- ok: 458 (24.9%)
 - unknown-word: 219 (11.9%)
 - no-parse: 47 (2.6%)
 - multiple-parses-unresolved: 0 (0.0%)
 - unsupported-construction: 111 (6.0%)
-- pronoun-unresolvable: 203 (11.0%)
+- pronoun-unresolvable: 202 (11.0%)
 - no-relation-extracted: 97 (5.3%)
 - fragment-skipped: 49 (2.7%)
-- parse-resource-capped: 55 (3.0%)
+- parse-resource-capped: 68 (3.7%)
 
 ### synthetic (360 sentences)
 
@@ -35,15 +35,15 @@ dev/AURORA_SPRINT.md "Week 2").
 
 ### real (1478 sentences)
 
-- ok: 211 (14.3%)
+- ok: 210 (14.2%)
 - unknown-word: 216 (14.6%)
 - no-parse: 47 (3.2%)
 - multiple-parses-unresolved: 0 (0.0%)
 - unsupported-construction: 111 (7.5%)
-- pronoun-unresolvable: 161 (10.9%)
+- pronoun-unresolvable: 160 (10.8%)
 - no-relation-extracted: 81 (5.5%)
 - fragment-skipped: 48 (3.2%)
-- parse-resource-capped: 55 (3.7%)
+- parse-resource-capped: 68 (4.6%)
 
 ## Examples (up to 3 verbatim per failure class, corpus-wide)
 
@@ -90,6 +90,6 @@ _(no occurrences in this corpus)_
 ### parse-resource-capped
 
 - `real_gutenberg_alice#0`: "so she was considering in her own mind ( as well as she could , for the hot day made her feel very sleepy and stupid ) , whether the pleasure of making a daisy-chain would be worth the trouble of getting up and picking the daisies , when suddenly a white rabbit with pink eyes ran close by her ." -- parse exceeded 10.0s wall-clock cap (at ruleset 'predicate2')
+- `real_gutenberg_alice#0`: "first , she tried to look down and make out what she was coming to , but it was too dark to see anything ; then she looked at the sides of the well , and noticed that they were filled with cupboards and book-shelves ; here and there she saw maps and pictures hung upon pegs ." -- parse exceeded 10.0s wall-clock cap (at ruleset 'predicate2')
 - `real_gutenberg_alice#0`: "let me see : that would be four thousand miles down , i think -- ' ( for , you see , alice had learnt several things of this sort in her lessons in the schoolroom , and though this was not a very good opportunity for showing off her knowledge , as there was no one to listen to her , still it was good practice to say it over ) ' -- yes , that 's about the right distance -- but then i wonder what latitude or longitude i 've got to ? '" -- parse exceeded 10.0s wall-clock cap (mid-ruleset 'predicate1')
-- `real_gutenberg_alice#3`: "when she got to the door , she found she had forgotten the little golden key , and when she went back to the table for it , she found she could not possibly reach it : she could see it quite plainly through the glass , and she tried her best to climb up one of the legs of the table , but it was too slippery ; and when she had tired herself out with trying , the poor little thing sat down and cried ." -- parse exceeded 10.0s wall-clock cap (mid-ruleset 'predicate1')
 
