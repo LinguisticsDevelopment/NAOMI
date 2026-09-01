@@ -3291,3 +3291,24 @@ cand_addr_mask, evidence-target/from_ltm presence) — perception-side
 facts about clause SHAPE, the same facts the deterministic dispatcher
 reads; the split forbids register CONTENTS, not structure. Extension
 queued; gate #2 fires after it.
+
+### Executor LOFO gate #2 — GO: 4/4 informative cells capture 100% of the oracle-floor gap, traceless (MEASURED)
+
+Repaired instrument (balanced trace loss, interaction feature, structural
+flags), 7 cloud runs, ~100 min each, EXIT:0 all. Logs: executor-lofo2-logs.
+Per held-out family (learned/oracle/floor): writeback 1.000/1.000/0.510;
+defdesc 0.800/0.800/0.490; inverse 0.720/0.720/0.450; recall_link
+0.520/0.520/0.280 — the executor with ZERO traces for the held-out
+family reaches ORACLE level in every informative cell. plain_fact
+self-reports uninformative (old_l1_6 scores ~0.24-0.31 in EVERY arm
+including oracle under the shared mixed config — a recorded config gap
+to fix, not a composition datum); pronoun remains invalid by curriculum
+construction (placeholder=gold ⇒ floor ≈ 1.0; the inversion persists at
+scale). Design criterion (≥0.5 of gap on ≥4/6) formally met → GO.
+Deeper finding: held-out op_acc = 0.000 while task = oracle — the
+selector does NOT copy unseen gold traces; it composes FUNCTIONALLY
+EQUIVALENT alternative programs (and the floor arm proves they are not
+the plain-fact program). Baseline: all six families' op_acc ≥ 0.935
+with traces; soft-vs-argmax delta 0.000 everywhere (D1 hard costs
+nothing); kill-criteria ratio ≈ 1.0x. PHASE 3 (variable-length programs,
+learned halting) is now a LEAD DECISION — not built pending sign-off.
