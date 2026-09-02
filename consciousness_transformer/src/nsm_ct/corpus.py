@@ -70,6 +70,7 @@ import gc
 import os
 import random
 import sys
+import time
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple, Union
@@ -104,6 +105,14 @@ from .membrane import (NAME_GENDER, PRONOUN_MORPHOLOGY, HypothesisCandidateSet,
 # see FAILURE_REASONS and taxonomy_counts).
 CORPUS_MAX_HYPOTHESES = 4000
 CORPUS_MAX_PARSE_SECONDS = 10.0
+
+# M58f3: sentinel default for the fallbacks' optional `max_seconds` param
+# (see _quoted_fallback/_attribution_fallback below) -- lets a caller that
+# doesn't share a deadline (e.g. a test calling a fallback directly) fall
+# back to CORPUS_MAX_PARSE_SECONDS unchanged, while _parse_one_sentence_uncapped
+# threads the REMAINING budget of its own single deadline through instead of
+# handing each fallback a fresh CORPUS_MAX_PARSE_SECONDS of its own.
+_MAX_SECONDS_UNSET = object()
 
 # ---------------------------------------------------------------------------
 # 1. sentence splitting + tokenization (matches the curriculum convention:
@@ -737,7 +746,8 @@ def _hypothesis_candidates(idx: int, sent: str, graphs, scores) -> HypothesisCan
 
 
 def _quoted_fallback(idx: int, sent: str, tokens: Sequence[str], parser,
-                      registry: Optional["_PassageRegistry"]) -> Optional[List[ParsedClause]]:
+                      registry: Optional["_PassageRegistry"],
+                      max_seconds: Union[float, object] = _MAX_SECONDS_UNSET) -> Optional[List[ParsedClause]]:
     """M58c item 4: when the sentence AS A WHOLE yields nothing, try the
     quoted SPAN inside it (if any) on its own -- e.g. narration wrapped
     around a complete quoted clause. Facts from the quoted span are tagged
@@ -746,12 +756,21 @@ def _quoted_fallback(idx: int, sent: str, tokens: Sequence[str], parser,
     ``None`` (not a fallback failure list) if there's no quote mark, or the
     span itself doesn't parse/extract either -- callers fall through to
     their normal failure classification in that case.
+
+    M58f3: ``max_seconds`` defaults to the sentinel ``_MAX_SECONDS_UNSET``
+    (resolved to ``CORPUS_MAX_PARSE_SECONDS``) so a caller not tracking a
+    shared deadline behaves as before; ``_parse_one_sentence_uncapped``
+    instead passes its own REMAINING budget so the primary parse and both
+    fallbacks share one ``CORPUS_MAX_PARSE_SECONDS`` deadline per sentence
+    rather than each getting a fresh one.
     """
     span = _quoted_span(tokens)
     if not span:
         return None
+    if max_seconds is _MAX_SECONDS_UNSET:
+        max_seconds = CORPUS_MAX_PARSE_SECONDS
     graphs, _scores, _margin = parser._parse_topk_one(
-        span, k=4, max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=CORPUS_MAX_PARSE_SECONDS)
+        span, k=4, max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=max_seconds)
     if not graphs:
         return None
     clauses, _links = extract_discourse(graphs[0])
@@ -775,15 +794,22 @@ def _quoted_fallback(idx: int, sent: str, tokens: Sequence[str], parser,
 # tagged with its speaker rather than silently downgraded to the generic
 # "quoted" source.
 def _attribution_fallback(idx: int, sent: str, tokens: Sequence[str], parser,
-                           registry: Optional["_PassageRegistry"]) -> Optional[List[ParsedClause]]:
+                           registry: Optional["_PassageRegistry"],
+                           max_seconds: Union[float, object] = _MAX_SECONDS_UNSET) -> Optional[List[ParsedClause]]:
+    """M58f3: ``max_seconds`` defaults to the sentinel ``_MAX_SECONDS_UNSET``
+    (resolved to ``CORPUS_MAX_PARSE_SECONDS``); see :func:`_quoted_fallback`'s
+    docstring for why -- same shared-deadline threading applies here.
+    """
     stripped = strip_attribution(tokens)
     if stripped is None:
         return None
     core, speaker = stripped
     if not core:
         return None
+    if max_seconds is _MAX_SECONDS_UNSET:
+        max_seconds = CORPUS_MAX_PARSE_SECONDS
     graphs, _scores, _margin = parser._parse_topk_one(
-        " ".join(core), k=4, max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=CORPUS_MAX_PARSE_SECONDS)
+        " ".join(core), k=4, max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=max_seconds)
     if not graphs:
         return None
     clauses, _links = extract_discourse(graphs[0])
@@ -818,15 +844,24 @@ def _parse_one_sentence(idx: int, sent: str, parser,
     try:
         return _parse_one_sentence_uncapped(idx, sent, parser, registry=registry)
     except ParseResourceExceeded as exc:
-        return [ParseFailure(idx, sent, "parse-resource-capped", detail=str(exc))]
-    finally:
         # Eager release (task requirement): a capped sentence can leave
         # thousands of deep-copied Hypothesis objects reachable only via the
         # exception's traceback frames until those frames unwind -- gc.collect()
         # here (cheap relative to parsing) guarantees they're actually freed
         # before the next sentence starts, rather than drifting to whenever
         # the cyclic collector next runs on its own.
+        #
+        # M58f3: this used to run unconditionally in a `finally` on EVERY
+        # sentence, capped or not. With the ~1M-object USVS/WordNet tables
+        # live on the heap for the whole run, a full gc.collect() costs
+        # ~0.3s regardless of how much garbage there actually is -- across
+        # a full corpus (thousands of sentences) that's minutes of pure
+        # waste for a release that only ever matters on the capped path
+        # (an uncapped sentence leaves no such traceback-rooted garbage
+        # behind). Moved into this except branch so it only runs on the
+        # one outcome it exists for.
         gc.collect()
+        return [ParseFailure(idx, sent, "parse-resource-capped", detail=str(exc))]
 
 
 def _parse_one_sentence_uncapped(idx: int, sent: str, parser,
@@ -840,11 +875,24 @@ def _parse_one_sentence_uncapped(idx: int, sent: str, parser,
     if getattr(parser, "_parser", None) is None or not hasattr(parser, "_parse_topk_one"):
         return [ParseFailure(idx, sent, "no-parse", detail="parser unavailable")]
 
+    # M58f3: one shared deadline for the primary parse AND both fallbacks
+    # below -- previously each of the three _parse_topk_one calls got its
+    # own fresh CORPUS_MAX_PARSE_SECONDS, so a genuinely hard sentence could
+    # spend up to 3x the intended budget (primary + attribution fallback +
+    # quoted fallback) before giving up. `_remaining()` clamps to >=0 so a
+    # deadline already exhausted by the primary call hands the fallbacks a
+    # 0s budget (an immediate ParseResourceExceeded) rather than a second
+    # full allowance.
+    _deadline = time.monotonic() + CORPUS_MAX_PARSE_SECONDS
+
+    def _remaining() -> float:
+        return max(0.0, _deadline - time.monotonic())
+
     # M58c item 4: quotation marks are stripped before the PARSE call only --
     # `sent`/`tokens` (kept for context/detail text and the unsupported-
     # construction/quoted-span checks) are untouched.
     graphs, scores, margin = parser._parse_topk_one(
-        _strip_quotes(sent), k=4, max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=CORPUS_MAX_PARSE_SECONDS)
+        _strip_quotes(sent), k=4, max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=_remaining())
     # M58c item 2's tie-breaker (see _rerank_topk's own docstring for why it
     # lives here rather than in quantum_parser's scorer): re-picks "top1"
     # among score-tied candidates only; margin is recomputed since the
@@ -854,8 +902,8 @@ def _parse_one_sentence_uncapped(idx: int, sent: str, parser,
     if not graphs:
         if _no_verb_token(content_tokens):
             return [ParseFailure(idx, sent, "fragment-skipped")]
-        fallback = _attribution_fallback(idx, sent, tokens, parser, registry) or \
-            _quoted_fallback(idx, sent, tokens, parser, registry)
+        fallback = _attribution_fallback(idx, sent, tokens, parser, registry, max_seconds=_remaining()) or \
+            _quoted_fallback(idx, sent, tokens, parser, registry, max_seconds=_remaining())
         if fallback:
             return fallback
         return [ParseFailure(idx, sent, "no-parse")]
@@ -870,8 +918,8 @@ def _parse_one_sentence_uncapped(idx: int, sent: str, parser,
     if not clauses:
         if _no_verb_token(content_tokens):
             return [ParseFailure(idx, sent, "fragment-skipped")]
-        fallback = _attribution_fallback(idx, sent, tokens, parser, registry) or \
-            _quoted_fallback(idx, sent, tokens, parser, registry)
+        fallback = _attribution_fallback(idx, sent, tokens, parser, registry, max_seconds=_remaining()) or \
+            _quoted_fallback(idx, sent, tokens, parser, registry, max_seconds=_remaining())
         if fallback:
             return fallback
         sig = _unsupported_signal(tokens)
@@ -892,8 +940,8 @@ def _parse_one_sentence_uncapped(idx: int, sent: str, parser,
         return triples
     if pronoun_hit:
         return [ParseFailure(idx, sent, "pronoun-unresolvable")]
-    fallback = _attribution_fallback(idx, sent, tokens, parser, registry) or \
-        _quoted_fallback(idx, sent, tokens, parser, registry)
+    fallback = _attribution_fallback(idx, sent, tokens, parser, registry, max_seconds=_remaining()) or \
+        _quoted_fallback(idx, sent, tokens, parser, registry, max_seconds=_remaining())
     if fallback:
         return fallback
     sig = _unsupported_signal(tokens)

@@ -305,6 +305,66 @@ def curriculum_retention_report(model, eps, batch, gold, batch_size: int) -> dic
             "per_kind": {k: (sum(w), len(w)) for k, w in per_kind.items()}}
 
 
+def _safe_build_clause_batch(episodes, parser, meaning_resolver, codec, **kwargs):
+    """``build_clause_batch(episodes, ...)``, defended against a capped-out
+    sentence exactly like ``scripts/eval_prose.py``'s own ``run()``:
+    ``_prose_parse_graph``'s ``ParseResourceExceeded`` (or any other build
+    exception) is deliberately NOT caught inside ``build_clause_batch`` --
+    it propagates here, to be handled the same "give up on purpose, count
+    it" way every other caller in this codebase handles it, rather than
+    crashing the whole training/eval run (M58f: this is what "prose
+    training" was blocked on -- unlike ``nsm_ct.corpus.parse_passage``'s
+    own per-sentence ``_parse_one_sentence`` wrapper, this all-episodes-
+    at-once call had no such guard at all).
+
+    Optimistic fast path: try the whole-set batch build FIRST (the original,
+    unprotected call -- unchanged cost in the common case where nothing
+    caps out). Only on failure does this fall back to
+    ``eval_prose.partition_buildable``'s per-episode probe (reused, not
+    duplicated) to find and drop whatever doesn't build alone either, then
+    retries the batch build from the survivors -- the same re-probe-and-
+    shrink loop ``eval_prose.run`` uses for wall-clock jitter right at the
+    cap boundary (CORPUS_MAX_PARSE_SECONDS is wall-clock, not deterministic
+    -- a borderline sentence that built alone can still blow a later
+    all-at-once call under system load). Probing every episode alone
+    upfront, unconditionally, would double total parse cost for the common
+    all-succeed case -- only pay it once something has actually failed.
+
+    Returns ``(batch, buildable_eps)`` -- ``buildable_eps`` is the
+    (possibly shrunk) episode list ``batch``'s rows are index-aligned
+    with; callers must use IT, not the original ``episodes``, for gold
+    tensors and reports. ``(None, [])`` if nothing survives.
+    """
+    try:
+        return build_clause_batch(episodes, parser, meaning_resolver, codec, **kwargs), episodes
+    except Exception as exc:  # noqa: BLE001 -- deliberate catch-all, see docstring
+        print(f"  batch build hit {type(exc).__name__}: {exc}; falling back to per-episode "
+              f"probing to find and drop the culprit(s)", flush=True)
+
+    buildable, failures = eval_prose.partition_buildable(episodes, parser, meaning_resolver, codec)
+    if failures:
+        print(f"  {len(failures)}/{len(episodes)} episode(s) dropped by build "
+              f"(capped parse or other build failure), e.g. {failures[0][1]!r}", flush=True)
+    if not buildable:
+        return None, []
+    batch = None
+    for attempt in range(5):
+        try:
+            batch = build_clause_batch(buildable, parser, meaning_resolver, codec, **kwargs)
+            break
+        except Exception as exc:  # noqa: BLE001 -- deliberate catch-all, mirrors eval_prose.run
+            still_buildable, newly_failed = eval_prose.partition_buildable(
+                buildable, parser, meaning_resolver, codec)
+            if len(still_buildable) == len(buildable):
+                raise  # no progress -- a real failure, not jitter; don't loop forever
+            print(f"  retry {attempt + 1}: batch build hit {type(exc).__name__}; re-probed down to "
+                  f"{len(still_buildable)}/{len(buildable)} episodes", flush=True)
+            buildable = still_buildable
+            if not buildable:
+                return None, []
+    return batch, buildable
+
+
 # ---------------------------------------------------------------------------
 # 4. main run
 # ---------------------------------------------------------------------------
@@ -381,12 +441,18 @@ def run(args) -> dict:
     n_resolver_params = sum(p.numel() for p in resolver.parameters()) if resolver is not None else 0
     codec = TPRCodec(dim=dim, max_pos=model_config.get("codec_max_pos", 64))
 
-    prose_eval_batch = (build_clause_batch(prose_eval_eps, parser, meaning_resolver, codec,
-                                            writeback_cheat=args.cheat, writeback_no_gold=args.no_gold_eval)
-                         if prose_eval_eps else None)
-    curriculum_val_batch = (build_clause_batch(curriculum_val_eps, parser, meaning_resolver, codec,
-                                                writeback_cheat=args.cheat, writeback_no_gold=args.no_gold_eval)
-                             if curriculum_val_eps else None)
+    if prose_eval_eps:
+        prose_eval_batch, prose_eval_eps = _safe_build_clause_batch(
+            prose_eval_eps, parser, meaning_resolver, codec,
+            writeback_cheat=args.cheat, writeback_no_gold=args.no_gold_eval)
+    else:
+        prose_eval_batch = None
+    if curriculum_val_eps:
+        curriculum_val_batch, curriculum_val_eps = _safe_build_clause_batch(
+            curriculum_val_eps, parser, meaning_resolver, codec,
+            writeback_cheat=args.cheat, writeback_no_gold=args.no_gold_eval)
+    else:
+        curriculum_val_batch = None
     gold_prose_eval = torch.tensor([e.answer_idx for e in prose_eval_eps]) if prose_eval_eps else None
     gold_curriculum_val = torch.tensor([e.answer_idx for e in curriculum_val_eps]) if curriculum_val_eps else None
 
@@ -399,38 +465,43 @@ def run(args) -> dict:
         print("=== no training episodes (0 prose-train + 0 curriculum) -- skipping the training loop ===",
               flush=True)
     else:
-        tr = build_clause_batch(mixed_train_eps, parser, meaning_resolver, codec, writeback_cheat=args.cheat)
-        opt = torch.optim.Adam(model.parameters(), lr=3e-3)
-        gold_tr = torch.tensor([e.answer_idx for e in mixed_train_eps])
-        n_tr = len(mixed_train_eps)
-        t0 = time.time()
-        model.train()
-        for i in range(args.epochs):
-            epoch_losses = []
-            for mb_idx in epoch_minibatches(n_tr, args.batch_size, args.seed, i):
-                idx_t = torch.from_numpy(mb_idx)
-                sub = tr.subset(idx_t)
-                sub_gold = gold_tr[idx_t]
-                out = model(sub)
-                loss = F.cross_entropy(out["answer_logits"], sub_gold)
-                if resolver is not None and "resolver_logits" in out:
-                    cg = sub.cand_gold
-                    has_cand = cg >= 0
-                    if bool(has_cand.any()):
-                        aux = F.cross_entropy(out["resolver_logits"][has_cand], cg[has_cand])
-                        loss = loss + AUX_WEIGHT * aux
-                opt.zero_grad(); loss.backward(); opt.step()
-                epoch_losses.append(float(loss.item()))
-            last_loss = epoch_losses[-1]
-            losses.append(last_loss)
-            if (i + 1) % args.log_interval == 0 or i == 0 or i == args.epochs - 1:
-                model.eval()
-                prose_acc = _quick_acc(model, prose_eval_batch, gold_prose_eval, args.batch_size)
-                curr_acc = _quick_acc(model, curriculum_val_batch, gold_curriculum_val, args.batch_size)
-                model.train()
-                print(f"  epoch {i + 1:3d} loss={last_loss:.3f} prose_val={prose_acc:.3f} "
-                      f"curriculum_val={curr_acc:.3f}", flush=True)
-        elapsed_min = (time.time() - t0) / 60
+        tr, mixed_train_eps = _safe_build_clause_batch(
+            mixed_train_eps, parser, meaning_resolver, codec, writeback_cheat=args.cheat)
+        if not mixed_train_eps:
+            print("=== no training episodes survived batch build -- skipping the training loop ===",
+                  flush=True)
+        else:
+            opt = torch.optim.Adam(model.parameters(), lr=3e-3)
+            gold_tr = torch.tensor([e.answer_idx for e in mixed_train_eps])
+            n_tr = len(mixed_train_eps)
+            t0 = time.time()
+            model.train()
+            for i in range(args.epochs):
+                epoch_losses = []
+                for mb_idx in epoch_minibatches(n_tr, args.batch_size, args.seed, i):
+                    idx_t = torch.from_numpy(mb_idx)
+                    sub = tr.subset(idx_t)
+                    sub_gold = gold_tr[idx_t]
+                    out = model(sub)
+                    loss = F.cross_entropy(out["answer_logits"], sub_gold)
+                    if resolver is not None and "resolver_logits" in out:
+                        cg = sub.cand_gold
+                        has_cand = cg >= 0
+                        if bool(has_cand.any()):
+                            aux = F.cross_entropy(out["resolver_logits"][has_cand], cg[has_cand])
+                            loss = loss + AUX_WEIGHT * aux
+                    opt.zero_grad(); loss.backward(); opt.step()
+                    epoch_losses.append(float(loss.item()))
+                last_loss = epoch_losses[-1]
+                losses.append(last_loss)
+                if (i + 1) % args.log_interval == 0 or i == 0 or i == args.epochs - 1:
+                    model.eval()
+                    prose_acc = _quick_acc(model, prose_eval_batch, gold_prose_eval, args.batch_size)
+                    curr_acc = _quick_acc(model, curriculum_val_batch, gold_curriculum_val, args.batch_size)
+                    model.train()
+                    print(f"  epoch {i + 1:3d} loss={last_loss:.3f} prose_val={prose_acc:.3f} "
+                          f"curriculum_val={curr_acc:.3f}", flush=True)
+            elapsed_min = (time.time() - t0) / 60
 
     # M60 CLEANUP wiring (reused verbatim from scripts/train_instances.py's run_arm /
     # scripts/eval_prose.py's run: a loaded checkpoint's model.cleanup defaults to

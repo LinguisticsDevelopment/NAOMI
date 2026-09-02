@@ -3425,3 +3425,27 @@ parse_passage's direct helper uncapped) -> hoist the cap into the parser
 entry so no caller can forget it. Fix M58f2 dispatched; NOT merging the
 partial m58f branch until the complete thing verifies (hang test
 terminates + quantum 134 + frozen-eval).
+
+### M58f2/f3 — the hang's TRUE root cause: quadratic GC, not parser caps (RESOLVED, merged)
+
+Supersedes the earlier "uncapped parse_passage path" guesses. Found via
+py-spy on the live process + instrumented repros: test_corpus hung
+because (A) an UNCONDITIONAL gc.collect() ran in a `finally` on EVERY
+sentence — the process heap holds the ~1M-object USVS/WordNet tables, so
+a full collect costs ~0.3s regardless of garbage, × 1838 sentences ≈
+550s of pure waste (measured: gc total dropped from ~550s to ~20s once
+gated); (B) the two fallbacks (_quoted/_attribution) each got a fresh
+CORPUS_MAX_PARSE_SECONDS budget instead of sharing one deadline. The
+per-sentence PARSER caps already worked (sentences parse 2-10s or cap at
+10s) — it was never a parser-cap gap. Fix (m58f3, merged): gate the
+gc.collect to only the except-ParseResourceExceeded branch + a shared
+_remaining() deadline across primary parse and both fallbacks; PLUS made
+test_converted_episodes_build_batch_and_forward fast (small fixture; the
+full-corpus version kept as @pytest.mark.slow) so it stops taking ~19min
+and the suite gate is practical. Carried the m58f quantum_parser
+per-match deadline + train_prose per-episode build guard along. Prose
+training was never actually blocked (frozen-eval ran clean throughout:
+0.552 / retention 0.900). META-lesson for the ledger: this cloud
+environment's lost background-notification sleeps cost far more wall-
+clock than any compute — long jobs must stay foreground/chunked, and a
+sturdier compute path is worth it before the next big campaign.

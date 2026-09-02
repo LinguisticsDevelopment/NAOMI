@@ -23,3 +23,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: legitimately-long-running tests (e.g. full-corpus reparse) excluded from the default run; invoke explicitly with -m slow",
+]
+addopts = "-m 'not slow'"
