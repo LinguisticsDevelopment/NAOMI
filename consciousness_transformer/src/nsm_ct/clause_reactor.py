@@ -243,12 +243,37 @@ def _prose_parse_graph(parser, sent: str):
     never a hang) -- the same "give up on purpose, count it" contract
     corpus.py's own ``_parse_one_sentence`` wrapper gives conversion-time
     sentences.
+
+    Memoized on ``parser`` by ``(sentence text, CORPUS_MAX_HYPOTHESES,
+    CORPUS_MAX_PARSE_SECONDS)`` -- successes only, never a capped/failed
+    parse (a retry after resource pressure eases deserves a fresh attempt,
+    not a cached failure baked in forever). M58f: a prose episode's
+    ``ep.context`` is every PRECEDING sentence of its document, so a
+    K-sentence document's own episodes re-parse the same shared prefix
+    sentences over and over -- O(k^2) total sentence-parses across one
+    document without this cache, since every one of a document's own
+    episodes, and every isolated per-episode probe
+    (``eval_prose.partition_buildable``) of the same document, hits this
+    function fresh with no memoization at all. The caps are read fresh
+    from ``nsm_ct.corpus`` on every call rather than fixed at ``parser``
+    construction (tests monkeypatch them to force a deterministic cap), so
+    they're part of the cache key too, not just the sentence text -- a
+    result cached under one cap is never handed back once the effective
+    cap has changed.
     """
     if not hasattr(parser, "_parse_graph"):
         return None
     from .corpus import CORPUS_MAX_HYPOTHESES, CORPUS_MAX_PARSE_SECONDS  # local import
-    return parser._parse_graph(sent, max_hypotheses=CORPUS_MAX_HYPOTHESES,
-                                max_seconds=CORPUS_MAX_PARSE_SECONDS)
+    cache = getattr(parser, "_prose_graph_cache", None)
+    if cache is None:
+        cache = parser._prose_graph_cache = {}
+    key = (sent, CORPUS_MAX_HYPOTHESES, CORPUS_MAX_PARSE_SECONDS)
+    if key in cache:
+        return cache[key]
+    graph = parser._parse_graph(sent, max_hypotheses=CORPUS_MAX_HYPOTHESES,
+                                 max_seconds=CORPUS_MAX_PARSE_SECONDS)
+    cache[key] = graph
+    return graph
 
 
 def _prose_pronoun_candidates(pronoun: str, context_sentences, parser) -> List[str]:

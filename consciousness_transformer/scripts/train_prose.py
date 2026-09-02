@@ -317,19 +317,30 @@ def _safe_build_clause_batch(episodes, parser, meaning_resolver, codec, **kwargs
     own per-sentence ``_parse_one_sentence`` wrapper, this all-episodes-
     at-once call had no such guard at all).
 
-    Probes every episode ALONE first (``eval_prose.partition_buildable``,
-    reused not duplicated) and drops whatever doesn't build, then builds
-    the batch from the survivors with the same re-probe-and-shrink retry
-    ``eval_prose.run`` uses for wall-clock jitter right at the cap boundary
-    (CORPUS_MAX_PARSE_SECONDS is wall-clock, not deterministic -- a
-    borderline sentence that built alone during the probe can still blow
-    the shared all-at-once call under system load).
+    Optimistic fast path: try the whole-set batch build FIRST (the original,
+    unprotected call -- unchanged cost in the common case where nothing
+    caps out). Only on failure does this fall back to
+    ``eval_prose.partition_buildable``'s per-episode probe (reused, not
+    duplicated) to find and drop whatever doesn't build alone either, then
+    retries the batch build from the survivors -- the same re-probe-and-
+    shrink loop ``eval_prose.run`` uses for wall-clock jitter right at the
+    cap boundary (CORPUS_MAX_PARSE_SECONDS is wall-clock, not deterministic
+    -- a borderline sentence that built alone can still blow a later
+    all-at-once call under system load). Probing every episode alone
+    upfront, unconditionally, would double total parse cost for the common
+    all-succeed case -- only pay it once something has actually failed.
 
     Returns ``(batch, buildable_eps)`` -- ``buildable_eps`` is the
     (possibly shrunk) episode list ``batch``'s rows are index-aligned
     with; callers must use IT, not the original ``episodes``, for gold
     tensors and reports. ``(None, [])`` if nothing survives.
     """
+    try:
+        return build_clause_batch(episodes, parser, meaning_resolver, codec, **kwargs), episodes
+    except Exception as exc:  # noqa: BLE001 -- deliberate catch-all, see docstring
+        print(f"  batch build hit {type(exc).__name__}: {exc}; falling back to per-episode "
+              f"probing to find and drop the culprit(s)", flush=True)
+
     buildable, failures = eval_prose.partition_buildable(episodes, parser, meaning_resolver, codec)
     if failures:
         print(f"  {len(failures)}/{len(episodes)} episode(s) dropped by build "
