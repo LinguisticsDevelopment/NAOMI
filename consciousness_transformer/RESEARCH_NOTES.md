@@ -3449,3 +3449,24 @@ training was never actually blocked (frozen-eval ran clean throughout:
 environment's lost background-notification sleeps cost far more wall-
 clock than any compute — long jobs must stay foreground/chunked, and a
 sturdier compute path is worth it before the next big campaign.
+
+### Prose training BLOCKED again — 3rd uncapped parse call site → hoist the cap (2026-09-02)
+
+The GC fix (161d236) is confirmed good (test_corpus 11/11 fast, frozen-eval
+clean). But the full train_prose run HUNG in batch-build (py-spy: unbounded
+deepcopy in quantum_parser apply_rule <- _parse_graph_one). Root cause:
+scripts/eval_prose.py's per-episode probe (build_one/partition_buildable,
+used by train_prose to build the 128-doc TRAIN split) calls
+build_clause_batch WITHOUT the max_hypotheses/max_seconds caps, so it
+re-parses a pathological train-set sentence with NO cap. Frozen-eval
+didn't hit it (that sentence is in the train split, not the 42-doc eval
+split). This is the THIRD distinct uncapped parse call site (converter →
+corpus.py; batch-build → clause_reactor; now eval_prose probe). The
+PATTERN is the real bug: quantum_parser.parse() enforces no default cap,
+so every caller must remember to pass one and keeps forgetting.
+DECISION (director): stop patching call sites; HOIST a generous default
+wall-clock cap into quantum_parser's ParserConfig (max_parse_seconds
+default None -> e.g. 30.0). This bounds EVERY caller at once, cannot bind
+on curriculum (ms) or normal prose (2-10s), and turns the hang into a
+catchable ParseResourceExceeded that build_one's existing guard drops.
+Fix dispatched (M58g); prose training resumes after.
