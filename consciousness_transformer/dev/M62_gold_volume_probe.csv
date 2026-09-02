@@ -1,0 +1,501 @@
+bin,file,n_tokens,outcome,full_tree,parse_seconds,detail,sentence
+A,real_gutenberg_alice.txt,2,grounding-fail,False,1.3594,clauses=0,'oh !
+A,real_gutenberg_bryant.txt,3,grounding-fail,False,0.002,clauses=0,"more ! """
+A,real_gutenberg_alice.txt,3,grounding-fail,False,0.0021,clauses=0,oh dear !
+A,real_gutenberg_bryant.txt,8,full-tree,True,3.1152,,""" i was needing a chicken ! """
+A,real_gutenberg_alice.txt,4,grounding-fail,False,0.002,clauses=0,said the lory .
+A,real_gutenberg_bryant.txt,4,grounding-fail,False,0.0019,clauses=0,"roll around ! """
+A,real_gutenberg_burgess_more.txt,5,grounding-fail,False,0.0036,clauses=0,""" of course not !"
+A,real_gutenberg_alice.txt,4,full-tree,True,0.0023,,'a knot ! '
+A,real_gutenberg_burgess_more.txt,4,grounding-fail,False,0.001,clauses=0,""" nobody ! """
+A,real_gutenberg_bryant.txt,7,full-tree,True,0.0054,,"we want to come in ! """
+A,real_gutenberg_burgess_more.txt,4,grounding-fail,False,0.0013,clauses=0,""" too bad ."
+A,real_gutenberg_alice.txt,8,full-tree,True,0.012,,i 'll set dinah at you ! '
+A,real_gutenberg_alice.txt,8,grounding-fail,False,0.0066,clauses=0,""" coming in a minute , nurse !"
+A,real_gutenberg_edgeworth.txt,5,full-tree,True,0.0236,,most haste worst speed .
+A,real_gutenberg_bryant.txt,3,grounding-fail,False,0.0022,clauses=0,""" more !"
+A,real_gutenberg_alice.txt,3,grounding-fail,False,0.0016,clauses=0,the duchess !
+A,real_gutenberg_bryant.txt,8,full-tree,True,0.0107,,i see it and i love it .
+A,real_gutenberg_burgess_more.txt,5,full-tree,True,0.0067,,what do you think ?
+A,real_gutenberg_alice.txt,8,full-tree,True,0.016,,'we must burn the house down ! '
+A,real_gutenberg_bryant.txt,5,grounding-fail,False,0.0017,clauses=0,whispered the city mouse .
+A,real_gutenberg_burgess_more.txt,8,grounding-fail,False,0.0246,clauses=0,""" well , _our_ fish , then !"
+A,real_gutenberg_alice.txt,8,full-tree,True,0.0396,,'how can i have done that ? '
+A,real_gutenberg_alice.txt,5,grounding-fail,False,0.0012,clauses=0,"good-bye , feet ! '"
+A,real_gutenberg_alice.txt,5,grounding-fail,False,0.0029,clauses=0,"when suddenly , thump !"
+A,real_gutenberg_burgess_more.txt,8,full-tree,True,0.0102,,such a thing never had happened before .
+A,real_gutenberg_bryant.txt,8,grounding-fail,False,0.0111,clauses=0,the lion above could n't stand that .
+A,real_gutenberg_bryant.txt,7,full-tree,True,0.0057,,there are the green tiny berries !
+A,real_gutenberg_bryant.txt,4,grounding-fail,False,0.0049,clauses=0,fumed the whale .
+A,real_gutenberg_busterbear.txt,6,grounding-fail,False,0.0013,clauses=0,""" woof , woof ! """
+A,real_gutenberg_bryant.txt,5,grounding-fail,False,0.0025,clauses=0,"roll me around ! """
+A,real_gutenberg_alice.txt,6,grounding-fail,False,0.0013,clauses=0,'i wo n't indeed ! '
+A,real_gutenberg_bryant.txt,6,grounding-fail,False,0.0112,clauses=0,""" dear , dear ! """
+A,real_gutenberg_bryant.txt,3,grounding-fail,False,0.0016,clauses=0,"good-bye . """
+A,real_gutenberg_edgeworth.txt,7,grounding-fail,False,0.0096,clauses=0,""" mary , are you up ?"
+A,real_gutenberg_busterbear.txt,5,full-tree,True,0.0023,,""" i do ! """
+A,real_gutenberg_alice.txt,4,grounding-fail,False,0.0011,clauses=0,mary ann ! '
+A,real_gutenberg_edgeworth.txt,2,grounding-fail,False,0.0009,clauses=0,ho !
+A,real_gutenberg_alice.txt,3,grounding-fail,False,0.001,clauses=0,'ahem ! '
+A,real_gutenberg_burgess_more.txt,3,full-tree,True,0.0012,,he exclaimed .
+A,real_gutenberg_burgess_more.txt,4,grounding-fail,False,0.0035,clauses=0,said buster bear .
+A,real_gutenberg_busterbear.txt,6,full-tree,True,0.0049,,but little joe would n't .
+A,real_gutenberg_alice.txt,3,grounding-fail,False,0.0009,clauses=0,'well ! '
+A,real_gutenberg_edgeworth.txt,6,full-tree,True,0.0042,,""" i 've done ! """
+A,real_gutenberg_alice.txt,8,full-tree,True,0.0267,,'she 'd soon fetch it back ! '
+A,real_gutenberg_alice.txt,4,full-tree,True,0.0016,,she said aloud .
+A,real_gutenberg_alice.txt,6,full-tree,True,0.0066,,'what is a caucus-race ? '
+A,real_gutenberg_alice.txt,4,grounding-fail,False,0.0032,clauses=0,said the voice .
+A,real_gutenberg_alice.txt,6,full-tree,True,0.0087,,i shall be late ! '
+A,real_gutenberg_alice.txt,6,grounding-fail,False,0.0024,clauses=0,"the duchess , the duchess !"
+A,real_gutenberg_bryant.txt,6,full-tree,True,0.0048,,""" what is that ? """
+A,real_gutenberg_burgess_more.txt,4,grounding-fail,False,0.0051,clauses=0,snapped little joe .
+A,real_gutenberg_edgeworth.txt,7,full-tree,True,0.0046,,"are you gone for ever ? """
+A,real_gutenberg_bryant.txt,4,grounding-fail,False,0.0031,clauses=0,said the whale .
+A,real_gutenberg_bryant.txt,3,full-tree,True,0.0012,,she said .
+A,real_gutenberg_busterbear.txt,8,full-tree,True,0.0055,,"probably he is the thief himself . """
+A,real_gutenberg_alice.txt,7,grounding-fail,False,0.0018,clauses=0,"'digging for apples , indeed ! '"
+A,real_gutenberg_alice.txt,4,grounding-fail,False,0.0017,clauses=0,heads below ! '
+A,real_gutenberg_bryant.txt,5,full-tree,True,0.003,,he was terribly angry .
+A,real_gutenberg_bryant.txt,2,grounding-fail,False,0.0014,clauses=0,cluck !
+A,real_gutenberg_alice.txt,6,grounding-fail,False,0.002,clauses=0,'a barrowful of what ? '
+A,real_gutenberg_alice.txt,2,grounding-fail,False,0.0015,clauses=0,thump !
+A,real_gutenberg_burgess_more.txt,8,full-tree,True,0.009,,"i 'll try it to-morrow morning . """
+A,real_gutenberg_burgess_more.txt,6,full-tree,True,0.0053,,there the same thing happened .
+A,real_gutenberg_bryant.txt,4,grounding-fail,False,0.002,clauses=0,""" run ! """
+A,real_gutenberg_burgess_more.txt,8,full-tree,True,0.0364,,he did n't mean to do it .
+A,real_gutenberg_bryant.txt,5,full-tree,True,0.0029,,"i am coming ! """
+A,real_gutenberg_alice.txt,8,full-tree,True,0.0483,,there was exactly one a-piece all round .
+A,real_gutenberg_alice.txt,8,full-tree,True,0.0122,,and how odd the directions will look !
+A,real_gutenberg_bryant.txt,7,full-tree,True,0.047,,it was just half a chicken .
+A,real_gutenberg_edgeworth.txt,2,grounding-fail,False,0.0008,clauses=0,mary !
+A,real_gutenberg_alice.txt,5,full-tree,True,0.0035,,where are you ? '
+A,real_gutenberg_bryant.txt,8,grounding-fail,False,0.0138,clauses=0,""" make a light , old moon !"
+A,real_gutenberg_alice.txt,7,full-tree,True,0.0214,,one blank-line-separated block = one passage .
+A,real_gutenberg_bryant.txt,5,full-tree,True,0.0046,,of course you could .
+A,real_gutenberg_burgess_more.txt,7,full-tree,True,0.0326,,i would just waste my time .
+A,real_gutenberg_burgess_more.txt,5,grounding-fail,False,0.0014,clauses=0,"what 's this ? """
+A,real_gutenberg_alice.txt,3,grounding-fail,False,0.0017,clauses=0,prizes ! '
+A,real_gutenberg_alice.txt,5,grounding-fail,False,0.0033,clauses=0,'poor little thing ! '
+A,real_gutenberg_burgess_more.txt,7,full-tree,True,0.0071,,""" they are _our_ fish ! """
+A,real_gutenberg_alice.txt,8,grounding-fail,False,0.0344,clauses=0,william 's conduct at first was moderate .
+A,real_gutenberg_bryant.txt,5,grounding-fail,False,0.0046,clauses=0,"make a light ! """
+A,real_gutenberg_busterbear.txt,4,full-tree,True,0.0025,,who was it ?
+A,real_gutenberg_burgess_more.txt,8,full-tree,True,0.0109,,it was the footprint of buster bear .
+A,real_gutenberg_edgeworth.txt,6,full-tree,True,0.0078,,he was a jew broker .
+A,real_gutenberg_alice.txt,8,full-tree,True,0.0366,,"silence all round , if you please !"
+A,real_gutenberg_burgess_more.txt,7,grounding-fail,False,0.0025,clauses=0,"too bad , "" said he ."
+A,real_gutenberg_burgess_more.txt,7,full-tree,True,0.0254,,"at least , little joe did ."
+A,real_gutenberg_edgeworth.txt,7,full-tree,True,0.0046,,""" ah , mary , honey !"
+A,real_gutenberg_alice.txt,5,full-tree,True,0.0075,,oh my dear paws !
+A,real_gutenberg_burgess_more.txt,5,grounding-fail,False,0.0064,clauses=0,so did grandfather frog .
+A,real_gutenberg_bryant.txt,3,grounding-fail,False,0.0016,clauses=0,"stop ! """
+A,real_gutenberg_alice.txt,7,grounding-fail,False,0.0059,clauses=0,tell us all about it ! '
+A,real_gutenberg_edgeworth.txt,6,full-tree,True,0.0109,,"edmund was mistaken , alas !"
+A,real_gutenberg_burgess_more.txt,7,full-tree,True,0.0214,,it made him feel very queer .
+A,real_gutenberg_burgess_more.txt,7,full-tree,True,0.0194,,now buster bear is very smart .
+A,real_gutenberg_bryant.txt,5,grounding-fail,False,0.0014,clauses=0,""" the idea ! """
+A,real_gutenberg_alice.txt,8,full-tree,True,0.1232,,i must have been changed for mabel !
+A,real_gutenberg_bryant.txt,5,full-tree,True,0.0049,,"it is spring ! """
+A,real_gutenberg_busterbear.txt,7,full-tree,True,0.0221,,billy mink just had to laugh .
+A,real_gutenberg_burgess_more.txt,4,grounding-fail,False,0.0032,clauses=0,asked grandfather frog .
+A,real_gutenberg_busterbear.txt,7,grounding-fail,False,0.0022,clauses=0,""" come and get it . """
+A,real_gutenberg_bryant.txt,7,full-tree,True,0.0084,,and they began to pull again .
+A,real_gutenberg_alice.txt,8,full-tree,True,0.0081,,"digging for apples , yer honour ! '"
+A,real_gutenberg_burgess_more.txt,4,full-tree,True,0.0044,,it was puzzling .
+A,real_gutenberg_edgeworth.txt,6,full-tree,True,0.0025,,""" god bless the boy !"
+A,real_gutenberg_alice.txt,6,grounding-fail,False,0.0044,clauses=0,"oh , my dear dinah !"
+A,real_gutenberg_alice.txt,5,full-tree,True,0.0037,,rabbit' engraved upon it .
+A,real_gutenberg_bryant.txt,8,grounding-fail,False,0.0087,clauses=0,""" out of the way , there !"
+A,real_gutenberg_bryant.txt,5,grounding-fail,False,0.0056,clauses=0,said the little half-chick .
+A,real_gutenberg_burgess_more.txt,4,grounding-fail,False,0.0047,clauses=0,growled little joe .
+A,real_gutenberg_busterbear.txt,3,grounding-fail,False,0.0009,clauses=0,"thief ! """
+A,real_gutenberg_bryant.txt,5,full-tree,True,0.0105,,that was a pull !
+A,real_gutenberg_bryant.txt,4,grounding-fail,False,0.0014,clauses=0,"the idea ! """
+A,real_gutenberg_burgess_more.txt,8,full-tree,True,0.0084,,"yes , sir , it was puzzling ."
+A,real_gutenberg_bryant.txt,8,full-tree,True,0.0034,,"why did n't you come before ? """
+A,real_gutenberg_burgess_more.txt,7,full-tree,True,0.0162,,"you 'll find it pays . """
+A,real_gutenberg_burgess_more.txt,8,full-tree,True,0.0095,,he is very old and very wise .
+A,real_gutenberg_alice.txt,5,full-tree,True,0.0014,,' -- i proceed .
+A,real_gutenberg_burgess_more.txt,5,grounding-fail,False,0.0052,clauses=0,said little joe fiercely .
+A,real_gutenberg_bryant.txt,7,full-tree,True,0.0032,,""" 'and here i wait patiently ."
+A,real_gutenberg_bryant.txt,6,grounding-fail,False,0.0037,clauses=0,"420 sentences , 20 passages ."
+A,real_gutenberg_edgeworth.txt,7,full-tree,True,0.0098,,"then peggy exclaimed -- "" sure !"
+A,real_gutenberg_bryant.txt,5,grounding-fail,False,0.0092,clauses=0,shouted the little boy .
+A,real_gutenberg_busterbear.txt,7,full-tree,True,0.0152,,buster did n't seem to mind .
+A,real_gutenberg_alice.txt,2,grounding-fail,False,0.0026,clauses=0,pat !
+B,real_gutenberg_busterbear.txt,10,grounding-fail,False,0.0073,clauses=0,# real prose ( m58a ) -- thornton w .
+B,real_gutenberg_bryant.txt,12,full-tree,True,0.1357,,i have all sorts of fine things to eat every day .
+B,real_gutenberg_edgeworth.txt,11,full-tree,True,0.0432,,""" your poor goat is dead , "" replied peggy ."
+B,real_gutenberg_bryant.txt,10,full-tree,True,0.0231,,"the lion will surely catch us this time ! """
+B,real_gutenberg_bryant.txt,12,full-tree,True,0.1078,,then through all my twigs i feel the slow sap stirring .
+B,real_gutenberg_alice.txt,15,full-tree,True,0.1416,,the first thing she heard was a general chorus of 'there goes bill ! '
+B,real_gutenberg_busterbear.txt,15,full-tree,True,0.1033,,"they had gone only a little way when billy mink whispered : "" sh-h !"
+B,real_gutenberg_bryant.txt,11,full-tree,True,0.0849,,and ran as fast as he could to the hole .
+B,real_gutenberg_alice.txt,12,grounding-fail,False,0.0104,clauses=0,"come here directly , and get ready for your walk ! """
+B,real_gutenberg_burgess_more.txt,11,full-tree,True,0.0247,,"why , it was a footprint in the soft mud ."
+B,real_gutenberg_bryant.txt,11,grounding-fail,False,0.0033,clauses=0,""" the very thing for the king 's dinner ! """
+B,real_gutenberg_edgeworth.txt,11,full-tree,True,0.0448,,there was no other to be had in this village .
+B,real_gutenberg_alice.txt,13,full-tree,True,0.1584,,'how surprised he 'll be when he finds out who i am !
+B,real_gutenberg_burgess_more.txt,12,full-tree,True,0.0806,,"it looks as if somebody is trying to -- ha ! """
+B,real_gutenberg_alice.txt,15,full-tree,True,0.1142,,"as for pulling me out of the window , i only wish they could !"
+B,real_gutenberg_edgeworth.txt,12,full-tree,True,0.2013,,"my hands must be washed before i can do anything . """
+B,real_gutenberg_busterbear.txt,10,full-tree,True,0.0157,,"said he in his deepest , most grumbly-rumbly voice ."
+B,real_gutenberg_alice.txt,14,grounding-fail,False,0.0859,clauses=0,"so bill 's got to come down the chimney , has he ? '"
+B,real_gutenberg_bryant.txt,13,full-tree,True,0.0982,,all the little bright stars were there with their nice little lamps .
+B,real_gutenberg_burgess_more.txt,13,full-tree,True,0.0937,,farmer brown 's boy scowled down at them more puzzled than ever .
+B,real_gutenberg_bryant.txt,14,full-tree,True,0.155,,she was much pleased with their looks as they came from the shell .
+B,real_gutenberg_busterbear.txt,9,full-tree,True,0.0172,,"the fact is , he was afraid to ."
+B,real_gutenberg_edgeworth.txt,13,full-tree,True,0.1061,,this was the joyful news which edmund had to tell his sisters .
+B,real_gutenberg_busterbear.txt,9,full-tree,True,0.0248,,little joe otter was in a terrible rage .
+B,real_gutenberg_bryant.txt,14,full-tree,True,0.0104,,""" aha , youngster , what are you doing in my sky ? """
+B,real_gutenberg_alice.txt,9,full-tree,True,0.0192,,and yesterday things went on just as usual .
+B,real_gutenberg_alice.txt,11,full-tree,True,0.0416,,then came a little pattering of feet on the stairs .
+B,real_gutenberg_bryant.txt,9,full-tree,True,0.0326,,i am almost dead for want of air .
+B,real_gutenberg_busterbear.txt,13,full-tree,True,0.1212,,"cried little joe , into whose head an idea had just popped ."
+B,real_gutenberg_bryant.txt,9,full-tree,True,0.0823,,this was even better than the brown sugar .
+B,real_gutenberg_burgess_more.txt,11,full-tree,True,0.029,,"then he hid near by , where he could watch ."
+B,real_gutenberg_busterbear.txt,14,full-tree,True,0.0976,,"he heard sammy jay way off in the distance screaming , "" thief !"
+B,real_gutenberg_burgess_more.txt,10,full-tree,True,0.0845,,then he saved a nice fat trout and waited .
+B,real_gutenberg_bryant.txt,11,full-tree,True,0.0252,,quickly the little door opened and the acorn rolled inside .
+B,real_gutenberg_burgess_more.txt,14,full-tree,True,0.169,,little joe otter found that out when he took grandfather frog 's advice .
+B,real_gutenberg_bryant.txt,10,full-tree,True,0.0346,,""" i will help you ; i will ! """
+B,real_gutenberg_bryant.txt,12,full-tree,True,0.1043,,"the wind was whimpering , and begging to be set free ."
+B,real_gutenberg_bryant.txt,11,grounding-fail,False,0.006,clauses=0,by and by the moon peeped in at the window .
+B,real_gutenberg_bryant.txt,11,full-tree,True,0.2914,,"i nod to him , and he looks at me ."
+B,real_gutenberg_burgess_more.txt,15,full-tree,True,0.11,,"somehow , it seemed to buster as if the brook were laughing at him ."
+B,real_gutenberg_alice.txt,10,full-tree,True,0.0152,,'what else have you got in your pocket ? '
+B,real_gutenberg_bryant.txt,13,full-tree,True,0.0311,,"where it was he did n't know , so he looked everywhere ."
+B,real_gutenberg_alice.txt,9,full-tree,True,0.0155,,"why , it fills the whole window ! '"
+B,real_gutenberg_alice.txt,10,full-tree,True,0.0096,,"'of course , ' the dodo replied very gravely ."
+B,real_gutenberg_alice.txt,11,grounding-fail,False,0.0131,clauses=0,"said the mouse , turning to alice , and sighing ."
+B,real_gutenberg_bryant.txt,13,full-tree,True,0.0591,,"and away he went , hoppity-kick , hoppity-kick , over the fields ."
+B,real_gutenberg_edgeworth.txt,10,grounding-fail,False,0.0035,clauses=0,""" your joyful and affectionate brother , edmund . """
+B,real_gutenberg_bryant.txt,14,full-tree,True,0.0782,,"said the little gingerbread boy , "" i am a quarter gone ! """
+B,real_gutenberg_bryant.txt,15,full-tree,True,0.027,,after a while he came to madrid and to the palace of the king .
+B,real_gutenberg_busterbear.txt,15,full-tree,True,0.1505,,buster bear tiptoed up very softly until he was right behind little joe otter .
+B,real_gutenberg_alice.txt,15,full-tree,True,0.1589,,"cried the mouse , who was trembling down to the end of his tail ."
+B,real_gutenberg_burgess_more.txt,9,full-tree,True,0.0559,,both anger and fear make it do that .
+B,real_gutenberg_burgess_more.txt,13,full-tree,True,0.0827,,"then he went on to another , and this was no better ."
+B,real_gutenberg_burgess_more.txt,14,full-tree,True,0.1265,,"little joe would n't tell , but billy mink told the whole story ."
+B,real_gutenberg_alice.txt,13,full-tree,True,0.0846,,"oh , how i wish i could shut up like a telescope !"
+B,real_gutenberg_burgess_more.txt,15,full-tree,True,0.1716,,it did n't take buster long to catch all the fish he could eat .
+B,real_gutenberg_bryant.txt,9,full-tree,True,0.0589,,and she called her chickens to help her .
+B,real_gutenberg_burgess_more.txt,10,full-tree,True,0.0525,,then he began to chuckle and finally to laugh .
+B,real_gutenberg_alice.txt,12,full-tree,True,0.1154,,the master says you 're to go down the chimney ! '
+B,real_gutenberg_busterbear.txt,15,full-tree,True,0.0661,,""" let 's go see what he is doing , "" said billy mink ."
+B,real_gutenberg_burgess_more.txt,13,full-tree,True,0.0328,,"farmer brown 's boy tramped through the green forest , whistling merrily ."
+B,real_gutenberg_bryant.txt,11,full-tree,True,0.0206,,he leaped down into the well after the other lion .
+B,real_gutenberg_busterbear.txt,9,full-tree,True,0.0382,,it was the voice of the laughing brook .
+B,real_gutenberg_bryant.txt,11,full-tree,True,0.0653,,never had she dreamed that she could be so big .
+B,real_gutenberg_bryant.txt,15,full-tree,True,0.067,,suddenly he saw a big yellow light at the very edge of the sky .
+B,real_gutenberg_alice.txt,12,full-tree,True,0.041,,"'come , there 's no use in crying like that ! '"
+B,real_gutenberg_bryant.txt,13,full-tree,True,0.1,,"then , of course , the lion could see where they were ."
+B,real_gutenberg_bryant.txt,10,full-tree,True,0.0274,,the fox looked at him and began to run .
+B,real_gutenberg_alice.txt,13,full-tree,True,0.1351,,i 'd nearly forgotten that i 've got to grow up again !
+B,real_gutenberg_alice.txt,15,full-tree,True,0.1081,,"on various pretexts they all moved off , and alice was soon left alone ."
+B,real_gutenberg_alice.txt,10,full-tree,True,0.0339,,do n't let me hear the name again ! '
+B,real_gutenberg_bryant.txt,14,full-tree,True,0.0666,,"they had n't any little girls or any little boys , at all ."
+B,real_gutenberg_busterbear.txt,14,full-tree,True,0.1118,,little joe sat down on the bank and prepared to enjoy his breakfast .
+B,real_gutenberg_busterbear.txt,9,grounding-fail,False,0.0382,clauses=0,"why , little joe otter to be sure ."
+B,real_gutenberg_bryant.txt,11,full-tree,True,0.0431,,""" i 'll show you how to fool me ! """
+B,real_gutenberg_bryant.txt,11,full-tree,True,0.0536,,and she began to sink softly down toward the earth .
+B,real_gutenberg_alice.txt,11,full-tree,True,0.0878,,'i wonder if i shall fall right through the earth !
+B,real_gutenberg_bryant.txt,15,full-tree,True,0.174,,"when his mother came to bed he would cry , "" roll me around !"
+B,real_gutenberg_bryant.txt,10,grounding-fail,False,0.0514,clauses=0,""" 'see , all my leaves are dark crimson ."
+B,real_gutenberg_alice.txt,10,full-tree,True,0.0098,,this speech caused a remarkable sensation among the party .
+B,real_gutenberg_edgeworth.txt,13,grounding-fail,False,0.0879,clauses=0,mary did not choose to have anything to do with these people .
+B,real_gutenberg_burgess_more.txt,12,full-tree,True,0.0959,,little joe put the fish back on the log and waited .
+B,real_gutenberg_bryant.txt,14,grounding-fail,False,0.0976,clauses=0,"but at last she stood quite still , and spoke boldly and proudly ."
+B,real_gutenberg_burgess_more.txt,15,full-tree,True,0.0923,,then he sat down close to the edge of it and did n't move .
+B,real_gutenberg_bryant.txt,11,full-tree,True,0.0373,,""" the blackberry-bush , mamma ; what does it say ?"
+B,real_gutenberg_bryant.txt,12,full-tree,True,0.0814,,"just then , the little gingerbread boy came to a river ."
+B,real_gutenberg_alice.txt,14,full-tree,True,0.3766,,"if they had any sense , they 'd take the roof off . '"
+B,real_gutenberg_busterbear.txt,13,full-tree,True,0.0728,,he did the same thing in the next pool and the next .
+B,real_gutenberg_bryant.txt,15,full-tree,True,0.0554,,"but he always locked the door after him , and carried away the key ."
+B,real_gutenberg_burgess_more.txt,12,full-tree,True,0.0759,,so he did n't move so much as an eye lash .
+B,real_gutenberg_alice.txt,12,full-tree,True,0.0796,,'i must be getting somewhere near the centre of the earth .
+B,real_gutenberg_bryant.txt,15,full-tree,True,0.1278,,"and when he saw them , that naughty little jack rollaround began to tease ."
+B,real_gutenberg_alice.txt,11,full-tree,True,0.0492,,it 's high time you were all in bed ! '
+B,real_gutenberg_alice.txt,11,full-tree,True,0.122,,i wonder if i 've been changed in the night ?
+B,real_gutenberg_bryant.txt,13,full-tree,True,0.09,,"he braced himself with all his might , and pulled his best ."
+B,real_gutenberg_alice.txt,10,full-tree,True,0.0731,,i wonder what i should be like then ? '
+B,real_gutenberg_burgess_more.txt,11,full-tree,True,0.0989,,what finer breakfast could any one have than fresh-caught trout ?
+B,real_gutenberg_bryant.txt,12,full-tree,True,0.1075,,it had only one leg and one wing and one eye !
+B,real_gutenberg_bryant.txt,15,full-tree,True,0.0878,,"in the middle of the stream the fox said , "" oh , dear !"
+B,real_gutenberg_alice.txt,14,full-tree,True,0.0809,,"there ought to be a book written about me , that there ought !"
+B,real_gutenberg_burgess_more.txt,9,full-tree,True,0.0549,,little joe otter had his way too much .
+B,real_gutenberg_alice.txt,14,full-tree,True,0.1272,,let this be a lesson to you never to lose your temper ! '
+B,real_gutenberg_alice.txt,12,full-tree,True,0.0882,,i suppose dinah 'll be sending me on messages next ! '
+B,real_gutenberg_bryant.txt,15,full-tree,True,0.145,,""" yes , i will help you , "" cried the cloud once more ."
+B,real_gutenberg_alice.txt,11,full-tree,True,0.0673,,let me see -- how is it to be managed ?
+B,real_gutenberg_busterbear.txt,11,full-tree,True,0.0825,,"just you watch me get even with buster bear . """
+B,real_gutenberg_alice.txt,13,full-tree,True,0.1055,,"'dinah 'll miss me very much to-night , i should think ! '"
+B,real_gutenberg_edgeworth.txt,10,full-tree,True,0.0286,,it was in vain that mary related the fact .
+B,real_gutenberg_alice.txt,15,full-tree,True,0.1259,,'we wo n't talk about her any more if you 'd rather not . '
+B,real_gutenberg_alice.txt,14,full-tree,True,0.118,,"alice led the way , and the whole party swam to the shore ."
+B,real_gutenberg_alice.txt,11,full-tree,True,0.0845,,i almost think i can remember feeling a little different .
+B,real_gutenberg_busterbear.txt,15,full-tree,True,0.0949,,"once more he yawned , and slowly got to his feet and shook himself ."
+B,real_gutenberg_alice.txt,13,full-tree,True,0.0745,,'i wonder how many miles i 've fallen by this time ? '
+B,real_gutenberg_edgeworth.txt,9,full-tree,True,0.0184,,[*goody is not a word used in ireland .
+B,real_gutenberg_bryant.txt,13,full-tree,True,0.0825,,he slipped through and saw some stairs going down into the earth .
+B,real_gutenberg_busterbear.txt,9,grounding-fail,False,0.0425,clauses=0,""" that 's a very fine looking trout ."
+B,real_gutenberg_burgess_more.txt,12,full-tree,True,0.0859,,there is nothing quite like common sense to smooth out troubles .
+B,real_gutenberg_burgess_more.txt,13,full-tree,True,0.0128,,""" nothing , nothing at all , "" replied grandfather frog mildly ."
+B,real_gutenberg_edgeworth.txt,13,full-tree,True,0.1188,,he found that edmund was both quick and exact in executing commissions .
+B,real_gutenberg_alice.txt,10,full-tree,True,0.0491,,'as if i would talk on such a subject !
+B,real_gutenberg_alice.txt,10,full-tree,True,0.008,,'mine is a long and a sad tale ! '
+B,real_gutenberg_burgess_more.txt,13,full-tree,True,0.1333,,"i guess that 'll teach him to let our fish alone . """
+B,real_gutenberg_busterbear.txt,11,full-tree,True,0.06,,"anyway , that is what little joe told billy mink ."
+B,real_gutenberg_burgess_more.txt,10,full-tree,True,0.0353,,""" you 're pretty smart , mr . otter !"
+B,real_gutenberg_burgess_more.txt,15,full-tree,True,0.0593,,"yes , sir , that 's what it was , and all it was ."
+C,real_gutenberg_bryant.txt,23,full-tree,True,0.1667,,""" really , "" he said , "" you do not live well at all ; you should see how i live !"
+C,real_gutenberg_busterbear.txt,24,full-tree,True,0.8815,,"and that is just what buster bear was doing , and it was very plain to see that he was having great fun ."
+C,real_gutenberg_bryant.txt,22,full-tree,True,0.1977,,"a little boy sat at his mother 's knees , by the long western window , looking out into the garden ."
+C,real_gutenberg_bryant.txt,23,full-tree,True,0.3637,,"but as soon as it could walk the little half-chick showed a most headstrong spirit , worse than any of its brothers ."
+C,real_gutenberg_bryant.txt,19,full-tree,True,0.1192,,""" do n't blow me so , wind , "" he cried , "" let me down ! """
+C,real_gutenberg_burgess_more.txt,17,grounding-fail,False,0.1357,clauses=0,"there , on the bank beside the little pool , were the heads of three trout ."
+C,real_gutenberg_edgeworth.txt,19,full-tree,True,0.1171,,"**what are in ireland called moats , are , in england , called danish mounds , or barrows ."
+C,real_gutenberg_bryant.txt,24,full-tree,True,0.3252,,"the field mouse hurried as fast as he could down the last stairs , and pushed through just as the door was closing ."
+C,real_gutenberg_burgess_more.txt,22,full-tree,True,0.5052,,"he had a funny feeling , too , that he was being watched , although he could n't see any one ."
+C,real_gutenberg_edgeworth.txt,18,full-tree,True,0.1738,,mr . hopkins thought that he had no means of escape but by boldly persisting in falsehood .
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.5385,,"there was once upon a time a spanish hen , who hatched out some nice little chickens ."
+C,real_gutenberg_busterbear.txt,19,full-tree,True,0.2851,,""" must be that chatterer got out of bed the wrong way this morning , "" thought he ."
+C,real_gutenberg_burgess_more.txt,21,full-tree,True,0.297,,little joe otter and buster bear were watching him and taking the greatest care to keep out of his sight .
+C,real_gutenberg_alice.txt,16,grounding-fail,False,0.1916,clauses=0,"run home this moment , and fetch me a pair of gloves and a fan !"
+C,real_gutenberg_edgeworth.txt,22,full-tree,True,0.2853,,"she left the fair as soon as she could ; and though she struggled against it , she felt very melancholy ."
+C,real_gutenberg_bryant.txt,16,full-tree,True,0.0986,,"at that , they were both so ashamed that neither would speak to the other ."
+C,real_gutenberg_bryant.txt,21,full-tree,True,0.3001,,the small blades of grass creep thick about my feet ; the sweet rain helps to swell my shining buds .
+C,real_gutenberg_alice.txt,23,full-tree,True,0.074,,"edwin and morcar , the earls of mercia and northumbria -- "" ' 'i thought you did , ' said the mouse ."
+C,real_gutenberg_edgeworth.txt,21,full-tree,True,0.6122,,he informed him that this list and these drawings came from two ladies who had seen the coins in question .
+C,real_gutenberg_busterbear.txt,17,full-tree,True,0.1509,,"but looking at the matter as little joe did , it amounted to the same thing ."
+C,real_gutenberg_bryant.txt,23,full-tree,True,0.4546,,"at last , there came a little rustling , whispering sound , all round the window : _rustle , whisper , whisper_ ."
+C,real_gutenberg_busterbear.txt,24,full-tree,True,0.3091,,"perhaps he did n't tell it quite exactly as it was , but you know he was very badly frightened at the time ."
+C,real_gutenberg_edgeworth.txt,20,full-tree,True,0.1988,,"mary immediately set before her some milk , and picked a good potato out of the bowl for her ."
+C,real_gutenberg_burgess_more.txt,19,full-tree,True,0.368,,"to be sure bobby coon caught a few little fish there , but they did n't mind bobby ."
+C,real_gutenberg_bryant.txt,23,full-tree,True,0.2058,,"then they said , -- so she poked her head through ; and she was in the midst of a beautiful garden ."
+C,real_gutenberg_edgeworth.txt,18,full-tree,True,0.2862,,"half a crown , goody grope said , was the least she could be content to take ."
+C,real_gutenberg_busterbear.txt,17,full-tree,True,0.1486,,"he heard the sweet voices of happy little singers , and they were good to hear ."
+C,real_gutenberg_bryant.txt,21,full-tree,True,0.1473,,"the same soft little voice answered , "" it 's the rain , and i want to come in ! """
+C,real_gutenberg_edgeworth.txt,17,full-tree,True,0.1199,,""" that is the very reason that you have not a halfpenny , "" said betsy ."
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.1095,,"but , of course , as you know very well , there was n't any other lion !"
+C,real_gutenberg_alice.txt,19,grounding-fail,False,0.0886,clauses=0,"why , there 's hardly room for you , and no room at all for any lesson-books ! '"
+C,real_gutenberg_edgeworth.txt,22,full-tree,True,0.3554,,"mary , do n't be cast down -- we have no need to be cast down -- we are honest . """
+C,real_gutenberg_bryant.txt,22,full-tree,True,0.1893,,"the acorn was rolling down , with a soft tapping sound , ahead of him , so down he went too ."
+C,real_gutenberg_bryant.txt,25,full-tree,True,0.7597,,and his mother would put out her hand from the big bed and push the little bed back and forth till she was tired .
+C,real_gutenberg_alice.txt,24,full-tree,True,0.3635,,"for , you see , as she could n't answer either question , it did n't much matter which way she put it ."
+C,real_gutenberg_alice.txt,19,full-tree,True,0.1183,,"alice called after it ; and the others all joined in chorus , 'yes , please do ! '"
+C,real_gutenberg_burgess_more.txt,21,full-tree,True,0.1752,,now farmer brown 's boy did n't know that buster bear had come down to the green forest to live .
+C,real_gutenberg_alice.txt,17,full-tree,True,0.1388,,"and she began fancying the sort of thing that would happen : ' "" miss alice !"
+C,real_gutenberg_busterbear.txt,24,full-tree,True,0.445,,he heard chatterer the red squirrel scolding as fast as he could make his tongue go and working himself into a terrible rage .
+C,real_gutenberg_busterbear.txt,19,full-tree,True,0.1792,,but little joe just turned his back and went off down the laughing brook in a great rage .
+C,real_gutenberg_edgeworth.txt,21,full-tree,True,0.1729,,"edmund agreed with her , that they ought to carry it all immediately to mr . hopkins , the agent ."
+C,real_gutenberg_bryant.txt,24,full-tree,True,0.3383,,"little gingerbread boy , my shoulder is sinking ; jump on my nose , and i can hold you out of water . """
+C,real_gutenberg_burgess_more.txt,24,full-tree,True,0.6889,,"but when they discovered that buster bear was a fisherman , they made up their minds that something had got to be done ."
+C,real_gutenberg_edgeworth.txt,18,grounding-fail,False,0.1783,clauses=0,"mary , encouraged by these kind friends , went on with her little manufacture with increased activity ."
+C,real_gutenberg_edgeworth.txt,24,full-tree,True,0.34,,"it was by one of his rush candles that mary read it ; and the letter was as follows : -- "" joy !"
+C,real_gutenberg_edgeworth.txt,18,full-tree,True,0.1752,,"peggy and anne were soon roused , when they heard that there was a letter from edmund ."
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.1923,,and she picked the little half-chick up by one leg and threw him out of the window .
+C,real_gutenberg_edgeworth.txt,25,full-tree,True,0.2483,,"does not he remember edmund 's counting the things to him upon the great table in his hall , and we all standing by !"
+C,real_gutenberg_burgess_more.txt,22,full-tree,True,0.2258,,"farmer brown 's boy trudged on to the next pool , and there was a puzzled frown on his freckled face ."
+C,real_gutenberg_alice.txt,18,grounding-fail,False,0.1749,clauses=0,"and at last she spread out her hand again , and made another snatch in the air ."
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.5238,,"the minute the fox reached the bank he threw back his head , and gave a snap !"
+C,real_gutenberg_alice.txt,24,full-tree,True,0.4658,,"heading/verse paragraphs filtered ( scripts/fetch_corpus . py : : _is_prose_paragraph ) ; surviving paragraphs chunked into ~20-sentence passages , whitespace-normalized , unedited otherwise ."
+C,real_gutenberg_burgess_more.txt,17,full-tree,True,0.1256,,# real prose ( corpus scale-up ) -- the adventures of buster bear by thornton w .
+C,real_gutenberg_bryant.txt,23,full-tree,True,0.2968,,but at last a day came when the lion was nearer still and the little mother jackal was frightened almost to death .
+C,real_gutenberg_bryant.txt,20,full-tree,True,0.3025,,he was just on the point of putting his teeth into the cheese when the city mouse saw him .
+C,real_gutenberg_burgess_more.txt,19,full-tree,True,0.5643,,grandfather frog knew it and shook his head very soberly when little joe had been disrespectful to him .
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.1332,,"the next minute he said , "" my goodness gracious , i am three quarters gone ! """
+C,real_gutenberg_alice.txt,19,full-tree,True,0.3568,,( dinah was the cat . ) 'i hope they 'll remember her saucer of milk at tea-time .
+C,real_gutenberg_bryant.txt,16,full-tree,True,0.1257,,"but the little gingerbread boy laughed harder than ever , and ran like the wind ."
+C,real_gutenberg_alice.txt,22,full-tree,True,0.3637,,"no , i 've made up my mind about it ; if i 'm mabel , i 'll stay down here !"
+C,real_gutenberg_burgess_more.txt,17,full-tree,True,0.3057,,"billy sometimes catches more fish than he can eat , but then he usually hides them ."
+C,real_gutenberg_burgess_more.txt,20,full-tree,True,0.1112,,"mr . and mrs . redwing were there , and blacky the crow was sitting in the big hickory-tree ."
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.5184,,"but the moon answered never a word , and jack rollaround could not see where to steer ."
+C,real_gutenberg_edgeworth.txt,25,full-tree,True,0.6728,,"the children turned pale and stood motionless ; but edmund threw down his hammer , and ran out to see what was the matter ."
+C,real_gutenberg_bryant.txt,19,full-tree,True,0.183,,"it keeps nodding , nodding to me behind the fence ; what does it say , mamma ? """
+C,real_gutenberg_alice.txt,20,full-tree,True,0.1357,,"but if i 'm not the same , the next question is , who in the world am i ?"
+C,real_gutenberg_alice.txt,23,full-tree,True,0.2498,,"in another moment down went alice after it , never once considering how in the world she was to get out again ."
+C,real_gutenberg_alice.txt,18,full-tree,True,0.1215,,"and they all crowded round it , panting , and asking , 'but who has won ? '"
+C,real_gutenberg_bryant.txt,22,full-tree,True,0.3069,,"and every day the little red man went away through the tiny door , and did not come back till afternoon ."
+C,real_gutenberg_burgess_more.txt,24,full-tree,True,0.4225,,"but it takes more than three trout to fill buster bear 's stomach , so he kept on to the next little pool ."
+C,real_gutenberg_edgeworth.txt,18,full-tree,True,0.186,,""" when good luck came to you , what a shame to turn your back upon it !"
+C,real_gutenberg_edgeworth.txt,18,full-tree,True,0.5705,,three guineas a year she thought was the highest rent for which she could venture to engage .
+C,real_gutenberg_bryant.txt,19,full-tree,True,0.2228,,and he wanted to get wings and a tail so he did get some wings and a tail .
+C,real_gutenberg_alice.txt,19,full-tree,True,0.1874,,"'but it 's no use now , ' thought poor alice , 'to pretend to be two people !"
+C,real_gutenberg_alice.txt,20,full-tree,True,0.2083,,and the eaglet bent down its head to hide a smile : some of the other birds tittered audibly .
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.081,,"but the little gingerbread boy shouted across to him , "" you ca n't catch me ! """
+C,real_gutenberg_edgeworth.txt,20,full-tree,True,0.2629,,"she had a small neat cottage , and there was not a weed to be seen in her garden ."
+C,real_gutenberg_alice.txt,24,full-tree,True,0.2156,,"'as wet as ever , ' said alice in a melancholy tone : 'it does n't seem to dry me at all . '"
+C,real_gutenberg_burgess_more.txt,18,full-tree,True,0.1913,,""" what have foolish green flies got to do with my -- i mean _our_ fish ? """
+C,real_gutenberg_bryant.txt,25,full-tree,True,0.4988,,when he had gone some distance the little half-chick came to a little brook that was caught in the weeds and in much trouble .
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.2329,,"she said , "" men of earth , i will help you , come what may ! """
+C,real_gutenberg_alice.txt,19,full-tree,True,0.2589,,"'i shall be punished for it now , i suppose , by being drowned in my own tears !"
+C,real_gutenberg_bryant.txt,20,full-tree,True,0.606,,"grunted the whale , "" i 'll pull her out , if she is stuck to the horns . """
+C,real_gutenberg_edgeworth.txt,16,full-tree,True,0.1638,,"mary told her that she had carried it to mr . hopkins , the agent ."
+C,real_gutenberg_alice.txt,23,full-tree,True,0.3943,,"'i beg your pardon , ' said alice very humbly : 'you had got to the fifth bend , i think ? '"
+C,real_gutenberg_alice.txt,19,full-tree,True,0.156,,"'would it be of any use , now , ' thought alice , 'to speak to this mouse ?"
+C,real_gutenberg_alice.txt,17,full-tree,True,0.2042,,let me see : i 'll give them a new pair of boots every christmas . '
+C,real_gutenberg_burgess_more.txt,24,full-tree,True,0.2671,,"one of them moved now , and quicker than a wink had scooped one of those foolish fish out on to the bank ."
+C,real_gutenberg_busterbear.txt,20,full-tree,True,0.2816,,""" i 'm going fishing , "" said he in his deep grumbly-rumbly voice to no one in particular ."
+C,real_gutenberg_edgeworth.txt,22,full-tree,True,0.2896,,"as the ladies were standing at the gate , they heard a voice near them crying , "" o , mother !"
+C,real_gutenberg_alice.txt,19,grounding-fail,False,0.0814,clauses=0,"but the insolence of his normans -- "" how are you getting on now , my dear ? '"
+C,real_gutenberg_alice.txt,16,full-tree,True,0.1467,,"and then a voice she had never heard before , 'sure then i 'm here !"
+C,real_gutenberg_burgess_more.txt,16,full-tree,True,0.0961,,""" thank you , "" replied buster , and his eyes twinkled more than ever ."
+C,real_gutenberg_bryant.txt,25,full-tree,True,0.5817,,"one , two , three , came out plump and fluffy ; but when the fourth shell broke , out came a little half-chick !"
+C,real_gutenberg_edgeworth.txt,22,full-tree,True,0.3771,,"besides this , when he waited at dinner he made such a noise in walking that his fellow-servants laughed at him ."
+C,real_gutenberg_bryant.txt,23,full-tree,True,0.2777,,"he could not swim across , and he wanted to keep running away from the cow and the horse and the people ."
+C,real_gutenberg_bryant.txt,22,full-tree,True,0.241,,""" please stop , little gingerbread boy , "" said the horse , "" you look very good to eat . """
+C,real_gutenberg_bryant.txt,20,full-tree,True,0.2349,,"the little boy could never get enough ; so for this he was called "" little jack rollaround . """
+C,real_gutenberg_alice.txt,20,full-tree,True,0.1784,,"alice replied eagerly , for she was always ready to talk about her pet : 'dinah 's our cat ."
+C,real_gutenberg_alice.txt,21,full-tree,True,0.1726,,"i suppose i ought to eat or drink something or other ; but the great question is , what ? '"
+C,real_gutenberg_bryant.txt,25,full-tree,True,0.2924,,"the little country mouse looked at the trap , and he looked at the cheese , and he looked at the little city mouse ."
+C,real_gutenberg_bryant.txt,19,full-tree,True,0.138,,"but jack rollaround only behaved the worse : "" get out of the way , old moon ! """
+C,real_gutenberg_alice.txt,22,full-tree,True,0.5331,,"'nobody seems to like her , down here , and i 'm sure she 's the best cat in the world !"
+C,real_gutenberg_bryant.txt,25,full-tree,True,0.2063,,""" it 's the sunshine , "" said a little , soft , cheery voice , "" and i want to come in ! """
+C,real_gutenberg_busterbear.txt,17,grounding-fail,False,0.1439,clauses=0,""" it 's too bad to waste such a fine fish , "" said buster thoughtfully ."
+C,real_gutenberg_bryant.txt,21,full-tree,True,0.1575,,""" 'a few days more , and i drop the white petals down among the grass , and , lo !"
+C,real_gutenberg_edgeworth.txt,23,full-tree,True,0.3256,,"it was at the house of the schoolmistress that they stopped , and she gave them a good account of these orphans ."
+C,real_gutenberg_edgeworth.txt,17,grounding-fail,False,0.0387,clauses=0,in the pleasant valley of ashton there lived an elderly woman of the name of preston .
+C,real_gutenberg_burgess_more.txt,22,full-tree,True,0.9221,,perhaps he would n't have been afraid this time if it had n't been for the surprise of what he found .
+C,real_gutenberg_alice.txt,24,full-tree,True,0.6354,,"cried alice again , for this time the mouse was bristling all over , and she felt certain it must be really offended ."
+C,real_gutenberg_alice.txt,19,full-tree,True,0.1763,,"'why , ' said the dodo , 'the best way to explain it is to do it . '"
+C,real_gutenberg_alice.txt,18,full-tree,True,0.0927,,"said alice to herself , rather sharply ; 'i advise you to leave off this minute ! '"
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.1731,,but as he was passing the windows of the kitchen the cook looked out and saw him .
+C,real_gutenberg_burgess_more.txt,18,full-tree,True,0.136,,"the farther he went down the laughing brook , the more puzzled farmer brown 's boy grew ."
+C,real_gutenberg_burgess_more.txt,24,full-tree,True,0.7634,,""" now i wonder who was so thoughtful as to leave this fine breakfast ready for me , "" said he out loud ."
+C,real_gutenberg_bryant.txt,22,full-tree,True,0.2291,,"the elephant was jerked off his feet , and came slipping and sliding to the beach , and into the surf ."
+C,real_gutenberg_bryant.txt,20,full-tree,True,0.2885,,"when she brought the flour home she said , "" who will make some bread with this flour ? """
+C,real_gutenberg_bryant.txt,23,full-tree,True,0.1766,,"when you hear that , pull very , very hard , for the cow is stuck very deep in the mud . """
+C,real_gutenberg_alice.txt,24,grounding-fail,False,0.2458,clauses=0,"catch hold of this rope -- will the roof bear ? -- mind that loose slate -- oh , it 's coming down !"
+C,real_gutenberg_bryant.txt,18,full-tree,True,0.1686,,"i hold them as high as i can for the little boy , who comes dancing out ."
+C,real_gutenberg_edgeworth.txt,17,full-tree,True,0.0662,,"decayed labourers , women , and children make it their business to procure and prepare them ."
+C,real_gutenberg_bryant.txt,24,full-tree,True,0.3412,,"the kind moon made a path up to the sky , and up sailed the little bed into the midst of the sky ."
+C,real_gutenberg_bryant.txt,19,full-tree,True,0.3194,,""" if you 'll excuse me , "" he said , "" i think i will go home ."
+C,real_gutenberg_burgess_more.txt,18,full-tree,True,0.7398,,"it was fun to catch the fish , and it was still more fun to eat them ."
+C,real_gutenberg_alice.txt,19,full-tree,True,0.1516,,"'how queer it seems , ' alice said to herself , 'to be going messages for a rabbit !"
+D,real_gutenberg_bryant.txt,31,full-tree,True,0.9654,,"and he said to the poor mouse , -- "" you shall be my servant ; you shall make my bed and sweep my room and cook my broth . """
+D,real_gutenberg_bryant.txt,29,full-tree,True,0.4569,,"little mr field mouse ran to the root and poked his nose under after the acorn , and there he saw a small round hole in the ground ."
+D,real_gutenberg_alice.txt,29,full-tree,True,0.4161,,"and alice was so much frightened that she ran off at once in the direction it pointed to , without trying to explain the mistake it had made ."
+D,real_gutenberg_bryant.txt,44,full-tree,True,1.9121,,"every day they dry and wither more and more ; by and by they will be so weak they can scarcely cling to my branches , and the north wind will tear them all away , and nobody will remember them any more ."
+D,real_gutenberg_burgess_more.txt,26,full-tree,True,0.541,,"when they came to the place where buster was waiting , all he had to do was to scoop them out on to the bank ."
+D,real_gutenberg_alice.txt,36,full-tree,True,1.1006,,"it was the white rabbit , trotting slowly back again , and looking anxiously about as it went , as if it had lost something ; and she heard it muttering to itself 'the duchess !"
+D,real_gutenberg_edgeworth.txt,56,full-tree,True,3.2323,,"she , however , in the midst of her hurry , found time to make a very pretty pair , with neat roses , as a present for her schoolmistress , who , now that she saw her pupil in a good way of business , consented to receive the amount of her old debt ."
+D,real_gutenberg_burgess_more.txt,26,full-tree,True,0.2178,,"he looked up the laughing brook and down the laughing brook and this way and that way , but no one was to be seen ."
+D,real_gutenberg_edgeworth.txt,52,full-tree,True,18.4158,,"mr . harvey , in reply , observed that he could not consider as rubbish the gold coins which were amongst them when they were discovered ; and he inquired why these gold coins , and those of the reign of henry the seventh , were not now sent to him ."
+D,real_gutenberg_alice.txt,50,full-tree,True,3.6107,,"however , on the second time round , she came upon a low curtain she had not noticed before , and behind it was a little door about fifteen inches high : she tried the little golden key in the lock , and to her great delight it fitted !"
+D,real_gutenberg_alice.txt,32,full-tree,True,0.4559,,"and she kept on puzzling about it while the mouse was speaking , so that her idea of the tale was something like this : -- 'you are not attending ! '"
+D,real_gutenberg_edgeworth.txt,40,full-tree,True,4.3124,,"she offered a penny for the paper ; but the master would not take anything from her , but gave her the paper when he found that she wanted it to make a garland for her mother 's grave ."
+D,real_gutenberg_bryant.txt,31,full-tree,True,0.6475,,"but when the whale found himself sliding toward the land he was so provoked with the cow that he dived head first , down to the bottom of the sea ."
+D,real_gutenberg_alice.txt,26,full-tree,True,0.3727,,"let me see : four times five is twelve , and four times six is thirteen , and four times seven is -- oh dear !"
+D,real_gutenberg_alice.txt,68,full-tree,True,3.7479,,"alice guessed in a moment that it was looking for the fan and the pair of white kid gloves , and she very good-naturedly began hunting about for them , but they were nowhere to be seen -- everything seemed to have changed since her swim in the pool , and the great hall , with the glass table and the little door , had vanished completely ."
+D,real_gutenberg_edgeworth.txt,31,full-tree,True,1.4739,,"it was summer time , and he got up early , because he liked to go home to see his sisters , and he took his share in the manufactory ."
+D,real_gutenberg_alice.txt,27,full-tree,True,0.3992,,"for the mouse was swimming away from her as hard as it could go , and making quite a commotion in the pool as it went ."
+D,real_gutenberg_alice.txt,54,full-tree,True,1.7513,,"she went on growing , and growing , and very soon had to kneel down on the floor : in another minute there was not even room for this , and she tried the effect of lying down with one elbow against the door , and the other arm curled round her head ."
+D,real_gutenberg_alice.txt,68,cap-hit,False,30.0046,"parse exceeded 30.0s wall-clock cap (mid-_apply_all, ruleset 'predicate1')","she drew her foot as far down the chimney as she could , and waited till she heard a little animal ( she could n't guess of what sort it was ) scratching and scrambling about in the chimney close above her : then , saying to herself 'this is bill , ' she gave one sharp kick , and waited to see what would happen next ."
+D,real_gutenberg_alice.txt,45,full-tree,True,3.6846,,"she was close behind it when she turned the corner , but the rabbit was no longer to be seen : she found herself in a long , low hall , which was lit up by a row of lamps hanging from the roof ."
+D,real_gutenberg_edgeworth.txt,73,full-tree,True,2.6938,,"***near kells , in ireland , there is a round tower , which was in imminent danger of being pulled down by an old woman 's rooting at its foundation , in hopes of finding treasure . ] year after year st . patrick 's day came about , without her ever finding a farthing by all her groping ; and as she was always idle , she grew poorer and poorer ."
+D,real_gutenberg_edgeworth.txt,69,full-tree,True,6.2972,,"but i will not tell you how it all came about till we meet , which will be next week , as we are ( i mean , master and mistress , and the young ladies -- bless them ! -- and mr . gilbert and i ) coming down to the vicarage to keep christmas ; and a happy christmas 'tis likely to be for honest folks ."
+D,real_gutenberg_edgeworth.txt,79,full-tree,True,19.9319,,"a pound of common grease may be procured for fourpence , and about six pounds of grease will dip a pound of rushes and one pound of rushes may be bought for one shilling ; so that a pound of rushes , medicated and ready for use , will cost three shillings . "" ] the servant was pleased with his good nature in this trifling instance , and remembered it long after it was forgotten by edmund ."
+D,real_gutenberg_edgeworth.txt,33,full-tree,True,1.6265,,"as soon as they are cut , they must be flung into water , and kept there ; for otherwise they will dry and shrink , and the peel will not run ."
+D,real_gutenberg_bryant.txt,31,full-tree,True,0.4104,,"so the poor old lion floundered about and floundered about , and as he could n't get up the steep sides of the well , he was at last drowned ."
+D,real_gutenberg_burgess_more.txt,26,full-tree,True,0.6559,,"oh , my , no ! the truth is , he thought all the time that he was preventing buster bear from getting a breakfast ."
+D,real_gutenberg_alice.txt,44,full-tree,True,1.4832,,"it was as much as she could do , lying down on one side , to look through into the garden with one eye ; but to get through was more hopeless than ever : she sat down and began to cry again ."
+D,real_gutenberg_edgeworth.txt,65,full-tree,True,27.6853,,"mary paid the half-crown , and was in hopes that she had got rid for ever of her tormentor , but she was mistaken , for scarcely was the week at an end before the old woman appeared before her again , and repeated her threats of falling to work the next morning , unless she had something given to her to buy tobacco ."
+D,real_gutenberg_edgeworth.txt,32,full-tree,True,0.5843,,"all the neighbours shared in their joy , and the day of their removal from the ruins of rossmore castle to their new house was the happiest of the christmas holidays ."
+D,real_gutenberg_bryant.txt,30,full-tree,True,1.1207,,"he was just thinking how lucky the city mouse was , when suddenly the door opened with a bang , and in came the cook to get some flour ."
+D,real_gutenberg_edgeworth.txt,35,full-tree,True,0.5717,,"it is not only by their superior riches , but it is yet more by their superior knowledge , that persons in the higher rank of life may assist those in a lower condition ."
+D,real_gutenberg_edgeworth.txt,33,full-tree,True,0.5712,,"edmund was out working with a farmer , mary was spinning , and her little sisters were measuring out some bogberries , of which they had gathered a basketful , for sale ."
+D,real_gutenberg_burgess_more.txt,42,full-tree,True,0.7882,,"then , instead of keeping on to the little pool , he hurried to a place way down the laughing brook , where the water was very shallow , hardly over his feet , and there he sat chuckling to himself ."
+D,real_gutenberg_edgeworth.txt,44,full-tree,True,0.6876,,"# real prose ( corpus scale-up ) -- the parent 's assistant by maria edgeworth ( 1796 ) , public domain , via nltk . corpus . gutenberg fileid 'edgeworth-parents . txt' ( cached here so the converter/tests need no network access ) ."
+D,real_gutenberg_edgeworth.txt,43,full-tree,True,6.6699,,"she returned home to the old castle , mortified that she had no good news to tell anne and peggy , who she knew expected to hear that she had found a nice house for them in the village near their brother ."
+D,real_gutenberg_burgess_more.txt,54,cap-hit,False,30.0035,"parse exceeded 30.0s wall-clock cap (mid-_apply_all, ruleset 'predicate1')","he may be a bully , because great big people are very apt to be bullies , and though i have n't seen him , i guess buster bear is big enough from all i have heard , but i do n't see how he is a thief , "" said grandfather frog ."
+D,real_gutenberg_edgeworth.txt,31,full-tree,True,0.4126,,""" it ca n't be taken from us , "" cried edmund , "" poor orphans though we are , and he a rich gentleman , as he calls himself ."
+D,real_gutenberg_alice.txt,41,full-tree,True,1.6521,,"tell me that first , and then , if i like being that person , i 'll come up : if not , i 'll stay down here till i 'm somebody else "" -- but , oh dear ! '"
+D,real_gutenberg_edgeworth.txt,34,full-tree,True,0.7569,,""" no , "" replied the postmaster 's daughter ; "" this house is given to them as a reward -- that was the word in the letter ; for i saw it ."
+D,real_gutenberg_busterbear.txt,52,full-tree,True,6.3712,,""" i was sitting on the bank of the laughing brook beside one of the little pools , "" he told billy mink , "" and was just going to eat a fat trout i had caught , when who should come along but that great big bully , buster bear ."
+D,real_gutenberg_edgeworth.txt,49,full-tree,True,1.2349,,"a full account of all that happened was sent to england to mr . harvey , their landlord , and a few posts afterwards there came a letter from him , containing a dismissal of the dishonest agent , and a reward for the honest and industrious orphans ."
+D,real_gutenberg_bryant.txt,28,full-tree,True,0.3449,,"whenever he wanted anything to eat , all he had to do was to come up out of his cave in the stones and earth and _roar_ ."
+D,real_gutenberg_bryant.txt,29,full-tree,True,0.439,,"and as the day passed , and the cloud became larger , this wish to do something for the people of earth was ever greater in her heart ."
+D,real_gutenberg_edgeworth.txt,27,full-tree,True,1.2893,,"he had gathered and stripped a good provision of rushes in the month of august , and a neighbour gave him grease to dip them in ."
+D,real_gutenberg_alice.txt,35,full-tree,True,0.4877,,"( for , with all her knowledge of history , alice had no very clear notion how long ago anything had happened . ) so she began again : 'ou est ma chatte ? '"
+D,real_gutenberg_alice.txt,32,full-tree,True,1.4019,,"i would n't be in bill 's place for a good deal : this fireplace is narrow , to be sure ; but i think i can kick a little ! '"
+D,real_gutenberg_bryant.txt,26,full-tree,True,0.7119,,""" that cow must be stuck mighty tight "" ; and he drove his tail deep in the water , and gave a marvellous pull ."
+D,real_gutenberg_edgeworth.txt,31,full-tree,True,0.8631,,"the rush candles caught his attention ; for he had never seen any of them before , as he came from a part of england where they were not used ."
+D,real_gutenberg_edgeworth.txt,43,full-tree,True,18.1017,,"i wish it was not so dark , mother , that you might just step out and see the great bed i 've dug ; i know you 'd say it was no bad day 's work -- and oh , mother !"
+D,real_gutenberg_alice.txt,29,full-tree,True,0.4085,,"everything is so out-of-the-way down here , that i should think very likely it can talk : at any rate , there 's no harm in trying . '"
+D,real_gutenberg_bryant.txt,27,full-tree,True,0.307,,""" no , it is n't , "" said the little red man , "" i have it ; you will never see it again . """
+D,real_gutenberg_bryant.txt,26,full-tree,True,0.3902,,"they had run away so many times that they were quite thin and very tired , and they could not run so fast any more ."
+D,real_gutenberg_burgess_more.txt,39,full-tree,True,1.2299,,"and so he was so surprised that he had hard work to believe his own eyes , and he had a queer feeling all over , -- a little chilly feeling , although it was a warm day ."
+D,real_gutenberg_alice.txt,33,full-tree,True,1.155,,"alice took up the fan and gloves , and , as the hall was very hot , she kept fanning herself all the time she went on talking : 'dear , dear !"
+D,real_gutenberg_edgeworth.txt,45,full-tree,True,1.2789,,"mr . hopkins , the agent , imagined that no one knew of the discovery of this treasure but himself and these poor children ; so , not being as honest as they were , he resolved to keep it for his own use ."
+D,real_gutenberg_alice.txt,74,full-tree,True,4.2849,,"she is such a dear quiet thing , ' alice went on , half to herself , as she swam lazily about in the pool , 'and she sits purring so nicely by the fire , licking her paws and washing her face -- and she is such a nice soft thing to nurse -- and she 's such a capital one for catching mice -- oh , i beg your pardon ! '"
+D,real_gutenberg_bryant.txt,34,full-tree,True,0.814,,""" now , mother , do n't you fret , "" said the little father jackal ; "" you do just as i tell you , and it will be all right . """
+D,real_gutenberg_edgeworth.txt,28,full-tree,True,0.816,,"at first he refused to tell them from whom he got them , because he had bought them , he said , under a promise of secrecy ."
+D,real_gutenberg_alice.txt,30,full-tree,True,1.2435,,"only i do n't think , ' alice went on , 'that they 'd let dinah stop in the house if it began ordering people about like that ! '"
+D,real_gutenberg_bryant.txt,27,full-tree,True,0.3071,,"one day little brother rabbit was running along on the sand , lippety , lippety , when he saw the whale and the elephant talking together ."
+D,real_gutenberg_alice.txt,49,full-tree,True,1.3252,,"she hastily put down the bottle , saying to herself 'that 's quite enough -- i hope i sha n't grow any more -- as it is , i ca n't get out at the door -- i do wish i had n't drunk quite so much ! '"
+D,real_gutenberg_burgess_more.txt,36,full-tree,True,1.8649,,""" either the trout have lost their appetite or they have grown very wise , "" muttered farmer brown 's boy , as after a long time he moved on to the next little pool ."
+D,real_gutenberg_edgeworth.txt,94,cap-hit,False,30.0064,"parse exceeded 30.0s wall-clock cap (mid-_apply_all, ruleset 'predicate1')","when he was questioned by gilbert why he did not bring an answer , he did not attempt to make any excuse ; he did not say , "" there was no answer , please your honour , "" or , "" they bid me not to wait , "" etc . ; but he told exactly the truth ; and though gilbert scolded him for being so impatient as not to wait , yet his telling the truth was more to the boy 's advantage than any excuse he could have made ."
+D,real_gutenberg_bryant.txt,59,cap-hit,False,30.0052,"parse exceeded 30.0s wall-clock cap (mid-_apply_all, ruleset 'predicate1')","this was what they were saying : -- "" you are the biggest thing on the land , brother elephant , "" said the whale , "" and i am the biggest thing in the sea ; if we join together we can rule all the animals in the world , and have our way about everything . """
+D,real_gutenberg_edgeworth.txt,54,full-tree,True,4.5533,,""" my hands must be washed , "" said george , a little boy who came running in ; "" i ran so fast that i might be in time , to go to work along with you all , that i tumbled down , and look how i have dirtied my hands ."
+D,real_gutenberg_burgess_more.txt,34,full-tree,True,2.686,,"so this morning he only went far enough to make sure that if little joe were watching for him , as he was sure he would be , he would see him coming ."
+D,real_gutenberg_busterbear.txt,43,full-tree,True,1.5345,,"of course that was n't nice talk and anything but a nice spirit , but little joe otter 's temper is sometimes pretty short , especially when he is hungry , and this time he had had no breakfast , you know ."
+D,real_gutenberg_edgeworth.txt,36,full-tree,True,2.7154,,"isabella and caroline knew them again instantly ; and as the cross which isabella had made on each of them was still visible through a magnifying glass , there could be no possibility of doubt ."
+D,real_gutenberg_edgeworth.txt,78,cap-hit,False,30.0048,"parse exceeded 30.0s wall-clock cap (mid-_apply_all, ruleset 'predicate1')","hopkins had sold the gold coins , and some of the others ; and he flattered himself that the children , and the young ladies , to whom he now found they had been shown , could not tell whether what they had seen were gold or not , and he was not in the least apprehensive that those of henry the seventh 's reign should be reclaimed from him as he thought they had escaped attention ."
+D,real_gutenberg_alice.txt,69,cap-hit,False,30.0054,"parse exceeded 30.0s wall-clock cap (mid-_apply_all, ruleset 'predicate1')","last came a little feeble , squeaking voice , ( 'that 's bill , ' thought alice , ) 'well , i hardly know -- no more , thank ye ; i 'm better now -- but i 'm a deal too flustered to tell you -- all i know is , something comes at me like a jack-in-the-box , and up i goes like a sky-rocket ! '"
+D,real_gutenberg_edgeworth.txt,55,full-tree,True,1.3688,,"her mother never spoke rightly afterwards , but talked in a confused way about some debts , and one in particular , which she owed to a schoolmistress for mary 's schooling ; and then she charged mary to go and pay it , because she was not able to go in with it ."
+D,real_gutenberg_bryant.txt,50,full-tree,True,2.129,,"but the little gingerbread boy ran harder than ever , and as he ran he cried out , -- and when he found that he was ahead of the threshers , he turned and shouted back to them , -- then the little gingerbread boy ran faster than ever ."
+D,real_gutenberg_bryant.txt,60,cap-hit,False,30.0049,parse exceeded 30.0s wall-clock cap (mid-ruleset 'predicate1'),"when the little old woman had rolled him out , and dressed him up , and pinched his gingerbread shoes into shape , she put him in a pan ; then she put the pan in the oven and shut the door ; and she thought , "" now i shall have a little boy of my own . """
+D,real_gutenberg_edgeworth.txt,74,full-tree,True,5.9514,,"goody grope , however , reached her sixtieth year , without ever seeing this lucky day ; and now , in her old age , she was a beggar , without a house to shelter her , a bed to lie on , or food to put into her mouth , but what she begged from the charity of those who had trusted more than she had to industry and less to luck ."
+D,real_gutenberg_busterbear.txt,34,full-tree,True,0.7023,,"but most of all he listened to a merry , low , silvery laugh that never stopped but went on and on , until he just felt as if he must laugh too ."
+D,real_gutenberg_alice.txt,27,full-tree,True,0.2923,,"after a while , finding that nothing more happened , she decided on going into the garden at once ; but , alas for poor alice !"
+D,real_gutenberg_alice.txt,26,full-tree,True,1.0838,,"i do hope it 'll make me grow large again , for really i 'm quite tired of being such a tiny little thing ! '"
+D,real_gutenberg_burgess_more.txt,39,full-tree,True,0.9855,,"farmer brown 's boy fished there too , sometimes , and this always made little joe and billy mink very angry , but they were so afraid of him that they did n't dare do anything about it ."
+D,real_gutenberg_edgeworth.txt,45,full-tree,True,1.1453,,"the winter passed away , while she was so weak that she could earn but little by her work ; and when the summer came , her rent was called for , and the rent was not ready in her little purse as usual ."
+D,real_gutenberg_burgess_more.txt,28,full-tree,True,0.4631,,"sure enough , just as the jolly sunbeams began to creep through the green forest , he saw buster bear coming straight over to the little pool ."
+D,real_gutenberg_edgeworth.txt,26,full-tree,True,0.3303,,"they had great pleasure in giving to this industrious girl the reward of her ingenuity , which she received with some surprise and more gratitude ."
+D,real_gutenberg_edgeworth.txt,41,full-tree,True,1.5199,,"besides spinning well , she had learned at school to do plain work tolerably neatly , and isabella and caroline employed her to work for them ; by which she earned a great deal more than she could by spinning ."
+D,real_gutenberg_burgess_more.txt,41,full-tree,True,1.4633,,""" i believe , "" said little joe as he wiped tears of laughter from his eyes , "" that grandfather frog is right , and that the best thing i can do is to make friends with buster bear ."
+D,real_gutenberg_alice.txt,30,grounding-fail,False,0.3104,clauses=0,"then silence , and then another confusion of voices -- 'hold up his head -- brandy now -- do n't choke him -- how was it , old fellow ?"
+D,real_gutenberg_alice.txt,33,full-tree,True,0.8791,,"as soon as she was small enough to get through the door , she ran out of the house , and found quite a crowd of little animals and birds waiting outside ."
+D,real_gutenberg_alice.txt,37,full-tree,True,1.1812,,"some of the birds hurried off at once : one old magpie began wrapping itself up very carefully , remarking , 'i really must be getting home ; the night-air does n't suit my throat ! '"
+D,real_gutenberg_bryant.txt,29,full-tree,True,0.5323,,"and one day the lion was so near that the little mother jackal grew frightened ; she said , -- "" oh , father jackal , father jackal !"
+D,real_gutenberg_edgeworth.txt,33,full-tree,True,0.6332,,"isabella , who had some knowledge of chemistry , discovered , by touching the coins with nitric acid , that several of them were of gold , and consequently of great value ."
+D,real_gutenberg_edgeworth.txt,32,full-tree,True,1.1041,,"the mason came , and gave it as his opinion that the rooms they inhabited might last through the winter but that no part of the ruins could stand another year ."
+D,real_gutenberg_edgeworth.txt,26,full-tree,True,0.5218,,they were not envied for their prosperity ; because everybody saw that it was the reward of their good conduct ; everybody except goody grope .
+D,real_gutenberg_edgeworth.txt,41,full-tree,True,0.6642,,"with what mary got by her spinning and plain work , and edmund by leading of cart-horses , going on errands , etc . , and with little peggy and anne 's earnings , the family contrived to live comfortably ."
+D,real_gutenberg_edgeworth.txt,32,full-tree,True,1.3602,,"interrupted goody grope ; "" do n't be prating ; do n't i know as well as you do , that they found a pot of gold , by good luck ?"
+D,real_gutenberg_burgess_more.txt,26,full-tree,True,0.4265,,he was so intent on looking behind him to see if buster was coming that he did n't see buster waiting there until he spoke .
+D,real_gutenberg_busterbear.txt,30,full-tree,True,1.4686,,"you see , buster knew perfectly well when he invited little joe to come back and get it that little joe would n't dare do anything of the kind ."
+D,real_gutenberg_bryant.txt,26,full-tree,True,0.2256,,"this was too much for the good moon ; he put out his big light , all at once , and left the sky pitch-black ."
+D,real_gutenberg_edgeworth.txt,42,full-tree,True,1.3907,,"as for peggy and nancy , it was little that they could do ; but they were good children , and mary , when she considered that so much depended upon her , was resolved to exert herself to the utmost ."
+D,real_gutenberg_edgeworth.txt,35,full-tree,True,0.8895,,""" sure , "" says one of the neighbours , "" we can do no less than give a helping hand to the poor orphans , that are so ready to help themselves . """
+D,real_gutenberg_edgeworth.txt,29,full-tree,True,1.3249,,"mary stopped her wheel , for she was afraid that the noise of it had wakened her mother , and would hinder her from going to sleep again ."
+D,real_gutenberg_edgeworth.txt,41,full-tree,True,0.7787,,"at her leisure hours she taught her sisters to read and write ; and edmund , with part of the money which he earned by his work out of doors , paid a schoolmaster for teaching him a little arithmetic ."
+D,real_gutenberg_alice.txt,32,full-tree,True,2.9523,,"'i know something interesting is sure to happen , ' she said to herself , 'whenever i eat or drink anything ; so i 'll just see what this bottle does ."
+D,real_gutenberg_edgeworth.txt,127,too-long,False,0.0005,graph parse failed (Sentence too long (127 > 100)); no discourse structure.,"mr . harvey , the gentleman on whose estate she lived , was in england , and , in his absence , all was managed by a mr . hopkins , an agent , who was a hard man . * the driver came to mary about a week after her mother 's death , and told her that the rent must be brought in the next day , and that she must leave the cabin , for a new tenant was coming into it ; that she was too young to have a house to herself , and that the only thing she had to do was to get some neighbour to take her and her brother and her sisters in for charity 's sake ."
+D,real_gutenberg_alice.txt,32,full-tree,True,2.6141,,"'what i was going to say , ' said the dodo in an offended tone , 'was , that the best thing to get us dry would be a caucus-race . '"
+D,real_gutenberg_edgeworth.txt,29,full-tree,True,0.7045,,"but there was one thing which was at first rather disagreeable to him : he was obliged to wear shoes and stockings , and they hurt his feet ."
+D,real_gutenberg_edgeworth.txt,56,full-tree,True,5.1003,,"[*the author has seen a pair of shoes , such as here described , made in a few hours . ] it was soon remarked by the men-servants that he had left off clumping so heavily , and it was observed by the maids that he never dirtied the stairs or passages with his shoes ."
+D,real_gutenberg_alice.txt,50,full-tree,True,1.604,,"alice was not a bit hurt , and she jumped up on to her feet in a moment : she looked up , but it was all dark overhead ; before her was another long passage , and the white rabbit was still in sight , hurrying down it ."
+D,real_gutenberg_edgeworth.txt,33,full-tree,True,0.8626,,"mary went to her , and took her goat along with her , and offered it in part of payment of the debt , but the schoolmistress would not receive the goat ."
+D,real_gutenberg_edgeworth.txt,33,full-tree,True,0.9356,,"the chest was carried for them by some of the charitable neighbours , who likewise added to their scanty stock of potatoes and turf what would make it last through the winter ."
+D,real_gutenberg_edgeworth.txt,49,full-tree,True,6.3457,,"though poor i have lived honest , and i have brought you up to be the same , mary ; and i am sure the little ones will take after you ; for you 'll be good to them -- as good to them as you can . """
+D,real_gutenberg_burgess_more.txt,31,full-tree,True,0.331,,but that is just what the hair on farmer brown 's boy 's head did the day he went fishing in the laughing brook and had no luck at all .
+D,real_gutenberg_edgeworth.txt,34,full-tree,True,0.7396,,"one morning edmund and the little manufacturers were assembled very early , and they were busy at their work , all sitting round the meal chest , which served them for a table ."
+D,real_gutenberg_edgeworth.txt,31,full-tree,True,0.9443,,"none could be found but a woman , who was a great scold , and a man who was famous for going to law about every trifle with his neighbours ."
+D,real_gutenberg_edgeworth.txt,80,full-tree,True,16.0101,,"he told his sister mary of his distress , and she made for him , after many trials , a pair of cloth shoes , with soles of platted hemp . * in these he could walk without making the least noise ; and as these shoes could not be worn out of doors , he was always sure to change them before he went out ; and consequently he had always clean shoes to wear in the house ."
+D,real_gutenberg_bryant.txt,32,full-tree,True,0.5195,,""" indeed , indeed , father lion , "" said the little jackal , "" i know that is what everybody thinks ; but indeed and indeed there is another lion !"
+D,real_gutenberg_busterbear.txt,27,full-tree,True,1.701,,"it had seemed like a great joke to buster bear , and he had chuckled over it all the time he was eating the fat trout ."
+D,real_gutenberg_edgeworth.txt,54,full-tree,True,1.6386,,"now , mr . hopkins , the agent , was at this time in dublin , and caroline 's father posted the jew , the next day , in the back-parlour of a banker 's house , with whom mr . hopkins had , on this day , appointed to settle some accounts ."
+D,real_gutenberg_burgess_more.txt,36,full-tree,True,0.8106,,"all the way home through the green forest , farmer brown 's boy kept looking behind him , and he did n't draw a long breath until he reached the edge of the green forest ."
+D,real_gutenberg_alice.txt,77,full-tree,True,10.4831,,"by this time she had found her way into a tidy little room with a table in the window , and on it ( as she had hoped ) a fan and two or three pairs of tiny white kid gloves : she took up the fan and a pair of the gloves , and was just going to leave the room , when her eye fell upon a little bottle that stood near the looking-glass ."
+D,real_gutenberg_alice.txt,53,full-tree,True,6.3605,,"first , however , she waited for a few minutes to see if she was going to shrink any further : she felt a little nervous about this ; 'for it might end , you know , ' said alice to herself , 'in my going out altogether , like a candle ."
+D,real_gutenberg_edgeworth.txt,61,cap-hit,False,30.0042,"parse exceeded 30.0s wall-clock cap (mid-_apply_all, ruleset 'predicate1')",""" it will go near to break my jem 's heart , "" said dame preston to herself , as she sat one evening beside the fire stirring the embers , and considering how she had best open the matter to her son , who stood opposite to her , eating a dry crust of bread very heartily for supper ."
+D,real_gutenberg_bryant.txt,40,full-tree,True,0.5137,,"by and by , as she sat so still , she heard _tap , tap , tap_ , and _rustle , whisper , rustle_ , up and down the window-pane , and on the door and at the keyhole ."
+D,real_gutenberg_bryant.txt,51,full-tree,True,2.8086,,"on earth it grew hotter and hotter ; the sun burned down so fiercely that the people were fainting in its rays ; it seemed as if they must die of heat , and yet they were obliged to go on with their work , for they were very poor ."
+D,real_gutenberg_edgeworth.txt,27,full-tree,True,0.7675,,"when they went there , they found the room in which the children lived as clean and neat as such a ruined place could be made ."
+D,real_gutenberg_alice.txt,30,full-tree,True,1.1747,,"however , when they had been running half an hour or so , and were quite dry again , the dodo suddenly called out 'the race is over ! '"
+D,real_gutenberg_edgeworth.txt,84,cap-hit,False,30.0076,"parse exceeded 30.0s wall-clock cap (mid-_apply_all, ruleset 'predicate1')","think of the luck of these childer , that have found a pot of gold , and such great , grand friends , and a slated house , and all : and here am i , with scarce a rag to cover me , and not a potato to put into my mouth ! -- i , that have been looking under ground all my days for treasure , not to have a halfpenny at the last , to buy me tobacco ! """
+D,real_gutenberg_edgeworth.txt,75,full-tree,True,18.7762,,"at last , when the jew was informed that the coins were stolen , and that he would be proceeded against as a receiver of stolen goods , if he did not confess the whole truth , he declared that he had purchased them from a gentleman , whom he had never seen before or since ; but he added , that he could swear to his person , if he saw him again ."
