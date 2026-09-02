@@ -159,7 +159,11 @@ def test_synthetic_paragraph_yields_episodes():
 # 4. converted episodes build into a real ClauseBatch and forward runs
 # ---------------------------------------------------------------------------
 
-def test_converted_episodes_build_batch_and_forward():
+def _build_batch_and_forward(files):
+    """Shared body for the fast (subset) and @pytest.mark.slow (full-corpus)
+    variants below: parse every passage in `files` into episodes, build them
+    into a real ClauseBatch, and run ClauseReactor forward (shapes only).
+    """
     from nsm_ct.clause_reactor import ClauseReactor, build_clause_batch
     from nsm_ct.input_encoder import ParserInputEncoder
     from nsm_ct.meaning import NSMMeaningResolver
@@ -168,7 +172,6 @@ def test_converted_episodes_build_batch_and_forward():
     from nsm_ct.tokenizer import SimpleTokenizer
     from nsm_ct.tpr import TPRCodec
 
-    files = sorted(glob.glob(os.path.join(_DATA_DIR, "*.txt")))
     assert files, "expected data/corpus/*.txt to exist"
 
     all_sentences = []
@@ -235,6 +238,33 @@ def test_converted_episodes_build_batch_and_forward():
         out = model(batch)
     assert out["answer_logits"].shape == (b, batch.options.shape[1])
     assert torch.isfinite(out["answer_logits"]).all()
+
+
+def test_converted_episodes_build_batch_and_forward():
+    """M58f3: runs on a SMALL subset of data/corpus (one real-prose file +
+    one synthetic file) rather than the full 8-file corpus, so this test
+    (part of the default suite gate) finishes in a couple of minutes instead
+    of ~19. Still exercises the real parse->episode->batch->forward path on
+    both a messy real-prose file and a synthetic one; see the
+    @pytest.mark.slow variant below for full-corpus coverage.
+    """
+    files = sorted(glob.glob(os.path.join(_DATA_DIR, "*.txt")))
+    subset = [f for f in files if os.path.basename(f) in
+              ("real_gutenberg_burgess_more.txt", "synthetic_prose_01.txt")]
+    assert len(subset) == 2, "expected the two fixed subset files to exist in data/corpus"
+    _build_batch_and_forward(subset)
+
+
+@pytest.mark.slow
+def test_converted_episodes_build_batch_and_forward_full_corpus():
+    """Full-corpus (all 8 data/corpus/*.txt files) variant of the test
+    above -- legitimately slow (~19 min even after M58f3's gc.collect/
+    shared-deadline fixes, since most of that time is real per-sentence
+    parse work, not overhead), so it's excluded from the default run;
+    invoke explicitly with `-m slow` when full-corpus coverage matters.
+    """
+    files = sorted(glob.glob(os.path.join(_DATA_DIR, "*.txt")))
+    _build_batch_and_forward(files)
 
 
 # ---------------------------------------------------------------------------
