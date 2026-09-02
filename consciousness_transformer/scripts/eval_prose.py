@@ -194,7 +194,33 @@ def run(args) -> None:
         print("no buildable episodes -- nothing to score.")
         return
 
-    batch = build_clause_batch(buildable, parser, meaning_resolver, codec)
+    # converter-memfix (eval-side): partition_buildable already proved every
+    # episode in ``buildable`` builds ALONE -- but its resource cap
+    # (CORPUS_MAX_PARSE_SECONDS) is WALL-CLOCK, not a deterministic bound
+    # like max_hypotheses, so a borderline sentence that took ~9.5s during
+    # the probe pass above can legitimately take ~10.5s on THIS re-parse
+    # (system load/timing jitter alone, same sentence, same cap) and blow
+    # ``build_clause_batch``'s single all-at-once call. Re-probing (the
+    # SAME per-episode contract partition_buildable already uses) and
+    # dropping whatever no longer builds converges to a batch that's safe
+    # to construct -- never a crash, and bounded (a retry that makes no
+    # further progress is a real, non-flaky failure, not more jitter).
+    batch = None
+    for attempt in range(5):
+        try:
+            batch = build_clause_batch(buildable, parser, meaning_resolver, codec)
+            break
+        except Exception as exc:  # noqa: BLE001 -- deliberate catch-all, mirrors build_one
+            still_buildable, newly_failed = partition_buildable(buildable, parser, meaning_resolver, codec)
+            failures.extend(newly_failed)
+            if len(still_buildable) == len(buildable):
+                raise  # no progress -- a real failure, not jitter; don't loop forever
+            print(f"  retry {attempt + 1}: batch build hit {type(exc).__name__}; re-probed down to "
+                  f"{len(still_buildable)}/{len(buildable)} episodes", flush=True)
+            buildable = still_buildable
+            if not buildable:
+                print("no buildable episodes survived retry -- nothing to score.")
+                return
     gold = torch.tensor([e.answer_idx for e in buildable])
 
     # M60 CLEANUP wiring (reused verbatim from scripts/train_instances.py's
