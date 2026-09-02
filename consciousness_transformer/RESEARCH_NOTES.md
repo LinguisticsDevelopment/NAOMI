@@ -3355,3 +3355,37 @@ NEXT (the point of the floor): prose TRAINING (scripts/train_prose.py),
 warm-start from m60, held-out documents, --frozen-eval comparator == this
 0.523 baseline. "Does reading real text help it read real text" becomes
 a measured delta.
+
+### Prose-training v1 — GATE 1 caught a real hang; training BLOCKED, M58 unaffected (2026-09-02)
+
+Dispatched the first prose-training run with a full-suite sanity gate
+FIRST. Gate worked as designed: 1137 tests pass, but
+test_corpus.py::test_converted_episodes_build_batch_and_forward HANGS
+indefinitely (non-terminating at 7m30s, two independent confirmations) —
+so training never ran (correctly). Stack trace:
+parse_passage(corpus.py:919) -> _parse_one_sentence(:819) ->
+_parse_one_sentence_uncapped(:846) -> _parse_topk_one(input_encoder:375)
+-> parse -> _apply_all(quantum_parser:164) -> apply_rule(:272) ->
+copy(data_structures:147).
+
+Root cause (the memfix cap has a GAP): (a) the batch-build re-parse path
+still routes through an explicitly UNCAPPED variant
+(_parse_one_sentence_uncapped) — no config_override with the caps; (b)
+even on the capped path the ruleset check fires only AFTER a full
+_apply_all returns, so one runaway _apply_all (deep-copying a large
+hypothesis inside itertools.product(*ambiguous_groups)) never hits it.
+This path is what build_clause_batch's prose steps AND train_prose use,
+so prose TRAINING is blocked until capped. The M58 zero-shot number is
+UNAFFECTED (eval_prose.py's own build path was capped and completed).
+
+Also found: (1) omw-2.0 missing from the cloud setup recipe (only
+wordnet+omw-1.4 downloaded) — 4 spanish_freeze tests fail until
+`nltk.download('omw-2.0')`; add it to every cloud dispatch. (2)
+test_ground_normalize's discrimination test takes ~419s (uncached
+wordnet senses() per word x1200) — slow, not hung; a caching target.
+
+FIX (M58f, dispatched): cap the batch-build re-parse path (route
+parse_passage through the capped config_override) AND move the
+quantum_parser cap check inside _apply_all so a single runaway call is
+bounded; gate = the hanging test terminates with capped drops,
+quantum_parser 134/134 + curriculum signature gates green.
