@@ -48,3 +48,45 @@ sets near-identical, not byte-identical. VERDICT: encouraging first signal,
 not yet a claim. To confirm needs more held-out documents (bigger corpus)
 and/or more epochs; a clean re-run with a fixed pre-parsed episode set
 (so BEFORE/AFTER share an identical eval set) would remove the n-mismatch.
+
+### M62/M62b — teacher gold-volume probe: encoder-distill is GO (2026-09-02)
+
+M62 (fetch McGuffey from Gutenberg) BLOCKED: cloud routine egress denies
+the open web (only PyPI/npm/GitHub-raw allowlisted). No text fabricated.
+For the properly-graded K-12 corpora (McGuffey/RACE/ARC) we will need to
+grant egress or MOUNT the corpus (like data/corpus/ already holds cached
+Gutenberg). Non-blocking for now.
+
+M62b (in-repo real corpus): measured how much clean GROUNDED-TREE gold the
+deterministic parser manufactures from real prose = the teacher-signal
+feasibility question for the learned encoder (dev/UNIVERSAL_ENCODER_DESIGN
+open-q #2). 500 sentences, 125 per length-bin, from 1475 unique deduped
+sentences across 5 real Gutenberg children's-lit files (alice, bryant,
+burgess, busterbear, edgeworth). Gold = discourse graph with >=1 clause
+carrying a real SUBJECT via extract_discourse, default 30s ParserConfig cap.
+
+  bin A (<=8 tok):  63/125 = 50.4%   cap-hit 0%    med 0.005s p90 0.024s
+  bin B (9-15):    113/125 = 90.4%   cap-hit 0%    med 0.078s p90 0.135s
+  bin C (16-25):   116/125 = 92.8%   cap-hit 0%    med 0.226s p90 0.554s
+  bin D (26+):     114/125 = 91.2%   cap-hit 7.2%  med 1.181s p90 18.29s
+  overall:         406/500 = 81.2%   cap-hit 1.8%
+
+Failure modes (94/500): grounding-fail 84 (almost all bin-A bare
+interjections/fragments with NO subject to ground -- "oh !", "oh dear !";
+a measurement artifact of the gold def, not a parse failure), cap-hit 9
+(all bin D, long sentences, ruleset 'predicate1'), too-long 1 (127-tok
+> 100-word hard cap).
+
+READ (honest): yield is LOWEST in the SHORTEST bin -- counterintuitive, but
+because bin A is dominated by contentless interjections, not because short
+sentences are hard. For actual PROPOSITIONAL sentences (B/C/D), yield is a
+flat ~90-93% and does NOT degrade with length within the cap. So teacher
+gold on real propositional prose is ABUNDANT (~90%) at every length.
+VERDICT: parser does NOT need hardening before distillation -- the gold
+engine works. M63 (encoder distill, Stage i) can start. Caveat: gold YIELD
+RATE is proven high; gold VOLUME (~1300 trees from this in-repo corpus) is
+bounded only by source-text ACCESS (egress/mount), not by the parser --
+the deterministic parser is an unlimited engine given more source text.
+Next real decision belongs to lead: red-pen the encoder design doc + decide
+whether to grant egress / mount more public-domain text to scale gold
+volume before M63.
