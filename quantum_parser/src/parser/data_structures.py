@@ -235,16 +235,18 @@ class ParserConfig:
     max_sentence_length: int = 100    # Reject sentences longer than this
     max_initial_hypotheses: int = 50  # Cap on POS combination hypotheses
     enable_pos_ambiguity: bool = True # Enable POS ambiguity handling
-    # Opt-in resource caps (default None == disabled, byte-identical to prior
-    # behavior for every existing caller). When set, QuantumParser.parse
-    # raises ParseResourceExceeded instead of letting a single ruleset's
-    # itertools.product(*ambiguous_groups) branching (see quantum_parser.py's
-    # main loop) grow without bound on a long/highly-ambiguous sentence --
-    # see nsm_ct.corpus's CORPUS_MAX_HYPOTHESES / CORPUS_MAX_PARSE_SECONDS,
-    # the only caller that currently sets these (via a config_override, not
-    # by mutating a shared QuantumParser's own .config).
+    # Resource caps. When set, QuantumParser.parse raises ParseResourceExceeded
+    # instead of letting a single ruleset's itertools.product(*ambiguous_groups)
+    # branching (see quantum_parser.py's main loop) grow without bound on a
+    # long/highly-ambiguous sentence -- see nsm_ct.corpus's
+    # CORPUS_MAX_HYPOTHESES / CORPUS_MAX_PARSE_SECONDS, which override these
+    # per-call (via config_override, not by mutating a shared QuantumParser's
+    # own .config). max_parse_seconds defaults to a 30s wall-clock cap so every
+    # caller is bounded even if it forgets to pass its own cap; callers that
+    # need a different bound (or none) still set it via config_override.
+    # max_ruleset_hypotheses stays opt-in (default None == disabled).
     max_ruleset_hypotheses: Optional[int] = None   # Cap pre-dedup hypotheses generated in one ruleset pass
-    max_parse_seconds: Optional[float] = None      # Wall-clock cap for one parse() call
+    max_parse_seconds: Optional[float] = 30.0      # Wall-clock cap for one parse() call (default bound; override via config_override to disable/raise)
 
 
 @dataclass
