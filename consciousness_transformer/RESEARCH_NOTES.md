@@ -3312,3 +3312,46 @@ the plain-fact program). Baseline: all six families' op_acc ≥ 0.935
 with traces; soft-vs-argmax delta 0.000 everywhere (D1 hard costs
 nothing); kill-criteria ratio ≈ 1.0x. PHASE 3 (variable-length programs,
 learned halting) is now a LEAD DECISION — not built pending sign-off.
+
+### M58 — THE BIG-N ZERO-SHOT PROSE NUMBER (MEASURED; the honest floor)
+
+Frozen M60 checkpoint (700KB, trained ONLY on synthetic curricula, zero
+prose, git a976936), evaluated on real-prose episodes from an 8-file
+corpus (5 Gutenberg books: Alice/Burgess×2/Bryant/Edgeworth + 3 synthetic
+prose sets), converter+parser at commit b67c8b6. Build: 130/170 episodes
+built (40 build-failures = sentences the parser resource-caps dropped
+honestly, not crashes). Wilson 95% CIs.
+
+| metric | acc | 95% CI | n=43 prior |
+|---|---|---|---|
+| overall | 0.523 | 0.438–0.607 | 0.558 |
+| synthetic prose | 0.667 | 0.562–0.757 | 0.741 |
+| real (wild Gutenberg) | 0.233 | 0.132–0.377 | 0.250 |
+| AGENT | 0.475 | 0.353–0.600 | — |
+| OBJECT (round-2, new) | 0.697 | 0.527–0.826 | — |
+| PLACE | 0.441 | 0.289–0.605 | — |
+(random floor 0.25.)
+
+Reading: overall 0.523 is ABOVE chance with real error bars (CI floor
+0.438) — the first statistically-backed zero-shot claim. Synthetic prose
+(0.667, CI excludes chance) is solid. WILD text (0.233, CI 0.13–0.38) is
+NOT distinguishable from chance at this n — honest headline: transfer to
+CONTROLLED prose proven, transfer to WILD prose NOT YET demonstrated,
+and bounded by perception (40 dropped + capped/degraded parses), not
+shown to be comprehension-bound. Conservative floor 3x over: pre-
+grounding-fix checkpoint, pre-prose-training, parseable subset only.
+
+Bug found + fixed en route (real, valuable): quantum_parser built the
+FULL POS-tag Cartesian product before truncating (56.6M tuples on one
+61-word Alice sentence) → OOM in the converter AND a 6-hour hang in the
+eval (uncapped _parse at clause_reactor's batch-build path). Fix:
+itertools.islice (lazy, byte-identical output) + opt-in
+max_ruleset_hypotheses/max_parse_seconds caps via per-call
+config_override (default None → every existing caller byte-identical;
+curriculum signature gates + quantum_parser 134/134 green). SEAM: same
+root bug hit at two call sites → hoist caps into parser defaults later.
+
+NEXT (the point of the floor): prose TRAINING (scripts/train_prose.py),
+warm-start from m60, held-out documents, --frozen-eval comparator == this
+0.523 baseline. "Does reading real text help it read real text" becomes
+a measured delta.
