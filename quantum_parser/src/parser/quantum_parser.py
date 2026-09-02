@@ -161,6 +161,22 @@ class QuantumParser:
                     def _apply_all(base_hyp, matches):
                         result = base_hyp
                         for match in matches:
+                            # Per-match deadline check (opt-in, None by default):
+                            # the per-combo checks below this closure only fire
+                            # once a whole _apply_all call returns, so a single
+                            # call chewing through a long `matches` list (e.g.
+                            # independent_matches on a large hypothesis, each
+                            # apply_rule deep-copying via Hypothesis.copy) can
+                            # run well past max_parse_seconds before either
+                            # check downstream ever runs. Checking here bounds
+                            # that single call too.
+                            if (deadline is not None
+                                    and time.monotonic() > deadline):
+                                raise ParseResourceExceeded(
+                                    f"parse exceeded {config.max_parse_seconds}s wall-clock cap "
+                                    f"(mid-_apply_all, ruleset {ruleset_name!r})",
+                                    ruleset_name, len(new_hypotheses),
+                                )
                             result = apply_rule(result, match)
                             if match.rule.recursive:
                                 result = apply_ruleset_recursively(result, ruleset, deadline=deadline,
@@ -222,22 +238,38 @@ class QuantumParser:
             for hyp in new_hypotheses:
                 hyp.score = score_hypothesis(hyp, chart.embeddings)
 
-            # DEDUPLICATION: Remove structurally equivalent hypotheses
-            deduplicated = []
+            # DEDUPLICATION: Remove structurally equivalent hypotheses.
+            #
+            # Keyed by Hypothesis.equivalence_key() (constructed from exactly
+            # the fields is_equivalent compares) instead of the original
+            # pairwise "for hyp: for existing in deduplicated: is_equivalent"
+            # scan: two hypotheses share a key iff is_equivalent(...) would
+            # have returned True for them, so this dict produces the same
+            # surviving set (same score-tie-break rule: keep the earlier one
+            # unless a strictly-better-scored equivalent shows up) in O(n)
+            # instead of O(n^2) -- final order doesn't matter since every
+            # consumer (sort_hypotheses/prune_hypotheses, and the final sort
+            # below) sorts by score before use, never relies on list order.
+            # This mattered because is_equivalent rebuilds two edge sets
+            # every call: even a new_hypotheses list that stayed within
+            # max_ruleset_hypotheses (capped only during generation, above)
+            # could spend far longer than a parse's whole max_parse_seconds
+            # budget on this one loop alone -- the deadline check below is
+            # kept as a backstop for whatever's still O(n) here.
+            dedup_index: dict = {}
             for hyp in new_hypotheses:
-                # Check if this hypothesis is equivalent to any already added
-                is_duplicate = False
-                for existing in deduplicated:
-                    if hyp.is_equivalent(existing):
-                        # Keep the one with better score
-                        if hyp.score > existing.score:
-                            deduplicated.remove(existing)
-                            deduplicated.append(hyp)
-                        is_duplicate = True
-                        break
-
-                if not is_duplicate:
-                    deduplicated.append(hyp)
+                if (config.max_parse_seconds is not None
+                        and time.monotonic() - start_time > config.max_parse_seconds):
+                    raise ParseResourceExceeded(
+                        f"parse exceeded {config.max_parse_seconds}s wall-clock cap "
+                        f"(mid-deduplication, ruleset {ruleset_name!r})",
+                        ruleset_name, len(new_hypotheses),
+                    )
+                key = hyp.equivalence_key()
+                existing = dedup_index.get(key)
+                if existing is None or hyp.score > existing.score:
+                    dedup_index[key] = hyp
+            deduplicated = list(dedup_index.values())
 
             # Update chart hypotheses
             chart.hypotheses = deduplicated

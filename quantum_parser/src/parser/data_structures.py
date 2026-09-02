@@ -202,6 +202,24 @@ class Hypothesis:
 
         return True
 
+    def equivalence_key(self):
+        """Hashable key such that two hypotheses share a key iff
+        :meth:`is_equivalent` would return ``True`` for the pair (built from
+        exactly the same fields: per-node type/index/flags-set, the edge
+        set, and the consumed set).
+
+        Lets a caller deduplicate a list of hypotheses with a dict in O(n)
+        instead of the O(n^2) pairwise ``is_equivalent`` scan this replaced
+        in :meth:`QuantumParser.parse`'s DEDUPLICATION step -- that scan
+        (each call rebuilding two edge sets) could spend far longer than a
+        parse's whole ``max_parse_seconds`` budget on a single ruleset pass
+        once combinatorial generation produced a few thousand surviving
+        hypotheses, even after that generation step was itself capped.
+        """
+        node_key = tuple((n.type, n.index, frozenset(n.flags)) for n in self.nodes)
+        edge_key = frozenset((e.type, e.parent, e.child) for e in self.edges)
+        return (node_key, edge_key, frozenset(self.consumed))
+
     def __repr__(self) -> str:
         unconsumed = len(self.get_unconsumed())
         return f"Hypothesis(edges={len(self.edges)}, unconsumed={unconsumed}, score={self.score:.3f})"
