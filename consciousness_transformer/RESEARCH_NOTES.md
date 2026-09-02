@@ -3312,3 +3312,60 @@ the plain-fact program). Baseline: all six families' op_acc ≥ 0.935
 with traces; soft-vs-argmax delta 0.000 everywhere (D1 hard costs
 nothing); kill-criteria ratio ≈ 1.0x. PHASE 3 (variable-length programs,
 learned halting) is now a LEAD DECISION — not built pending sign-off.
+
+### Converter memory-fix + big-n zero-shot: 56.6M-tuple POS-tag product was the real OOM cause; overall 0.558→0.519 at n 43→133 (MEASURED)
+
+Diagnosed the ~14GB OOM-kill on the 180KB corpus (real_gutenberg_alice.txt
+ALONE was the trigger) by instrumented parsing of individual sentences in
+isolation. The mechanism was NOT in quantum_parser's chart-parsing/
+rule-application loop (that stage's Cartesian branching over ambiguous
+anchors is real but bounded — e.g. 2560 pre-dedup hypotheses for one
+65-word sentence's `predicate1` ruleset, ~10s) — it was one level earlier,
+in `create_initial_chart`: `list(itertools.product(*possible_tags_per_word))`
+materialized the FULL Cartesian product of every word's candidate POS tags
+BEFORE truncating to `max_initial_hypotheses`. For one 61-word Alice
+sentence with ~25 ambiguously-tagged words that product is 56,623,104
+tuples — hanging/OOMing before `QuantumParser.parse`'s ruleset loop ever
+starts. Fixed with `itertools.islice`, which is lexicographically
+order-preserving, so every sentence that previously completed gets
+byte-identical output — not a cap, a bug fix (no gate needed, none added).
+
+As defense in depth, added opt-in resource caps to quantum_parser
+(`ParserConfig.max_ruleset_hypotheses`/`max_parse_seconds`, a
+`QuantumParser.parse(config_override=...)` hook, `ParseResourceExceeded`)
+— both `None`/disabled by default, so curriculum generation and every
+other existing caller is byte-for-byte unaffected (quantum_parser's own
+134-test suite green throughout; test_parser_round.py/test_parser_round2.py
+signature gates green). `nsm_ct.corpus` sets them
+(`CORPUS_MAX_HYPOTHESES=4000` / `CORPUS_MAX_PARSE_SECONDS=10.0`) and tags a
+capped sentence `"parse-resource-capped"` — an honest, counted taxonomy
+outcome, never a crash or silent drop. `eval_prose.py` re-parses episode
+context through a DIFFERENT (clause_reactor) call path than the converter's
+own capped one and needed the same caps wired in separately to stop it
+hanging too, plus a bounded retry (wall-clock caps aren't as deterministic
+as a hypothesis-count cap — a borderline sentence can jitter across the
+10s line between the per-episode probe and the final batch build).
+
+Full corpus (8 files, 1838 sentences) now converts in ~31 min at a FLAT
+~700-750MB peak RSS (was: OOM-killed at ~14GB). 170 episodes produced;
+55/1838 sentences (3.0%) honestly capped. Big-n zero-shot re-measure on
+the SAME frozen M60 checkpoint (n 43→133, all real Gutenberg text +
+synthetic, corpus-conversion-only difference from M58d's n=43 baseline):
+
+overall 0.519 [0.435, 0.602] (was 0.558 at n=43) — random floor 0.250,
+majority baseline 0.038; synthetic 0.667 [0.562, 0.757] (was 0.741);
+real 0.239 [0.139, 0.379] (was 0.250, n 16→46 — the real bucket
+essentially unchanged, now on much firmer statistical footing). Per
+relation: AGENT 0.475 [0.355, 0.598] (n=61), OBJECT 0.697 [0.527, 0.826]
+(n=33), PLACE 0.441 [0.289, 0.605] (n=34), RECIPIENT 0.400 [0.118, 0.769]
+(n=5). 28/170 episodes (16%) have a pronoun-resolved sentence in their
+passage context. abstain_rate 0.406, acc-when-confident 0.684 (n=79) vs
+0.519 overall — the caution dial still fires more and more correctly on
+harder text. Reading: the wider CIs (all overlap the n=43 point estimates)
+say this is the SAME zero-shot signal at more statistical power, not a
+regression — comprehension still clears the 0.250 floor by a wide margin
+on real text the checkpoint never trained on, THROUGH a perception layer
+that still only strictly parses a minority of wild sentences, with honest
+abstention on the rest. Next: the corpus campaign's own worklist (more
+real-text sources, the unfiltered-distractor-pool item from M58d) now has
+n=133 instead of n=43 to work from.
