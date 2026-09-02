@@ -3389,3 +3389,39 @@ parse_passage through the capped config_override) AND move the
 quantum_parser cap check inside _apply_all so a single runaway call is
 bounded; gate = the hanging test terminates with capped drops,
 quantum_parser 134/134 + curriculum signature gates green.
+
+### M58f verification — FIX INCOMPLETE: hang persists, cause (a) never addressed (2026-09-02)
+
+Verification-only run: Check 1 (the hanging test alone, 900s, no
+contention) did NOT terminate — killed at real 15m0.045s, faulthandler
+SIGABRT trace still stuck in parse_passage(corpus.py:919) ->
+_parse_one_sentence(corpus.py:829). The M58f branch (f575909) fixed
+cause (b) — the quantum_parser per-match deadline inside _apply_all —
+and added a train_prose crash-guard, but its diff touched ONLY
+quantum_parser + train_prose; corpus.py was never changed. Cause (a) from
+the dispatch (the batch-build re-parse path routes through the UNCAPPED
+_parse_one_sentence/_parse_one_sentence_uncapped, never passing the cap
+config_override) is UNFIXED — which is exactly why test_corpus.py (via
+parse_passage, not train_prose) still hangs. NOT merged. Pattern to
+watch: each agent fixes one layer and misses another (memfix -> quantum
+cap gap; M58f -> quantum fixed but corpus.py caller missed). Pending
+Check 3 (frozen-eval): if train_prose's own path completes, the test
+hang is isolated cleanup and training can proceed; if it also hangs, the
+corpus.py cap is a hard blocker. Decide after Check 3.
+
+Check 3 UPDATE (decisive): frozen-eval Gate-2 COMPLETED cleanly (9m8s),
+so PROSE TRAINING IS NOT BLOCKED — the hang is isolated to the ONE test
+that calls parse_passage DIRECTLY (test_corpus.py:195) through the
+uncapped _parse_one_sentence; production paths (eval_prose/train_prose)
+use the per-episode build_one guard that catches ParseResourceExceeded
+and drops the sentence (5/34 dropped here, fine). Frozen-eval numbers
+(m58f branch, n=29): overall 0.552, synthetic 0.765, real 0.250,
+curriculum RETENTION 0.900 (no-forgetting baseline). Confirms M58's
+0.523 holds. No third layer appeared — the remaining fix is EXACTLY the
+diagnosed cause (a): route corpus.py's _parse_one_sentence batch-build
+re-parse through the capped config_override. Durable seam: caps are
+scattered across call sites (converter capped, eval guarded, but
+parse_passage's direct helper uncapped) -> hoist the cap into the parser
+entry so no caller can forget it. Fix M58f2 dispatched; NOT merging the
+partial m58f branch until the complete thing verifies (hang test
+terminates + quantum 134 + frozen-eval).
