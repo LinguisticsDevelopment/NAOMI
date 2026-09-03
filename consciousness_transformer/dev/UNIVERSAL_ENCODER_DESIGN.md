@@ -211,3 +211,64 @@ to roadmap now so §2 is designed with rule-inventory-as-input from day one
 - M66: code-switch demo (grounding-consistency eval).
 - M67+: K-12 read-then-answer ladder on clean I/O; then self-editable
   grammar; then learned long-form decoder.
+
+## 9. Addenda from lead (2026-09-02) — capabilities to fold in
+
+These three each reclaim losses the M62b probe exposed (bin-A yield 50%
+was dominated by imperatives with implied subjects + bare interjections,
+NOT parser weakness). Fold into the encoder + grounding schema.
+
+### 9.1 Elision / pro-drop — licensed empty slots filled from memory
+The deterministic parser fails "More!" / Spanish pro-drop because it parses
+each sentence in ISOLATION with no discourse context and no way to posit an
+empty constituent. The trained encoder reads into the SAME grounded memory
+holding the prior clause, so the antecedent ("whatever the prior verb was",
+the dropped subject) is retrievable. Build in two parts:
+(a) **Grammar rules that LICENSE a null slot** — "imperative -> null
+    subject = addressee"; "elliptical fragment -> inherit predicate from
+    antecedent"; Spanish "finite verb -> null subject recovered from
+    agreement". Cheap grammar edits; exactly what the self-editable-grammar
+    roadmap (§6) is for.
+(b) **The trained encoder + memory FILLS the slot** from discourse context.
+Honest calibration: (a) is trivial; (b) is genuine discourse inference —
+mostly right on simple cases, a real learned skill on hard ones — but it is
+on-architecture (memory-grounded) and INSPECTABLE (you can audit what it
+filled in). Not free, but tractable, and it directly recovers the
+imperative half of the bin-A grounding-fails.
+
+### 9.2 Interjections as grounded stance/appraisal nodes (not failures)
+An interjection is not contentless — it carries affective/stance meaning.
+Ground it to an **appraisal node** (fits NSM feeling/evaluation primitives,
+"I feel something bad/good") instead of returning grounding-fail:
+- "shit, [clause]" -> a stance modifier scoping the following clause.
+- "shit" as a REACTION to incoming news -> an appraisal node attached to
+  that proposition ("reaction = bad"), optionally with per-node metadata.
+This is a grounding-SCHEMA addition (a new node type + attachment rules),
+touching the NSM primitive set. Recovers the interjection half of bin-A.
+
+### 9.3 Speaker + time metadata ("WHO said what, WHEN")
+Largely ALREADY BUILT: the provenance system (M57 decision, membrane-side
+append-only log) already carries source / language / timestamp / trust, one
+record per gated write. Add a **speaker/agent field** to that record ->
+WHO. Timestamp -> WHEN already present. The per-node "my reaction is X"
+appraisal metadata (§9.2) is a separate, small semantic-annotation
+extension on the grounded node, distinct from membrane provenance.
+
+### 9.4 Note on tokenization (for the record)
+Word-level tokenization + POS (`SimpleTokenizer`), each token grounding to
+a USVS sense — NOT LLM subword/BPE. The trained encoder is a SMALL model
+over an inspectable grounded memory, not billions of params over opaque
+activations. The heavy, blow-up-prone compute today is the DETERMINISTIC
+parser (the hang saga) — which the trained encoder replaces with something
+fast and robust. "Lightweight, not like an LLM" holds for the representation
+now and the model we are about to build.
+
+## 10. Build start (M63)
+
+Step 1 (IN FLIGHT): freeze the encoder I/O contract by generating the gold
+dataset — run the deterministic teacher over ALL in-repo real text, serialize
+(text -> grounded tree) pairs + document the exact tree schema (the encoder's
+output target) and the per-token candidate-sense lookup (its retrieval input).
+Step 2 (next, director-specced): the encoder model itself (retrieval-
+conditioned, grammar-constrained transition parser) trained on that gold,
+eval = tree/grounding agreement vs teacher on held-out.
