@@ -186,7 +186,124 @@ integrated with real-corpus parsing.
 
 ## 6. Two fully-worked real examples
 
-See `runs/encoder_gold_v1.jsonl` for the full dataset. Verbatim records
-below (pretty-printed; the file itself is one JSON object per line).
+See `runs/encoder_gold_v1.jsonl` for the full dataset (not committed — see
+`.gitignore`'s `runs/`; regenerate with `python scripts/build_encoder_gold_v1.py`).
+Verbatim records below (pretty-printed; the file itself is one JSON object
+per line), copied as-is from the generated data — nothing hand-edited.
 
-<!-- EXAMPLES_PLACEHOLDER -->
+### 6.1 Single clause, both content-word roles grounded — and MFS's honest failure mode
+
+`text = "do cats eat bats ? '"`
+
+```json
+{
+  "text": "do cats eat bats ? '",
+  "tokens": ["do", "cats", "eat", "bats", "?", "'"],
+  "pos": ["AUX", "NOUN", "VERB", "VERB", "PUNCT", "PUNCT"],
+  "gold_tree": {
+    "clauses": [
+      {
+        "predicate": "eat",
+        "predicate_sense_id": "eat.v.01",
+        "is_question": false,
+        "roles": [
+          {"relation": "SUBJECT", "word": "cats", "is_entity": false, "sense_id": null},
+          {"relation": "OBJECT", "word": "bats", "is_entity": false, "sense_id": "balmy.s.01"}
+        ]
+      }
+    ],
+    "discourse_links": []
+  },
+  "token_sense_candidates": [
+    {"index": 0, "token": "do", "sense_candidates": [
+        "bash.n.02", "do.n.02", "doctor_of_osteopathy.n.01", "make.v.01", "perform.v.01",
+        "do.v.03", "do.v.04", "cause.v.01", "practice.v.01", "suffice.v.01", "do.v.08",
+        "act.v.02", "serve.v.09", "do.v.11", "dress.v.16", "do.v.13"],
+     "chosen_sense": "bash.n.02"},
+    {"index": 2, "token": "eat",
+     "sense_candidates": ["eat.v.01", "eat.v.02", "feed.v.06", "eat.v.04", "consume.v.05", "corrode.v.01"],
+     "chosen_sense": "eat.v.01"},
+    {"index": 3, "token": "bats", "sense_candidates": ["balmy.s.01"], "chosen_sense": "balmy.s.01"}
+  ]
+}
+```
+
+Two honest artifacts of the MFS grounding strategy (§3), visible directly in
+this real record:
+- `"cats"` gets `sense_id: null` in `gold_tree` **and no entry at all** in
+  `token_sense_candidates` — the USVS lemma index is keyed on the singular
+  lemma `"cat"`, so the inflected surface form `"cats"` has zero coverage.
+  Same reason `"bats"` (below) only resolves via its one adjective sense,
+  never its noun ("flying mammal") sense — that lemma entry is simply
+  `"bat"`, not `"bats"`, in the index.
+- `"bats"` DOES resolve, to `balmy.s.01` — WordNet's most-frequent sense for
+  the lemma `"bats"` is the informal adjective ("bats" = "crazy"), not the
+  animal. This is MFS doing exactly what MFS does (§3): no context is
+  consulted, so a real ambiguity gets the wrong (if "most frequent" by
+  WordNet's own count) answer. This is precisely the gap a future
+  context-conditioned WSD/retrieval step (§4) exists to close.
+
+### 6.2 Multi-clause with a discourse link (OR / MAYBE)
+
+`text = "they had n't any little girls or any little boys , at all ."`
+
+```json
+{
+  "text": "they had n't any little girls or any little boys , at all .",
+  "tokens": ["they", "had", "n't", "any", "little", "girls", "or", "any", "little", "boys", ",", "at", "all", "."],
+  "pos": ["PRON", "AUX", "PART", "ADV", "ADJ", "NOUN", "CCONJ", "ADV", "ADJ", "NOUN", "PUNCT", "ADP", "ADJ", "PUNCT"],
+  "gold_tree": {
+    "clauses": [
+      {
+        "predicate": "had", "predicate_sense_id": null, "is_question": false,
+        "roles": [
+          {"relation": "SUBJECT", "word": "they", "is_entity": true, "sense_id": null},
+          {"relation": "PLACE", "word": "girls", "is_entity": false, "sense_id": null}
+        ]
+      },
+      {
+        "predicate": "had", "predicate_sense_id": null, "is_question": false,
+        "roles": [
+          {"relation": "SUBJECT", "word": "they", "is_entity": true, "sense_id": null},
+          {"relation": "PLACE", "word": "boys", "is_entity": false, "sense_id": null}
+        ]
+      }
+    ],
+    "discourse_links": [
+      {"coordinator": "OR", "prime": "MAYBE", "clause_i": 0, "clause_j": 1}
+    ]
+  },
+  "token_sense_candidates": [
+    {"index": 3, "token": "any", "sense_candidates": ["any.s.01", "any.r.01"], "chosen_sense": "any.s.01"},
+    {"index": 4, "token": "little", "sense_candidates": [
+        "little.n.01", "small.a.01", "little.a.02", "little.s.01", "fiddling.s.01",
+        "little.s.03", "short.a.03", "little.s.04", "little.s.05", "little.r.01"],
+     "chosen_sense": "little.n.01"},
+    {"index": 6, "token": "or", "sense_candidates": ["oregon.n.01", "operating_room.n.01"], "chosen_sense": "oregon.n.01"},
+    {"index": 7, "token": "any", "sense_candidates": ["any.s.01", "any.r.01"], "chosen_sense": "any.s.01"},
+    {"index": 8, "token": "little", "sense_candidates": [
+        "little.n.01", "small.a.01", "little.a.02", "little.s.01", "fiddling.s.01",
+        "little.s.03", "short.a.03", "little.s.04", "little.s.05", "little.r.01"],
+     "chosen_sense": "little.n.01"},
+    {"index": 11, "token": "at", "sense_candidates": ["astatine.n.01", "at.n.02"], "chosen_sense": "astatine.n.01"},
+    {"index": 12, "token": "all", "sense_candidates": ["all.a.01", "all.s.01", "wholly.r.01"], "chosen_sense": "all.a.01"}
+  ]
+}
+```
+
+Notes visible directly in this real record: the coordinated-value "A or B"
+shape (§2.1's ordering) produces one lossless clause per disjunct
+(`"girls"`, `"boys"`), both sharing the same predicate/subject, related by
+one `discourse_links` entry carrying the `MAYBE` prime (NSM has no OR
+exponent — disjunction *is* MAYBE, per `nsm_ct.clause`'s module docstring).
+`"they"` is `is_entity: true` (a pronoun/referent variable, never sense-
+grounded by design — §2.2). `"girls"`/`"boys"` get `sense_id: null` and no
+`token_sense_candidates` entry, the same plural-lemma coverage gap as
+`"cats"` in §6.1 — evidently the dominant reason a content word ends up
+ungrounded in this dataset (see `dev/ENCODER_GOLD_V1_STATS.md` for how often
+that happens in aggregate). Function words that happen to collide with a
+WordNet abbreviation lemma get spurious candidates too (`"at"` ->
+`astatine.n.01`, the element symbol; `"or"` -> `oregon.n.01`, the state
+abbreviation) — real content the schema captures faithfully, exactly as the
+teacher pipeline actually grounds them today, however wrong that dominant
+sense is.
