@@ -332,3 +332,34 @@ egress for real graded K-12 text (cloud routines can't reach the open web --
 need egress grant or mounted corpus); (3) full encoder train + structure-
 recall fix before relying on the lattice. I/O layer is ready to plug the
 comprehension model into.
+
+### Spanish grammar-SWAP-test feasibility: READY (2026-09-04)
+
+Probe (branch spanish-swap-feasibility, dev/SPANISH_SWAP_FEASIBILITY.md).
+The swap test (train encoder EN, then feed Spanish grammar+senses+text to the
+SAME weights) is a DATA swap, no encoder change -- confirmed feasible.
+- CHECK 1 (USVS resolves Spanish): NO out-of-box (English lemmas only), but
+  the fix is small+ADDITIVE: union lemmas(lang="spa") from OMW (already in
+  the downloaded corpus, mcr/wn-data-spa.tab) into the lemma->sense_id index.
+  Verified standalone: 88,942 Spanish lemmas indexed in ~4.3s; 8/9 test words
+  resolve to the SAME grounded synsets as English (perro->dog.n.01,
+  gato->cat.n.01, nino->child.n.01). NO re-grounding, FINGERPRINT UNCHANGED
+  (only the lemma lookup extends, not sense coords). Narrower gap: conjugated
+  Spanish verbs (esta/corre/come) miss OMW base lemmas -> predicate
+  sense-grounding falls back to entity (contract-valid); lemmatize-before-
+  lookup is the optional fix.
+- CHECK 2 (quantum_parser tags+parses Spanish): YES, already built on branch
+  -- spanish.json grammar, tag_spanish_sentence + SPANISH_WORD_TAG_DICT,
+  es_lexicon.json.gz, ParserInputEncoder(lang="es"), meaning_es.py,
+  curriculum2 TEMPLATES_ES, probe_spanish_freeze.py. All 3 test sentences
+  parse to correct grounded role-labeled trees when correctly accented
+  (diacritics matter: "esta"/DET vs "está"/VERB).
+- Orthogonal note: the V2 gold BUILDER (build_encoder_gold_v2.py) lives on
+  branch encoder-gold-v2, not mainline -- adapt it for lang="es".
+PLAN for the swap test (all data/setup, NO encoder redesign): (a) extend USVS
+lemma index with Spanish OMW (additive, fingerprint-safe); (b) adapt
+build_encoder_gold_v2.py for lang="es" over Spanish sentences -> Spanish
+candidate-lattice test set; (c) run encoder_full.pt on it -> candidate-set
+recall on never-trained Spanish vs random = THE acceptance test. Honest
+caveat: Spanish predicate-verb sense-grounding limited by the base-lemma gap;
+noun/entity/structure recall is the clean signal.
