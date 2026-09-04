@@ -90,3 +90,47 @@ the deterministic parser is an unlimited engine given more source text.
 Next real decision belongs to lead: red-pen the encoder design doc + decide
 whether to grant egress / mount more public-domain text to scale gold
 volume before M63.
+
+### M63.1 / M63.1c — encoder gold landed (teacher bulk + hand-authored hard cases) (2026-09-03/04)
+
+M63.1 (branch encoder-gold-v1, commit e5717f2): deterministic-teacher gold
+corpus over all in-repo real text. 1259 gold records / 1475 attempted =
+85.4% yield; 4.4MB jsonl. Failures: grounding-fail 180, cap-hit 28,
+too-long 6, other 2. Distributions: median 2 clauses/tree, 2 role-slots/
+clause, and MEDIAN 5 candidate senses/content token (p90 16) -- confirms the
+retrieval-conditioning input is real+bounded. Frozen I/O contract:
+dev/ENCODER_IO_CONTRACT.md. This is the bulk distillation data (kept on the
+branch, not merged to mainline, like m60-battery-logs).
+
+M63.1c (branch encoder-handgold-v1, commit 5317d13, opus): 33 hand-authored
+gold records for the 3 families the teacher structurally can't emit
+(imperative synth-subject, interjection appraisal, elision-with-context) +
+dev/ENCODER_IO_CONTRACT_ADDENDUM.md (the context_ref construct) +
+dev/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md (encoder-reference grammar format, 6
+rules). Key design result: point-to-context = "select a node from the
+retrieved MEMORY-candidate set", exactly symmetric to grounding = "select a
+sense from the retrieved SENSE-candidate set" -> ONE retrieval-select action
+(EMIT_CONTEXT_REF), on-architecture not a bolt-on.
+
+TWO FLAGS for lead (both real):
+1. VALENCE COVERAGE HOLE: "valence from USVS not hard-coded" works only for
+   interjections WITH a WordNet/USVS sense (~4/15: shit/wow/damn/hell). Pure
+   interjections (alas/ugh/ouch/oh/ah/oops/phew/hurray) have NO synset -> no
+   sense to ground to. So the decision presupposes a small USVS interjection
+   pseudo-sense table (eval-axis coords) that doesn't exist yet. Agent marked
+   these stance_lexicon:"needed" (stores "unresolved", never a hard-coded
+   polarity). Director take: bounded task, add interjection senses INTO USVS
+   (data, not code -> honors the invariant), do before pure-interjection
+   valence is needed.
+2. SUPERVISION/ALIGNMENT (the load-bearing one): a gold context_ref is an
+   index into serialized prior_context; at run time the antecedent is a
+   memory node under a runtime memory_handle. How is the gold pointer a
+   supervised loss over a live retrieval candidate set? Director take:
+   RESOLVED in principle -- treat serialized prior_context AS the training-
+   time memory-candidate set; supervise EMIT_CONTEXT_REF as pointer-selection
+   over it, IDENTICAL to sense-selection; make candidate featurization mirror
+   runtime retrieval. Tractable; folds into the M63.2 encoder-model spec,
+   not a blocker. Awaits lead sign-off.
+
+NEXT: lead red-pens ENCODER_GRAMMAR_FORMAT_PROPOSAL + the two calls above;
+then M63.2 (encoder model) -- RESERVED for lead go.
