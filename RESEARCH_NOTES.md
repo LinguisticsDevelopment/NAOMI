@@ -363,3 +363,36 @@ candidate-lattice test set; (c) run encoder_full.pt on it -> candidate-set
 recall on never-trained Spanish vs random = THE acceptance test. Honest
 caveat: Spanish predicate-verb sense-grounding limited by the base-lemma gap;
 noun/entity/structure recall is the clean signal.
+
+### Encoder full EN train + Spanish test-set ready; STRUCTURE gap found (2026-09-04)
+
+FULL ENGLISH TRAIN (branch encoder-train-full, encoder_full.pt): 985 recs,
+80/10/10 split, d_model=128, 15 ep, loss 40.5->6.0 monotonic. Params 342,834
+(~1.37MB; spec's own "~1.3MB" figure -- "sub-MB" was loose; under the 2MB
+ceiling). Held-out TEST candidate-set recall:
+  SENSE 0.931 (vs 0.041 random), SLOT 0.978 (vs 0.000 random), consistent
+  train/dev/test (no overfit gap) -- grounding + slot emission GENUINELY
+  LEARNED. STRUCTURE recall 0.000 on ALL splits incl train.
+STRUCTURE DIAGNOSIS (real, not metric artifact): the 7-action transition
+system has NO STOP/terminal action -- legal_action_types returns
+["OPEN_CLAUSE"] even after the buffer is consumed, so the policy re-opens
+clauses forever (6-50 per tree vs gold 1-4); teacher forcing never teaches
+"stop" (oracle just ends). Fairer metrics: clause-boundary F1 0.16-0.22,
+clause-count match ~0-2%. => ARCHITECTURAL: needs a STOP action added to the
+inventory (+ taught). Agent correctly did NOT change architecture. This is
+the REMAINING LEVER to finish the encoder's structure -- a targeted bug fix,
+not a redesign.
+Also flagged: train_encoder.py non-smoke default hash_buckets=32768 blows the
+budget (~5MB); overridden to 4096 here -> 1.37MB. Fix the default.
+
+SPANISH TEST SET (branch spanish-gold-v2, runs/spanish_gold_v2.jsonl): 208
+records, V2-shape valid. USVS Spanish lemma resolution added ADDITIVELY
+(wordnet.py spanish_lemmas + build_usvs union) -- fingerprint PROVABLY
+unchanged (e0daef638b640dd5 before==after; fingerprint hashes axes+meta not
+lemmas) + English senses_of unchanged; perro->dog.n.01 etc. now resolve in
+the production build. Grounding 71% entity / 29% sense; conjugated predicate
+verbs 100% entity-fallback (known base-lemma gap). Forest median 1 tree
+(templates simpler than EN children's-lit).
+NEXT: swap test (EN-trained encoder on Spanish) fired -- sense/slot transfer
+is the clean cross-lingual proof; structure 0% in BOTH langs (same STOP bug)
+so it doesn't confound. Then the STOP-action fix to finish structure.
