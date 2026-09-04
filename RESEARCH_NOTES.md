@@ -280,3 +280,55 @@ transducer, comprehension disambiguates). Status as it progresses:
   (~0.33M params), CPU-trainable smoke <=10min, loss = candidate-SET
   emission (copy gold set), eval = candidate-set recall, concrete impl
   deliverable list. STEP 6 (encoder impl) FIRED.
+
+### MORNING REPORT (2026-09-04) — encoder + decoder I/O layer BUILT overnight
+
+Autonomous overnight build of the candidates-first I/O layer. Philosophy
+(locked): encoder = pure token->candidate-lattice transducer; comprehension
+resolves everything (WSD/coref/elision/attachment) downstream via
+select-from-memory-candidates.
+
+(a) READY (all merged to mainline):
+- ENCODER (src/nsm_ct/encoder_model.py, 199,026 params = ~0.80MB fp32 =>
+  SUB-MB confirmed; retrieval-conditioned grammar-constrained transition
+  parser). Smoke-trained (150 rec, 2 ep, ~4.6min CPU). Candidate-set recall
+  on held-out (n=40) vs random-legal baseline: SENSE 93.8% vs 2.7% (34x);
+  SLOT 62.7% vs 0.0%; STRUCTURE 0.0% (both -- see limits). NEVER ARGMAXES by
+  construction: no head scores candidate-vs-candidate; sense candidates
+  copied verbatim from retrieval (unit-tested + 100% exact-copy spot-check).
+  Train loss 61.9->42.5 over 2 ep (learning cleanly). 5 unit tests pass.
+- DECODER (src/nsm_ct/decoder.py): phase-1 rule-grounded short-answer
+  realizer. 16 tests green. Realizes who/where/attribute/yes-no; ABSTENTION
+  ("I don't know.") first-class; NO-CONFAB ABLATION passes (sever
+  memory->decoder => abstention, zero content leak).
+
+(b) FILE MAP: src/nsm_ct/encoder_model.py, src/nsm_ct/decoder.py,
+scripts/{train_encoder,eval_encoder}.py, tests/{test_encoder_model,
+test_decoder}.py, configs/encoder_smoke.yaml; dev/{UNIVERSAL_ENCODER_DESIGN,
+ENCODER_IO_CONTRACT_V2, ENCODER_GRAMMAR_FORMAT_PROPOSAL, ENCODER_MODEL_SPEC,
+DECODER_DESIGN}.md. Data: candidate-lattice gold (985 rec) on branch
+encoder-gold-v2; smoke checkpoint on branch encoder-model.
+
+(c) STUBBED / smoke-only (NOT production):
+- Encoder trained on a 150-record SMOKE subset only; full train (all 985 +
+  more epochs) is the obvious follow-up. STRUCTURE RECALL 0% is the real
+  limitation -- exact top-k-tree match isn't learned at smoke scale (sense +
+  slot emission are; structure needs full training and/or a looser match).
+- Stage-ii Spanish + Stage-iii code-switch: not started.
+- Pure-interjection USVS gloss-senses: deferred (USVS-fingerprint blast
+  radius). Teacher-gold correctness: not audited (yield measured, not
+  correctness). Hand-gold sense_ids: unverified. Some corpus-header junk
+  records leak into the gold. MFS-dissolution decision means these matter
+  less for the encoder (it emits candidate sets) but matter for gold hygiene.
+
+(d) NEEDS THE LEAD (next phase): the COMPREHENSION MODEL -- the mind that
+consumes the encoder's candidate lattice, RESOLVES it (WSD/coref/elision/
+attachment) via select-from-memory-candidates over grounded tensor memory,
+reasons, and answers; trained by the K-12 read-then-answer ladder; decoder
+realizes its answers. This is where connotation ("how does Bob feel?") and
+all comprehension live. Open questions: (1) context_ref supervision =
+selection-over-retrieved-candidates (settled in principle); (2) corpus /
+egress for real graded K-12 text (cloud routines can't reach the open web --
+need egress grant or mounted corpus); (3) full encoder train + structure-
+recall fix before relying on the lattice. I/O layer is ready to plug the
+comprehension model into.
