@@ -272,3 +272,48 @@ output target) and the per-token candidate-sense lookup (its retrieval input).
 Step 2 (next, director-specced): the encoder model itself (retrieval-
 conditioned, grammar-constrained transition parser) trained on that gold,
 eval = tree/grounding agreement vs teacher on held-out.
+
+## 11. Candidates-first pivot (2026-09-04) — the boundary decision
+
+**Supersedes §10 Step 1's "one grounded tree" framing.** Per the lead's CORE
+BOUNDARY DECISION (`RESEARCH_NOTES.md`, 2026-09-04), the encoder is
+redefined as *literally just a token→tree-SET transducer*. It **emits a
+candidate lattice and commits to nothing**:
+
+1. per content node, **all** real sense candidates (`senses_of`), no chosen
+   sense;
+2. the parser's **top-k possible trees** — a parse *forest*, so
+   structural/attachment ambiguity is preserved, not resolved;
+3. **unresolved link slots** for pronouns, coref, and elided predicates/args,
+   each carrying a *candidate set*, not a resolution.
+
+The **comprehension model** (downstream GRU over grounded memory — not the
+encoder) resolves *all* of it — WSD, coref/pronoun linking, elision-fill,
+attachment — with **one primitive: select-from-memory-conditioned-candidates.**
+
+Why: (a) keeps the encoder a pure deterministic transducer — **no parser
+bleed**, no comprehension-side inference leaking into the "objective" parse;
+(b) makes the encoder gold **deterministic and label-free** — the target is
+the candidate *set* the teacher already produces (`senses_of` exhaustive;
+parser `max_hypotheses` top-k), so no correct-sense/attachment annotation is
+needed. Encoder eval becomes **candidate-set recall** (is the gold element
+among the emitted candidates?), never pick-accuracy.
+
+The unified insight: **sense-ambiguity, pronoun/coref, and elision are one
+construct** — a role/predicate position + a candidate set + how the candidates
+are retrieved — differing only in source (lexicon / self / context / memory).
+The former elision-only `context_ref` is promoted to that universal
+unresolved-slot primitive.
+
+Consequences already locked: (i) the 1259 committed-MFS teacher-gold trees are
+the wrong form and are being **regenerated** as candidate-lattice gold;
+(ii) the interjection **appraisal-node over-build is stripped** — an
+interjection grounds to its literal/gloss USVS sense candidate(s) and is
+marked an interjection utterance; connotation/valence is a *comprehension-side*
+learned inference, out of scope for the encoder; (iii) the synthesized
+imperative subject (prime `YOU`) and the frozen role vocabulary are kept.
+
+**Canonical schema:** see `dev/ENCODER_IO_CONTRACT_V2.md` — the single
+candidates-first I/O contract that supersedes v1 (`dev/ENCODER_IO_CONTRACT.md`,
+one committed tree) and reconciles the two hand-draft addenda. This design doc
+remains the entry point; V2 is the authoritative serialization schema.
