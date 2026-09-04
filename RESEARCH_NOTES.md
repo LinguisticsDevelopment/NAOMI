@@ -252,3 +252,19 @@ transducer, comprehension disambiguates). Status as it progresses:
   learned realizer deferred.
 - STEP 2 (gold->lattice) still RUNNING (~30min in). STEP 3 (grammar finalize)
   FIRED.
+- STEP 2 DONE (encoder-gold-v2 branch, 5878fea): teacher gold as CANDIDATE
+  LATTICE. 985 records (of 1475; no-hypothesis 372, grounding-fail 107,
+  cap-hit 11 -- yield lower than v1's 1259 due to stricter lattice validity,
+  ACCEPTABLE). REAL FOREST: median 3 trees/sentence (p90 6, max 8), only
+  157/985 single-tree. Median 5 sense-candidates/node (p90 18); 4770 pronoun
+  reference slots. Shape verified: lattice.trees[] with per-node grounding
+  {type:sense, candidates:[...]} (NO committed pick), utterance_kind,
+  reference slots. Data kept on branch. (Minor: some corpus header lines leak
+  as junk records -- cleanup deferred, non-blocking.)
+- STEP 3 DONE + MERGED (a081a80): dev/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md
+  canonical, candidates-first. Rules LICENSE + emit candidate/unresolved slots,
+  never disambiguate; action_map to encoder actions; interjection SIMPLIFIED to
+  ground-only (appraisal/FEEL/reaction-index DROPPED); utterance_kind has no
+  "appraisal"; PP-attachment emitted as forest branches; multilingual pro-drop
+  as one surface-absent+context rule.
+- STEP 5 (encoder-model SPEC) + STEP 7 (decoder impl) FIRED.
