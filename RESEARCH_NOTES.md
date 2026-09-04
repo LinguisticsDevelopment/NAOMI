@@ -268,3 +268,15 @@ transducer, comprehension disambiguates). Status as it progresses:
   "appraisal"; PP-attachment emitted as forest branches; multilingual pro-drop
   as one surface-absent+context rule.
 - STEP 5 (encoder-model SPEC) + STEP 7 (decoder impl) FIRED.
+- STEP 7 DONE + MERGED (8c367f0): src/nsm_ct/decoder.py + tests/test_decoder.py.
+  Phase-1 rule-grounded realizer GREEN: 16 tests pass (12.6s). Realizes
+  who->"Mary." / where->"The garden." / "Mary is in the garden." / yes-no->
+  "Yes." / abstain->"I don't know." NO-CONFAB ABLATION PASSES all 6 cases
+  (sever memory->decoder => "I don't know.", zero content-word leak).
+  Reuses membrane.py RELATION_TEMPLATES/render_fact; new realize() API +
+  sense_id->lemma + entity book + abstention fallback. DECODER READY.
+- STEP 5 DONE + MERGED (64488c2): dev/ENCODER_MODEL_SPEC.md. Sound:
+  never-argmax (candidate-pick not representable), sub-MB controller
+  (~0.33M params), CPU-trainable smoke <=10min, loss = candidate-SET
+  emission (copy gold set), eval = candidate-set recall, concrete impl
+  deliverable list. STEP 6 (encoder impl) FIRED.
