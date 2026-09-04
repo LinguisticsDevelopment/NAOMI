@@ -244,3 +244,11 @@ transducer, comprehension disambiguates). Status as it progresses:
   utterance_kind:"interjection"; connotation is comprehension-side); eval =
   candidate-SET recall (sense/structure/slot recall). Design doc §11 added.
 - STEP 2 (gold regen -> candidate lattice) + STEP 4 (decoder design): FIRED.
+- STEP 4 DONE + MERGED (07b1bbe): dev/DECODER_DESIGN.md. Phase-1 rule-grounded
+  short-answer realizer (sense_id->lemma via sense_lemmas, entity book,
+  grammar-forward word order); abstention ("I don't know") first-class;
+  no-confab ABLATION gate (sever memory->decoder => output collapses to
+  abstention, never invents). Reuses mind/membrane.py render path. Phase-2
+  learned realizer deferred.
+- STEP 2 (gold->lattice) still RUNNING (~30min in). STEP 3 (grammar finalize)
+  FIRED.
