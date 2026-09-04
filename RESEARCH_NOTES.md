@@ -230,3 +230,17 @@ appraisal-node over-build, keep context_ref generalized + synth-subject +
 ref.source:self); (3) encoder-reference grammar format finalize; (4) decoder
 design; (5) pure-interjection USVS gloss-senses. Build starts only when all
 five are ironed out.
+
+### OVERNIGHT encoder/decoder build — running morning report (2026-09-04)
+
+Autonomous pipeline (philosophy locked: encoder = candidate-lattice
+transducer, comprehension disambiguates). Status as it progresses:
+- STEP 1 DONE + MERGED (2714a2f): canonical candidates-first I/O contract
+  dev/ENCODER_IO_CONTRACT_V2.md. Verified: lattice replaces committed tree
+  (all senses/node + top-k forest + unresolved slots); ONE unified
+  `grounding` construct (types sense/reference/elision share candidates+
+  retrieval envelope; source lexicon/self/context/memory); imperative synth
+  "you" kept; appraisal STRIPPED (interjection -> literal/gloss sense +
+  utterance_kind:"interjection"; connotation is comprehension-side); eval =
+  candidate-SET recall (sense/structure/slot recall). Design doc §11 added.
+- STEP 2 (gold regen -> candidate lattice) + STEP 4 (decoder design): FIRED.
