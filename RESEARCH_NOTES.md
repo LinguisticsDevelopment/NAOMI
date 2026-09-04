@@ -192,3 +192,41 @@ CONSEQUENCE: the two hand-draft addenda (encoder-handgold-v1/v2) assumed a
 reaction-sense index / emotion inventory -> both need REVISION to
 "literal-or-gloss sense + learned connotation-eval + projection". context_ref
 (elision) + imperative synth-subject are UNAFFECTED and stand.
+
+### CORE BOUNDARY DECISION (lead, 2026-09-04) — encoder emits candidates, comprehension disambiguates
+
+The encoder does NOT disambiguate. It emits the CANDIDATE LATTICE: all real
+sense candidates per node + the parser's top-k POSSIBLE TREES (incl.
+structural/attachment ambiguity) + unresolved link slots (pronouns, elided
+args). It commits to NOTHING. The COMPREHENSION model (GRU over memory)
+resolves ALL of it -- WSD, pronoun/coref linking, elision-fill, attachment --
+as ONE primitive: "select the right candidate from memory-conditioned
+candidates." Chosen over "encoder does WSD" to avoid PARSER BLEED (encoder
+staying a pure transducer) AND because it makes encoder gold deterministic +
+label-free.
+
+Consequences:
+- MFS/WSD gold problem (#5) DISSOLVED: encoder gold = candidate set (all
+  senses via senses_of + parser top-k trees), no correct-sense label needed.
+  No sense_chooser wiring for the encoder. WSD is comprehension, trained by
+  K-12.
+- context_ref is no longer elision-specific: it IS the general
+  unresolved-slot->select-from-candidates primitive; pronoun/sense/elision
+  are instances.
+- The 1259 teacher-gold trees are the WRONG FORM (committed MFS single tree).
+  REGENERATE as candidate-lattice gold (top-k structures + per-slot sense
+  candidates, no pick). Teacher supports it natively (max_hypotheses=20,
+  senses_of returns all). Encoder eval = did it produce the right CANDIDATE
+  SET (recall), not the right pick.
+- Encoder emits a parse FOREST (top-k) not one resolved tree -- structural
+  ambiguity is comprehension's to resolve, same as sense ambiguity.
+
+SEQUENCING (lead): corpus/K-12 test + comprehension training are POST
+encoder/decoder build (the "comprehension retrain"). So corpus-sourcing
+(egress/mount) and K-12 curriculum DROP OUT of the pre-build checklist.
+Revised pre-build (encoder/decoder) checklist: (1) candidate-lattice gold
+regenerate; (2) canonical candidates-first schema (reconcile v1/v2, strip
+appraisal-node over-build, keep context_ref generalized + synth-subject +
+ref.source:self); (3) encoder-reference grammar format finalize; (4) decoder
+design; (5) pure-interjection USVS gloss-senses. Build starts only when all
+five are ironed out.
