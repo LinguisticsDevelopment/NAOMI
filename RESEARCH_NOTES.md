@@ -134,3 +134,30 @@ TWO FLAGS for lead (both real):
 
 NEXT: lead red-pens ENCODER_GRAMMAR_FORMAT_PROPOSAL + the two calls above;
 then M63.2 (encoder model) -- RESERVED for lead go.
+
+### M63.1c cross-validation — 2nd independent draft SHARPENS flag #1 (2026-09-04)
+
+The local Opus agent (dispatched pre-offline, survived, finished ~10h) wrote
+a SECOND independent hand-gold draft (33 records) -> branch encoder-handgold-v2.
+Both drafts independently converged: APPRAISAL is the odd family out. The v2
+draft sharpens flag #1 into the real architectural point:
+- For interjections it's NOT just "pure ones lack a WordNet sense." Even
+  interjections WITH a sense fail: "shit" retrieves sense_candidates=
+  [shit.n.01 (feces)], but the appraisal target is annoyance.n.01 -- which is
+  NOT in the token's candidate set. So the emotion/reaction sense is NEVER
+  the surface token's retrieved WordNet candidate, for ANY interjection.
+- Consequence: appraisals BREAK the frozen retrieval-conditioning assumption
+  ("the correct sense is one of the present token's candidates"). Every other
+  family fits the one mechanism (grounding = select a retrieved candidate
+  sense of a present token); appraisals do NOT. They require a SEPARATE
+  retrieval index: interjection-span -> candidate REACTION senses, which is
+  not lemma-reachable and likely needs a small hand-curated reaction
+  inventory. (v2 also adds a useful `ref.source:"self"` = point to another
+  clause in the same record, beyond context/memory.)
+- Also: POS enum has no INTJ; interjections tag as NOUN/ADV, so the appraisal
+  signal must ride on a clause_type discriminator, not POS.
+REVISED flag #1 for lead: the decision is not "add ~11 interjection senses"
+but "appraisals need their own reaction-sense inventory + retrieval index."
+This is THE open question for the appraisal family before it can train like
+the rest. Imperatives + elision were comfortably human-writable; appraisals
+are the snag.
