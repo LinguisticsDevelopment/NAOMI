@@ -370,3 +370,19 @@ def all_senses():
     for s in sorted(wn.all_synsets(), key=lambda x: x.name()):
         yield (s.name(), s.definition() or "", s.lexname(),
                [l.name().lower() for l in s.lemmas()])
+
+
+def spanish_lemmas(sense_id: str) -> List[str]:
+    """OMW Spanish (``lang="spa"``) lemma names for the synset *sense_id*,
+    keyed to the SAME synset id as its English lemmas -- no re-grounding,
+    just a wider lemma->sense_id lookup (see ``dev/SPANISH_SWAP_FEASIBILITY.md``
+    Check 1). Lowercased, deduped. Empty list if WordNet/OMW is unavailable
+    or the synset has no Spanish layer."""
+    if not wordnet_available():
+        return []
+    try:
+        wn = _wn()
+        syn = wn.synset(sense_id)
+        return sorted({l.name().lower() for l in syn.lemmas(lang="spa")})
+    except Exception:  # pragma: no cover
+        return []
