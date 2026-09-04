@@ -161,3 +161,34 @@ but "appraisals need their own reaction-sense inventory + retrieval index."
 This is THE open question for the appraisal family before it can train like
 the rest. Imperatives + elision were comfortably human-writable; appraisals
 are the snag.
+
+### Appraisal grounding DECISION (lead, 2026-09-04) — derive connotation, no table
+
+Lead REJECTS an interjection->emotion table (off-philosophy). Instead:
+- An interjection grounds to its LITERAL USVS sense ("shit!" -> shit.n.01),
+  which IS in the token's retrieved sense candidates -> the "appraisals need
+  a separate retrieval index" problem DISSOLVES; same grounding mechanism as
+  every word. No table, no second index.
+- The appraisal is a LEARNED operation on grounded structure: (1)
+  connotation-evaluation = read the sense's valence off the GOOD<->BAD eval
+  axis already anchored by the NSM GOOD/BAD primes in USVS (valence DERIVED
+  from structure, never imported/hard-coded); (2) projection = the
+  interjection act projects that valence onto the target (standalone / or
+  attached to the reacted-to proposition). Both ops GENERALIZE beyond
+  interjections (epithets, sarcasm: "you snake!") -> connotation for the
+  whole vocabulary, not 15 words.
+- PURE interjections (alas/ugh/oh) have no literal sense: ADD them to USVS
+  via GLOSS-grounding (Wiktionary-style gloss through the existing
+  ground/usvs.py gloss->prime->coordinate pipeline). Deterministic lexical
+  data, not a trained model. Then they ground like any sense.
+- NRC-VAD / Warriner: static human-rated tables (not trained models, so they
+  pass the no-probabilistic bar) BUT imported valence is less on-philosophy
+  than derived; SKIP as primary, keep only as optional validation of derived
+  valence. Not expected to be needed.
+- HONEST COST: connotation-eval must be LEARNED from USVS structure; works
+  where GOOD/BAD anchors give signal, research-risk on subtle/neutral senses;
+  testable on held-out words. The right kind of thing to learn, not hand.
+CONSEQUENCE: the two hand-draft addenda (encoder-handgold-v1/v2) assumed a
+reaction-sense index / emotion inventory -> both need REVISION to
+"literal-or-gloss sense + learned connotation-eval + projection". context_ref
+(elision) + imperative synth-subject are UNAFFECTED and stand.
