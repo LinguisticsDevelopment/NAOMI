@@ -346,7 +346,7 @@ def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
 
     # 3) the full sense layer — grounded IN the placed space (M46 default),
     #    or per-gloss prime decomposition (legacy "primes" mode)
-    from ..wordnet import all_senses
+    from ..wordnet import all_senses, spanish_lemmas
     axis_index = {a: j for j, a in enumerate(axes.names)}
     sense_ids: List[str] = []
     sense_lemmas: List[List[str]] = []
@@ -358,7 +358,13 @@ def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
         if max_senses is not None and k >= max_senses:
             break
         sense_ids.append(sid)
-        sense_lemmas.append(lemmas)
+        # Additive lemma-index widening only (dev/SPANISH_SWAP_FEASIBILITY.md
+        # Check 1): union OMW Spanish lemmas, keyed to this SAME sense_id, into
+        # the lemma list. Grounding (weights below) never reads `lemmas` --
+        # see the SENSE_W_GENUS comment above -- so this cannot perturb the
+        # coordinate space, axes, or fingerprint; it only widens senses_of().
+        es = spanish_lemmas(sid)
+        sense_lemmas.append(lemmas + [l for l in es if l not in lemmas] if es else lemmas)
         weights: Dict[str, float] = {}
         if sense_grounding == "usvs":
             weights = sense_usvs_weights(sid, gloss, lemmas, placed, axes.names)
