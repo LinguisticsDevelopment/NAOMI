@@ -1,0 +1,33 @@
+# Smoke config for the candidate-lattice encoder (dev/ENCODER_MODEL_SPEC.md S2.3).
+#
+# Observed CPU wall-clock (this run, single core, no GPU):
+#   training loop only:        38.2s  (2 epochs x 444 teacher-forced derivations)
+#   + beam-decode eval (train/dev/test, beam_width=6, k=6): ~218s
+#   TOTAL (incl. USVS load + feature build): 278.5s (~4.6 min)
+# well inside the S2.3 <=~10min CPU training budget (the eval pass is not
+# counted against that budget in the spec, and is itself well under 4 min).
+#
+# `scripts/train_encoder.py --smoke` applies these exact values; this file
+# documents them (no YAML loader is wired up -- the `--smoke` flag is the
+# source of truth, this is the human-readable mirror the spec asks for).
+
+n_train: 150
+n_dev: 40
+n_test: 40
+
+d_model: 64
+hash_buckets: 4096      # 2^12
+d_pos: 8
+d_sense: 16
+d_rule: 8
+controller_hidden: 64
+
+batch_size: 16          # gradient-accumulation window over derivations
+epochs: 2
+lr: 0.001
+seed: 0
+
+beam_width: 6
+k: 6                    # top-k forest at inference
+
+max_seconds: 650         # hard training-time cutoff (spec: <=~10-12 min CPU)
