@@ -431,3 +431,31 @@ to finish: (a) STOP-action fix for structure (the one real bug, both langs);
 (b optional) a Spanish gold set WITH slot/elision sites for a fuller swap
 test; (c minor) Spanish verb base-lemma gap. Decoder already done. NOT
 starting comprehension model until (a) lands (structure) per lead.
+
+### DECODER PLAN UPDATE (lead, 2026-09-05) — trained decoder, round-trip test
+
+Supersedes "Phase-1 deterministic realizer only". The decoder should be a
+TRAINED (learned) realizer, same philosophy as the encoder. Objective AND
+acceptance test = ROUND-TRIP RECONSTRUCTION (autoencoder):
+  text -> ENCODER -> grounded structure -> DECODER -> text ,  output == input.
+- SELF-SUPERVISED: the source sentence IS the target; no separate decoder
+  gold needed. Train the decoder to reconstruct the source from its grounded
+  structure (use teacher-gold committed structures as the structure->text
+  training pairs; the surface sentence is the label).
+- TEST: encode a sentence, immediately decode, compare to input -- easy,
+  self-checking, tests encoder+decoder TOGETHER as faithful inverses.
+  Report reconstruction accuracy (exact-match rate + token-level F1; 100%
+  exact not required -- articles/inflection may vary).
+- Round-trip needs a committed reading to decode from (the encoder emits a
+  lattice); for reconstruction use the top tree + surface tokens/lemmas
+  (sense DISAMBIGUATION is not needed to regenerate surface -- that's
+  comprehension's job). So the round-trip tests the STRUCTURE+realization
+  faithfulness, not sense selection.
+- KEEP the no-confabulation ablation (sever structure -> output collapses to
+  abstention/empty, never invents) -- reconstruction is the SAFE form of a
+  learned decoder (target is the known input, structure is the bottleneck),
+  but the ablation stays the guarantee.
+- STILL grammar-SWAPPABLE for language: realize via the swapped grammar so
+  English-structure -> Spanish grammar -> Spanish out (and Spanish in -> out).
+DIRECTIVE to overnight loop: PHASE 3 decoder step = build+TRAIN the learned
+reconstruction decoder + round-trip eval (not just make Phase-1 swappable).
