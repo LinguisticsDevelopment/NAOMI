@@ -9,7 +9,8 @@ against another. Every ambiguity is emitted as a candidate SET, copied whole
 from retrieval (`token_sense_candidates`), never generated or ranked.
 
 Contents:
-  - the 7-action transition system + a grammar-conditioned legality mask
+  - the 8-action transition system (incl. a terminal STOP action) + a
+    grammar-conditioned legality mask
     (structural preconditions only; see the module docstring note on scope)
   - the oracle: gold tree -> teacher-forced action sequence (spec S3.1)
   - the policy network (spec S2.2): hash token embedding + POS + pooled USVS
@@ -50,7 +51,7 @@ import torch.nn.functional as F
 
 ACTION_TYPES: List[str] = [
     "SHIFT", "OPEN_CLAUSE", "GROUND", "ATTACH",
-    "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT", "CLOSE_CLAUSE",
+    "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT", "CLOSE_CLAUSE", "STOP",
 ]
 ACTION_INDEX: Dict[str, int] = {a: i for i, a in enumerate(ACTION_TYPES)}
 
@@ -327,6 +328,15 @@ def linearize_tree(record: dict, tree: dict) -> List[Step]:
 
         steps.append(Step(action="CLOSE_CLAUSE"))
 
+    # Terminal STOP (spec fix: give the transition system a way to say "the
+    # sentence is done"). Flush any trailing tokens the tree never grounded
+    # (most gold trees don't consume every token -- trailing punctuation,
+    # function words, etc.) so the derivation reaches a legal `i>=T` state
+    # with no clause open, then emit STOP. Every gold derivation ends here,
+    # so teacher forcing always sees the terminal action.
+    shift_to(T)
+    steps.append(Step(action="STOP"))
+
     return steps
 
 
@@ -334,24 +344,52 @@ def linearize_tree(record: dict, tree: dict) -> List[Step]:
 # Grammar-constrained legality mask (spec S3.3, structural preconditions)
 # ---------------------------------------------------------------------------
 
-def legal_action_types(open_clause: bool, i: int, T: int) -> List[str]:
+def legal_action_types(open_clause: bool, i: int, T: int, has_clause: bool = False) -> List[str]:
     """Structural preconditions only (spec S3.3 bullet 1). Note GROUND /
     EMIT_UNRESOLVED_SLOT / EMIT_SYNTH_SLOT stay legal even once `i>=T`:
     real gold occasionally has two nodes address an overlapping/duplicate
     token_index (e.g. a coref slot re-pointing at an already-consumed
     position), and the oracle's buffer pointer only ever advances -- so a
     node's grounding action must remain legal regardless of exactly where
-    the monotonic pointer has gotten to. Only SHIFT needs `i<T` (there is
-    nothing left to advance onto). This guarantees the mask can never
-    exclude a gold oracle action -- a masked-out gold target would make its
-    cross-entropy target -inf-logit -> +inf loss, which is exactly the
-    training-time invariant this function exists to prevent.
+    the monotonic pointer has gotten to.
+
+    `has_clause` says whether this derivation has closed at least one
+    clause so far. STOP is legal exactly when the buffer is consumed
+    (`i>=T`), no clause is open, AND `has_clause` -- no gold tree has zero
+    clauses (verified over the full corpus), so the oracle's terminal
+    flush+STOP (see `linearize_tree`) only ever follows an already-closed
+    clause. The same `has_clause` gate applies to SHIFT while no clause is
+    open (the flush itself): without it, an early/undertrained policy can
+    legally race straight through the whole buffer via repeated
+    no-open-clause SHIFTs before ever opening a single clause, landing on
+    STOP having emitted no content at all -- a state the oracle never
+    demonstrates and a real failure mode observed in a smoke run. Gating
+    both on `has_clause` restores "OPEN_CLAUSE is the only legal action
+    before anything has been produced" while still letting a *completed*
+    derivation flush and stop.
+
+    STOP does NOT replace OPEN_CLAUSE as the sole legal action once
+    `has_clause` and `i>=T`: real gold trees occasionally still need to open
+    another clause there (the same duplicate-token-index collisions above
+    can push the monotonic pointer past `T` while clauses remain), so
+    OPEN_CLAUSE stays legal alongside STOP at that state -- the model must
+    learn *from context* which one to take, exactly as it already learns
+    everything else this mask leaves ambiguous. This guarantees the mask
+    can never exclude a gold oracle action -- a masked-out gold target
+    would make its cross-entropy target -inf-logit -> +inf loss, which is
+    exactly the training-time invariant this function exists to prevent.
     """
-    if not open_clause:
-        return ["OPEN_CLAUSE"]
-    types = ["GROUND", "EMIT_UNRESOLVED_SLOT", "EMIT_SYNTH_SLOT", "CLOSE_CLAUSE"]
-    if i < T:
-        types = ["SHIFT"] + types
+    if open_clause:
+        types = ["GROUND", "EMIT_UNRESOLVED_SLOT", "EMIT_SYNTH_SLOT", "CLOSE_CLAUSE"]
+        if i < T:
+            types = ["SHIFT"] + types
+        return types
+    types = ["OPEN_CLAUSE"]
+    if has_clause:
+        if i < T:
+            types.append("SHIFT")
+        else:
+            types.append("STOP")
     return types
 
 
@@ -452,6 +490,7 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
     open_kind_id = model._none_clause_id
     prev_action_id = model._start_action_id
     i = 0
+    has_clause = False
 
     losses = []
     for step in steps:
@@ -459,7 +498,7 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
         enc_i = enc[i_clamped] if T > 0 else torch.zeros(model.d_model)
         h = model.controller_step(enc_i, open_kind_id, prev_action_id, h)
 
-        legal = legal_action_types(open_clause, i, T)
+        legal = legal_action_types(open_clause, i, T, has_clause)
         mask = _mask_vector(legal)
         type_logits = model.action_type_head(h).squeeze(0) + mask
         target_type = torch.tensor(ACTION_INDEX[step.action])
@@ -474,6 +513,7 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
         elif step.action == "CLOSE_CLAUSE":
             open_clause = False
             open_kind_id = model._none_clause_id
+            has_clause = True
         elif step.action in ("GROUND", "ATTACH", "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT"):
             role_logits = model.role_head(h).squeeze(0)
             losses.append(F.cross_entropy(role_logits.unsqueeze(0),
@@ -540,13 +580,18 @@ def _tree_skeleton(tree: dict) -> Tuple[frozenset, ...]:
 
 
 def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 8,
-                 k: int = 8, max_steps: int = 400, max_clauses: int = 6,
+                 k: int = 8, max_steps: int = 400, max_clauses: int = 20,
                  policy: str = "model", rng: Optional[random.Random] = None) -> List[dict]:
     """Returns up to `k` structurally-distinct trees (a candidate forest).
 
     `policy="model"` uses the learned action-type distribution (masked);
     `policy="random"` samples uniformly among legal actions instead -- the
     random baseline used for comparison in eval (never used for training).
+
+    A beam terminates primarily by emitting the learned STOP action (see
+    `legal_action_types`); `max_clauses`/`max_steps` are only a safety-net
+    backstop against a beam that never learns to stop, not the intended
+    stopping mechanism.
     """
     with torch.no_grad():
         enc = model.encode(feats) if policy == "model" else None
@@ -566,7 +611,7 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
                 if b.done:
                     finished.append(b)
                     continue
-                legal = legal_action_types(b.open_clause, b.i, T)
+                legal = legal_action_types(b.open_clause, b.i, T, has_clause=bool(b.clauses))
                 if policy == "model":
                     i_clamped = min(b.i, T - 1) if T > 0 else 0
                     enc_i = enc[i_clamped] if T > 0 else torch.zeros(model.d_model)
@@ -591,6 +636,9 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
                     else:
                         nb.logprob = b.logprob - math.log(max(len(top), 1))
                     _apply_action(nb, action, model, feats, h)
+                    # `_apply_action` already marks STOP beams done (the
+                    # natural, learned termination); these are only a
+                    # backstop against a beam that never emits STOP.
                     if len(nb.clauses) >= max_clauses or nb.steps_taken >= max_steps:
                         nb.done = True
                     candidates.append(nb)
@@ -628,6 +676,9 @@ def _apply_action(state: BeamState, action: str, model: EncoderModel,
     state.prev_action_id = ACTION_INDEX[action]
     if action == "SHIFT":
         state.i = min(state.i + 1, T)
+        return
+    if action == "STOP":
+        state.done = True
         return
     if action == "OPEN_CLAUSE":
         kind = "proposition"
