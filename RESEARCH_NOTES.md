@@ -396,3 +396,38 @@ verbs 100% entity-fallback (known base-lemma gap). Forest median 1 tree
 NEXT: swap test (EN-trained encoder on Spanish) fired -- sense/slot transfer
 is the clean cross-lingual proof; structure 0% in BOTH langs (same STOP bug)
 so it doesn't confound. Then the STOP-action fix to finish structure.
+
+### GRAMMAR-SWAP ACCEPTANCE TEST result (2026-09-04) — cross-lingual grounding transfers, on 1 metric
+
+Ran the ENGLISH-only-trained encoder (encoder_full.pt, frozen) on 208
+never-seen SPANISH lattice records; Spanish senses+grammar swapped into the
+memory input; same USVS (fp e0daef638b640dd5 intact, perro->dog.n.01), same
+metric, no retrain. Branch encoder-swap-test (45f88ff), dev/SWAP_TEST_RESULTS.md.
+
+RESULT (Spanish, n=208):
+- SENSE recall (candidate-set / grounding-SITE recall): 1.000 (308/308) vs
+  random-legal ~0.07-0.10 => ~10-13x. At/above English's 0.931.
+- SLOT recall: N/A -- the Spanish templates (curriculum TEMPLATES_ES) contain
+  ZERO reference/elision sites, so slot-transfer could NOT be measured.
+- STRUCTURE recall: 0.000, identical to English -- the same missing-STOP-action
+  bug in BOTH languages (not a cross-lingual failure).
+
+VERDICT (honest): grounding transfers cross-lingually by DATA SWAP ALONE on
+the metric this test could measure. Same frozen EN weights + Spanish
+grammar/lexicon as memory -> the encoder correctly decides WHERE Spanish
+tokens need sense-grounding (the structural grammar->grounding policy), ~12x
+random. The encoder is applying a learned apply-grammar-to-ground policy, not
+memorizing English. That's real evidence for the universal-encoder thesis.
+CAVEATS (do not oversell): (1) ONE metric -- slot transfer untested (no
+Spanish slot sites); (2) sense recall = grounding-SITE-type correctness
+(which per the candidates-first design IS the encoder's job -- it emits the
+candidate set, comprehension selects -- but it is coarser than "picks the
+right sense"); (3) Spanish sites skew noun/place (verbs entity-fallback), not
+the same distribution as English; (4) structure still 0% both langs.
+
+ENCODER 'FINISHED' STATUS: grounding + slot emission strong (EN 0.93/0.98);
+cross-lingual grounding-site transfer shown (1.0 vs 0.08 Spanish). REMAINING
+to finish: (a) STOP-action fix for structure (the one real bug, both langs);
+(b optional) a Spanish gold set WITH slot/elision sites for a fuller swap
+test; (c minor) Spanish verb base-lemma gap. Decoder already done. NOT
+starting comprehension model until (a) lands (structure) per lead.
