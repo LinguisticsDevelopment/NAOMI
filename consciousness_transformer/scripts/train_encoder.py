@@ -101,7 +101,7 @@ def main():
         n_dev = args.n_dev or 98
         n_test = args.n_test or 98
         d_model = args.d_model or 128
-        hash_buckets = args.hash_buckets or 32768
+        hash_buckets = args.hash_buckets or 4096
         epochs = args.epochs or 15
         batch_size = args.batch_size or 32
 

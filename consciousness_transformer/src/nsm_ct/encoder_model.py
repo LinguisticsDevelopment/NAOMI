@@ -50,7 +50,7 @@ import torch.nn.functional as F
 
 ACTION_TYPES: List[str] = [
     "SHIFT", "OPEN_CLAUSE", "GROUND", "ATTACH",
-    "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT", "CLOSE_CLAUSE",
+    "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT", "CLOSE_CLAUSE", "STOP",
 ]
 ACTION_INDEX: Dict[str, int] = {a: i for i, a in enumerate(ACTION_TYPES)}
 
@@ -327,6 +327,8 @@ def linearize_tree(record: dict, tree: dict) -> List[Step]:
 
         steps.append(Step(action="CLOSE_CLAUSE"))
 
+    shift_to(T)
+    steps.append(Step(action="STOP"))
     return steps
 
 
@@ -334,7 +336,7 @@ def linearize_tree(record: dict, tree: dict) -> List[Step]:
 # Grammar-constrained legality mask (spec S3.3, structural preconditions)
 # ---------------------------------------------------------------------------
 
-def legal_action_types(open_clause: bool, i: int, T: int) -> List[str]:
+def legal_action_types(open_clause: bool, i: int, T: int, has_clause: bool = False) -> List[str]:
     """Structural preconditions only (spec S3.3 bullet 1). Note GROUND /
     EMIT_UNRESOLVED_SLOT / EMIT_SYNTH_SLOT stay legal even once `i>=T`:
     real gold occasionally has two nodes address an overlapping/duplicate
@@ -346,9 +348,29 @@ def legal_action_types(open_clause: bool, i: int, T: int) -> List[str]:
     exclude a gold oracle action -- a masked-out gold target would make its
     cross-entropy target -inf-logit -> +inf loss, which is exactly the
     training-time invariant this function exists to prevent.
+
+    STOP becomes legal once the buffer is exhausted (`i>=T`), no clause is
+    currently open, and at least one clause has already been closed
+    (`has_clause`) -- the `has_clause` gate exists to keep an undertrained
+    model from racing to a degenerate empty-tree exit (buffer-exhaustion+STOP
+    before ever opening a clause). OPEN_CLAUSE stays legal in that same
+    state too, rather than STOP excluding it: the oracle's buffer pointer
+    can spuriously drift past T mid-derivation when a later clause
+    re-references an earlier, already-passed token_index (clamped forward
+    per `clause_node_order`'s docstring), so `i>=T` alone does not reliably
+    mean "no clauses remain" -- excluding OPEN_CLAUSE here could exclude a
+    gold action, which is the one thing this function must never do (see
+    above). Teacher forcing still trains the action-type head to prefer
+    STOP at a derivation's true end and OPEN_CLAUSE when another clause
+    genuinely follows.
     """
     if not open_clause:
-        return ["OPEN_CLAUSE"]
+        types = ["OPEN_CLAUSE"]
+        if i < T:
+            types = ["SHIFT"] + types
+        elif has_clause:
+            types = types + ["STOP"]
+        return types
     types = ["GROUND", "EMIT_UNRESOLVED_SLOT", "EMIT_SYNTH_SLOT", "CLOSE_CLAUSE"]
     if i < T:
         types = ["SHIFT"] + types
@@ -452,6 +474,7 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
     open_kind_id = model._none_clause_id
     prev_action_id = model._start_action_id
     i = 0
+    has_clause = False
 
     losses = []
     for step in steps:
@@ -459,7 +482,7 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
         enc_i = enc[i_clamped] if T > 0 else torch.zeros(model.d_model)
         h = model.controller_step(enc_i, open_kind_id, prev_action_id, h)
 
-        legal = legal_action_types(open_clause, i, T)
+        legal = legal_action_types(open_clause, i, T, has_clause)
         mask = _mask_vector(legal)
         type_logits = model.action_type_head(h).squeeze(0) + mask
         target_type = torch.tensor(ACTION_INDEX[step.action])
@@ -474,6 +497,7 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
         elif step.action == "CLOSE_CLAUSE":
             open_clause = False
             open_kind_id = model._none_clause_id
+            has_clause = True
         elif step.action in ("GROUND", "ATTACH", "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT"):
             role_logits = model.role_head(h).squeeze(0)
             losses.append(F.cross_entropy(role_logits.unsqueeze(0),
@@ -544,6 +568,11 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
                  policy: str = "model", rng: Optional[random.Random] = None) -> List[dict]:
     """Returns up to `k` structurally-distinct trees (a candidate forest).
 
+    A beam terminates primarily by emitting STOP (legal only once the buffer
+    is exhausted, no clause is open, and >=1 clause has closed -- see
+    `legal_action_types`); `max_clauses`/`max_steps` remain only as a large
+    safety backstop against a beam that never reaches STOP.
+
     `policy="model"` uses the learned action-type distribution (masked);
     `policy="random"` samples uniformly among legal actions instead -- the
     random baseline used for comparison in eval (never used for training).
@@ -566,7 +595,7 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
                 if b.done:
                     finished.append(b)
                     continue
-                legal = legal_action_types(b.open_clause, b.i, T)
+                legal = legal_action_types(b.open_clause, b.i, T, has_clause=bool(b.clauses))
                 if policy == "model":
                     i_clamped = min(b.i, T - 1) if T > 0 else 0
                     enc_i = enc[i_clamped] if T > 0 else torch.zeros(model.d_model)
@@ -591,7 +620,7 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
                     else:
                         nb.logprob = b.logprob - math.log(max(len(top), 1))
                     _apply_action(nb, action, model, feats, h)
-                    if len(nb.clauses) >= max_clauses or nb.steps_taken >= max_steps:
+                    if action == "STOP" or len(nb.clauses) >= max_clauses or nb.steps_taken >= max_steps:
                         nb.done = True
                     candidates.append(nb)
             candidates.sort(key=lambda s: s.logprob, reverse=True)
@@ -644,6 +673,8 @@ def _apply_action(state: BeamState, action: str, model: EncoderModel,
         if state.cur_clause is not None:
             state.clauses.append(state.cur_clause)
             state.cur_clause = None
+        return
+    if action == "STOP":
         return
 
     role = "PREDICATE"
