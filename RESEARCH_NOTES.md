@@ -459,3 +459,46 @@ acceptance test = ROUND-TRIP RECONSTRUCTION (autoencoder):
   English-structure -> Spanish grammar -> Spanish out (and Spanish in -> out).
 DIRECTIVE to overnight loop: PHASE 3 decoder step = build+TRAIN the learned
 reconstruction decoder + round-trip eval (not just make Phase-1 swappable).
+
+### MORNING REPORT (2026-09-05) — encoder STOP fix MERGED; next step is COMPUTE-bound
+
+DONE + MERGED tonight (from branch encoder-stop-fix ebde6c4; code files only,
+not its stale RESEARCH_NOTES):
+- ENCODER STOP-ACTION FIX (src/nsm_ct/encoder_model.py + tests + train_encoder.py):
+  8-action transition system with a terminal STOP; linearize_tree emits STOP;
+  legal_action_types(open_clause,i,T,has_clause) -- STOP legal only when i>=T,
+  no open clause, AND has_clause (>=1 clause closed) -- the has_clause gate
+  fixes a degenerate empty-tree early-exit an undertrained model would take;
+  beam_decode terminates on STOP; train_encoder hash_buckets default
+  32768->4096 (sub-MB). 8 encoder unit tests green (oracle round-trips w/
+  STOP, mask never excludes gold, decode terminates via STOP, sense-copy
+  invariant). Mechanically verified: emitted trees now TERMINATE (bounded
+  clause counts, not runaway); smoke structure recall NON-ZERO (small,
+  undertrained -- per the run's own report).
+
+HONEST LIMITATION -- structure-recall PAYOFF is COMPUTE-BOUND: CPU cannot
+converge the model overnight. A 150-rec/1-epoch smoke is ~7min; an
+undertrained model rarely emits STOP so beam-decode eval is slow; a real
+985-rec multi-epoch train is infeasible on this CPU box. The fix is correct;
+demonstrating a strong structure-recall number needs real compute. (The
+STOP-fix session burned ~3h grinding CPU smokes chasing this and had to be
+wound down.)
+
+ALREADY BANKED (prior runs, on mainline/branches): encoder grounds well
+(held-out sense 0.931 / slot 0.978 vs random 0.041/0.000); cross-lingual
+grounding transfer PROVEN (EN-trained -> never-seen Spanish sense-site recall
+1.000 vs ~0.08 random; fingerprint-safe OMW-spa lemma extension); decoder
+Phase-1 rule-grounded realizer done (16 tests, no-confab ablation passes).
+
+NOT DONE (compute-bound and/or gated): full converged encoder retrain +
+structure recall >0; the TRAINED reconstruction decoder + round-trip test;
+the comprehension-model spec (gated on encoder+decoder actually working);
+Spanish-grammar robustify (not run). (Note: a redundant capture routine
+encoder-stop-fix2 was also fired mid-wind-down before the original push was
+noticed; ignore/dedupe -- the original ebde6c4 is canonical.)
+
+>>> DECISION FOR THE LEAD (hyper-critical -- blocks everything next): provision
+GPU / paid compute for real training, OR deliberately shrink to a tiny
+curriculum the CPU CAN converge. Everything downstream (structure recall,
+trained decoder, comprehension) waits on this. Say which and the next session
+proceeds.
