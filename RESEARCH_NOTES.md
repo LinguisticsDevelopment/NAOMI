@@ -502,3 +502,24 @@ GPU / paid compute for real training, OR deliberately shrink to a tiny
 curriculum the CPU CAN converge. Everything downstream (structure recall,
 trained decoder, comprehension) waits on this. Say which and the next session
 proceeds.
+
+### Colab training vehicle prepped (2026-09-05)
+
+Encoder training is CPU-ONLY (encoder_model.py has no device handling -> GPU
+would error; confirmed). Colab's value = UNINTERRUPTED long runtime (the
+harness interruptions are what killed the overnight CPU runs), not GPU speed.
+MERGED to mainline:
+- scripts/colab_train_encoder.py + colab/Encoder_Train.ipynb (branch
+  colab-encoder-notebook ee68a8f): self-contained, smoke-tested end-to-end;
+  trains encoder (default 984 recs x 50 ep, ~50-60min CPU) + English
+  candidate-set recall + Spanish swap eval. Smoke even at tiny scale showed
+  Spanish sense 0.727 vs 0.036 random (transfer holding).
+- TRAINED RECONSTRUCTION DECODER (branch decoder-trained-code 3487c21):
+  src/nsm_ct/decoder_trained.py (DecoderTrainedModel, 183,826 params ~0.735MB
+  sub-MB; GRU over structure nodes -> surface tokens; copy-from-structure
+  no-confab) + scripts/train_decoder.py (self-supervised reconstruction) +
+  tests/test_decoder_trained.py (10 green incl no-confab ablation; tiny-train
+  sanity exit 0). Trains structure->text; round-trip test = text->encoder->
+  decoder->text (exact-match + token-F1).
+NEXT: unified colab notebook (encoder + decoder in one run) being built +
+smoke-tested; then lead runs it on Colab.
