@@ -523,3 +523,20 @@ MERGED to mainline:
   decoder->text (exact-match + token-F1).
 NEXT: unified colab notebook (encoder + decoder in one run) being built +
 smoke-tested; then lead runs it on Colab.
+
+### Unified Colab notebook READY (2026-09-05) — lead runs it
+
+scripts/colab_train_all.py + colab/Train_Encoder_And_Decoder.ipynb (branch
+colab-full-notebook 2e6a13e, merged to mainline). One run trains ENCODER
+(candidate-lattice, STOP-fixed) + learned RECONSTRUCTION DECODER, then reports:
+EN candidate-set recall (sense/slot/STRUCTURE vs random), Spanish grammar-SWAP
+recall, decoder reconstruction (exact-match + token-F1), the autoencoder
+ROUND-TRIP (text->encoder.beam_decode->top tree->decoder.realize->text), and a
+no-confab spot check. Smoke-tested end-to-end on cloud CPU (exit 0, full
+RESULTS printed). Reuses all existing train/eval machinery verbatim +
+predicted_tree_to_structure bridge. CPU-only (encoder has no GPU path) ->
+Colab's value is uninterrupted runtime; ~2h total est. Checkpoints don't
+auto-return: lead downloads them or pastes the RESULTS block back to ledger
+the real numbers. Notebook URL: colab.research.google.com/github/
+LinguisticsDevelopment/NAOMI/blob/colab-full-notebook/consciousness_transformer/
+colab/Train_Encoder_And_Decoder.ipynb
