@@ -1,0 +1,187 @@
+NAOMI encoder push: scheduled sampling + scaling-curve driver
+branch: encoder-schedsamp (base: claude/m27-m28-cleanup + encoder-gold-v2)
+date: 2026-09-06
+
+===============================================================================
+1. WHAT WAS BUILT
+===============================================================================
+
+STEP 1 -- Scheduled sampling (DAgger-lite), src/nsm_ct/encoder_model.py:
+
+  * `teacher_force_loss(..., p_ss=0.0, rng=None)`: at each step of the
+    oracle derivation, with probability `p_ss` the VISITED transition state
+    fed to the *next* step's controller is advanced using the model's own
+    argmax-LEGAL action type instead of the gold one. The loss TARGET at
+    every step is always the gold action, so the model is trained to pick
+    the right action from states it actually visits (closing exactly the
+    train/decode mismatch that produces exposure bias).
+
+  * A canonical pure-teacher-forced trajectory is tracked in parallel,
+    purely as fallback bookkeeping (never fed to the network). Whenever a
+    prior model-driven step has diverged the visited state enough that the
+    CURRENT gold step's action would be illegal under `legal_action_types`
+    at that state, this step falls back to teacher forcing: the visited
+    state is resynced to the canonical one before computing the loss (so a
+    gold target is never scored against a masked-out, -inf-logit action),
+    and this step's own advance also uses the gold action unconditionally
+    (no scheduled-sampling draw on a resync step). This is the
+    "fall back to teacher forcing when the gold next-action is no longer
+    legal" rule the task asked for.
+
+  * Default `p_ss=0.0` is byte-identical to the original loss: the
+    model-driven branch is only ever taken when `rng.random() < p_ss`,
+    which is never true at `p_ss=0.0`, so `open_clause/i/has_clause` always
+    equal the canonical trajectory and the resync branch never fires either.
+    Verified both by re-running the full existing test suite (16/16 green,
+    see below) and by a direct regression check that
+    `teacher_force_loss(p_ss=0.0)` produces an identical loss value to the
+    pre-change default call on the same model/inputs/seed.
+
+  * scripts/train_encoder.py: added `--sched-samp-max` (CLI default 0.0 --
+    kept at 0 so existing invocations of this script, and the two other
+    scripts/notebooks that reuse its `load_gold`/`stratified_split` helpers,
+    are completely unaffected) and `--sched-samp-warmup-epochs` (default
+    10). `p_ss` is annealed linearly from 0 at epoch 0 up to
+    `--sched-samp-max` at `--sched-samp-warmup-epochs`, held constant after.
+
+  * Added `teacher_forced_action_accuracy` / `teacher_forced_accuracy_corpus`
+    to encoder_model.py, and a new `scripts/eval_teacher_forced.py` --
+    see CORRECTION #1 below.
+
+STEP 2 -- scripts/scaling_curve.py (new):
+
+  Trains scripts/train_encoder.py's exact model/loss (nsm_ct.encoder_model,
+  called verbatim) at `--n-list` train sizes (default [200, 400, 788], same
+  seeded forest-width-stratified split as train_encoder.py/rescore_encoder.py)
+  for a fixed `--epochs` (default 60), WITH scheduled sampling on by default
+  (`--sched-samp-max` default 0.25). For each size, reports on the held-out
+  test split: free-running beam-decode edge_precision/edge_recall/
+  overgen_ratio (nsm_ct.encoder_model.evaluate) AND teacher-forced
+  next-action accuracy (nsm_ct.encoder_model.teacher_forced_accuracy_corpus).
+  Prints one "edge-F1 & TF-acc vs n" table and writes a JSON report.
+
+STEP 3 -- smoke test: see section 3 below (verbatim tee'd output).
+
+STEP 4 -- colab/Encoder_Push.ipynb (new): mounts Drive first (saves to
+  MyDrive/naomi_encoder_push), clones encoder-schedsamp, installs, builds
+  USVS, fetches gold, runs scripts/scaling_curve.py at [200,400,788]
+  --epochs 100 --sched-samp-max 0.25 with output teed to Drive, plus a
+  final markdown cell explaining what to read off the table (edge-F1 rising
+  with n = data-limited; edge-F1 jump vs the 0.70 pure-TF baseline =
+  exposure-bias recovered). Optional git-push cell at the end (getpass),
+  matching colab/Train_Encoder_And_Decoder.ipynb's overnight-safe pattern
+  (Drive-tee everything during the run; push is a separate, optional,
+  awake-required step).
+
+===============================================================================
+2. CORRECTIONS TO THE ORIGINAL BRIEF
+===============================================================================
+
+CORRECTION #1 -- scripts/eval_teacher_forced.py did not already exist.
+  The brief referred to it as something to "reuse" for STEP 2's
+  teacher-forced-accuracy column, but no such script (and no teacher-forced
+  *accuracy* metric at all -- only the *loss*) was present anywhere in the
+  repo before this branch. Built both pieces from scratch this turn:
+  `teacher_forced_action_accuracy`/`teacher_forced_accuracy_corpus` in
+  encoder_model.py (pure-teacher-forced replay, counts how often the
+  model's masked-argmax action type matches the gold action type at each
+  gold-prefix state) and scripts/eval_teacher_forced.py (a standalone CLI
+  eval over a checkpoint, mirroring scripts/eval_encoder.py's shape/split
+  recomputation). scaling_curve.py calls the corpus-level function directly
+  rather than shelling out to the CLI script.
+
+CORRECTION #2 -- train_encoder.py's --sched-samp-max CLI default is 0.0,
+  not 0.25. STEP 1 asked for "--sched-samp-max, default 0.25" on the CLI,
+  but the same paragraph also says "the DEFAULT stays 0 so nothing changes
+  unless asked" and the overall brief says "Keep pure teacher-forcing the
+  default so existing tests/behaviour are unchanged." Defaulting the CLI
+  flag itself to 0.25 would have silently turned scheduled sampling on for
+  every *existing* invocation of train_encoder.py that doesn't pass the
+  flag -- including scripts that only reuse its `load_gold`/
+  `stratified_split` helpers today, and any existing production training
+  command that doesn't know about the new flag yet. Resolved this in favor
+  of the stronger, more explicit "nothing changes unless asked" instruction:
+  `teacher_force_loss`'s function-level default is 0.0 (as asked), and
+  train_encoder.py's own `--sched-samp-max` CLI default is ALSO 0.0 (not
+  0.25). scripts/scaling_curve.py -- a brand-new script with no existing
+  callers to break -- defaults ITS OWN `--sched-samp-max` to 0.25, exactly
+  as STEP 2 asked ("each for a fixed --epochs... WITH scheduled sampling
+  on"), and the Colab notebook passes `--sched-samp-max 0.25` explicitly.
+  Net effect: identical opt-in behavior for the scaling-curve experiments
+  the brief cares about, zero behavior change for every pre-existing
+  training invocation.
+
+No other deviations: the training loop's structure (teacher_force_loss's
+step-by-step state machine, legal_action_types masking, controller_step's
+per-step hidden-state update) matched the assumed hook -- advancing the
+visited (open_clause, open_kind_id, has_clause, i) state with the model's
+own action, instead of the gold Step's fields, was a direct, local
+substitution using the exact same state-transition logic
+`beam_decode`/`_apply_action` already use at decode time. No other files
+needed changes.
+
+===============================================================================
+3. TEST RESULTS
+===============================================================================
+
+$ pytest tests/test_encoder_model.py -q
+................                                                         [100%]
+16 passed in 332.15s (0:05:32)
+
+(default p_ss=0.0 path -- confirms scheduled sampling introduces zero
+behavior change unless explicitly requested)
+
+===============================================================================
+4. SMOKE TEST (tiny scale; full smoke stdout below, verbatim)
+===============================================================================
+
+$ python scripts/scaling_curve.py --n-list 40 80 --n-dev 10 --n-test 10 \
+    --epochs 2 --sched-samp-max 0.25 --device cpu --out /tmp/scaling_smoke.json
+
+[    0.2s] 985 gold records available
+[   12.3s] USVS loaded (d_axes=607); pos_vocab=15 role_vocab=37
+[   12.3s] n_train=40: split train=40 dev=10 test=10
+[   12.4s] n_train=40: 107 teacher-forced derivations
+[   17.3s] n_train=40: epoch 1/2 done avg_loss=75.513 p_ss=0.000
+[   19.8s] n_train=40: epoch 2/2 done avg_loss=61.365 p_ss=0.025
+[   42.8s] n_train=40: test edge_precision=0.000 edge_recall=0.000 overgen=0.000 tf_acc=0.691 (train_wall=5.2s, stopped_early=False)
+[   42.8s] n_train=80: split train=80 dev=10 test=10
+[   42.9s] n_train=80: 234 teacher-forced derivations
+[   49.0s] n_train=80: epoch 1/2 done avg_loss=78.131 p_ss=0.000
+[   55.5s] n_train=80: epoch 2/2 done avg_loss=58.163 p_ss=0.025
+[   76.0s] n_train=80: test edge_precision=0.025 edge_recall=0.008 overgen=0.017 tf_acc=0.628 (train_wall=12.6s, stopped_early=False)
+
+==============================================================================
+SCALING TABLE (sched_samp_max=0.25, epochs=2)
+==============================================================================
+ n_train   edge_P   edge_R  edge_F1  overgen   tf_acc  minutes
+      40    0.000    0.000      nan    0.000    0.691      0.1
+      80    0.025    0.008    0.013    0.017    0.628      0.2
+
+read: edge-F1 rising with n_train => data-limited, more gold helps.
+      edge-F1 here vs. the pure-teacher-forcing ~0.70 baseline at n=788 => how much of the exposure-bias gap scheduled sampling recovered.
+[   76.0s] saved report -> /tmp/scaling_smoke.json
+[   76.0s] TOTAL wall-clock: 76.0s
+
+exit code: 0
+
+Numbers above are meaningless (2 epochs, 40-80 training records) -- this
+smoke test only proves the scheduled-sampling training path, the eval path,
+and the table/report output run end to end without error on CPU. The real
+signal comes from the Colab overnight run (colab/Encoder_Push.ipynb) at
+[200, 400, 788] train / 100 epochs, which was NOT run here per instructions
+("Do NOT do the full training here (too long)").
+
+===============================================================================
+5. FILES CHANGED / ADDED
+===============================================================================
+
+  M src/nsm_ct/encoder_model.py       scheduled sampling in teacher_force_loss
+                                       + teacher_forced_action_accuracy /
+                                       teacher_forced_accuracy_corpus
+  M scripts/train_encoder.py          --sched-samp-max / --sched-samp-warmup-epochs
+  A scripts/eval_teacher_forced.py    standalone TF-accuracy eval (new; see
+                                       CORRECTION #1)
+  A scripts/scaling_curve.py          the scaling-curve driver (STEP 2)
+  A colab/Encoder_Push.ipynb          overnight Colab notebook (STEP 4)
+  A runs/encoder_schedsamp_report.txt this file

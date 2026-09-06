@@ -502,14 +502,61 @@ def _action_type_class_weights(terminal_weight: float) -> Optional[torch.Tensor]
     return w
 
 
+def _advance_state(action: str, token_index: Optional[int], kind: Optional[str],
+                    open_clause: bool, open_kind_id: int, has_clause: bool, i: int,
+                    model: EncoderModel) -> Tuple[bool, int, bool, int, int]:
+    """Apply one action-type's effect on the (open_clause, open_kind_id,
+    has_clause, i) transition state (spec S3.1/S3.3), shared by the gold
+    advance and the scheduled-sampling model advance below. Returns
+    `(open_clause, open_kind_id, has_clause, prev_action_id, i)`."""
+    prev_action_id = ACTION_INDEX[action]
+    if action == "OPEN_CLAUSE":
+        open_clause = True
+        open_kind_id = KIND_INDEX.get(kind, 0)
+    elif action == "CLOSE_CLAUSE":
+        open_clause = False
+        open_kind_id = model._none_clause_id
+        has_clause = True
+    if action in ("SHIFT", "GROUND", "EMIT_UNRESOLVED_SLOT") and token_index is not None:
+        i = token_index + 1
+    return open_clause, open_kind_id, has_clause, prev_action_id, i
+
+
 def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List[Step],
-                        terminal_weight: float = 1.0) -> torch.Tensor:
+                        terminal_weight: float = 1.0, p_ss: float = 0.0,
+                        rng: Optional[random.Random] = None) -> torch.Tensor:
     """`terminal_weight` (default 1.0 = unweighted, the original loss)
     up-weights the action-TYPE cross-entropy specifically for the STOP/
     CLOSE_CLAUSE targets (see `TERMINAL_ACTION_TYPES`) via `F.cross_entropy`'s
     per-class `weight`. Only the action-type term is reweighted -- the
     role/kind/gtype/source/prime terms are unaffected, and this is still a
-    pure teacher-forced loss on the oracle derivation, no decode-time change."""
+    pure teacher-forced loss on the oracle derivation, no decode-time change.
+
+    `p_ss` (default 0.0 = pure teacher forcing, byte-identical to the
+    original loss -- nothing below ever fires when it's 0.0): scheduled
+    sampling / DAgger-lite (spec fix for the exposure-bias gap between
+    teacher-forced accuracy and free-running beam-decode edge-F1 -- the
+    model is trained only on GOLD prefixes and never learns to recover from
+    its own mistakes at decode time). At each step, with probability
+    `p_ss`, the VISITED transition state fed to the next step's controller
+    is advanced using the model's own argmax-LEGAL action instead of the
+    gold one; the loss TARGET at every step is always the gold action, so
+    the model learns the right action from states it actually visits.
+
+    A canonical (pure teacher-forced) trajectory is tracked in parallel,
+    purely as fallback bookkeeping -- it is never fed to the network. If a
+    prior step's model-driven advance has diverged the visited state enough
+    that the CURRENT step's gold action would be illegal there (masked out
+    -- e.g. the buffer pointer or open-clause bit no longer matches what
+    this gold step assumes), this step falls back to teacher forcing: the
+    visited state is resynced to the canonical one before computing this
+    step's loss (so a gold target is never scored against an impossible,
+    -inf-logit action), and this step's own advance also uses the gold
+    action unconditionally (no scheduled-sampling draw on a resync step).
+    This can never trigger at p_ss=0.0 (visited == canonical at every step
+    by construction), which is what keeps the default loss unchanged.
+    """
+    rng = rng if rng is not None else random
     enc = model.encode(feats)
     T = enc.shape[0]
     h = model.init_controller_state()
@@ -518,15 +565,29 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
     prev_action_id = model._start_action_id
     i = 0
     has_clause = False
+    # canonical pure-TF trajectory (bookkeeping only; never fed to the network)
+    tf_open_clause = False
+    tf_open_kind_id = model._none_clause_id
+    tf_has_clause = False
+    tf_i = 0
     class_weights = _action_type_class_weights(terminal_weight)
 
     losses = []
     for step in steps:
+        legal = legal_action_types(open_clause, i, T, has_clause)
+        forced_tf = step.action not in legal
+        if forced_tf:
+            # a prior scheduled-sampling step diverged the visited state
+            # past what this gold step assumes -- fall back to teacher
+            # forcing: resync to the canonical trajectory for this step.
+            open_clause, open_kind_id, has_clause, i = (
+                tf_open_clause, tf_open_kind_id, tf_has_clause, tf_i)
+            legal = legal_action_types(open_clause, i, T, has_clause)
+
         i_clamped = min(i, T - 1) if T > 0 else 0
         enc_i = enc[i_clamped] if T > 0 else torch.zeros(model.d_model)
         h = model.controller_step(enc_i, open_kind_id, prev_action_id, h)
 
-        legal = legal_action_types(open_clause, i, T, has_clause)
         mask = _mask_vector(legal)
         type_logits = model.action_type_head(h).squeeze(0) + mask
         target_type = torch.tensor(ACTION_INDEX[step.action])
@@ -536,12 +597,6 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
             kind_logits = model.kind_head(h).squeeze(0)
             losses.append(F.cross_entropy(kind_logits.unsqueeze(0),
                                            torch.tensor([KIND_INDEX.get(step.kind, 0)])))
-            open_clause = True
-            open_kind_id = KIND_INDEX.get(step.kind, 0)
-        elif step.action == "CLOSE_CLAUSE":
-            open_clause = False
-            open_kind_id = model._none_clause_id
-            has_clause = True
         elif step.action in ("GROUND", "ATTACH", "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT"):
             role_logits = model.role_head(h).squeeze(0)
             losses.append(F.cross_entropy(role_logits.unsqueeze(0),
@@ -559,11 +614,92 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
             losses.append(F.cross_entropy(prime_logits.unsqueeze(0),
                                            torch.tensor([PRIME_INDEX.get(step.prime, PRIME_INDEX["<UNK_PRIME>"])])))
 
-        if step.action in ("SHIFT", "GROUND", "EMIT_UNRESOLVED_SLOT") and step.token_index is not None:
-            i = step.token_index + 1
-        prev_action_id = ACTION_INDEX[step.action]
+        # advance the canonical pure-TF trajectory unconditionally (fallback
+        # bookkeeping only -- gold token_index/kind, never the model's).
+        tf_open_clause, tf_open_kind_id, tf_has_clause, _, tf_i = _advance_state(
+            step.action, step.token_index, step.kind, tf_open_clause, tf_open_kind_id,
+            tf_has_clause, tf_i, model)
+
+        if not forced_tf and p_ss > 0.0 and rng.random() < p_ss:
+            with torch.no_grad():
+                order = torch.argsort(type_logits, descending=True).tolist()
+                model_action = next(ACTION_TYPES[idx] for idx in order if ACTION_TYPES[idx] in legal)
+                model_kind = None
+                if model_action == "OPEN_CLAUSE":
+                    model_kind = CLAUSE_KINDS[int(torch.argmax(model.kind_head(h).squeeze(0)))]
+            model_token_index = i if model_action in ("GROUND", "EMIT_UNRESOLVED_SLOT") and i < T else None
+            open_clause, open_kind_id, has_clause, prev_action_id, i = _advance_state(
+                model_action, model_token_index, model_kind, open_clause, open_kind_id,
+                has_clause, i, model)
+        else:
+            open_clause, open_kind_id, has_clause, prev_action_id, i = _advance_state(
+                step.action, step.token_index, step.kind, open_clause, open_kind_id,
+                has_clause, i, model)
 
     return torch.stack(losses).sum()
+
+
+# ---------------------------------------------------------------------------
+# Teacher-forced next-action accuracy -- the exposure-bias diagnostic this
+# scheduled-sampling fix targets. Always walks the PURE gold-prefix
+# trajectory (no p_ss here by construction: this metric is defined as "how
+# often does the policy pick the gold action when conditioned on the gold
+# prefix", the free-running counterpart being beam_decode's edge-F1).
+# ---------------------------------------------------------------------------
+
+def teacher_forced_action_accuracy(model: EncoderModel, feats: SentenceFeatures,
+                                    steps: List[Step]) -> Tuple[int, int]:
+    """-> (n_correct, n_total) action-TYPE predictions over one gold
+    derivation, walked under pure teacher forcing (the gold action always
+    advances the state, exactly like `teacher_force_loss(..., p_ss=0.0)`);
+    "correct" means the model's masked argmax action type equals the gold
+    action type at that gold-prefix state."""
+    with torch.no_grad():
+        enc = model.encode(feats)
+        T = enc.shape[0]
+        h = model.init_controller_state()
+        open_clause = False
+        open_kind_id = model._none_clause_id
+        prev_action_id = model._start_action_id
+        i = 0
+        has_clause = False
+
+        n_correct = 0
+        for step in steps:
+            i_clamped = min(i, T - 1) if T > 0 else 0
+            enc_i = enc[i_clamped] if T > 0 else torch.zeros(model.d_model)
+            h = model.controller_step(enc_i, open_kind_id, prev_action_id, h)
+
+            legal = legal_action_types(open_clause, i, T, has_clause)
+            mask = _mask_vector(legal)
+            type_logits = model.action_type_head(h).squeeze(0) + mask
+            pred = ACTION_TYPES[int(torch.argmax(type_logits))]
+            if pred == step.action:
+                n_correct += 1
+
+            open_clause, open_kind_id, has_clause, prev_action_id, i = _advance_state(
+                step.action, step.token_index, step.kind, open_clause, open_kind_id,
+                has_clause, i, model)
+
+    return n_correct, len(steps)
+
+
+def teacher_forced_accuracy_corpus(model: EncoderModel, records: Sequence[dict], usvs,
+                                    pos_vocab: Dict[str, int], hash_buckets: int) -> float:
+    """Teacher-forced next-action accuracy pooled over every gold tree of
+    every record (spec fix, DIAGNOSIS 2026-09-06: the free-running beam-
+    decode edge-F1 vs. this teacher-forced accuracy is the exposure-bias
+    gap scheduled sampling is meant to close)."""
+    model.eval()
+    n_correct, n_total = 0, 0
+    for record in records:
+        feats = build_features(record, usvs, pos_vocab, hash_buckets)
+        for tree in record["lattice"]["trees"]:
+            steps = linearize_tree(record, tree)
+            c, n = teacher_forced_action_accuracy(model, feats, steps)
+            n_correct += c
+            n_total += n
+    return n_correct / n_total if n_total else float("nan")
 
 
 # ---------------------------------------------------------------------------

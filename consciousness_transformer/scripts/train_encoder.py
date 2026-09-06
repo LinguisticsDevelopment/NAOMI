@@ -91,6 +91,15 @@ def main():
     ap.add_argument("--max-seconds", type=float, default=650.0, help="hard training-time cutoff")
     ap.add_argument("--beam-width", type=int, default=6)
     ap.add_argument("--k", type=int, default=6)
+    ap.add_argument("--sched-samp-max", type=float, default=0.0,
+                     help="scheduled-sampling (DAgger-lite) max probability p_ss, annealed linearly "
+                          "from 0 at epoch 0 up to this value at --sched-samp-warmup-epochs and held "
+                          "thereafter (nsm_ct.encoder_model.teacher_force_loss's p_ss; see its "
+                          "docstring for the fallback-to-teacher-forcing-on-illegal-gold-action rule); "
+                          "0.0 (default) = pure teacher forcing, byte-identical to the original loss -- "
+                          "kept at 0 by default so existing invocations of this script are unaffected")
+    ap.add_argument("--sched-samp-warmup-epochs", type=int, default=10,
+                     help="epochs over which p_ss ramps linearly from 0 to --sched-samp-max")
     args = ap.parse_args()
 
     if args.smoke:
@@ -161,6 +170,8 @@ def main():
             stopped_early = True
             print(f"[{time.time()-t0:6.1f}s] max-seconds budget hit before epoch {epoch}; stopping")
             break
+        p_ss = (args.sched_samp_max * min(1.0, epoch / max(1, args.sched_samp_warmup_epochs))
+                if args.sched_samp_max > 0.0 else 0.0)
         random.shuffle(train_items)
         epoch_loss = 0.0
         epoch_n = 0
@@ -169,7 +180,8 @@ def main():
             if time.time() - train_start > args.max_seconds:
                 stopped_early = True
                 break
-            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=args.terminal_weight) / batch_size
+            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=args.terminal_weight,
+                                          p_ss=p_ss) / batch_size
             loss.backward()
             epoch_loss += float(loss.item()) * batch_size
             epoch_n += 1
@@ -187,7 +199,8 @@ def main():
         opt.zero_grad()
         avg = epoch_loss / max(epoch_n, 1)
         loss_curve.append((step_count, avg))
-        print(f"[{time.time()-t0:6.1f}s] === epoch {epoch} done: avg_loss={avg:.3f} (n={epoch_n} derivations) ===")
+        print(f"[{time.time()-t0:6.1f}s] === epoch {epoch} done: avg_loss={avg:.3f} "
+              f"(n={epoch_n} derivations, p_ss={p_ss:.3f}) ===")
         if stopped_early:
             break
 
@@ -217,7 +230,9 @@ def main():
         "d_model": d_model,
         "config": {"n_train": len(train_recs), "n_dev": len(dev_recs), "n_test": len(test_recs),
                    "epochs": epochs, "batch_size": batch_size, "seed": args.seed,
-                   "terminal_weight": args.terminal_weight},
+                   "terminal_weight": args.terminal_weight,
+                   "sched_samp_max": args.sched_samp_max,
+                   "sched_samp_warmup_epochs": args.sched_samp_warmup_epochs},
         "loss_curve": loss_curve,
         "metrics": metrics,
         "random_baseline_test": random_metrics,
