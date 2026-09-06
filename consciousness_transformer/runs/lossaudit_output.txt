@@ -1,0 +1,282 @@
+================================================================================
+NAOMI encoder TRAINING/LOSS PATH AUDIT -- 2026-09-06
+Independent verification that the training/loss path is correct, separate
+from the beam_decode aliasing-bug fix (which only ever affected decode-time
+eval, never training). Branch: encoder-lossaudit-logs (base:
+claude/m27-m28-cleanup). Checkpoint: runs/encoder_colab.pt (pulled from
+colab-trained-ckpts-v2). Gold: runs/encoder_gold_v2.jsonl (pulled from
+encoder-gold-v2). READ-ONLY analysis; no training; no src/scripts edits
+(one new analysis script added: scripts/eval_teacher_forced.py).
+================================================================================
+
+================================================================================
+PART A -- LOSS-FUNCTION CODE REVIEW
+(src/nsm_ct/encoder_model.py: linearize_tree, legal_action_types,
+teacher_force_loss; scripts/train_encoder.py's minibatch loop)
+================================================================================
+
+1. Action-type CE (encoder_model.py:529-533)
+   target = ACTION_INDEX[step.action] (the GOLD action), scored against
+   type_logits = action_type_head(h) + mask, mask built from
+   legal_action_types(open_clause, i, T, has_clause) using the PRE-step
+   state. CLEAN. Traced every state legal_action_types can be called in
+   against every step linearize_tree can emit (initial OPEN_CLAUSE-only
+   state; open-clause interior SHIFT/GROUND/EMIT_*/CLOSE_CLAUSE; the
+   has_clause-gated post-close flush SHIFT/OPEN_CLAUSE/STOP) -- could not
+   construct a gold step the mask excludes. This matches the module's own
+   "verified by construction" docstring claim (lines 372-381) and is
+   corroborated empirically: Part B below measures STOP accuracy = 1.0000
+   and finite (non-NaN/inf) loss throughout the historical training run's
+   own loss_curve, exactly what you'd see if no masked gold target (which
+   would CE against a -inf logit -> +inf loss) ever occurred.
+
+2. Terminal-weight class weighting (encoder_model.py:496-502, 521, 533)
+   `_action_type_class_weights` builds a length-8 weight vector matching
+   ACTION_TYPES' own order, setting only CLOSE_CLAUSE (index 6) and STOP
+   (index 7) to `terminal_weight`, passed as F.cross_entropy's per-class
+   `weight=`. CLEAN. Indices verified against ACTION_TYPES; only the
+   action-type CE is reweighted, no other term touched, exactly as the
+   docstring claims.
+
+3. Role CE (encoder_model.py:545-548)
+   Fires for action in (GROUND, ATTACH, EMIT_SYNTH_SLOT,
+   EMIT_UNRESOLVED_SLOT), target = model.role_id(step.role). `step.role` is
+   populated for all of these in linearize_tree via clause_node_order's
+   role name. CLEAN. Side note (not a bug): ATTACH is dead code -- the
+   oracle (linearize_tree) never emits it, and legal_action_types never
+   makes it legal at any state, so its branch in teacher_force_loss and in
+   the ACTION_TYPES list is presently unreachable. Confirmed empirically in
+   Part B: ATTACH support = 0.
+
+4. Grounding-type CE (encoder_model.py:549-552)
+   Fires exactly when action in (GROUND, EMIT_SYNTH_SLOT,
+   EMIT_UNRESOLVED_SLOT) and step.gtype is not None, target =
+   GTYPE_INDEX[step.gtype]. This lines up exactly with which actions carry
+   a gtype in linearize_tree (GROUND: sense/entity; EMIT_SYNTH_SLOT: prime;
+   EMIT_UNRESOLVED_SLOT: reference/elision). CLEAN.
+
+5. Source CE (encoder_model.py:553-556)
+   Gate is `step.gtype in ("sense","reference","elision")` -- keyed on
+   GTYPE, not action -- deliberately excluding "entity" and "prime"
+   groundings from a source target (those aren't retrieval-sourced).
+   CLEAN, and verified CONSISTENT with decode: `_apply_action`'s own gate
+   for computing a source prediction at decode time (encoder_model.py:828,
+   `if gtype in ("sense","reference","elision")`) uses the identical
+   three-way set. Train and decode agree on exactly which nodes get a
+   source head at all.
+
+6. Prime CE (encoder_model.py:557-560)
+   Fires only for EMIT_SYNTH_SLOT with step.prime is not None, target
+   PRIME_INDEX.get(step.prime, PRIME_INDEX["<UNK_PRIME>"]). CLEAN.
+
+7. Buffer-pointer advance / teacher forcing of the NEXT step's input
+   (encoder_model.py:562-563, and the whole step loop's state block)
+   `i = step.token_index + 1` fires for SHIFT/GROUND/EMIT_UNRESOLVED_SLOT,
+   mirroring linearize_tree's own i-updates for exactly those three actions
+   (shift_to's `i += 1` loop for SHIFT; `i = eff_tidx + 1` at lines 318 and
+   328 for GROUND/EMIT_UNRESOLVED_SLOT). EMIT_SYNTH_SLOT (prime) correctly
+   does NOT advance i, matching the oracle (a prime slot consumes no
+   token). CLEAN. More generally: EVERY state variable that conditions the
+   next step (open_clause, open_kind_id, has_clause, i, prev_action_id) is
+   updated from the GOLD `step` at every iteration in teacher_force_loss --
+   the model's own head outputs are used ONLY to compute that step's loss
+   and never fed back into the recurrent state. This is exact, leak-free
+   teacher forcing (never the model's own prediction), confirmed by
+   reading the full loop body top to bottom.
+
+8. Mask consistency between train and decode
+   Both teacher_force_loss and beam_decode call the SAME
+   `legal_action_types` / `_mask_vector` functions (encoder_model.py:
+   348-401) with the same state convention (open_clause, i, T, has_clause).
+   The only difference is WHERE the state comes from: the gold step
+   (train) vs. the beam's own prior action (decode) -- exactly the intended
+   train/decode distinction, not a drift bug. CLEAN.
+
+9. Double-counting / mis-indexing / dropped terms
+   Traced the full per-step body: the 6 heads (action-type, kind, role,
+   gtype, source, prime) are gated by mutually-exclusive, non-overlapping
+   per-action/per-gtype conditions -- no term is computed twice for one
+   step, and none of the conditions silently skip a term linearize_tree
+   actually populates for that action. CLEAN.
+
+10. Minibatch/gradient-accumulation loop (scripts/train_encoder.py:164-190)
+    `loss = teacher_force_loss(...) / batch_size`, then `.backward()` is
+    called once per derivation and accumulated; `opt.step()` fires every
+    `batch_size` derivations AND once more at end-of-epoch for the
+    remainder. NOT A BUG, but a minor, common convention worth flagging:
+    when `len(train_items) % batch_size != 0`, the final partial batch of
+    an epoch still divides by the FULL `batch_size` rather than its own
+    (smaller) size, so its per-example gradient contribution is slightly
+    diluted relative to full batches. No gold target is dropped or
+    misweighted by this -- it only very slightly under-weights the last
+    partial batch's average gradient magnitude each epoch. Negligible at
+    n_train=788, batch_size=32 (one ~20-item remainder batch out of ~25
+    per epoch); does not explain or relate to any decode-time symptom.
+
+11. "Is a gold target ever masked to -inf?"
+    No instance found by construction-tracing (item 1) or by the empirical
+    checks in Part B (STOP=1.0000 accuracy; CLOSE_CLAUSE=0.8155, both
+    comfortably learned, not floor-level/random -- which is what a
+    -inf-logit-masked gold target would produce, since the network could
+    never receive a usable gradient signal for a target action whose logit
+    the mask always zeroes out at inference/eval time too).
+
+VERDICT (Part A): No bug found in any CE term, the masking logic, or the
+teacher-forcing state machine. Every term is computed against the correct
+gold target, using exactly the state teacher forcing implies (gold action
+history, not the model's own choices), consistently masked the same way
+train-side and decode-side. The one item worth a future look (not urgent,
+not a correctness bug) is the diluted final-partial-batch gradient noted
+in #10, and the fact that ATTACH is fully dead code (item #3).
+
+================================================================================
+PART B -- TEACHER-FORCED ACCURACY (scripts/eval_teacher_forced.py)
+Never calls em.beam_decode. Walks the SAME gold oracle action sequence
+(em.linearize_tree) teacher_force_loss trains on; at each step feeds the
+GOLD prefix (identical state-update code to teacher_force_loss, see script),
+and records argmax(masked action-type logits) == gold action.
+================================================================================
+
+loading checkpoint runs/encoder_colab.pt ...
+policy params: 342,979
+checkpoint config: {'n_train': 788, 'n_dev': 98, 'n_test': 98, 'epochs': 100, 'batch_size': 32, 'seed': 0, 'terminal_weight': 4.0, 'device': 'cpu'}
+reproduced split: train=788 dev=98 test=98 (seed=0)
+teacher-forcing split=test (n=98 records)
+
+teacher-forced derivations scored: 241 (from 98 records, forest-expanded -- one derivation per gold tree)
+
+==============================================================================
+TEACHER-FORCED NEXT-ACTION ACCURACY (never calls beam_decode)
+==============================================================================
+OVERALL micro accuracy: 0.8880  (n=7063 steps)
+
+action type             accuracy   support
+------------------------------------------
+SHIFT                     0.9350      4614
+OPEN_CLAUSE               0.8956       412
+GROUND                    0.7232      1062
+ATTACH                       nan         0
+EMIT_SYNTH_SLOT              nan         0
+EMIT_UNRESOLVED_SLOT      0.7578       322
+CLOSE_CLAUSE              0.8155       412
+STOP                      1.0000       241
+
+------------------------------------------
+TERMINAL ACTIONS (the ones over-attachment/aliasing would hide):
+  CLOSE_CLAUSE         accuracy=0.8155  support=412
+  STOP                 accuracy=1.0000  support=241
+
+==============================================================================
+TYPED SUB-DECISION teacher-forced accuracy (where each head fires)
+==============================================================================
+  clause-kind @ OPEN_CLAUSE              accuracy=1.0000  support=412
+  role label @ GROUND/EMIT_*             accuracy=0.7934  support=1384
+  grounding-type @ GROUND/EMIT_*         accuracy=0.8772  support=1384
+  source @ sense/reference/elision       accuracy=0.9299  support=927
+  prime @ EMIT_SYNTH_SLOT                accuracy=nan  support=0
+
+==============================================================================
+INTERPRETATION
+==============================================================================
+Teacher-forced accuracy is the training/loss path's own report card and
+an UPPER BOUND on decode quality (decode compounds errors across steps;
+this does not). If OVERALL is high (~0.85+) and roughly consistent with
+the fixed-decode edge-F1 (~0.70), the gap is normal exposure bias and the
+loss/training path is sound. If OVERALL (or specifically CLOSE_CLAUSE/
+STOP) is LOW, that points to a genuine training-path bug, not decode.
+
+JSON summary:
+{
+  "split": "test",
+  "n_records": 98,
+  "n_derivations": 241,
+  "overall_accuracy": 0.88800792864222,
+  "overall_support": 7063,
+  "per_action_type": {
+    "SHIFT": {"accuracy": 0.9349804941482445, "support": 4614},
+    "OPEN_CLAUSE": {"accuracy": 0.8956310679611651, "support": 412},
+    "GROUND": {"accuracy": 0.7231638418079096, "support": 1062},
+    "ATTACH": {"accuracy": NaN, "support": 0},
+    "EMIT_SYNTH_SLOT": {"accuracy": NaN, "support": 0},
+    "EMIT_UNRESOLVED_SLOT": {"accuracy": 0.7577639751552795, "support": 322},
+    "CLOSE_CLAUSE": {"accuracy": 0.8155339805825242, "support": 412},
+    "STOP": {"accuracy": 1.0, "support": 241}
+  },
+  "sub_decisions": {
+    "kind": {"accuracy": 1.0, "support": 412},
+    "role": {"accuracy": 0.7933526011560693, "support": 1384},
+    "gtype": {"accuracy": 0.8771676300578035, "support": 1384},
+    "source": {"accuracy": 0.9298813376483279, "support": 927},
+    "prime": {"accuracy": NaN, "support": 0}
+  }
+}
+
+--------------------------------------------------------------------------------
+SUPPLEMENTARY CORROBORATION (this audit's own extra check, using the repo's
+EXISTING scripts/rescore_encoder.py -- decode IS used here, only to confirm
+Part B's "roughly consistent with the fixed-decode edge-F1" claim against
+real numbers rather than the task prompt's placeholder figure. This is
+evaluation only, not training, and does not touch Part B's own
+beam_decode-free result above.)
+
+Fixed-decode (post-aliasing-fix beam_decode) rescore, same test split:
+  [MODEL] sense_recall=0.787  slot_recall=0.795  structure_recall=0.212
+          edge_precision=0.700  edge_recall=0.695  overgen_ratio=1.082  (n=98)
+  [DUMP]  edge_precision=0.016  overgen_ratio=9.773  (the cheat baseline,
+          for scale -- MODEL's overgen_ratio of 1.082 is right-sized, NOT
+          dumping)
+
+Compare: teacher-forced OVERALL=0.888 (upper bound) vs. fixed-decode
+edge-F1 ~0.70 (harmonic mean of precision=0.700/recall=0.695). This is
+exactly the "high teacher-forced + normal exposure-bias gap to decode"
+pattern the task's own interpretation guidance describes as evidence the
+loss/training path is sound. It is also independent confirmation that the
+prior over-generation (overgen_ratio=7.5, edge_precision=0.111, recorded
+in this SAME checkpoint's OWN saved `metrics` field from training time)
+was a property of the OLD, buggy beam_decode, not of the trained weights:
+the SAME weights, re-decoded with the FIXED beam_decode, score
+overgen_ratio=1.082 (right-sized) instead of 7.5.
+
+Existing test suite (tests/test_encoder_model.py) also passes in full on
+this checkout: 16 passed in 459.09s -- includes the beam-fork-aliasing
+regression test, confirming the decode fix and the loss-review above are
+being checked against the actual current code, not a stale copy.
+
+================================================================================
+PART C -- METRIC SANITY (hand-built tiny forest, em.score_record / em.aggregate_recall)
+================================================================================
+Hand-built gold record: tokens = ["The","dog","chased","the","cat"], one gold
+clause: PREDICATE "chased"@2 (entity), SUBJECT "dog"@1 (sense), OBJECT
+"cat"@4 (sense) -> 3 gold edges.
+Hand-built emitted forest (one tree): PREDICATE@2 (entity, CORRECT),
+SUBJECT@1 (sense, CORRECT), OBJECT@99 (sense, WRONG token_index; gold's
+OBJECT is @4) -> 3 emitted edges, 2 overlapping with gold.
+Hand-computed: edge_precision = 2/3, edge_recall = 2/3, overgen_ratio = 3/3 = 1.0.
+
+RecordRecall: RecordRecall(sense_hits=1, sense_total=2, slot_hits=0, slot_total=0, tree_hits=0, tree_total=1, all_recalled=False, edge_precision=0.6666666666666666, edge_recall=0.6666666666666666, overgen_ratio=1.0)
+edge_precision: got=0.666667 expected=0.666667 PASS=True
+edge_recall:    got=0.666667 expected=0.666667 PASS=True
+overgen_ratio:  got=1.000000 expected=1.000000 PASS=True
+aggregate_recall: {'sense_recall': 0.5, 'slot_recall': nan, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.6666666666666666, 'edge_recall': 0.6666666666666666, 'overgen_ratio': 1.0, 'n_records': 1}
+aggregate edge_precision PASS=True  edge_recall PASS=True  overgen_ratio PASS=True
+
+METRIC SANITY CHECK: PASS
+
+================================================================================
+FINAL VERDICT
+================================================================================
+The training/loss path is SOUND. Every CE term in teacher_force_loss is
+computed against the correct gold target under exact (leak-free) teacher
+forcing; the legality mask is applied identically at train and decode time
+and, by construction and by trace, never excludes a gold action; teacher-
+forced next-action accuracy is 0.888 overall with STOP=1.000 and
+CLOSE_CLAUSE=0.816 (the two terminal actions the pre-fix decode symptom
+would have hidden a stopping-learning failure behind, had one existed) --
+both comfortably learned, not floor-level. This upper bound is consistent
+with the fixed-decode edge-F1 (~0.70, precision=0.700/recall=0.695,
+overgen_ratio=1.082, right-sized) via ordinary exposure bias, and the
+metric arithmetic itself checks out exactly on a hand-computed example.
+The prior extreme over-generation (7.5x, precision=0.11) was a property of
+the OLD beam_decode aliasing bug alone, confirmed here by re-decoding the
+SAME checkpoint weights with the fix and getting a right-sized forest.
+No suspected training/loss bug found.
