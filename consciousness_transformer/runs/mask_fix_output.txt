@@ -1,0 +1,210 @@
+==================================================================
+SUMMARY (side-by-side, test split n=98, beam_width=8, k=8)
+==================================================================
+policy=model   strict_ground=False (baseline): edge_precision=0.101  edge_recall=0.648  overgen_ratio=8.268  sense_recall=0.921
+policy=model   strict_ground=True            : edge_precision=0.101  edge_recall=0.638  overgen_ratio=8.200  sense_recall=0.921
+policy=dump    strict_ground=False (baseline): edge_precision=0.016  edge_recall=0.196  overgen_ratio=9.773  sense_recall=1.000
+policy=dump    strict_ground=True            : edge_precision=0.016  edge_recall=0.196  overgen_ratio=9.773  sense_recall=1.000
+  (dump bypasses the mask entirely -- see beam_decode's `if policy=="dump": return _dump_forest(...)` --
+   so strict_ground has zero effect on it by construction; included only as the reference baseline.)
+
+oracle-legality check (strict_ground=True, full corpus, 97530 steps): FAIL -- 933 gold GROUND actions
+(0.96% of steps) land at i>=T via the documented duplicate-token-index collision and get masked out.
+
+null-node composition under LOOSE mask (test split, best trees): 16.3% of all emitted nodes are null;
+of THOSE null nodes, only 13.2% are GROUND-produced (sense+entity -- what strict_ground removes), while
+82.4% are EMIT_SYNTH_SLOT (prime) nulls and 4.3% are EMIT_UNRESOLVED_SLOT (reference+elision) nulls --
+neither touched by strict_ground.
+
+READ: strict_ground does NOT fix the over-generation (overgen_ratio 8.268->8.200, edge_precision
+unchanged at 0.101) because the diagnosed mechanism (unbounded post-buffer GROUND) is a small minority
+of the null-node mass. The dominant source is excessive EMIT_SYNTH_SLOT (prime) emission, which this
+mask change does not touch at all -- a follow-up fix needs to bound EMIT_SYNTH_SLOT/EMIT_UNRESOLVED_SLOT,
+not just GROUND.
+
+==================================================================
+STEP 2a: strict_ground oracle-legality check (full corpus)
+==================================================================
+checked 97530 oracle steps across 985 gold records under strict_ground=True
+FAIL: 933 gold oracle action(s) masked out under strict_ground=True
+
+first offending record + step:
+{
+  "record_idx": 6,
+  "tree_idx": 0,
+  "step_idx": 68,
+  "action": "GROUND",
+  "token_index": 59,
+  "i": 59,
+  "T": 58,
+  "open_clause": true,
+  "has_clause": true,
+  "legal_at_state": [
+    "EMIT_UNRESOLVED_SLOT",
+    "EMIT_SYNTH_SLOT",
+    "CLOSE_CLAUSE"
+  ],
+  "tokens": [
+    "first",
+    ",",
+    "she",
+    "tried",
+    "to",
+    "look",
+    "down",
+    "and",
+    "make",
+    "out",
+    "what",
+    "she",
+    "was",
+    "coming",
+    "to",
+    ",",
+    "but",
+    "it",
+    "was",
+    "too",
+    "dark",
+    "to",
+    "see",
+    "anything",
+    ";",
+    "then",
+    "she",
+    "looked",
+    "at",
+    "the",
+    "sides",
+    "of",
+    "the",
+    "well",
+    ",",
+    "and",
+    "noticed",
+    "that",
+    "they",
+    "were",
+    "filled",
+    "with",
+    "cupboards",
+    "and",
+    "book-shelves",
+    ";",
+    "here",
+    "and",
+    "there",
+    "she",
+    "saw",
+    "maps",
+    "and",
+    "pictures",
+    "hung",
+    "upon",
+    "pegs",
+    "."
+  ]
+}
+
+... and 932 more failure(s) (not shown)
+
+==================================================================
+STEP 2b: python -m pytest tests/test_encoder_model.py -q
+==================================================================
+................                                                         [100%]
+16 passed in 61.99s (0:01:01)
+
+==================================================================
+STEP 3: RE-SCORE run-2 checkpoint, strict_ground=False (baseline)
+==================================================================
+loading checkpoint runs/encoder_colab.pt ...
+policy params: 342,979
+checkpoint config: {'n_train': 788, 'n_dev': 98, 'n_test': 98, 'epochs': 100, 'batch_size': 32, 'seed': 0, 'terminal_weight': 4.0, 'device': 'cpu'}
+checkpoint's OLD reported metrics (recall-only, no precision gate): {"english_test": {"sense_recall": 0.9037800687285223, "slot_recall": 0.9627329192546584, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.11085291437108624, "edge_recall": 0.6363335407978266, "overgen_ratio": 7.501854905298782, "n_records": 98}, "english_test_random": {"sense_recall": 0.01718213058419244, "slot_recall": 0.0, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.003817809174952032, "edge_recall": 0.008434252822007923, "overgen_ratio": 0.07148463781116843, "n_records": 98}, "english_test_dump": {"sense_recall": 1.0, "slot_recall": 0.8850931677018633, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.016308240896128777, "edge_recall": 0.19587783248497534, "overgen_ratio": 9.772929493975413, "n_records": 98}, "spanish": {"sense_recall": 1.0, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.09614340219848728, "edge_recall": 0.42658253205128205, "overgen_ratio": 4.013721955128205, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 308, "slot_hits": 0, "tree_hits": 0}, "spanish_random": {"sense_recall": 0.048701298701298704, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.003605769230769231, "edge_recall": 0.002944711538461539, "overgen_ratio": 0.008573717948717948, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 15, "slot_hits": 0, "tree_hits": 0}}
+reproduced split: train=788 dev=98 test=98 (seed=0)
+scoring split=test (n=98)
+
+==============================================================================
+RE-SCORE: model vs random vs dump (NEW precision + overgen metrics)  strict_ground=False
+==============================================================================
+
+[MODEL]
+    sense_recall=0.921  slot_recall=0.963  structure_recall=0.000
+      edge_precision=0.101  edge_recall=0.648  overgen_ratio=8.268  (n=98)
+
+[RANDOM]
+    sense_recall=0.031  slot_recall=0.000  structure_recall=0.000
+      edge_precision=0.005  edge_recall=0.005  overgen_ratio=0.029  (n=98)
+
+[DUMP]
+    sense_recall=1.000  slot_recall=0.885  structure_recall=0.000
+      edge_precision=0.016  edge_recall=0.196  overgen_ratio=9.773  (n=98)
+
+==============================================================================
+HEADLINE
+==============================================================================
+  MODEL edge_precision = 0.101    MODEL overgen_ratio = 8.268
+  DUMP  edge_precision = 0.016    DUMP  overgen_ratio = 9.773
+  MODEL sense_recall   = 0.921    DUMP  sense_recall  = 1.000
+  (the old headline claim was model sense/slot recall alone; if MODEL's
+   overgen_ratio is close to DUMP's and MODEL's edge_precision is low,
+   that recall was inflated by over-generation, not real structure.)
+
+==================================================================
+STEP 3: RE-SCORE run-2 checkpoint, strict_ground=True
+==================================================================
+loading checkpoint runs/encoder_colab.pt ...
+policy params: 342,979
+checkpoint config: {'n_train': 788, 'n_dev': 98, 'n_test': 98, 'epochs': 100, 'batch_size': 32, 'seed': 0, 'terminal_weight': 4.0, 'device': 'cpu'}
+checkpoint's OLD reported metrics (recall-only, no precision gate): {"english_test": {"sense_recall": 0.9037800687285223, "slot_recall": 0.9627329192546584, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.11085291437108624, "edge_recall": 0.6363335407978266, "overgen_ratio": 7.501854905298782, "n_records": 98}, "english_test_random": {"sense_recall": 0.01718213058419244, "slot_recall": 0.0, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.003817809174952032, "edge_recall": 0.008434252822007923, "overgen_ratio": 0.07148463781116843, "n_records": 98}, "english_test_dump": {"sense_recall": 1.0, "slot_recall": 0.8850931677018633, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.016308240896128777, "edge_recall": 0.19587783248497534, "overgen_ratio": 9.772929493975413, "n_records": 98}, "spanish": {"sense_recall": 1.0, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.09614340219848728, "edge_recall": 0.42658253205128205, "overgen_ratio": 4.013721955128205, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 308, "slot_hits": 0, "tree_hits": 0}, "spanish_random": {"sense_recall": 0.048701298701298704, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.003605769230769231, "edge_recall": 0.002944711538461539, "overgen_ratio": 0.008573717948717948, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 15, "slot_hits": 0, "tree_hits": 0}}
+reproduced split: train=788 dev=98 test=98 (seed=0)
+scoring split=test (n=98)
+
+==============================================================================
+RE-SCORE: model vs random vs dump (NEW precision + overgen metrics)  strict_ground=True
+==============================================================================
+
+[MODEL]
+    sense_recall=0.921  slot_recall=0.932  structure_recall=0.000
+      edge_precision=0.101  edge_recall=0.638  overgen_ratio=8.200  (n=98)
+
+[RANDOM]
+    sense_recall=0.027  slot_recall=0.000  structure_recall=0.000
+      edge_precision=0.007  edge_recall=0.008  overgen_ratio=0.047  (n=98)
+
+[DUMP]
+    sense_recall=1.000  slot_recall=0.885  structure_recall=0.000
+      edge_precision=0.016  edge_recall=0.196  overgen_ratio=9.773  (n=98)
+
+==============================================================================
+HEADLINE
+==============================================================================
+  MODEL edge_precision = 0.101    MODEL overgen_ratio = 8.200
+  DUMP  edge_precision = 0.016    DUMP  overgen_ratio = 9.773
+  MODEL sense_recall   = 0.921    DUMP  sense_recall  = 1.000
+  (the old headline claim was model sense/slot recall alone; if MODEL's
+   overgen_ratio is close to DUMP's and MODEL's edge_precision is low,
+   that recall was inflated by over-generation, not real structure.)
+
+==================================================================
+STEP 4: null-node (spam) composition under LOOSE mask
+==================================================================
+loading checkpoint runs/encoder_colab.pt ...
+reproduced split: train=788 dev=98 test=98 (seed=0)
+decoding split=test (n=98) under LOOSE mask (strict_ground=False), policy=model
+
+best trees examined: 136
+total emitted nodes (in best trees): 16403
+total null (token_index=None) nodes: 2671  (0.163 of all emitted nodes)
+
+null-node composition by grounding type (fraction of ALL emitted nodes):
+  sense       count=  290  frac_of_all_nodes=0.0177
+  entity      count=   63  frac_of_all_nodes=0.0038
+  prime       count= 2202  frac_of_all_nodes=0.1342
+  reference   count=  116  frac_of_all_nodes=0.0071
+  elision     count=    0  frac_of_all_nodes=0.0000
+
+by producing action (fraction of ALL emitted nodes):
+  GROUND nulls (sense+entity, killed by strict_ground)          : count=  353  frac=0.0215
+  EMIT_SYNTH_SLOT nulls (prime, NOT touched by strict_ground)   : count= 2202  frac=0.1342
+  EMIT_UNRESOLVED_SLOT nulls (reference+elision, NOT touched)  : count=  116  frac=0.0071

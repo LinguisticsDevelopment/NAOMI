@@ -49,6 +49,9 @@ def main():
     ap.add_argument("--beam-width", type=int, default=8)
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--split", choices=("train", "dev", "test"), default="test")
+    ap.add_argument("--strict-ground", action="store_true",
+                     help="decode-time-only mask tightening: drop GROUND once i>=T (see "
+                          "encoder_model.legal_action_types); default off = original behavior")
     args = ap.parse_args()
 
     print(f"loading checkpoint {args.checkpoint} ...")
@@ -84,10 +87,12 @@ def main():
     for policy in ("model", "random", "dump"):
         results[policy] = em.evaluate(model, recs, usvs, pos_vocab, ckpt["hash_buckets"],
                                        beam_width=args.beam_width, k=args.k, policy=policy,
-                                       rng=rng if policy == "random" else None)
+                                       rng=rng if policy == "random" else None,
+                                       strict_ground=args.strict_ground)
 
     print("\n" + "=" * 78)
-    print("RE-SCORE: model vs random vs dump (NEW precision + overgen metrics)")
+    print(f"RE-SCORE: model vs random vs dump (NEW precision + overgen metrics)  "
+          f"strict_ground={args.strict_ground}")
     print("=" * 78)
     for policy in ("model", "random", "dump"):
         print(f"\n[{policy.upper()}]")

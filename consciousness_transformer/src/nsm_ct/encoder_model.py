@@ -344,7 +344,8 @@ def linearize_tree(record: dict, tree: dict) -> List[Step]:
 # Grammar-constrained legality mask (spec S3.3, structural preconditions)
 # ---------------------------------------------------------------------------
 
-def legal_action_types(open_clause: bool, i: int, T: int, has_clause: bool = False) -> List[str]:
+def legal_action_types(open_clause: bool, i: int, T: int, has_clause: bool = False,
+                        strict_ground: bool = False) -> List[str]:
     """Structural preconditions only (spec S3.3 bullet 1). Note GROUND /
     EMIT_UNRESOLVED_SLOT / EMIT_SYNTH_SLOT stay legal even once `i>=T`:
     real gold occasionally has two nodes address an overlapping/duplicate
@@ -378,11 +379,26 @@ def legal_action_types(open_clause: bool, i: int, T: int, has_clause: bool = Fal
     can never exclude a gold oracle action -- a masked-out gold target
     would make its cross-entropy target -inf-logit -> +inf loss, which is
     exactly the training-time invariant this function exists to prevent.
-    """
+
+    `strict_ground` (default False = byte-identical current behavior) is a
+    decode-time-only tightening: when True, GROUND is removed from the
+    legal set once `i>=T` (EMIT_SYNTH_SLOT / EMIT_UNRESOLVED_SLOT / CLOSE_CLAUSE
+    / SHIFT are unaffected). This closes the phantom-node hole where a
+    policy that never learned to prefer CLOSE_CLAUSE/STOP can legally keep
+    emitting GROUND forever once the buffer is exhausted (`_apply_action`
+    only advances `i` on GROUND/EMIT_UNRESOLVED_SLOT while `i<T`, so those
+    post-buffer GROUNDs all land on `token_index=None`). Never used for
+    training (the loss call above never passes it) -- only for `beam_decode`/
+    `evaluate` at decode time, gated behind this flag precisely because it
+    is NOT guaranteed to preserve the "never excludes a gold action"
+    invariant above (the same duplicate-token-index collisions can push a
+    gold GROUND past `i>=T`, see `linearize_tree`'s `eff_tidx = max(tidx, i)`)."""
     if open_clause:
         types = ["GROUND", "EMIT_UNRESOLVED_SLOT", "EMIT_SYNTH_SLOT", "CLOSE_CLAUSE"]
         if i < T:
             types = ["SHIFT"] + types
+        elif strict_ground:
+            types.remove("GROUND")
         return types
     types = ["OPEN_CLAUSE"]
     if has_clause:
@@ -674,7 +690,7 @@ def _select_branch_actions(legal_ranked: List[str], logp: torch.Tensor,
 def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 8,
                  k: int = 8, max_steps: int = 400, max_clauses: int = 20,
                  policy: str = "model", rng: Optional[random.Random] = None,
-                 commit_margin: float = 0.0) -> List[dict]:
+                 commit_margin: float = 0.0, strict_ground: bool = False) -> List[dict]:
     """Returns up to `k` structurally-distinct trees (a candidate forest).
 
     `policy="model"` uses the learned action-type distribution (masked);
@@ -696,6 +712,9 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
     (as candidates), giving a genuinely ambiguous step a set while a
     confident one is emitted alone -- "commit when confident, give a set
     only when unsure." 0.0 keeps the original always-branch-top-3 behavior.
+
+    `strict_ground` (default False = original behavior): passed straight
+    through to `legal_action_types` -- see that function's docstring.
     """
     if policy == "dump":
         return _dump_forest(feats)
@@ -717,7 +736,8 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
                 if b.done:
                     finished.append(b)
                     continue
-                legal = legal_action_types(b.open_clause, b.i, T, has_clause=bool(b.clauses))
+                legal = legal_action_types(b.open_clause, b.i, T, has_clause=bool(b.clauses),
+                                            strict_ground=strict_ground)
                 if policy == "model":
                     i_clamped = min(b.i, T - 1) if T > 0 else 0
                     enc_i = enc[i_clamped] if T > 0 else torch.zeros(model.d_model)
@@ -997,11 +1017,13 @@ def aggregate_recall(scores: List[RecordRecall]) -> Dict[str, float]:
 def evaluate(model: EncoderModel, records: Sequence[dict], usvs, pos_vocab: Dict[str, int],
              hash_buckets: int, beam_width: int = 8, k: int = 8,
              policy: str = "model", rng: Optional[random.Random] = None,
-             commit_margin: float = 0.0) -> Dict[str, float]:
+             commit_margin: float = 0.0, strict_ground: bool = False) -> Dict[str, float]:
     """`policy`: "model" (learned), "random" (uniform-legal baseline), or
     "dump" (the over-generation cheat baseline, `_dump_forest`) -- passed
     straight through to `beam_decode`, along with `commit_margin`
-    (confidence-gated branching, policy="model" only; see `beam_decode`).
+    (confidence-gated branching, policy="model" only; see `beam_decode`) and
+    `strict_ground` (decode-time-only legality tightening, default False =
+    original behavior; see `legal_action_types`).
     Returns `aggregate_recall`'s dict: the original site-recall fields
     (sense_recall/slot_recall/structure_recall/all_gold_recalled_rate)
     PLUS best-tree edge_precision/edge_recall/overgen_ratio (see
@@ -1010,6 +1032,6 @@ def evaluate(model: EncoderModel, records: Sequence[dict], usvs, pos_vocab: Dict
     for record in records:
         feats = build_features(record, usvs, pos_vocab, hash_buckets)
         forest = beam_decode(model, feats, beam_width=beam_width, k=k, policy=policy, rng=rng,
-                              commit_margin=commit_margin)
+                              commit_margin=commit_margin, strict_ground=strict_ground)
         scores.append(score_record(record, forest))
     return aggregate_recall(scores)

@@ -165,6 +165,24 @@ def test_oracle_legality_full_corpus():
     assert n_stop > 0
 
 
+def test_strict_ground_default_false_is_byte_identical_to_original():
+    """`strict_ground` is decode-time-only and defaults to False; confirm
+    that default produces the exact same legal set as calling without the
+    kwarg at all (i.e. adding the parameter changed nothing for existing
+    callers). The empirical question of whether strict_ground=True ever
+    masks a gold oracle action (it does, rarely -- see
+    `scripts/check_strict_ground_oracle.py`) is deliberately NOT asserted
+    here as a hard invariant: unlike the training-time mask, this is a
+    decode-time knob explicitly allowed to trade a small amount of oracle
+    unreachability for tighter generation, so it does not belong in this
+    module's "never excludes a gold action" test family."""
+    for open_clause in (True, False):
+        for i, T in ((0, 5), (4, 5), (5, 5), (7, 5)):
+            for has_clause in (True, False):
+                assert (em.legal_action_types(open_clause, i, T, has_clause)
+                        == em.legal_action_types(open_clause, i, T, has_clause, strict_ground=False))
+
+
 def test_sense_emission_copies_the_full_candidate_set_not_one_sense():
     """The architectural core of the spec: at a GROUND(sense) site the
     emitted `candidates` must equal `sense_cand[token_index]` EXACTLY (the
