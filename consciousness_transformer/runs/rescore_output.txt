@@ -1,0 +1,32 @@
+loading checkpoint runs/encoder_colab.pt ...
+policy params: 342,979
+checkpoint config: {'n_train': 788, 'n_dev': 98, 'n_test': 98, 'epochs': 50, 'batch_size': 32, 'seed': 0, 'device': 'cpu'}
+checkpoint's OLD reported metrics (recall-only, no precision gate): {"english_test": {"sense_recall": 0.9278350515463918, "slot_recall": 0.9565217391304348, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "n_records": 98}, "english_test_random": {"sense_recall": 0.041237113402061855, "slot_recall": 0.0, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "n_records": 98}, "spanish": {"sense_recall": 1.0, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 308, "slot_hits": 0, "tree_hits": 0}, "spanish_random": {"sense_recall": 0.032467532467532464, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 10, "slot_hits": 0, "tree_hits": 0}}
+reproduced split: train=788 dev=98 test=98 (seed=0)
+scoring split=test (n=98)
+
+==============================================================================
+RE-SCORE: model vs random vs dump (NEW precision + overgen metrics)
+==============================================================================
+
+[MODEL]
+    sense_recall=0.935  slot_recall=0.966  structure_recall=0.000
+      edge_precision=0.100  edge_recall=0.644  overgen_ratio=8.123  (n=98)
+
+[RANDOM]
+    sense_recall=0.031  slot_recall=0.000  structure_recall=0.000
+      edge_precision=0.010  edge_recall=0.010  overgen_ratio=0.063  (n=98)
+
+[DUMP]
+    sense_recall=1.000  slot_recall=0.885  structure_recall=0.000
+      edge_precision=0.016  edge_recall=0.196  overgen_ratio=9.773  (n=98)
+
+==============================================================================
+HEADLINE
+==============================================================================
+  MODEL edge_precision = 0.100    MODEL overgen_ratio = 8.123
+  DUMP  edge_precision = 0.016    DUMP  overgen_ratio = 9.773
+  MODEL sense_recall   = 0.935    DUMP  sense_recall  = 1.000
+  (the old headline claim was model sense/slot recall alone; if MODEL's
+   overgen_ratio is close to DUMP's and MODEL's edge_precision is low,
+   that recall was inflated by over-generation, not real structure.)
