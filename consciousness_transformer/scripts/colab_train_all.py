@@ -261,7 +261,11 @@ def main() -> None:
     ap.add_argument("--enc-hash-buckets", type=int, default=4096)
     ap.add_argument("--enc-batch-size", type=int, default=32)
     ap.add_argument("--enc-lr", type=float, default=1e-3)
-    ap.add_argument("--enc-max-seconds", type=float, default=5400.0)
+    ap.add_argument("--enc-max-seconds", type=float, default=21600.0,
+                     help="run-2 default (up from 5400s): a hard wall-clock cutoff, NOT the intended "
+                          "stopping mechanism -- at --enc-epochs 300 this needs headroom past the old "
+                          "50-epoch budget or the epoch bump silently truncates; recalibrate against "
+                          "the printed per-epoch wall-clock")
     # Decoder hyperparameters (nsm_ct.decoder_trained.DecoderTrainedModel / train_decoder.py defaults)
     ap.add_argument("--dec-d-model", type=int, default=96,
                      help="run-2 default (up from 48); more decoder capacity per the DECODER PLAN "
@@ -269,7 +273,9 @@ def main() -> None:
     ap.add_argument("--dec-hash-buckets", type=int, default=2048)
     ap.add_argument("--dec-batch-size", type=int, default=16)
     ap.add_argument("--dec-lr", type=float, default=1e-3)
-    ap.add_argument("--dec-max-seconds", type=float, default=2400.0)
+    ap.add_argument("--dec-max-seconds", type=float, default=5400.0,
+                     help="run-2 default (up from 2400s), for the same reason as --enc-max-seconds: "
+                          "--dec-epochs 200 (up from 80) needs headroom to actually run")
     # Shared eval knobs
     ap.add_argument("--beam-width", type=int, default=6)
     ap.add_argument("--k", type=int, default=6)
