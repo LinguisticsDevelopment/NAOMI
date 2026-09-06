@@ -1,0 +1,201 @@
+loaded 985 gold records from /home/user/NAOMI/consciousness_transformer/runs/encoder_gold_v2.jsonl
+test split: 98 records (reproduced via train_encoder.stratified_split: True)
+
+usable test records (have >=1 tree): 98 / 98
+ORIGINAL grounded-structure coverage: 555/2400 tokens (23.1%) -- uncovered gap = 76.9%
+ORIGINAL uncovered-token POS composition (the raw 76% gap, ceiling reference): content=38.6% function=61.4% other=0.0% (n=1845)
+
+==============================================================================
+DERIVATION (i): NEAREST-NODE ATTACH (node owns a block)
+==============================================================================
+node-span length distribution (n=555 spans): min=1 median=3.0 mean=4.32 max=40
+ABSORBED (non-head) token POS composition (n=1845): function=61.4% content=38.6% other=0.0%
+BLEED RATE (absorbed content-POS token whose nearest node is >1 away / all absorbed): 29.2%  (539/1845)
+
+-- 10 example sentences (derivation i) --
+  TEXT: 'isabella and caroline everywhere asserted their belief in the integrity of the orphans , but to prove it was in this instance out of their power .'
+    [PLACE     ] head='integrity'          block='isabella and caroline everywhere asserted their belief in the integrity of the orphans'
+    [SUBJECT   ] head='it'                 block=', but to prove it'
+    [PREDICATE ] head='was'                block='was in'
+    [PLACE     ] head='instance'           block='this instance out'
+    [OF        ] head='power'              block='of their power .'
+
+  TEXT: "the farther he went down the laughing brook , the more puzzled farmer brown 's boy grew ."
+    [SUBJECT   ] head='he'                 block='the farther he'
+    [PREDICATE ] head='went'               block='went down the laughing'
+    [SUBJECT   ] head='more'               block='brook , the more'
+    [PREDICATE ] head='puzzled'            block='puzzled'
+    [OBJECT    ] head='farmer'             block='farmer'
+    [OBJECT    ] head='brown'              block="brown 's boy grew ."
+
+  TEXT: "it was so big and fat that it made little joe 's mouth water , for you know fat trout are his favorite food ."
+    [SUBJECT   ] head='it'                 block='it'
+    [PREDICATE ] head='was'                block='was'
+    [PLACE     ] head='big'                block='so big'
+    [PLACE     ] head='fat'                block='and fat'
+    [SUBJECT   ] head='it'                 block='that it'
+    [PREDICATE ] head='made'               block='made'
+    [OBJECT    ] head='joe'                block="little joe 's mouth water ,"
+    [SUBJECT   ] head='trout'              block='for you know fat trout'
+    [PREDICATE ] head='are'                block='are'
+    [OBJECT    ] head='favorite'           block='his favorite'
+    [OBJECT    ] head='food'               block='food .'
+
+  TEXT: 'she recollected her father \'s having shown to her the prints of the coins at the end of each king \'s reign , in " rapin \'s history of england ; " and upon comparing these impressions with the coins found by the orphans , she perceived that many of them were of the reign of henry the seventh , which , from their scarcity , were highly appreciated by numismatic collectors .'
+    [SUBJECT   ] head='she'                block='she'
+    [PREDICATE ] head='recollected'        block='recollected'
+    [OBJECT    ] head='father'             block="her father 's having shown to"
+    [OF        ] head='coins'              block='her the prints of the coins at the end of each king \'s reign , in "'
+    [SUBJECT   ] head='impressions'        block='rapin \'s history of england ; " and upon comparing these impressions with'
+    [PREDICATE ] head='found'              block='the coins found by'
+    [PLACE     ] head='orphans'            block='the orphans , she perceived that many of them were of the reign of henry the seventh , which , from their scarcity , were highly appreciated by numismatic collectors .'
+
+  TEXT: '" your poor goat is dead , " replied peggy .'
+    [SUBJECT   ] head='goat'               block='" your poor goat'
+    [PREDICATE ] head='is'                 block='is'
+    [OBJECT    ] head='dead'               block='dead , " replied peggy .'
+
+  TEXT: 'and the lion in the water shook his mane and showed his teeth .'
+    [PREDICATE ] head='and'                block='and'
+    [SUBJECT   ] head='lion'               block='the lion in'
+    [PLACE     ] head='shook'              block='the water shook his'
+    [PLACE     ] head='showed'             block='mane and showed his teeth .'
+
+  TEXT: 'you see , he is just as fond of fishing as is little joe otter or billy mink or buster bear .'
+    [SUBJECT   ] head='you'                block='you'
+    [PREDICATE ] head='see'                block='see ,'
+    [PREDICATE ] head='is'                 block='he is'
+    [SUBJECT   ] head='as'                 block='just as fond of fishing'
+    [OBJECT    ] head='joe'                block='as is little joe'
+    [OBJECT    ] head='otter'              block='otter'
+    [OBJECT    ] head='or'                 block='or'
+    [OBJECT    ] head='billy'              block='billy mink or buster bear .'
+
+  TEXT: 'he cried , and steered for the light .'
+    [SUBJECT   ] head='he'                 block='he'
+    [PREDICATE ] head='cried'              block='cried , and'
+    [FOR       ] head='light'              block='steered for the light .'
+
+  TEXT: 'perhaps that is what the fish thought he was , for pretty soon , two or three swam right in close to where he was sitting .'
+    [SUBJECT   ] head='he'                 block='perhaps that is what the fish thought he'
+    [PREDICATE ] head='was'                block='was , for'
+    [PLACE     ] head='two'                block='pretty soon , two'
+    [PLACE     ] head='three'              block='or three swam right in'
+    [SUBJECT   ] head='he'                 block='close to where he'
+    [OBJECT    ] head='sitting'            block='was sitting .'
+
+  TEXT: 'the little old woman and the little old man ran after him as fast as they could , but he just laughed , and shouted , -- the little gingerbread boy ran on and on , until he came to a cow , by the roadside .'
+    [SUBJECT   ] head='woman'              block='the little old woman and the'
+    [SUBJECT   ] head='man'                block='little old man'
+    [PREDICATE ] head='ran'                block='ran'
+    [PLACE     ] head='him'                block='after him'
+    [OBJECT    ] head='fast'               block='as fast as they'
+    [SUBJECT   ] head='he'                 block='could , but he just laughed , and shouted , -- the little'
+    [PREDICATE ] head='came'               block='gingerbread boy ran on and on , until he came to'
+    [PLACE     ] head='cow'                block='a cow , by the roadside .'
+
+==============================================================================
+DERIVATION (ii): SINGLE-TOKEN NODE + CONNECTIVES
+==============================================================================
+*** THE KEY NUMBER *** connective-token POS composition (n=1845 connective tokens): function=61.4% content=38.6% other=0.0%
+
+overall surface-token assignment: node-owned=23.1% connective=76.9%  (node-owned=555, connective=1845, total=2400)
+
+connective diversity, top 15 most common (relation_a, relation_b) keys:
+  ('BOS', 'SUBJECT')                       freq=  52  distinct_strings=  43  top5=['and'x3, 'the'x3, 'so'x3, 'when'x2, '"'x2]
+  ('PREDICATE', 'PLACE')                   freq=  36  distinct_strings=  30  top5=['to'x5, 'by the'x2, 'to a'x2, 'in this'x1, 'so'x1]
+  ('OBJECT', 'EOS')                        freq=  36  distinct_strings=  22  top5=['.'x15, "'s boy grew ."x1, ', " replied peggy .'x1, 'mink or buster bear .'x1, '!'x1]
+  ('PLACE', 'EOS')                         freq=  33  distinct_strings=  26  top5=['.'x7, '?'x2, ', she perceived that many of them were of the reign of henry the seventh , which , from their scarcity , were highly appreciated by numismatic collectors .'x1, 'his teeth .'x1, ', by the roadside .'x1]
+  ('PREDICATE', 'OBJECT')                  freq=  24  distinct_strings=  19  top5=['the'x4, 'her'x2, 'a'x2, 'little'x1, 'his'x1]
+  ('SUBJECT', 'PREDICATE')                 freq=  20  distinct_strings=  16  top5=['was'x3, 'had'x3, 'with the coins'x1, 'just laughed , and shouted , -- the little gingerbread boy ran on and on , until he'x1, 'could'x1]
+  ('PREDICATE', 'SUBJECT')                 freq=  18  distinct_strings=  18  top5=['down the laughing brook , the'x1, 'the'x1, 'just'x1, 'to fancy what the'x1, ':'x1]
+  ('OBJECT', 'SUBJECT')                    freq=  17  distinct_strings=  17  top5=["'s mouth water , for you know fat"x1, 'as they could , but'x1, 'as'x1, 'in , and asked what'x1, ','x1]
+  ('PLACE', 'PLACE')                       freq=  15  distinct_strings=   8  top5=['and'x7, 'or'x2, 'his mane and'x1, 'again , for she felt very'x1, 'so'x1]
+  ('PLACE', 'SUBJECT')                     freq=  12  distinct_strings=  10  top5=[','x3, 'of the orphans , but to prove'x1, 'that'x1, 'swam right in close to where'x1, ', so that the'x1]
+  ('OBJECT', 'PLACE')                      freq=  12  distinct_strings=  12  top5=['in the next'x1, 'in'x1, ', and was near'x1, 'look at'x1, 'at'x1]
+  ('OF', 'EOS')                            freq=  10  distinct_strings=   7  top5=['.'x4, 'for her amongst their acquaintance , and got three shillings a pair for them .'x1, ', which seemed neither like a halfpenny , nor a shilling , nor a guinea .'x1, 'that would happen : \' " miss alice !'x1, 'themselves .'x1]
+  ('OBJECT', 'OF')                         freq=   8  distinct_strings=   6  top5=['of'x2, 'of the'x2, "'s having shown to her the prints of the"x1, 'at the very edge of the'x1, ', and they saw that a great chimney of the old'x1]
+  ('PREDICATE', 'EOS')                     freq=   8  distinct_strings=   8  top5=[", ' the dodo replied very gravely ."x1, 'near he took the greatest care not to make the teeniest , weeniest bit of noise .'x1, "never heard before , 'sure then i 'm here !"x1, ', but he had wanted to .'x1, 'of their potatoes and buttermilk if they should find their own ever fall short .'x1]
+  ('OF', 'SUBJECT')                        freq=   7  distinct_strings=   7  top5=['at the end of each king \'s reign , in " rapin \'s history of england ; " and upon comparing these'x1, ', where the'x1, ';'x1, 'in which'x1, ", now , ' thought alice ,"x1]
+
+-- 10 example sentences (derivation ii) --
+  TEXT: 'isabella and caroline everywhere asserted their belief in the integrity of the orphans , but to prove it was in this instance out of their power .'
+    nodes: [PLACE:'integrity'] [SUBJECT:'it'] [PREDICATE:'was'] [PLACE:'instance'] [OF:'power']
+    connective ('BOS', 'PLACE'): 'isabella and caroline everywhere asserted their belief in the'
+    connective ('PLACE', 'SUBJECT'): 'of the orphans , but to prove'
+    connective ('PREDICATE', 'PLACE'): 'in this'
+    connective ('PLACE', 'OF'): 'out of their'
+    connective ('OF', 'EOS'): '.'
+
+  TEXT: "the farther he went down the laughing brook , the more puzzled farmer brown 's boy grew ."
+    nodes: [SUBJECT:'he'] [PREDICATE:'went'] [SUBJECT:'more'] [PREDICATE:'puzzled'] [OBJECT:'farmer'] [OBJECT:'brown']
+    connective ('BOS', 'SUBJECT'): 'the farther'
+    connective ('PREDICATE', 'SUBJECT'): 'down the laughing brook , the'
+    connective ('OBJECT', 'EOS'): "'s boy grew ."
+
+  TEXT: "it was so big and fat that it made little joe 's mouth water , for you know fat trout are his favorite food ."
+    nodes: [SUBJECT:'it'] [PREDICATE:'was'] [PLACE:'big'] [PLACE:'fat'] [SUBJECT:'it'] [PREDICATE:'made'] [OBJECT:'joe'] [SUBJECT:'trout'] [PREDICATE:'are'] [OBJECT:'favorite'] [OBJECT:'food']
+    connective ('PREDICATE', 'PLACE'): 'so'
+    connective ('PLACE', 'PLACE'): 'and'
+    connective ('PLACE', 'SUBJECT'): 'that'
+    connective ('PREDICATE', 'OBJECT'): 'his'
+    connective ('OBJECT', 'SUBJECT'): "'s mouth water , for you know fat"
+    connective ('OBJECT', 'EOS'): '.'
+
+  TEXT: 'she recollected her father \'s having shown to her the prints of the coins at the end of each king \'s reign , in " rapin \'s history of england ; " and upon comparing these impressions with the coins found by the orphans , she perceived that many of them were of the reign of henry the seventh , which , from their scarcity , were highly appreciated by numismatic collectors .'
+    nodes: [SUBJECT:'she'] [PREDICATE:'recollected'] [OBJECT:'father'] [OF:'coins'] [SUBJECT:'impressions'] [PREDICATE:'found'] [PLACE:'orphans']
+    connective ('PREDICATE', 'OBJECT'): 'her'
+    connective ('OBJECT', 'OF'): "'s having shown to her the prints of the"
+    connective ('OF', 'SUBJECT'): 'at the end of each king \'s reign , in " rapin \'s history of england ; " and upon comparing these'
+    connective ('SUBJECT', 'PREDICATE'): 'with the coins'
+    connective ('PREDICATE', 'PLACE'): 'by the'
+    connective ('PLACE', 'EOS'): ', she perceived that many of them were of the reign of henry the seventh , which , from their scarcity , were highly appreciated by numismatic collectors .'
+
+  TEXT: '" your poor goat is dead , " replied peggy .'
+    nodes: [SUBJECT:'goat'] [PREDICATE:'is'] [OBJECT:'dead']
+    connective ('BOS', 'SUBJECT'): '" your poor'
+    connective ('OBJECT', 'EOS'): ', " replied peggy .'
+
+  TEXT: 'and the lion in the water shook his mane and showed his teeth .'
+    nodes: [PREDICATE:'and'] [SUBJECT:'lion'] [PLACE:'shook'] [PLACE:'showed']
+    connective ('PREDICATE', 'SUBJECT'): 'the'
+    connective ('SUBJECT', 'PLACE'): 'in the water'
+    connective ('PLACE', 'PLACE'): 'his mane and'
+    connective ('PLACE', 'EOS'): 'his teeth .'
+
+  TEXT: 'you see , he is just as fond of fishing as is little joe otter or billy mink or buster bear .'
+    nodes: [SUBJECT:'you'] [PREDICATE:'see'] [PREDICATE:'is'] [SUBJECT:'as'] [OBJECT:'joe'] [OBJECT:'otter'] [OBJECT:'or'] [OBJECT:'billy']
+    connective ('PREDICATE', 'PREDICATE'): ', he'
+    connective ('PREDICATE', 'SUBJECT'): 'just'
+    connective ('SUBJECT', 'OBJECT'): 'fond of fishing as is little'
+    connective ('OBJECT', 'EOS'): 'mink or buster bear .'
+
+  TEXT: 'he cried , and steered for the light .'
+    nodes: [SUBJECT:'he'] [PREDICATE:'cried'] [FOR:'light']
+    connective ('PREDICATE', 'FOR'): ', and steered for the'
+    connective ('FOR', 'EOS'): '.'
+
+  TEXT: 'perhaps that is what the fish thought he was , for pretty soon , two or three swam right in close to where he was sitting .'
+    nodes: [SUBJECT:'he'] [PREDICATE:'was'] [PLACE:'two'] [PLACE:'three'] [SUBJECT:'he'] [OBJECT:'sitting']
+    connective ('BOS', 'SUBJECT'): 'perhaps that is what the fish thought'
+    connective ('PREDICATE', 'PLACE'): ', for pretty soon ,'
+    connective ('PLACE', 'PLACE'): 'or'
+    connective ('PLACE', 'SUBJECT'): 'swam right in close to where'
+    connective ('SUBJECT', 'OBJECT'): 'was'
+    connective ('OBJECT', 'EOS'): '.'
+
+  TEXT: 'the little old woman and the little old man ran after him as fast as they could , but he just laughed , and shouted , -- the little gingerbread boy ran on and on , until he came to a cow , by the roadside .'
+    nodes: [SUBJECT:'woman'] [SUBJECT:'man'] [PREDICATE:'ran'] [PLACE:'him'] [OBJECT:'fast'] [SUBJECT:'he'] [PREDICATE:'came'] [PLACE:'cow']
+    connective ('BOS', 'SUBJECT'): 'the little old'
+    connective ('SUBJECT', 'SUBJECT'): 'and the little old'
+    connective ('PREDICATE', 'PLACE'): 'to a'
+    connective ('PLACE', 'OBJECT'): 'as'
+    connective ('OBJECT', 'SUBJECT'): 'as they could , but'
+    connective ('SUBJECT', 'PREDICATE'): 'just laughed , and shouted , -- the little gingerbread boy ran on and on , until he'
+    connective ('PLACE', 'EOS'): ', by the roadside .'
+
+==============================================================================
+SANITY CHECKS
+==============================================================================
+derivation (i) total assigned tokens vs total surface tokens: 2400 / 2400  (OK: 100%)
+derivation (ii) total assigned tokens vs total surface tokens: 2400 / 2400  (OK: 100%)
