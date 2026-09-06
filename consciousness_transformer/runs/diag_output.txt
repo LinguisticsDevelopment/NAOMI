@@ -1,0 +1,237 @@
+loading USVS ...
+loading encoder ckpt ...
+  encoder cfg: {'n_train': 788, 'n_dev': 98, 'n_test': 98, 'epochs': 50, 'batch_size': 32, 'seed': 0, 'device': 'cpu'}
+  reported metrics: {"sense_recall": 0.9278350515463918, "slot_recall": 0.9565217391304348, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "n_records": 98}
+loading decoder ckpt ...
+reproduced split: train=788 dev=98 test=98 (seed=0)
+
+========================================================================
+ENCODER STRUCTURE DIAGNOSIS
+========================================================================
+n_test=98  empty_forest=0  beam=8 k=8
+[A] node recall (grouping-agnostic) : 461/702 = 0.657
+[B] clause-exact recall             : 0/412 = 0.000
+    whole-tree exact (metric repro) : 0/241 = 0.000
+[D] predicate token_index agreement : 71/412 = 0.172
+[C] edges-off per gold clause (0=exact match to an emitted clause):
+      0 off :    0  (  0.0%)
+      1 off :    0  (  0.0%)
+      2 off :    3  (  0.7%)
+      3 off :    3  (  0.7%)
+      4+ off :  406  ( 98.5%)
+    clause-count delta (emitted_best - gold):
+      -2 : 3
+      -1 : 34
+      +0 : 50
+      +1 : 7
+      +2 : 3
+      +3 : 1
+
+--- EXAMPLES (gold clauses  vs  best-emitted tree) ---
+
+TEXT: isabella and caroline everywhere asserted their belief in the integrity of the orphans , but to prove it was in this ins
+  GOLD  (3 clause):
+    {OF:power#25:sense, PLACE:instance#21:sense, PLACE:integrity#9:sense, PREDICATE:was#18:entity, SUBJECT:it#17:reference}
+    {PLACE:instance#21:sense, PLACE:integrity#9:sense, PREDICATE:was#18:entity, SUBJECT:it#17:reference}
+    {PLACE:integrity#9:sense, PLACE:this#20:entity, PREDICATE:was#18:entity, SUBJECT:it#17:reference}
+  EMIT  (1 clause, best of forest):
+    {FOR:<null>#None:prime, FOR:to#15:entity, INDIRECT_OBJECT:in#19:sense, OBJECT:<null>#None:prime, OBJECT:belief#6:sense, OBJECT:instance#21:sense, OBJECT:out#22:sense, OBJECT:their#5:entity, OF:,#13:entity, OF:<null>#None:prime, OF:orphans#12:entity, OF:the#11:entity, OFF:,#13:entity, OFF:<null>#None:prime, OFF:but#14:entity, PLACE:<null>#None:prime, PLACE:caroline#2:sense, PLACE:everywhere#3:entity, PLACE:everywhere#3:sense, PLACE:instance#21:sense, PLACE:integrity#9:sense, PLACE:of#23:reference, PLACE:prove#16:sense, PLACE:the#8:sense, PLACE:their#5:entity, PLACE:this#20:entity, PLACE:to#15:entity, PREDICATE:in#19:sense, SOURCE:<null>#None:prime, SOURCE:but#14:entity, SUBJECT:<null>#None:prime, SUBJECT:and#1:entity, SUBJECT:belief#6:sense, SUBJECT:caroline#2:sense, SUBJECT:everywhere#3:entity, SUBJECT:everywhere#3:sense, SUBJECT:in#19:sense, SUBJECT:in#7:sense, SUBJECT:integrity#9:sense, SUBJECT:isabella#0:sense, SUBJECT:it#17:reference, SUBJECT:of#10:entity, SUBJECT:out#22:reference, UP:belief#6:sense}
+
+TEXT: the farther he went down the laughing brook , the more puzzled farmer brown 's boy grew .
+  GOLD  (5 clause):
+    {OBJECT:brown#13:sense, OBJECT:farmer#12:sense, PREDICATE:puzzled#11:sense, SUBJECT:more#10:sense}
+    {PREDICATE:went#3:entity, SUBJECT:he#2:reference}
+    {PREDICATE:went#3:entity, SUBJECT:he#2:reference}
+    {OBJECT:farmer#12:sense, PREDICATE:puzzled#11:sense, SUBJECT:more#10:sense}
+    {PREDICATE:went#3:entity, SUBJECT:he#2:reference}
+  EMIT  (1 clause, best of forest):
+    {DOWN:,#8:entity, DOWN:<null>#None:prime, DOWN:brook#7:sense, DOWN:farmer#12:sense, DOWN:farther#1:sense, INDIRECT_OBJECT:farmer#12:sense, OBJECT:'s#14:entity, OBJECT:,#8:entity, OBJECT:.#17:sense, OBJECT:<null>#None:prime, OBJECT:<null>#None:sense, OBJECT:boy#15:sense, OBJECT:brook#7:sense, OBJECT:brown#13:sense, OBJECT:down#4:sense, OBJECT:farmer#12:sense, OBJECT:grew#16:entity, OBJECT:puzzled#11:sense, PLACE:'s#14:entity, PLACE:.#17:sense, PLACE:<null>#None:prime, PLACE:<null>#None:sense, PLACE:brown#13:sense, PLACE:down#4:sense, PLACE:farther#1:sense, PLACE:laughing#6:sense, PREDICATE:grew#16:entity, SUBJECT:,#8:entity, SUBJECT:<null>#None:prime, SUBJECT:boy#15:sense, SUBJECT:brook#7:sense, SUBJECT:down#4:sense, SUBJECT:he#2:reference, SUBJECT:laughing#6:sense, SUBJECT:more#10:sense, SUBJECT:puzzled#11:sense, SUBJECT:the#0:sense, SUBJECT:the#9:sense, SUBJECT:went#3:entity, UP:more#10:sense, UPON:puzzled#11:sense, WITH:<null>#None:prime, WITH:down#4:sense, WITH:laughing#6:sense, WITH:the#5:entity, WITH:the#5:sense}
+
+TEXT: it was so big and fat that it made little joe 's mouth water , for you know fat trout are his favorite food .
+  GOLD  (11 clause):
+    {OBJECT:joe#10:entity, PREDICATE:made#8:sense, SUBJECT:<null>#None:reference}
+    {OBJECT:favorite#22:sense, OBJECT:food#23:sense, PREDICATE:are#20:sense, SUBJECT:trout#19:sense}
+    {PLACE:big#3:sense, PREDICATE:was#1:entity, SUBJECT:it#0:reference}
+    {PLACE:fat#5:sense, PREDICATE:was#1:entity, SUBJECT:it#7:reference}
+    {OBJECT:joe#10:entity, PREDICATE:made#8:sense, SUBJECT:<null>#None:reference}
+    {OBJECT:food#23:sense, PREDICATE:are#20:sense, SUBJECT:trout#19:sense}
+    {PLACE:big#3:sense, PREDICATE:was#1:entity, SUBJECT:it#0:reference}
+    {PLACE:fat#5:sense, PREDICATE:was#1:entity, SUBJECT:it#7:reference}
+    {OBJECT:joe#10:entity, PREDICATE:made#8:sense, SUBJECT:<null>#None:reference}
+    {PLACE:big#3:sense, PREDICATE:was#1:entity, SUBJECT:it#0:reference}
+    {PLACE:fat#5:sense, PREDICATE:was#1:entity, SUBJECT:it#7:reference}
+  EMIT  (3 clause, best of forest):
+    {DOWN:,#14:sense, DOWN:<null>#None:prime, DOWN:mouth#12:sense, FOR:<null>#None:prime, FOR:you#16:reference, INDIRECT_OBJECT:<null>#None:prime, INDIRECT_OBJECT:that#6:entity, OBJECT:'s#11:entity, OBJECT:<null>#None:prime, OBJECT:and#4:entity, OBJECT:it#7:reference, OBJECT:joe#10:entity, OBJECT:know#17:sense, OBJECT:little#9:sense, OBJECT:made#8:sense, OBJECT:that#6:entity, OBJECT:water#13:sense, PLACE:<null>#None:prime, PLACE:and#4:entity, PLACE:big#3:sense, PLACE:fat#5:sense, PREDICATE:made#8:sense, SUBJECT:<null>#None:prime, SUBJECT:it#0:reference, SUBJECT:mouth#12:sense, SUBJECT:so#2:entity}
+    {INDIRECT_OBJECT:it#7:entity, OBJECT:'s#11:entity, OBJECT:joe#10:entity, OBJECT:little#9:sense, PLACE:and#4:entity, PLACE:fat#5:sense, PREDICATE:made#8:sense, SUBJECT:it#7:reference, SUBJECT:that#6:entity}
+    {OBJECT:'s#11:entity, OBJECT:joe#10:entity, OBJECT:little#9:sense, PREDICATE:<null>#None:prime, SUBJECT:it#7:reference}
+
+TEXT: she recollected her father 's having shown to her the prints of the coins at the end of each king 's reign , in " rapin 
+  GOLD  (4 clause):
+    {OBJECT:father#3:sense, OF:coins#13:entity, PREDICATE:recollected#1:entity, SUBJECT:she#0:reference}
+    {PLACE:orphans#43:entity, PREDICATE:found#40:sense, SUBJECT:impressions#36:entity}
+    {OF:coins#13:entity, PREDICATE:recollected#1:entity, SUBJECT:she#0:reference}
+    {PLACE:orphans#43:entity, PREDICATE:found#40:sense, SUBJECT:impressions#36:entity}
+  EMIT  (3 clause, best of forest):
+    {DOWN:'s#26:entity, DOWN:,#44:entity, DOWN:<null>#None:prime, DOWN:history#27:sense, DOWN:many#48:sense, DOWN:that#47:entity, DURING:<null>#None:prime, DURING:father#3:sense, FOR:of#17:reference, INDIRECT_OBJECT:<null>#None:prime, INDIRECT_OBJECT:her#2:reference, OBJECT:'s#4:entity, OBJECT:,#22:entity, OBJECT:<null>#None:prime, OBJECT:at#14:reference, OBJECT:father#3:sense, OBJECT:found#40:sense, OBJECT:having#5:entity, OBJECT:having#5:sense, OBJECT:her#2:reference, OBJECT:her#8:reference, OBJECT:impressions#36:entity, OBJECT:many#48:sense, OBJECT:of#11:reference, OBJECT:of#28:reference, OBJECT:prints#10:entity, OBJECT:shown#6:entity, OBJECT:that#47:entity, OBJECT:these#35:entity, OBJECT:to#7:entity, OBJECT:upon#33:entity, OF:<null>#None:prime, OF:at#14:reference, OF:coins#13:entity, OF:each#18:sense, OF:england#29:sense, OF:king#19:sense, OF:the#12:entity, OF:the#53:entity, OF:them#50:reference, PLACE:"#24:entity, PLACE:'s#26:entity, PLACE:<null>#None:prime, PLACE:end#16:sense, PLACE:found#40:sense, PLACE:her#8:reference, PLACE:history#27:sense, PLACE:in#23:sense, PLACE:of#17:reference, PLACE:orphans#43:entity, PLACE:perceived#46:sense, PLACE:prints#10:entity, PLACE:rapin#25:entity, PLACE:reign#21:sense, PLACE:reign#54:sense, PLACE:to#7:entity, PREDICATE:were#51:entity, SOURCE:and#32:entity, SUBJECT:<null>#None:prime, SUBJECT:her#2:reference, SUBJECT:of#11:entity, SUBJECT:of#52:reference, SUBJECT:she#0:reference, SUBJECT:she#45:reference, THROUGH:,#44:entity, WITH:<null>#None:prime, WITH:coins#39:entity, WITH:the#38:sense, WITH:with#37:sense}
+    {OBJECT:of#55:entity, OBJECT:of#55:sense, OBJECT:reign#54:sense, OF:<null>#None:prime, OF:henry#56:sense, PLACE:<null>#None:prime, PLACE:of#55:entity, PLACE:reign#54:sense, PLACE:the#53:entity, PREDICATE:the#53:sense, SOURCE:seventh#58:sense, SUBJECT:,#59:reference, SUBJECT:of#52:entity, SUBJECT:of#55:sense, SUBJECT:the#53:entity, SUBJECT:the#57:sense}
+    {OBJECT:.#72:entity, OBJECT:.#72:reference, OBJECT:<null>#None:entity, OBJECT:<null>#None:prime, OBJECT:<null>#None:reference, OBJECT:<null>#None:sense, OBJECT:by#69:sense, OBJECT:from#62:entity, OBJECT:henry#56:sense, OBJECT:scarcity#64:sense, OBJECT:seventh#58:sense, OBJECT:the#57:sense, OF:,#59:sense, OF:<null>#None:prime, OF:henry#56:sense, OF:seventh#58:sense, PLACE:,#59:entity, PLACE:,#61:entity, PLACE:<null>#None:prime, PLACE:henry#56:sense, PLACE:scarcity#64:sense, PLACE:their#63:entity, PLACE:which#60:entity, PREDICATE:collectors#71:entity, SUBJECT:,#59:entity, SUBJECT:,#61:entity, SUBJECT:,#65:entity, SUBJECT:by#69:sense, SUBJECT:from#62:entity, SUBJECT:numismatic#70:reference, SUBJECT:of#55:sense, SUBJECT:reign#54:reference, SUBJECT:seventh#58:sense, SUBJECT:the#57:sense, SUBJECT:which#60:entity}
+
+TEXT: " your poor goat is dead , " replied peggy .
+  GOLD  (2 clause):
+    {OBJECT:dead#5:sense, PREDICATE:is#4:entity, SUBJECT:goat#3:sense}
+    {PREDICATE:is#4:entity, SUBJECT:goat#3:sense}
+  EMIT  (1 clause, best of forest):
+    {OBJECT:"#7:entity, OBJECT:,#6:entity, OBJECT:.#10:entity, OBJECT:<null>#None:prime, OBJECT:dead#5:sense, OBJECT:is#4:entity, OBJECT:peggy#9:entity, PLACE:<null>#None:prime, PLACE:goat#3:sense, PLACE:poor#2:sense, PLACE:replied#8:entity, PREDICATE:<null>#None:prime, SUBJECT:"#0:entity, SUBJECT:,#6:entity, SUBJECT:<null>#None:prime, SUBJECT:goat#3:sense, SUBJECT:poor#2:sense, SUBJECT:your#1:sense}
+
+TEXT: and the lion in the water shook his mane and showed his teeth .
+  GOLD  (3 clause):
+    {PLACE:showed#10:entity, PREDICATE:and#0:entity, SUBJECT:<null>#None:sense}
+    {PLACE:shook#6:sense, PREDICATE:and#0:entity, SUBJECT:lion#2:sense}
+    {PLACE:water#5:sense, PREDICATE:shook#6:sense, SUBJECT:lion#2:sense}
+  EMIT  (1 clause, best of forest):
+    {OBJECT:.#13:sense, OBJECT:and#9:entity, OBJECT:his#11:entity, OBJECT:his#7:entity, OBJECT:his#7:sense, OBJECT:teeth#12:sense, OF:showed#10:entity, PLACE:<null>#None:prime, PLACE:his#7:entity, PLACE:his#7:sense, PLACE:in#3:reference, PLACE:lion#2:sense, PLACE:mane#8:sense, PLACE:shook#6:sense, PLACE:showed#10:entity, PLACE:the#4:sense, PLACE:water#5:sense, PREDICATE:and#9:entity, SUBJECT:and#0:entity, SUBJECT:in#3:sense, SUBJECT:lion#2:sense, SUBJECT:the#1:sense, SUBJECT:water#5:sense}
+
+TEXT: you see , he is just as fond of fishing as is little joe otter or billy mink or buster bear .
+  GOLD  (7 clause):
+    {OBJECT:joe#13:entity, OBJECT:or#15:sense, PREDICATE:is#4:entity, SUBJECT:as#6:sense}
+    {OBJECT:otter#14:sense, PREDICATE:see#1:sense, SUBJECT:you#0:reference}
+    {OBJECT:billy#16:sense, PREDICATE:see#1:sense, SUBJECT:<null>#None:reference}
+    {OBJECT:otter#14:sense, PREDICATE:see#1:sense, SUBJECT:you#0:reference}
+    {OBJECT:billy#16:sense, PREDICATE:see#1:sense, SUBJECT:<null>#None:reference}
+    {PLACE:otter#14:sense, PREDICATE:see#1:sense, SUBJECT:you#0:reference}
+    {PLACE:billy#16:sense, PREDICATE:see#1:sense, SUBJECT:<null>#None:reference}
+  EMIT  (3 clause, best of forest):
+    {BEFORE:<null>#None:prime, BEFORE:as#10:sense, DOWN:<null>#None:prime, DOWN:as#6:sense, DOWN:of#8:reference, INDIRECT_OBJECT:<null>#None:prime, INDIRECT_OBJECT:as#10:sense, INDIRECT_OBJECT:as#6:sense, INDIRECT_OBJECT:joe#13:entity, INDIRECT_OBJECT:just#5:sense, INDIRECT_OBJECT:little#12:sense, INDIRECT_OBJECT:of#8:reference, OBJECT:,#2:entity, OBJECT:<null>#None:prime, OBJECT:as#10:sense, OBJECT:as#6:sense, OBJECT:fond#7:sense, OBJECT:he#3:reference, OBJECT:is#11:entity, OBJECT:is#4:entity, OBJECT:joe#13:entity, OBJECT:just#5:sense, OBJECT:little#12:sense, OBJECT:of#8:reference, OBJECT:or#15:entity, OBJECT:otter#14:sense, OF:<null>#None:prime, OF:fishing#9:sense, PLACE:<null>#None:prime, PLACE:fond#7:sense, PLACE:is#11:entity, PLACE:is#4:entity, PLACE:just#5:sense, PREDICATE:is#4:entity, SUBJECT:,#2:entity, SUBJECT:<null>#None:prime, SUBJECT:as#10:sense, SUBJECT:as#6:sense, SUBJECT:he#3:reference, SUBJECT:of#8:reference, SUBJECT:you#0:reference}
+    {OBJECT:buster#19:sense, OBJECT:mink#17:sense, OBJECT:or#18:reference, OBJECT:or#18:sense, PREDICATE:or#15:entity, SUBJECT:billy#16:reference, SUBJECT:mink#17:sense, SUBJECT:or#18:reference}
+    {OBJECT:.#21:sense, OBJECT:<null>#None:sense, OBJECT:bear#20:sense, PREDICATE:or#18:entity, SUBJECT:buster#19:reference}
+
+TEXT: he cried , and steered for the light .
+  GOLD  (2 clause):
+    {FOR:light#7:sense, PREDICATE:cried#1:entity, SUBJECT:he#0:reference}
+    {PREDICATE:cried#1:entity, SUBJECT:he#0:reference}
+  EMIT  (2 clause, best of forest):
+    {FOR:light#7:sense, FOR:the#6:sense, OBJECT:,#2:entity, OBJECT:<null>#None:prime, OBJECT:and#3:entity, OBJECT:for#5:reference, OBJECT:steered#4:entity, PLACE:for#5:sense, PLACE:steered#4:entity, PREDICATE:<null>#None:prime, SUBJECT:,#2:entity, SUBJECT:<null>#None:prime, SUBJECT:and#3:entity, SUBJECT:for#5:sense, SUBJECT:he#0:reference, THROUGH:.#8:sense}
+    {OBJECT:<null>#None:prime, OBJECT:<null>#None:sense, PLACE:<null>#None:prime, PLACE:<null>#None:sense, PREDICATE:<null>#None:entity, SUBJECT:.#8:sense, SUBJECT:<null>#None:reference, THROUGH:<null>#None:prime, THROUGH:<null>#None:sense}
+
+TEXT: perhaps that is what the fish thought he was , for pretty soon , two or three swam right in close to where he was sittin
+  GOLD  (5 clause):
+    {OBJECT:sitting#25:sense, PREDICATE:was#8:entity, SUBJECT:<null>#None:reference}
+    {PLACE:two#14:sense, PREDICATE:was#8:entity, SUBJECT:he#7:reference}
+    {PLACE:three#16:sense, PREDICATE:was#8:entity, SUBJECT:he#23:reference}
+    {OBJECT:sitting#25:sense, PLACE:two#14:sense, PREDICATE:was#8:entity, SUBJECT:he#7:reference}
+    {OBJECT:<null>#None:sense, PLACE:three#16:sense, PREDICATE:was#8:entity, SUBJECT:he#23:reference}
+  EMIT  (1 clause, best of forest):
+    {DOWN:,#13:entity, DOWN:,#9:entity, DOWN:<null>#None:prime, FOR:<null>#None:prime, INDIRECT_OBJECT:<null>#None:prime, INDIRECT_OBJECT:the#4:entity, INDIRECT_OBJECT:what#3:entity, OBJECT:,#9:entity, OBJECT:.#26:sense, OBJECT:<null>#None:prime, OBJECT:fish#5:sense, OBJECT:he#7:reference, OBJECT:in#19:sense, OBJECT:or#15:reference, OBJECT:right#18:sense, OBJECT:sitting#25:sense, OBJECT:the#4:entity, OBJECT:the#4:sense, OBJECT:thought#6:sense, OBJECT:was#8:entity, OBJECT:what#3:entity, PLACE:,#13:entity, PLACE:,#9:entity, PLACE:<null>#None:prime, PLACE:close#20:sense, PLACE:for#10:reference, PLACE:for#10:sense, PLACE:he#23:reference, PLACE:or#15:sense, PLACE:pretty#11:sense, PLACE:soon#12:sense, PLACE:swam#17:entity, PLACE:three#16:sense, PLACE:to#21:entity, PLACE:two#14:sense, PLACE:was#24:entity, PLACE:was#8:entity, PLACE:where#22:entity, PREDICATE:sitting#25:sense, SUBJECT:,#9:entity, SUBJECT:.#26:entity, SUBJECT:<null>#None:prime, SUBJECT:fish#5:sense, SUBJECT:he#23:reference, SUBJECT:he#7:reference, SUBJECT:in#19:sense, SUBJECT:or#15:entity, SUBJECT:perhaps#0:sense, SUBJECT:that#1:entity, SUBJECT:the#4:entity, SUBJECT:thought#6:sense, SUBJECT:three#16:sense}
+
+TEXT: the little old woman and the little old man ran after him as fast as they could , but he just laughed , and shouted , --
+  GOLD  (6 clause):
+    {OBJECT:fast#13:sense, PLACE:him#11:reference, PREDICATE:ran#9:entity, SUBJECT:woman#3:sense}
+    {OBJECT:<null>#None:sense, PLACE:<null>#None:reference, PREDICATE:ran#9:entity, SUBJECT:man#8:sense}
+    {PLACE:cow#41:sense, PREDICATE:came#38:entity, SUBJECT:he#19:reference}
+    {PLACE:him#11:reference, PREDICATE:ran#9:entity, SUBJECT:woman#3:sense}
+    {PLACE:cow#41:sense, PREDICATE:came#38:entity, SUBJECT:he#19:reference}
+    {PLACE:<null>#None:reference, PREDICATE:ran#9:entity, SUBJECT:man#8:sense}
+  EMIT  (3 clause, best of forest):
+    {DOWN:--#26:entity, DOWN:<null>#None:prime, OBJECT:,#17:entity, OBJECT:,#22:entity, OBJECT:,#25:entity, OBJECT:<null>#None:prime, OBJECT:as#14:sense, OBJECT:fast#13:sense, OBJECT:he#19:reference, OBJECT:they#15:reference, OBJECT:to#39:entity, PLACE:,#25:entity, PLACE:<null>#None:prime, PLACE:a#40:sense, PLACE:and#33:entity, PLACE:but#18:entity, PLACE:but#18:sense, PLACE:cow#41:sense, PLACE:gingerbread#29:sense, PLACE:laughed#21:entity, PLACE:little#28:sense, PLACE:on#32:sense, PLACE:on#34:sense, PLACE:ran#31:entity, PLACE:shouted#24:entity, PLACE:the#27:entity, PLACE:the#27:sense, PLACE:until#36:entity, PREDICATE:ran#31:entity, SOURCE:,#35:entity, SUBJECT:,#17:entity, SUBJECT:,#22:entity, SUBJECT:,#42:entity, SUBJECT:--#26:entity, SUBJECT:<null>#None:prime, SUBJECT:and#23:entity, SUBJECT:boy#30:sense, SUBJECT:came#38:entity, SUBJECT:could#16:entity, SUBJECT:he#19:reference, SUBJECT:he#37:reference, SUBJECT:him#11:reference, SUBJECT:just#20:sense, SUBJECT:they#15:reference}
+    {FOR:him#11:reference, INDIRECT_OBJECT:<null>#None:prime, INDIRECT_OBJECT:as#12:sense, INDIRECT_OBJECT:fast#13:sense, INDIRECT_OBJECT:him#11:reference, INDIRECT_OBJECT:little#6:sense, INDIRECT_OBJECT:old#7:sense, INDIRECT_OBJECT:the#5:sense, INDIRECT_OBJECT:woman#3:sense, OBJECT:<null>#None:prime, OBJECT:after#10:sense, OBJECT:and#4:entity, OBJECT:as#12:sense, OBJECT:as#14:sense, OBJECT:fast#13:sense, OBJECT:man#8:sense, OBJECT:old#7:sense, OBJECT:the#5:sense, OBJECT:they#15:reference, OBJECT:woman#3:sense, PLACE:<null>#None:prime, PLACE:after#10:sense, PLACE:as#12:sense, PLACE:little#1:sense, PLACE:old#2:entity, PLACE:old#2:sense, PREDICATE:as#12:sense, SUBJECT:<null>#None:prime, SUBJECT:and#4:entity, SUBJECT:him#11:reference, SUBJECT:little#6:sense, SUBJECT:man#8:sense, SUBJECT:old#2:entity, SUBJECT:old#7:entity, SUBJECT:old#7:sense, SUBJECT:the#0:entity, SUBJECT:the#0:sense, SUBJECT:the#5:entity, SUBJECT:the#5:sense}
+    {OBJECT:,#42:entity, OBJECT:to#39:entity, PLACE:<null>#None:prime, PLACE:a#40:sense, PLACE:and#33:sense, PLACE:cow#41:sense, PLACE:on#34:sense, PREDICATE:came#38:entity, SUBJECT:,#35:entity, SUBJECT:<null>#None:prime, SUBJECT:he#37:reference, SUBJECT:until#36:entity}
+
+TEXT: 'of course , ' the dodo replied very gravely .
+  GOLD  (2 clause):
+    {PREDICATE:course#1:sense, SUBJECT:'of#0:entity}
+    {PREDICATE:replied#6:entity, SUBJECT:dodo#5:sense}
+  EMIT  (1 clause, best of forest):
+    {DOWN:,#2:entity, DOWN:<null>#None:prime, DOWN:dodo#5:sense, INDIRECT_OBJECT:very#7:sense, OBJECT:'#3:reference, OBJECT:,#2:entity, OBJECT:.#9:sense, OBJECT:<null>#None:prime, OBJECT:gravely#8:sense, PLACE:replied#6:entity, PREDICATE:replied#6:entity, SUBJECT:'#3:entity, SUBJECT:'#3:sense, SUBJECT:'of#0:entity, SUBJECT:,#2:entity, SUBJECT:<null>#None:prime, SUBJECT:course#1:sense, SUBJECT:dodo#5:sense, SUBJECT:the#4:sense}
+
+TEXT: and he is as much bigger than you as you are bigger than i !
+  GOLD  (6 clause):
+    {INDIRECT_OBJECT:than#6:entity, OBJECT:you#7:reference, PREDICATE:is#2:entity, SUBJECT:he#1:reference}
+    {OBJECT:i#13:reference, OBJECT:than#12:entity, PREDICATE:are#10:sense, SUBJECT:you#9:reference}
+    {INDIRECT_OBJECT:as#3:sense, OBJECT:than#6:entity, PREDICATE:is#2:entity, SUBJECT:he#1:reference}
+    {OBJECT:i#13:reference, OBJECT:than#12:entity, PREDICATE:are#10:sense, SUBJECT:you#7:reference}
+    {INDIRECT_OBJECT:much#4:sense, OBJECT:than#6:entity, PREDICATE:is#2:entity, SUBJECT:he#1:reference}
+    {OBJECT:i#13:reference, OBJECT:than#12:entity, PREDICATE:are#10:sense, SUBJECT:you#7:reference}
+  EMIT  (1 clause, best of forest):
+    {INDIRECT_OBJECT:<null>#None:prime, INDIRECT_OBJECT:as#3:sense, INDIRECT_OBJECT:much#4:sense, OBJECT:<null>#None:prime, OBJECT:are#10:sense, OBJECT:as#3:sense, OBJECT:as#8:reference, OBJECT:as#8:sense, OBJECT:bigger#11:sense, OBJECT:bigger#5:sense, OBJECT:i#13:reference, OBJECT:much#4:sense, OBJECT:than#12:entity, OBJECT:than#6:entity, OBJECT:you#7:reference, OBJECT:you#9:reference, PLACE:as#8:sense, PREDICATE:are#10:sense, SUBJECT:and#0:entity, SUBJECT:as#3:sense, SUBJECT:he#1:entity, SUBJECT:he#1:reference}
+
+TEXT: she let betsy in , and asked what she could want at such a time of night .
+  GOLD  (5 clause):
+    {OBJECT:betsy#2:entity, PLACE:time#14:sense, PREDICATE:let#1:sense, SUBJECT:she#0:reference}
+    {OF:night#16:sense, PLACE:<null>#None:sense, PREDICATE:want#10:sense, SUBJECT:she#8:reference}
+    {OBJECT:betsy#2:entity, PLACE:time#14:sense, PREDICATE:let#1:sense, SUBJECT:she#0:reference}
+    {OF:night#16:sense, PLACE:<null>#None:sense, PREDICATE:want#10:sense, SUBJECT:she#8:reference}
+    {PLACE:time#14:sense, PREDICATE:let#1:sense, SUBJECT:she#0:reference}
+  EMIT  (1 clause, best of forest):
+    {OBJECT:,#4:entity, OBJECT:<null>#None:prime, OBJECT:at#11:sense, OBJECT:betsy#2:entity, OBJECT:she#8:reference, OBJECT:want#10:sense, OBJECT:what#7:entity, OF:.#17:reference, OF:night#16:sense, PLACE:,#4:entity, PLACE:<null>#None:prime, PLACE:a#13:sense, PLACE:and#5:entity, PLACE:asked#6:entity, PLACE:in#3:sense, PLACE:of#15:entity, PLACE:such#12:sense, PLACE:time#14:sense, PREDICATE:could#9:entity, SUBJECT:.#17:reference, SUBJECT:betsy#2:entity, SUBJECT:of#15:reference, SUBJECT:she#0:reference}
+
+TEXT: and she tried to fancy what the flame of a candle is like after the candle is blown out , for she could not remember eve
+  GOLD  (3 clause):
+    {PLACE:candle#10:sense, PREDICATE:tried#2:sense, SUBJECT:she#1:reference}
+    {PLACE:candle#15:sense, PREDICATE:like#12:sense, SUBJECT:flame#7:sense}
+    {PLACE:candle#10:sense, PREDICATE:tried#2:sense, SUBJECT:she#1:reference}
+  EMIT  (1 clause, best of forest):
+    {DOWN:<null>#None:prime, INDIRECT_OBJECT:<null>#None:prime, INDIRECT_OBJECT:what#5:entity, OBJECT:<null>#None:prime, OBJECT:a#9:sense, OBJECT:after#13:sense, OBJECT:candle#10:sense, OBJECT:flame#7:sense, OBJECT:is#11:entity, OBJECT:is#16:entity, OBJECT:like#12:sense, OBJECT:of#8:entity, OBJECT:of#8:sense, OBJECT:the#6:entity, OBJECT:the#6:sense, OBJECT:to#3:entity, OBJECT:what#5:entity, OF:<null>#None:prime, OF:a#9:sense, OF:candle#10:sense, OF:is#11:entity, OFF:is#16:entity, PLACE:<null>#None:prime, PLACE:fancy#4:sense, PREDICATE:tried#2:sense, SUBJECT:and#0:entity, SUBJECT:she#1:entity, SUBJECT:she#1:reference, SUBJECT:to#3:entity, UP:<null>#None:prime, UP:candle#15:sense, UPON:blown#17:sense}
+
+TEXT: he did the same thing in the next pool and the next .
+  GOLD  (2 clause):
+    {OBJECT:thing#4:sense, PLACE:pool#8:sense, PREDICATE:did#1:entity, SUBJECT:he#0:reference}
+    {PLACE:pool#8:sense, PREDICATE:did#1:entity, SUBJECT:he#0:reference}
+  EMIT  (2 clause, best of forest):
+    {INDIRECT_OBJECT:<null>#None:prime, INDIRECT_OBJECT:same#3:sense, INDIRECT_OBJECT:the#2:sense, OBJECT:.#12:sense, OBJECT:<null>#None:sense, OBJECT:and#9:entity, OBJECT:in#5:sense, OBJECT:same#3:sense, OBJECT:the#10:sense, OBJECT:the#2:sense, OBJECT:thing#4:sense, PLACE:<null>#None:prime, PLACE:and#9:entity, PLACE:in#5:sense, PLACE:next#11:sense, PLACE:next#7:sense, PLACE:pool#8:sense, PLACE:same#3:sense, PLACE:the#10:entity, PLACE:the#2:entity, PLACE:the#6:entity, PREDICATE:thing#4:sense, SUBJECT:.#12:entity, SUBJECT:.#12:sense, SUBJECT:<null>#None:prime, SUBJECT:he#0:reference, SUBJECT:in#5:sense, SUBJECT:same#3:sense, SUBJECT:the#2:sense, SUBJECT:thing#4:sense}
+    {INDIRECT_OBJECT:<null>#None:sense, OBJECT:<null>#None:prime, OBJECT:<null>#None:reference, OBJECT:<null>#None:sense, PLACE:<null>#None:entity, PLACE:<null>#None:prime, PREDICATE:.#12:entity, SUBJECT:<null>#None:reference}
+
+========================================================================
+DECODER RECONSTRUCTION DIAGNOSIS
+========================================================================
+n=98
+reconstruction-from-gold token-F1 : all=0.394  content=0.386  function=0.404
+  (content>>function => decoder drops function words / morphology / order)
+
+--- EXAMPLES (gold text  vs  realized) ---
+  GOLD: isabella and caroline everywhere asserted their belief in the integrity of the orphans , but to prove it was i
+  PRED: and the it blows , and the it was so much that he was in a instance power instance the instance .
+
+  GOLD: the farther he went down the laughing brook , the more puzzled farmer brown 's boy grew .
+  PRED: the he went on to the next puzzled puzzled brown the little brown more .
+
+  GOLD: it was so big and fat that it made little joe 's mouth water , for you know fat trout are his favorite food .
+  PRED: the was was was terribly angry to favorite , fat was a little food , fat was a little food , fat was a little 
+
+  GOLD: she recollected her father 's having shown to her the prints of the coins at the end of each king 's reign , i
+  PRED: the recollected she father a little red , and the wind was impressions , orphans , and they had been too found
+
+  GOLD: " your poor goat is dead , " replied peggy .
+  PRED: the little is goat , and the little goat dead .
+
+  GOLD: and the lion in the water shook his mane and showed his teeth .
+  PRED: the little gingerbread lion lion the little gingerbread shook and lion the same , and the lion shook showed .
+
+  GOLD: you see , he is just as fond of fishing as is little joe otter or billy mink or buster bear .
+  PRED: the see see , and see see as joe otter otter billy billy mink .
+
+  GOLD: he cried , and steered for the light .
+  PRED: and he cried cried the he could n't be able , and the lion stalked cried the cloud little joe otter to light i
+
+  GOLD: perhaps that is what the fish thought he was , for pretty soon , two or three swam right in close to where he 
+  PRED: and was he was a two two guinea-pigs three three three three three three .
+
+  GOLD: the little old woman and the little old man ran after him as fast as they could , but he just laughed , and sh
+  PRED: the little gingerbread woman ran ran him him , him , and he was in the cow of the cow .
+
+  GOLD: 'of course , ' the dodo replied very gravely .
+  PRED: " course , as course , " said , " said , " said , " said , " said , " said , " said , " said , " said , " said
+
+  GOLD: and he is as much bigger than you as you are bigger than i !
+  PRED: " he is not know what .
+
+  GOLD: she let betsy in , and asked what she could want at such a time of night .
+  PRED: and let let let let let let let let let let let , and she time want she had betsy .
+
+  GOLD: and she tried to fancy what the flame of a candle is like after the candle is blown out , for she could not re
+  PRED: and she tried to the next like flame , and the lion was flame had been like like .
+
+  GOLD: he did the same thing in the next pool and the next .
+  PRED: " he he did n't seem a little pool .
+
+
+DONE.
