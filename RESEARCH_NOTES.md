@@ -845,3 +845,25 @@ trace parse->clause->gold and return recoverability + cost per content category.
 Then: enrich extraction -> regenerate richer gold -> retrain encoder+decoder.
 NEXT: (a) await pipeline-trace verdict -> design richer-extraction; (b) build the
 scaling-curve Colab notebook for the lead.
+
+### RICHER-STRUCTURE COST: it's EXTRACTION, not parser work (2026-09-06)
+
+Pipeline trace (local investigation): the quantum_parser emits a FULL typed
+dependency graph -- every content word present with a typed edge (adjectives=
+DESCRIPTION, adverbs=SPECIFICATION, determiners=DESCRIPTION[DET], adjunct PPs=
+MODIFICATION, complements=SUBJECT_COMPLEMENT, subord clauses=SUBORDINATION,
+coordination=COORDINATION). The ~77% surface loss is ENTIRELY at extraction:
+src/nsm_ct/clause.py extract_discourse whitelists only SUBJECT/OBJECT/
+INDIRECT_OBJECT/PREPOSITION/MODIFICATION(PP)/COORDINATION and ignores the rest
+(_extra_args L465-494, _relation_for L417-424, _clause_from_node L213-231).
+=> NO parser work needed. Richer structure = richer extraction + schema widening.
+COST: Phase1 modifiers (adj/adv/complement) CHEAP + additive (new flat role
+entries -> new relation labels; encoder action space/oracle/mask UNCHANGED, role
+vocab auto-extends, metric _gold_sites is label-agnostic). Phase2 determiners
+(cheap, route to structural feature -- no WordNet sense). Phase3 subordinate
+clauses (moderate -- recurse extract_discourse into SUBORDINATION subgraph +
+discourse link). Schema nesting (modifier->head pointer) deferred; flat roles
+first (fine for realization = copy tokens in order).
+PLAN: Phase1a = additive DESCRIPTION/SPECIFICATION/SUBJECT_COMPLEMENT extraction
+-> regenerate gold SAMPLE -> measure coverage lift (23% -> ?) as a GATE before
+retrain. Dispatched. Proceeding autonomously (extraction branch, per lead).
