@@ -709,3 +709,33 @@ node count <= winning-beam emit-action count) + re-score run-2 ckpt + round-trip
 Awaiting: does overgen collapse toward 1.0 and edge_precision/structure jump?
 LESSON: validate the eval harness before concluding the model is broken (CLAUDE.md
 "perfect-looking results get held-out tests" cuts both ways -- so do terrible ones).
+
+### RESOLVED: aliasing fix -> encoder WORKS. Decoder is the real bottleneck (2026-09-06)
+
+Re-score of the SAME run-2 checkpoint under FIXED beam_decode (deepcopy cur_clause
+per fork; mainline 2004059; branch encoder-rescore-logs:runs/rescore_fixed_output.txt):
+  ENCODER held-out test (n=98)   CORRUPTED -> FIXED:
+    edge_precision   0.101 -> 0.700
+    overgen_ratio    8.27  -> 1.082   (near-perfect edge count)
+    structure_recall 0.000 -> 0.212   (whole-tree EXACT)
+    edge_recall      0.648 -> 0.695
+    sense_recall     0.921 -> 0.787   (honest now; 0.92 was over-gen inflation)
+    slot_recall      0.963 -> 0.795
+  vs DUMP (prec 0.016, overgen 9.77) -> model now crushes the cheat baseline.
+  SPANISH grammar-swap (zero ES training, n=208): edge_precision 0.756, overgen
+    0.93, structure_recall 0.139, sense 1.000. Cross-lingual grounding transfer
+    REAL + strong under clean metric.
+VERDICT: the encoder was WORKING the whole time. The "over-generation / structure
+broken" verdict (run-1 AND run-2) was 100% the beam_decode aliasing artifact.
+Three fix hypotheses (terminal-weight loss, strict_ground mask, decoder capacity)
+all no-op'd because none was the bug. The lead's original instinct ("0% can't be
+right at 93/96") was correct -- it was a harness bug. ~0.70 precision/recall from
+a 343K-param sub-MB parser + zero-shot cross-lingual = the I/O encoder thesis
+holds.
+REMAINING: the DECODER. Round-trip token_f1 0.35, output garbled even fed the
+FIXED (clean) top tree; decoder-from-GOLD-tree 0.36 was never aliasing-affected,
+so this limitation is REAL. This is where more decoder training + the lead's
+memory-frame idea (store parent rawtext, retrieval-augmented realization with a
+copy-from-structure gate) actually apply -- now measurable on clean structure.
+NEXT: (1) encoder is essentially done for now; (2) focus shifts to decoder --
+retrain/redesign the realizer against clean structure; consider the memory frame.
