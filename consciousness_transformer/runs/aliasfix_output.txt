@@ -1,0 +1,111 @@
+loading checkpoint runs/encoder_colab.pt ...
+policy params: 342,979
+checkpoint config: {'n_train': 788, 'n_dev': 98, 'n_test': 98, 'epochs': 100, 'batch_size': 32, 'seed': 0, 'terminal_weight': 4.0, 'device': 'cpu'}
+checkpoint's OLD reported metrics (recall-only, no precision gate): {"english_test": {"sense_recall": 0.9037800687285223, "slot_recall": 0.9627329192546584, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.11085291437108624, "edge_recall": 0.6363335407978266, "overgen_ratio": 7.501854905298782, "n_records": 98}, "english_test_random": {"sense_recall": 0.01718213058419244, "slot_recall": 0.0, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.003817809174952032, "edge_recall": 0.008434252822007923, "overgen_ratio": 0.07148463781116843, "n_records": 98}, "english_test_dump": {"sense_recall": 1.0, "slot_recall": 0.8850931677018633, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.016308240896128777, "edge_recall": 0.19587783248497534, "overgen_ratio": 9.772929493975413, "n_records": 98}, "spanish": {"sense_recall": 1.0, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.09614340219848728, "edge_recall": 0.42658253205128205, "overgen_ratio": 4.013721955128205, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 308, "slot_hits": 0, "tree_hits": 0}, "spanish_random": {"sense_recall": 0.048701298701298704, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.003605769230769231, "edge_recall": 0.002944711538461539, "overgen_ratio": 0.008573717948717948, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 15, "slot_hits": 0, "tree_hits": 0}}
+reproduced split: train=788 dev=98 test=98 (seed=0)
+scoring split=test (n=98)
+
+==============================================================================
+RE-SCORE: model vs random vs dump (NEW precision + overgen metrics)
+==============================================================================
+
+[MODEL]
+    sense_recall=0.787  slot_recall=0.795  structure_recall=0.212
+      edge_precision=0.700  edge_recall=0.695  overgen_ratio=1.082  (n=98)
+
+[RANDOM]
+    sense_recall=0.027  slot_recall=0.000  structure_recall=0.000
+      edge_precision=0.012  edge_recall=0.009  overgen_ratio=0.044  (n=98)
+
+[DUMP]
+    sense_recall=1.000  slot_recall=0.885  structure_recall=0.000
+      edge_precision=0.016  edge_recall=0.196  overgen_ratio=9.773  (n=98)
+
+==============================================================================
+HEADLINE
+==============================================================================
+  MODEL edge_precision = 0.700    MODEL overgen_ratio = 1.082
+  DUMP  edge_precision = 0.016    DUMP  overgen_ratio = 9.773
+  MODEL sense_recall   = 0.787    DUMP  sense_recall  = 1.000
+  (the old headline claim was model sense/slot recall alone; if MODEL's
+   overgen_ratio is close to DUMP's and MODEL's edge_precision is low,
+   that recall was inflated by over-generation, not real structure.)
+
+==============================================================================
+PYTEST: tests/test_encoder_model.py (full suite, incl. new de-aliasing regression test)
+==============================================================================
+................ [100%]
+16 passed in 588.97s (0:09:48)
+
+==============================================================================
+CORRUPTED (pre-fix, aliased beam_decode) vs FIXED (this branch) -- English test split (n=98)
+==============================================================================
+  CORRUPTED (checkpoint's stored metrics, aliased decode):
+    model : sense_recall=0.904 slot_recall=0.963 structure_recall=0.000 edge_precision=0.101 edge_recall=0.636 overgen_ratio=7.502 (task audit reported 8.27 with different beam settings)
+    random: sense_recall=0.017 slot_recall=0.000 structure_recall=0.000 edge_precision=0.004 edge_recall=0.008 overgen_ratio=0.071
+    dump  : sense_recall=1.000 slot_recall=0.885 structure_recall=0.000 edge_precision=0.016 edge_recall=0.196 overgen_ratio=9.773
+
+  FIXED (this run, de-aliased beam_decode, same checkpoint/split/beam settings):
+    model : sense_recall=0.787 slot_recall=0.795 structure_recall=0.212 edge_precision=0.700 edge_recall=0.695 overgen_ratio=1.082
+    random: sense_recall=0.027 slot_recall=0.000 structure_recall=0.000 edge_precision=0.012 edge_recall=0.009 overgen_ratio=0.044
+    dump  : sense_recall=1.000 slot_recall=0.885 structure_recall=0.000 edge_precision=0.016 edge_recall=0.196 overgen_ratio=9.773
+
+==============================================================================
+SPANISH GRAMMAR-SWAP EVAL (scripts/eval_encoder_on.py on runs/spanish_gold_v2.jsonl, n=208)
+==============================================================================
+  CORRUPTED (checkpoint's stored metrics):
+    model : sense_recall=1.000 slot_recall=NaN structure_recall=0.000 edge_precision=0.096 edge_recall=0.427 overgen_ratio=4.014
+    random: sense_recall=0.049 slot_recall=NaN structure_recall=0.000 edge_precision=0.004 edge_recall=0.003 overgen_ratio=0.009
+
+  FIXED (this run):
+policy params: 342,979
+=== spanish_gold_v2.jsonl (n=208) ===
+  model : {
+  "sense_recall": 1.0,
+  "slot_recall": NaN,
+  "structure_recall": 0.13872832369942195,
+  "all_gold_recalled_rate": 0.20673076923076922,
+  "edge_precision": 0.755837912087913,
+  "edge_recall": 0.6949118589743588,
+  "overgen_ratio": 0.9305889423076935,
+  "n_records": 208,
+  "sense_total": 308,
+  "slot_total": 0,
+  "tree_total": 346,
+  "sense_hits": 308,
+  "slot_hits": 0,
+  "tree_hits": 48
+}
+  random: {
+  "sense_recall": 0.032467532467532464,
+  "slot_recall": NaN,
+  "structure_recall": 0.0,
+  "all_gold_recalled_rate": 0.0,
+  "edge_precision": 0.010416666666666666,
+  "edge_recall": 0.00641025641025641,
+  "overgen_ratio": 0.014423076923076924,
+  "n_records": 208,
+  "sense_total": 308,
+  "slot_total": 0,
+  "tree_total": 346,
+  "sense_hits": 10,
+  "slot_hits": 0,
+  "tree_hits": 0
+}
+
+==============================================================================
+DECODER ROUND-TRIP (fixed encoder.beam_decode -> decoder.realize, held-out English)
+==============================================================================
+reproduced encoder split: train=788 dev=98 test=98 (seed=0)
+reproduced decoder train split: n=787 (seed=0)
+round-trip test on 19 held-out English sentences (encoder test split, excluded from decoder training)
+  round-trip example: gold='" your poor goat is dead , " replied peggy .' pred='" the little is , bill , " is the little red , and softer the door .'
+  round-trip example: gold='he cried , and steered for the light .' pred='then he cried the light light by his fish and his and where his nose more .'
+  round-trip example: gold='the little old woman and the little old man ran after him as fast as they could , but he just laughed , and shouted , -- the little gingerbread boy ran on and on , until he came to a cow , by the roadside .' pred='and woman the woman of woman fast .'
+  round-trip example: gold='she let betsy in , and asked what she could want at such a time of night .' pred="cried let let of the let let will had n't actually on time ."
+  round-trip example: gold='he did the same thing in the next pool and the next .' pred="and did n't he was thing again pool pool and , he did n't in a soft pool and when his eyes ."
+
+==============================================================================
+ROUND-TRIP RESULT (fixed beam_decode)
+==============================================================================
+  exact_match = 0.000   token_f1 = 0.351   n=19  empty_forest=0
