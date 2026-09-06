@@ -1,0 +1,286 @@
+[    0.0s] USVS already present at /content/NAOMI/consciousness_transformer/data/usvs
+[   20.2s] USVS loaded: 117659 senses, d_axes=607
+[   20.2s] ========================================================================
+[   20.2s] PHASE 1: encoder training
+[   20.2s] ========================================================================
+[   20.2s] loading English gold from /content/NAOMI/consciousness_transformer/runs/encoder_gold_v2.jsonl
+[   21.4s] 985 English gold records available
+[   21.4s] encoder split: train=788 dev=98 test=98
+[   21.5s] pos_vocab=15 role_vocab=37
+[   21.5s] encoder policy params: 342,979 (~1.372 MB fp32)
+[   21.5s] building features + teacher-forced derivations for 788 encoder train records
+[   22.6s] 2531 teacher-forced derivations, batch_size=32, epochs=100
+[   22.6s] terminal_weight=4.0 (STOP/CLOSE_CLAUSE action-CE up-weight)
+[  146.7s] epoch 1/100 done: avg_loss=40.9869 (n=2531 derivations)
+[  263.0s] epoch 2/100 done: avg_loss=23.7087 (n=2531 derivations)
+[  379.1s] epoch 3/100 done: avg_loss=19.4812 (n=2531 derivations)
+[  495.0s] epoch 4/100 done: avg_loss=16.9192 (n=2531 derivations)
+[  612.5s] epoch 5/100 done: avg_loss=14.8598 (n=2531 derivations)
+[  727.5s] epoch 6/100 done: avg_loss=13.1181 (n=2531 derivations)
+[  842.6s] epoch 7/100 done: avg_loss=11.7399 (n=2531 derivations)
+[  958.4s] epoch 8/100 done: avg_loss=10.5963 (n=2531 derivations)
+[ 1074.2s] epoch 9/100 done: avg_loss=9.6407 (n=2531 derivations)
+[ 1189.4s] epoch 10/100 done: avg_loss=8.8276 (n=2531 derivations)
+[ 1303.9s] epoch 11/100 done: avg_loss=8.1931 (n=2531 derivations)
+[ 1419.1s] epoch 12/100 done: avg_loss=7.5447 (n=2531 derivations)
+[ 1534.9s] epoch 13/100 done: avg_loss=7.0548 (n=2531 derivations)
+[ 1650.0s] epoch 14/100 done: avg_loss=6.6071 (n=2531 derivations)
+[ 1764.3s] epoch 15/100 done: avg_loss=6.2336 (n=2531 derivations)
+[ 1878.1s] epoch 16/100 done: avg_loss=5.8767 (n=2531 derivations)
+[ 1992.6s] epoch 17/100 done: avg_loss=5.5856 (n=2531 derivations)
+[ 2107.4s] epoch 18/100 done: avg_loss=5.3253 (n=2531 derivations)
+[ 2223.0s] epoch 19/100 done: avg_loss=5.0857 (n=2531 derivations)
+[ 2337.6s] epoch 20/100 done: avg_loss=4.8607 (n=2531 derivations)
+[ 2451.8s] epoch 21/100 done: avg_loss=4.7023 (n=2531 derivations)
+[ 2566.0s] epoch 22/100 done: avg_loss=4.4931 (n=2531 derivations)
+[ 2681.0s] epoch 23/100 done: avg_loss=4.3292 (n=2531 derivations)
+[ 2795.9s] epoch 24/100 done: avg_loss=4.1996 (n=2531 derivations)
+[ 2911.2s] epoch 25/100 done: avg_loss=4.0647 (n=2531 derivations)
+[ 3025.9s] epoch 26/100 done: avg_loss=3.9628 (n=2531 derivations)
+[ 3140.8s] epoch 27/100 done: avg_loss=3.8942 (n=2531 derivations)
+[ 3256.6s] epoch 28/100 done: avg_loss=3.7530 (n=2531 derivations)
+[ 3371.5s] epoch 29/100 done: avg_loss=3.6651 (n=2531 derivations)
+[ 3486.0s] epoch 30/100 done: avg_loss=3.6000 (n=2531 derivations)
+[ 3602.6s] epoch 31/100 done: avg_loss=3.5253 (n=2531 derivations)
+[ 3718.3s] epoch 32/100 done: avg_loss=3.4702 (n=2531 derivations)
+[ 3833.1s] epoch 33/100 done: avg_loss=3.4015 (n=2531 derivations)
+[ 3948.1s] epoch 34/100 done: avg_loss=3.3488 (n=2531 derivations)
+[ 4064.1s] epoch 35/100 done: avg_loss=3.2850 (n=2531 derivations)
+[ 4179.5s] epoch 36/100 done: avg_loss=3.2660 (n=2531 derivations)
+[ 4294.4s] epoch 37/100 done: avg_loss=3.2357 (n=2531 derivations)
+[ 4410.8s] epoch 38/100 done: avg_loss=3.1628 (n=2531 derivations)
+[ 4526.2s] epoch 39/100 done: avg_loss=3.1153 (n=2531 derivations)
+[ 4641.4s] epoch 40/100 done: avg_loss=3.1040 (n=2531 derivations)
+[ 4757.0s] epoch 41/100 done: avg_loss=3.0587 (n=2531 derivations)
+[ 4872.4s] epoch 42/100 done: avg_loss=3.0217 (n=2531 derivations)
+[ 4987.7s] epoch 43/100 done: avg_loss=3.0281 (n=2531 derivations)
+[ 5103.3s] epoch 44/100 done: avg_loss=2.9986 (n=2531 derivations)
+[ 5218.6s] epoch 45/100 done: avg_loss=2.9185 (n=2531 derivations)
+[ 5334.5s] epoch 46/100 done: avg_loss=2.9193 (n=2531 derivations)
+[ 5450.5s] epoch 47/100 done: avg_loss=2.8767 (n=2531 derivations)
+[ 5567.0s] epoch 48/100 done: avg_loss=2.8818 (n=2531 derivations)
+[ 5682.0s] epoch 49/100 done: avg_loss=2.8521 (n=2531 derivations)
+[ 5796.6s] epoch 50/100 done: avg_loss=2.8076 (n=2531 derivations)
+[ 5911.1s] epoch 51/100 done: avg_loss=2.8002 (n=2531 derivations)
+[ 6025.6s] epoch 52/100 done: avg_loss=2.7642 (n=2531 derivations)
+[ 6140.0s] epoch 53/100 done: avg_loss=2.7609 (n=2531 derivations)
+[ 6254.9s] epoch 54/100 done: avg_loss=2.7407 (n=2531 derivations)
+[ 6369.8s] epoch 55/100 done: avg_loss=2.7187 (n=2531 derivations)
+[ 6485.2s] epoch 56/100 done: avg_loss=2.7077 (n=2531 derivations)
+[ 6600.4s] epoch 57/100 done: avg_loss=2.6966 (n=2531 derivations)
+[ 6715.2s] epoch 58/100 done: avg_loss=2.6687 (n=2531 derivations)
+[ 6830.1s] epoch 59/100 done: avg_loss=2.6493 (n=2531 derivations)
+[ 6946.4s] epoch 60/100 done: avg_loss=2.6238 (n=2531 derivations)
+[ 7062.0s] epoch 61/100 done: avg_loss=2.6331 (n=2531 derivations)
+[ 7177.6s] epoch 62/100 done: avg_loss=2.6169 (n=2531 derivations)
+[ 7293.6s] epoch 63/100 done: avg_loss=2.5956 (n=2531 derivations)
+[ 7409.2s] epoch 64/100 done: avg_loss=2.5974 (n=2531 derivations)
+[ 7524.1s] epoch 65/100 done: avg_loss=2.5804 (n=2531 derivations)
+[ 7639.2s] epoch 66/100 done: avg_loss=2.5593 (n=2531 derivations)
+[ 7754.1s] epoch 67/100 done: avg_loss=2.5512 (n=2531 derivations)
+[ 7869.0s] epoch 68/100 done: avg_loss=2.5572 (n=2531 derivations)
+[ 7984.9s] epoch 69/100 done: avg_loss=2.5397 (n=2531 derivations)
+[ 8100.3s] epoch 70/100 done: avg_loss=2.5187 (n=2531 derivations)
+[ 8215.6s] epoch 71/100 done: avg_loss=2.5081 (n=2531 derivations)
+[ 8330.1s] epoch 72/100 done: avg_loss=2.4881 (n=2531 derivations)
+[ 8444.4s] epoch 73/100 done: avg_loss=2.4869 (n=2531 derivations)
+[ 8559.3s] epoch 74/100 done: avg_loss=2.4891 (n=2531 derivations)
+[ 8673.7s] epoch 75/100 done: avg_loss=2.4603 (n=2531 derivations)
+[ 8789.2s] epoch 76/100 done: avg_loss=2.4591 (n=2531 derivations)
+[ 8905.0s] epoch 77/100 done: avg_loss=2.4209 (n=2531 derivations)
+[ 9020.3s] epoch 78/100 done: avg_loss=2.4375 (n=2531 derivations)
+[ 9135.7s] epoch 79/100 done: avg_loss=2.4132 (n=2531 derivations)
+[ 9250.8s] epoch 80/100 done: avg_loss=2.4123 (n=2531 derivations)
+[ 9365.8s] epoch 81/100 done: avg_loss=2.4251 (n=2531 derivations)
+[ 9480.6s] epoch 82/100 done: avg_loss=2.4020 (n=2531 derivations)
+[ 9596.5s] epoch 83/100 done: avg_loss=2.3848 (n=2531 derivations)
+[ 9711.5s] epoch 84/100 done: avg_loss=2.3957 (n=2531 derivations)
+[ 9826.2s] epoch 85/100 done: avg_loss=2.3638 (n=2531 derivations)
+[ 9940.7s] epoch 86/100 done: avg_loss=2.3603 (n=2531 derivations)
+[10056.6s] epoch 87/100 done: avg_loss=2.3418 (n=2531 derivations)
+[10171.7s] epoch 88/100 done: avg_loss=2.3512 (n=2531 derivations)
+[10287.4s] epoch 89/100 done: avg_loss=2.3423 (n=2531 derivations)
+[10402.8s] epoch 90/100 done: avg_loss=2.3258 (n=2531 derivations)
+[10518.4s] epoch 91/100 done: avg_loss=2.3173 (n=2531 derivations)
+[10633.7s] epoch 92/100 done: avg_loss=2.3165 (n=2531 derivations)
+[10749.4s] epoch 93/100 done: avg_loss=2.3079 (n=2531 derivations)
+[10864.9s] epoch 94/100 done: avg_loss=2.3065 (n=2531 derivations)
+[10981.4s] epoch 95/100 done: avg_loss=2.2936 (n=2531 derivations)
+[11097.2s] epoch 96/100 done: avg_loss=2.2800 (n=2531 derivations)
+[11212.6s] epoch 97/100 done: avg_loss=2.2763 (n=2531 derivations)
+[11328.4s] epoch 98/100 done: avg_loss=2.2705 (n=2531 derivations)
+[11443.8s] epoch 99/100 done: avg_loss=2.2655 (n=2531 derivations)
+[11559.1s] epoch 100/100 done: avg_loss=2.2517 (n=2531 derivations)
+[11559.1s] encoder training wall-clock: 11530.6s (stopped_early=False)
+[11559.1s] evaluating English candidate-set recall (model policy) on held-out test split ...
+[11614.7s] English test (model) : sense=0.904 slot=0.963 structure=0.000 edge_precision=0.111 edge_recall=0.636 overgen=7.502
+[11616.5s] English test (random): sense=0.017 slot=0.000 structure=0.000 edge_precision=0.004 edge_recall=0.008 overgen=0.071
+[11616.5s] evaluating English 'dump everything' cheat baseline (DIAGNOSIS 2026-09-06 precision gate) ...
+[11616.6s] English test (dump)  : sense=1.000 slot=0.885 structure=0.000 edge_precision=0.016 edge_recall=0.196 overgen=9.773
+[11616.6s]   (dump wins recall trivially by over-generating; the model should beat it on edge_precision/overgen_ratio, not just recall, or its recall is a mirage)
+[11616.6s] loading Spanish gold from /content/NAOMI/consciousness_transformer/runs/spanish_gold_v2.jsonl for the grammar-swap eval
+[11616.6s] 208 Spanish gold records
+[11685.6s] Spanish (model) : sense=1.000 slot=nan structure=0.000 edge_precision=0.096 edge_recall=0.427 overgen=4.014
+[11689.1s] Spanish (random): sense=0.049 slot=nan structure=0.000 edge_precision=0.004 edge_recall=0.003 overgen=0.009
+[11689.1s] saved encoder checkpoint -> /content/drive/MyDrive/naomi_run2/encoder_colab.pt
+[11689.1s] ========================================================================
+[11689.1s] PHASE 2: decoder training
+[11689.1s] ========================================================================
+[11689.4s] decoder split: train=787 dev=197 (of 984 records drawn from 985 available)
+[11689.4s] relation_vocab=37 function_vocab=2047
+[11689.4s] decoder params: 371,072 (~1.484 MB fp32)
+[11689.4s] building reconstruction features for 787 decoder train records
+[11689.7s] 787 reconstruction items, batch_size=16, epochs=100
+[11716.3s] decoder epoch 1/100 done: avg_loss=6.1151 (n=787 records)
+[11742.6s] decoder epoch 2/100 done: avg_loss=4.8552 (n=787 records)
+[11768.5s] decoder epoch 3/100 done: avg_loss=4.6796 (n=787 records)
+[11794.3s] decoder epoch 4/100 done: avg_loss=4.5473 (n=787 records)
+[11820.7s] decoder epoch 5/100 done: avg_loss=4.4418 (n=787 records)
+[11847.1s] decoder epoch 6/100 done: avg_loss=4.3390 (n=787 records)
+[11873.6s] decoder epoch 7/100 done: avg_loss=4.2552 (n=787 records)
+[11900.0s] decoder epoch 8/100 done: avg_loss=4.1669 (n=787 records)
+[11925.7s] decoder epoch 9/100 done: avg_loss=4.0791 (n=787 records)
+[11951.5s] decoder epoch 10/100 done: avg_loss=3.9894 (n=787 records)
+[11977.9s] decoder epoch 11/100 done: avg_loss=3.9091 (n=787 records)
+[12004.2s] decoder epoch 12/100 done: avg_loss=3.8223 (n=787 records)
+[12030.6s] decoder epoch 13/100 done: avg_loss=3.7408 (n=787 records)
+[12057.0s] decoder epoch 14/100 done: avg_loss=3.6610 (n=787 records)
+[12082.8s] decoder epoch 15/100 done: avg_loss=3.5837 (n=787 records)
+[12108.5s] decoder epoch 16/100 done: avg_loss=3.4985 (n=787 records)
+[12135.0s] decoder epoch 17/100 done: avg_loss=3.4169 (n=787 records)
+[12161.3s] decoder epoch 18/100 done: avg_loss=3.3374 (n=787 records)
+[12188.2s] decoder epoch 19/100 done: avg_loss=3.2562 (n=787 records)
+[12215.2s] decoder epoch 20/100 done: avg_loss=3.1784 (n=787 records)
+[12242.0s] decoder epoch 21/100 done: avg_loss=3.1266 (n=787 records)
+[12267.6s] decoder epoch 22/100 done: avg_loss=3.0375 (n=787 records)
+[12294.1s] decoder epoch 23/100 done: avg_loss=2.9600 (n=787 records)
+[12320.7s] decoder epoch 24/100 done: avg_loss=2.8902 (n=787 records)
+[12347.1s] decoder epoch 25/100 done: avg_loss=2.8266 (n=787 records)
+[12373.6s] decoder epoch 26/100 done: avg_loss=2.7568 (n=787 records)
+[12400.1s] decoder epoch 27/100 done: avg_loss=2.6960 (n=787 records)
+[12426.1s] decoder epoch 28/100 done: avg_loss=2.6282 (n=787 records)
+[12451.9s] decoder epoch 29/100 done: avg_loss=2.5702 (n=787 records)
+[12478.4s] decoder epoch 30/100 done: avg_loss=2.5111 (n=787 records)
+[12505.2s] decoder epoch 31/100 done: avg_loss=2.4551 (n=787 records)
+[12531.9s] decoder epoch 32/100 done: avg_loss=2.3967 (n=787 records)
+[12558.5s] decoder epoch 33/100 done: avg_loss=2.3417 (n=787 records)
+[12585.4s] decoder epoch 34/100 done: avg_loss=2.2887 (n=787 records)
+[12611.5s] decoder epoch 35/100 done: avg_loss=2.2441 (n=787 records)
+[12637.4s] decoder epoch 36/100 done: avg_loss=2.1990 (n=787 records)
+[12664.3s] decoder epoch 37/100 done: avg_loss=2.1581 (n=787 records)
+[12691.1s] decoder epoch 38/100 done: avg_loss=2.1336 (n=787 records)
+[12717.8s] decoder epoch 39/100 done: avg_loss=2.0854 (n=787 records)
+[12744.6s] decoder epoch 40/100 done: avg_loss=2.0319 (n=787 records)
+[12771.7s] decoder epoch 41/100 done: avg_loss=1.9748 (n=787 records)
+[12797.8s] decoder epoch 42/100 done: avg_loss=1.9424 (n=787 records)
+[12824.1s] decoder epoch 43/100 done: avg_loss=1.8969 (n=787 records)
+[12850.7s] decoder epoch 44/100 done: avg_loss=1.8633 (n=787 records)
+[12877.3s] decoder epoch 45/100 done: avg_loss=1.8562 (n=787 records)
+[12904.0s] decoder epoch 46/100 done: avg_loss=1.7982 (n=787 records)
+[12930.7s] decoder epoch 47/100 done: avg_loss=1.7508 (n=787 records)
+[12957.4s] decoder epoch 48/100 done: avg_loss=1.7240 (n=787 records)
+[12983.4s] decoder epoch 49/100 done: avg_loss=1.6997 (n=787 records)
+[13009.5s] decoder epoch 50/100 done: avg_loss=1.6687 (n=787 records)
+[13036.0s] decoder epoch 51/100 done: avg_loss=1.6343 (n=787 records)
+[13062.6s] decoder epoch 52/100 done: avg_loss=1.6022 (n=787 records)
+[13089.2s] decoder epoch 53/100 done: avg_loss=1.5781 (n=787 records)
+[13115.8s] decoder epoch 54/100 done: avg_loss=1.6629 (n=787 records)
+[13142.2s] decoder epoch 55/100 done: avg_loss=1.6518 (n=787 records)
+[13168.0s] decoder epoch 56/100 done: avg_loss=1.5605 (n=787 records)
+[13194.6s] decoder epoch 57/100 done: avg_loss=1.4997 (n=787 records)
+[13221.3s] decoder epoch 58/100 done: avg_loss=1.4532 (n=787 records)
+[13247.9s] decoder epoch 59/100 done: avg_loss=1.4236 (n=787 records)
+[13274.7s] decoder epoch 60/100 done: avg_loss=1.3757 (n=787 records)
+[13301.8s] decoder epoch 61/100 done: avg_loss=1.3411 (n=787 records)
+[13328.6s] decoder epoch 62/100 done: avg_loss=1.3195 (n=787 records)
+[13354.8s] decoder epoch 63/100 done: avg_loss=1.2995 (n=787 records)
+[13381.3s] decoder epoch 64/100 done: avg_loss=1.3000 (n=787 records)
+[13408.2s] decoder epoch 65/100 done: avg_loss=1.2857 (n=787 records)
+[13435.0s] decoder epoch 66/100 done: avg_loss=1.3090 (n=787 records)
+[13462.0s] decoder epoch 67/100 done: avg_loss=1.2899 (n=787 records)
+[13489.0s] decoder epoch 68/100 done: avg_loss=1.2536 (n=787 records)
+[13516.0s] decoder epoch 69/100 done: avg_loss=1.2311 (n=787 records)
+[13542.2s] decoder epoch 70/100 done: avg_loss=1.2165 (n=787 records)
+[13568.4s] decoder epoch 71/100 done: avg_loss=1.2093 (n=787 records)
+[13595.1s] decoder epoch 72/100 done: avg_loss=1.1645 (n=787 records)
+[13621.9s] decoder epoch 73/100 done: avg_loss=1.1357 (n=787 records)
+[13648.7s] decoder epoch 74/100 done: avg_loss=1.1244 (n=787 records)
+[13675.4s] decoder epoch 75/100 done: avg_loss=1.1346 (n=787 records)
+[13702.0s] decoder epoch 76/100 done: avg_loss=1.1234 (n=787 records)
+[13728.0s] decoder epoch 77/100 done: avg_loss=1.1171 (n=787 records)
+[13754.0s] decoder epoch 78/100 done: avg_loss=1.0727 (n=787 records)
+[13780.6s] decoder epoch 79/100 done: avg_loss=1.0469 (n=787 records)
+[13807.2s] decoder epoch 80/100 done: avg_loss=1.0374 (n=787 records)
+[13833.7s] decoder epoch 81/100 done: avg_loss=1.0356 (n=787 records)
+[13860.3s] decoder epoch 82/100 done: avg_loss=1.0551 (n=787 records)
+[13886.7s] decoder epoch 83/100 done: avg_loss=1.0208 (n=787 records)
+[13912.8s] decoder epoch 84/100 done: avg_loss=1.0013 (n=787 records)
+[13939.1s] decoder epoch 85/100 done: avg_loss=0.9622 (n=787 records)
+[13965.9s] decoder epoch 86/100 done: avg_loss=0.9664 (n=787 records)
+[13992.5s] decoder epoch 87/100 done: avg_loss=0.9315 (n=787 records)
+[14018.9s] decoder epoch 88/100 done: avg_loss=0.8937 (n=787 records)
+[14045.7s] decoder epoch 89/100 done: avg_loss=0.8792 (n=787 records)
+[14072.0s] decoder epoch 90/100 done: avg_loss=0.8797 (n=787 records)
+[14098.1s] decoder epoch 91/100 done: avg_loss=0.9070 (n=787 records)
+[14124.6s] decoder epoch 92/100 done: avg_loss=0.9212 (n=787 records)
+[14151.2s] decoder epoch 93/100 done: avg_loss=0.8856 (n=787 records)
+[14177.8s] decoder epoch 94/100 done: avg_loss=0.8692 (n=787 records)
+[14204.5s] decoder epoch 95/100 done: avg_loss=0.8668 (n=787 records)
+[14231.1s] decoder epoch 96/100 done: avg_loss=0.8570 (n=787 records)
+[14257.1s] decoder epoch 97/100 done: avg_loss=0.8384 (n=787 records)
+[14283.2s] decoder epoch 98/100 done: avg_loss=0.8467 (n=787 records)
+[14310.0s] decoder epoch 99/100 done: avg_loss=0.8035 (n=787 records)
+[14336.8s] decoder epoch 100/100 done: avg_loss=0.7965 (n=787 records)
+[14336.8s] decoder training wall-clock: 2647.1s (stopped_early=False)
+[14336.8s] evaluating reconstruction (decoder alone, gold committed tree) on held-out dev split ...
+[14338.3s] decoder dev reconstruction: exact_match=0.000 token_f1=0.359 (n=197)
+[14338.3s] saved decoder checkpoint -> /content/drive/MyDrive/naomi_run2/decoder_colab.pt
+[14338.3s] ========================================================================
+[14338.3s] PHASE 3: round-trip test (encoder.beam_decode -> decoder.realize)
+[14338.3s] ========================================================================
+[14338.3s] round-trip test on 19 held-out English sentences (encoder test split, not used for decoder training)
+[14348.9s]   round-trip example: gold='" your poor goat is dead , " replied peggy .' pred='the little your of brown poor of the your !'
+[14348.9s]   round-trip example: gold='he cried , and steered for the light .' pred="then he had n't been a big light !"
+[14348.9s]   round-trip example: gold='the little old woman and the little old man ran after him as fast as they could , but he just laughed , and shouted , -- the little gingerbread boy ran on and on , until he came to a cow , by the roadside .' pred='the goat of the ran the little bright of the laughed the old the sky the little the boy of him little they were the woman boy of as little they were little after boy .'
+[14348.9s]   round-trip example: gold='she let betsy in , and asked what she could want at such a time of night .' pred='the she , there she betsy betsy ; but of of night night betsy , if night of happy night had night betsy to have of what night could to want to in the she of asked want , betsy'
+[14348.9s]   round-trip example: gold='he did the same thing in the next pool and the next .' pred='the did did not like for did , the neighbours of in the same of same the the pool the poor the the the in the same in the same pool the next in in same same .'
+[14348.9s] round-trip: exact_match=0.000 token_f1=0.383 (n=19, empty_forest=0)
+[14348.9s] ========================================================================
+[14348.9s] PHASE 4: no-confab spot check (severed structure -> decoder must abstain)
+[14348.9s] ========================================================================
+[14354.6s] no-confab: 10/10 severed structures abstained (all_abstained=True)
+
+========================================================================
+FINAL RESULTS
+========================================================================
+device: cpu (encoder is CPU-only -- see resolve_device()'s note; decoder trained on the same device)
+
+--- ENCODER ---
+records: 788 train / 98 dev / 98 test (of 985 EN gold available)  |  epochs: 100
+policy params: 342,979 (~1.372 MB fp32)  |  training wall-clock: 11530.6s
+English (held-out test split):
+  model : sense=0.904 slot=0.963 structure=0.000 edge_precision=0.111 edge_recall=0.636 overgen=7.502
+  random: sense=0.017 slot=0.000 structure=0.000 edge_precision=0.004 edge_recall=0.008 overgen=0.071
+  dump  : sense=1.000 slot=0.885 structure=0.000 edge_precision=0.016 edge_recall=0.196 overgen=9.773  (cheat baseline -- see DIAGNOSIS 2026-09-06)
+  NOTE: dump wins recall trivially by over-generating every token under every type/role.
+        The model claim to watch is edge_precision/overgen_ratio vs dump, not recall alone.
+Spanish grammar-swap (208 records, EN-trained weights, zero ES training):
+  model : sense=1.000 slot=nan structure=0.000 edge_precision=0.096 edge_recall=0.427 overgen=4.014
+  random: sense=0.049 slot=nan structure=0.000 edge_precision=0.004 edge_recall=0.003 overgen=0.009
+
+--- DECODER ---
+records: 787 train / 197 dev (of 984 drawn, 985 EN gold available)  |  epochs: 100
+params: 371,072 (~1.484 MB fp32)  |  training wall-clock: 2647.1s
+reconstruction (gold committed tree, held-out dev): exact_match=0.000 token_f1=0.359 (n=197)
+
+--- ROUND-TRIP (encoder+decoder autoencoder, no gold tree in the loop) ---
+n=19 held-out English sentences  |  empty_forest=0
+  exact_match=0.000  token_f1=0.383
+
+--- NO-CONFAB SPOT CHECK ---
+  10/10 severed structures abstained (all_abstained=True)
+
+encoder checkpoint: /content/drive/MyDrive/naomi_run2/encoder_colab.pt
+decoder checkpoint: /content/drive/MyDrive/naomi_run2/decoder_colab.pt
+encoder wall-clock: 11530.6s  |  decoder wall-clock: 2647.1s  |  TOTAL wall-clock: 14354.6s
+========================================================================
