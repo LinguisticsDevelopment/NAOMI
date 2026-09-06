@@ -770,3 +770,32 @@ closed class (~100 fn words), decoder realizes only copyable + fn words, stops
 confab, measures the HONEST ceiling of what current structure can reconstruct.
 RECOMMENDATION: C first (cheap, no new data, fixes confab hole, its ceiling number
 decides B vs A). Awaiting lead's pick before building.
+
+### DECODER-V2 STEP 1: the decoder isn't the bottleneck -- the STRUCTURE is (2026-09-06)
+
+Node->span viability report (branch decoder-memory-step1:runs/decoder_memory_step1.txt,
+test split n=98, 2400 tokens):
+  - Grounded-structure coverage 23.1% (555/2400). Gap 76.9%: 61.4% function,
+    38.6% CONTENT -> ~30% of ALL surface tokens are content the structure dropped.
+  - Derivation (ii) connectives are CONTENT, near-unique per instance (e.g.
+    (OBJECT,SUBJECT) key: 17 occ / 17 distinct strings). NOT a learnable closed
+    set. Derivation (i) node-blocks: mean len 4.3, 29% bleed rate.
+  => the memory-frame-with-connectives as specced does NOT cleanly work, because
+     the "glue" is dropped content, not function words.
+  - QUALITY problem too (not just sparsity): e.g. "isabella and caroline ...
+    asserted their belief ..." grounds only subordinate-clause fragments
+    (integrity/it/was/instance/power) and MISSES the matrix S/V/O. Teacher gold
+    grounds the wrong/minor constituents sometimes.
+SYNTHESIS: the decoder is NOT the bottleneck. The grounded structure (teacher
+gold trees) is a sparse (23%), sometimes-mis-grounded pred-arg skeleton. Both the
+round-trip-exact goal AND the memory decoder are capped by structure
+coverage+quality. No decoder can realize meaning the structure never captured.
+LEAD FORK (architecture): (A) richer/correct structure (more nodes, right
+constituents -> better teacher/gold; the expensive lever) vs (reduced-realization)
+accept structure as a lossy meaning-core, realize only captured nodes with
+function-word glue, DROP round-trip-exact as the goal (cheap, on-thesis, but
+capped by quality). Reduced-realization makes connectives clean BY CONSTRUCTION
+(drop gap-content, keep gap-function) but does NOT fix the wrong-constituent
+quality issue. Either way a GOLD-QUALITY AUDIT is needed -> dispatched.
+Connects to dev/ENCODER_DATA_STRATEGY.md: the lever is tree RICHNESS/CORRECTNESS,
+not sentence count. HELD for lead decision; encoder-data research done (6564173).
