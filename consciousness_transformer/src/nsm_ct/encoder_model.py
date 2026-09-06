@@ -35,6 +35,7 @@ teacher forcing is exact either way.
 
 from __future__ import annotations
 
+import copy
 import math
 import random
 from dataclasses import dataclass, field
@@ -734,9 +735,17 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
                     top = top[:min(2, len(legal))]
 
                 for action in top:
+                    # `clauses` holds already-CLOSE_CLAUSE'd dicts, never mutated again
+                    # after being appended (see _apply_action), so a shallow copy of the
+                    # outer list is safe to share across sibling beams. `cur_clause` is
+                    # the SAME still-open dict/roles-list until CLOSE_CLAUSE -- sharing it
+                    # here let every sibling beam's GROUND/EMIT_* append into one shared
+                    # roles list, polluting the winning tree with other beams' nodes. Each
+                    # forked child must own an independent copy of the still-open clause.
                     nb = BeamState(h=h, i=b.i, open_clause=b.open_clause, open_kind_id=b.open_kind_id,
                                     prev_action_id=b.prev_action_id, logprob=b.logprob,
-                                    clauses=list(b.clauses), cur_clause=b.cur_clause,
+                                    clauses=list(b.clauses),
+                                    cur_clause=(copy.deepcopy(b.cur_clause) if b.cur_clause is not None else None),
                                     steps_taken=b.steps_taken + 1)
                     if policy == "model":
                         nb.logprob = b.logprob + float(logp[ACTION_INDEX[action]])

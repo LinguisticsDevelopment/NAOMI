@@ -268,6 +268,57 @@ def test_beam_decode_terminates_via_stop_not_artificial_cap():
     )
 
 
+def test_beam_fork_does_not_alias_open_clause_across_siblings(gold_records):
+    """Regression test for the beam-fork aliasing bug (encoder-audit-logs
+    branch, runs/audit_output.txt): forking a beam used to copy
+    `cur_clause` (the still-open clause dict + its `roles` list) BY
+    REFERENCE (`cur_clause=b.cur_clause`), so every sibling beam's
+    GROUND/EMIT_SYNTH_SLOT/EMIT_UNRESOLVED_SLOT actions appended into the
+    SAME shared `roles` list (a 7-action winning beam producing a 32-node
+    tree; largest shared roles list observed: 316).
+
+    A single beam's own buffer pointer (`state.i`) only ever advances, so
+    one trajectory can never emit two nodes -- predicate or role -- at the
+    same real `token_index` within one clause. A within-clause repeated
+    token_index is therefore only possible if that clause's `roles` list
+    also absorbed nodes appended by a DIFFERENT beam's actions, i.e. it was
+    aliased -- exactly the audit's "(C) TOKEN-INDEX DUPLICATION" symptom
+    (95.6% of clauses collided; max repeat count 16). This calls the real,
+    unmodified `em.beam_decode` (no reimplementation of its fork logic) and
+    checks that invariant directly on its output.
+
+    Before the fix this check (same model/seed/gold/settings) finds
+    within-clause collisions in 11/24 emitted clauses; after the fix, 0."""
+    from nsm_ct.ground.usvs import load_usvs
+
+    usvs_dir = Path(__file__).resolve().parent.parent / "data" / "usvs"
+    if not usvs_dir.exists():
+        pytest.skip("needs data/usvs (run scripts/build_usvs.py)")
+    usvs = load_usvs(str(usvs_dir))
+
+    pos_vocab = em.build_pos_vocab(gold_records[:10])
+    role_vocab = em.build_role_vocab(gold_records[:10])
+    torch.manual_seed(0)
+    model = em.EncoderModel(pos_vocab, role_vocab, d_axes=len(usvs.axes), hash_buckets=1024,
+                             d_model=32, controller_hidden=32)
+    model.eval()
+
+    total_clauses = 0
+    for record in gold_records[:10]:
+        feats = em.build_features(record, usvs, pos_vocab, 1024)
+        forest = em.beam_decode(model, feats, beam_width=8, k=8, max_steps=60, max_clauses=6)
+        for tree in forest:
+            for clause in tree["clauses"]:
+                total_clauses += 1
+                idxs = [node["token_index"] for node in ([clause["predicate"]] + clause["roles"])
+                        if node["token_index"] is not None]
+                assert len(idxs) == len(set(idxs)), (
+                    f"clause has a repeated token_index in {idxs} -- a sibling beam's node "
+                    f"leaked into this clause's roles list via a shared (aliased) reference"
+                )
+    assert total_clauses > 0, "decode must produce at least one clause to check"
+
+
 def test_model_stays_sub_megabyte_at_smoke_dims():
     from nsm_ct.ground.usvs import load_usvs
 
