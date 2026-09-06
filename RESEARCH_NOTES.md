@@ -799,3 +799,31 @@ capped by quality). Reduced-realization makes connectives clean BY CONSTRUCTION
 quality issue. Either way a GOLD-QUALITY AUDIT is needed -> dispatched.
 Connects to dev/ENCODER_DATA_STRATEGY.md: the lever is tree RICHNESS/CORRECTNESS,
 not sentence count. HELD for lead decision; encoder-data research done (6564173).
+
+### GOLD-QUALITY AUDIT (director, hand + objective over all 985) (2026-09-06)
+
+Hand-judged 24 rendered gold trees, THEN quantified objectively over all 985 top
+trees (correcting an eyeball overstatement -- the objective numbers are milder):
+  ROLE nodes (n=4323): 37% function-POS, BUT 33pts are PRONOUNS (legit args);
+    only ~4% genuinely-suspect (DET 29, ADP 79, CCONJ 51, AUX 19). Role grounding
+    is mostly fine. (NOUN 1733, PRON 1422, VERB 415, ADJ 244, PROPN 233...)
+  PREDICATE nodes (n=1931): VERB 63.1% (correct), AUX 29.9% (much = legit copula
+    "he IS old"; some = wrong modal/aux e.g. "will look"->PRED:will), CCONJ 4.6%
+    (wrong). So predicate quality decent-with-a-real-minority-wrong.
+CORRECTION: my 24-example read suggested ~20% "badly mis-grounded"; the objective
+numbers say per-node grounding is DECENT (~4% suspect roles, ~5% clearly-wrong
+predicates). I overstated. Lesson (again): quantify before concluding.
+REFINED CONCLUSION: the bottleneck is SPARSITY, not per-node wrongness. Trees
+capture ~23% of tokens (drop modifiers/adjuncts/conjuncts, sometimes a whole
+matrix/subordinate clause). What IS grounded is mostly right. Therefore:
+  - REDUCED-REALIZATION (decoder realizes the mostly-correct captured core with
+    function-word glue) is MORE viable than the step-1 connective analysis implied
+    -- that analysis forced connectives to carry dropped content only because it
+    targeted FULL-surface reconstruction. Target the captured core instead ->
+    connectives shrink to function glue.
+  - Encoder "more data" still not the lever: more thin sentences don't fix
+    sparsity; RICHER trees (more nodes/sentence) do. = fork A, OR reduced-real.
+STATUS: autonomous work assigned by lead COMPLETE (encoder-data strategy +
+decoder viability + gold audit). Genuinely blocked on a lead architecture call:
+FORK for decoder/structure = (A) richer trees vs (reduced-realization + accept
+thin trees). Both downstream steps need this decision. Holding.
