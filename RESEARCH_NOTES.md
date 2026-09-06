@@ -627,3 +627,33 @@ nothing now.
 NEXT: lead runs colab/Train_Encoder_And_Decoder.ipynb (run-2). Then evaluate
 precision/overgen. If terminal-weight+epochs insufficient, escalate to mask
 tightening or GPU-path (encoder is CPU-only; 300 ep may be slow on Colab).
+
+### RUN-2 RESULT + ROOT CAUSE CONFIRMED: it's the MASK, not loss/capacity (2026-09-06)
+
+Colab run-2 (100/100 ep, terminal-weight 4.0, dec d_model 96) FINAL RESULTS:
+  encoder model: edge_precision 0.111 (run-1 0.100) overgen 7.50 (run-1 8.12)
+                 -> FLAT. terminal-weight loss fix did essentially nothing.
+  decoder recon-from-gold token_f1 0.359 (run-1 0.360) -> FLAT despite 2x
+                 d_model + more epochs. Decoder ceiling is NOT capacity.
+  no-confab 10/10 abstain; Spanish sense 1.000 (transfer holds).
+Both "train more/bigger" levers FALSIFIED. ROOT CAUSE found at line level
+(src/nsm_ct/encoder_model.py):
+  - _apply_action (~L826): GROUND/EMIT_UNRESOLVED_SLOT only advance the buffer
+    pointer when state.i < T; at i>=T they produce token_index=None nodes and
+    do NOT advance.
+  - legal_action_types keeps GROUND legal at i>=T (docstring: for rare
+    duplicate-token gold). => once the buffer is consumed, the policy emits
+    UNBOUNDED GROUND -> <null>#None phantom nodes (the spam that dominated every
+    emitted tree; gold ~6 edges, model best-tree ~45, ~35 are null phantoms).
+  - This is why terminal-weight failed: CLOSE can't win when the junk action is
+    legal & free every step.
+FIX (gold-safe): make GROUND illegal at i>=T. The oracle (linearize_tree) NEVER
+GROUNDs content at i>=T (every content node consumes a fresh advancing token),
+so this can't mask a gold action -- guarded by the full-corpus oracle-legality
+test. Structurally caps tree size ~ token count -> overgen toward 1.0.
+IN FLIGHT: no-retrain confirmation routine (trig_018pGHLKSHdcea1eJqH8eJcJ, branch
+encoder-mask-fix) re-scores the run-2 ckpt under strict_ground mask + proves
+oracle-legality + breaks down null-node spam by gtype (GROUND vs EMIT_SYNTH
+prime vs EMIT_UNRESOLVED reference/elision -- the latter two aren't killed by
+strict_ground and may need a bound too). If overgen drops toward 1.0, bake the
+mask fix in + retrain (training mask must match decode mask).
