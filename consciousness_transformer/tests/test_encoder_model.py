@@ -368,3 +368,64 @@ def test_dump_policy_high_recall_low_precision_high_overgen(gold_records):
     assert dump_metrics["sense_recall"] > random_metrics["sense_recall"]
     assert dump_metrics["overgen_ratio"] > 1.5
     assert dump_metrics["edge_precision"] < 0.5
+
+
+def test_commit_margin_zero_matches_default_branching(gold_records):
+    """`commit_margin=0.0` (the default) must reproduce the exact original
+    always-branch-top-3 behavior -- confidence gating is strictly opt-in."""
+    from nsm_ct.ground.usvs import load_usvs
+
+    usvs_dir = Path(__file__).resolve().parent.parent / "data" / "usvs"
+    if not usvs_dir.exists():
+        pytest.skip("needs data/usvs (run scripts/build_usvs.py)")
+    usvs = load_usvs(str(usvs_dir))
+    record = gold_records[0]
+    pos_vocab = em.build_pos_vocab(gold_records[:20])
+    role_vocab = em.build_role_vocab(gold_records[:20])
+    hash_buckets = 1024
+    torch.manual_seed(0)
+    model = em.EncoderModel(pos_vocab, role_vocab, d_axes=len(usvs.axes), hash_buckets=hash_buckets,
+                             d_model=32, controller_hidden=32)
+    model.eval()
+    feats = em.build_features(record, usvs, pos_vocab, hash_buckets)
+
+    torch.manual_seed(1)
+    default_forest = em.beam_decode(model, feats, beam_width=8, k=8)
+    torch.manual_seed(1)
+    explicit_off_forest = em.beam_decode(model, feats, beam_width=8, k=8, commit_margin=0.0)
+    assert [t["clauses"] for t in default_forest] == [t["clauses"] for t in explicit_off_forest]
+
+
+def test_select_branch_actions_commits_when_confident():
+    """A large gap between the best and 2nd-best legal action's log-prob,
+    with a tight margin, must commit to just the top action."""
+    legal_ranked = ["GROUND", "SHIFT", "CLOSE_CLAUSE"]
+    logp = torch.full((len(em.ACTION_TYPES),), -100.0)
+    logp[em.ACTION_INDEX["GROUND"]] = -0.01
+    logp[em.ACTION_INDEX["SHIFT"]] = -5.0
+    logp[em.ACTION_INDEX["CLOSE_CLAUSE"]] = -6.0
+    assert em._select_branch_actions(legal_ranked, logp, commit_margin=0.5) == ["GROUND"]
+
+
+def test_select_branch_actions_branches_when_unsure():
+    """A near-tied best/2nd-best pair, within the margin, must branch into
+    both -- but never beyond the top 2, regardless of how wide the margin
+    or how many legal actions there are."""
+    legal_ranked = ["GROUND", "SHIFT", "CLOSE_CLAUSE"]
+    logp = torch.full((len(em.ACTION_TYPES),), -100.0)
+    logp[em.ACTION_INDEX["GROUND"]] = -1.0
+    logp[em.ACTION_INDEX["SHIFT"]] = -1.05
+    logp[em.ACTION_INDEX["CLOSE_CLAUSE"]] = -50.0
+    assert em._select_branch_actions(legal_ranked, logp, commit_margin=0.5) == ["GROUND", "SHIFT"]
+    assert em._select_branch_actions(legal_ranked, logp, commit_margin=1e9) == ["GROUND", "SHIFT"]
+
+
+def test_select_branch_actions_zero_margin_is_original_top3():
+    """`commit_margin<=0.0` (the default/off) must reproduce the exact
+    original always-branch-top-3 behavior, unconditionally."""
+    legal_ranked = ["GROUND", "SHIFT", "CLOSE_CLAUSE", "STOP"]
+    logp = torch.full((len(em.ACTION_TYPES),), -100.0)
+    for i, a in enumerate(legal_ranked):
+        logp[em.ACTION_INDEX[a]] = -float(i)
+    assert em._select_branch_actions(legal_ranked, logp, commit_margin=0.0) == \
+        ["GROUND", "SHIFT", "CLOSE_CLAUSE"]

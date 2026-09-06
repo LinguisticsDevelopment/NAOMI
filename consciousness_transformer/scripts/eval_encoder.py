@@ -37,6 +37,9 @@ def main():
     ap.add_argument("--beam-width", type=int, default=6)
     ap.add_argument("--k", type=int, default=6)
     ap.add_argument("--split", choices=("train", "dev", "test", "all"), default="test")
+    ap.add_argument("--commit-margin", type=float, default=0.0,
+                     help="confidence-gated decode (policy=model only); 0.0 = off (original "
+                          "always-branch-top-3 decode)")
     args = ap.parse_args()
 
     ckpt = torch.load(args.checkpoint, weights_only=False)
@@ -62,7 +65,8 @@ def main():
     targets = splits if args.split == "all" else {args.split: splits[args.split]}
     for name, recs in targets.items():
         model_metrics = em.evaluate(model, recs, usvs, pos_vocab, ckpt["hash_buckets"],
-                                     beam_width=args.beam_width, k=args.k, policy="model")
+                                     beam_width=args.beam_width, k=args.k, policy="model",
+                                     commit_margin=args.commit_margin)
         random_metrics = em.evaluate(model, recs, usvs, pos_vocab, ckpt["hash_buckets"],
                                       beam_width=args.beam_width, k=args.k, policy="random", rng=rng)
         print(f"=== {name} (n={len(recs)}) ===")

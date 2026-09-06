@@ -651,9 +651,30 @@ def _dump_forest(feats: SentenceFeatures) -> List[dict]:
     return [{"clauses": [{"predicate": predicate, "roles": roles}]}]
 
 
+def _select_branch_actions(legal_ranked: List[str], logp: torch.Tensor,
+                            commit_margin: float) -> List[str]:
+    """Which legal action-types to branch a beam into this step, given
+    `legal_ranked` (legal actions, best-first) and their log-probs `logp`.
+
+    `commit_margin<=0.0` (off): the original always-branch-top-3 behavior.
+    `commit_margin>0.0`: commit to the single best action UNLESS the
+    runner-up is within `commit_margin` log-prob of it, in which case both
+    are kept -- "commit when confident, give a set only when unsure."."""
+    if commit_margin <= 0.0:
+        return legal_ranked[:min(3, len(legal_ranked))]
+    top = legal_ranked[:1]
+    if len(legal_ranked) >= 2:
+        best_lp = float(logp[ACTION_INDEX[legal_ranked[0]]])
+        second_lp = float(logp[ACTION_INDEX[legal_ranked[1]]])
+        if (best_lp - second_lp) <= commit_margin:
+            top = legal_ranked[:2]
+    return top
+
+
 def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 8,
                  k: int = 8, max_steps: int = 400, max_clauses: int = 20,
-                 policy: str = "model", rng: Optional[random.Random] = None) -> List[dict]:
+                 policy: str = "model", rng: Optional[random.Random] = None,
+                 commit_margin: float = 0.0) -> List[dict]:
     """Returns up to `k` structurally-distinct trees (a candidate forest).
 
     `policy="model"` uses the learned action-type distribution (masked);
@@ -667,6 +688,14 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
     `legal_action_types`); `max_clauses`/`max_steps` are only a safety-net
     backstop against a beam that never learns to stop, not the intended
     stopping mechanism.
+
+    `commit_margin` (policy="model" only, default 0.0 = off, original
+    behavior): confidence-gated branching. At each step the policy commits
+    to the single top-scoring legal action UNLESS the runner-up's log-prob
+    is within `commit_margin` of the best, in which case both are branched
+    (as candidates), giving a genuinely ambiguous step a set while a
+    confident one is emitted alone -- "commit when confident, give a set
+    only when unsure." 0.0 keeps the original always-branch-top-3 behavior.
     """
     if policy == "dump":
         return _dump_forest(feats)
@@ -696,7 +725,8 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
                     logits = model.action_type_head(h).squeeze(0) + _mask_vector(legal)
                     logp = F.log_softmax(logits, dim=-1)
                     order = torch.argsort(logp, descending=True).tolist()
-                    top = [ACTION_TYPES[idx] for idx in order if ACTION_TYPES[idx] in legal][:min(3, len(legal))]
+                    legal_ranked = [ACTION_TYPES[idx] for idx in order if ACTION_TYPES[idx] in legal]
+                    top = _select_branch_actions(legal_ranked, logp, commit_margin)
                 else:
                     h = None
                     top = list(legal)
@@ -966,16 +996,20 @@ def aggregate_recall(scores: List[RecordRecall]) -> Dict[str, float]:
 
 def evaluate(model: EncoderModel, records: Sequence[dict], usvs, pos_vocab: Dict[str, int],
              hash_buckets: int, beam_width: int = 8, k: int = 8,
-             policy: str = "model", rng: Optional[random.Random] = None) -> Dict[str, float]:
+             policy: str = "model", rng: Optional[random.Random] = None,
+             commit_margin: float = 0.0) -> Dict[str, float]:
     """`policy`: "model" (learned), "random" (uniform-legal baseline), or
     "dump" (the over-generation cheat baseline, `_dump_forest`) -- passed
-    straight through to `beam_decode`. Returns `aggregate_recall`'s dict:
-    the original site-recall fields (sense_recall/slot_recall/
-    structure_recall/all_gold_recalled_rate) PLUS best-tree edge_precision/
-    edge_recall/overgen_ratio (see `score_record`)."""
+    straight through to `beam_decode`, along with `commit_margin`
+    (confidence-gated branching, policy="model" only; see `beam_decode`).
+    Returns `aggregate_recall`'s dict: the original site-recall fields
+    (sense_recall/slot_recall/structure_recall/all_gold_recalled_rate)
+    PLUS best-tree edge_precision/edge_recall/overgen_ratio (see
+    `score_record`)."""
     scores = []
     for record in records:
         feats = build_features(record, usvs, pos_vocab, hash_buckets)
-        forest = beam_decode(model, feats, beam_width=beam_width, k=k, policy=policy, rng=rng)
+        forest = beam_decode(model, feats, beam_width=beam_width, k=k, policy=policy, rng=rng,
+                              commit_margin=commit_margin)
         scores.append(score_record(record, forest))
     return aggregate_recall(scores)
