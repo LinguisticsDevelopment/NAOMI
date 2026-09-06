@@ -1,0 +1,78 @@
+loaded 985 records from /home/user/NAOMI/consciousness_transformer/runs/encoder_gold_v2.jsonl
+reproduced colab_train_all.py decoder split: train=787 dev=197
+checkpoint: d_model=96 hash_buckets=2048 relation_vocab=37 function_vocab=2047 config={'n_train': 787, 'n_dev': 197, 'epochs': 100, 'batch_size': 16, 'seed': 0} n_params=371072
+checkpoint's own dev_reconstruction: {'n': 197, 'exact_match': 0.0, 'token_f1': 0.35895335957836927}
+
+==============================================================================
+PART A -- UNREACHABLE-TARGET RATE
+==============================================================================
+[TRAIN] total_tokens=19492 copy=4762 function_slots=14730 unreachable=0 unreachable_rate_overall=0.0000 unreachable_rate_of_function_slots=0.0000
+[DEV] total_tokens=4930 copy=1183 function_slots=3747 unreachable=0 unreachable_rate_overall=0.0000 unreachable_rate_of_function_slots=0.0000
+[ALL] total_tokens=24473 copy=5953 function_slots=18520 unreachable=2 unreachable_rate_overall=0.0001 unreachable_rate_of_function_slots=0.0001
+    top unreachable tokens: [('terrified', 1), ('tumbling', 1)]
+
+function_vocab size = 2047 (built via dt.build_function_vocab over the colab_train_all.py `dec_pool`, i.e. train+dev COMBINED before the split -- see note below)
+function_vocab sample (30 random, excluding <unk>): ['bumped', 'natured', 'sun', 'somewhere', 'shillings', 'answered', 'dreamed', 'books', 'letter', 'sheets', 'intently', 'knack', 'pope', 'grease', 'slow', 'crown', 'bed', 'leading', '=', 'to', 'strangely', 'had', 'hungry', 'other', 'shelter', 'shone', "'a", 'reflecting', 'inhabited', 'eagerly']
+
+==============================================================================
+PART B -- TEACHER-FORCED NEXT-TOKEN ACCURACY (held-out dev)
+==============================================================================
+records used: 150
+DEV OVERALL accuracy: 0.1602 (support=3901)
+  DEV COPY    : accuracy=0.1882  support=898
+  DEV FUNCTION: accuracy=0.1090  support=2853
+  DEV EOS     : accuracy=0.9667  support=150
+
+[generalization-gap check] same metric on 150 TRAIN records (the model's own training distribution):
+TRAIN OVERALL accuracy: 0.7874 (support=3786)
+  TRAIN COPY    : accuracy=0.9219  support=896
+  TRAIN FUNCTION: accuracy=0.7318  support=2740
+  TRAIN EOS     : accuracy=1.0000  support=150
+
+=> TRAIN-DEV accuracy gap (overall): 0.6272
+
+==============================================================================
+PART C -- FREE-RUNNING realize() vs GOLD: exact-match vs token-F1 gap
+==============================================================================
+records used: 30
+exact_match       = 0.0000
+token_f1 (raw)    = 0.3451
+token_f1 (lemma)  = 0.3516
+
+8 gold-vs-realized pairs:
+
+  [0] exact=0 f1_raw=0.231 f1_lemma=0.231
+      GOLD: there is nothing quite like common sense to smooth out troubles .
+      PRED: the little gingerbread boy had n't be to do out of the window .
+
+  [1] exact=0 f1_raw=0.386 f1_lemma=0.386
+      GOLD: he shuffled along over to the laughing brook , and straight to a little pool of which he knew , and as he drew near he took the greatest care not to make the teeniest , weeniest bit of noise .
+      PRED: then he shuffled , the little gingerbread boy , and he drew his eyes pool .
+
+  [2] exact=0 f1_raw=0.215 f1_lemma=0.215
+      GOLD: does not he remember edmund 's counting the things to him upon the great table in his hall , and we all standing by !
+      PRED: and he remember edmund before him ; for gilbert ; and when he saw , until to know , and roared know what to make him , and gave no it to have been him , " o a bog
+
+  [3] exact=0 f1_raw=0.400 f1_lemma=0.457
+      GOLD: her brother was still more vexed than she was , that she could not find a place near him .
+      PRED: brother was than than him : did n't in the wind as she find .
+
+  [4] exact=0 f1_raw=0.370 f1_lemma=0.370
+      GOLD: " i 'll go to him no more , " said edmund , sturdily .
+      PRED: " i shall go back and there , and there was no
+
+  [5] exact=0 f1_raw=0.364 f1_lemma=0.364
+      GOLD: and as buster listened it suddenly came to him just what he wanted for breakfast .
+      PRED: when buster , it buster much came it came he came to see about it it .
+
+  [6] exact=0 f1_raw=0.303 f1_lemma=0.303
+      GOLD: so she swallowed one of the cakes , and was delighted to find that she began shrinking directly .
+      PRED: and she swallowed , one one one 's voice , and a bit !
+
+  [7] exact=0 f1_raw=0.190 f1_lemma=0.190
+      GOLD: he pulled harder ; the elephant pulled harder .
+      PRED: then he had n't be as he could hardly contain himself .
+
+==============================================================================
+DONE
+==============================================================================
