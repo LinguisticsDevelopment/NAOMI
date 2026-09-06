@@ -1,0 +1,1443 @@
+loading checkpoint runs/encoder_colab.pt ...
+policy params: 342,979
+checkpoint config: {'n_train': 788, 'n_dev': 98, 'n_test': 98, 'epochs': 100, 'batch_size': 32, 'seed': 0, 'terminal_weight': 4.0, 'device': 'cpu'}
+checkpoint's reported metrics: {'english_test': {'sense_recall': 0.9037800687285223, 'slot_recall': 0.9627329192546584, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.11085291437108624, 'edge_recall': 0.6363335407978266, 'overgen_ratio': 7.501854905298782, 'n_records': 98}, 'english_test_random': {'sense_recall': 0.01718213058419244, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.003817809174952032, 'edge_recall': 0.008434252822007923, 'overgen_ratio': 0.07148463781116843, 'n_records': 98}, 'english_test_dump': {'sense_recall': 1.0, 'slot_recall': 0.8850931677018633, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.016308240896128777, 'edge_recall': 0.19587783248497534, 'overgen_ratio': 9.772929493975413, 'n_records': 98}, 'spanish': {'sense_recall': 1.0, 'slot_recall': nan, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.09614340219848728, 'edge_recall': 0.42658253205128205, 'overgen_ratio': 4.013721955128205, 'n_records': 208, 'sense_total': 308, 'slot_total': 0, 'tree_total': 346, 'sense_hits': 308, 'slot_hits': 0, 'tree_hits': 0}, 'spanish_random': {'sense_recall': 0.048701298701298704, 'slot_recall': nan, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.003605769230769231, 'edge_recall': 0.002944711538461539, 'overgen_ratio': 0.008573717948717948, 'n_records': 208, 'sense_total': 308, 'slot_total': 0, 'tree_total': 346, 'sense_hits': 15, 'slot_hits': 0, 'tree_hits': 0}}
+reproduced split: train=788 dev=98 test=98 (seed=0)
+decoding split=test (n=98) beam_width=8 k=8
+
+==============================================================================
+(A) ACTION-SEQUENCE HISTOGRAM (winning = top-logprob beam)
+==============================================================================
+n records = 98
+winning-beam action-sequence length: n=98 min=7.0 median=24.0 mean=28.64 max=80.0
+
+per action-type: total / per-tree mean
+  SHIFT                  total=  1938  mean/tree= 19.776
+  OPEN_CLAUSE            total=   144  mean/tree=  1.469
+  GROUND                 total=   371  mean/tree=  3.786
+  ATTACH                 total=     0  mean/tree=  0.000
+  EMIT_SYNTH_SLOT        total=     0  mean/tree=  0.000
+  EMIT_UNRESOLVED_SLOT   total=   112  mean/tree=  1.143
+  CLOSE_CLAUSE           total=   144  mean/tree=  1.469
+  STOP                   total=    98  mean/tree=  1.000
+
+TERMINATION REASON (winning beam):
+  STOP              98  (100.0%)
+
+  => real-STOP fraction = 1.000   safety-net-cutoff fraction = 0.000
+
+==============================================================================
+(B) TREE SHAPE: best-emitted-tree-per-gold-tree vs GOLD
+==============================================================================
+gold trees scored (non-empty edge set): 241
+  of which the best-overlap emitted tree had ZERO overlap: 0 (0.0%)
+
+EMITTED (best tree per gold tree):
+  clauses/tree:          n=241 min=1.0 median=1.0 mean=1.73 max=5.0
+  nodes/clause:          n=418 min=5.0 median=49.0 mean=67.23 max=317.0
+  real-token nodes/tree: n=241 min=21.0 median=79.0 mean=97.57 max=337.0
+  null nodes/tree:       n=241 min=0.0 median=13.0 mean=19.03 max=83.0
+
+GOLD (for comparison):
+  clauses/tree:  n=241 min=1.0 median=2.0 mean=1.71 max=4.0
+  nodes/clause:  n=412 min=2.0 median=3.0 mean=3.36 max=7.0
+
+==============================================================================
+(C0) OBJECT-IDENTITY ALIASING CHECK (candidate mechanism)
+==============================================================================
+Python object identity of clause dicts / roles-lists across each record's
+full k=8 forest -- beam branching does `clauses=list(b.clauses)` (a new
+outer list) and `cur_clause=b.cur_clause` (the SAME inner dict/list, not
+copied). If many sibling beams share one still-open clause before it is
+closed, every one of THEIR GROUND/EMIT actions appends into the SAME
+`roles` list object -- not just the eventual winning trajectory's own.
+
+total clause-slots across all forests (sum over records of sum over forest trees of len(clauses)): 2196
+total DISTINCT clause dict objects (by id()):                          816
+total DISTINCT roles-list objects (by id()):                           816
+=> mean clause-slots-per-distinct-object (sharing factor): n=98 min=1.0 median=2.7 mean=2.65 max=3.6
+largest single roles-list length observed (one shared clause's role count, any tree, any record): 316
+
+==============================================================================
+(C) TOKEN-INDEX DUPLICATION (within the best-emitted trees from B)
+==============================================================================
+distinct best-emitted trees examined: 136
+per-token repeat-count histogram (across all best-emitted trees' real-token nodes):
+  repeat=1: 320 (token_index, tree) pairs
+  repeat=2: 539 (token_index, tree) pairs
+  repeat=3: 424 (token_index, tree) pairs
+  repeat=4: 374 (token_index, tree) pairs
+  repeat=5: 360 (token_index, tree) pairs
+  repeat=6: 304 (token_index, tree) pairs
+  repeat=7: 257 (token_index, tree) pairs
+  repeat=8: 179 (token_index, tree) pairs
+  repeat=9: 96 (token_index, tree) pairs
+  repeat=10: 53 (token_index, tree) pairs
+  repeat=11: 46 (token_index, tree) pairs
+  repeat=12: 38 (token_index, tree) pairs
+  repeat=13: 16 (token_index, tree) pairs
+  repeat=14: 5 (token_index, tree) pairs
+  repeat=15: 3 (token_index, tree) pairs
+  repeat=16: 2 (token_index, tree) pairs
+max repeat count observed: 16
+
+clauses with a same-token_index-under-multiple-roles collision: 239/250 (95.60%)
+example within-clause collisions (tokens truncated):
+  tokens=['isabella', 'and', 'caroline', 'everywhere', 'asserted', 'their', 'belief', 'in', 'the', 'integrity', 'of', 'the']...  roles_at_dup_index=[('PREDICATE', 19), ('SUBJECT', 0), ('SUBJECT', 1), ('SUBJECT', 1), ('SUBJECT', 1), ('SUBJECT', 0), ('SUBJECT', 2), ('PLACE', 2), ('SUBJECT', 2), ('PLACE', 2), ('PLACE', 2), ('SUBJECT', 1), ('SUBJECT', 1), ('SUBJECT', 3), ('SUBJECT', 3), ('SUBJECT', 3), ('SUBJECT', 3), ('PLACE', 3), ('OBJECT', 3), ('PLACE', 3), ('PLACE', 3), ('SUBJECT', 2), ('PLACE', 5), ('OBJECT', 5), ('OBJECT', 5), ('OBJECT', 5), ('OBJECT', 5), ('OBJECT', 5), ('SUBJECT', 6), ('SUBJECT', 6), ('SUBJECT', 6), ('SUBJECT', 6), ('SUBJECT', 6), ('OBJECT', 6), ('SUBJECT', 6), ('UP', 6), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('INDIRECT_OBJECT', 7), ('INDIRECT_OBJECT', 7), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('SUBJECT', 9), ('PLACE', 9), ('PLACE', 9), ('PLACE', 9), ('FOR', 9), ('PLACE', 9), ('PLACE', 9), ('PLACE', 9), ('PLACE', 9), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('OF', 11), ('OF', 11), ('OF', 11), ('OF', 11), ('OF', 11), ('OF', 11), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 13), ('OF', 13), ('OF', 13), ('OFF', 13), ('OF', 13), ('OF', 13), ('OF', 13), ('OFF', 14), ('OFF', 14), ('OFF', 14), ('PLACE', 14), ('OFF', 14), ('OFF', 14), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('OBJECT', 17), ('OBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('INDIRECT_OBJECT', 19), ('INDIRECT_OBJECT', 19), ('OBJECT', 19), ('SUBJECT', 19), ('SUBJECT', 19), ('INDIRECT_OBJECT', 19), ('PLACE', 20), ('PLACE', 20), ('PLACE', 20), ('PLACE', 20), ('PLACE', 20), ('PLACE', 20), ('PLACE', 21), ('PLACE', 21), ('OBJECT', 21), ('PLACE', 21), ('PLACE', 21), ('PLACE', 21), ('OBJECT', 22), ('OBJECT', 22), ('SUBJECT', 22), ('OBJECT', 22), ('PLACE', 22)]
+  tokens=['isabella', 'and', 'caroline', 'everywhere', 'asserted', 'their', 'belief', 'in', 'the', 'integrity', 'of', 'the']...  roles_at_dup_index=[('PLACE', 23), ('PLACE', 23), ('SUBJECT', 24), ('SUBJECT', 24), ('OF', 25), ('OF', 25), ('SUBJECT', 26), ('SUBJECT', 26)]
+  tokens=['isabella', 'and', 'caroline', 'everywhere', 'asserted', 'their', 'belief', 'in', 'the', 'integrity', 'of', 'the']...  roles_at_dup_index=[('PREDICATE', 19), ('SUBJECT', 0), ('SUBJECT', 1), ('SUBJECT', 1), ('SUBJECT', 1), ('SUBJECT', 0), ('SUBJECT', 2), ('PLACE', 2), ('SUBJECT', 2), ('PLACE', 2), ('PLACE', 2), ('SUBJECT', 1), ('SUBJECT', 1), ('SUBJECT', 3), ('SUBJECT', 3), ('SUBJECT', 3), ('SUBJECT', 3), ('PLACE', 3), ('OBJECT', 3), ('PLACE', 3), ('PLACE', 3), ('SUBJECT', 2), ('PLACE', 5), ('OBJECT', 5), ('OBJECT', 5), ('OBJECT', 5), ('OBJECT', 5), ('OBJECT', 5), ('SUBJECT', 6), ('SUBJECT', 6), ('SUBJECT', 6), ('SUBJECT', 6), ('SUBJECT', 6), ('OBJECT', 6), ('SUBJECT', 6), ('UP', 6), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('SUBJECT', 7), ('INDIRECT_OBJECT', 7), ('INDIRECT_OBJECT', 7), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('PLACE', 8), ('SUBJECT', 9), ('PLACE', 9), ('PLACE', 9), ('PLACE', 9), ('FOR', 9), ('PLACE', 9), ('PLACE', 9), ('PLACE', 9), ('PLACE', 9), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('OF', 11), ('OF', 11), ('OF', 11), ('OF', 11), ('OF', 11), ('OF', 11), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 12), ('OF', 13), ('OF', 13), ('OF', 13), ('OFF', 13), ('OF', 13), ('OF', 13), ('OF', 13), ('OFF', 14), ('OFF', 14), ('OFF', 14), ('PLACE', 14), ('OFF', 14), ('OFF', 14), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 15), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('PLACE', 16), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('OBJECT', 17), ('OBJECT', 17), ('SUBJECT', 17), ('SUBJECT', 17), ('INDIRECT_OBJECT', 19), ('INDIRECT_OBJECT', 19), ('OBJECT', 19), ('SUBJECT', 19), ('SUBJECT', 19), ('INDIRECT_OBJECT', 19), ('PLACE', 20), ('PLACE', 20), ('PLACE', 20), ('PLACE', 20), ('PLACE', 20), ('PLACE', 20), ('PLACE', 21), ('PLACE', 21), ('OBJECT', 21), ('PLACE', 21), ('PLACE', 21), ('PLACE', 21), ('OBJECT', 22), ('OBJECT', 22), ('SUBJECT', 22), ('OBJECT', 22), ('PLACE', 22)]
+  tokens=['the', 'farther', 'he', 'went', 'down', 'the', 'laughing', 'brook', ',', 'the', 'more', 'puzzled']...  roles_at_dup_index=[('PREDICATE', 16), ('SUBJECT', 0), ('DOWN', 1), ('PLACE', 1), ('SUBJECT', 0), ('SUBJECT', 2), ('SUBJECT', 2), ('SUBJECT', 2), ('SUBJECT', 2), ('SUBJECT', 2), ('PLACE', 1), ('SUBJECT', 1), ('OBJECT', 2), ('SUBJECT', 2), ('SUBJECT', 2), ('SUBJECT', 2), ('SUBJECT', 2), ('OBJECT', 4), ('SUBJECT', 4), ('SUBJECT', 4), ('OBJECT', 4), ('OBJECT', 4), ('WITH', 5), ('SUBJECT', 5), ('INDIRECT_OBJECT', 5), ('WITH', 5), ('WITH', 5), ('PLACE', 6), ('SUBJECT', 6), ('DOWN', 7), ('SUBJECT', 7), ('OBJECT', 7), ('DOWN', 7), ('SUBJECT', 7), ('OBJECT', 8), ('OBJECT', 8), ('SUBJECT', 8), ('DOWN', 8), ('OBJECT', 8), ('OBJECT', 8), ('DOWN', 9), ('SUBJECT', 9), ('DOWN', 9), ('UP', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('SUBJECT', 10), ('DOWN', 10), ('UPON', 11), ('SUBJECT', 11), ('UPON', 11), ('OBJECT', 12), ('INDIRECT_OBJECT', 12), ('SUBJECT', 12), ('SUBJECT', 12), ('OBJECT', 13), ('OBJECT', 13), ('SUBJECT', 13), ('OBJECT', 13), ('SUBJECT', 13), ('PLACE', 14), ('OBJECT', 14), ('PLACE', 14), ('SUBJECT', 14), ('SUBJECT', 14), ('PLACE', 15), ('PLACE', 15), ('OBJECT', 15), ('SUBJECT', 15), ('OBJECT', 16), ('OBJECT', 16), ('OBJECT', 17), ('OBJECT', 17), ('PLACE', 17)]
+  tokens=['it', 'was', 'so', 'big', 'and', 'fat', 'that', 'it', 'made', 'little', 'joe', "'s"]...  roles_at_dup_index=[('SUBJECT', 0), ('SUBJECT', 0), ('PLACE', 3), ('PLACE', 3), ('PLACE', 3), ('PLACE', 3), ('PLACE', 3), ('PLACE', 3), ('PLACE', 3), ('PLACE', 3), ('PLACE', 3), ('OBJECT', 4), ('PLACE', 4), ('PLACE', 4), ('PLACE', 4), ('OBJECT', 4), ('PLACE', 5), ('PLACE', 5), ('PLACE', 5), ('PLACE', 5), ('PLACE', 5), ('INDIRECT_OBJECT', 6), ('OBJECT', 6), ('INDIRECT_OBJECT', 6), ('OBJECT', 7), ('OBJECT', 7), ('INDIRECT_OBJECT', 7), ('INDIRECT_OBJECT', 7)]
+
+==============================================================================
+(D) 8 FULL EXAMPLE TREES (spread of short/medium/long)
+==============================================================================
+
+--- EXAMPLE 1/8  (test-split idx=52, T=4 tokens) ---
+SOURCE: 'she answered herself .'
+TOKENS: ['she', 'answered', 'herself', '.']
+
+GOLD (2 tree(s)):
+  gold_tree[0]:
+    clause[0] kind=proposition predicate_word='answered'
+      SUBJECT: 'she' #idx=0 gtype=reference
+      PREDICATE: 'answered' #idx=1 gtype=entity
+      OBJECT: 'herself' #idx=2 gtype=entity
+  gold_tree[1]:
+    clause[0] kind=proposition predicate_word='answered'
+      SUBJECT: 'she' #idx=0 gtype=reference
+      PREDICATE: 'answered' #idx=1 gtype=entity
+
+WINNING EMITTED TREE (top-logprob, term_reason=STOP):
+    clause[0] kind=proposition
+      PREDICATE:answered#idx=1:entity
+      SUBJECT:she#idx=0:reference
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:she#idx=0:reference
+      SUBJECT:she#idx=0:reference
+      OBJECT:herself#idx=2:entity
+      SUBJECT:herself#idx=2:entity
+      SUBJECT:herself#idx=2:entity
+      PLACE:herself#idx=2:entity
+      PLACE:herself#idx=2:entity
+      SUBJECT:herself#idx=2:entity
+      SUBJECT:herself#idx=2:entity
+      OBJECT:.#idx=3:entity
+      OBJECT:.#idx=3:entity
+      SUBJECT:.#idx=3:entity
+      PLACE:.#idx=3:entity
+      PLACE:.#idx=3:entity
+      OBJECT:herself#idx=2:entity
+      OBJECT:herself#idx=2:entity
+      OBJECT:herself#idx=2:entity
+      OBJECT:herself#idx=2:entity
+      OBJECT:.#idx=3:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+
+  action sequence (7 steps):
+  OPEN_CLAUSE EMIT_UNRESOLVED_SLOT GROUND GROUND CLOSE_CLAUSE SHIFT STOP
+
+--- EXAMPLE 2/8  (test-split idx=51, T=11 tokens) ---
+SOURCE: "buster bear 's own mouth watered as he saw it ."
+TOKENS: ['buster', 'bear', "'s", 'own', 'mouth', 'watered', 'as', 'he', 'saw', 'it', '.']
+
+GOLD (2 tree(s)):
+  gold_tree[0]:
+    clause[0] kind=proposition predicate_word='bear'
+      SUBJECT: 'buster' #idx=0 gtype=sense
+      PREDICATE: 'bear' #idx=1 gtype=sense
+    clause[1] kind=proposition predicate_word='saw'
+      SUBJECT: 'he' #idx=7 gtype=reference
+      PREDICATE: 'saw' #idx=8 gtype=sense
+      OBJECT: 'it' #idx=9 gtype=reference
+  gold_tree[1]:
+    clause[0] kind=proposition predicate_word='bear'
+      SUBJECT: 'buster' #idx=0 gtype=sense
+      PREDICATE: 'bear' #idx=1 gtype=sense
+
+WINNING EMITTED TREE (top-logprob, term_reason=STOP):
+    clause[0] kind=proposition
+      PREDICATE:saw#idx=8:sense
+      SUBJECT:buster#idx=0:sense
+      SUBJECT:buster#idx=0:sense
+      OBJECT:'s#idx=2:entity
+      DOWN:'s#idx=2:entity
+      DOWN:<null>#idx=None:prime
+      PLACE:'s#idx=2:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:'s#idx=2:entity
+      OBJECT:'s#idx=2:entity
+      OBJECT:'s#idx=2:entity
+      OBJECT:<null>#idx=None:prime
+      BEFORE:own#idx=3:sense
+      SUBJECT:own#idx=3:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:own#idx=3:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:own#idx=3:sense
+      SUBJECT:<null>#idx=None:prime
+      PLACE:own#idx=3:sense
+      BEFORE:own#idx=3:sense
+      BEFORE:mouth#idx=4:sense
+      SUBJECT:mouth#idx=4:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:mouth#idx=4:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:mouth#idx=4:sense
+      SUBJECT:<null>#idx=None:prime
+      BEFORE:mouth#idx=4:sense
+      BEFORE:mouth#idx=4:sense
+      OBJECT:watered#idx=5:sense
+      SUBJECT:watered#idx=5:sense
+      SUBJECT:<null>#idx=None:prime
+      BEFORE:watered#idx=5:sense
+      BEFORE:<null>#idx=None:prime
+      SUBJECT:watered#idx=5:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:watered#idx=5:sense
+      DOWN:as#idx=6:sense
+      PLACE:as#idx=6:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:as#idx=6:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:as#idx=6:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:as#idx=6:sense
+      OBJECT:he#idx=7:reference
+      SUBJECT:he#idx=7:reference
+      SUBJECT:he#idx=7:reference
+      SUBJECT:he#idx=7:reference
+      SUBJECT:he#idx=7:reference
+      SUBJECT:he#idx=7:reference
+      SUBJECT:he#idx=7:reference
+      SUBJECT:he#idx=7:reference
+      SUBJECT:he#idx=7:reference
+      OBJECT:he#idx=7:reference
+      PLACE:saw#idx=8:sense
+      OBJECT:it#idx=9:reference
+      OBJECT:it#idx=9:reference
+      OBJECT:it#idx=9:reference
+      OBJECT:it#idx=9:reference
+      OBJECT:it#idx=9:reference
+      OBJECT:it#idx=9:reference
+      OBJECT:it#idx=9:reference
+      SUBJECT:.#idx=10:reference
+      OBJECT:.#idx=10:reference
+      OBJECT:.#idx=10:sense
+      OBJECT:<null>#idx=None:reference
+      OBJECT:<null>#idx=None:reference
+      OBJECT:<null>#idx=None:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:<null>#idx=None:sense
+      OBJECT:<null>#idx=None:prime
+
+  action sequence (14 steps):
+  OPEN_CLAUSE SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT EMIT_UNRESOLVED_SLOT GROUND EMIT_UNRESOLVED_SLOT CLOSE_CLAUSE SHIFT STOP
+
+--- EXAMPLE 3/8  (test-split idx=11, T=15 tokens) ---
+SOURCE: 'and he is as much bigger than you as you are bigger than i !'
+TOKENS: ['and', 'he', 'is', 'as', 'much', 'bigger', 'than', 'you', 'as', 'you', 'are', 'bigger', 'than', 'i', '!']
+
+GOLD (3 tree(s)):
+  gold_tree[0]:
+    clause[0] kind=proposition predicate_word='is'
+      SUBJECT: 'he' #idx=1 gtype=reference
+      PREDICATE: 'is' #idx=2 gtype=entity
+      INDIRECT_OBJECT: 'than' #idx=6 gtype=entity
+      OBJECT: 'you' #idx=7 gtype=reference
+    clause[1] kind=proposition predicate_word='are'
+      SUBJECT: 'you' #idx=9 gtype=reference
+      PREDICATE: 'are' #idx=10 gtype=sense
+      OBJECT: 'than' #idx=12 gtype=entity
+      OBJECT: 'i' #idx=13 gtype=reference
+  gold_tree[1]:
+    clause[0] kind=proposition predicate_word='is'
+      SUBJECT: 'he' #idx=1 gtype=reference
+      PREDICATE: 'is' #idx=2 gtype=entity
+      INDIRECT_OBJECT: 'as' #idx=3 gtype=sense
+      OBJECT: 'than' #idx=6 gtype=entity
+    clause[1] kind=proposition predicate_word='are'
+      SUBJECT: 'you' #idx=7 gtype=reference
+      PREDICATE: 'are' #idx=10 gtype=sense
+      OBJECT: 'than' #idx=12 gtype=entity
+      OBJECT: 'i' #idx=13 gtype=reference
+  gold_tree[2]:
+    clause[0] kind=proposition predicate_word='is'
+      SUBJECT: 'he' #idx=1 gtype=reference
+      PREDICATE: 'is' #idx=2 gtype=entity
+      INDIRECT_OBJECT: 'much' #idx=4 gtype=sense
+      OBJECT: 'than' #idx=6 gtype=entity
+    clause[1] kind=proposition predicate_word='are'
+      SUBJECT: 'you' #idx=7 gtype=reference
+      PREDICATE: 'are' #idx=10 gtype=sense
+      OBJECT: 'than' #idx=12 gtype=entity
+      OBJECT: 'i' #idx=13 gtype=reference
+
+WINNING EMITTED TREE (top-logprob, term_reason=STOP):
+    clause[0] kind=proposition
+      PREDICATE:are#idx=10:sense
+      SUBJECT:and#idx=0:entity
+      SUBJECT:and#idx=0:entity
+      SUBJECT:he#idx=1:reference
+      SUBJECT:he#idx=1:reference
+      SUBJECT:he#idx=1:reference
+      SUBJECT:he#idx=1:reference
+      SUBJECT:he#idx=1:entity
+      SUBJECT:he#idx=1:entity
+      OBJECT:as#idx=3:sense
+      OBJECT:as#idx=3:sense
+      OBJECT:as#idx=3:sense
+      OBJECT:as#idx=3:sense
+      SUBJECT:as#idx=3:sense
+      SUBJECT:as#idx=3:sense
+      OBJECT:as#idx=3:sense
+      OBJECT:much#idx=4:sense
+      OBJECT:much#idx=4:sense
+      OBJECT:much#idx=4:sense
+      OBJECT:much#idx=4:sense
+      OBJECT:much#idx=4:sense
+      OBJECT:much#idx=4:sense
+      OBJECT:bigger#idx=5:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:bigger#idx=5:sense
+      OBJECT:bigger#idx=5:sense
+      OBJECT:bigger#idx=5:sense
+      INDIRECT_OBJECT:bigger#idx=5:sense
+      OBJECT:than#idx=6:entity
+      OBJECT:than#idx=6:entity
+      OBJECT:than#idx=6:entity
+      OBJECT:than#idx=6:entity
+      OBJECT:than#idx=6:entity
+      OBJECT:than#idx=6:entity
+      OBJECT:than#idx=6:entity
+      OBJECT:than#idx=6:entity
+      INDIRECT_OBJECT:than#idx=6:entity
+      INDIRECT_OBJECT:than#idx=6:entity
+      PLACE:than#idx=6:entity
+      PLACE:than#idx=6:entity
+      OBJECT:you#idx=7:reference
+      OBJECT:you#idx=7:reference
+      OBJECT:you#idx=7:reference
+      OBJECT:you#idx=7:reference
+      OBJECT:you#idx=7:reference
+      OBJECT:you#idx=7:reference
+      OBJECT:as#idx=8:entity
+      OBJECT:as#idx=8:entity
+      OBJECT:as#idx=8:sense
+      OBJECT:as#idx=8:sense
+      OBJECT:as#idx=8:sense
+      OBJECT:as#idx=8:sense
+      OBJECT:you#idx=9:reference
+      OBJECT:you#idx=9:reference
+      OBJECT:you#idx=9:reference
+      OBJECT:you#idx=9:reference
+      OBJECT:you#idx=9:reference
+      OBJECT:you#idx=9:reference
+      OBJECT:are#idx=10:sense
+      OBJECT:are#idx=10:sense
+      OBJECT:are#idx=10:sense
+      OBJECT:bigger#idx=11:sense
+      OBJECT:bigger#idx=11:sense
+      OBJECT:than#idx=12:entity
+      OBJECT:than#idx=12:entity
+      OBJECT:than#idx=12:entity
+      OBJECT:than#idx=12:entity
+      OBJECT:i#idx=13:reference
+      OBJECT:i#idx=13:reference
+      OBJECT:i#idx=13:reference
+
+  action sequence (18 steps):
+  OPEN_CLAUSE SHIFT EMIT_UNRESOLVED_SLOT GROUND SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT GROUND CLOSE_CLAUSE SHIFT SHIFT STOP
+
+--- EXAMPLE 4/8  (test-split idx=37, T=18 tokens) ---
+SOURCE: 'the little boy comes running to look at me , and cries , " oh , mamma !'
+TOKENS: ['the', 'little', 'boy', 'comes', 'running', 'to', 'look', 'at', 'me', ',', 'and', 'cries', ',', '"', 'oh', ',', 'mamma', '!']
+
+GOLD (3 tree(s)):
+  gold_tree[0]:
+    clause[0] kind=proposition predicate_word='comes'
+      SUBJECT: 'boy' #idx=2 gtype=sense
+      PREDICATE: 'comes' #idx=3 gtype=entity
+      INDIRECT_OBJECT: 'running' #idx=4 gtype=sense
+      OBJECT: 'to' #idx=5 gtype=entity
+      PLACE: 'me' #idx=8 gtype=reference
+  gold_tree[1]:
+    clause[0] kind=proposition predicate_word='comes'
+      SUBJECT: 'boy' #idx=2 gtype=sense
+      PREDICATE: 'comes' #idx=3 gtype=entity
+      OBJECT: 'running' #idx=4 gtype=sense
+      PLACE: 'me' #idx=8 gtype=reference
+  gold_tree[2]:
+    clause[0] kind=proposition predicate_word='comes'
+      SUBJECT: 'boy' #idx=2 gtype=sense
+      PREDICATE: 'comes' #idx=3 gtype=entity
+      OBJECT: 'running' #idx=4 gtype=sense
+      PLACE: 'look' #idx=6 gtype=sense
+
+WINNING EMITTED TREE (top-logprob, term_reason=STOP):
+    clause[0] kind=proposition
+      PREDICATE:and#idx=10:entity
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:the#idx=0:sense
+      SUBJECT:little#idx=1:sense
+      SUBJECT:little#idx=1:sense
+      SUBJECT:the#idx=0:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:little#idx=1:sense
+      SUBJECT:boy#idx=2:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:boy#idx=2:sense
+      SUBJECT:boy#idx=2:sense
+      SUBJECT:little#idx=1:sense
+      SUBJECT:little#idx=1:sense
+      SUBJECT:boy#idx=2:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:boy#idx=2:sense
+      FOR:little#idx=1:sense
+      SUBJECT:comes#idx=3:entity
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:boy#idx=2:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:boy#idx=2:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:running#idx=4:sense
+      OBJECT:running#idx=4:sense
+      OBJECT:to#idx=5:entity
+      OBJECT:to#idx=5:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:to#idx=5:entity
+      INDIRECT_OBJECT:to#idx=5:entity
+      SUBJECT:to#idx=5:entity
+      OBJECT:to#idx=5:entity
+      OBJECT:to#idx=5:entity
+      PLACE:look#idx=6:sense
+      PLACE:look#idx=6:sense
+      PLACE:look#idx=6:sense
+      PLACE:look#idx=6:sense
+      PLACE:look#idx=6:sense
+      OBJECT:at#idx=7:sense
+      OBJECT:at#idx=7:sense
+      PLACE:at#idx=7:sense
+      PLACE:at#idx=7:sense
+      PLACE:at#idx=7:sense
+      OBJECT:at#idx=7:sense
+      PLACE:me#idx=8:reference
+      PLACE:me#idx=8:reference
+      PLACE:me#idx=8:reference
+      PLACE:me#idx=8:reference
+      PLACE:me#idx=8:reference
+      PLACE:me#idx=8:reference
+      PLACE:me#idx=8:reference
+      PLACE:me#idx=8:reference
+      OBJECT:,#idx=9:entity
+      OBJECT:,#idx=9:entity
+      FOR:,#idx=9:entity
+
+  action sequence (21 steps):
+  OPEN_CLAUSE SHIFT SHIFT GROUND GROUND GROUND SHIFT SHIFT SHIFT EMIT_UNRESOLVED_SLOT CLOSE_CLAUSE SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT STOP
+
+--- EXAMPLE 5/8  (test-split idx=50, T=22 tokens) ---
+SOURCE: 'he looked so excited , and his eyes sparkled so , that every one knew right away that something had happened .'
+TOKENS: ['he', 'looked', 'so', 'excited', ',', 'and', 'his', 'eyes', 'sparkled', 'so', ',', 'that', 'every', 'one', 'knew', 'right', 'away', 'that', 'something', 'had', 'happened', '.']
+
+GOLD (3 tree(s)):
+  gold_tree[0]:
+    clause[0] kind=proposition predicate_word='so'
+      SUBJECT: 'he' #idx=0 gtype=reference
+      PLACE: 'looked' #idx=1 gtype=entity
+      PREDICATE: 'so' #idx=2 gtype=sense
+    clause[1] kind=proposition predicate_word='so'
+      PREDICATE: 'so' #idx=2 gtype=sense
+      PLACE: 'excited' #idx=3 gtype=sense
+      SUBJECT: '<null>' #idx=None gtype=reference
+  gold_tree[1]:
+    clause[0] kind=proposition predicate_word='so'
+      SUBJECT: 'he' #idx=0 gtype=reference
+      PLACE: 'looked' #idx=1 gtype=entity
+      PREDICATE: 'so' #idx=2 gtype=sense
+    clause[1] kind=proposition predicate_word='so'
+      PREDICATE: 'so' #idx=2 gtype=sense
+      PLACE: 'excited' #idx=3 gtype=sense
+      SUBJECT: '<null>' #idx=None gtype=reference
+    clause[2] kind=proposition predicate_word='knew'
+      OBJECT: 'that' #idx=11 gtype=entity
+      SUBJECT: 'one' #idx=13 gtype=sense
+      PREDICATE: 'knew' #idx=14 gtype=entity
+  gold_tree[2]:
+    clause[0] kind=proposition predicate_word='so'
+      SUBJECT: 'he' #idx=0 gtype=reference
+      PLACE: 'looked' #idx=1 gtype=entity
+      PREDICATE: 'so' #idx=2 gtype=sense
+    clause[1] kind=proposition predicate_word='so'
+      PREDICATE: 'so' #idx=2 gtype=sense
+      PLACE: 'excited' #idx=3 gtype=sense
+      SUBJECT: '<null>' #idx=None gtype=reference
+    clause[2] kind=proposition predicate_word='knew'
+      OBJECT: 'that' #idx=11 gtype=entity
+      SUBJECT: 'one' #idx=13 gtype=sense
+      PREDICATE: 'knew' #idx=14 gtype=entity
+      OBJECT: 'something' #idx=18 gtype=entity
+
+WINNING EMITTED TREE (top-logprob, term_reason=STOP):
+    clause[0] kind=proposition
+      PREDICATE:happened#idx=20:entity
+      SUBJECT:he#idx=0:reference
+      SUBJECT:he#idx=0:reference
+      PLACE:looked#idx=1:entity
+      PLACE:<null>#idx=None:prime
+      OBJECT:so#idx=2:entity
+      SUBJECT:so#idx=2:entity
+      PLACE:looked#idx=1:entity
+      PLACE:<null>#idx=None:prime
+      OBJECT:excited#idx=3:sense
+      PLACE:excited#idx=3:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:excited#idx=3:sense
+      PLACE:excited#idx=3:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:excited#idx=3:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:excited#idx=3:sense
+      OBJECT:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      OBJECT:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      OBJECT:,#idx=4:entity
+      OBJECT:,#idx=4:entity
+      SUBJECT:,#idx=4:entity
+      SUBJECT:,#idx=4:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:his#idx=6:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:his#idx=6:sense
+      PLACE:his#idx=6:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:his#idx=6:sense
+      SUBJECT:eyes#idx=7:sense
+      SUBJECT:eyes#idx=7:sense
+      SUBJECT:<null>#idx=None:prime
+      OF:eyes#idx=7:sense
+      SUBJECT:eyes#idx=7:sense
+      SUBJECT:<null>#idx=None:prime
+      OF:eyes#idx=7:sense
+      OBJECT:so#idx=9:sense
+      OBJECT:so#idx=9:sense
+      OBJECT:so#idx=9:sense
+      OBJECT:so#idx=9:sense
+      OBJECT:so#idx=9:sense
+      OBJECT:so#idx=9:entity
+      OBJECT:<null>#idx=None:prime
+      DOWN:,#idx=10:entity
+      OBJECT:,#idx=10:entity
+      DOWN:,#idx=10:sense
+      SUBJECT:,#idx=10:entity
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:,#idx=10:sense
+      OBJECT:,#idx=10:sense
+      SUBJECT:,#idx=10:entity
+      SUBJECT:<null>#idx=None:prime
+      INDIRECT_OBJECT:that#idx=11:entity
+      INDIRECT_OBJECT:that#idx=11:entity
+      DOWN:that#idx=11:entity
+      SUBJECT:that#idx=11:entity
+      SUBJECT:that#idx=11:entity
+      INDIRECT_OBJECT:that#idx=11:entity
+      INDIRECT_OBJECT:that#idx=11:entity
+      SUBJECT:that#idx=11:entity
+      SUBJECT:that#idx=11:entity
+      DOWN:every#idx=12:sense
+      OBJECT:every#idx=12:sense
+      OBJECT:every#idx=12:sense
+      SUBJECT:every#idx=12:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:every#idx=12:sense
+      OBJECT:every#idx=12:sense
+      SUBJECT:every#idx=12:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:one#idx=13:sense
+      OBJECT:one#idx=13:sense
+      OBJECT:one#idx=13:sense
+      SUBJECT:one#idx=13:sense
+      SUBJECT:one#idx=13:sense
+      OBJECT:one#idx=13:sense
+      OBJECT:one#idx=13:sense
+      SUBJECT:one#idx=13:sense
+      SUBJECT:one#idx=13:sense
+      OBJECT:knew#idx=14:entity
+      OBJECT:knew#idx=14:entity
+      OBJECT:knew#idx=14:entity
+      OBJECT:knew#idx=14:entity
+      OBJECT:knew#idx=14:entity
+      OBJECT:right#idx=15:sense
+      OBJECT:right#idx=15:sense
+      OBJECT:right#idx=15:sense
+      OBJECT:right#idx=15:sense
+      OBJECT:right#idx=15:sense
+      OBJECT:right#idx=15:sense
+      OBJECT:right#idx=15:sense
+      OBJECT:away#idx=16:sense
+      OBJECT:away#idx=16:sense
+      OBJECT:away#idx=16:sense
+      OBJECT:away#idx=16:sense
+      OBJECT:away#idx=16:sense
+      OBJECT:away#idx=16:sense
+      OBJECT:that#idx=17:entity
+      OBJECT:that#idx=17:entity
+      OBJECT:that#idx=17:entity
+      OBJECT:that#idx=17:entity
+      OBJECT:that#idx=17:entity
+      OBJECT:that#idx=17:entity
+      OBJECT:something#idx=18:sense
+      OBJECT:something#idx=18:sense
+      OBJECT:something#idx=18:sense
+      OBJECT:something#idx=18:entity
+      OBJECT:something#idx=18:entity
+      OBJECT:something#idx=18:sense
+      OBJECT:something#idx=18:sense
+      OBJECT:happened#idx=20:entity
+      OBJECT:happened#idx=20:entity
+      OBJECT:.#idx=21:entity
+      OBJECT:.#idx=21:entity
+      OBJECT:.#idx=21:entity
+    clause[1] kind=proposition
+      PREDICATE:<null>#idx=None:prime
+      SUBJECT:.#idx=21:entity
+      SUBJECT:.#idx=21:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:reference
+      OBJECT:<null>#idx=None:reference
+      OBJECT:<null>#idx=None:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:entity
+      OBJECT:<null>#idx=None:sense
+      OBJECT:<null>#idx=None:prime
+
+  action sequence (29 steps):
+  OPEN_CLAUSE EMIT_UNRESOLVED_SLOT GROUND SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT GROUND CLOSE_CLAUSE OPEN_CLAUSE GROUND GROUND GROUND CLOSE_CLAUSE STOP
+
+--- EXAMPLE 6/8  (test-split idx=79, T=28 tokens) ---
+SOURCE: 'he was very patient , very , very patient , but his patience brought no reward , not so much as the faintest kind of a nibble .'
+TOKENS: ['he', 'was', 'very', 'patient', ',', 'very', ',', 'very', 'patient', ',', 'but', 'his', 'patience', 'brought', 'no', 'reward', ',', 'not', 'so', 'much', 'as', 'the', 'faintest', 'kind', 'of', 'a', 'nibble', '.']
+
+GOLD (3 tree(s)):
+  gold_tree[0]:
+    clause[0] kind=proposition predicate_word='was'
+      SUBJECT: 'he' #idx=0 gtype=reference
+      PREDICATE: 'was' #idx=1 gtype=entity
+      PLACE: 'nibble' #idx=26 gtype=sense
+    clause[1] kind=proposition predicate_word='brought'
+      SUBJECT: 'patience' #idx=12 gtype=sense
+      PREDICATE: 'brought' #idx=13 gtype=entity
+      OBJECT: 'reward' #idx=15 gtype=sense
+  gold_tree[1]:
+    clause[0] kind=proposition predicate_word='was'
+      SUBJECT: 'he' #idx=0 gtype=reference
+      PREDICATE: 'was' #idx=1 gtype=entity
+      PLACE: 'nibble' #idx=26 gtype=sense
+  gold_tree[2]:
+    clause[0] kind=proposition predicate_word='was'
+      SUBJECT: 'he' #idx=0 gtype=reference
+      PREDICATE: 'was' #idx=1 gtype=entity
+      OBJECT: 'patient' #idx=3 gtype=sense
+      PLACE: 'nibble' #idx=26 gtype=sense
+    clause[1] kind=proposition predicate_word='brought'
+      SUBJECT: 'patience' #idx=12 gtype=sense
+      PREDICATE: 'brought' #idx=13 gtype=entity
+      OBJECT: 'reward' #idx=15 gtype=sense
+
+WINNING EMITTED TREE (top-logprob, term_reason=STOP):
+    clause[0] kind=proposition
+      PREDICATE:<null>#idx=None:prime
+      SUBJECT:he#idx=0:reference
+      SUBJECT:he#idx=0:reference
+      OBJECT:very#idx=2:sense
+      SUBJECT:very#idx=2:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:very#idx=2:sense
+      OBJECT:very#idx=2:sense
+      OBJECT:patient#idx=3:sense
+      OBJECT:patient#idx=3:sense
+      PLACE:patient#idx=3:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:patient#idx=3:sense
+      OBJECT:patient#idx=3:sense
+      OBJECT:,#idx=4:entity
+      OBJECT:,#idx=4:entity
+      OBJECT:,#idx=4:entity
+      OBJECT:,#idx=4:entity
+      OBJECT:,#idx=4:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:very#idx=5:sense
+      OBJECT:very#idx=5:sense
+      OBJECT:very#idx=5:sense
+      OBJECT:very#idx=5:sense
+      OBJECT:,#idx=6:entity
+      OBJECT:,#idx=6:entity
+      OBJECT:,#idx=6:entity
+      OBJECT:very#idx=7:entity
+      OBJECT:very#idx=7:entity
+      OBJECT:very#idx=7:entity
+      OBJECT:patient#idx=8:sense
+      OBJECT:patient#idx=8:sense
+      OBJECT:patient#idx=8:sense
+      OBJECT:,#idx=9:entity
+      OBJECT:,#idx=9:entity
+      OBJECT:,#idx=9:entity
+      OBJECT:but#idx=10:entity
+      OBJECT:but#idx=10:entity
+      OBJECT:but#idx=10:entity
+      DOWN:his#idx=11:sense
+      DOWN:his#idx=11:entity
+      DOWN:his#idx=11:entity
+      OBJECT:patience#idx=12:sense
+      OBJECT:patience#idx=12:sense
+      UP:patience#idx=12:sense
+      OBJECT:brought#idx=13:entity
+      OBJECT:brought#idx=13:entity
+      OBJECT:brought#idx=13:entity
+      OBJECT:no#idx=14:sense
+      OBJECT:no#idx=14:sense
+      DOWN:no#idx=14:sense
+      OBJECT:reward#idx=15:sense
+      OBJECT:reward#idx=15:sense
+      DOWN:reward#idx=15:sense
+      OBJECT:,#idx=16:entity
+      OBJECT:,#idx=16:entity
+      DOWN:,#idx=16:entity
+      DOWN:not#idx=17:sense
+      DOWN:not#idx=17:sense
+      DOWN:not#idx=17:sense
+      DOWN:<null>#idx=None:prime
+      DOWN:<null>#idx=None:prime
+      DOWN:<null>#idx=None:prime
+      DOWN:much#idx=19:sense
+      DOWN:much#idx=19:sense
+      DOWN:<null>#idx=None:prime
+      OBJECT:as#idx=20:sense
+      OBJECT:as#idx=20:sense
+      DOWN:as#idx=20:sense
+      OBJECT:the#idx=21:sense
+      OBJECT:the#idx=21:sense
+      OBJECT:the#idx=21:sense
+      OBJECT:faintest#idx=22:entity
+      OBJECT:faintest#idx=22:sense
+      OBJECT:faintest#idx=22:entity
+      OBJECT:kind#idx=23:sense
+      OBJECT:kind#idx=23:sense
+      OBJECT:kind#idx=23:sense
+      DOWN:of#idx=24:reference
+      DOWN:<null>#idx=None:prime
+      DOWN:of#idx=24:reference
+      OF:a#idx=25:sense
+      OF:a#idx=25:sense
+      OF:a#idx=25:sense
+      OF:nibble#idx=26:sense
+      OF:nibble#idx=26:sense
+      OF:nibble#idx=26:sense
+      SUBJECT:.#idx=27:reference
+      SUBJECT:.#idx=27:reference
+      SUBJECT:.#idx=27:reference
+      SUBJECT:.#idx=27:reference
+      SUBJECT:.#idx=27:reference
+      SUBJECT:.#idx=27:reference
+
+  action sequence (31 steps):
+  OPEN_CLAUSE EMIT_UNRESOLVED_SLOT GROUND SHIFT GROUND SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT GROUND CLOSE_CLAUSE SHIFT STOP
+
+--- EXAMPLE 7/8  (test-split idx=43, T=42 tokens) ---
+SOURCE: 'it did so indeed , and much sooner than she had expected : before she had drunk half the bottle , she found her head pressing against the ceiling , and had to stoop to save her neck from being broken .'
+TOKENS: ['it', 'did', 'so', 'indeed', ',', 'and', 'much', 'sooner', 'than', 'she', 'had', 'expected', ':', 'before', 'she', 'had', 'drunk', 'half', 'the', 'bottle', ',', 'she', 'found', 'her', 'head', 'pressing', 'against', 'the', 'ceiling', ',', 'and', 'had', 'to', 'stoop', 'to', 'save', 'her', 'neck', 'from', 'being', 'broken', '.']
+
+GOLD (3 tree(s)):
+  gold_tree[0]:
+    clause[0] kind=proposition predicate_word='expected'
+      SUBJECT: 'she' #idx=9 gtype=reference
+      PREDICATE: 'expected' #idx=11 gtype=sense
+      BEFORE: 'she' #idx=14 gtype=reference
+    clause[1] kind=proposition predicate_word='found'
+      SUBJECT: 'she' #idx=21 gtype=reference
+      PREDICATE: 'found' #idx=22 gtype=sense
+      OBJECT: 'head' #idx=24 gtype=sense
+      OBJECT: 'pressing' #idx=25 gtype=sense
+  gold_tree[1]:
+    clause[0] kind=proposition predicate_word='had'
+      SUBJECT: 'she' #idx=9 gtype=reference
+      PREDICATE: 'had' #idx=10 gtype=entity
+      BEFORE: 'she' #idx=14 gtype=reference
+    clause[1] kind=proposition predicate_word='found'
+      SUBJECT: 'she' #idx=21 gtype=reference
+      PREDICATE: 'found' #idx=22 gtype=sense
+      OBJECT: 'head' #idx=24 gtype=sense
+      OBJECT: 'pressing' #idx=25 gtype=sense
+  gold_tree[2]:
+    clause[0] kind=proposition predicate_word='expected'
+      SUBJECT: 'she' #idx=9 gtype=reference
+      PREDICATE: 'expected' #idx=11 gtype=sense
+      BEFORE: 'she' #idx=14 gtype=reference
+    clause[1] kind=proposition predicate_word='found'
+      SUBJECT: 'she' #idx=21 gtype=reference
+      PREDICATE: 'found' #idx=22 gtype=sense
+      OBJECT: 'head' #idx=24 gtype=sense
+
+WINNING EMITTED TREE (top-logprob, term_reason=STOP):
+    clause[0] kind=proposition
+      PREDICATE:pressing#idx=25:sense
+      SUBJECT:it#idx=0:reference
+      SUBJECT:it#idx=0:reference
+      OBJECT:so#idx=2:sense
+      OBJECT:so#idx=2:sense
+      OBJECT:so#idx=2:sense
+      SUBJECT:so#idx=2:sense
+      OBJECT:so#idx=2:sense
+      PLACE:so#idx=2:sense
+      PLACE:indeed#idx=3:sense
+      PLACE:indeed#idx=3:sense
+      PLACE:indeed#idx=3:sense
+      PLACE:indeed#idx=3:sense
+      PLACE:indeed#idx=3:sense
+      OBJECT:indeed#idx=3:sense
+      PLACE:indeed#idx=3:sense
+      PLACE:indeed#idx=3:sense
+      PLACE:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      OBJECT:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      PLACE:,#idx=4:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:and#idx=5:entity
+      PLACE:much#idx=6:sense
+      PLACE:much#idx=6:sense
+      PLACE:much#idx=6:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:much#idx=6:sense
+      PLACE:much#idx=6:sense
+      OBJECT:much#idx=6:sense
+      SUBJECT:much#idx=6:sense
+      SUBJECT:much#idx=6:sense
+      PLACE:much#idx=6:sense
+      SUBJECT:sooner#idx=7:sense
+      SUBJECT:sooner#idx=7:sense
+      SUBJECT:sooner#idx=7:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:sooner#idx=7:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:sooner#idx=7:sense
+      OBJECT:<null>#idx=None:prime
+      SUBJECT:than#idx=8:entity
+      SUBJECT:than#idx=8:entity
+      PLACE:than#idx=8:entity
+      PLACE:than#idx=8:entity
+      OBJECT:than#idx=8:entity
+      OBJECT:<null>#idx=None:prime
+      SUBJECT:than#idx=8:entity
+      SUBJECT:than#idx=8:entity
+      INDIRECT_OBJECT:than#idx=8:entity
+      INDIRECT_OBJECT:than#idx=8:entity
+      OBJECT:than#idx=8:entity
+      OBJECT:than#idx=8:entity
+      PLACE:than#idx=8:entity
+      PLACE:than#idx=8:entity
+      SUBJECT:she#idx=9:reference
+      SUBJECT:she#idx=9:reference
+      SUBJECT:she#idx=9:reference
+      SUBJECT:she#idx=9:reference
+      SUBJECT:she#idx=9:reference
+      OBJECT:she#idx=9:reference
+      OBJECT:<null>#idx=None:prime
+      SUBJECT:she#idx=9:reference
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:she#idx=9:reference
+      SUBJECT:she#idx=9:reference
+      SUBJECT:she#idx=9:reference
+      SUBJECT:she#idx=9:reference
+      SUBJECT:had#idx=10:entity
+      SUBJECT:had#idx=10:entity
+      SUBJECT:had#idx=10:entity
+      SUBJECT:had#idx=10:entity
+      SUBJECT:had#idx=10:entity
+      SUBJECT:had#idx=10:entity
+      OBJECT::#idx=12:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT::#idx=12:entity
+      OBJECT::#idx=12:entity
+      OBJECT::#idx=12:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT::#idx=12:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT::#idx=12:sense
+      OBJECT::#idx=12:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT::#idx=12:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:before#idx=13:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:before#idx=13:sense
+      OBJECT:before#idx=13:sense
+      OBJECT:before#idx=13:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:before#idx=13:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:before#idx=13:sense
+      SUBJECT:before#idx=13:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:before#idx=13:sense
+      OBJECT:<null>#idx=None:prime
+      SUBJECT:she#idx=14:reference
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:she#idx=14:reference
+      OBJECT:<null>#idx=None:prime
+      OBJECT:she#idx=14:reference
+      OBJECT:<null>#idx=None:prime
+      SUBJECT:she#idx=14:reference
+      SUBJECT:she#idx=14:reference
+      SUBJECT:she#idx=14:reference
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:she#idx=14:reference
+      OBJECT:<null>#idx=None:prime
+      SUBJECT:she#idx=14:reference
+      SUBJECT:she#idx=14:reference
+      SUBJECT:she#idx=14:reference
+      SUBJECT:<null>#idx=None:prime
+      PLACE:had#idx=15:entity
+      PLACE:had#idx=15:entity
+      PLACE:had#idx=15:entity
+      PLACE:had#idx=15:entity
+      SUBJECT:had#idx=15:entity
+      SUBJECT:had#idx=15:entity
+      OBJECT:drunk#idx=16:sense
+      OBJECT:drunk#idx=16:sense
+      OBJECT:half#idx=17:sense
+      OBJECT:half#idx=17:sense
+      OBJECT:half#idx=17:sense
+      OBJECT:half#idx=17:sense
+      OBJECT:half#idx=17:sense
+      OBJECT:half#idx=17:sense
+      INDIRECT_OBJECT:half#idx=17:sense
+      INDIRECT_OBJECT:half#idx=17:sense
+      OBJECT:half#idx=17:sense
+      OBJECT:half#idx=17:sense
+      OBJECT:half#idx=17:sense
+      SUBJECT:half#idx=17:sense
+      SUBJECT:half#idx=17:sense
+      OBJECT:the#idx=18:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:the#idx=18:sense
+      OBJECT:the#idx=18:sense
+      OBJECT:the#idx=18:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:the#idx=18:sense
+      OBJECT:the#idx=18:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:the#idx=18:sense
+      OBJECT:bottle#idx=19:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:bottle#idx=19:sense
+      OBJECT:bottle#idx=19:sense
+      OBJECT:bottle#idx=19:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:bottle#idx=19:sense
+      OBJECT:bottle#idx=19:sense
+      OBJECT:bottle#idx=19:sense
+      OBJECT:bottle#idx=19:sense
+      OBJECT:,#idx=20:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:,#idx=20:sense
+      OBJECT:,#idx=20:sense
+      OBJECT:,#idx=20:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:,#idx=20:entity
+      OBJECT:,#idx=20:entity
+      OBJECT:,#idx=20:entity
+      OBJECT:,#idx=20:entity
+      SUBJECT:she#idx=21:reference
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:she#idx=21:reference
+      OBJECT:she#idx=21:reference
+      SUBJECT:she#idx=21:reference
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:she#idx=21:reference
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:she#idx=21:reference
+      OBJECT:found#idx=22:sense
+      OBJECT:found#idx=22:sense
+      OBJECT:her#idx=23:reference
+      OBJECT:her#idx=23:reference
+      OBJECT:her#idx=23:reference
+      OBJECT:her#idx=23:reference
+      OBJECT:her#idx=23:reference
+      OBJECT:her#idx=23:reference
+      OBJECT:her#idx=23:reference
+      OBJECT:her#idx=23:reference
+      OBJECT:her#idx=23:reference
+      SUBJECT:head#idx=24:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:head#idx=24:sense
+      OBJECT:head#idx=24:sense
+      SUBJECT:head#idx=24:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:head#idx=24:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:head#idx=24:sense
+      OBJECT:pressing#idx=25:sense
+      OBJECT:pressing#idx=25:sense
+      OBJECT:pressing#idx=25:sense
+      OBJECT:pressing#idx=25:sense
+      OBJECT:against#idx=26:sense
+      OBJECT:against#idx=26:entity
+      OBJECT:against#idx=26:entity
+      OBJECT:against#idx=26:sense
+      OBJECT:against#idx=26:entity
+      OBJECT:against#idx=26:sense
+      PLACE:the#idx=27:sense
+      PLACE:the#idx=27:sense
+      PLACE:the#idx=27:sense
+      PLACE:the#idx=27:sense
+      PLACE:the#idx=27:entity
+      PLACE:the#idx=27:sense
+      PLACE:ceiling#idx=28:sense
+      PLACE:ceiling#idx=28:sense
+      PLACE:ceiling#idx=28:sense
+      PLACE:ceiling#idx=28:sense
+      PLACE:ceiling#idx=28:sense
+      PLACE:ceiling#idx=28:sense
+      SUBJECT:,#idx=29:entity
+      SUBJECT:,#idx=29:entity
+      SUBJECT:,#idx=29:entity
+      SUBJECT:,#idx=29:entity
+      SUBJECT:,#idx=29:entity
+      SUBJECT:,#idx=29:sense
+      OBJECT:and#idx=30:reference
+
+  action sequence (45 steps):
+  OPEN_CLAUSE SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT EMIT_UNRESOLVED_SLOT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT GROUND GROUND SHIFT SHIFT GROUND CLOSE_CLAUSE SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT STOP
+
+--- EXAMPLE 8/8  (test-split idx=38, T=74 tokens) ---
+SOURCE: 'goody grope , however , reached her sixtieth year , without ever seeing this lucky day ; and now , in her old age , she was a beggar , without a house to shelter her , a bed to lie on , or food to put into her mouth , but what she begged from the charity of those who had trusted more than she had to industry and less to luck .'
+TOKENS: ['goody', 'grope', ',', 'however', ',', 'reached', 'her', 'sixtieth', 'year', ',', 'without', 'ever', 'seeing', 'this', 'lucky', 'day', ';', 'and', 'now', ',', 'in', 'her', 'old', 'age', ',', 'she', 'was', 'a', 'beggar', ',', 'without', 'a', 'house', 'to', 'shelter', 'her', ',', 'a', 'bed', 'to', 'lie', 'on', ',', 'or', 'food', 'to', 'put', 'into', 'her', 'mouth', ',', 'but', 'what', 'she', 'begged', 'from', 'the', 'charity', 'of', 'those', 'who', 'had', 'trusted', 'more', 'than', 'she', 'had', 'to', 'industry', 'and', 'less', 'to', 'luck', '.']
+
+GOLD (2 tree(s)):
+  gold_tree[0]:
+    clause[0] kind=proposition predicate_word='grope'
+      SUBJECT: 'goody' #idx=0 gtype=sense
+      PREDICATE: 'grope' #idx=1 gtype=sense
+      PLACE: 'age' #idx=23 gtype=sense
+    clause[1] kind=proposition predicate_word='was'
+      SUBJECT: 'she' #idx=25 gtype=reference
+      PREDICATE: 'was' #idx=26 gtype=entity
+      OBJECT: 'beggar' #idx=28 gtype=sense
+    clause[2] kind=proposition predicate_word='begged'
+      SUBJECT: 'she' #idx=53 gtype=reference
+      PREDICATE: 'begged' #idx=54 gtype=entity
+      SOURCE: 'charity' #idx=57 gtype=sense
+      OF: 'who' #idx=60 gtype=sense
+    clause[3] kind=proposition predicate_word='had'
+      PREDICATE: 'had' #idx=61 gtype=entity
+      SUBJECT: 'she' #idx=65 gtype=reference
+      PLACE: 'industry' #idx=68 gtype=sense
+  gold_tree[1]:
+    clause[0] kind=proposition predicate_word='grope'
+      SUBJECT: 'goody' #idx=0 gtype=sense
+      PREDICATE: 'grope' #idx=1 gtype=sense
+      PLACE: 'age' #idx=23 gtype=sense
+    clause[1] kind=proposition predicate_word='was'
+      SUBJECT: 'she' #idx=25 gtype=reference
+      PREDICATE: 'was' #idx=26 gtype=entity
+      OBJECT: 'beggar' #idx=28 gtype=sense
+    clause[2] kind=proposition predicate_word='begged'
+      SUBJECT: 'she' #idx=53 gtype=reference
+      PREDICATE: 'begged' #idx=54 gtype=entity
+      SOURCE: 'charity' #idx=57 gtype=sense
+      OF: 'who' #idx=60 gtype=sense
+
+WINNING EMITTED TREE (top-logprob, term_reason=STOP):
+    clause[0] kind=proposition
+      PREDICATE:begged#idx=54:entity
+      SUBJECT:goody#idx=0:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:grope#idx=1:sense
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:goody#idx=0:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:,#idx=2:entity
+      SUBJECT:,#idx=2:entity
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:,#idx=2:entity
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:,#idx=2:entity
+      PLACE:grope#idx=1:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:however#idx=3:sense
+      PLACE:however#idx=3:sense
+      PLACE:however#idx=3:sense
+      PLACE:however#idx=3:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:however#idx=3:sense
+      PLACE:however#idx=3:sense
+      PLACE:however#idx=3:sense
+      OBJECT:,#idx=2:entity
+      OBJECT:,#idx=4:entity
+      SUBJECT:,#idx=4:entity
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:,#idx=4:entity
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:,#idx=4:entity
+      SUBJECT:,#idx=4:entity
+      SUBJECT:<null>#idx=None:prime
+      PLACE:reached#idx=5:entity
+      PLACE:reached#idx=5:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:reached#idx=5:entity
+      OBJECT:her#idx=6:reference
+      OBJECT:her#idx=6:reference
+      OBJECT:her#idx=6:reference
+      OBJECT:her#idx=6:reference
+      OBJECT:her#idx=6:reference
+      OBJECT:her#idx=6:reference
+      OBJECT:her#idx=6:reference
+      OBJECT:her#idx=6:reference
+      OBJECT:sixtieth#idx=7:sense
+      SUBJECT:sixtieth#idx=7:sense
+      SUBJECT:sixtieth#idx=7:sense
+      SUBJECT:sixtieth#idx=7:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:sixtieth#idx=7:sense
+      OBJECT:year#idx=8:sense
+      SUBJECT:year#idx=8:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:year#idx=8:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:year#idx=8:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:,#idx=9:entity
+      SUBJECT:,#idx=9:entity
+      SUBJECT:<null>#idx=None:prime
+      SUBJECT:,#idx=9:entity
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:,#idx=9:entity
+      OBJECT:without#idx=10:entity
+      SUBJECT:without#idx=10:entity
+      SUBJECT:without#idx=10:entity
+      SUBJECT:without#idx=10:entity
+      SUBJECT:without#idx=10:entity
+      SUBJECT:without#idx=10:entity
+      SUBJECT:without#idx=10:entity
+      SUBJECT:ever#idx=11:sense
+      SUBJECT:ever#idx=11:sense
+      SUBJECT:ever#idx=11:sense
+      SUBJECT:ever#idx=11:sense
+      SUBJECT:ever#idx=11:sense
+      SUBJECT:ever#idx=11:sense
+      SUBJECT:ever#idx=11:sense
+      PLACE:seeing#idx=12:entity
+      PLACE:seeing#idx=12:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:this#idx=13:entity
+      OBJECT:this#idx=13:entity
+      OBJECT:this#idx=13:entity
+      OBJECT:this#idx=13:entity
+      OBJECT:this#idx=13:entity
+      SUBJECT:this#idx=13:entity
+      SUBJECT:this#idx=13:entity
+      OBJECT:this#idx=13:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:this#idx=13:entity
+      OBJECT:lucky#idx=14:sense
+      OBJECT:lucky#idx=14:sense
+      PLACE:lucky#idx=14:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:lucky#idx=14:sense
+      OBJECT:lucky#idx=14:sense
+      SUBJECT:lucky#idx=14:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:day#idx=15:sense
+      OBJECT:day#idx=15:sense
+      OBJECT:day#idx=15:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:day#idx=15:sense
+      OBJECT:day#idx=15:sense
+      PLACE:day#idx=15:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:day#idx=15:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:;#idx=16:entity
+      OBJECT:;#idx=16:sense
+      OBJECT:;#idx=16:sense
+      SUBJECT:;#idx=16:entity
+      SUBJECT:;#idx=16:entity
+      OBJECT:;#idx=16:entity
+      SUBJECT:;#idx=16:entity
+      SUBJECT:;#idx=16:entity
+      OBJECT:;#idx=16:entity
+      OBJECT:and#idx=17:entity
+      OBJECT:and#idx=17:entity
+      OBJECT:and#idx=17:entity
+      PLACE:now#idx=18:sense
+      PLACE:now#idx=18:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:now#idx=18:sense
+      PLACE:now#idx=18:sense
+      PLACE:<null>#idx=None:prime
+      OBJECT:,#idx=19:entity
+      DOWN:,#idx=19:entity
+      DOWN:<null>#idx=None:prime
+      OBJECT:,#idx=19:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:in#idx=20:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:<null>#idx=None:prime
+      PLACE:her#idx=21:reference
+      PLACE:her#idx=21:reference
+      PLACE:her#idx=21:reference
+      OBJECT:her#idx=21:reference
+      PLACE:old#idx=22:sense
+      PLACE:old#idx=22:entity
+      PLACE:<null>#idx=None:prime
+      OBJECT:old#idx=22:sense
+      OBJECT:age#idx=23:sense
+      OBJECT:age#idx=23:sense
+      OBJECT:age#idx=23:sense
+      OBJECT:age#idx=23:sense
+      OBJECT:,#idx=24:entity
+      OBJECT:,#idx=24:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:,#idx=24:entity
+      OBJECT:she#idx=25:reference
+      SUBJECT:she#idx=25:reference
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:she#idx=25:reference
+      OBJECT:was#idx=26:entity
+      OBJECT:was#idx=26:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:a#idx=27:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:<null>#idx=None:prime
+      OBJECT:beggar#idx=28:sense
+      OBJECT:beggar#idx=28:sense
+      OBJECT:<null>#idx=None:prime
+      DOWN:,#idx=29:sense
+      DOWN:without#idx=30:entity
+      DOWN:a#idx=31:sense
+      OBJECT:house#idx=32:sense
+      PLACE:to#idx=33:entity
+      PLACE:shelter#idx=34:sense
+      OBJECT:her#idx=35:reference
+      OBJECT:her#idx=35:reference
+      DOWN:,#idx=36:entity
+      DOWN:<null>#idx=None:prime
+      OBJECT:bed#idx=38:sense
+      OBJECT:to#idx=39:entity
+      PLACE:lie#idx=40:sense
+      PLACE:on#idx=41:sense
+      PLACE:,#idx=42:entity
+      PLACE:or#idx=43:entity
+      SOURCE:food#idx=44:sense
+      OBJECT:to#idx=45:entity
+      PLACE:put#idx=46:sense
+      OBJECT:into#idx=47:sense
+      PLACE:her#idx=48:reference
+      PLACE:mouth#idx=49:sense
+      OBJECT:,#idx=50:entity
+      PLACE:but#idx=51:entity
+      OBJECT:what#idx=52:entity
+      OBJECT:she#idx=53:reference
+      OBJECT:from#idx=55:reference
+      WITH:the#idx=56:sense
+      FOR:charity#idx=57:sense
+      FOR:of#idx=58:entity
+      FOR:of#idx=58:entity
+      OF:<null>#idx=None:prime
+      OF:who#idx=60:sense
+      OF:had#idx=61:entity
+      PLACE:trusted#idx=62:sense
+      OBJECT:more#idx=63:sense
+      OBJECT:than#idx=64:entity
+      OBJECT:she#idx=65:reference
+      PLACE:had#idx=66:entity
+      PLACE:to#idx=67:entity
+      PLACE:industry#idx=68:sense
+      OBJECT:and#idx=69:entity
+    clause[1] kind=proposition
+      PREDICATE:begged#idx=54:entity
+      OBJECT:her#idx=35:reference
+      OBJECT:her#idx=35:reference
+      OBJECT:,#idx=36:entity
+      OBJECT:,#idx=36:entity
+      SUBJECT:a#idx=37:sense
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:a#idx=37:sense
+      OBJECT:a#idx=37:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:a#idx=37:sense
+      OBJECT:bed#idx=38:sense
+      OBJECT:bed#idx=38:sense
+      OBJECT:to#idx=39:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:to#idx=39:entity
+      OBJECT:to#idx=39:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:to#idx=39:entity
+      PLACE:lie#idx=40:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:lie#idx=40:sense
+      PLACE:lie#idx=40:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:lie#idx=40:sense
+      PLACE:on#idx=41:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:on#idx=41:sense
+      PLACE:on#idx=41:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:on#idx=41:sense
+      PLACE:,#idx=42:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:,#idx=42:entity
+      PLACE:,#idx=42:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:,#idx=42:entity
+      PLACE:or#idx=43:entity
+      PLACE:or#idx=43:entity
+      PLACE:or#idx=43:entity
+      PLACE:or#idx=43:entity
+      PLACE:or#idx=43:entity
+      PLACE:or#idx=43:entity
+      SUBJECT:food#idx=44:sense
+      SUBJECT:<null>#idx=None:prime
+      SOURCE:food#idx=44:sense
+      SOURCE:food#idx=44:sense
+      SOURCE:<null>#idx=None:prime
+      SOURCE:food#idx=44:sense
+      OBJECT:to#idx=45:entity
+      OBJECT:to#idx=45:entity
+      OBJECT:to#idx=45:entity
+      OBJECT:to#idx=45:entity
+      OBJECT:to#idx=45:entity
+      OBJECT:to#idx=45:entity
+      PLACE:put#idx=46:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:put#idx=46:sense
+      PLACE:put#idx=46:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:put#idx=46:sense
+      OBJECT:into#idx=47:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:into#idx=47:sense
+      OBJECT:into#idx=47:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:into#idx=47:sense
+      PLACE:her#idx=48:reference
+      PLACE:her#idx=48:reference
+      PLACE:her#idx=48:reference
+      PLACE:her#idx=48:reference
+      PLACE:her#idx=48:reference
+      PLACE:her#idx=48:reference
+      PLACE:mouth#idx=49:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:mouth#idx=49:sense
+      PLACE:mouth#idx=49:sense
+      PLACE:<null>#idx=None:prime
+      PLACE:mouth#idx=49:sense
+      OBJECT:,#idx=50:entity
+      OBJECT:<null>#idx=None:prime
+      OBJECT:,#idx=50:entity
+      OBJECT:,#idx=50:entity
+      OBJECT:<null>#idx=None:prime
+      PLACE:,#idx=50:entity
+      PLACE:but#idx=51:entity
+      PLACE:but#idx=51:entity
+      PLACE:<null>#idx=None:prime
+      PLACE:but#idx=51:entity
+      SUBJECT:what#idx=52:entity
+      SUBJECT:what#idx=52:entity
+      OBJECT:what#idx=52:entity
+      SUBJECT:what#idx=52:entity
+      SUBJECT:<null>#idx=None:prime
+      OBJECT:what#idx=52:entity
+      SUBJECT:she#idx=53:reference
+      SUBJECT:she#idx=53:reference
+      OBJECT:she#idx=53:reference
+      SUBJECT:she#idx=53:reference
+      SUBJECT:she#idx=53:reference
+      OBJECT:she#idx=53:reference
+      OBJECT:from#idx=55:sense
+      OBJECT:from#idx=55:entity
+      OBJECT:from#idx=55:sense
+      PLACE:the#idx=56:sense
+      WITH:the#idx=56:sense
+      WITH:the#idx=56:sense
+      PLACE:charity#idx=57:sense
+      PLACE:charity#idx=57:sense
+      FOR:charity#idx=57:sense
+      FOR:of#idx=58:reference
+      FOR:of#idx=58:entity
+      FOR:of#idx=58:reference
+      OF:those#idx=59:sense
+      OF:those#idx=59:entity
+      OF:who#idx=60:sense
+      OF:who#idx=60:sense
+      OF:had#idx=61:entity
+      PLACE:had#idx=61:entity
+      PLACE:trusted#idx=62:sense
+      PLACE:trusted#idx=62:sense
+      PLACE:trusted#idx=62:sense
+      OBJECT:more#idx=63:sense
+      OBJECT:more#idx=63:sense
+      OBJECT:<null>#idx=None:prime
+      OBJECT:more#idx=63:sense
+      OBJECT:than#idx=64:entity
+      OBJECT:than#idx=64:entity
+      OBJECT:than#idx=64:entity
+      OBJECT:she#idx=65:reference
+      OBJECT:she#idx=65:reference
+      OBJECT:she#idx=65:reference
+      OBJECT:she#idx=65:reference
+      PLACE:had#idx=66:entity
+      PLACE:had#idx=66:entity
+      PLACE:had#idx=66:entity
+      PLACE:to#idx=67:entity
+      PLACE:to#idx=67:entity
+      PLACE:industry#idx=68:sense
+      PLACE:industry#idx=68:sense
+      OBJECT:and#idx=69:entity
+      OBJECT:and#idx=69:entity
+
+  action sequence (79 steps):
+  OPEN_CLAUSE GROUND GROUND SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT GROUND CLOSE_CLAUSE OPEN_CLAUSE SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT EMIT_UNRESOLVED_SLOT GROUND SHIFT SHIFT GROUND SHIFT SHIFT SHIFT SHIFT GROUND SHIFT GROUND CLOSE_CLAUSE SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT SHIFT STOP
+
+==============================================================================
+AUDIT COMPLETE -- measurement only, no fixes proposed or applied.
+==============================================================================
