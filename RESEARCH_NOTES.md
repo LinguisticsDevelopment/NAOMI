@@ -739,3 +739,34 @@ memory-frame idea (store parent rawtext, retrieval-augmented realization with a
 copy-from-structure gate) actually apply -- now measurable on clean structure.
 NEXT: (1) encoder is essentially done for now; (2) focus shifts to decoder --
 retrain/redesign the realizer against clean structure; consider the memory frame.
+
+### TRAINING-PATH AUDITS: encoder CLEAN, decoder has a real bug (2026-09-06)
+
+ENCODER (branch encoder-lossaudit-logs): training/loss path SOUND. Teacher-forced
+next-action accuracy 0.888 overall (STOP 1.000, CLOSE_CLAUSE 0.816); every CE
+term correct; mask leak-free; metric arithmetic hand-verified (PASS). 0.888 TF
+vs 0.70 fixed-decode edge-F1 = normal exposure bias. No loss bug. Encoder DONE.
+
+DECODER (branch decoder-lossaudit-logs): the lead's "logic bug in training"
+instinct CONFIRMED, deeper than "too binary":
+  - Teacher-forced token acc TRAIN 0.787 vs DEV 0.160 (0.63 gap) = MEMORIZATION.
+  - ROOT: build_function_vocab (decoder_trained.py:113) mines EVERY surface token
+    not covered by a structure node -> 2047 entries FULL OF CONTENT WORDS
+    (bumped, shillings, pope, crown, hungry, inhabited...). The decoder generates
+    content from a memorized list instead of copying from structure -> memorizes
+    (train) + confabulates (dev: "gingerbread boy"). This is a NO-CONFAB HOLE:
+    the function head can emit content absent from the structure.
+  - DEEPER CAUSE (the real finding): of 24473 target tokens only 5953 (24%) are
+    copyable from structure; 76% are "gaps". The grounded structure is a
+    PRED-ARG SKELETON covering ~1/4 of surface words. Exact-surface reconstruction
+    by copy is impossible -> function-vocab was papering over it by memorizing.
+  - "too binary" exact-position CE is SECONDARY: lemmatized token-F1 (0.352) ~=
+    raw (0.345), so output is genuinely wrong content, not synonym/order harshness.
+  - Minor: function_vocab built over train+dev combined (vocab leak).
+DESIGN FORK (LEAD DECISION, architecture-level): (A) richer structure (ground
+more content; more gold) / (B) memory-frame retrieval for the 76% gap (lead's
+idea; copy-gated) / (C) honest partial realizer: curate function_vocab to a true
+closed class (~100 fn words), decoder realizes only copyable + fn words, stops
+confab, measures the HONEST ceiling of what current structure can reconstruct.
+RECOMMENDATION: C first (cheap, no new data, fixes confab hole, its ceiling number
+decides B vs A). Awaiting lead's pick before building.
