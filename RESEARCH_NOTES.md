@@ -657,3 +657,26 @@ oracle-legality + breaks down null-node spam by gtype (GROUND vs EMIT_SYNTH
 prime vs EMIT_UNRESOLVED reference/elision -- the latter two aren't killed by
 strict_ground and may need a bound too). If overgen drops toward 1.0, bake the
 mask fix in + retrain (training mask must match decode mask).
+
+### CORRECTION: strict_ground fix FAILED + was NOT gold-safe (2026-09-06)
+
+The proposed "GROUND illegal at i>=T" fix (prev entry) is WRONG on both counts
+(re-score on run-2 ckpt, branch encoder-mask-fix, runs/mask_fix_output.txt):
+  - NO EFFECT: model overgen 8.27 (loose) -> 8.20 (strict), edge_precision
+    0.101 -> 0.101. Did nothing.
+  - NOT GOLD-SAFE: oracle-legality check FAILED -- 933 gold GROUND actions
+    (0.96% of 97530 steps) genuinely land at i>=T via the duplicate-token-index
+    collision (e.g. rec6: token_index=59, i=59, T=58). The docstring was right;
+    my "oracle never grounds at i>=T" claim was wrong. This fix would mask gold
+    actions -> +inf loss. DEAD.
+  - Null nodes are only 16.3% of emitted (prime/EMIT_SYNTH_SLOT dominates them
+    at 82% of nulls, but nulls overall are minor). Even zero nulls -> overgen
+    ~6.9. So the 8x over-generation is REAL-TOKEN over-emission, mechanism NOT
+    understood. ~120 emitted nodes/tree vs a handful gold; math doesn't close
+    with a monotonic-advance-only GROUND, so the transition dynamics aren't what
+    the code reading suggested.
+TWO fix hypotheses now falsified (loss-weight; strict_ground). STANCE: stop
+theorizing -> AUDIT emitted trees first (trig_01H3Vczy1FvXYj5fAHvH8pHR, branch
+encoder-audit-logs): action histogram (does it ever STOP or hit max_clauses=20
+cap?), tree shape vs gold, token-index duplication, 8 full example trees. Design
+fix #3 from THAT data, not theory.
