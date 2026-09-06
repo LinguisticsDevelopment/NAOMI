@@ -566,3 +566,35 @@ LEAD IDEAS (2026-09-05):
    Don't add a loss that collapses to one tree (breaks candidates-first).
 NEXT: diagnosis routine loads the checkpoints -> soft structure metrics + set
 recall + example trees + decoder error breakdown, to tell close-vs-broken.
+
+### DIAGNOSIS: encoder structure-0.000 is REAL; 93/96 sense/slot was a MIRAGE (2026-09-06)
+
+Ran scripts/diagnose_colab_ckpts.py on the Colab run-1 checkpoints (98-rec
+held-out split reproduced exactly; branch encoder-diag-logs:runs/diag_output.txt).
+FINDINGS (decisive):
+- [C] edges-off: 98.5% of gold clauses are 4+ edges from the nearest emitted
+  clause; 0 exact, 0 one-off. NOT metric strictness -- structure genuinely broken.
+- Emitted trees are OVER-ATTACHMENT SOUP: single clause w/ 20-50 role edges,
+  same token under SUBJECT+OBJECT+PLACE, predicates = punctuation/<null>/function
+  words. [D] predicate token_index agreement = 17%.
+- WHY 93/96 looked good: sense/slot are RECALL-ONLY ("token i grounded as sense
+  anywhere in forest?"). A dump-everything forest trivially covers every token ->
+  ~1.0 recall regardless of correctness. Node-recall WITH relation label = 0.657;
+  clause-exact = 0.000. Model beats random (0.04) by DUMPING, not by grounding.
+  We skipped CLAUDE.md's cheat-baseline-at-floor law for the encoder.
+- ROOT CAUSE (hypothesis): STOP/REDUCE actions never learned to fire (rare in
+  oracle -> under-weighted by plain CE) + severe undertraining (50 ep CPU).
+- DECODER: reconstruction FROM GOLD tree content=0.386 function=0.404 (both bad,
+  equal) + repetition collapse ("let let let", "three three three"). Can't copy
+  from a perfect structure yet => memory/retrieval-frame idea PREMATURE.
+REVISED PLAN (supersedes "encoder works, move to decoder+memory"):
+  1. metric fix: add PRECISION + dump-everything cheat baseline (re-score
+     existing ckpt, no retrain) -- non-negotiable gate.
+  2. loss/decode fix: make it commit+stop (up-weight terminal/REDUCE / penalize
+     over-attach).
+  3. THEN long Colab run (fixing 1-2 first; longer training on broken objective
+     just overfits dumping).
+  4. decoder: more training/capacity vs gold until copy-from-structure works;
+     THEN the memory frame.
+STATUS: "encoder built+trained (0.93/0.96)" claim RETRACTED -- that was recall
+inflated by over-generation. Encoder structure competence is the real blocker.
