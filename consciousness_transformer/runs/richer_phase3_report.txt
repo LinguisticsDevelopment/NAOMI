@@ -1,0 +1,155 @@
+================================================================================
+NAOMI richer-structure PHASE 3 -- coverage + connective-cleanliness report
+Branch: richer-gold-phase3 (base: richer-gold-phase1)
+Matched sentences (200-sample minus 2 pre-existing 20s cap-hits, identical set/order across phase1 and phase3): 198
+================================================================================
+
+--------------------------------------------------------------------------------
+STEP 3a -- GROUNDED-TOKEN COVERAGE (predicate-inclusive: dt.extract_nodes, best tree)
+--------------------------------------------------------------------------------
+ORIGINAL gold  : 1192/5250 = 22.70%
+PHASE1 gold    : 1570/5250 = 29.90%  (delta vs orig: +7.20pp)
+PHASE3 gold    : 1584/5250 = 30.17%  (delta vs orig: +7.47pp, delta vs phase1: +0.27pp)
+
+--------------------------------------------------------------------------------
+STEP 3c -- NEW SUBORDINATION CLAUSES + POS OF NEWLY-COVERED TOKENS (phase3 minus phase1)
+--------------------------------------------------------------------------------
+SUBORDINATE-linked clauses across the WHOLE forest (all 700 trees over all 198 records -- a sentence can contribute several trees to the k=8 lattice): 53
+SUBORDINATE-linked clauses in the BEST tree only (the tree coverage/connective numbers above actually use): 12  (SUBORDINATION is genuinely rare in this successfully-parsed corpus -- a separate top-1-hypothesis check found SUBORDINATION edges present in only 17/200 raw parses, of which 12 became a clause; the rest hit either no MODIFICATION edge to the real nested predicate/gap, or a nested predicate whose graph-node index collided with the (separately, pre-existing) heuristic that picks the primary clause -- see VERDICT)
+newly-covered tokens (phase3 vs phase1, best tree): 15
+  PRON         4 (26.7%)
+  AUX          4 (26.7%)
+  ADV          3 (20.0%)
+  VERB         2 (13.3%)
+  PROPN        1 (6.7%)
+  NOUN         1 (6.7%)
+
+--------------------------------------------------------------------------------
+STEP 3b -- CONNECTIVE CLEANLINESS (derivation-ii, decoder-memory-step1 methodology) *** THE GATE ***
+--------------------------------------------------------------------------------
+step-1 baseline (decoder-memory-step1, 98-record TEST split of full encoder_gold_v2, ORIGINAL gold, no modifier/subordination extraction): function=61.4% content=38.6% other=0.0% of the raw connective gap (n=1845 connective tokens)
+
+ORIGINAL   connective-token POS composition (n=4058): function=60.6% content=39.4% other=0.0%   (node-owned=1192/5250 = 22.7%, connective=4058/5250 = 77.3%)
+PHASE1     connective-token POS composition (n=3680): function=61.1% content=38.9% other=0.0%   (node-owned=1570/5250 = 29.9%, connective=3680/5250 = 70.1%)
+PHASE3     connective-token POS composition (n=3666): function=61.1% content=38.9% other=0.0%   (node-owned=1584/5250 = 30.2%, connective=3666/5250 = 69.8%)
+
+GATE CHECK: step-1 baseline content fraction = 38.6%. Is phase3's content fraction materially DOWN? phase3 = 38.9%
+
+connective diversity, phase3 gold, top 10 most common (relation_a, relation_b) keys:
+  ('BOS', 'SUBJECT')                       freq=  73  distinct_strings=  59  top5=['and'x7, 'so'x4, 'as'x3, 'for ,'x2, 'and so'x2]
+  ('OBJECT', 'EOS')                        freq=  71  distinct_strings=  48  top5=['.'x15, '!'x6, '?'x4, 'get out again .'x2, '= one passage .'x1]
+  ('PREDICATE', 'DESCRIPTION')             freq=  58  distinct_strings=  43  top5=['to'x4, 'upon'x4, 'with'x3, 'on'x3, 'up'x3]
+  ('SUBJECT', 'PREDICATE')                 freq=  53  distinct_strings=  31  top5=["'ll"x6, 'had'x6, 'was'x5, "n't"x4, 'would'x2]
+  ('PLACE', 'EOS')                         freq=  49  distinct_strings=  30  top5=['.'x13, '!'x6, '?'x3, 'of the earth .'x1, ', hurrying down it .'x1]
+  ('PREDICATE', 'PLACE')                   freq=  42  distinct_strings=  21  top5=['to'x16, 'on'x6, 'into'x2, 'to look down'x1, 'with cupboards and book-shelves ;'x1]
+  ('PLACE', 'SUBJECT')                     freq=  39  distinct_strings=  36  top5=[','x4, 'own mind ( as well as'x1, 'down went alice after it , never once considering how in the world'x1, ', and then dipped suddenly down , so suddenly that alice had not a moment to think about stopping'x1, 'make out what'x1]
+  ('OBJECT', 'DESCRIPTION')                freq=  35  distinct_strings=  29  top5=['for'x3, 'in'x2, 'out of'x2, 'of'x2, 'into'x2]
+  ('OBJECT', 'SUBJECT')                    freq=  32  distinct_strings=  32  top5=['to , but it was too dark to see anything ; then'x1, 'noticed that'x1, "did n't much matter which way"x1, ', wondering how'x1, ", ' so"x1]
+  ('BOS', 'DESCRIPTION')                   freq=  30  distinct_strings=  27  top5=['how'x3, 'and'x2, 'in'x1, 'would'x1, 'there are no mice in'x1]
+
+--------------------------------------------------------------------------------
+8 BEFORE(orig) -> PHASE1 -> PHASE3 EXAMPLES
+--------------------------------------------------------------------------------
+TEXT: "i wonder if i 've been changed in the night ?"
+  ORIG:
+    pred='wonder'  SUBJECT='i', PLACE='night'
+  PHASE1:
+    pred='wonder'  SUBJECT='i', PLACE='night', DESCRIPTION='the'
+  PHASE3:
+    pred='wonder'  SUBJECT='i', PLACE='night', DESCRIPTION='the'
+    pred="'ve"  SUBJECT='i'
+
+TEXT: "her first idea was that she had somehow fallen into the sea , 'and in that case i can go back by railway , ' she said to herself ."
+  ORIG:
+    pred='was'  SUBJECT='idea', PLACE='sea'
+    pred='go'  SUBJECT='i', OBJECT='back', PLACE='railway'
+    pred='said'  SUBJECT='she', PLACE='herself'
+  PHASE1:
+    pred='was'  SUBJECT='idea', PLACE='sea', DESCRIPTION='her', DESCRIPTION='first', DESCRIPTION='the'
+    pred='go'  SUBJECT='i', OBJECT='back', PLACE='railway'
+    pred='said'  SUBJECT='she', PLACE='herself'
+  PHASE3:
+    pred='was'  SUBJECT='idea', PLACE='sea', DESCRIPTION='her', DESCRIPTION='first', DESCRIPTION='the'
+    pred='go'  SUBJECT='i', OBJECT='back', PLACE='railway'
+    pred='said'  SUBJECT='she', PLACE='herself'
+    pred='had'  SUBJECT='she', SPECIFICATION='somehow'
+
+TEXT: "and yet i wish i could show you our cat dinah : i think you 'd take a fancy to cats if you could only see her ."
+  ORIG:
+    pred='wish'  SUBJECT='i', PLACE='cats', OBJECT='i'
+    pred='take'  SUBJECT='you', OBJECT='fancy', PLACE='cats'
+  PHASE1:
+    pred='wish'  SUBJECT='i', PLACE='cats', OBJECT='i'
+    pred='take'  SUBJECT='you', OBJECT='fancy', DESCRIPTION='a', PLACE='cats'
+  PHASE3:
+    pred='wish'  SUBJECT='i', PLACE='cats', OBJECT='i'
+    pred='take'  SUBJECT='you', OBJECT='fancy', DESCRIPTION='a', PLACE='cats'
+    pred='could'  SUBJECT='you', SPECIFICATION='only'
+
+TEXT: 'said alice ; not that she wanted much to know , but the dodo had paused as if it thought that somebody ought to speak , and no one else seemed inclined to say anything .'
+  ORIG:
+    pred='wanted'  SUBJECT='she'
+  PHASE1:
+    pred='wanted'  SUBJECT='she', SPECIFICATION='much'
+  PHASE3:
+    pred='wanted'  SUBJECT='she', SPECIFICATION='much'
+    pred='thought'  SUBJECT='it'
+
+TEXT: 'the next thing was to eat the comfits : this caused some noise and confusion , as the large birds complained that they could not taste theirs , and the small ones choked and had to be patted on the back .'
+  ORIG:
+    pred='was'  SUBJECT='thing', OBJECT='noise'
+    pred='was'  SUBJECT='thing', OBJECT='confusion'
+    pred='caused'  SUBJECT='this', OBJECT='and'
+    pred='patted'  SUBJECT='to', PLACE='back'
+  PHASE1:
+    pred='was'  SUBJECT='thing', OBJECT='noise', DESCRIPTION='the', DESCRIPTION='next'
+    pred='was'  SUBJECT='thing', OBJECT='confusion', DESCRIPTION='the', DESCRIPTION='next'
+    pred='caused'  SUBJECT='this', OBJECT='and'
+    pred='patted'  SUBJECT='to', PLACE='back', DESCRIPTION='the'
+  PHASE3:
+    pred='was'  SUBJECT='thing', OBJECT='noise', DESCRIPTION='the', DESCRIPTION='next'
+    pred='was'  SUBJECT='thing', OBJECT='confusion', DESCRIPTION='the', DESCRIPTION='next'
+    pred='caused'  SUBJECT='this', OBJECT='and'
+    pred='patted'  SUBJECT='to', PLACE='back', DESCRIPTION='the'
+    pred='could'  SUBJECT='they'
+
+TEXT: 'when i used to read fairy-tales , i fancied that kind of thing never happened , and now here i am in the middle of one !'
+  ORIG:
+    pred='used'  SUBJECT='i', OF='thing'
+    pred='am'  SUBJECT='i', PLACE='middle', OF='one'
+  PHASE1:
+    pred='used'  SUBJECT='i', OF='thing'
+    pred='am'  SUBJECT='i', PLACE='middle', DESCRIPTION='the', OF='one'
+  PHASE3:
+    pred='used'  SUBJECT='i', OF='thing'
+    pred='am'  SUBJECT='i', PLACE='middle', DESCRIPTION='the', OF='one'
+    pred='happened'  SUBJECT='kind', SPECIFICATION='never'
+
+(only 6 examples where phase3 strictly added coverage beyond phase1 in this sample)
+
+================================================================================
+VERDICT
+================================================================================
+Coverage: orig 22.70% -> phase1 29.90% -> phase3 30.17% (+0.27pp over phase1, +7.47pp over orig). SUBORDINATION recursion adds only a THIN slice on top of phase1, because most transitive complementizer clauses in this corpus ("mary believes that the cat sees the dog") were ALREADY being recovered -- unlinked, mislabeled as an unrelated top-level fact -- by the pre-existing _secondary_fact_clauses fallback (any extra SUBJECT edge with a PP/OBJECT becomes its own fact clause, subordination-blind). The genuinely NEW coverage this phase adds is narrow: intransitive embedded clauses that fallback used to drop entirely (no PP/OBJECT to qualify), plus subject-relative clauses (whose predicate never had a SUBJECT edge in the first place, so the fallback never saw them at all). SUBORDINATION itself is also rare in this corpus's successfully-parsed structures (17/200 top-1 parses).
+
+Connective cleanliness (THE gate): content fraction of the raw connective gap is UNCHANGED within noise -- orig 39.4%, phase1 38.9%, phase3 38.9%, vs the step-1 baseline's 38.6%. Not materially down. The new subordinate clauses pull a handful of content words (verbs, a noun) out of the gap, but not enough to move the aggregate needle: the gap is still ~39% content words, same order of magnitude as before any richer-structure work.
+
+--------------------------------------------------------------------------------
+STEP 4 -- REGRESSION
+--------------------------------------------------------------------------------
+`pytest tests/ -k "clause or discourse or parser" -q`: 101 passed, 6 failed (1076 deselected, 234.87s).
+
+Pass/fail delta vs phase1's 101p/6f: ZERO delta -- identical count, and the
+SAME 6 tests fail for the SAME reasons (verified by name, not just count):
+  - test_curriculum2.py::test_sense_binding_anchor_clauses_never_carry_a_context_word
+  - test_multi_arg_transfer.py::test_multi_arg_clause_unrolls_sharing_entity
+  - test_parser_round2.py::test_clean_transitive_clause_yields_both_directions
+  - test_parser_round2.py::test_generic_pp_clause_becomes_an_object_fact_not_a_failure
+  - test_parser_round2.py::test_object_question_becomes_a_real_episode
+  - test_sense_resolver.py::test_sense_binding_batch_no_same_clause_context_leak
+All 6 are the SAME phase1 fallout (downstream role-count/content-word-count
+heuristics outside clause.py that predate phase1's new modifier roles --
+see phase1's own report for the per-test root-cause trace). No NEW failure:
+SUBORDINATE clauses are appended as ADDITIONAL Clause objects in the
+returned list, never altering any existing clause's args/predicate, so no
+downstream consumer that was passing against phase1's output regressed.

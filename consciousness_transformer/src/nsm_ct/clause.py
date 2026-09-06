@@ -562,8 +562,17 @@ def _fact_clause(graph, subj: str, pred: Optional[str], rel: str, val_idx: int,
                   head=_syn("CLAUSE", pred), is_question=is_question)
 
 
-def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx: Optional[int]) -> List[Clause]:
+def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idxs: "set") -> List[Clause]:
     """Independent fact clauses for OTHER top-level subjects.
+
+    ``skip_clause_idxs`` (PHASE 3, was a single ``skip_clause_idx`` int):
+    every clause-bearing node index already claimed by another path --
+    the primary clause plus, since PHASE 3, every nested-clause predicate
+    :func:`_subordinate_clauses` already turned into its own
+    :class:`Clause`. A nested clause's own predicate carries a real
+    SUBJECT edge in the complementizer shape ("he knew that she left" --
+    "left" has SUBJECT->"she"), which would otherwise make this function
+    re-emit it a SECOND time as an unrelated top-level fact.
 
     :func:`_primary_discourse` only ever looks at the *first* SUBJECT edge
     (``subs[0]``) — every existing single-sentence shape (coordination,
@@ -579,7 +588,7 @@ def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx:
     """
     out: List[Clause] = []
     for c_idx, s_idx in subs:
-        if c_idx == skip_clause_idx:
+        if c_idx in skip_clause_idxs:
             continue
         subj = graph.token(s_idx)
         pred = graph.token(c_idx)
@@ -783,6 +792,110 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
     return [], []
 
 
+def _subordinate_clauses(graph, exclude_idxs: "set") -> Tuple[List[Clause], "set"]:
+    """PHASE 3 (additive, on top of phase 1's modifier extraction): recurse
+    into every SUBORDINATION edge and extract the nested clause it points
+    to as its own :class:`Clause`, reusing the same argument-collection
+    funnel (:func:`_extra_args`) phase 1 already uses for modifiers.
+
+    Two shapes, both verified empirically against real parses (parsing
+    "she said that the dog ran", "mary believes that the cat sees the dog",
+    "the dog that barked is happy", "the ball that mary found is round" and
+    printing the resulting :class:`~nsm_ct.quantum_adapter.HypGraph` edges
+    -- NOT just read off the grammar's enum/comments, which is the same
+    discipline phase 1's DESCRIPTION/SPECIFICATION direction correction
+    used, for the same reason: this grammar's edge directions disagree with
+    each other and with the enum's own doc comments):
+
+    1. COMPLEMENTIZER ("said that S" / "believes that S"): the host
+       predicate's SUBORDINATION edge points to a placeholder CLAUSE node
+       (token "that", flagged both RELATIVE and SUBORDINATE by the
+       ``clause2``-family grammar rule) which carries no arguments of its
+       own; THAT node's own MODIFICATION edge points to the real nested
+       predicate ("ran"/"sees"), which carries its own SUBJECT/OBJECT edges
+       exactly like any top-level clause. The SUBORDINATE flag (stamped by
+       the grammar rule that builds this shape) is what distinguishes this
+       from shape 2 below -- both put a CLAUSE/PREDICATE node on the
+       SUBORDINATION edge's target, but only this shape's target is itself
+       a mere connective.
+    2. RELATIVE CLAUSE ("the NOUN who/that V..."): the host (the modified
+       NOUN, not a predicate) points via SUBORDINATION straight at the
+       nested predicate itself ("barked"/"found"); that predicate's own
+       MODIFICATION edge points not to a further nested predicate but to
+       the relative marker ("who"/"that"/"where") filling the GAP the
+       relative clause left behind -- the missing SUBJECT when the
+       predicate has no separate SUBJECT edge of its own ("the dog who
+       chased ..."), else the missing OBJECT when it does ("the ball that
+       mary found" -- "found" already has SUBJECT->"mary", so "that" fills
+       the OBJECT gap; "where"/other SPECIFIER relative markers fill a
+       PLACE gap instead, per the ``rel2`` grammar rule, though no sample
+       sentence exercising that path parsed successfully to confirm it end
+       to end -- included defensively, at zero cost to the confirmed paths).
+
+    Only ONE hop is resolved directly per SUBORDINATION edge, but a nested
+    predicate that itself carries a further SUBORDINATION edge is still
+    picked up, because the scan below walks every SUBORDINATION edge in the
+    graph (not just ones hanging off an already-known clause), so chained
+    subordination recurses for free.
+
+    Returns ``(nested_clauses, consumed_idxs)`` -- ``consumed_idxs`` is
+    every nested-predicate graph-node index turned into a clause here, so
+    :func:`extract_discourse` can keep :func:`_secondary_fact_clauses` from
+    re-emitting the same predicate as an unrelated top-level fact (a
+    complementizer-shape nested predicate carries a real SUBJECT edge, so
+    it would otherwise also show up in ``graph.edges_of("SUBJECT")``).
+    """
+    clauses: List[Clause] = []
+    consumed: set = set()
+    sub_edges = [(p, c) for (t, p, c) in graph.edges
+                 if t in ("SUBORDINATION", "SUBORDINATION_FROM", "SUBORDINATION_TO")]
+    for _host_idx, target_idx in sub_edges:
+        if target_idx in exclude_idxs or target_idx in consumed:
+            continue
+        mod_idx = next((c for (t, p, c) in graph.edges if t == "MODIFICATION" and p == target_idx), None)
+        if mod_idx is None:
+            continue  # no way to reach the real nested predicate/gap -- skip cleanly
+        if "SUBORDINATE" in graph.flags_of(target_idx):
+            nested_pred_idx, gap_idx = mod_idx, None       # shape 1: target is the connective
+        else:
+            nested_pred_idx, gap_idx = target_idx, mod_idx  # shape 2: target IS the predicate
+
+        if nested_pred_idx in exclude_idxs or nested_pred_idx in consumed:
+            continue
+        pred_tok = graph.token(nested_pred_idx)
+        if not pred_tok or pred_tok in _PUNCT:
+            continue
+
+        subj_edge = next(((p, c) for (t, p, c) in graph.edges
+                           if t == "SUBJECT" and p == nested_pred_idx), None)
+        args: List[Tuple[str, ParseNode]] = []
+        exclude = {nested_pred_idx}
+        if subj_edge is not None:
+            _p, subj_idx = subj_edge
+            subj_tok = graph.token(subj_idx)
+            if subj_tok and subj_tok not in _PUNCT:
+                args.append(("SUBJECT", _syn(graph.label(subj_idx) or "NOMINAL", subj_tok, "SUBJECT")))
+            exclude.add(subj_idx)
+
+        if gap_idx is not None and gap_idx not in exclude:
+            gap_tok = graph.token(gap_idx)
+            if gap_tok and gap_tok not in _PUNCT:
+                if graph.label(gap_idx) == "SPECIFIER":
+                    gap_rel = "PLACE"
+                elif subj_edge is None:
+                    gap_rel = "SUBJECT"
+                else:
+                    gap_rel = "OBJECT"
+                args.append((gap_rel, _syn(graph.label(gap_idx) or "NOMINAL", gap_tok, gap_rel)))
+            exclude.add(gap_idx)
+
+        args.extend(_extra_args(graph, nested_pred_idx, exclude=exclude))
+        clauses.append(Clause(predicate=pred_tok, args=args, head=_syn("CLAUSE", pred_tok),
+                               is_question=_is_question(graph, nested_pred_idx)))
+        consumed.add(nested_pred_idx)
+    return clauses, consumed
+
+
 def extract_discourse(graph) -> Tuple[List[Clause], List[DiscourseLink]]:
     """Pull clauses + their coordinating links from a flat hypothesis graph.
 
@@ -791,16 +904,34 @@ def extract_discourse(graph) -> Tuple[List[Clause], List[DiscourseLink]]:
     function existed), then appends one independent fact clause per *other*
     top-level subject (see :func:`_secondary_fact_clauses`) — the shape that
     shows up once :class:`~nsm_ct.input_encoder.ParserInputEncoder` merges
-    several per-sentence graphs into one for multi-sentence input.
+    several per-sentence graphs into one for multi-sentence input. PHASE 3
+    (additive on top of phase 1's modifier extraction): also recurses into
+    every SUBORDINATION edge (see :func:`_subordinate_clauses`) and appends
+    each nested clause it finds, related back to the primary clause via a
+    ``SUBORDINATE`` :class:`DiscourseLink` (no NSM prime grounds subordination
+    itself the way MAYBE grounds OR -- this curriculum only distinguishes
+    complementizer/relative subordination, not the causal/conditional
+    BECAUSE/IF/WHEN shapes the coordinator table already reserves primes
+    for).
     """
     if graph is None or not getattr(graph, "nodes", None):
         return [], []
     subj, pred, clause_idx, subj_idx = _subject_predicate(graph)
     clauses, links = _primary_discourse(graph, subj, pred, clause_idx, subj_idx)
+    exclude_idxs = {clause_idx} if clause_idx is not None else set()
+    sub_clauses, sub_consumed = _subordinate_clauses(graph, exclude_idxs)
+    skip_idxs = exclude_idxs | sub_consumed
     subs = graph.edges_of("SUBJECT")
     if len(subs) > 1:
-        clauses = clauses + _secondary_fact_clauses(graph, subs, clause_idx)
+        clauses = clauses + _secondary_fact_clauses(graph, subs, skip_idxs)
     clauses = clauses + _recover_coordinated_clause_orphans(graph)
+    if sub_clauses:
+        base_i = 0 if clauses else None
+        for cl in sub_clauses:
+            j = len(clauses)
+            clauses.append(cl)
+            if base_i is not None:
+                links.append(DiscourseLink("SUBORDINATE", None, base_i, j))
     return clauses, links
 
 
