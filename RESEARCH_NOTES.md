@@ -867,3 +867,27 @@ first (fine for realization = copy tokens in order).
 PLAN: Phase1a = additive DESCRIPTION/SPECIFICATION/SUBJECT_COMPLEMENT extraction
 -> regenerate gold SAMPLE -> measure coverage lift (23% -> ?) as a GATE before
 retrain. Dispatched. Proceeding autonomously (extraction branch, per lead).
+
+### RICHER-STRUCTURE PHASE 1a: modifiers done, honest partial (2026-09-06)
+
+Branch richer-gold-phase1 (clause.py additive change; runs/richer_phase1_report.txt).
+Coverage 22.9% -> 30.1% (+7.2pts, +31% rel). New roles: DESCRIPTION 324,
+SPECIFICATION 57, COMPLEMENT 25; newly-covered POS 51% DET / 28% ADJ / 14% ADV.
+Extraction verified CORRECT (10/10 examples attach to right clause; DESCRIPTION
+child=modifier, SPECIFICATION parent=modifier -- opposite directions, both
+handled; SUBJECT_COMPLEMENT dead in grammar -> COMPLEMENT fires instead; both
+walked). No parser work.
+CAVEATS (honest): (1) +7pts is the SMALL slice -- modifiers were easy; the big
+coverage is SUBORDINATE CLAUSES (phase 3) + coordination/multi-verb. 30% not yet
+enough for verbatim round-trip. (2) Richer roles RIPPLE: 6 downstream tests fail
+(corpus.py _prose_steps role-count heuristics `len(other_roles)==1`, sense-binding
+curriculum "one content word" invariant) -- all correctly diagnosed as consumers
+assuming the OLD narrow role set, NOT extraction bugs. Must be fixed before merge
+(phase 1b). So richer-structure = extraction(cheap) + downstream coupling(moderate)
++ multi-phase, NOT one-shot.
+GATE: does adding subordinate clauses reach reconstruction-viable coverage AND
+make connectives clean (the step-1 blocker: connectives were content because
+content was dropped)? Phase 3 dispatched (subordination extraction + re-measure
+coverage + connective function/content %). If it plateaus low or connectives
+stay content-laden, verbatim round-trip may be unreachable via extraction ->
+escalate to lead. Phase 1 NOT merged (breaks 6 tests); phase 3 builds on branch.
