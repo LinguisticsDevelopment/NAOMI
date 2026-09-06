@@ -680,3 +680,32 @@ theorizing -> AUDIT emitted trees first (trig_01H3Vczy1FvXYj5fAHvH8pHR, branch
 encoder-audit-logs): action histogram (does it ever STOP or hit max_clauses=20
 cap?), tree shape vs gold, token-index duplication, 8 full example trees. Design
 fix #3 from THAT data, not theory.
+
+### ROOT CAUSE FOUND: beam_decode ALIASING BUG (not the model at all) (2026-09-06)
+
+Decode audit (branch encoder-audit-logs:runs/audit_output.txt) revealed the real
+mechanism -- a Python object-aliasing bug in beam_decode, NOT model/mask/loss:
+  - Winning beams take SHORT, correct action sequences (100% terminate via real
+    STOP; e.g. "she answered herself" -> OPEN,EMIT_UNRESOLVED,GROUND,GROUND,
+    CLOSE,SHIFT,STOP = a clean parse) BUT emit HUGE trees (that 7-action beam
+    produced a 32-node tree). Mathematically impossible without pollution.
+  - THE BUG (encoder_model.py ~L739): on beam fork, child BeamState uses
+    `cur_clause=b.cur_clause` -- the SAME open-clause dict + roles LIST shared
+    across all sibling beams. Every sibling's GROUND/EMIT appends into ONE shared
+    roles list. Identity check: sharing factor 2.65, largest shared roles list
+    316 nodes. Winning tree = union of many beams' roles.
+  - This ALONE produced: overgen ~8x, edge_precision 0.10, structure_recall 0,
+    inflated sense recall, token dup up to 16x, 95.6% within-clause collisions.
+  - Training is TEACHER-FORCED (single trajectory, no branching) -> NEVER
+    affected. That's why the loss curve was healthy and real.
+CONSEQUENCE: ALL prior decode metrics are ARTIFACTS. The "encoder over-generates /
+is broken" verdict (run-1 AND run-2) is WRONG -- it was beam pollution. The three
+"failed fixes" (terminal-weight loss, strict_ground mask, decoder capacity) all
+did nothing because none touched the actual bug. The encoder's true quality is
+UNMEASURED and may be good.
+FIX (decode-only, no retrain): deepcopy cur_clause per fork. Branch
+encoder-aliasfix (trig_01CVABFD6npLqmCGb84GnWk4): fix + regression test (tree
+node count <= winning-beam emit-action count) + re-score run-2 ckpt + round-trip.
+Awaiting: does overgen collapse toward 1.0 and edge_precision/structure jump?
+LESSON: validate the eval harness before concluding the model is broken (CLAUDE.md
+"perfect-looking results get held-out tests" cuts both ways -- so do terrible ones).
