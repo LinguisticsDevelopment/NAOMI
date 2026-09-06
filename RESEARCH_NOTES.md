@@ -891,3 +891,34 @@ content was dropped)? Phase 3 dispatched (subordination extraction + re-measure
 coverage + connective function/content %). If it plateaus low or connectives
 stay content-laden, verbatim round-trip may be unreachable via extraction ->
 escalate to lead. Phase 1 NOT merged (breaks 6 tests); phase 3 builds on branch.
+
+### RICHER-STRUCTURE HITS A WALL: verbatim round-trip not reachable via extraction (2026-09-06)
+
+Phase 3 (subordination) result (branch richer-gold-phase3, runs/richer_phase3_report.txt,
+198-sentence sample):
+  Coverage: orig 22.7% -> phase1(modifiers) 29.9% -> phase3(+subordination) 30.2%
+    (subordination adds only +0.27pp -- SUBORDINATION rare, 17/200 parses, and
+     most complement clauses were already caught unlinked by _secondary_fact_clauses).
+  CONNECTIVE GATE (the decider): content fraction of the connective gap
+    orig 39.4% -> phase1 38.9% -> phase3 38.9% (step-1 baseline 38.6%). UNCHANGED.
+    Connectives still near-UNIQUE per (rel,rel) key (novel content per sentence).
+  Regression: same 6 downstream failures as phase1, no new (subordination clean).
+VERDICT: richer-structure-via-EXTRACTION PLATEAUS at ~30% coverage / ~39%-content
+connectives. Verbatim round-trip is NOT reachable this way. Deep reason: for
+verbatim reconstruction EVERY content token must be a copyable NODE, but the
+connective content is ~39% and NEAR-UNIQUE (novel) -> can't be templated as
+connectives, must be nodes -> needs ~full coverage -> extraction can't cheaply
+get there (remaining content is a long tail: coordination, serial verbs,
+embedded material, parser gaps -- steeply diminishing returns).
+KEEP: phase1 modifier extraction (+7pp, richer grounding: adj/adv/complement) is
+a GENUINE encoder-gold improvement regardless of the decoder decision -- worth
+merging after fixing the 6 downstream role-count consumers.
+REOPENED FORK (lead's call, NEW evidence): the lead chose richer-structure +
+verbatim round-trip over reduced-realization; that path now shows an evidentiary
+wall. Options: (a) REDUCED-REALIZATION (now evidence-favored; phase1 richer trees
+make the captured core bigger -> fuller faithful paraphrase; on-thesis = structure
+is abstracted meaning); (b) grind full-construction extraction (coordination/
+serial-verbs/... diminishing returns, long, parser gaps); (c) reconsider whether
+verbatim round-trip is the right GOAL at all (thesis implies lossy abstraction).
+RECOMMENDATION: pivot to reduced-realization (or reframe the goal); keep phase1
+gold for the encoder. ESCALATING to lead (reverses their decision w/ new data).
