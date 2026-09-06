@@ -598,3 +598,32 @@ REVISED PLAN (supersedes "encoder works, move to decoder+memory"):
      THEN the memory frame.
 STATUS: "encoder built+trained (0.93/0.96)" claim RETRACTED -- that was recall
 inflated by over-generation. Encoder structure competence is the real blocker.
+
+### ENCODER-FIX-V2 built + merged (2026-09-06, mainline 060550d)
+
+The mirage is now QUANTIFIED (scripts/rescore_encoder.py, runs/rescore_output.txt,
+n=98 EN test), model vs baselines:
+  MODEL: sense 0.935 slot 0.966 | edge_precision 0.100 edge_recall 0.644 overgen 8.12x
+  DUMP : sense 1.000 slot 0.885 | edge_precision 0.016 edge_recall 0.196 overgen 9.77x
+  RANDOM: sense 0.031            | edge_precision 0.010 edge_recall 0.010 overgen 0.06x
+=> model overgen (8.12) sits right beside the dump cheat baseline (9.77); edge
+precision 0.10 (90% of emitted edges spurious). The old 0.93/0.96 was recall
+inflated by ~8x over-generation, NOT structure. BUT model edge_recall 0.644 >>
+dump 0.196 and random 0.010 => it DID learn which edges are plausible; it just
+never learned to stop. Fixable shape.
+FIXES SHIPPED (7 commits, 41 tests green, smoke exit 0):
+  - edge_precision/edge_recall/overgen_ratio (best-tree EVAL view; forest never
+    collapsed -> candidates-first preserved) + policy="dump" cheat baseline.
+  - class-weighted CE up-weighting STOP/CLOSE_CLAUSE via --terminal-weight
+    (default 4.0; lib default 1.0 = backward-compatible) -- the commit/stop fix.
+  - confidence-gated decode --commit-margin (commit top-1 unless 2nd within
+    margin) = the lead's "give a set only when unsure".
+  - colab_train_all.py + notebook run-2 defaults: --enc-epochs 300, --dec-epochs
+    200, --dec-d-model 96, dump baseline in report, git-push cell -> branch
+    colab-trained-ckpts-v2. Notebook clones encoder-fix-v2 (kept alive).
+GATE for run-2 SUCCESS: model edge_precision must rise WELL above dump's 0.016
+and overgen_ratio must fall toward 1.0 (currently 8.12). Recall alone proves
+nothing now.
+NEXT: lead runs colab/Train_Encoder_And_Decoder.ipynb (run-2). Then evaluate
+precision/overgen. If terminal-weight+epochs insufficient, escalate to mask
+tightening or GPU-path (encoder is CPU-only; 300 ep may be slow on Colab).
