@@ -1,0 +1,221 @@
+================================================================================
+NAOMI richer-structure PHASE 1a -- coverage-gate report
+Branch: richer-gold-phase1 (base: claude/m27-m28-cleanup)
+================================================================================
+
+STEP 1 -- ADDITIVE EXTRACTION CHANGE (src/nsm_ct/clause.py)
+--------------------------------------------------------------------------------
+Modified: _extra_args() (the single funnel used by every branch of
+extract_discourse -- _primary_discourse's four shapes, _secondary_fact_clauses,
+and _recover_coordinated_clause_orphans). For each already-resolved argument
+node (subject, object, indirect object, PP value) AND the predicate node,
+_extra_args now ALSO walks:
+
+  - DESCRIPTION edges (adjectives + determiners modifying a noun)
+  - SPECIFICATION edges (adverbs modifying a predicate/descriptor)
+  - COMPLEMENT / SUBJECT_COMPLEMENT edges (predicate complements, "mary is
+    happy")
+
+...and appends each as a NEW FLAT role (relation = the edge-type name itself,
+e.g. "DESCRIPTION"). No existing role is removed or altered. No nesting, no
+head-pointer -- flat, as specified for this phase. SUBORDINATION untouched.
+
+IMPORTANT CORRECTION TO THE TASK'S STATED PREMISE (verified empirically by
+parsing real sentences and inspecting the actual HypGraph edges before writing
+any code, not just reading the enum's comments -- the comments contradict each
+other):
+
+  1. Predicate complements ("mary is happy") are emitted by this grammar as a
+     COMPLEMENT edge, NOT SUBJECT_COMPLEMENT. Grepping the grammar rule files
+     (quantum_parser/grammars/*.json) confirms no rule ever creates a
+     SUBJECT_COMPLEMENT edge -- it exists only in the ConnectionType enum and
+     in scorer.py's scoring set. Extraction now walks BOTH -- COMPLEMENT (the
+     one that actually fires) and SUBJECT_COMPLEMENT (per the literal spec,
+     currently a no-op, zero cost, forward-compatible if a future grammar rule
+     starts emitting it).
+  2. DESCRIPTION and SPECIFICATION do NOT share one edge direction. Verified
+     against real parses:
+       - DESCRIPTION: parent = the modified NOUN, child = the DESCRIPTOR
+         ("man" --DESCRIPTION--> "tall"). Modifier is the CHILD.
+       - SPECIFICATION: parent = the SPECIFIER (adverb), child = the modified
+         predicate/descriptor ("quickly" --SPECIFICATION--> "saw"). Modifier
+         is the PARENT -- the reverse of DESCRIPTION.
+     Both directions are walked explicitly; treating them as symmetric (as
+     the task description implied) would have silently dropped every adverb
+     attached to a predicate.
+
+Determiners arrive on the same DESCRIPTION edge as adjectives (quantum_parser
+has no separate DET edge type) -- included per spec; ground_word() has no
+WordNet sense for "the"/"a" so these fall back to type:"entity" grounding,
+which is fine for a coverage measurement, not a real sense grounding.
+
+_relation_for() and _clause_from_node() (the task's other two named drop
+sites) were deliberately NOT modified:
+  - _relation_for() only picks the PRIMARY relation label for a coordinated
+    element; it never drops modifiers, so there was nothing additive to do
+    there.
+  - _clause_from_node() backs extract_clauses(), the TREE-based path (not
+    extract_discourse(), the flat-GRAPH-based path this measurement and
+    scripts/build_encoder_gold_v2.py's build_record() actually use).
+    hypothesis_to_tree()'s walk only follows edges where the CURRENT node is
+    the edge's PARENT -- so a SPECIFICATION edge (parent=specifier,
+    child=predicate) is structurally UNREACHABLE from the tree's root, for
+    the exact same reason the module's own docstring gives for why HypGraph
+    exists at all ("coordinated elements point up to their coordinator,
+    leaving them unreachable from the root"). Modifying _clause_from_node
+    would have captured DESCRIPTION (reachable) but not SPECIFICATION
+    (unreachable), an inconsistent half-measure with no effect on the
+    measured pipeline -- left out of scope for this phase.
+
+SUBJECT-node modifiers (e.g. "tall" in "the tall man saw...") are threaded
+into _extra_args via a new modifier_idxs param, wired at every call site with
+a single unambiguous subject node. The two coordinated-subject branches
+(several subjects sharing one "extra" role list) deliberately do NOT thread
+subject modifiers, to avoid mis-attributing one conjunct's descriptor to
+every conjunct.
+
+STEP 2 -- REGENERATED GOLD (200-sentence sample)
+--------------------------------------------------------------------------------
+scripts/build_encoder_gold_v2.py (the build_record/build_clause_dict/
+ground_word machinery) lives on the encoder-gold-v2 branch, not this one --
+its logic was reused verbatim in a driver script run against the MODIFIED
+clause.py, re-parsing the first 200 `text` sentences from
+runs/encoder_gold_v2.jsonl (the OLD gold, generated pre-patch -- used as-is
+for the OLD side of the comparison; SAME sentences, so directly comparable),
+with a 20s per-sentence wall-clock cap (ParserInputEncoder._parse_topk_one's
+existing max_seconds).
+
+Output: runs/richer_gold_sample.jsonl
+Outcomes: {'ok': 198, 'cap-hit': 2} out of 200 (2 sentences hit the 20s cap
+and were skipped, not stalling the run). Both are long, clause-dense Alice-
+in-Wonderland sentences (30-50+ tokens with multiple coordinated/subordinate
+clauses) that are expensive for the CHART PARSER itself (combinatorial
+hypothesis growth) -- this extraction change never touches parsing/chart
+code, so the cap-hit is pre-existing parser behavior, not something this
+change introduced.
+
+STEP 3 -- COVERAGE MEASUREMENT (same 198 matched sentences, best tree only)
+--------------------------------------------------------------------------------
+Two coverage numbers are reported. The task's literal definition ("# surface
+tokens that are some node's token_index") counts only ROLE token_index values
+-- the gold JSON schema does not store a token_index for the predicate word
+itself, so neither OLD nor NEW credits the predicate token under this strict
+definition:
+
+  OLD (roles only):  844/5250 = 16.08%
+  NEW (roles only): 1222/5250 = 23.28%
+  DELTA:            +7.20 percentage points
+
+A second, predicate-inclusive number (left-to-right token match of each
+clause's predicate word against tokens not already claimed by a role) is
+reported because it lines up with the task's own "~23%" baseline claim almost
+exactly, confirming this measurement's methodology is sound:
+
+  OLD (+ predicate): 1202/5250 = 22.90%   <- matches the task's stated ~23%
+  NEW (+ predicate): 1580/5250 = 30.10%
+  DELTA:             +7.20 percentage points (identical -- predicate coverage
+                      is unchanged between OLD/NEW, only the modifier roles
+                      differ)
+
+New-role category breakdown (NEW gold, best tree, across 198 sentences):
+  DESCRIPTION:  324
+  SPECIFICATION: 57
+  COMPLEMENT:    25
+  (SUBJECT_COMPLEMENT: 0 -- confirmed dead in this grammar, see STEP 1 note)
+
+POS composition of the 378 newly-covered tokens (NEW minus OLD):
+  DET:   194 (51.3%)
+  ADJ:   105 (27.8%)
+  ADV:    53 (14.0%)
+  PRON:   17 (4.5%)   -- possessive pronouns ("her", "your") arriving via DESCRIPTION
+  VERB:    6 (1.6%)   -- participial modifiers ("known") via DESCRIPTION
+  NOUN:    3 (0.8%)
+  --> 93.1% is DET+ADJ+ADV, matching the expected modifier categories.
+
+10 side-by-side examples (sentence / OLD roles / NEW roles) were generated;
+see runs/richer_phase1_report.txt's companion examples.json in the session
+scratchpad, and the 3 examples inlined in the final chat message. Spot-checked
+across all 10: every new DESCRIPTION/SPECIFICATION/COMPLEMENT role attaches to
+the argument or predicate of the SAME clause it modifies in the SAME sentence
+-- no cross-sentence or cross-clause leakage observed. Pre-existing duplicate-
+clause artifacts (e.g. a coordinated-value sentence emitting the same
+subject/PP twice, once per coordinated element -- present in OLD already) now
+duplicate their modifiers too, consistently, not a new bug.
+
+STEP 4 -- REGRESSION
+--------------------------------------------------------------------------------
+`pytest tests/ -k "clause or discourse or parser" -q`: 101 passed, 6 failed
+(1076 deselected), 633s.
+
+ALL 6 failures trace to ONE root cause, and it is NOT a bug in the additive
+extraction change itself: Clause.args now legitimately carries more entries
+per clause (the new DESCRIPTION/SPECIFICATION/COMPLEMENT roles), and several
+DOWNSTREAM consumers of Clause.args (outside clause.py, out of this phase's
+"clause.py ONLY" scope) pattern-match on the OLD narrow role shape/count --
+they were never taught that a clause can carry a modifier role, so they now
+misfire. Verified by reading each failure's call site, not just the assert
+diff:
+
+  1. test_multi_arg_transfer.py::test_multi_arg_clause_unrolls_sharing_entity
+     -- "mary gave john the ball in the garden" now unrolls to 6 real steps
+     instead of the hard-coded 4 (AGENT+RECIPIENT+PLACE+question). The 2
+     extra steps are exactly the two new DESCRIPTION("the") roles (ball's,
+     garden's determiner) -- INTENDED richer output; the test's literal `4`
+     needs updating in a later phase, not a bug here.
+
+  2 & 3. test_curriculum2.py::test_sense_binding_anchor_clauses_never_carry_a_context_word
+     and test_sense_resolver.py::test_sense_binding_batch_no_same_clause_context_leak
+     -- both assert "the anchor clause has NO other content word besides the
+     homograph". A determiner/adjective modifying the same NP is now a
+     second content-word role in that clause, which is exactly what these
+     invariants were designed to catch -- correctly, on the OLD extraction.
+     Real fallout, not a false positive: Phase 1b needs to teach the sense-
+     binding curriculum generator to exclude modifier-only roles
+     (DESCRIPTION/SPECIFICATION/COMPLEMENT) from its "content word" count
+     before it can keep using this curriculum family.
+
+  4 & 5. test_parser_round2.py::test_clean_transitive_clause_yields_both_directions
+     and ::test_generic_pp_clause_becomes_an_object_fact_not_a_failure (and
+     the episode-count test downstream of it,
+     ::test_object_question_becomes_a_real_episode) -- traced to
+     nsm_ct.corpus._prose_steps/parse_passage's own "clean transitive" and
+     "clean catch-all" heuristics, which fire only when a clause has
+     EXACTLY ONE non-SUBJECT/PLACE role (`len(other_roles) == 1`). "The man
+     ate the apple" now carries DESCRIPTION("the") x2 alongside SUBJECT/
+     OBJECT, so `other_roles` has length 3, not 1 -- the heuristic no longer
+     recognizes the clause as "clean" and skips the complementary fact/
+     catch-all fact it used to emit. This is corpus.py code outside
+     clause.py, unmodified this phase, whose role-COUNTING heuristics
+     predate this phase's new roles -- confirmed real fallout, not an
+     extraction bug (every attached role is still correct; nothing is
+     misattributed).
+
+Net: 0 of the 6 failures are extraction bugs (no modifier attached to the
+wrong node or the wrong sentence in any of them); all 6 are the direct,
+explicable consequence of Clause.args no longer being restricted to the old
+~6-relation whitelist, in modules downstream of clause.py that this phase
+was scoped NOT to touch. Fixing them is Phase 1b's job (teach corpus.py's
+role-counting heuristics and the sense-binding curriculum generator to
+filter out modifier roles before applying their shape checks), gated on
+this coverage measurement first -- which is what this phase was for.
+--------------------------------------------------------------------------------
+
+VERDICT
+--------------------------------------------------------------------------------
+Coverage jumped materially: 22.90% -> 30.10% (+7.2 points absolute, +31%
+relative) on the predicate-inclusive metric that matches the task's own
+~23% baseline claim; the strict roles-only metric shows the identical +7.2pp
+delta (16.08% -> 23.28%). The richer extraction looks structurally correct:
+every one of the 10 dumped side-by-side examples attaches each new
+DESCRIPTION/SPECIFICATION/COMPLEMENT role to the right argument of the right
+clause in the right sentence (verified by hand, including multi-clause and
+coordinated sentences), the POS mix of newly-covered tokens is 93% DET+ADJ+
+ADV as expected, and the 6 pytest failures are all pre-existing downstream
+consumers whose role-count heuristics predate this phase's richer roles, not
+misattribution inside the new extraction code -- SUBJECT_COMPLEMENT never
+fires in this grammar (predicate complements arrive as plain COMPLEMENT
+instead, extraction now walks both) and DESCRIPTION/SPECIFICATION point in
+OPPOSITE directions in the real graph (verified empirically, not from the
+enum comments alone), both handled explicitly. No parser change, no
+retrain, main/master untouched.
+--------------------------------------------------------------------------------
