@@ -827,3 +827,21 @@ STATUS: autonomous work assigned by lead COMPLETE (encoder-data strategy +
 decoder viability + gold audit). Genuinely blocked on a lead architecture call:
 FORK for decoder/structure = (A) richer trees vs (reduced-realization + accept
 thin trees). Both downstream steps need this decision. Holding.
+
+### LEAD DECISIONS (2026-09-06)
+1. DECODER/structure = RICHER STRUCTURE. Keep verbatim round-trip as the goal;
+   fix the root sparsity by making gold trees capture more of the surface
+   (modifiers/adjuncts/determiners/conjuncts/subordinate clauses), not just the
+   ~23% pred-arg core. Reduced-realization REJECTED.
+2. ENCODER = MEASURE SCALING CURVE. Train at n=200/400/788 (fixed epochs),
+   report edge-F1 + teacher-forced-acc vs n, to decide if more data helps before
+   spending. Needs a Colab run from the lead.
+PLAN (richer structure): cost hinges on WHERE content is dropped --
+build_encoder_gold_v2.py:build_clause_dict copies cl.predicate + cl.args from
+nsm_ct.clause.extract_discourse(graph). If the parser GRAPH still holds the
+dropped modifiers/adjuncts (=> richer EXTRACTION, moderate) vs the parser never
+emits them (=> parser work, expensive). Investigation dispatched (local agent) to
+trace parse->clause->gold and return recoverability + cost per content category.
+Then: enrich extraction -> regenerate richer gold -> retrain encoder+decoder.
+NEXT: (a) await pipeline-trace verdict -> design richer-extraction; (b) build the
+scaling-curve Colab notebook for the lead.
