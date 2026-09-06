@@ -540,3 +540,29 @@ auto-return: lead downloads them or pastes the RESULTS block back to ledger
 the real numbers. Notebook URL: colab.research.google.com/github/
 LinguisticsDevelopment/NAOMI/blob/colab-full-notebook/consciousness_transformer/
 colab/Train_Encoder_And_Decoder.ipynb
+
+### COLAB RUN 1 results + lead ideas (2026-09-05)
+
+First full Colab run (checkpoints on branch colab-trained-ckpts):
+- ENCODER (50ep, 788 train): EN test sense 0.928 / slot 0.957 / STRUCTURE
+  0.000 (vs random 0.041/0.000/0.000). Spanish grammar-swap sense 1.000 vs
+  0.032 (ZERO ES training) -- cross-lingual transfer proven at scale.
+- DECODER (80ep): reconstruction from GOLD tree exact 0.000 / token-F1 0.360;
+  ROUND-TRIP (enc->dec) exact 0.000 / token-F1 0.323. No-confab 10/10 abstain.
+DIAGNOSIS (from numbers): grounding + cross-lingual + no-confab WORK; structure
+exact-match 0 and decoder reconstruction weak. Round-trip (0.32) ~= decoder-
+from-gold (0.36) => the DECODER is the round-trip bottleneck, not the encoder's
+imperfect trees.
+LEAD IDEAS (2026-09-05):
+1. Decoder: more training + MEMORY-side realization signal -- store each saved
+   clause-tree's PARENT RAWTEXT in the memory structures so the realizer learns
+   surface/"dialectic" patterns (meaning->how-it-was-said). Retrieval-augmented
+   realization; keep it from degenerating into memorizing training sentences.
+2. structure recall 0 while sense/slot 0.93/0.96 seems inconsistent -> but it's
+   PER-SITE (0.93/0.96) vs WHOLE-TREE-EXACT (0). Lead's key point: there ISN'T
+   a single "right" tree -- the encoder emits a candidate FOREST (candidates-
+   first); exact-match-to-one-gold-tree is likely the WRONG metric. Right
+   metric = gold-tree-in-forest SET recall + soft clause-boundary/attachment F1.
+   Don't add a loss that collapses to one tree (breaks candidates-first).
+NEXT: diagnosis routine loads the checkpoints -> soft structure metrics + set
+recall + example trees + decoder error breakdown, to tell close-vs-broken.
