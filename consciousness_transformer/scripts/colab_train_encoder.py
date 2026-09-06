@@ -97,9 +97,11 @@ def split_sizes(n_records: int, n_available: int, log) -> tuple:
     return n_train, n_dev, n_test
 
 
-def train(model, train_items, epochs, batch_size, lr, max_seconds, t0, log):
+def train(model, train_items, epochs, batch_size, lr, max_seconds, t0, log, terminal_weight=4.0):
     """Same teacher-forced training loop as scripts/train_encoder.py's
-    main(), calling em.teacher_force_loss verbatim -- no reimplemented loss."""
+    main(), calling em.teacher_force_loss verbatim -- no reimplemented loss.
+    `terminal_weight` up-weights the STOP/CLOSE_CLAUSE action-type CE loss
+    (spec fix, DIAGNOSIS 2026-09-06); see `em.teacher_force_loss`."""
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     loss_curve = []
     step_count = 0
@@ -118,7 +120,7 @@ def train(model, train_items, epochs, batch_size, lr, max_seconds, t0, log):
             if time.time() - train_start > max_seconds:
                 stopped_early = True
                 break
-            loss = em.teacher_force_loss(model, feats, steps) / batch_size
+            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=terminal_weight) / batch_size
             loss.backward()
             epoch_loss += float(loss.item()) * batch_size
             epoch_n += 1
@@ -167,6 +169,9 @@ def main() -> None:
     ap.add_argument("--hash-buckets", type=int, default=4096)
     ap.add_argument("--batch-size", type=int, default=32)
     ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--terminal-weight", type=float, default=4.0,
+                     help="up-weight the STOP/CLOSE_CLAUSE action-type CE loss by this factor "
+                          "(DIAGNOSIS 2026-09-06 fix); 1.0 = unweighted (original loss)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-seconds", type=float, default=5400.0, help="hard training-time cutoff")
     ap.add_argument("--beam-width", type=int, default=6)
@@ -232,7 +237,8 @@ def main() -> None:
         f"epochs={args.epochs}")
 
     loss_curve, train_wall, stopped_early = train(
-        model, train_items, args.epochs, args.batch_size, args.lr, args.max_seconds, t0, log)
+        model, train_items, args.epochs, args.batch_size, args.lr, args.max_seconds, t0, log,
+        terminal_weight=args.terminal_weight)
     log(f"training wall-clock: {train_wall:.1f}s (stopped_early={stopped_early})")
 
     model.eval()
@@ -275,7 +281,7 @@ def main() -> None:
         "d_model": args.d_model,
         "config": {"n_train": len(train_recs), "n_dev": len(dev_recs), "n_test": len(test_recs),
                    "epochs": args.epochs, "batch_size": args.batch_size, "seed": args.seed,
-                   "device": device},
+                   "terminal_weight": args.terminal_weight, "device": device},
         "loss_curve": loss_curve,
         "metrics": {"english_test": en_model_metrics, "english_test_random": en_random_metrics,
                     "spanish": es_model_metrics, "spanish_random": es_random_metrics},

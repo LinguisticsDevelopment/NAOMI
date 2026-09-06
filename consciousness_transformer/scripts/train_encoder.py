@@ -82,6 +82,11 @@ def main():
     ap.add_argument("--epochs", type=int, default=None)
     ap.add_argument("--batch-size", type=int, default=None)
     ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--terminal-weight", type=float, default=4.0,
+                     help="up-weight the STOP/CLOSE_CLAUSE action-type CE loss by this factor "
+                          "(spec fix, DIAGNOSIS 2026-09-06: rare terminal actions in the oracle "
+                          "are under-trained by plain CE, so the policy never learns to stop and "
+                          "over-attaches instead); 1.0 = unweighted (original loss)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-seconds", type=float, default=650.0, help="hard training-time cutoff")
     ap.add_argument("--beam-width", type=int, default=6)
@@ -164,7 +169,7 @@ def main():
             if time.time() - train_start > args.max_seconds:
                 stopped_early = True
                 break
-            loss = em.teacher_force_loss(model, feats, steps) / batch_size
+            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=args.terminal_weight) / batch_size
             loss.backward()
             epoch_loss += float(loss.item()) * batch_size
             epoch_n += 1
@@ -211,7 +216,8 @@ def main():
         "hash_buckets": hash_buckets,
         "d_model": d_model,
         "config": {"n_train": len(train_recs), "n_dev": len(dev_recs), "n_test": len(test_recs),
-                   "epochs": epochs, "batch_size": batch_size, "seed": args.seed},
+                   "epochs": epochs, "batch_size": batch_size, "seed": args.seed,
+                   "terminal_weight": args.terminal_weight},
         "loss_curve": loss_curve,
         "metrics": metrics,
         "random_baseline_test": random_metrics,

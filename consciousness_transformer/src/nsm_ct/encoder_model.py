@@ -482,7 +482,33 @@ class EncoderModel(nn.Module):
 # TYPE, the role/kind ARG, and the grounding TYPE -- never a candidate.
 # ---------------------------------------------------------------------------
 
-def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List[Step]) -> torch.Tensor:
+# The transition system's TERMINAL/REDUCE actions (spec fix, DIAGNOSIS
+# 2026-09-06): STOP ends the whole derivation; CLOSE_CLAUSE ends one clause
+# ("reduce" in classic transition-parser terms). Both are rare per oracle
+# derivation (one CLOSE_CLAUSE per clause, one STOP per sentence, against
+# many GROUND/SHIFT steps), so plain unweighted CE under-trains them --
+# the encoder never learns to stop, and over-attaches instead (see
+# `_dump_forest`'s docstring for the resulting failure mode).
+TERMINAL_ACTION_TYPES: Tuple[str, ...] = ("CLOSE_CLAUSE", "STOP")
+
+
+def _action_type_class_weights(terminal_weight: float) -> Optional[torch.Tensor]:
+    if terminal_weight == 1.0:
+        return None
+    w = torch.ones(len(ACTION_TYPES))
+    for a in TERMINAL_ACTION_TYPES:
+        w[ACTION_INDEX[a]] = terminal_weight
+    return w
+
+
+def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List[Step],
+                        terminal_weight: float = 1.0) -> torch.Tensor:
+    """`terminal_weight` (default 1.0 = unweighted, the original loss)
+    up-weights the action-TYPE cross-entropy specifically for the STOP/
+    CLOSE_CLAUSE targets (see `TERMINAL_ACTION_TYPES`) via `F.cross_entropy`'s
+    per-class `weight`. Only the action-type term is reweighted -- the
+    role/kind/gtype/source/prime terms are unaffected, and this is still a
+    pure teacher-forced loss on the oracle derivation, no decode-time change."""
     enc = model.encode(feats)
     T = enc.shape[0]
     h = model.init_controller_state()
@@ -491,6 +517,7 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
     prev_action_id = model._start_action_id
     i = 0
     has_clause = False
+    class_weights = _action_type_class_weights(terminal_weight)
 
     losses = []
     for step in steps:
@@ -502,7 +529,7 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
         mask = _mask_vector(legal)
         type_logits = model.action_type_head(h).squeeze(0) + mask
         target_type = torch.tensor(ACTION_INDEX[step.action])
-        losses.append(F.cross_entropy(type_logits.unsqueeze(0), target_type.unsqueeze(0)))
+        losses.append(F.cross_entropy(type_logits.unsqueeze(0), target_type.unsqueeze(0), weight=class_weights))
 
         if step.action == "OPEN_CLAUSE":
             kind_logits = model.kind_head(h).squeeze(0)
