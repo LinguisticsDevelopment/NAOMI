@@ -236,16 +236,21 @@ def main() -> None:
     ap.add_argument("--enc-records", type=int, default=984,
                      help="EN gold records for the encoder split (~80/10/10 train/dev/test); "
                           "984 reproduces the dev/ENCODER_MODEL_SPEC.md S2.3 full-Stage-i split")
-    ap.add_argument("--enc-epochs", type=int, default=50,
-                     help="~50-60 min end-to-end on this project's CPU dev box at --enc-records 984 "
-                          "(see scripts/colab_train_encoder.py)")
+    ap.add_argument("--enc-epochs", type=int, default=300,
+                     help="run-2 default (DIAGNOSIS 2026-09-06): run-1's 50 epochs was severely "
+                          "undertrained on top of the missing STOP/CLOSE_CLAUSE weighting -- see "
+                          "--terminal-weight; recalibrate against the printed per-epoch wall-clock")
+    ap.add_argument("--terminal-weight", type=float, default=4.0,
+                     help="up-weight the STOP/CLOSE_CLAUSE action-type CE loss by this factor "
+                          "(DIAGNOSIS 2026-09-06 fix: rare terminal actions are under-trained by "
+                          "plain CE, so the policy never learns to stop and over-attaches instead); "
+                          "1.0 = unweighted (run-1's original loss)")
     ap.add_argument("--dec-records", type=int, default=984,
                      help="EN gold records for the decoder split (80/20 train/dev, scripts/train_decoder.py)")
-    ap.add_argument("--dec-epochs", type=int, default=80,
-                     help="decoder is much smaller (48-d GRU) and its per-record features are cheap to "
-                          "rebuild (~15-17s/epoch at --dec-records 984 on this project's CPU dev box), "
-                          "so 80 epochs (~20-22 min) converges far faster per-epoch than the encoder; "
-                          "see the printed decoder training wall-clock to recalibrate")
+    ap.add_argument("--dec-epochs", type=int, default=200,
+                     help="run-2 default; decoder is much smaller than the encoder and its per-record "
+                          "features are cheap to rebuild, so it converges far faster per-epoch -- see "
+                          "the printed decoder training wall-clock to recalibrate")
     ap.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     ap.add_argument("--outdir", default=str(ROOT / "runs" / "colab_all"))
     ap.add_argument("--gold", default=str(ROOT / "runs" / "encoder_gold_v2.jsonl"))
@@ -258,7 +263,9 @@ def main() -> None:
     ap.add_argument("--enc-lr", type=float, default=1e-3)
     ap.add_argument("--enc-max-seconds", type=float, default=5400.0)
     # Decoder hyperparameters (nsm_ct.decoder_trained.DecoderTrainedModel / train_decoder.py defaults)
-    ap.add_argument("--dec-d-model", type=int, default=48)
+    ap.add_argument("--dec-d-model", type=int, default=96,
+                     help="run-2 default (up from 48); more decoder capacity per the DECODER PLAN "
+                          "UPDATE lead notes (reconstruction-from-gold was weak at 48-d)")
     ap.add_argument("--dec-hash-buckets", type=int, default=2048)
     ap.add_argument("--dec-batch-size", type=int, default=16)
     ap.add_argument("--dec-lr", type=float, default=1e-3)
@@ -337,9 +344,10 @@ def main() -> None:
     log(f"{len(enc_train_items)} teacher-forced derivations, batch_size={args.enc_batch_size}, "
         f"epochs={args.enc_epochs}")
 
+    log(f"terminal_weight={args.terminal_weight} (STOP/CLOSE_CLAUSE action-CE up-weight)")
     enc_loss_curve, enc_train_wall, enc_stopped_early = train_encoder_epochs(
         encoder, enc_train_items, args.enc_epochs, args.enc_batch_size, args.enc_lr,
-        args.enc_max_seconds, t0, log)
+        args.enc_max_seconds, t0, log, terminal_weight=args.terminal_weight)
     log(f"encoder training wall-clock: {enc_train_wall:.1f}s (stopped_early={enc_stopped_early})")
 
     encoder.eval()
@@ -353,6 +361,13 @@ def main() -> None:
     en_random_metrics = em.evaluate(encoder, enc_test, usvs, pos_vocab, args.enc_hash_buckets,
                                      beam_width=args.beam_width, k=args.k, policy="random", rng=rng)
     log(f"English test (random): {fmt_recall(en_random_metrics)}")
+
+    log("evaluating English 'dump everything' cheat baseline (DIAGNOSIS 2026-09-06 precision gate) ...")
+    en_dump_metrics = em.evaluate(encoder, enc_test, usvs, pos_vocab, args.enc_hash_buckets,
+                                   beam_width=args.beam_width, k=args.k, policy="dump")
+    log(f"English test (dump)  : {fmt_recall(en_dump_metrics)}")
+    log("  (dump wins recall trivially by over-generating; the model should beat it on "
+        "edge_precision/overgen_ratio, not just recall, or its recall is a mirage)")
 
     log(f"loading Spanish gold from {spanish_path} for the grammar-swap eval")
     spanish_records = load_gold(str(spanish_path))
@@ -377,9 +392,10 @@ def main() -> None:
         "d_model": args.enc_d_model,
         "config": {"n_train": len(enc_train), "n_dev": len(enc_dev), "n_test": len(enc_test),
                    "epochs": args.enc_epochs, "batch_size": args.enc_batch_size, "seed": args.seed,
-                   "device": device},
+                   "terminal_weight": args.terminal_weight, "device": device},
         "loss_curve": enc_loss_curve,
         "metrics": {"english_test": en_model_metrics, "english_test_random": en_random_metrics,
+                    "english_test_dump": en_dump_metrics,
                     "spanish": es_model_metrics, "spanish_random": es_random_metrics},
         "train_wallclock_s": enc_train_wall,
         "n_policy_params": n_enc_params,
@@ -503,6 +519,9 @@ def main() -> None:
     print("English (held-out test split):")
     print(f"  model : {fmt_recall(en_model_metrics)}")
     print(f"  random: {fmt_recall(en_random_metrics)}")
+    print(f"  dump  : {fmt_recall(en_dump_metrics)}  (cheat baseline -- see DIAGNOSIS 2026-09-06)")
+    print("  NOTE: dump wins recall trivially by over-generating every token under every type/role.")
+    print("        The model claim to watch is edge_precision/overgen_ratio vs dump, not recall alone.")
     print(f"Spanish grammar-swap ({len(spanish_records)} records, EN-trained weights, zero ES training):")
     print(f"  model : {fmt_recall(es_model_metrics)}")
     print(f"  random: {fmt_recall(es_random_metrics)}")
