@@ -922,3 +922,16 @@ serial-verbs/... diminishing returns, long, parser gaps); (c) reconsider whether
 verbatim round-trip is the right GOAL at all (thesis implies lossy abstraction).
 RECOMMENDATION: pivot to reduced-realization (or reframe the goal); keep phase1
 gold for the encoder. ESCALATING to lead (reverses their decision w/ new data).
+
+### ENCODER PUSH ready (scheduled sampling + scaling curve) (2026-09-06)
+Branch encoder-schedsamp: scheduled sampling added to teacher_force_loss
+(--sched-samp-max default 0.25, anneal; DEFAULT p_ss=0 = unchanged, 16 tests
+green); scripts/scaling_curve.py (train 200/400/788, report edge-F1 + TF-acc);
+colab/Encoder_Push.ipynb (Drive-safe overnight, 100 epochs). Smoke exit 0.
+Targets the measured 0.70-decode vs 0.888-TF exposure-bias gap (the encoder =
+weakest link, per lead) with NO new data. LEAD to run the notebook.
+Read: edge-F1 rising w/ n => data-limited; edge-F1 > 0.70 at n=788 => sched-samp
+recovered exposure bias.
+NEXT (director, autonomous-safe): (a) structure-match decoder evaluator (lead's
+cycle-consistency metric); (b) land phase-1 richer-gold modifier win (fix 6
+downstream role-count consumers + merge).
