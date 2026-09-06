@@ -1,0 +1,95 @@
+loading checkpoint /home/user/NAOMI/consciousness_transformer/runs/encoder_colab.pt ...
+policy params: 342,979
+checkpoint config: {'n_train': 788, 'n_dev': 98, 'n_test': 98, 'epochs': 100, 'batch_size': 32, 'seed': 0, 'terminal_weight': 4.0, 'device': 'cpu'}
+checkpoint's OLD reported metrics (recall-only, no precision gate): {"english_test": {"sense_recall": 0.9037800687285223, "slot_recall": 0.9627329192546584, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.11085291437108624, "edge_recall": 0.6363335407978266, "overgen_ratio": 7.501854905298782, "n_records": 98}, "english_test_random": {"sense_recall": 0.01718213058419244, "slot_recall": 0.0, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.003817809174952032, "edge_recall": 0.008434252822007923, "overgen_ratio": 0.07148463781116843, "n_records": 98}, "english_test_dump": {"sense_recall": 1.0, "slot_recall": 0.8850931677018633, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.016308240896128777, "edge_recall": 0.19587783248497534, "overgen_ratio": 9.772929493975413, "n_records": 98}, "spanish": {"sense_recall": 1.0, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.09614340219848728, "edge_recall": 0.42658253205128205, "overgen_ratio": 4.013721955128205, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 308, "slot_hits": 0, "tree_hits": 0}, "spanish_random": {"sense_recall": 0.048701298701298704, "slot_recall": NaN, "structure_recall": 0.0, "all_gold_recalled_rate": 0.0, "edge_precision": 0.003605769230769231, "edge_recall": 0.002944711538461539, "overgen_ratio": 0.008573717948717948, "n_records": 208, "sense_total": 308, "slot_total": 0, "tree_total": 346, "sense_hits": 15, "slot_hits": 0, "tree_hits": 0}}
+reproduced split: train=788 dev=98 test=98 (seed=0)
+scoring split=test (n=98)
+
+==============================================================================
+RE-SCORE: model vs random vs dump (NEW precision + overgen metrics)
+==============================================================================
+
+[MODEL]
+    sense_recall=0.787  slot_recall=0.795  structure_recall=0.212
+      edge_precision=0.700  edge_recall=0.695  overgen_ratio=1.082  (n=98)
+
+[RANDOM]
+    sense_recall=0.038  slot_recall=0.000  structure_recall=0.000
+      edge_precision=0.004  edge_recall=0.006  overgen_ratio=0.033  (n=98)
+
+[DUMP]
+    sense_recall=1.000  slot_recall=0.885  structure_recall=0.000
+      edge_precision=0.016  edge_recall=0.196  overgen_ratio=9.773  (n=98)
+
+==============================================================================
+HEADLINE
+==============================================================================
+  MODEL edge_precision = 0.700    MODEL overgen_ratio = 1.082
+  DUMP  edge_precision = 0.016    DUMP  overgen_ratio = 9.773
+  MODEL sense_recall   = 0.787    DUMP  sense_recall  = 1.000
+  (the old headline claim was model sense/slot recall alone; if MODEL's
+   overgen_ratio is close to DUMP's and MODEL's edge_precision is low,
+   that recall was inflated by over-generation, not real structure.)
+policy params: 342,979
+=== spanish_gold_v2.jsonl (n=208) ===
+  model : {
+  "sense_recall": 1.0,
+  "slot_recall": NaN,
+  "structure_recall": 0.13872832369942195,
+  "all_gold_recalled_rate": 0.20673076923076922,
+  "edge_precision": 0.755837912087913,
+  "edge_recall": 0.6949118589743588,
+  "overgen_ratio": 0.9305889423076935,
+  "n_records": 208,
+  "sense_total": 308,
+  "slot_total": 0,
+  "tree_total": 346,
+  "sense_hits": 308,
+  "slot_hits": 0,
+  "tree_hits": 48
+}
+  random: {
+  "sense_recall": 0.04220779220779221,
+  "slot_recall": NaN,
+  "structure_recall": 0.0,
+  "all_gold_recalled_rate": 0.0,
+  "edge_precision": 0.012339743589743591,
+  "edge_recall": 0.008393429487179487,
+  "overgen_ratio": 0.025500801282051285,
+  "n_records": 208,
+  "sense_total": 308,
+  "slot_total": 0,
+  "tree_total": 346,
+  "sense_hits": 13,
+  "slot_hits": 0,
+  "tree_hits": 0
+}
+round-trip test on 15 held-out English test-split sentences (encoder test split, n=98 total)
+  round-trip example: gold='isabella and caroline everywhere asserted their belief in the integrity of the orphans , but to prove it was in this instance out of their power .' pred="so was , hot was , but he did n't mind an eye to be sure , but he was afraid to do ."
+  round-trip example: gold="the farther he went down the laughing brook , the more puzzled farmer brown 's boy grew ." pred='and he went on boy , and the elephant was very on to the boy .'
+  round-trip example: gold="it was so big and fat that it made little joe 's mouth water , for you know fat trout are his favorite food ." pred="it 'll a rush rush : let the little red , and had a joe to be ."
+  round-trip example: gold='she recollected her father \'s having shown to her the prints of the coins at the end of each king \'s reign , in " rapin \'s history of england ; " and upon comparing these impressions with the coins found by the orphans , she perceived that many of them were of the reign of henry the seventh , which , from their scarcity , were highly appreciated by numismatic collectors .' pred='she recollected to a few little while , and reign a of mercia them them of soon , reign he would not a worm them of the ground , and gave a marvellous the same of the waking .'
+  round-trip example: gold='" your poor goat is dead , " replied peggy .' pred='" the little is , bill , " is the little red , and softer the door .'
+
+==============================================================================
+ROUND-TRIP RESULT (encoder.beam_decode -> decoder.realize, fixed beam_decode)
+==============================================================================
+n=15  empty_forest=0
+exact_match=0.000  token_f1=0.353
+
+5 gold-vs-realized example pairs:
+  GOLD: 'isabella and caroline everywhere asserted their belief in the integrity of the orphans , but to prove it was in this instance out of their power .'
+  PRED: "so was , hot was , but he did n't mind an eye to be sure , but he was afraid to do ."
+
+  GOLD: "the farther he went down the laughing brook , the more puzzled farmer brown 's boy grew ."
+  PRED: 'and he went on boy , and the elephant was very on to the boy .'
+
+  GOLD: "it was so big and fat that it made little joe 's mouth water , for you know fat trout are his favorite food ."
+  PRED: "it 'll a rush rush : let the little red , and had a joe to be ."
+
+  GOLD: 'she recollected her father \'s having shown to her the prints of the coins at the end of each king \'s reign , in " rapin \'s history of england ; " and upon comparing these impressions with the coins found by the orphans , she perceived that many of them were of the reign of henry the seventh , which , from their scarcity , were highly appreciated by numismatic collectors .'
+  PRED: 'she recollected to a few little while , and reign a of mercia them them of soon , reign he would not a worm them of the ground , and gave a marvellous the same of the waking .'
+
+  GOLD: '" your poor goat is dead , " replied peggy .'
+  PRED: '" the little is , bill , " is the little red , and softer the door .'
+
