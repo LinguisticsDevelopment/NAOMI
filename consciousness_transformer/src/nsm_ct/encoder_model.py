@@ -579,6 +579,51 @@ def _tree_skeleton(tree: dict) -> Tuple[frozenset, ...]:
     return tuple(sorted((_clause_skeleton(c) for c in tree["clauses"]), key=lambda s: sorted(map(str, s))))
 
 
+_DUMP_ROLE_CYCLE = ("SUBJECT", "OBJECT", "PLACE")
+
+
+def _dump_forest(feats: SentenceFeatures) -> List[dict]:
+    """The cheat baseline (spec: 'a dump policy... that attaches maximally /
+    never terminates early'): ground EVERY token under a role, as EVERY one
+    of the content/slot grounding types (sense, reference, elision), all in
+    one giant never-closed-until-forced clause -- exactly the over-attachment
+    failure mode (same token under multiple relations/types) this eval
+    exists to expose. No gold lookup anywhere (`sense_cand` is the same
+    per-token retrieval result `GROUND` copies, never the gold answer).
+
+    This bypasses the token-by-token transition state machine on purpose:
+    that machine's buffer pointer is strictly monotonic (each GROUND/
+    EMIT_UNRESOLVED_SLOT step consumes and advances past one token), so a
+    single linear pass structurally CANNOT re-attach an already-consumed
+    token under a second relation/type -- which is exactly the maximal
+    multi-type re-attachment a true "dump everything" policy needs. Instead
+    this directly builds the one-clause tree that behavior implies, using
+    the identical clause/node dict shape `beam_decode` produces, so
+    `score_record`/`evaluate` treat it identically either way.
+    """
+    T = len(feats.tokens)
+    if T == 0:
+        return [{"clauses": [{"predicate": {"relation": "PREDICATE", "token_index": None,
+                                             "grounding": {"type": "prime", "source": None,
+                                                           "prime": "<UNK_PRIME>", "candidates": None}},
+                               "roles": []}]}]
+
+    def _node(relation: str, t: int, gtype: str) -> dict:
+        cands = list(feats.sense_cand[t]) if gtype == "sense" and feats.sense_cand[t] else None
+        source = "lexicon" if gtype == "sense" else "context"
+        return {"relation": relation, "token_index": t,
+                "grounding": {"type": gtype, "source": source, "prime": None, "candidates": cands}}
+
+    predicate = _node("PREDICATE", 0, "sense")
+    roles: List[dict] = []
+    for t in range(T):
+        role = _DUMP_ROLE_CYCLE[t % len(_DUMP_ROLE_CYCLE)]
+        for gtype in ("sense", "reference", "elision"):
+            roles.append(_node(role, t, gtype))
+
+    return [{"clauses": [{"predicate": predicate, "roles": roles}]}]
+
+
 def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 8,
                  k: int = 8, max_steps: int = 400, max_clauses: int = 20,
                  policy: str = "model", rng: Optional[random.Random] = None) -> List[dict]:
@@ -586,13 +631,18 @@ def beam_decode(model: EncoderModel, feats: SentenceFeatures, beam_width: int = 
 
     `policy="model"` uses the learned action-type distribution (masked);
     `policy="random"` samples uniformly among legal actions instead -- the
-    random baseline used for comparison in eval (never used for training).
+    random baseline used for comparison in eval (never used for training);
+    `policy="dump"` is the over-generation cheat baseline (see
+    `_dump_forest`) -- never used for training, only for exposing recall
+    metrics that reward dumping over committing.
 
     A beam terminates primarily by emitting the learned STOP action (see
     `legal_action_types`); `max_clauses`/`max_steps` are only a safety-net
     backstop against a beam that never learns to stop, not the intended
     stopping mechanism.
     """
+    if policy == "dump":
+        return _dump_forest(feats)
     with torch.no_grad():
         enc = model.encode(feats) if policy == "model" else None
         T = len(feats.tokens)
@@ -782,6 +832,32 @@ def _emitted_sites(forest: List[dict]) -> Tuple[Dict[int, str], List[Tuple[Optio
     return sense_sites, slot_sites
 
 
+def _tree_edge_set(tree_skeleton: Tuple[frozenset, ...]) -> frozenset:
+    """A tree skeleton (one frozenset of (relation, token_index, gtype)
+    edges per clause, as `_tree_skeleton`/`_gold_sites` build) flattened to
+    ONE pooled edge set for the whole tree -- the unit edge-level precision/
+    recall/over-generation are measured over (spec: 'an edge = a node key
+    inside a clause -- the same tuples `_clause_skeleton` builds')."""
+    if not tree_skeleton:
+        return frozenset()
+    return frozenset().union(*tree_skeleton)
+
+
+def _best_tree_overlap(gold_edges: frozenset, forest_edge_sets: List[frozenset]) -> Tuple[int, int]:
+    """-> (overlap, best_tree_size) for the forest tree with MAX edge-overlap
+    to `gold_edges` (the 'best tree' -- an EVAL-VIEW selection only; the
+    emitted forest itself is never collapsed to one tree, see module note).
+    Ties broken toward the smaller tree (does not reward padding a tied
+    match with extra unrelated edges)."""
+    best_overlap, best_size = 0, 0
+    for edges in forest_edge_sets:
+        overlap = len(gold_edges & edges)
+        size = len(edges)
+        if overlap > best_overlap or (overlap == best_overlap and size < best_size):
+            best_overlap, best_size = overlap, size
+    return best_overlap, best_size
+
+
 @dataclass
 class RecordRecall:
     sense_hits: int
@@ -791,6 +867,9 @@ class RecordRecall:
     tree_hits: int
     tree_total: int
     all_recalled: bool
+    edge_precision: float
+    edge_recall: float
+    overgen_ratio: float
 
 
 def score_record(record: dict, forest: List[dict]) -> RecordRecall:
@@ -811,7 +890,25 @@ def score_record(record: dict, forest: List[dict]) -> RecordRecall:
     tree_total = len(gold_trees)
 
     all_recalled = (sense_hits == sense_total and slot_hits == slot_total and tree_hits == tree_total)
-    return RecordRecall(sense_hits, sense_total, slot_hits, slot_total, tree_hits, tree_total, all_recalled)
+
+    # Edge-level precision / recall / over-generation (best-tree EVAL VIEW
+    # only, per gold tree, averaged over this record's gold trees).
+    forest_edge_sets = [_tree_edge_set(sk) for sk in emit_forest_sk]
+    precisions, recalls, overgens = [], [], []
+    for gold_sk in gold_trees:
+        gold_edges = _tree_edge_set(gold_sk)
+        if not gold_edges:
+            continue
+        overlap, best_size = _best_tree_overlap(gold_edges, forest_edge_sets)
+        precisions.append(overlap / best_size if best_size else 0.0)
+        recalls.append(overlap / len(gold_edges))
+        overgens.append(best_size / len(gold_edges))
+    edge_precision = sum(precisions) / len(precisions) if precisions else float("nan")
+    edge_recall = sum(recalls) / len(recalls) if recalls else float("nan")
+    overgen_ratio = sum(overgens) / len(overgens) if overgens else float("nan")
+
+    return RecordRecall(sense_hits, sense_total, slot_hits, slot_total, tree_hits, tree_total, all_recalled,
+                         edge_precision, edge_recall, overgen_ratio)
 
 
 def aggregate_recall(scores: List[RecordRecall]) -> Dict[str, float]:
@@ -820,11 +917,22 @@ def aggregate_recall(scores: List[RecordRecall]) -> Dict[str, float]:
     th = sum(s.tree_hits for s in scores); tt = sum(s.tree_total for s in scores)
     ar = sum(1 for s in scores if s.all_recalled)
     n = len(scores)
+
+    def _mean(vals: List[float]) -> float:
+        vals = [v for v in vals if not math.isnan(v)]
+        return sum(vals) / len(vals) if vals else float("nan")
+
     return {
         "sense_recall": sh / st if st else float("nan"),
         "slot_recall": lh / lt if lt else float("nan"),
         "structure_recall": th / tt if tt else float("nan"),
         "all_gold_recalled_rate": ar / n if n else float("nan"),
+        # Best-tree edge precision/recall + over-generation ratio (eval-view
+        # only; see `_tree_edge_set`/`_best_tree_overlap`). ~1.0 overgen means
+        # right-sized trees; >>1.0 means dumping (see policy="dump").
+        "edge_precision": _mean([s.edge_precision for s in scores]),
+        "edge_recall": _mean([s.edge_recall for s in scores]),
+        "overgen_ratio": _mean([s.overgen_ratio for s in scores]),
         "n_records": n,
     }
 
@@ -832,6 +940,12 @@ def aggregate_recall(scores: List[RecordRecall]) -> Dict[str, float]:
 def evaluate(model: EncoderModel, records: Sequence[dict], usvs, pos_vocab: Dict[str, int],
              hash_buckets: int, beam_width: int = 8, k: int = 8,
              policy: str = "model", rng: Optional[random.Random] = None) -> Dict[str, float]:
+    """`policy`: "model" (learned), "random" (uniform-legal baseline), or
+    "dump" (the over-generation cheat baseline, `_dump_forest`) -- passed
+    straight through to `beam_decode`. Returns `aggregate_recall`'s dict:
+    the original site-recall fields (sense_recall/slot_recall/
+    structure_recall/all_gold_recalled_rate) PLUS best-tree edge_precision/
+    edge_recall/overgen_ratio (see `score_record`)."""
     scores = []
     for record in records:
         feats = build_features(record, usvs, pos_vocab, hash_buckets)

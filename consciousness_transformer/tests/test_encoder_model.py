@@ -6,6 +6,7 @@ argmax over candidates must be unrepresentable).
 """
 
 import json
+import random
 from pathlib import Path
 
 import pytest
@@ -280,3 +281,90 @@ def test_model_stays_sub_megabyte_at_smoke_dims():
                              d_tok=32, d_pos=8, d_sense=16, d_rule=8, d_model=64, controller_hidden=64)
     n_bytes = model.num_policy_params() * 4
     assert n_bytes < 1_000_000, f"policy is {n_bytes/1e6:.2f} MB, expected sub-MB at smoke dims"
+
+
+def _tiny_gold_record() -> dict:
+    """A hand-built 1-clause, 3-edge gold record ("cats chase mice"), just
+    enough schema for `_gold_sites`/`clause_node_order` to walk: a real
+    `tokens` list + a clause with a `predicate` surface token, a
+    `predicate_grounding`, and two roles."""
+    return {
+        "tokens": ["cats", "chase", "mice"],
+        "lattice": {"trees": [{"clauses": [{
+            "predicate": "chase",
+            "predicate_grounding": {"type": "entity"},
+            "roles": [
+                {"relation": "SUBJECT", "token_index": 0, "grounding": {"type": "sense"}},
+                {"relation": "OBJECT", "token_index": 2, "grounding": {"type": "sense"}},
+            ],
+            "utterance_kind": "proposition",
+        }]}]},
+    }
+
+
+def _emitted_clause(predicate_tidx, predicate_gtype, roles) -> dict:
+    return {"predicate": {"token_index": predicate_tidx, "grounding": {"type": predicate_gtype}},
+            "roles": [{"relation": r, "token_index": t, "grounding": {"type": g}} for r, t, g in roles]}
+
+
+def test_edge_precision_recall_exact_match_forest():
+    """An emitted forest whose one tree exactly reproduces the gold tree's
+    3 edges: precision=1.0, recall=1.0, overgen=1.0 (right-sized)."""
+    record = _tiny_gold_record()
+    forest = [{"clauses": [_emitted_clause(1, "entity", [("SUBJECT", 0, "sense"), ("OBJECT", 2, "sense")])]}]
+    score = em.score_record(record, forest)
+    assert score.edge_precision == pytest.approx(1.0)
+    assert score.edge_recall == pytest.approx(1.0)
+    assert score.overgen_ratio == pytest.approx(1.0)
+
+
+def test_edge_precision_recall_over_attachment_forest():
+    """An emitted tree that recalls all 3 gold edges but ALSO dumps 3 extra
+    (wrong) edges: recall stays 1.0 (nothing gold is missed), but precision
+    drops below 1 and the over-generation ratio rises above 1 -- the exact
+    signature the model-vs-dump comparison is meant to catch."""
+    record = _tiny_gold_record()
+    forest = [{"clauses": [_emitted_clause(1, "entity", [
+        ("SUBJECT", 0, "sense"), ("OBJECT", 2, "sense"),          # correct
+        ("PLACE", 0, "sense"), ("PLACE", 2, "reference"), ("SUBJECT", 1, "sense"),  # extra/wrong
+    ])]}]
+    score = em.score_record(record, forest)
+    assert score.edge_recall == pytest.approx(1.0)
+    assert score.edge_precision < 1.0
+    assert score.overgen_ratio > 1.0
+    # 6 emitted edges, 3 correct -> precision 0.5, overgen 2.0 exactly.
+    assert score.edge_precision == pytest.approx(0.5)
+    assert score.overgen_ratio == pytest.approx(2.0)
+
+
+def test_dump_policy_high_recall_low_precision_high_overgen(gold_records):
+    """The `policy="dump"` cheat baseline (spec: attaches maximally, never
+    terminates early) must reproduce the historical failure mode: strong
+    site recall (sense/slot -- the OLD metrics that made the over-generating
+    run-1 checkpoint look "done") but weak edge precision and a >>1
+    over-generation ratio (the NEW metrics this eval adds specifically to
+    catch that). Compared against a random-legal-action baseline, dump
+    should recall far more and over-generate far more."""
+    from nsm_ct.ground.usvs import load_usvs
+
+    usvs_dir = Path(__file__).resolve().parent.parent / "data" / "usvs"
+    if not usvs_dir.exists():
+        pytest.skip("needs data/usvs (run scripts/build_usvs.py)")
+    usvs = load_usvs(str(usvs_dir))
+    records = gold_records[:20]
+    pos_vocab = em.build_pos_vocab(records)
+    role_vocab = em.build_role_vocab(records)
+    hash_buckets = 1024
+    torch.manual_seed(0)
+    model = em.EncoderModel(pos_vocab, role_vocab, d_axes=len(usvs.axes), hash_buckets=hash_buckets,
+                             d_model=32, controller_hidden=32)
+    model.eval()
+
+    dump_metrics = em.evaluate(model, records, usvs, pos_vocab, hash_buckets, policy="dump")
+    random_metrics = em.evaluate(model, records, usvs, pos_vocab, hash_buckets, policy="random",
+                                  rng=random.Random(0))
+
+    assert dump_metrics["sense_recall"] > 0.9
+    assert dump_metrics["sense_recall"] > random_metrics["sense_recall"]
+    assert dump_metrics["overgen_ratio"] > 1.5
+    assert dump_metrics["edge_precision"] < 0.5

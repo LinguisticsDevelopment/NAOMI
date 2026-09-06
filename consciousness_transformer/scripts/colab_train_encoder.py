@@ -142,7 +142,10 @@ def train(model, train_items, epochs, batch_size, lr, max_seconds, t0, log):
 def fmt_recall(m: dict) -> str:
     return (f"sense={m.get('sense_recall', float('nan')):.3f} "
             f"slot={m.get('slot_recall', float('nan')):.3f} "
-            f"structure={m.get('structure_recall', float('nan')):.3f}")
+            f"structure={m.get('structure_recall', float('nan')):.3f} "
+            f"edge_precision={m.get('edge_precision', float('nan')):.3f} "
+            f"edge_recall={m.get('edge_recall', float('nan')):.3f} "
+            f"overgen={m.get('overgen_ratio', float('nan')):.3f}")
 
 
 def main() -> None:
