@@ -950,3 +950,27 @@ ceiling too. Confirms "encoder is the weakest link" from another angle.
 => metric is fair (gold-text high, garbage 0) and ready to be the decoder's
 training reward once the memory-decoder is rebuilt. Verbatim token-F1 (0.32)
 retired in favor of this.
+
+### ENCODER SCALING CURVE result: DATA-LIMITED (2026-09-07)
+Branch encoder-schedsamp-results (scaling_log.txt), 100 epochs/size, schedsamp p_ss=0.25:
+  n_train  edge_P  edge_R  edge_F1  overgen  tf_acc
+    200    0.618   0.520   0.565    0.830    0.814
+    400    0.651   0.511   0.573    0.814    0.826
+    788    0.713   0.654   0.682    0.952    0.877
+VERDICT 1 (DATA-LIMITED = YES): tf_acc rises monotonically 0.814->0.826->0.877
+(ceiling still climbing), edge-F1 jumps 0.573->0.682 at 788, no flattening. MORE
+DATA is the encoder lever. (Lead's "encoder is weakest link" + "measure scaling
+curve" both validated.)
+VERDICT 2 (scheduled sampling = ~NEUTRAL, my idea didn't pan out): vs old no-
+schedsamp n788 (edge_P 0.70/F1 ~0.70), this run 0.713/0.682 -- flat on F1 (recall
+dropped 0.695->0.654), overgen improved 1.08->0.95 (better calibration). The
+0.88-tf vs 0.68-F1 gap is NOT recoverable exposure bias -- it's error COMPOUNDING
+over the derivation (per-step 0.88 -> sequence ~0.68), and per-step acc is itself
+data-limited. Keep schedsamp low/off (mild overgen benefit only).
+=> ENCODER FIX = WAY MORE GRAMMATICAL ENGLISH GOLD (lead: "just need way more
+examples of working english"). Plan: (1) expand public-domain children's-lit
+corpus (fetch_corpus.py --allow-download; Burgess/Potter/Grimm/Andersen/Jacobs/
+McGuffey/Aesop) from ~985 -> several thousand sentences; (2) rebuild gold with the
+NOW-RICHER extraction (mainline) -> encoder_gold_v3; (3) retrain encoder on it
+(bigger n -> higher edge-F1). Corpus-expansion routine dispatched (branch
+corpus-expand + colab/Gold_Expand.ipynb). English-only; Spanish stays held-out.
