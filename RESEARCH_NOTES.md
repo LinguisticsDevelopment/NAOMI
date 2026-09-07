@@ -1018,3 +1018,31 @@ sources (yield/node-quality vs Burgess/Alice control) + forest-width distributio
 writability gate + existing-hand-gold check + ~16 draft hard-case candidates for
 lead review (branch hand-gold-draft, dev/HAND_GOLD_DRAFT.md). Both analysis/draft
 only; nothing merged. Gate the 16K gold build on QA (source-filter + prune) first.
+
+### GOLD QA + HAND-GOLD DRAFT results (2026-09-07)
+QA (branch gold-qa, runs/gold_qa_report.txt):
+- FOREST TOO WIDE (lead confirmed): current gold mean 3.46 trees/sentence, 61%
+  have 3+. Multi-tree variants are SPURIOUS -- trivial modifier-attachment wobble
+  (PLACE vs SPECIFICATION vs DESCRIPTION) or dropped clauses, NOT genuine
+  ambiguity; 50% of multi-tree are exact score-ties that are still spurious.
+  REC: prune gold to TOP-1 (1 tree/sentence) by default; keep token sense-
+  candidate SETS (candidates-first preserved where real); genuine structural
+  ambiguity = hand-curated, not parser top-k.
+- SOURCE QUALITY: new fairy-tale sources noisier -- yield Grimm/Jacobs 50%,
+  Andersen/McGuffey 58-62% vs Burgess control 82%; suspect-role 26-28% vs 18%.
+  But parse-FAILURES = lost gold not noise; OK trees only modestly noisier; top-1
+  pruning cleans further. REC: keep all sources.
+HAND-GOLD (branch hand-gold-draft, dev/HAND_GOLD_DRAFT.md, OPUS):
+- SCHEMA IS HUMAN-WRITABLE (yes). Human writes ~4-10 lines (surface, clause
+  split, utterance_kind, predicate, role labels, filler = W()/PRIME()/CTX()/
+  MEM()); scripts/hand_gold.py fills tokens/pos(real tagger)/candidates/indices/
+  ctx-handles. Gate validated: 16 drafts pass linearize+legality+round-trip+
+  finite train-loss; 5 injected corruptions caught.
+- 16 draft hard cases (imperatives/interjections/elision/synth). LEAD DECISIONS
+  RAISED: D2 interjection grounding (entity-now vs wait for USVS gloss-senses);
+  D3 'me'/'I' (no I prime -> <UNK_PRIME>, add prime or memory-ref); D4 missing
+  role labels QUANTITY/ADDITIVE/FOCUS (add to vocab or accept loss); D6 stranded
+  aux tense/polarity (elision slot name its carrier?).
+AWAITING LEAD: (1) forest rule (rec top-1); (2) source keep-all (rec yes);
+(3) review HAND_GOLD_DRAFT.md D2/D3/D4/D6. THEN apply source-filter+prune to
+build_encoder_gold_v2 and run the 16K gold build. Nothing merged/trained yet.
