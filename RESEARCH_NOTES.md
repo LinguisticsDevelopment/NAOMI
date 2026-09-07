@@ -974,3 +974,22 @@ McGuffey/Aesop) from ~985 -> several thousand sentences; (2) rebuild gold with t
 NOW-RICHER extraction (mainline) -> encoder_gold_v3; (3) retrain encoder on it
 (bigger n -> higher edge-F1). Corpus-expansion routine dispatched (branch
 corpus-expand + colab/Gold_Expand.ipynb). English-only; Spanish stays held-out.
+
+### CORPUS EXPANDED 11x: 1,475 -> 16,411 unique English sentences (2026-09-07)
+Branch corpus-expand: fetch_corpus.py extended (nltk gutenberg budgets raised +
+verified GITenberg direct-downloads). Sources: Burgess 856, Alice 1220, Bryant
+2245, Edgeworth 3515, Grimm 3003, Andersen 2897, Jacobs English Fairy Tales 2817,
+McGuffey 410 (+synthetics excluded from CORPUS_GLOB). All public-domain simple
+children's-lit English (same genre); English-only (Spanish still held-out).
+Smoke gold build (30 new sentences, richer clause.py): 22 records, modifiers
+(DESCRIPTION/SPECIFICATION/COMPLEMENT) present. colab/Gold_Expand.ipynb built
+(Drive-safe, fsync-per-record, per-sentence cap) -> encoder_gold_v3.jsonl.
+build_encoder_gold_v2.py: env-var out override + parse caps + fsync durability.
+CAVEAT (key): the CPU-only encoder CANNOT train on all 16K in feasible time
+(n=788 x100ep = 3.9h; 16K x100ep ~= 80h). PLAN: build gold (partial ok), TRAIN on
+a ~3-5K SUBSET at ~30 epochs (feasible ~4-7h) -> big edge-F1 jump per the
+data-limited scaling curve. Exploiting the FULL 16K is the trigger for a
+GPU-capable encoder (deferred engineering item, needs lead nod).
+NEXT: lead runs Gold_Expand.ipynb -> encoder_gold_v3; then train encoder on a
+subset (prep that notebook). corpus-expand NOT yet merged to mainline (hold until
+richer gold validated to help).
