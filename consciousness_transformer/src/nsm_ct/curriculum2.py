@@ -2919,7 +2919,7 @@ def verify_garden_path_trait_templates(sample_name_a: str = "mary", sample_name_
     :func:`verify_sense_binding_templates` already runs for its own cue
     sentences). Returns an empty dict if ``quantum_parser`` isn't importable
     (caller must treat that as "unable to verify", not a pass)."""
-    from .clause import extract_discourse
+    from .clause import MODIFIER_RELATIONS, extract_discourse
     from .input_encoder import ParserInputEncoder
     from .nsm_primes import PRIME_NAMES
     from .structure import PARSE_LABELS
@@ -2942,7 +2942,7 @@ def verify_garden_path_trait_templates(sample_name_a: str = "mary", sample_name_
             ok = any(
                 {rel: (arg.token or "").lower() for rel, arg in cl.args}.get("SUBJECT") == n
                 and {rel: (arg.token or "").lower() for rel, arg in cl.args}.get("PLACE") == trait
-                and len(cl.args) == 2
+                and len([1 for rel, _arg in cl.args if rel not in MODIFIER_RELATIONS]) == 2
                 for cl in clauses)
             results[f"TRAIT[{n}.{reading}]"] = {"sentence": sent, "ok": ok}
     return results

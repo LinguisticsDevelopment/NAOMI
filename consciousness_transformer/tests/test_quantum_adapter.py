@@ -178,7 +178,14 @@ def test_two_pps_both_survive_extraction(parser):
     after a TRANSFER verb with an entity object is the recipient, not a
     place). This test predates that fix and asserted the bug's own output;
     only the expected ROLE for 'john' changes here, nothing about the
-    2-PP-survive structure this test is actually about."""
+    2-PP-survive structure this test is actually about.
+
+    PHASE 1 richer-gold update: the clause now also carries a
+    DESCRIPTION('the') modifier role for each of "the ball"/"the garden"
+    (_extra_args's additive richer-gold walk), so the literal arg count
+    grows from 4 to 6 -- unrelated to the 2-PP-survive structure this test
+    checks (still verified via the 4 token-set assertions above), so the
+    count is updated rather than the modifiers suppressed."""
     graph = parser._parse_graph("mary gave the ball to john in the garden .")
     clauses, _links = extract_discourse(graph)
     cl = _any_clause(clauses, "gave")
@@ -188,7 +195,7 @@ def test_two_pps_both_survive_extraction(parser):
     assert ("OBJECT", "ball") in tokens
     assert ("RECIPIENT", "john") in tokens
     assert ("PLACE", "garden") in tokens
-    assert len(cl.args) == 4
+    assert len(cl.args) == 6
 
 
 def test_primary_role_ordering_preserved(parser):

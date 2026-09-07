@@ -149,7 +149,14 @@ def test_english_parsing_byte_identical_regression(parser):
     to clause._PRONOUNS/_PRONOUN_EXTRA (a golden snapshot of this
     milestone's own actual output, which is provably identical to
     pre-M57e behavior since English _PRONOUNS membership/is_entity results
-    for these words are untouched -- see the two tests above)."""
+    for these words are untouched -- see the two tests above).
+
+    PHASE 1 richer-gold update: each snapshot now also carries the
+    DESCRIPTION('the') modifier role _extra_args appends for the sentence's
+    definite article -- unrelated to the Spanish-pronoun guarantee this test
+    exists for, but a genuine, correct change to what extraction returns
+    (clause.py's own richer-gold docstring), so the golden shapes are
+    updated rather than the modifier suppressed."""
     from nsm_ct.clause import extract_discourse
 
     def _shape(sent):
@@ -161,16 +168,16 @@ def test_english_parsing_byte_identical_regression(parser):
         )
 
     assert _shape("mary went to the garden .") == (
-        [("went", [("SUBJECT", "mary"), ("PLACE", "garden")], False)], [])
+        [("went", [("SUBJECT", "mary"), ("PLACE", "garden"), ("DESCRIPTION", "the")], False)], [])
     assert _shape("she found the ball .") == (
-        [("found", [("SUBJECT", "she"), ("OBJECT", "ball")], False)], [])
+        [("found", [("SUBJECT", "she"), ("DESCRIPTION", "the"), ("OBJECT", "ball")], False)], [])
     assert _shape("he is in the kitchen .") == (
-        [("is", [("SUBJECT", "he"), ("PLACE", "kitchen")], False)], [])
+        [("is", [("SUBJECT", "he"), ("PLACE", "kitchen"), ("DESCRIPTION", "the")], False)], [])
     assert _shape("they are in the garden .") == (
-        [("are", [("SUBJECT", "they"), ("PLACE", "garden")], False)], [])
+        [("are", [("SUBJECT", "they"), ("PLACE", "garden"), ("DESCRIPTION", "the")], False)], [])
     assert _shape("mary and john are in the garden .") == (
-        [("are", [("SUBJECT", "mary"), ("PLACE", "garden")], False),
-         ("are", [("SUBJECT", "john"), ("PLACE", "garden")], False)],
+        [("are", [("SUBJECT", "mary"), ("PLACE", "garden"), ("DESCRIPTION", "the")], False),
+         ("are", [("SUBJECT", "john"), ("PLACE", "garden"), ("DESCRIPTION", "the")], False)],
         [("AND", None, 0, 1)])
 
 

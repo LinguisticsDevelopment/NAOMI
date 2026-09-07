@@ -186,7 +186,7 @@ def test_freeze_pairs_excludes_fred():
 # ---------------------------------------------------------------------------
 
 def test_stream_equivalence_smoke():
-    from nsm_ct.clause import EntityTracker, clause_tpr, extract_discourse
+    from nsm_ct.clause import MODIFIER_RELATIONS, EntityTracker, clause_tpr, extract_discourse
     from nsm_ct.curriculum2 import generate_freeze_pairs
     from nsm_ct.input_encoder import ParserInputEncoder
     from nsm_ct.meaning import NSMMeaningResolver
@@ -227,8 +227,14 @@ def test_stream_equivalence_smoke():
         entity_total += 1
         entity_match += int((en_subj or "").lower() == (es_subj or "").lower())
 
-        en_by_rel = {rel: val for _s, rel, val in en_triples}
-        es_by_rel = {rel: val for _s, rel, val in es_triples}
+        # PHASE 1 richer-gold: modifier roles (DESCRIPTION/SPECIFICATION/...)
+        # are decorations, not the "prep-relation seam" this test measures --
+        # excluded here since English "the" and Spanish's "a"+"el" -> "al"
+        # contraction genuinely diverge on whether a DESCRIPTION token
+        # survives tokenization (a real, expected asymmetry, not a bug in
+        # the core relation extraction this assertion is actually about).
+        en_by_rel = {rel: val for _s, rel, val in en_triples if rel not in MODIFIER_RELATIONS}
+        es_by_rel = {rel: val for _s, rel, val in es_triples if rel not in MODIFIER_RELATIONS}
         for rel in set(en_by_rel) | set(es_by_rel):
             relation_total += 1
             if rel in en_by_rel and rel in es_by_rel:
