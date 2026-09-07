@@ -433,6 +433,14 @@ def _subject_predicate(graph):
     return graph.token(subj_idx), graph.token(clause_idx), clause_idx, subj_idx
 
 
+# PHASE 1 richer-gold: the modifier roles _extra_args appends onto a clause's
+# argument list are decorations, not core arguments -- any downstream
+# heuristic that counts "core args" or "content words" per clause must
+# exclude these so richer extraction doesn't silently change counts the
+# heuristic never meant to track. Shared here (rather than redefined at each
+# consumer) so a future modifier role only needs adding in one place.
+MODIFIER_RELATIONS = frozenset({"DESCRIPTION", "SPECIFICATION", "COMPLEMENT", "SUBJECT_COMPLEMENT"})
+
 _MODIFIER_HEAD_FIRST = ("DESCRIPTION", "COMPLEMENT", "SUBJECT_COMPLEMENT")
 
 
