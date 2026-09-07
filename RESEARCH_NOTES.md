@@ -993,3 +993,28 @@ GPU-capable encoder (deferred engineering item, needs lead nod).
 NEXT: lead runs Gold_Expand.ipynb -> encoder_gold_v3; then train encoder on a
 subset (prep that notebook). corpus-expand NOT yet merged to mainline (hold until
 richer gold validated to help).
+
+### GOLD STRATEGY: two-part gold + forest must reflect REAL ambiguity (lead, 2026-09-07)
+Lead re-flagged two things about gold composition:
+1. TEACHER-BULK vs HAND-AUTHORED (the encoder's whole point): the 16K corpus
+   expansion only scales what the DETERMINISTIC teacher can parse (declaratives).
+   The structures the LEARNED encoder exists for -- imperatives (synth SUBJECT=you),
+   interjections (ground token to literal USVS sense + stance kind; connotation is
+   COMPREHENSION-side off GOOD<->BAD, NOT encoder gold), elision/fragments
+   (context_ref antecedent-by-content), synthesized args, code-switch -- appear in
+   ZERO teacher gold and MUST be hand-fabricated. Encoder trains on teacher-bulk
+   UNION hand-authored hard cases (bulk=competence, hand=thesis). Gate: schema must
+   be HUMAN-WRITABLE.
+2. FOREST WIDTH: gold stores lattice.trees = parser top-k, but MOST sentences have
+   ONE valid parse. Storing top-k pollutes gold with INVALID low-confidence parses
+   and trains the encoder to over-emit candidate trees (a distinct over-generation
+   source from the aliasing bug -- "too big trees for no reason"). FIX: margin-based
+   pruning -- keep top-1 unless top-2 within a score margin (genuine ambiguity);
+   most sentences -> 1 tree. The candidate lattice should reflect REAL ambiguity,
+   not parser hypothesis count.
+DISPATCHED (parallel): (A) gold-qa -- per-source parse-quality of new fairy-tale
+sources (yield/node-quality vs Burgess/Alice control) + forest-width distribution
++ margin-pruning test (branch gold-qa). (B) hand-gold-draft (OPUS) -- schema-
+writability gate + existing-hand-gold check + ~16 draft hard-case candidates for
+lead review (branch hand-gold-draft, dev/HAND_GOLD_DRAFT.md). Both analysis/draft
+only; nothing merged. Gate the 16K gold build on QA (source-filter + prune) first.
