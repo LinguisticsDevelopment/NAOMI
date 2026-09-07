@@ -1,0 +1,111 @@
+reproduced encoder test split: 98; held out from decoder training: 19
+scoring 19 held-out sentences (structure-match), 19 of them also as a sanity control
+
+--- MAIN PASS: text -> decoder.realize -> re-parse -> beam_decode ---
+  [main 1/19] (2s) abstain=False (ok) edge_f1=0.400
+  [main 2/19] (5s) abstain=False (ok) edge_f1=0.571
+  [main 3/19] (7s) abstain=False (ok) edge_f1=0.154
+  [main 4/19] (11s) abstain=False (ok) edge_f1=0.400
+  [main 5/19] (13s) abstain=False (ok) edge_f1=0.444
+  [main 6/19] (20s) abstain=False (ok) edge_f1=0.154
+  [main 7/19] (22s) abstain=False (ok) edge_f1=0.000
+  [main 8/19] (25s) abstain=False (ok) edge_f1=0.364
+  [main 9/19] (27s) abstain=False (ok) edge_f1=0.211
+  [main 10/19] (30s) abstain=False (ok) edge_f1=0.167
+  [main 11/19] (33s) abstain=False (ok) edge_f1=0.364
+  [main 12/19] (33s) abstain=False (ok) edge_f1=0.250
+  [main 13/19] (36s) abstain=False (ok) edge_f1=0.000
+  [main 14/19] (39s) abstain=False (ok) edge_f1=0.000
+  [main 15/19] (39s) abstain=False (ok) edge_f1=1.000
+  [main 16/19] (42s) abstain=False (ok) edge_f1=0.000
+  [main 17/19] (44s) abstain=False (ok) edge_f1=0.182
+  [main 18/19] (47s) abstain=False (ok) edge_f1=0.333
+  [main 19/19] (50s) abstain=False (ok) edge_f1=0.444
+
+--- SANITY CONTROL: GOLD text -> re-parse -> beam_decode (decoder bypassed) ---
+  [control 1/19] (4s) abstain=False (ok) edge_f1=0.800
+  [control 2/19] (6s) abstain=False (ok) edge_f1=0.545
+  [control 3/19] (7s) abstain=False (ok) edge_f1=0.316
+  [control 4/19] (7s) abstain=False (ok) edge_f1=0.400
+  [control 5/19] (10s) abstain=False (ok) edge_f1=1.000
+  [control 6/19] (30s) abstain=True (reparse-cap-hit) edge_f1=0.000
+  [control 7/19] (32s) abstain=False (ok) edge_f1=0.250
+  [control 8/19] (35s) abstain=False (ok) edge_f1=0.222
+  [control 9/19] (38s) abstain=False (ok) edge_f1=0.444
+  [control 10/19] (41s) abstain=False (ok) edge_f1=0.462
+  [control 11/19] (44s) abstain=False (ok) edge_f1=1.000
+  [control 12/19] (44s) abstain=False (ok) edge_f1=0.750
+  [control 13/19] (44s) abstain=False (ok) edge_f1=1.000
+  [control 14/19] (47s) abstain=False (ok) edge_f1=0.444
+  [control 15/19] (49s) abstain=False (ok) edge_f1=0.800
+  [control 16/19] (54s) abstain=False (ok) edge_f1=0.750
+  [control 17/19] (58s) abstain=False (ok) edge_f1=0.316
+  [control 18/19] (62s) abstain=False (ok) edge_f1=0.200
+  [control 19/19] (64s) abstain=False (ok) edge_f1=0.909
+
+==============================================================================
+STRUCTURE-MATCH RESULT (round-trip cycle-consistency, edge-level)
+==============================================================================
+  n = 19
+  edge_precision = 0.333
+  edge_recall    = 0.282
+  edge_F1        = 0.286
+  abstain_rate   = 0.000
+
+  vs. OLD verbatim-text round-trip token_f1 = 0.320 (scripts/_roundtrip_aliasfix.py)
+
+  SANITY CONTROL (n=19, GOLD text re-encoded directly, decoder bypassed):
+    edge_precision = 0.570
+    edge_recall    = 0.587
+    edge_F1        = 0.558
+    abstain_rate   = 0.053
+    re-encode cycle behaving sanely (control F1 > decoder-realized F1): True
+
+------------------------------------------------------------------------------
+10 EXAMPLES (gold text / realized text\' / edge-F1(tree_A, tree_B))
+------------------------------------------------------------------------------
+  gold:  '" your poor goat is dead , " replied peggy .'
+  text\': '" the little is , bill , " is the best .'
+  edge_F1=0.400  (P=0.500 R=0.333 abstain=False reason=ok)
+
+  gold:  'he cried , and steered for the light .'
+  text\': 'and he cried the light light to a good to hear .'
+  edge_F1=0.571  (P=0.500 R=0.667 abstain=False reason=ok)
+
+  gold:  'the little old woman and the little old man ran after him as fast as they could , but he just laughed , and shouted , -- the little gingerbread boy ran on and on , until he came to a cow , by the roadside .'
+  text\': 'the little gingerbread was fast little he did into the laughing brook to fast fast fast and he fast .'
+  edge_F1=0.154  (P=0.333 R=0.100 abstain=False reason=ok)
+
+  gold:  'she let betsy in , and asked what she could want at such a time of night .'
+  text\': 'and let a few she let much good betsy , but she fancied the time , and she ran as if she could not run to me of the old castle .'
+  edge_F1=0.400  (P=0.667 R=0.286 abstain=False reason=ok)
+
+  gold:  'he did the same thing in the next pool and the next .'
+  text\': "and did n't he was thing again pool pool and , he did n't in a soft pool and when his eyes ."
+  edge_F1=0.444  (P=0.400 R=0.500 abstain=False reason=ok)
+
+  gold:  'as long as she was able to work , she was very industrious , and was accounted the best spinner in the parish ; but she overworked herself at last , and fell ill , so that she could not sit to her wheel as she used to do , and was obliged to give it up to her eldest daughter , mary .'
+  text\': "so was that was so much that did n't draw a small fat trout , and she overworked herself to have been sit her mother 's work ; but she determined herself sit to see that they stopped overworked wheel"
+  edge_F1=0.154  (P=0.167 R=0.143 abstain=False reason=ok)
+
+  gold:  'they did not grow idle or wasteful .'
+  text\': 'and did did not like to the old , and his eyes his terrible .'
+  edge_F1=0.000  (P=0.000 R=0.000 abstain=False reason=ok)
+
+  gold:  'he shuffled along over to the laughing brook , and straight to a little pool of which he knew , and as he drew near he took the greatest care not to make the teeniest , weeniest bit of noise .'
+  text\': 'then he shuffled , the little gingerbread boy , and he drew his eyes pool .'
+  edge_F1=0.364  (P=0.333 R=0.400 abstain=False reason=ok)
+
+  gold:  'when he had hoppity-kicked a good way , and was near madrid , he came to a clump of bushes , where the wind was caught fast .'
+  text\': 'but as he hoppity-kicked way a madrid of the little pool and he looked to the clump , and he was the happiest of the ground clump bushes bushes .'
+  edge_F1=0.211  (P=0.222 R=0.200 abstain=False reason=ok)
+
+  gold:  'the fox looked at him and began to run .'
+  text\': 'the looked of looked at the little and and to seen great out !'
+  edge_F1=0.167  (P=0.200 R=0.143 abstain=False reason=ok)
+
+------------------------------------------------------------------------------
+NOTE: the decoder scored here (runs/decoder_colab.pt) is the OLD buggy
+function_vocab decoder -- this run's deliverable is a WORKING structure-
+match evaluator + a baseline number + confirmation the re-encode path
+works end-to-end (see sanity control above), NOT a claim of decoder quality.
