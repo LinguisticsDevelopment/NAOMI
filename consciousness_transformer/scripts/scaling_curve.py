@@ -161,8 +161,11 @@ def main() -> None:
     ap.add_argument("--hash-buckets", type=int, default=4096)
     ap.add_argument("--batch-size", type=int, default=32)
     ap.add_argument("--lr", type=float, default=1e-3)
-    ap.add_argument("--max-seconds", type=float, default=650.0,
-                     help="hard per-cell training-time cutoff")
+    ap.add_argument("--max-seconds", type=float, default=16000.0,
+                     help="hard per-size training-time cutoff. Default 16000s (~4.4h) "
+                          "so every size in --n-list reaches --epochs before the cutoff "
+                          "(n=788 @ 100 epochs ~= 3.7h at ~130s/epoch); a smaller cap "
+                          "confounds the scaling curve by giving larger n fewer epochs.")
     ap.add_argument("--beam-width", type=int, default=6)
     ap.add_argument("--k", type=int, default=6)
     ap.add_argument("--seed", type=int, default=0)
