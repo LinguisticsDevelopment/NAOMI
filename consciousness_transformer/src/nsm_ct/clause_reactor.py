@@ -21,7 +21,7 @@ import torch.nn.functional as F
 from . import entity_memory as em
 from . import membrane
 from . import ops
-from .clause import _PRONOUNS, extract_discourse
+from .clause import MODIFIER_RELATIONS, _PRONOUNS, extract_discourse
 from .episode import _NAMES
 from .instances import InstanceRegistry
 from .ltm import mem_total
@@ -186,7 +186,7 @@ def _context_steps(sent: str, parser, resolver, codec: TPRCodec, cache: Dict[str
         if obj_tok:
             entity_vec = _ent_vec(obj_tok, resolver, codec, cache, meaning_source)
             for rel, arg in cl.args:
-                if rel == "OBJECT":
+                if rel == "OBJECT" or rel in MODIFIER_RELATIONS:
                     continue
                 tok = (arg.token or "").lower()
                 if not tok:
@@ -590,6 +590,8 @@ def _ambiguity_steps(ep, parser, resolver, codec: TPRCodec, cache: Dict[str, np.
             continue
         context_word = None
         for _rel, arg in hit_clause.args:
+            if _rel in MODIFIER_RELATIONS:
+                continue
             tok = (arg.token or "").lower()
             if tok and tok != homograph and tok not in _NAMESET:
                 context_word = tok

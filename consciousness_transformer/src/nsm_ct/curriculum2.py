@@ -2592,7 +2592,7 @@ def verify_sense_binding_templates(sample_gold_name: str = "mary",
     :func:`verify_templates` / :func:`verify_transfer_templates` /
     :func:`verify_pronoun_templates`.
     """
-    from .clause import extract_discourse
+    from .clause import MODIFIER_RELATIONS, extract_discourse
     from .input_encoder import ParserInputEncoder
     from .nsm_primes import PRIME_NAMES
     from .structure import PARSE_LABELS
@@ -2635,8 +2635,8 @@ def verify_sense_binding_templates(sample_gold_name: str = "mary",
         ok, roles, extra = False, {}, []
         if hit is not None:
             roles = {rel: (arg.token or "").lower() for rel, arg in hit.args}
-            extra = [t for _rel, arg in hit.args for t in [(arg.token or "").lower()]
-                     if t and t != w and t != sample_gold_name]
+            extra = [t for rel, arg in hit.args for t in [(arg.token or "").lower()]
+                     if rel not in MODIFIER_RELATIONS and t and t != w and t != sample_gold_name]
             ok = roles.get("SUBJECT") == sample_gold_name and not extra
         results[f"ANCHOR[{w}.{k}]"] = {"sentence": sent, "ok": ok, "roles": roles, "context_leak": extra}
     return results

@@ -433,8 +433,20 @@ def _subject_predicate(graph):
     return graph.token(subj_idx), graph.token(clause_idx), clause_idx, subj_idx
 
 
+# PHASE 1 richer-gold: the modifier roles _extra_args appends onto a clause's
+# argument list are decorations, not core arguments -- any downstream
+# heuristic that counts "core args" or "content words" per clause must
+# exclude these so richer extraction doesn't silently change counts the
+# heuristic never meant to track. Shared here (rather than redefined at each
+# consumer) so a future modifier role only needs adding in one place.
+MODIFIER_RELATIONS = frozenset({"DESCRIPTION", "SPECIFICATION", "COMPLEMENT", "SUBJECT_COMPLEMENT"})
+
+_MODIFIER_HEAD_FIRST = ("DESCRIPTION", "COMPLEMENT", "SUBJECT_COMPLEMENT")
+
+
 def _extra_args(graph, clause_idx: int, primary_val_idx: Optional[int] = None,
-                 exclude: "set" = frozenset()) -> List[Tuple[str, ParseNode]]:
+                 exclude: "set" = frozenset(), modifier_idxs: "set" = frozenset()
+                 ) -> List[Tuple[str, ParseNode]]:
     """Every argument edge beyond the one (or two, SUBJECT + primary) role a
     caller already captured -- the M48/M50 fix for the 2-arg extraction
     ceiling: real prose routinely carries a second/third PP, an OBJECT, or an
@@ -459,6 +471,41 @@ def _extra_args(graph, clause_idx: int, primary_val_idx: Optional[int] = None,
     (never re-added here); punctuation-token args are always excluded.
     Deterministic: sorted by the argument's own node index (surface order),
     so additional roles are always appended AFTER the primary one.
+
+    PHASE 1a (richer-gold, additive-only): also walk each already-resolved
+    argument node's (and the predicate's) DESCRIPTION/SPECIFICATION/
+    COMPLEMENT edges and append the descriptor/adverb/complement as a NEW
+    FLAT role -- no nesting, no head-pointer (that's a later phase). Relation
+    name is the edge-type itself (e.g. ``"DESCRIPTION"``), so a caller can
+    always tell a modifier role from a core one. Determiners arrive on a
+    DESCRIPTION edge exactly like adjectives (quantum_parser has no separate
+    DET edge type); ``ground_word`` will fall back to ``type:"entity"`` for
+    them (no WordNet sense), which is fine for a coverage measurement, not a
+    real sense grounding.
+
+    Direction is NOT uniform across these three types (verified empirically
+    against real parses, not just the enum's arrow comments, which disagree
+    with each other): DESCRIPTION and COMPLEMENT/SUBJECT_COMPLEMENT both
+    park the modifier as the CHILD of the modified node ("man" --DESCRIPTION--
+    > "tall"; "is" --COMPLEMENT--> "happy"), but SPECIFICATION runs the
+    other way -- the adverb is the PARENT, the thing it modifies is the CHILD
+    ("quickly" --SPECIFICATION--> "saw"). Both directions are walked below.
+    Note: this grammar's rules never actually emit SUBJECT_COMPLEMENT (only
+    the scorer references it; predicate complements -- "mary is happy" --
+    come through as plain COMPLEMENT) -- it's included anyway per spec, at
+    zero cost, in case a future grammar rule starts emitting it.
+
+    ``modifier_idxs``: extra node indices (beyond ``clause_idx``,
+    ``primary_val_idx`` and whatever this call finds) whose modifiers should
+    also be walked -- e.g. a caller's SUBJECT node, so "the tall man ..."
+    picks up "tall"/"the" off the subject too. Every node already resolved
+    as a role by the caller should be reachable via ``clause_idx``,
+    ``primary_val_idx``, ``modifier_idxs``, or this function's own ``found``
+    (OBJECT/INDIRECT_OBJECT children of ``clause_idx`` are already in
+    ``parents`` below) -- callers that can't name a single unambiguous
+    argument node (e.g. several coordinated subjects sharing one ``extra``
+    list) skip ``modifier_idxs`` rather than mis-attribute a modifier to
+    every conjunct.
     """
     seen = set(exclude)
     parents = {clause_idx}
@@ -490,6 +537,24 @@ def _extra_args(graph, clause_idx: int, primary_val_idx: Optional[int] = None,
                                   (prep_tok or "PREP").upper() if prep_tok else "PREP",
                                   obj_token=graph.token(val_idx))
             found.append((val_idx, rel, _syn(graph.label(val_idx) or "NOUN", graph.token(val_idx), rel)))
+
+    mod_parents = parents | set(modifier_idxs) | {idx for idx, _rel, _node in found}
+    if primary_val_idx is not None:
+        mod_parents.add(primary_val_idx)
+    for t, p, c in graph.edges:
+        if t in _MODIFIER_HEAD_FIRST and p in mod_parents:
+            tok = graph.token(c)
+            if c in seen or not tok or tok in _PUNCT:
+                continue
+            seen.add(c)
+            found.append((c, t, _syn(graph.label(c) or "NOUN", tok, t)))
+        elif t == "SPECIFICATION" and c in mod_parents:
+            tok = graph.token(p)
+            if p in seen or not tok or tok in _PUNCT:
+                continue
+            seen.add(p)
+            found.append((p, t, _syn(graph.label(p) or "NOUN", tok, t)))
+
     found.sort(key=lambda item: item[0])
     return [(rel, node) for _idx, rel, node in found]
 
@@ -544,7 +609,8 @@ def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx:
             if obj_idx is not None:
                 val_idx, rel = obj_idx, "OBJECT"
         if val_idx is not None:
-            extra = _extra_args(graph, c_idx, primary_val_idx=val_idx, exclude={val_idx})
+            extra = _extra_args(graph, c_idx, primary_val_idx=val_idx, exclude={val_idx},
+                                 modifier_idxs={s_idx})
             out.append(_fact_clause(graph, subj, pred, rel, val_idx, extra,
                                      is_question=_is_question(graph, c_idx)))
     return out
@@ -599,7 +665,8 @@ def _recover_coordinated_clause_orphans(graph) -> List[Clause]:
             continue
         rel = _prep_relation(graph, idx, graph.token(pp_idx), "PLACE",
                               obj_token=graph.token(val_idx))
-        extra = _extra_args(graph, idx, primary_val_idx=val_idx, exclude={val_idx})
+        extra = _extra_args(graph, idx, primary_val_idx=val_idx, exclude={val_idx},
+                             modifier_idxs={max(elements)})
         out.append(_fact_clause(graph, subj, tok, rel, val_idx, extra,
                                  is_question=_is_question(graph, idx)))
     return out
@@ -662,7 +729,7 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
         rel = _relation_for(graph, coord_idx, clause_idx)
         elements = sorted(set(elements))
         extra = _extra_args(graph, clause_idx, primary_val_idx=coord_idx,
-                             exclude=set(elements) | {coord_idx})
+                             exclude=set(elements) | {coord_idx}, modifier_idxs={subj_idx})
         clauses = [_fact_clause(graph, subj, pred, rel, el, extra, is_q) for el in elements]
         prime = _COORD_PRIME.get(coordinator)
         links = [DiscourseLink(coordinator, prime, 0, j) for j in range(1, len(clauses))]
@@ -676,7 +743,8 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
         prep_node, val_idx = prep_edges[0]
         rel = _prep_relation(graph, clause_idx, graph.token(prep_node), "PLACE",
                               obj_token=graph.token(val_idx))
-        extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx})
+        extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx},
+                             modifier_idxs={subj_idx})
         return [_fact_clause(graph, subj, pred, rel, val_idx, extra, is_q)], [DiscourseLink("NOT", "NOT", 0, 0)]
 
     # -- plain single fact -------------------------------------------------------
@@ -685,7 +753,8 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
         default = (graph.token(prep_node) or "PREP").upper()
         rel = _prep_relation(graph, clause_idx, graph.token(prep_node), default,
                               obj_token=graph.token(val_idx))
-        extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx})
+        extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx},
+                             modifier_idxs={subj_idx})
         return [_fact_clause(graph, subj, pred, rel, val_idx, extra, is_q)], []
 
     # -- bare-object locative verbs ("entered the Y", no PP at all) --------------
@@ -698,7 +767,8 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
                      and (graph.token(c) or "") not in _PUNCT]
         if obj_edges:
             _, val_idx = obj_edges[0]
-            extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx})
+            extra = _extra_args(graph, clause_idx, primary_val_idx=val_idx, exclude={val_idx},
+                                 modifier_idxs={subj_idx})
             return [_fact_clause(graph, subj, pred, "PLACE", val_idx, extra, is_q)], []
 
     # -- bare subject-only fact (no PP, no locative-verb object) -----------------
@@ -714,7 +784,7 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
     # (e.g. "mary found the ball ." -- previously a SUBJECT-only stump).
     if subj is not None:
         args = [("SUBJECT", _syn("NOMINAL", subj, "SUBJECT"))]
-        args.extend(_extra_args(graph, clause_idx))
+        args.extend(_extra_args(graph, clause_idx, modifier_idxs={subj_idx}))
         return [Clause(predicate=pred or "is", args=args,
                         head=_syn("CLAUSE", pred), is_question=is_q)], []
 

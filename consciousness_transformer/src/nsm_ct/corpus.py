@@ -75,7 +75,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
-from .clause import _PRONOUNS, extract_discourse, is_entity, strip_attribution
+from .clause import MODIFIER_RELATIONS, _PRONOUNS, extract_discourse, is_entity, strip_attribution
 from .clause_reactor import _TRANSFER_ROLE_MAP
 from .episode import Episode
 from .membrane import (NAME_GENDER, PRONOUN_MORPHOLOGY, HypothesisCandidateSet,
@@ -654,8 +654,13 @@ def _extract_triples(idx: int, sent: str, clauses, registry: Optional["_PassageR
                 triples.append(ParsedClause(idx, sent, obj_tok, mapped, resolved, pred, source=source))
             # item 3: the complementary OBJECT-direction fact for a CLEAN
             # transitive clause (subject + this one object, nothing else).
-            if len(other_roles) == 1 and other_roles[0][0] == "SUBJECT":
-                subj_tok = (other_roles[0][1].token or "").lower()
+            # PHASE 1 richer-gold: modifier roles (DESCRIPTION/SPECIFICATION/
+            # COMPLEMENT/...) are decorations, not core args -- excluded here
+            # so "the man ate the apple" still counts as "clean" despite the
+            # DESCRIPTION('the') role _extra_args now also returns.
+            core_other_roles = [(rel, arg) for rel, arg in other_roles if rel not in MODIFIER_RELATIONS]
+            if len(core_other_roles) == 1 and core_other_roles[0][0] == "SUBJECT":
+                subj_tok = (core_other_roles[0][1].token or "").lower()
                 if subj_tok and subj_tok not in _PRONOUNS:
                     triples.append(ParsedClause(idx, sent, subj_tok, "OBJECT", obj_tok, pred, source=source))
             continue
@@ -673,7 +678,10 @@ def _extract_triples(idx: int, sent: str, clauses, registry: Optional["_PassageR
         # "PLACE absent, exactly one other role" so it never overrides or
         # duplicates the dedicated PLACE branch below, and never fires
         # alongside extra structure this module doesn't otherwise model.
-        other_non_place = [(rel, arg) for rel, arg in cl.args if rel not in ("SUBJECT", "PLACE")]
+        # PHASE 1 richer-gold: exclude modifier roles from this count too --
+        # same rationale as core_other_roles above.
+        other_non_place = [(rel, arg) for rel, arg in cl.args
+                            if rel not in ("SUBJECT", "PLACE") and rel not in MODIFIER_RELATIONS]
         if place is None and subj and len(other_non_place) == 1:
             value = (other_non_place[0][1].token or "").lower()
             if value:
