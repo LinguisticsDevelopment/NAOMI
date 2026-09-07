@@ -1,0 +1,324 @@
+[    1.0s] 985 gold records available
+[   26.8s] USVS loaded (d_axes=607); pos_vocab=15 role_vocab=37
+[   26.8s] n_train=200: split train=200 dev=98 test=98
+[   27.2s] n_train=200: 575 teacher-forced derivations
+[   70.3s] n_train=200: epoch 1/100 done avg_loss=61.903 p_ss=0.000
+[  100.3s] n_train=200: epoch 2/100 done avg_loss=41.681 p_ss=0.025
+[  132.6s] n_train=200: epoch 3/100 done avg_loss=34.355 p_ss=0.050
+[  166.7s] n_train=200: epoch 4/100 done avg_loss=29.957 p_ss=0.075
+[  202.7s] n_train=200: epoch 5/100 done avg_loss=27.224 p_ss=0.100
+[  232.7s] n_train=200: epoch 6/100 done avg_loss=25.186 p_ss=0.125
+[  262.6s] n_train=200: epoch 7/100 done avg_loss=23.823 p_ss=0.150
+[  292.2s] n_train=200: epoch 8/100 done avg_loss=22.613 p_ss=0.175
+[  321.5s] n_train=200: epoch 9/100 done avg_loss=21.643 p_ss=0.200
+[  350.8s] n_train=200: epoch 10/100 done avg_loss=20.857 p_ss=0.225
+[  380.9s] n_train=200: epoch 11/100 done avg_loss=20.322 p_ss=0.250
+[  410.7s] n_train=200: epoch 12/100 done avg_loss=19.242 p_ss=0.250
+[  441.4s] n_train=200: epoch 13/100 done avg_loss=18.112 p_ss=0.250
+[  471.1s] n_train=200: epoch 14/100 done avg_loss=17.472 p_ss=0.250
+[  502.1s] n_train=200: epoch 15/100 done avg_loss=16.087 p_ss=0.250
+[  534.1s] n_train=200: epoch 16/100 done avg_loss=15.045 p_ss=0.250
+[  563.6s] n_train=200: epoch 17/100 done avg_loss=14.448 p_ss=0.250
+[  593.8s] n_train=200: epoch 18/100 done avg_loss=13.909 p_ss=0.250
+[  623.9s] n_train=200: epoch 19/100 done avg_loss=13.472 p_ss=0.250
+[  654.2s] n_train=200: epoch 20/100 done avg_loss=12.524 p_ss=0.250
+[  684.4s] n_train=200: epoch 21/100 done avg_loss=12.296 p_ss=0.250
+[  714.6s] n_train=200: epoch 22/100 done avg_loss=11.893 p_ss=0.250
+[  744.9s] n_train=200: epoch 23/100 done avg_loss=11.178 p_ss=0.250
+[  777.6s] n_train=200: epoch 24/100 done avg_loss=10.803 p_ss=0.250
+[  810.8s] n_train=200: epoch 25/100 done avg_loss=10.526 p_ss=0.250
+[  846.9s] n_train=200: epoch 26/100 done avg_loss=10.366 p_ss=0.250
+[  879.8s] n_train=200: epoch 27/100 done avg_loss=9.588 p_ss=0.250
+[  912.0s] n_train=200: epoch 28/100 done avg_loss=9.648 p_ss=0.250
+[  942.8s] n_train=200: epoch 29/100 done avg_loss=9.049 p_ss=0.250
+[  973.8s] n_train=200: epoch 30/100 done avg_loss=8.911 p_ss=0.250
+[ 1004.9s] n_train=200: epoch 31/100 done avg_loss=8.353 p_ss=0.250
+[ 1045.3s] n_train=200: epoch 32/100 done avg_loss=8.505 p_ss=0.250
+[ 1081.0s] n_train=200: epoch 33/100 done avg_loss=8.489 p_ss=0.250
+[ 1114.9s] n_train=200: epoch 34/100 done avg_loss=7.864 p_ss=0.250
+[ 1148.9s] n_train=200: epoch 35/100 done avg_loss=7.744 p_ss=0.250
+[ 1180.5s] n_train=200: epoch 36/100 done avg_loss=7.587 p_ss=0.250
+[ 1211.3s] n_train=200: epoch 37/100 done avg_loss=7.378 p_ss=0.250
+[ 1242.3s] n_train=200: epoch 38/100 done avg_loss=7.331 p_ss=0.250
+[ 1273.4s] n_train=200: epoch 39/100 done avg_loss=7.359 p_ss=0.250
+[ 1304.5s] n_train=200: epoch 40/100 done avg_loss=7.266 p_ss=0.250
+[ 1336.7s] n_train=200: epoch 41/100 done avg_loss=7.301 p_ss=0.250
+[ 1369.6s] n_train=200: epoch 42/100 done avg_loss=6.869 p_ss=0.250
+[ 1401.7s] n_train=200: epoch 43/100 done avg_loss=6.597 p_ss=0.250
+[ 1431.9s] n_train=200: epoch 44/100 done avg_loss=6.465 p_ss=0.250
+[ 1464.5s] n_train=200: epoch 45/100 done avg_loss=6.446 p_ss=0.250
+[ 1495.7s] n_train=200: epoch 46/100 done avg_loss=6.248 p_ss=0.250
+[ 1531.6s] n_train=200: epoch 47/100 done avg_loss=6.208 p_ss=0.250
+[ 1567.8s] n_train=200: epoch 48/100 done avg_loss=6.007 p_ss=0.250
+[ 1603.8s] n_train=200: epoch 49/100 done avg_loss=6.211 p_ss=0.250
+[ 1638.8s] n_train=200: epoch 50/100 done avg_loss=5.919 p_ss=0.250
+[ 1673.2s] n_train=200: epoch 51/100 done avg_loss=6.027 p_ss=0.250
+[ 1712.3s] n_train=200: epoch 52/100 done avg_loss=5.931 p_ss=0.250
+[ 1744.4s] n_train=200: epoch 53/100 done avg_loss=5.759 p_ss=0.250
+[ 1779.5s] n_train=200: epoch 54/100 done avg_loss=5.795 p_ss=0.250
+[ 1817.4s] n_train=200: epoch 55/100 done avg_loss=5.589 p_ss=0.250
+[ 1855.3s] n_train=200: epoch 56/100 done avg_loss=5.152 p_ss=0.250
+[ 1892.8s] n_train=200: epoch 57/100 done avg_loss=5.285 p_ss=0.250
+[ 1931.5s] n_train=200: epoch 58/100 done avg_loss=5.562 p_ss=0.250
+[ 1975.0s] n_train=200: epoch 59/100 done avg_loss=5.354 p_ss=0.250
+[ 2012.9s] n_train=200: epoch 60/100 done avg_loss=5.357 p_ss=0.250
+[ 2044.3s] n_train=200: epoch 61/100 done avg_loss=4.905 p_ss=0.250
+[ 2077.9s] n_train=200: epoch 62/100 done avg_loss=5.089 p_ss=0.250
+[ 2110.8s] n_train=200: epoch 63/100 done avg_loss=4.753 p_ss=0.250
+[ 2142.6s] n_train=200: epoch 64/100 done avg_loss=5.103 p_ss=0.250
+[ 2173.0s] n_train=200: epoch 65/100 done avg_loss=5.125 p_ss=0.250
+[ 2203.2s] n_train=200: epoch 66/100 done avg_loss=5.039 p_ss=0.250
+[ 2234.3s] n_train=200: epoch 67/100 done avg_loss=4.846 p_ss=0.250
+[ 2265.6s] n_train=200: epoch 68/100 done avg_loss=5.201 p_ss=0.250
+[ 2296.7s] n_train=200: epoch 69/100 done avg_loss=4.963 p_ss=0.250
+[ 2327.7s] n_train=200: epoch 70/100 done avg_loss=5.082 p_ss=0.250
+[ 2360.0s] n_train=200: epoch 71/100 done avg_loss=5.023 p_ss=0.250
+[ 2397.4s] n_train=200: epoch 72/100 done avg_loss=4.754 p_ss=0.250
+[ 2444.5s] n_train=200: epoch 73/100 done avg_loss=4.857 p_ss=0.250
+[ 2488.4s] n_train=200: epoch 74/100 done avg_loss=4.282 p_ss=0.250
+[ 2528.8s] n_train=200: epoch 75/100 done avg_loss=4.629 p_ss=0.250
+[ 2567.3s] n_train=200: epoch 76/100 done avg_loss=4.487 p_ss=0.250
+[ 2603.9s] n_train=200: epoch 77/100 done avg_loss=4.506 p_ss=0.250
+[ 2637.0s] n_train=200: epoch 78/100 done avg_loss=4.552 p_ss=0.250
+[ 2666.8s] n_train=200: epoch 79/100 done avg_loss=4.709 p_ss=0.250
+[ 2696.5s] n_train=200: epoch 80/100 done avg_loss=4.221 p_ss=0.250
+[ 2726.3s] n_train=200: epoch 81/100 done avg_loss=4.460 p_ss=0.250
+[ 2755.6s] n_train=200: epoch 82/100 done avg_loss=4.243 p_ss=0.250
+[ 2784.8s] n_train=200: epoch 83/100 done avg_loss=4.546 p_ss=0.250
+[ 2814.0s] n_train=200: epoch 84/100 done avg_loss=4.231 p_ss=0.250
+[ 2844.4s] n_train=200: epoch 85/100 done avg_loss=4.361 p_ss=0.250
+[ 2873.4s] n_train=200: epoch 86/100 done avg_loss=4.326 p_ss=0.250
+[ 2902.6s] n_train=200: epoch 87/100 done avg_loss=4.190 p_ss=0.250
+[ 2931.6s] n_train=200: epoch 88/100 done avg_loss=4.447 p_ss=0.250
+[ 2960.5s] n_train=200: epoch 89/100 done avg_loss=3.989 p_ss=0.250
+[ 2989.4s] n_train=200: epoch 90/100 done avg_loss=4.191 p_ss=0.250
+[ 3019.8s] n_train=200: epoch 91/100 done avg_loss=4.297 p_ss=0.250
+[ 3049.0s] n_train=200: epoch 92/100 done avg_loss=4.309 p_ss=0.250
+[ 3078.5s] n_train=200: epoch 93/100 done avg_loss=4.189 p_ss=0.250
+[ 3107.7s] n_train=200: epoch 94/100 done avg_loss=4.144 p_ss=0.250
+[ 3137.7s] n_train=200: epoch 95/100 done avg_loss=4.083 p_ss=0.250
+[ 3167.2s] n_train=200: epoch 96/100 done avg_loss=4.101 p_ss=0.250
+[ 3196.9s] n_train=200: epoch 97/100 done avg_loss=4.113 p_ss=0.250
+[ 3226.7s] n_train=200: epoch 98/100 done avg_loss=4.095 p_ss=0.250
+[ 3258.0s] n_train=200: epoch 99/100 done avg_loss=4.127 p_ss=0.250
+[ 3288.8s] n_train=200: epoch 100/100 done avg_loss=4.129 p_ss=0.250
+[ 3625.9s] n_train=200: test edge_precision=0.618 edge_recall=0.520 overgen=0.830 tf_acc=0.814 (train_wall=3252.9s, stopped_early=False)
+[ 3625.9s] n_train=400: split train=400 dev=98 test=98
+[ 3626.5s] n_train=400: 1134 teacher-forced derivations
+[ 3688.0s] n_train=400: epoch 1/100 done avg_loss=51.361 p_ss=0.000
+[ 3748.5s] n_train=400: epoch 2/100 done avg_loss=31.999 p_ss=0.025
+[ 3809.4s] n_train=400: epoch 3/100 done avg_loss=26.247 p_ss=0.050
+[ 3877.7s] n_train=400: epoch 4/100 done avg_loss=23.611 p_ss=0.075
+[ 3943.3s] n_train=400: epoch 5/100 done avg_loss=21.925 p_ss=0.100
+[ 4006.0s] n_train=400: epoch 6/100 done avg_loss=20.809 p_ss=0.125
+[ 4067.7s] n_train=400: epoch 7/100 done avg_loss=19.520 p_ss=0.150
+[ 4128.9s] n_train=400: epoch 8/100 done avg_loss=18.648 p_ss=0.175
+[ 4191.1s] n_train=400: epoch 9/100 done avg_loss=17.736 p_ss=0.200
+[ 4262.1s] n_train=400: epoch 10/100 done avg_loss=17.004 p_ss=0.225
+[ 4326.4s] n_train=400: epoch 11/100 done avg_loss=16.566 p_ss=0.250
+[ 4388.7s] n_train=400: epoch 12/100 done avg_loss=15.740 p_ss=0.250
+[ 4450.6s] n_train=400: epoch 13/100 done avg_loss=14.613 p_ss=0.250
+[ 4513.1s] n_train=400: epoch 14/100 done avg_loss=14.089 p_ss=0.250
+[ 4574.1s] n_train=400: epoch 15/100 done avg_loss=13.279 p_ss=0.250
+[ 4638.1s] n_train=400: epoch 16/100 done avg_loss=12.546 p_ss=0.250
+[ 4704.6s] n_train=400: epoch 17/100 done avg_loss=12.385 p_ss=0.250
+[ 4770.5s] n_train=400: epoch 18/100 done avg_loss=11.713 p_ss=0.250
+[ 4841.4s] n_train=400: epoch 19/100 done avg_loss=11.198 p_ss=0.250
+[ 4905.0s] n_train=400: epoch 20/100 done avg_loss=10.663 p_ss=0.250
+[ 4969.0s] n_train=400: epoch 21/100 done avg_loss=10.363 p_ss=0.250
+[ 5042.0s] n_train=400: epoch 22/100 done avg_loss=9.723 p_ss=0.250
+[ 5111.9s] n_train=400: epoch 23/100 done avg_loss=9.669 p_ss=0.250
+[ 5180.7s] n_train=400: epoch 24/100 done avg_loss=9.099 p_ss=0.250
+[ 5251.6s] n_train=400: epoch 25/100 done avg_loss=8.905 p_ss=0.250
+[ 5321.6s] n_train=400: epoch 26/100 done avg_loss=8.539 p_ss=0.250
+[ 5392.0s] n_train=400: epoch 27/100 done avg_loss=8.374 p_ss=0.250
+[ 5464.5s] n_train=400: epoch 28/100 done avg_loss=8.058 p_ss=0.250
+[ 5533.1s] n_train=400: epoch 29/100 done avg_loss=7.921 p_ss=0.250
+[ 5603.2s] n_train=400: epoch 30/100 done avg_loss=7.456 p_ss=0.250
+[ 5671.6s] n_train=400: epoch 31/100 done avg_loss=7.473 p_ss=0.250
+[ 5737.0s] n_train=400: epoch 32/100 done avg_loss=7.276 p_ss=0.250
+[ 5801.2s] n_train=400: epoch 33/100 done avg_loss=7.149 p_ss=0.250
+[ 5863.6s] n_train=400: epoch 34/100 done avg_loss=6.981 p_ss=0.250
+[ 5928.3s] n_train=400: epoch 35/100 done avg_loss=6.881 p_ss=0.250
+[ 6001.6s] n_train=400: epoch 36/100 done avg_loss=6.827 p_ss=0.250
+[ 6067.5s] n_train=400: epoch 37/100 done avg_loss=6.515 p_ss=0.250
+[ 6129.7s] n_train=400: epoch 38/100 done avg_loss=6.323 p_ss=0.250
+[ 6197.1s] n_train=400: epoch 39/100 done avg_loss=6.224 p_ss=0.250
+[ 6266.8s] n_train=400: epoch 40/100 done avg_loss=6.355 p_ss=0.250
+[ 6330.9s] n_train=400: epoch 41/100 done avg_loss=6.062 p_ss=0.250
+[ 6392.4s] n_train=400: epoch 42/100 done avg_loss=6.092 p_ss=0.250
+[ 6456.0s] n_train=400: epoch 43/100 done avg_loss=5.856 p_ss=0.250
+[ 6518.4s] n_train=400: epoch 44/100 done avg_loss=5.813 p_ss=0.250
+[ 6587.0s] n_train=400: epoch 45/100 done avg_loss=5.787 p_ss=0.250
+[ 6660.3s] n_train=400: epoch 46/100 done avg_loss=5.759 p_ss=0.250
+[ 6729.1s] n_train=400: epoch 47/100 done avg_loss=5.533 p_ss=0.250
+[ 6809.3s] n_train=400: epoch 48/100 done avg_loss=5.598 p_ss=0.250
+[ 6878.2s] n_train=400: epoch 49/100 done avg_loss=5.383 p_ss=0.250
+[ 6945.5s] n_train=400: epoch 50/100 done avg_loss=5.650 p_ss=0.250
+[ 7012.8s] n_train=400: epoch 51/100 done avg_loss=5.427 p_ss=0.250
+[ 7078.1s] n_train=400: epoch 52/100 done avg_loss=5.068 p_ss=0.250
+[ 7144.9s] n_train=400: epoch 53/100 done avg_loss=5.111 p_ss=0.250
+[ 7213.1s] n_train=400: epoch 54/100 done avg_loss=5.183 p_ss=0.250
+[ 7287.4s] n_train=400: epoch 55/100 done avg_loss=5.185 p_ss=0.250
+[ 7360.4s] n_train=400: epoch 56/100 done avg_loss=5.223 p_ss=0.250
+[ 7429.5s] n_train=400: epoch 57/100 done avg_loss=5.081 p_ss=0.250
+[ 7497.2s] n_train=400: epoch 58/100 done avg_loss=5.245 p_ss=0.250
+[ 7563.5s] n_train=400: epoch 59/100 done avg_loss=4.935 p_ss=0.250
+[ 7628.6s] n_train=400: epoch 60/100 done avg_loss=4.972 p_ss=0.250
+[ 7690.1s] n_train=400: epoch 61/100 done avg_loss=4.882 p_ss=0.250
+[ 7752.7s] n_train=400: epoch 62/100 done avg_loss=4.679 p_ss=0.250
+[ 7816.9s] n_train=400: epoch 63/100 done avg_loss=4.652 p_ss=0.250
+[ 7880.8s] n_train=400: epoch 64/100 done avg_loss=4.762 p_ss=0.250
+[ 7946.8s] n_train=400: epoch 65/100 done avg_loss=4.556 p_ss=0.250
+[ 8009.9s] n_train=400: epoch 66/100 done avg_loss=4.694 p_ss=0.250
+[ 8073.2s] n_train=400: epoch 67/100 done avg_loss=4.709 p_ss=0.250
+[ 8137.5s] n_train=400: epoch 68/100 done avg_loss=4.615 p_ss=0.250
+[ 8207.6s] n_train=400: epoch 69/100 done avg_loss=4.653 p_ss=0.250
+[ 8294.9s] n_train=400: epoch 70/100 done avg_loss=4.658 p_ss=0.250
+[ 8364.0s] n_train=400: epoch 71/100 done avg_loss=4.574 p_ss=0.250
+[ 8431.5s] n_train=400: epoch 72/100 done avg_loss=4.522 p_ss=0.250
+[ 8504.5s] n_train=400: epoch 73/100 done avg_loss=4.462 p_ss=0.250
+[ 8575.7s] n_train=400: epoch 74/100 done avg_loss=4.428 p_ss=0.250
+[ 8648.2s] n_train=400: epoch 75/100 done avg_loss=4.579 p_ss=0.250
+[ 8720.6s] n_train=400: epoch 76/100 done avg_loss=4.390 p_ss=0.250
+[ 8795.4s] n_train=400: epoch 77/100 done avg_loss=4.421 p_ss=0.250
+[ 8877.4s] n_train=400: epoch 78/100 done avg_loss=4.388 p_ss=0.250
+[ 8953.4s] n_train=400: epoch 79/100 done avg_loss=4.286 p_ss=0.250
+[ 9022.4s] n_train=400: epoch 80/100 done avg_loss=4.314 p_ss=0.250
+[ 9094.0s] n_train=400: epoch 81/100 done avg_loss=4.228 p_ss=0.250
+[ 9171.5s] n_train=400: epoch 82/100 done avg_loss=4.401 p_ss=0.250
+[ 9243.1s] n_train=400: epoch 83/100 done avg_loss=4.116 p_ss=0.250
+[ 9307.0s] n_train=400: epoch 84/100 done avg_loss=4.155 p_ss=0.250
+[ 9381.3s] n_train=400: epoch 85/100 done avg_loss=4.080 p_ss=0.250
+[ 9452.6s] n_train=400: epoch 86/100 done avg_loss=4.333 p_ss=0.250
+[ 9526.8s] n_train=400: epoch 87/100 done avg_loss=4.353 p_ss=0.250
+[ 9598.3s] n_train=400: epoch 88/100 done avg_loss=4.332 p_ss=0.250
+[ 9677.6s] n_train=400: epoch 89/100 done avg_loss=4.260 p_ss=0.250
+[ 9756.7s] n_train=400: epoch 90/100 done avg_loss=4.205 p_ss=0.250
+[ 9843.9s] n_train=400: epoch 91/100 done avg_loss=4.217 p_ss=0.250
+[ 9926.8s] n_train=400: epoch 92/100 done avg_loss=4.187 p_ss=0.250
+[ 9993.7s] n_train=400: epoch 93/100 done avg_loss=4.217 p_ss=0.250
+[10058.1s] n_train=400: epoch 94/100 done avg_loss=4.289 p_ss=0.250
+[10119.7s] n_train=400: epoch 95/100 done avg_loss=4.026 p_ss=0.250
+[10180.7s] n_train=400: epoch 96/100 done avg_loss=3.958 p_ss=0.250
+[10240.6s] n_train=400: epoch 97/100 done avg_loss=4.071 p_ss=0.250
+[10300.5s] n_train=400: epoch 98/100 done avg_loss=4.053 p_ss=0.250
+[10360.7s] n_train=400: epoch 99/100 done avg_loss=4.068 p_ss=0.250
+[10423.0s] n_train=400: epoch 100/100 done avg_loss=4.101 p_ss=0.250
+[10733.3s] n_train=400: test edge_precision=0.651 edge_recall=0.511 overgen=0.814 tf_acc=0.826 (train_wall=6796.5s, stopped_early=False)
+[10733.3s] n_train=788: split train=788 dev=98 test=98
+[10734.3s] n_train=788: 2531 teacher-forced derivations
+[10871.3s] n_train=788: epoch 1/100 done avg_loss=40.987 p_ss=0.000
+[11014.9s] n_train=788: epoch 2/100 done avg_loss=24.478 p_ss=0.025
+[11147.7s] n_train=788: epoch 3/100 done avg_loss=20.834 p_ss=0.050
+[11283.1s] n_train=788: epoch 4/100 done avg_loss=18.952 p_ss=0.075
+[11415.3s] n_train=788: epoch 5/100 done avg_loss=17.535 p_ss=0.100
+[11546.5s] n_train=788: epoch 6/100 done avg_loss=16.589 p_ss=0.125
+[11678.9s] n_train=788: epoch 7/100 done avg_loss=15.618 p_ss=0.150
+[11811.8s] n_train=788: epoch 8/100 done avg_loss=14.974 p_ss=0.175
+[11945.8s] n_train=788: epoch 9/100 done avg_loss=14.080 p_ss=0.200
+[12079.1s] n_train=788: epoch 10/100 done avg_loss=13.837 p_ss=0.225
+[12212.1s] n_train=788: epoch 11/100 done avg_loss=13.533 p_ss=0.250
+[12342.7s] n_train=788: epoch 12/100 done avg_loss=12.899 p_ss=0.250
+[12475.5s] n_train=788: epoch 13/100 done avg_loss=12.254 p_ss=0.250
+[12607.9s] n_train=788: epoch 14/100 done avg_loss=11.420 p_ss=0.250
+[12741.2s] n_train=788: epoch 15/100 done avg_loss=10.883 p_ss=0.250
+[12874.4s] n_train=788: epoch 16/100 done avg_loss=10.487 p_ss=0.250
+[13005.8s] n_train=788: epoch 17/100 done avg_loss=10.037 p_ss=0.250
+[13141.5s] n_train=788: epoch 18/100 done avg_loss=9.513 p_ss=0.250
+[13273.8s] n_train=788: epoch 19/100 done avg_loss=9.210 p_ss=0.250
+[13408.5s] n_train=788: epoch 20/100 done avg_loss=9.072 p_ss=0.250
+[13542.9s] n_train=788: epoch 21/100 done avg_loss=8.768 p_ss=0.250
+[13677.4s] n_train=788: epoch 22/100 done avg_loss=8.435 p_ss=0.250
+[13812.9s] n_train=788: epoch 23/100 done avg_loss=8.189 p_ss=0.250
+[13952.7s] n_train=788: epoch 24/100 done avg_loss=7.945 p_ss=0.250
+[14090.2s] n_train=788: epoch 25/100 done avg_loss=7.794 p_ss=0.250
+[14224.4s] n_train=788: epoch 26/100 done avg_loss=7.594 p_ss=0.250
+[14359.4s] n_train=788: epoch 27/100 done avg_loss=7.531 p_ss=0.250
+[14521.7s] n_train=788: epoch 28/100 done avg_loss=7.239 p_ss=0.250
+[14684.1s] n_train=788: epoch 29/100 done avg_loss=7.284 p_ss=0.250
+[14824.3s] n_train=788: epoch 30/100 done avg_loss=7.084 p_ss=0.250
+[14959.4s] n_train=788: epoch 31/100 done avg_loss=6.940 p_ss=0.250
+[15095.2s] n_train=788: epoch 32/100 done avg_loss=6.799 p_ss=0.250
+[15229.0s] n_train=788: epoch 33/100 done avg_loss=6.735 p_ss=0.250
+[15360.0s] n_train=788: epoch 34/100 done avg_loss=6.516 p_ss=0.250
+[15490.1s] n_train=788: epoch 35/100 done avg_loss=6.431 p_ss=0.250
+[15636.6s] n_train=788: epoch 36/100 done avg_loss=6.278 p_ss=0.250
+[15770.5s] n_train=788: epoch 37/100 done avg_loss=6.186 p_ss=0.250
+[15906.1s] n_train=788: epoch 38/100 done avg_loss=6.036 p_ss=0.250
+[16037.8s] n_train=788: epoch 39/100 done avg_loss=6.111 p_ss=0.250
+[16169.8s] n_train=788: epoch 40/100 done avg_loss=6.016 p_ss=0.250
+[16301.2s] n_train=788: epoch 41/100 done avg_loss=5.943 p_ss=0.250
+[16441.2s] n_train=788: epoch 42/100 done avg_loss=5.837 p_ss=0.250
+[16579.4s] n_train=788: epoch 43/100 done avg_loss=5.826 p_ss=0.250
+[16719.8s] n_train=788: epoch 44/100 done avg_loss=5.840 p_ss=0.250
+[16857.7s] n_train=788: epoch 45/100 done avg_loss=5.642 p_ss=0.250
+[16993.7s] n_train=788: epoch 46/100 done avg_loss=5.704 p_ss=0.250
+[17127.1s] n_train=788: epoch 47/100 done avg_loss=5.472 p_ss=0.250
+[17267.6s] n_train=788: epoch 48/100 done avg_loss=5.368 p_ss=0.250
+[17426.7s] n_train=788: epoch 49/100 done avg_loss=5.621 p_ss=0.250
+[17570.3s] n_train=788: epoch 50/100 done avg_loss=5.391 p_ss=0.250
+[17705.0s] n_train=788: epoch 51/100 done avg_loss=5.263 p_ss=0.250
+[17848.3s] n_train=788: epoch 52/100 done avg_loss=5.360 p_ss=0.250
+[17991.5s] n_train=788: epoch 53/100 done avg_loss=5.327 p_ss=0.250
+[18135.2s] n_train=788: epoch 54/100 done avg_loss=5.332 p_ss=0.250
+[18272.2s] n_train=788: epoch 55/100 done avg_loss=5.492 p_ss=0.250
+[18432.7s] n_train=788: epoch 56/100 done avg_loss=5.177 p_ss=0.250
+[18592.6s] n_train=788: epoch 57/100 done avg_loss=5.199 p_ss=0.250
+[18766.5s] n_train=788: epoch 58/100 done avg_loss=5.150 p_ss=0.250
+[18935.9s] n_train=788: epoch 59/100 done avg_loss=5.086 p_ss=0.250
+[19090.1s] n_train=788: epoch 60/100 done avg_loss=5.108 p_ss=0.250
+[19255.9s] n_train=788: epoch 61/100 done avg_loss=5.171 p_ss=0.250
+[19398.4s] n_train=788: epoch 62/100 done avg_loss=4.982 p_ss=0.250
+[19531.7s] n_train=788: epoch 63/100 done avg_loss=4.914 p_ss=0.250
+[19672.0s] n_train=788: epoch 64/100 done avg_loss=4.837 p_ss=0.250
+[19803.9s] n_train=788: epoch 65/100 done avg_loss=5.011 p_ss=0.250
+[19936.5s] n_train=788: epoch 66/100 done avg_loss=4.827 p_ss=0.250
+[20074.9s] n_train=788: epoch 67/100 done avg_loss=4.887 p_ss=0.250
+[20206.0s] n_train=788: epoch 68/100 done avg_loss=4.787 p_ss=0.250
+[20337.3s] n_train=788: epoch 69/100 done avg_loss=4.833 p_ss=0.250
+[20469.5s] n_train=788: epoch 70/100 done avg_loss=4.798 p_ss=0.250
+[20600.9s] n_train=788: epoch 71/100 done avg_loss=4.727 p_ss=0.250
+[20755.8s] n_train=788: epoch 72/100 done avg_loss=4.969 p_ss=0.250
+[20926.5s] n_train=788: epoch 73/100 done avg_loss=4.728 p_ss=0.250
+[21078.9s] n_train=788: epoch 74/100 done avg_loss=4.738 p_ss=0.250
+[21212.8s] n_train=788: epoch 75/100 done avg_loss=4.842 p_ss=0.250
+[21342.2s] n_train=788: epoch 76/100 done avg_loss=4.642 p_ss=0.250
+[21471.6s] n_train=788: epoch 77/100 done avg_loss=4.769 p_ss=0.250
+[21602.4s] n_train=788: epoch 78/100 done avg_loss=4.652 p_ss=0.250
+[21734.1s] n_train=788: epoch 79/100 done avg_loss=4.690 p_ss=0.250
+[21865.3s] n_train=788: epoch 80/100 done avg_loss=4.624 p_ss=0.250
+[21998.6s] n_train=788: epoch 81/100 done avg_loss=4.560 p_ss=0.250
+[22136.7s] n_train=788: epoch 82/100 done avg_loss=4.480 p_ss=0.250
+[22273.7s] n_train=788: epoch 83/100 done avg_loss=4.520 p_ss=0.250
+[22412.7s] n_train=788: epoch 84/100 done avg_loss=4.584 p_ss=0.250
+[22545.0s] n_train=788: epoch 85/100 done avg_loss=4.567 p_ss=0.250
+[22684.5s] n_train=788: epoch 86/100 done avg_loss=4.528 p_ss=0.250
+[22830.5s] n_train=788: epoch 87/100 done avg_loss=4.487 p_ss=0.250
+[22969.8s] n_train=788: epoch 88/100 done avg_loss=4.433 p_ss=0.250
+[23115.1s] n_train=788: epoch 89/100 done avg_loss=4.421 p_ss=0.250
+[23258.3s] n_train=788: epoch 90/100 done avg_loss=4.355 p_ss=0.250
+[23397.3s] n_train=788: epoch 91/100 done avg_loss=4.488 p_ss=0.250
+[23538.4s] n_train=788: epoch 92/100 done avg_loss=4.511 p_ss=0.250
+[23674.1s] n_train=788: epoch 93/100 done avg_loss=4.504 p_ss=0.250
+[23807.8s] n_train=788: epoch 94/100 done avg_loss=4.447 p_ss=0.250
+[23948.1s] n_train=788: epoch 95/100 done avg_loss=4.361 p_ss=0.250
+[24100.2s] n_train=788: epoch 96/100 done avg_loss=4.343 p_ss=0.250
+[24250.8s] n_train=788: epoch 97/100 done avg_loss=4.246 p_ss=0.250
+[24393.3s] n_train=788: epoch 98/100 done avg_loss=4.339 p_ss=0.250
+[24582.3s] n_train=788: epoch 99/100 done avg_loss=4.428 p_ss=0.250
+[24725.8s] n_train=788: epoch 100/100 done avg_loss=4.331 p_ss=0.250
+[25032.2s] n_train=788: test edge_precision=0.713 edge_recall=0.654 overgen=0.952 tf_acc=0.877 (train_wall=13991.6s, stopped_early=False)
+
+==============================================================================
+SCALING TABLE (sched_samp_max=0.25, epochs=100)
+==============================================================================
+ n_train   edge_P   edge_R  edge_F1  overgen   tf_acc  minutes
+     200    0.618    0.520    0.565    0.830    0.814     54.2
+     400    0.651    0.511    0.573    0.814    0.826    113.3
+     788    0.713    0.654    0.682    0.952    0.877    233.2
+
+read: edge-F1 rising with n_train => data-limited, more gold helps.
+      edge-F1 here vs. the pure-teacher-forcing ~0.70 baseline at n=788 => how much of the exposure-bias gap scheduled sampling recovered.
+[25032.2s] saved report -> /content/drive/MyDrive/naomi_encoder_push/scaling_curve_report.json
+[25032.2s] TOTAL wall-clock: 25032.2s

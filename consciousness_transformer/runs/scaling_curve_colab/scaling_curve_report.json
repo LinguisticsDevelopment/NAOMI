@@ -1,0 +1,68 @@
+{
+  "args": {
+    "n_list": [
+      200,
+      400,
+      788
+    ],
+    "n_dev": 98,
+    "n_test": 98,
+    "epochs": 100,
+    "sched_samp_max": 0.25,
+    "sched_samp_warmup_epochs": 10,
+    "terminal_weight": 4.0,
+    "d_model": 128,
+    "hash_buckets": 4096,
+    "batch_size": 32,
+    "lr": 0.001,
+    "max_seconds": 16000.0,
+    "beam_width": 6,
+    "k": 6,
+    "seed": 0,
+    "device": "cpu",
+    "gold": "/content/NAOMI/consciousness_transformer/runs/encoder_gold_v2.jsonl",
+    "usvs_dir": "/content/NAOMI/consciousness_transformer/data/usvs",
+    "out": "/content/drive/MyDrive/naomi_encoder_push/scaling_curve_report.json"
+  },
+  "results": [
+    {
+      "n_train": 200,
+      "n_dev": 98,
+      "n_test": 98,
+      "epochs": 100,
+      "stopped_early": false,
+      "train_wallclock_s": 3252.851952791214,
+      "test_edge_precision": 0.6183926660748819,
+      "test_edge_recall": 0.5196970669878405,
+      "test_overgen_ratio": 0.8303489452545681,
+      "test_edge_f1": 0.5647654055204369,
+      "teacher_forced_accuracy": 0.8139106967615309
+    },
+    {
+      "n_train": 400,
+      "n_dev": 98,
+      "n_test": 98,
+      "epochs": 100,
+      "stopped_early": false,
+      "train_wallclock_s": 6796.545385360718,
+      "test_edge_precision": 0.6508227099808732,
+      "test_edge_recall": 0.5110440569085892,
+      "test_overgen_ratio": 0.8140686321491686,
+      "test_edge_f1": 0.5725253316734386,
+      "teacher_forced_accuracy": 0.8257730207271492
+    },
+    {
+      "n_train": 788,
+      "n_dev": 98,
+      "n_test": 98,
+      "epochs": 100,
+      "stopped_early": false,
+      "train_wallclock_s": 13991.554949522018,
+      "test_edge_precision": 0.7125076878903409,
+      "test_edge_recall": 0.6541529851478831,
+      "test_overgen_ratio": 0.9521865700437129,
+      "test_edge_f1": 0.6820845000802137,
+      "teacher_forced_accuracy": 0.8773892113832649
+    }
+  ]
+}
