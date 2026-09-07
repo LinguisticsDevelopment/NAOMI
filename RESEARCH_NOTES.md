@@ -935,3 +935,18 @@ recovered exposure bias.
 NEXT (director, autonomous-safe): (a) structure-match decoder evaluator (lead's
 cycle-consistency metric); (b) land phase-1 richer-gold modifier win (fix 6
 downstream role-count consumers + merge).
+
+### STRUCTURE-MATCH evaluator WORKS (cycle-consistency metric) (2026-09-07)
+Branch decoder-structmatch: scripts/eval_structure_match.py. encode->decode->
+re-encode->edge-F1(tree_A,tree_B). The re-encode-from-raw-text path works
+end-to-end (parse text' -> record -> beam_decode). Baseline (OLD buggy decoder,
+19 held-out): per-example edge-F1 mean ~0.28.
+KEY: SANITY CONTROL (GOLD text -> re-parse -> beam_decode, decoder BYPASSED)
+scores only ~0.5-0.8, NOT 1.0 -> the metric's CEILING is ENCODER-LIMITED
+(encoder 0.70 + parser noise make tree_A != tree_B even for perfect input). So
+the structure-match TRAINING SIGNAL for the decoder is capped by encoder quality
+-> improving the encoder (schedsamp push, running now) raises the decoder's
+ceiling too. Confirms "encoder is the weakest link" from another angle.
+=> metric is fair (gold-text high, garbage 0) and ready to be the decoder's
+training reward once the memory-decoder is rebuilt. Verbatim token-F1 (0.32)
+retired in favor of this.
