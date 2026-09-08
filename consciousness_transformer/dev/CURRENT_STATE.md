@@ -120,13 +120,19 @@ Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
 - Gold data branches: encoder-gold-v2 (985, forest), encoder-gold-v3-small
   (959, top-1, no lemmatization), encoder-gold-v4b-small (987, top-1,
   lemmatized, POS-aware) -- v4b is the current best gold.
-- ARMS DONE (2 seeds): forest gold rank-1 F1 0.557 (passes the 0.55 gate,
-  reproduces run-2); strict top-1 gold 0.37-0.41 (LOSES; precision collapses).
-  Forest width = beam width, not a gate. See RESEARCH_NOTES 'ARMS seed 1/0'.
-- RUNNING: v4b margin + forest gold variants (encoder-gold-v4b-variants);
-  keep-best/curve tooling (encoder-train-arms-v2); FairytaleQA finish
-  (k12-fairytaleqa). NEXT ARMS: v2 forest / v4b top-1 / v4b margin / v4b
-  forest / v4b+hard, keep-best on dev, same 98 holdout, per-family hard-gold eval.
+- ARMS-1 + ARMS-2 DONE: the 'forest beats top-1' result was a target-shape
+  artifact. On the CURRENT gold's targets (v4b): top-1 0.49 >= forest 0.47 ~
+  margin 0.45-0.47. D1 stands; variety doesn't help; keep-best is essential
+  (arms peak at 750-1,250 steps). Committed edge-F1 on richer targets ~0.49;
+  whole-tree exact ~5%. Hard gold: interjections/elision generalize to unseen
+  templates; imperatives/additive do not (need more templates); mixing 1.2:1
+  hurts in-domain. See RESEARCH_NOTES 'ARMS-2 COMPLETE'.
+- FairytaleQA: fetch bug fixed (100-story default) -> 10,556 episodes (train
+  8,524 / val 1,025 / test 1,007); 18.2% entity-scoreable (1,923), 57% not
+  substrings. Strict parse yield 19.8%.
+- RUNNING: 16K-corpus v4b gold build (encoder-gold-v4b-16k). NEXT: scaling arms
+  v4b_3000 / v4b_8000 keep-best on the same holdout; hard-gold 1:4 mix arm;
+  widen imperative/additive templates.
 - NEXT: (1) read the v2/v3 arm result vs the rank-1 >= 0.55 gate; (2) run
   v4b_788 (+ hard gold mixed in as a 4th arm) on the same holdout; (3) if
   rank-1 clears, scale: v4b-style gold over the 16K corpus (Gold_Expand with

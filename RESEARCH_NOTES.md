@@ -1464,3 +1464,44 @@ the passage at all 60.2%. => ~80% of FairytaleQA needs the realization side
 and/or inference beyond a single memory read. The K-12 phase should start on
 the 367 entity items + MCTest (4-way MC, distractors provided) while the
 decoder/realization question is reopened.
+
+### ARMS-2 COMPLETE (keep-best on dev, 8K max steps, same 98 holdout) -- the arms-1 verdict was a TARGET-SHAPE artifact (2026-09-08)
+Kept-best rank-1 edge-F1, two target sets (v2 = old forest-era trees; v4b = current
+richer, lemmatized, POS-aware top-1 trees):
+| arm (gold)                | seed | on v2 targets | on v4b targets | best step (epochs) |
+| v2_788  forest, old gold  | 0    | **0.583** (P .73) | n/a (arms-1: 0.469/0.446 on v3) | 750 (9.5) |
+| v4b_788 top-1             | 0    | 0.391 | **0.491** (P .58) | 1,250 (~50) |
+| v4b_margin_788            | 0    | 0.384 | 0.445 | 6,750 |
+| v4b_margin_788            | 1    | 0.381 | 0.471 | 1,750 (51) |
+| v4b_all_788 forest        | 0    | 0.421 | 0.470 (P .62) | 4,250 (48) |
+| v4b_788 + hard gold (979) | 0    | 0.312 | 0.404 | 1,500 (61) |
+READ: (1) Each model scores best on the target shape it was trained on. The
+arms-1 "forest beats top-1" gap (0.557 vs 0.37-0.41) was v2-shaped targets
+rewarding the v2-trained model; on the CURRENT gold's targets, top-1 (0.49) >=
+forest (0.47) ~ margin (0.45-0.47) ~ old v2 model (0.45-0.47). VARIETY DOES NOT
+HELP at equal gold quality. D1 (top-1) stands. (2) Keep-best matters: every arm
+peaks early (v2 at 750 steps = 9.5 epochs; v4b top-1 at 1,250); arms-1's fixed
+8,000 steps overtrained everything; keep-best lifted the v2 control 0.557 ->
+0.583. (3) The richer targets are HARDER: ~0.49 committed edge-F1 vs 0.58 on the
+sparser old trees; whole-tree exact stays ~5%. The gate for "encoder works" must
+be stated on the current gold's targets: rank-1 0.49 today. (4) Hard gold mixed
+1.2:1 with real gold HURTS in-domain (0.49 -> 0.40): the mix ratio / curriculum
+needs tuning (e.g. 1:4, or hard gold as a second phase).
+HARD-GOLD GENERALIZATION (first real numbers; v4b_788_hard, rank-1 F1 per family):
+| family              | unseen fillers | unseen templates |
+| pure_interjection   | 1.000 | 1.000 |
+| content_interjection| 0.992 | 0.979 |
+| imperative          | 0.956 | 0.272 |
+| additive_focus      | 0.750 | 0.233 |
+| elision             | 0.708 | 0.711 |
+| quantity            | 0.633 | 0.667 |
+| synth_subject       | 0.667 | 0.667 |
+| speaker_prime       | 0.482 | 0.662 |
+Interjections and elision GENERALIZE to unseen templates; imperatives and
+additive/focus are learned per-template (0.96 -> 0.27, 0.75 -> 0.23): those two
+families need more template variety (the generator has 8-9 each; widen).
+NEXT: the lever is DATA VOLUME at v4b quality. 16K-corpus v4b gold build
+dispatched to the cloud box (branch encoder-gold-v4b-16k); then arms v4b_3000 /
+v4b_8000 with keep-best on the same 98 holdout = the scaling curve the audit
+asked for, done properly. Separately: hard-gold mix-ratio arm (1:4) and more
+imperative/additive templates.
