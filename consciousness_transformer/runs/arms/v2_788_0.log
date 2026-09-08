@@ -5173,3 +5173,8 @@
 [13653.2s] holdout eval targets from runs/encoder_gold_v2.jsonl: matched=98 missing=0
 [13893.9s] holdout (best-of-6 + rank1 + forest width): {'sense_recall': 0.8041237113402062, 'slot_recall': 0.7950310559006211, 'structure_recall': 0.2033195020746888, 'all_gold_recalled_rate': 0.1326530612244898, 'edge_precision': 0.6910088777435714, 'edge_recall': 0.6908541807776502, 'overgen_ratio': 1.097280365137508, 'n_records': 98, 'rank1_edge_precision': 0.5642385533967164, 'rank1_edge_recall': 0.5494131246682269, 'rank1_edge_f1': 0.5567271576667839, 'rank1_structure_recall': 0.06639004149377593, 'mean_forest_width': 5.948979591836735}
 [13893.9s] holdout eval targets (alt) from runs/encoder_gold_v3.jsonl: matched=94 missing=4
+[14124.4s] holdout_alt (best-of-6 + rank1 + forest width): {'sense_recall': 0.6217008797653959, 'slot_recall': 0.8032786885245902, 'structure_recall': 0.09574468085106383, 'all_gold_recalled_rate': 0.09574468085106383, 'edge_precision': 0.6969897683503508, 'edge_recall': 0.508499656371997, 'overgen_ratio': 0.7894796692669034, 'n_records': 94, 'rank1_edge_precision': 0.561936763000593, 'rank1_edge_recall': 0.40202037914803873, 'rank1_edge_f1': 0.4687138476201821, 'rank1_structure_recall': 0.05319148936170213, 'mean_forest_width': 5.946808510638298}
+[14124.4s] evaluating RANDOM baseline on holdout ...
+[14129.0s] holdout (random baseline): {'sense_recall': 0.013745704467353952, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0031179138321995466, 'edge_recall': 0.004676870748299319, 'overgen_ratio': 0.027210884353741496, 'n_records': 98}
+[14129.0s] saved checkpoint -> runs/arms/v2_788_0.pt
+[14129.0s] TOTAL wall-clock: 14129.0s
