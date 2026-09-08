@@ -154,9 +154,21 @@ def generate(per_family: int, seed: int) -> Tuple[Dict[str, List[dict]], dict]:
                 samples[family].append(rec)
             got += 1
 
+    # v3 (hard-gold-gen-v3): imperative and additive_focus were the two
+    # families that failed to generalize to unseen TEMPLATES (0.96->0.27 and
+    # 0.75->0.23 rank-1 F1, runs/arms/v4b_788_hard_0.log) despite fine
+    # unseen-FILLER scores -- the encoder was memorizing template shapes
+    # because only 8-9 templates existed per family. Both were widened
+    # (imperative 9->29, additive_focus 8->22, see hard_gold_templates.py);
+    # holding out 4 templates instead of 2 for exactly these two families
+    # makes the unseen-template test split a stronger structural-
+    # generalization check (test_template now withholds a full quarter+ of
+    # each widened family's surface shapes, not a token 2-of-9 sliver).
+    HELD_OUT_COUNT = {"imperative": 4, "additive_focus": 4}
+
     for family in FAMILIES:
         templates = by_family[family]
-        n_held = min(2, len(templates))
+        n_held = min(HELD_OUT_COUNT.get(family, 2), len(templates))
         held_out = rng.sample(templates, n_held) if n_held else []
         held_ids = {t.id for t in held_out}
         train_templates = [t for t in templates if t.id not in held_ids]

@@ -1,4 +1,223 @@
-# HARD-CASE GOLD GENERATOR — stats (lead directive, 2026-09-08; v2 update, same day)
+# HARD-CASE GOLD GENERATOR — stats (lead directive, 2026-09-08; v2 update, same day; v3 update, same day)
+
+## v3: widening the two families that failed to generalize to unseen templates
+
+Branch `hard-gold-gen-v3`. **Why:** the first encoder trained on v4b gold +
+the v2 generated hard gold (`runs/arms/v4b_788_hard_0.log`, "ARMS-2 COMPLETE"
+in the research notes) generalizes cleanly to UNSEEN TEMPLATES for
+`content_interjection`/`pure_interjection` (0.98-1.00 rank-1 F1) and
+tolerably for `elision` (0.71), but falls off a cliff for two families:
+
+| family | unseen-FILLER rank-1 F1 (`test_filler`) | unseen-TEMPLATE rank-1 F1 (`test_template`) |
+|---|---:|---:|
+| `imperative` | 0.9556 | **0.2721** |
+| `additive_focus` | 0.7500 | **0.2326** |
+
+Both families had only 8-9 templates before this pass — few enough that
+holding out even 2 of them for `test_template` left the encoder with almost
+no exposure to alternative surface shapes for the construction, so it
+memorized TEMPLATE SHAPE rather than the underlying grammar (imperative
+synthesized-SUBJECT / additive-particle-plus-elided-predicate). This pass
+widens both families' typed-slot TEMPLATE COUNT (not filler pools — those
+were already ample) so a held-out template is a narrow slice of a wide
+surface-shape distribution instead of most of what exists, and increases how
+many templates are held out (2 -> 4) so `test_template` is a genuinely
+stronger structural-generalization check.
+
+**What changed** (`src/nsm_ct/hard_gold_templates.py`):
+
+- **`imperative`: 9 -> 29 templates.** Added determiner variety on the
+  object (`a`/`an` via `article()`, `this`, `that`, `my`, `your` — the
+  existing 9 only ever used bare `the`), a `VT` + PROPN object shape
+  (`"grab daniel ."`), `PLACE` with `"on"` as well as the existing `"in"`,
+  a new `MANNER` role for `VT`/`VI` + adverb (`"buy the soldier
+  carefully ."`, `"come quickly ."`  — new `ADV` pool, 10 curated
+  manner/time adverbs, all 10 ground), a double-object shape (`"give mary
+  the flour ."`, `INDIRECT_OBJECT` = the PROPN), `please` BEFORE the verb
+  (the existing template only had it after, trailing-comma), `never` +
+  `VT`/`VI` alongside the existing `do n't` + `VT` (added `do n't` + `VI`
+  too), bare pronoun objects (`"{VT} it ."`, `"{VT} them ."` — the existing
+  template only had `"please {VT} it ."`), a speaker-prime object
+  (`"{VT} me the {N} ."`), a vocative-prefixed imperative (new `ADDRESSEE`
+  role, `"bill , lock the man ."`), two coordinated imperative clauses in
+  one record (`"clean the face and drop the water ."` — 2 clauses, both
+  `kind=imperative`, each its own synthesized `SUBJECT=PRIME(YOU)`), and a
+  bare `"!"`-terminated `VT`+object variant (the existing bang-terminated
+  template was `VI`-only).
+- **`additive_focus`: 8 -> 22 templates.** Added nominative bare-pronoun
+  `ADDITIVE` subjects (`"{PRON} too ."`/`"{PRON} also ."`, new use of the
+  existing `PRON` pool in this family) and oblique-case bare pronouns (new
+  `OBL_PRON` pool — `him`/`her`/`them`/`us`, grounded by the same
+  grammar-rule `hand_gold._PRONOUNS` routing as `PRON`/`PROPN`, not
+  `senses_of`-filtered), determiner variants without the leading `"and"`
+  (`"the {N} too ."`, `"{a/an} {N} too ."` — the existing pair only had the
+  `"and ..."` form), an `"also"` counterpart for every shape that previously
+  only had `"too"` (`and {PROPN} also`, `{PROPN} , also`, oblique-pronoun
+  `also`), FOCUS shapes without a trailing `"too"` (`"not {PROPN} ."`,
+  `"only {PROPN} ."`, `"just the {N} ."`, `"even {PROPN} ."` — the existing
+  FOCUS template was `only {PROPN} too .`, conflating FOCUS with ADDITIVE),
+  and an `and the {N} too .` definite-article counterpart to the existing
+  `and a {N} too .`. Antecedent-clause CONTEXT sentences for the new
+  templates draw their verb from the existing `VT`/`VT_past` pools (present
+  and past tense) instead of always the fixed `"want"`, giving the
+  "want/see/like/take-shaped, past and present" variation the brief asked
+  for without inventing new unverified verb forms.
+- **`let 's {VT} the {N} .` — SKIPPED, schema cannot express it.**
+  `encoder_model.PRIMES = ["YOU", "I", "<UNK_PRIME>"]` (D3): the schema only
+  admits a synthesized SUBJECT for 2nd-person singular (`YOU`, imperative
+  addressee) or 1st-person singular (`I`). A first-person-PLURAL synthesized
+  subject (`"let's"` = "you and I") has no admitted `PRIME` value — spelling
+  it `PRIME("WE")` would train against the catch-all `<UNK_PRIME>` bucket,
+  which is not a real gold target and would not genuinely widen the family.
+  Left for a future schema change (adding `"WE"` to `PRIMES`), not attempted
+  here.
+- **`{PROPN} as well .` — SKIPPED, schema cannot express it.** `"as well"`
+  is a two-TOKEN particle; every filler in `hand_gold.py`'s DSL (`W`) binds
+  to exactly one surface token (`_Matcher.match` consumes one token per
+  slot). There is no existing role shape for a multi-token surface span
+  here — authoring it would mean either faking `"as well"` as one non-real
+  token (would never match the real tagger's per-word output) or dropping
+  half the phrase. A correct fix needs a multi-token-span filler primitive
+  in `hand_gold.py` itself, out of scope for a template-only widening pass.
+
+**`gen_hard_gold.py`'s held-out count is now per-family**
+(`HELD_OUT_COUNT = {"imperative": 4, "additive_focus": 4}`, default 2 for
+every other family, unchanged): these two widened families hold out 4 whole
+templates from `train`/`test_filler` into `test_template`, not 2 — a bigger,
+harder unseen-template slice, proportionate to how many more templates now
+exist to hold out from.
+
+### v3 families × templates × splits
+
+`--per-family 150 --seed 0` (same invocation as v2; only the template set
+and the two families' held-out count changed):
+
+| family | templates (before → after) | held-out count | generated | **passed** | failed | train | test_filler | test_template | held-out template ids (seed 0) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| additive_focus | 8 → **22** | **4** | 11,567 | **143** | 0 | 109 | 10 | 24 | `add_and_a_n_too`, `add_pron_also`, `add_pron_too`, `add_propn_also` |
+| content_interjection | 8 | 2 | 210 | **210** | 0 | 150 | 30 | 30 | `interjc_then_clause_bang`, `interjc_then_clause_comma` |
+| elision | 8 | 2 | 5,916 | **138** | 0 | 93 | 15 | 30 | `elision_n_did`, `elision_n_did_too` |
+| imperative | 9 → **29** | **4** | 232 | **232** | 0 | 150 | 50 | 32 | `imp_neg_vt_obj`, `imp_vocative`, `imp_vt_obj_adv`, `imp_vt_obj_place_on` |
+| pure_interjection | 8 | 2 | 190 | **190** | 0 | 140 | 20 | 30 | `interjp_clause_then`, `interjp_double_dot` |
+| quantity | 8 | 2 | 4,918 | **132** | 0 | 108 | 20 | 4 | `quant_bang_past_ctx`, `quant_not_bang` |
+| speaker_prime | 9 | 2 | 206 | **193** | 0 | 138 | 25 | 30 | `speaker_show_me_n`, `speaker_vt_it_for_me` |
+| synth_subject | 8 | 2 | 287 | **210** | 0 | 150 | 30 | 30 | `synth_feels_bang`, `synth_seems_bang` |
+| **total** | **66 → 86** | — | **23,526** | **1,448** | **0** | **1,038** | **200** | **210** | — |
+
+**Failure histogram: empty** — all 23,526 generation attempts across every
+family (widened and unwidened alike) passed `check_record` outright; zero
+new failure modes from the 20 new templates.
+
+Output files (`runs/`, `git add -f`'d):
+
+| file | records | bytes |
+|---|---:|---:|
+| `hard_gold_train.jsonl` | 1,038 | 2,616,314 |
+| `hard_gold_test_filler.jsonl` | 200 | 497,833 |
+| `hard_gold_test_template.jsonl` | 210 | 606,823 |
+| `hard_gold_train_small.jsonl` (new, v3) | 200 | 515,458 |
+| **total** | **1,648** | **4,236,428 (4.04 MB, < 6 MB cap)** |
+
+`runs/hard_gold_train_small.jsonl` is new in v3: `scripts/make_hard_gold_small.py`
+draws a seeded (`--seed 0`), family-stratified 200-record subset of
+`hard_gold_train.jsonl` (25 records per family, 8 families) for the 1:4
+hard-gold-to-teacher-gold mixing arm — a fixed-size, reproducible slice
+rather than re-sampling ad hoc per training run.
+
+### v3 sample renders from new templates (not in the "first-2-per-family" table below, which still shows the pre-existing shapes)
+
+```
+imperative:
+  imp_vt_propn          'grab daniel .'
+  imp_give_propn_n       'give mary the flour .'
+  imp_vocative           'bill , lock the man .'
+  imp_coord               'clean the face and drop the water .'
+  imp_vt_obj_adv          'buy the soldier carefully .'
+  imp_never_vi            'never leave !'
+
+additive_focus:
+  add_oblpron_too         'her too .'
+  add_not_propn            'not sandra .'
+  add_just_the_n           'just the patient .'
+  add_even_propn           'even fred .'
+  add_and_the_n_too        'and the face too .'
+```
+
+All pass `hand_gold.check_record` (schema validity, oracle `linearize_tree`,
+action legality, skeleton round-trip).
+
+### v3 smoke-train result
+
+`python scripts/train_encoder.py --smoke --max-steps 40 --gold runs/hard_gold_train.jsonl`
+(150-record stratified train subset of the new 1,038-record file, 40-dev/40-test, CPU):
+
+```
+[  16.0s] USVS loaded: 117679 senses, d_axes=607
+[  16.0s] pos_vocab=13 role_vocab=14
+[  16.0s] policy params: 197,661 (~0.791 MB fp32)
+[  19.2s] epoch 0 step 50  avg_loss=26.874
+[  20.2s] === epoch 0 done: avg_loss=24.126 (n=150 derivations) ===
+[  21.7s] === epoch 1 done: avg_loss=20.373 (n=150 derivations) ===
+[  23.3s] === epoch 2 done: avg_loss=17.400 (n=150 derivations) ===
+[  24.8s] === epoch 3 done: avg_loss=15.173 (n=150 derivations) ===
+[  24.8s] training wall-clock: 6.2s (stopped_early=True); optimizer_steps=40 (cap=40, stop_reason=max_steps)
+[ 229.3s] test: {'sense_recall': 0.7857, 'edge_recall': 0.2396, 'rank1_edge_f1': 0.2722, 'n_records': 40}
+[ 230.7s] test (random baseline): {'sense_recall': 0.0143, 'edge_recall': 0.0521}
+```
+
+Loss finite and monotonically decreasing over all 40 optimizer steps (26.87
+→ 24.13 → 20.37 → 17.40 → 15.17) — the new templates' actions are all
+admitted by the legality mask (a masked-out gold action would be a `-inf`
+logit → `+inf` loss). `role_vocab=14` in this run. Two new role names were
+introduced for the v3 templates: `MANNER` (`imp_vt_obj_adv`/`imp_vi_adv`)
+and `ADDRESSEE` (`imp_vocative`). `MANNER` appears in `hard_gold_train.jsonl`
+(both its templates stayed in `train` at seed 0); `ADDRESSEE` does NOT —
+`imp_vocative` is one of `imperative`'s 4 held-out templates at seed 0, so
+every `ADDRESSEE`-bearing record landed in `test_template` and none in
+`train`. This is the intended held-out-TEMPLATE design working as specified
+(a genuinely unseen template can introduce a role the encoder never trained
+on, which is a harder and more honest generalization test than a held-out
+template that only varies fillers) — not a gap to fix, since `role_vocab`
+already has a fallback bucket for unseen role names at eval time, same as an
+unseen sense/POS ID.
+
+### v3 tests
+
+`pytest -q tests/test_hard_gold_gen.py tests/test_decisions_d1_d6.py`:
+**38 passed, 1 skipped** (the skip is `test_teacher_gold_inflected_word_grounding_unchanged_or_improved`'s
+own pre-existing "if `runs/encoder_gold_v2.jsonl` present" gate, unrelated
+to this batch, and unchanged from v2). `test_hard_gold_gen.py` gained two
+tests: `test_imperative_and_additive_focus_widened_v3` (template counts
+`>=24`/`>=20`) and `test_imperative_and_additive_focus_hold_out_four_templates`
+(the generator's `HELD_OUT_COUNT` override actually holds out 4, not the
+default 2, for these two families). `test_pools_are_grounded` was updated to
+also exclude the new `OBL_PRON` pool from the `senses_of_surface` check —
+same grammar-rule-not-sense-lookup exemption already given to `PROPN`/`PRON`.
+
+### v3 unfinished / out of scope, and exactly why
+
+- **`let 's {VT} the {N} .`** — schema cannot express a first-person-plural
+  synthesized subject (`encoder_model.PRIMES` only admits `YOU`/`I`); see
+  above. Not attempted.
+- **`{PROPN} as well .`** — schema's filler DSL has no multi-token-span
+  primitive; `"as well"` is two tokens. Not attempted.
+- **No new evaluation run against a freshly retrained encoder.** This batch
+  regenerates the GOLD (widened templates, wider `test_template` split) and
+  confirms it trains (finite, decreasing smoke loss); it does not itself
+  retrain the full arms-2-style encoder to confirm the unseen-template
+  rank-1 F1 actually improves for `imperative`/`additive_focus` — that is a
+  full multi-thousand-step training run (`runs/arms/v4b_788_hard_0.log` took
+  ~5,647s to reach its extra-eval), explicitly out of scope for a CPU,
+  code-and-generation-only, 40-step-smoke pass in one turn. The generated
+  `runs/hard_gold_test_template.jsonl` (now 32 imperative / 24
+  additive_focus records drawn from 4 held-out templates each, vs. the v2
+  file's thinner 2-held-out-template slices) is the artifact a follow-up
+  training run would evaluate against.
+- **`quantity`'s known template-surface-collision issue (v2 §9) persists
+  unchanged** — out of scope for this pass, which only touched
+  `imperative`/`additive_focus`.
+
+---
 
 > Generated by `scripts/gen_hard_gold.py` (templates in
 > `src/nsm_ct/hard_gold_templates.py`), this run at
