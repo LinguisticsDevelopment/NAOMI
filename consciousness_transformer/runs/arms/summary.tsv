@@ -9,3 +9,5 @@ v4b_788_hard	0	runs/encoder_gold_v4b.jsonl,runs/hard_gold_train.jsonl	788	8000	m
 v4b_all_788	0	runs/encoder_gold_v4b_all.jsonl	788	8000	max_steps	89.6359	9706.9	0.4953	0.5767	0.4205	5.9694			runs/arms/v4b_all_788_0.pt
 v4b_margin_788	0	runs/encoder_gold_v4b_margin.jsonl	788	8000	max_steps	231.4647	11130.5	0.4389	0.5535	0.3836	6.0000	0.5537	0.4453	6750
 v4b_margin_788	1	runs/encoder_gold_v4b_margin.jsonl	788	8000	max_steps	231.4647	6321.8	0.4396	0.5464	0.3812	5.9694			runs/arms/v4b_margin_788_1.pt
+v4b_8000	0	runs/encoder_gold_v4b_16k.jsonl	8000	8000	max_steps	32.0000	9012.4	0.7136	0.7245	0.6326	5.9898	0.5671	0.5342	6500	0.5311	0.5070	26.0000			runs/arms/v4b_8000_0.pt
+v4b_3000	0	runs/encoder_gold_v4b_16k.jsonl	3000	8000	max_steps	85.3333	9286.8	0.6671	0.6744	0.5495	5.9694	0.5117	0.4808	1750	0.4895	0.4442	18.6667			runs/arms/v4b_3000_0.pt
