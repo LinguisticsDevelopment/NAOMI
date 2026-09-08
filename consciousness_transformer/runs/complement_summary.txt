@@ -1,0 +1,45 @@
+PART B -- teacher-complement probe: summary
+==============================================================================
+complement set n=77  control set n=50  seed=20260908
+
+COMPLEMENT usable-rate overall: 14/77 = 18.2%
+
+usable-rate by outcome bucket:
+  grounding-fail  n=68  usable=9   rate=13.2%
+  cap-hit         n=9   usable=5   rate=55.6%
+  no-hypothesis   n=0
+
+usable-rate by length bin:
+  A n=46  usable=3   rate=6.5%
+  B n=12  usable=3   rate=25.0%
+  C n=9   usable=3   rate=33.3%
+  D n=10  usable=5   rate=50.0%
+
+usable-rate by outcome x length bin:
+  outcome                  A           B           C           D
+  grounding-fail     3/46=7%    3/12=25%     3/9=33%      0/1=0%
+  cap-hit                n=0         n=0         n=0     5/9=56%
+  no-hypothesis          n=0         n=0         n=0         n=0
+
+criterion pass rates (complement set):
+  J1 predicate-ok    26.0%
+  J2 subject-ok      54.5%
+  J3 no-phantoms     96.1%
+
+CONTROL (n=50, teacher-parseable TEST-split):
+  gold/teacher tree usable-rate (judge ceiling): 37/50 = 74.0%
+  encoder rank-1 usable-rate on EASY text:       33/50 = 66.0%
+    J1: gold=92.0%  encoder-on-easy=68.0%
+    J2: gold=74.0%  encoder-on-easy=76.0%
+    J3: gold=98.0%  encoder-on-easy=100.0%
+
+encoder-vs-teacher wall-clock by length bin (complement set; teacher time is its OWN recorded attempt on the same failed sentence):
+  bin   n   enc_mean_s  enc_median_s   teacher_mean_s  teacher_median_s   speedup(median)
+  A   46  4.5629     4.7080        0.0052          0.0032           0.0x
+  B   12  4.3270     4.4728        0.0373          0.0256           0.0x
+  C   9   2.1222     0.0956        0.1421          0.1439           1.5x
+  D   10  3.1893     3.3768        27.0357          30.0048           8.9x
+
+==============================================================================
+GATE (audit): complement usable-rate >= 50% (and not far below the encoder-on-easy control) -> encoder earns its existence beyond parser distillation. < 25% -> parser distillation on this checkpoint. In between -> inconclusive.
+  complement usable-rate 18.2% < 25% -> FAILS: parser distillation on this checkpoint.
