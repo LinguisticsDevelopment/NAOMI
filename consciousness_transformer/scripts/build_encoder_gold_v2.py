@@ -400,31 +400,40 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument("--corpus-files", default=None,
                    help="comma-separated basenames (e.g. real_gutenberg_alice.txt); when given, "
                         "restricts --corpus-glob's matches to exactly these files.")
+    p.add_argument("--workers", type=int, default=1,
+                   help="shard the (already deduped, ordered) sentence list across N fork()ed "
+                        "subprocesses, each independently loading USVS + building its own parser "
+                        "and writing its own JSONL shard (flushed+fsynced per record, same "
+                        "durability as single-process); shards are concatenated in original "
+                        "sentence order afterward, so output is byte-identical to --workers=1 for "
+                        "the same corpus/forest settings. Default 1 (no change from before this "
+                        "option existed).")
     return p.parse_args(argv)
 
 
-def main() -> int:
-    args = parse_args()
-    t0 = time.time()
-    corpus_files = args.corpus_files.split(",") if args.corpus_files else None
-    sentences = load_corpus(glob_pattern=args.corpus_glob, allowed_basenames=corpus_files)
-    print(f"corpus: {len(sentences)} unique sentences", flush=True)
-    print(f"corpus glob: {args.corpus_glob}"
-          + (f" (files={corpus_files})" if corpus_files else ""), flush=True)
-    print(f"forest policy: {args.forest}"
-          + (f" (margin={args.forest_margin})" if args.forest == "margin" else ""), flush=True)
+def _new_parser() -> ParserInputEncoder:
+    """A fresh, self-contained ``ParserInputEncoder``. The gold-record shape
+    (``build_record``) never reads ``parser.tokenizer`` -- only
+    ``parser._tag``/``parser._parse_topk_one``, both independent of the
+    tokenizer's vocabulary -- so any tokenizer built from any sentence set
+    produces byte-identical records; each ``--workers`` subprocess builds its
+    own from its own shard rather than pickling one shared instance across
+    the process boundary."""
+    tok = SimpleTokenizer.build([], extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
+    return ParserInputEncoder(tok)
 
-    print("loading USVS ...", flush=True)
-    usvs = load_usvs(USVS_DIR)
-    print(f"USVS loaded: {len(usvs.core_words)} core words, {len(usvs.sense_ids)} senses", flush=True)
 
-    tok = SimpleTokenizer.build(sentences, extra_tokens=list(PRIME_NAMES) + PARSE_LABELS)
-    parser = ParserInputEncoder(tok)
-    if getattr(parser, "_parser", None) is None:
-        print("quantum_parser unavailable; aborting")
-        return 1
-
-    OUT_JSONL.parent.mkdir(parents=True, exist_ok=True)
+def process_sentences(usvs, parser: ParserInputEncoder, sentences: List[str],
+                       forest_mode: str, forest_margin: float, out_path: Path,
+                       progress_prefix: str = "", t0: Optional[float] = None) -> Dict[str, object]:
+    """Runs the per-sentence build loop over ``sentences``, writing one JSONL
+    record per successfully-parsed sentence to ``out_path`` (flushed+fsynced,
+    same overnight-run durability as before ``--workers`` existed), and
+    returns the raw stats accumulators ``write_stats`` consumes. Shared by
+    the single-process path and every ``--workers`` shard subprocess so both
+    run the IDENTICAL per-sentence code -- a single worker's output is
+    byte-identical to the pre-``--workers`` script."""
+    t0 = t0 if t0 is not None else time.time()
     outcomes: Dict[str, int] = defaultdict(int)
     n_trees: List[int] = []
     n_raw_hyps: List[int] = []
@@ -432,11 +441,12 @@ def main() -> int:
     n_reference_slots = 0
     n_only_best = 0  # raw hypothesis count was 1 (nothing to widen)
 
-    with open(OUT_JSONL, "w", encoding="utf-8") as out_f:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as out_f:
         for i, sentence in enumerate(sentences):
             record, outcome, n_raw = build_record(usvs, parser, sentence,
-                                                    forest_mode=args.forest,
-                                                    forest_margin=args.forest_margin)
+                                                    forest_mode=forest_mode,
+                                                    forest_margin=forest_margin)
             outcomes[outcome] += 1
             if record is not None:
                 out_f.write(json.dumps(record) + "\n")
@@ -457,7 +467,133 @@ def main() -> int:
                             elif g["type"] == "reference":
                                 n_reference_slots += 1
             if (i + 1) % 100 == 0:
-                print(f"  ... {i + 1}/{len(sentences)} ({time.time() - t0:.0f}s)", flush=True)
+                print(f"{progress_prefix} ... {i + 1}/{len(sentences)} ({time.time() - t0:.0f}s)", flush=True)
+
+    return {
+        "outcomes": dict(outcomes),
+        "n_trees": n_trees,
+        "n_raw_hyps": n_raw_hyps,
+        "n_sense_cands": n_sense_cands,
+        "n_reference_slots": n_reference_slots,
+        "n_only_best": n_only_best,
+    }
+
+
+def _shard_paths(base: Path, n_shards: int) -> List[Path]:
+    return [base.with_suffix(f".shard{i}{base.suffix}") for i in range(n_shards)]
+
+
+def _shard_worker(shard_idx: int, sentences: List[str], forest_mode: str, forest_margin: float,
+                   shard_path: Path, stats_path: Path) -> None:
+    """Entry point for one ``--workers`` subprocess: independently loads USVS
+    + builds its own parser (neither is shared/pickled across the process
+    boundary), processes its contiguous sentence chunk, and dumps its stats
+    accumulators to ``stats_path`` as JSON for the parent to merge."""
+    usvs = load_usvs(USVS_DIR)
+    parser = _new_parser()
+    if getattr(parser, "_parser", None) is None:
+        print(f"[shard {shard_idx}] quantum_parser unavailable; aborting", flush=True)
+        raise SystemExit(1)
+    stats = process_sentences(usvs, parser, sentences, forest_mode, forest_margin,
+                               shard_path, progress_prefix=f"[shard {shard_idx}]")
+    stats_path.write_text(json.dumps(stats), encoding="utf-8")
+
+
+def _merge_stats(shard_stats: List[Dict[str, object]]) -> Tuple[Dict[str, int], List[int], List[int],
+                                                                  List[int], int, int]:
+    outcomes: Dict[str, int] = defaultdict(int)
+    n_trees: List[int] = []
+    n_raw_hyps: List[int] = []
+    n_sense_cands: List[int] = []
+    n_reference_slots = 0
+    n_only_best = 0
+    for s in shard_stats:
+        for k, v in s["outcomes"].items():
+            outcomes[k] += v
+        n_trees.extend(s["n_trees"])
+        n_raw_hyps.extend(s["n_raw_hyps"])
+        n_sense_cands.extend(s["n_sense_cands"])
+        n_reference_slots += s["n_reference_slots"]
+        n_only_best += s["n_only_best"]
+    return dict(outcomes), n_trees, n_raw_hyps, n_sense_cands, n_reference_slots, n_only_best
+
+
+def _split_contiguous(sentences: List[str], n_shards: int) -> List[List[str]]:
+    """``n_shards`` contiguous, near-equal-size chunks covering ``sentences``
+    in order (chunk 0 = the first slice, chunk 1 = the next, ...) so
+    concatenating each shard's output file in shard order reproduces the
+    original sentence order exactly -- no post-hoc re-sort needed."""
+    n = len(sentences)
+    base, extra = divmod(n, n_shards)
+    chunks = []
+    start = 0
+    for i in range(n_shards):
+        size = base + (1 if i < extra else 0)
+        chunks.append(sentences[start:start + size])
+        start += size
+    return chunks
+
+
+def main() -> int:
+    args = parse_args()
+    t0 = time.time()
+    corpus_files = args.corpus_files.split(",") if args.corpus_files else None
+    sentences = load_corpus(glob_pattern=args.corpus_glob, allowed_basenames=corpus_files)
+    print(f"corpus: {len(sentences)} unique sentences", flush=True)
+    print(f"corpus glob: {args.corpus_glob}"
+          + (f" (files={corpus_files})" if corpus_files else ""), flush=True)
+    print(f"forest policy: {args.forest}"
+          + (f" (margin={args.forest_margin})" if args.forest == "margin" else ""), flush=True)
+
+    OUT_JSONL.parent.mkdir(parents=True, exist_ok=True)
+
+    if args.workers <= 1:
+        print("loading USVS ...", flush=True)
+        usvs = load_usvs(USVS_DIR)
+        print(f"USVS loaded: {len(usvs.core_words)} core words, {len(usvs.sense_ids)} senses", flush=True)
+
+        parser = _new_parser()
+        if getattr(parser, "_parser", None) is None:
+            print("quantum_parser unavailable; aborting")
+            return 1
+
+        stats = process_sentences(usvs, parser, sentences, args.forest, args.forest_margin, OUT_JSONL, t0=t0)
+        outcomes, n_trees, n_raw_hyps = stats["outcomes"], stats["n_trees"], stats["n_raw_hyps"]
+        n_sense_cands, n_reference_slots, n_only_best = (
+            stats["n_sense_cands"], stats["n_reference_slots"], stats["n_only_best"])
+    else:
+        import multiprocessing as mp
+        print(f"workers: {args.workers} (sharding {len(sentences)} sentences deterministically, "
+              "contiguous chunks, byte-identical per-record output to single-process)", flush=True)
+        chunks = _split_contiguous(sentences, args.workers)
+        shard_paths = _shard_paths(OUT_JSONL, args.workers)
+        stats_paths = _shard_paths(OUT_STATS.with_suffix(".json"), args.workers)
+        ctx = mp.get_context("fork")
+        procs = []
+        for i, (chunk, shard_path, stats_path) in enumerate(zip(chunks, shard_paths, stats_paths)):
+            p = ctx.Process(target=_shard_worker,
+                             args=(i, chunk, args.forest, args.forest_margin, shard_path, stats_path))
+            p.start()
+            procs.append(p)
+        for p in procs:
+            p.join()
+        failed = [i for i, p in enumerate(procs) if p.exitcode != 0]
+        if failed:
+            print(f"shard(s) {failed} failed (non-zero exit); aborting before concatenation", flush=True)
+            return 1
+
+        with open(OUT_JSONL, "wb") as out_f:
+            for shard_path in shard_paths:
+                with open(shard_path, "rb") as sf:
+                    out_f.write(sf.read())
+        for shard_path in shard_paths:
+            shard_path.unlink()
+
+        shard_stats = [json.loads(p.read_text(encoding="utf-8")) for p in stats_paths]
+        for p in stats_paths:
+            p.unlink()
+        outcomes, n_trees, n_raw_hyps, n_sense_cands, n_reference_slots, n_only_best = _merge_stats(shard_stats)
+        print(f"all {args.workers} shards done ({time.time() - t0:.0f}s)", flush=True)
 
     print(f"wrote {len(n_trees)} records -> {OUT_JSONL}", flush=True)
     print(f"outcomes: {dict(outcomes)}", flush=True)
