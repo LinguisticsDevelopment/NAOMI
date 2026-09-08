@@ -1259,3 +1259,10 @@ rank-1 confidence is uncalibrated). Candidates already in the repo: structure-
 match round-trip (encode->decode->re-encode agreement), the no-phantom gate
 (J3, 96% even on failures), teacher agreement where the teacher parses, and
 comprehension-side consistency (a parse that contradicts memory is suspect).
+DISPATCHED (2026-09-08 ~08:53Z, lead-approved): (a) K-12 corpus SCOUT (branch
+k12-scout: open-license graded readers WITH comprehension questions, licenses,
+samples, teacher parse yield, fetch script); (b) LLM PARSE JUDGE (branch
+llm-parse-judge: tree flattener + Claude Haiku 4.5 good/bad verdict via the
+Anthropic SDK with Batches mode, mock backend for tests, calibration on gold /
+corrupted-gold / encoder-complement trees). Judge = the self-training admission
+filter; low priority, cheap (~$1 per 1K trees at Haiku rates, half in batch).
