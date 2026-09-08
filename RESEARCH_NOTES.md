@@ -1411,3 +1411,13 @@ Note: on the top-1 (v3) targets the two training golds are roughly tied
 (0.45-0.49 vs 0.42-0.49); the forest-trained model is strictly better on
 forest targets and never worse elsewhere. Precision is the big loser under
 top-1 training (0.69-0.71 -> 0.44-0.45): the top-1-trained model over-emits.
+
+### TRAIN-ARMS v2 TOOLING MERGED: dev eval + keep-best + curves (2026-09-08)
+train_encoder.py: --eval-every N (k=1 rank-1 F1 on the DEV holdout, logged to
+<out>.curve.tsv), --keep-best (best-dev checkpoint saved as <out>, last as
+<out>.last.pt, best_step in config), --patience, --extra-eval (comma list of
+extra gold files scored per `family`), epochs_equivalent in the summary.
+run_encoder_arms.sh: EVAL_EVERY=250 KEEP_BEST=1 defaults, ARMS filter, new arms
+v4b_788 and v4b_788_hard (v4b + generated hard gold, scored on the held-out
+hard-gold splits per family). tests/test_encoder_curve.py. Final eval reported
+for BOTH the kept-best and the last checkpoint.
