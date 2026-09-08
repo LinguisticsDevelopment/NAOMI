@@ -83,10 +83,18 @@ held-out zero-shot grammar-swap exam.
 
 ## AUDIT ADDENDUM (2026-09-08) — read dev/AUDIT_2026-09-08.md
 Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
-- NEXT ACTION 3 (Gold_Expand) is GATED on two measurements now in flight
-  (branch `encoder-complement-probe`): (a) rank-1 committed-tree edge-F1 >= 0.55
-  (the 0.70 headline is best-of-8 oracle); (b) encoder usable-rate >= 50% on
-  sentences the TEACHER FAILS (its only value beyond parser distillation).
+- GATES MEASURED 2026-09-08 (branch `encoder-complement-probe`, merged): BOTH
+  FAIL. (a) rank-1 edge-F1 0.534 (< 0.55), structure-exact 0.062, forest width
+  7.97/8 -- the 0.70 headline was a best-of-8 oracle. (b) complement usable
+  18.2% (< 25%): fragments 7% (never trained on), parser-timeout long
+  sentences 56% at 8.9x speed (n=9). Control: encoder-on-easy 66% vs teacher
+  74%. See RESEARCH_NOTES "AUDIT GATES MEASURED".
+- NEXT ACTION 3 (16K Gold_Expand on Colab) stays GATED. NEW NEXT ACTION 3':
+  small v3 gold (top-1, D1-D6) over ONLY the original 1,475 sentences, built
+  on the cloud box, then arms v2@788 vs v3@788 at fixed steps (branch
+  `encoder-train-arms` tooling). Decision number: rank-1 F1 >= 0.55 and forest
+  width -> ~1 on single-tree targets. Pass -> continue (v3@3000, 16K). Fail ->
+  parser becomes the encoder; week moves to the comprehension spike.
 - NEXT ACTION 4 (train): never bundle. Arms v2@788 / v3@788 / v3@~3000 at FIXED
   gradient steps, 2 seeds -> separates "more data" from "cleaner data".
 - NEXT ACTION 5 (memory-frame decoder): ON HOLD -- its coverage gate failed

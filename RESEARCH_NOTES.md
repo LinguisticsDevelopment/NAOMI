@@ -1140,3 +1140,51 @@ mainline. What changed:
 Also lands on mainline by this merge: the 16,411-sentence corpus + Gold_Expand.ipynb
 (corpus-expand) and hand_gold.py + HAND_GOLD_DRAFT.md (hand-gold-draft), per the
 lead's locked "keep all sources" decision.
+
+### AUDIT GATES MEASURED — BOTH FAIL: rank-1 F1 0.534, complement 18% (2026-09-08)
+Branch encoder-complement-probe (merged; runs/rescore_rank1.txt, runs/
+complement_summary.txt, runs/complement_probe.txt = all 77 rendered cases for
+the lead's hand-judgment). Run-2 checkpoint, n=98 test split, reproduction of
+the old best-of-8 numbers exact (0.700 / 1.082 / 0.212).
+GATE A (rank-1 committed tree, threshold F1 >= 0.55): FAIL.
+  | view              | edge_P | edge_R | edge_F1 | structure_exact |
+  | best-of-8 oracle  | 0.700  | 0.695  | 0.698   | 0.212 |
+  | rank-1 (= k=1)    | 0.559  | 0.512  | 0.534   | 0.062 |
+  Forest width: mean 7.97 of max 8 (min 6) -- the model NEVER stops emitting
+  alternatives; forest-pooled overgen 1.157 (mean per-record 3.36). The 0.70
+  headline was an oracle over 8 hypotheses; committed, the encoder gets the
+  whole tree right 6% of the time. Direct cause is visible: v2 gold averaged
+  3.46 trees/sentence, so the encoder was TRAINED to emit forests. D1 (top-1
+  gold, merged today) targets exactly this -- untested until a retrain.
+GATE B (teacher-complement usable-rate, >= 50% pass / < 25% distillation): FAIL
+  at 18.2% (14/77) -- BUT the composition matters:
+  - bin A grounding-fail fragments ("oh dear !", "more !"): 3/46 = 7%. J1 needs a
+    VERB/AUX predicate, which verbless fragments cannot satisfy, AND no gold of
+    any kind contains these constructions. This bucket measures "never trained
+    on it", not "cannot generalize".
+  - cap-hit LONG sentences (parser exceeded 30 s): 5/9 = 56% usable, median
+    3.4 s vs the parser's 30 s cap (8.9x). n=9 -- suggestive, not a claim.
+  - grounding-fail bins B/C: 3/12 = 25%, 3/9 = 33%.
+  - CONTROL: encoder rank-1 on easy teacher-parseable text 66% usable vs the
+    teacher's own trees 74% (judge ceiling). J1 26% / J2 55% / J3 96% on the
+    complement (phantoms are NOT the failure; predicate choice is).
+HONEST READING: on this checkpoint the learned encoder is parser distillation
+with (i) a real but tiny-n edge on sentences the parser times out on and (ii)
+zero capability on the fragment/interjection/imperative family, for the
+mundane reason that it has never seen one. The hand-gold plan (16 records) is
+~0.2% of the bulk and cannot change (ii) (audit finding 2).
+DIRECTOR DECISION (within remit, cheap, decisive -- runs before any 16K build):
+  Build v3 gold (top-1, richer, D1-D6) for ONLY the original 1,475 sentences on
+  the cloud box (~15 min; no Colab needed), then run the fixed-step arms
+  v2@788 vs v3@788 (2 seeds, same held-out sentences, ~2 h each). The ONE
+  number: does rank-1 edge-F1 clear 0.55 and forest width drop toward 1 when
+  the targets are single trees? YES -> encoder salvageable, proceed to v3@3000
+  and the 16K build. NO -> the learned encoder is not earning its place; the
+  parser becomes the encoder and the week moves to the comprehension spike.
+LEAD DECISIONS REQUESTED (architecture): (1) if the retrain fails the gate,
+accept the hybrid (deterministic parser as encoder on parseable text, learned
+encoder only as the cap-hit fallback) and move effort to comprehension? (2) the
+fragment family: fund hand-gold at the scale that could teach it (hundreds per
+construction, human time) or drop it from the encoder's remit and let
+comprehension handle fragments via candidates? (3) the comprehension spike
+(audit finding 8) -- go?
