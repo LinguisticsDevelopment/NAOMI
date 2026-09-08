@@ -1594,3 +1594,15 @@ unseen-template scores from ~0.25 to ~0.75. speaker_prime regressed (0.66 ->
 0.43; it was not widened and its n is small) -- next generator pass should widen
 it too. The 1:4 mix arm (200 hard records) is still running; it decides whether
 the in-domain cost (0.491 -> 0.464) can be recovered.
+
+### ARMS-3(b) COMPLETE: hard-gold mix ratio -- use the FULL hard gold (2026-09-08)
+| arm (v4b_788 + hard gold, v3 templates) | in-domain rank-1 (v4b tgt) | imperative unseen-tmpl | additive unseen-tmpl | interjections |
+| no hard gold (reference)                | 0.491 | -- | -- | -- |
+| + 200 hard (1:4)                        | 0.473 | 0.605 | 0.680 | 0.88-0.97 |
+| + 1,038 hard (1.3:1)                    | 0.464 | 0.781 | 0.729 | 0.98-1.00 |
+READ: the in-domain cost of mixing is 0.02-0.03 either way (seed-noise scale);
+the 1:4 sample gives up ~0.1-0.2 on the hard families for it. DECISION: train
+with the FULL hard gold from now on. At 16K-scale real gold (8,000 records)
+the full hard set is a natural ~1:8, so the next scaling arm should be
+v4b_8000 + hard_gold_train (v4 templates once merged). speaker_prime stays
+weak (0.30-0.43) -> generator v4 widening (in flight).
