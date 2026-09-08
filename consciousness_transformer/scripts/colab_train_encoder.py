@@ -44,6 +44,7 @@ import torch
 
 from nsm_ct.ground.usvs import build_usvs, load_usvs, save_usvs
 from nsm_ct import encoder_model as em
+from nsm_ct import encoder_train_util as etu
 from train_encoder import load_gold, stratified_split  # noqa: E402
 from eval_encoder_on import evaluate_with_totals  # noqa: E402
 
@@ -97,48 +98,41 @@ def split_sizes(n_records: int, n_available: int, log) -> tuple:
     return n_train, n_dev, n_test
 
 
-def train(model, train_items, epochs, batch_size, lr, max_seconds, t0, log, terminal_weight=4.0):
+def train(model, train_items, epochs, batch_size, lr, max_seconds, t0, log, terminal_weight=4.0,
+          max_steps=None):
     """Same teacher-forced training loop as scripts/train_encoder.py's
-    main(), calling em.teacher_force_loss verbatim -- no reimplemented loss.
+    main(), delegating to `nsm_ct.encoder_train_util.run_training_loop` so
+    the loop itself (clip/step/zero_grad placement, step accounting) is not
+    duplicated -- only this driver's own log formatting stays local. Without
+    --max-steps, prints/behavior are unchanged from before item A.
+
     `terminal_weight` up-weights the STOP/CLOSE_CLAUSE action-type CE loss
-    (spec fix, DIAGNOSIS 2026-09-06); see `em.teacher_force_loss`."""
+    (spec fix, DIAGNOSIS 2026-09-06); see `em.teacher_force_loss`. `max_steps`
+    caps optimizer steps rather than epochs (dev/AUDIT_2026-09-08.md finding
+    7); see `run_training_loop`."""
     opt = torch.optim.Adam(model.parameters(), lr=lr)
-    loss_curve = []
-    step_count = 0
-    train_start = time.time()
-    stopped_early = False
-    for epoch in range(epochs):
-        if time.time() - train_start > max_seconds:
-            stopped_early = True
-            log(f"max-seconds budget ({max_seconds}s) hit before epoch {epoch}; stopping")
-            break
-        random.shuffle(train_items)
-        epoch_loss = 0.0
-        epoch_n = 0
-        opt.zero_grad()
-        for idx, (feats, steps) in enumerate(train_items):
-            if time.time() - train_start > max_seconds:
-                stopped_early = True
-                break
-            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=terminal_weight) / batch_size
-            loss.backward()
-            epoch_loss += float(loss.item()) * batch_size
-            epoch_n += 1
-            step_count += 1
-            if (idx + 1) % batch_size == 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
-                opt.step()
-                opt.zero_grad()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
-        opt.step()
-        opt.zero_grad()
-        avg = epoch_loss / max(epoch_n, 1)
-        loss_curve.append((step_count, avg))
+
+    def on_epoch_done(epoch, avg, epoch_n):
         log(f"epoch {epoch + 1}/{epochs} done: avg_loss={avg:.4f} (n={epoch_n} derivations)")
-        if stopped_early:
-            break
-    train_wall = time.time() - train_start
-    return loss_curve, train_wall, stopped_early
+
+    def on_max_seconds(epoch):
+        log(f"max-seconds budget ({max_seconds}s) hit before epoch {epoch}; stopping")
+
+    result = etu.run_training_loop(
+        model, train_items, opt, epochs=epochs, batch_size=batch_size,
+        max_seconds=max_seconds, max_steps=max_steps, terminal_weight=terminal_weight,
+        on_epoch_done=on_epoch_done, on_max_seconds=on_max_seconds)
+
+    if max_steps is not None:
+        opt_steps = result["optimizer_steps"]
+        wall = result["train_wall"]
+        throughput = opt_steps / wall if wall > 0 else float("nan")
+        s_per_step = wall / opt_steps if opt_steps else float("nan")
+        log(f"max-steps budget: optimizer_steps={opt_steps} (cap={max_steps}, "
+            f"stop_reason={result['stop_reason']}) epoch_fraction={result['epoch_fraction']:.3f} "
+            f"throughput={throughput:.4f} steps/s ({s_per_step:.4f} s/step)")
+
+    return result["loss_curve"], result["train_wall"], result["stopped_early"]
 
 
 def fmt_recall(m: dict) -> str:
@@ -176,6 +170,26 @@ def main() -> None:
     ap.add_argument("--max-seconds", type=float, default=5400.0, help="hard training-time cutoff")
     ap.add_argument("--beam-width", type=int, default=6)
     ap.add_argument("--k", type=int, default=6)
+    ap.add_argument("--max-steps", type=int, default=None,
+                     help="(item A) train for exactly N optimizer steps; --epochs becomes a "
+                          "ceiling only (dev/AUDIT_2026-09-08.md finding 7)")
+    ap.add_argument("--subset-seed", type=int, default=None,
+                     help="(item B) seed for a stratified subset of size --records drawn from the "
+                          "training pool (or, with --holdout-file, the pool minus the held-out "
+                          "sentences); defaults to --seed")
+    ap.add_argument("--holdout-file", default=None,
+                     help="(item C) text file of sentences excluded from training and used as the "
+                          "eval set instead of the gold-derived dev/test split; see "
+                          "scripts/make_holdout.py")
+    ap.add_argument("--eval-gold", default=None,
+                     help="(item C) gold file whose records for the holdout sentences are the eval "
+                          "targets; only used with --holdout-file. Default: --gold.")
+    ap.add_argument("--eval-gold-alt", default=None,
+                     help="(item C) second gold file to ALSO score the holdout sentences against; "
+                          "only used with --holdout-file")
+    ap.add_argument("--skip-spanish", action="store_true",
+                     help="skip the Spanish grammar-swap eval and the --spanish-gold existence "
+                          "check (useful for the English-only training arms)")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -191,10 +205,11 @@ def main() -> None:
                   f"  git show origin/encoder-gold-v2:consciousness_transformer/runs/encoder_gold_v2.jsonl "
                   f"> {gold_path}")
     spanish_path = Path(args.spanish_gold)
-    if not spanish_path.exists():
+    if not args.skip_spanish and not spanish_path.exists():
         sys.exit(f"ERROR: Spanish gold file not found at {spanish_path}. Fetch it first, e.g.:\n"
                   f"  git show origin/spanish-gold-v2:consciousness_transformer/runs/spanish_gold_v2.jsonl "
-                  f"> {spanish_path}")
+                  f"> {spanish_path}\n"
+                  f"  (or pass --skip-spanish to skip the grammar-swap eval)")
 
     ensure_usvs(Path(args.usvs_dir), log)
 
@@ -205,10 +220,21 @@ def main() -> None:
     records = load_gold(str(gold_path))
     log(f"{len(records)} English gold records available")
 
-    n_train, n_dev, n_test = split_sizes(args.records, len(records), log)
-    train_recs, dev_recs, test_recs = stratified_split(records, args.seed, n_train, n_dev, n_test)
-    log(f"split: train={len(train_recs)} dev={len(dev_recs)} test={len(test_recs)} "
-        f"(held out from training, used for candidate-set-recall eval)")
+    holdout_sentences = None
+    dev_recs, test_recs = [], []
+    if args.holdout_file:
+        holdout_sentences = etu.load_holdout_sentences(args.holdout_file)
+        pool = etu.exclude_by_text(records, holdout_sentences)
+        n_train, _n_dev, _n_test = split_sizes(args.records, len(pool), log)
+        subset_seed = args.subset_seed if args.subset_seed is not None else args.seed
+        train_recs = etu.seeded_subset(pool, n_train, subset_seed)
+        log(f"holdout mode: {len(holdout_sentences)} held-out sentences, pool={len(pool)}, "
+            f"train subset={len(train_recs)} (subset_seed={subset_seed})")
+    else:
+        n_train, n_dev, n_test = split_sizes(args.records, len(records), log)
+        train_recs, dev_recs, test_recs = stratified_split(records, args.seed, n_train, n_dev, n_test)
+        log(f"split: train={len(train_recs)} dev={len(dev_recs)} test={len(test_recs)} "
+            f"(held out from training, used for candidate-set-recall eval)")
 
     log(f"loading USVS from {args.usvs_dir}")
     usvs = load_usvs(args.usvs_dir)
@@ -227,48 +253,69 @@ def main() -> None:
     log(f"policy params: {n_params:,} (~{n_bytes / 1e6:.3f} MB fp32)")
 
     log(f"building features + teacher-forced derivations for {len(train_recs)} train records")
-    train_items = []
-    for r in train_recs:
-        feats = em.build_features(r, usvs, pos_vocab, args.hash_buckets)
-        for tree in r["lattice"]["trees"]:
-            steps = em.linearize_tree(r, tree)
-            train_items.append((feats, steps))
+    train_items = etu.build_train_items(train_recs, usvs, pos_vocab, args.hash_buckets)
     log(f"{len(train_items)} teacher-forced derivations, batch_size={args.batch_size}, "
         f"epochs={args.epochs}")
 
     loss_curve, train_wall, stopped_early = train(
         model, train_items, args.epochs, args.batch_size, args.lr, args.max_seconds, t0, log,
-        terminal_weight=args.terminal_weight)
+        terminal_weight=args.terminal_weight, max_steps=args.max_steps)
     log(f"training wall-clock: {train_wall:.1f}s (stopped_early={stopped_early})")
 
     model.eval()
 
-    log("evaluating English candidate-set recall (model policy) on held-out test split ...")
-    en_model_metrics = em.evaluate(model, test_recs, usvs, pos_vocab, args.hash_buckets,
-                                    beam_width=args.beam_width, k=args.k, policy="model")
-    log(f"English test (model) : {fmt_recall(en_model_metrics)}")
+    en_target_name = "holdout" if holdout_sentences is not None else "held-out test split"
+    en_missing = 0
+    en_alt_metrics = None
+    if holdout_sentences is not None:
+        eval_gold_path = args.eval_gold or str(gold_path)
+        eval_records = records if eval_gold_path == str(gold_path) else load_gold(eval_gold_path)
+        en_targets, en_missing = etu.records_for_sentences(eval_records, holdout_sentences)
+        log(f"holdout eval targets from {eval_gold_path}: matched={len(en_targets)} missing={en_missing}")
+    else:
+        en_targets = test_recs
+
+    log(f"evaluating English candidate-set recall (model policy) on {en_target_name} "
+        f"(best-of-{args.k} + rank1 + forest width) ...")
+    en_model_metrics = etu.evaluate_full(model, en_targets, usvs, pos_vocab, args.hash_buckets,
+                                          beam_width=args.beam_width, k=args.k, policy="model")
+    log(f"English {en_target_name} (model) : {fmt_recall(en_model_metrics)}")
 
     rng = random.Random(args.seed)
-    log("evaluating English candidate-set recall (random-legal baseline) on held-out test split ...")
-    en_random_metrics = em.evaluate(model, test_recs, usvs, pos_vocab, args.hash_buckets,
+    log(f"evaluating English candidate-set recall (random-legal baseline) on {en_target_name} ...")
+    en_random_metrics = em.evaluate(model, en_targets, usvs, pos_vocab, args.hash_buckets,
                                      beam_width=args.beam_width, k=args.k, policy="random", rng=rng)
-    log(f"English test (random): {fmt_recall(en_random_metrics)}")
+    log(f"English {en_target_name} (random): {fmt_recall(en_random_metrics)}")
 
-    log(f"loading Spanish gold from {spanish_path} for the grammar-swap eval "
-        f"(EN-trained weights -> Spanish, zero Spanish training)")
-    spanish_records = load_gold(str(spanish_path))
-    log(f"{len(spanish_records)} Spanish gold records")
+    if holdout_sentences is not None and args.eval_gold_alt:
+        alt_records = load_gold(args.eval_gold_alt)
+        alt_targets, alt_missing = etu.records_for_sentences(alt_records, holdout_sentences)
+        log(f"holdout eval targets (alt) from {args.eval_gold_alt}: "
+            f"matched={len(alt_targets)} missing={alt_missing}")
+        en_alt_metrics = etu.evaluate_full(model, alt_targets, usvs, pos_vocab, args.hash_buckets,
+                                            beam_width=args.beam_width, k=args.k, policy="model")
+        log(f"English holdout_alt (model) : {fmt_recall(en_alt_metrics)}")
 
-    log("evaluating Spanish candidate-set recall (model policy, EN-trained weights) ...")
-    es_model_metrics = evaluate_with_totals(model, spanish_records, usvs, pos_vocab, args.hash_buckets,
-                                             args.beam_width, args.k, "model")
-    log(f"Spanish (model) : {fmt_recall(es_model_metrics)}")
+    spanish_records = []
+    es_model_metrics = es_random_metrics = None
+    if not args.skip_spanish:
+        log(f"loading Spanish gold from {spanish_path} for the grammar-swap eval "
+            f"(EN-trained weights -> Spanish, zero Spanish training)")
+        spanish_records = load_gold(str(spanish_path))
+        log(f"{len(spanish_records)} Spanish gold records")
 
-    es_rng = random.Random(args.seed)
-    log("evaluating Spanish candidate-set recall (random-legal baseline) ...")
-    es_random_metrics = evaluate_with_totals(model, spanish_records, usvs, pos_vocab, args.hash_buckets,
-                                              args.beam_width, args.k, "random", rng=es_rng)
-    log(f"Spanish (random): {fmt_recall(es_random_metrics)}")
+        log("evaluating Spanish candidate-set recall (model policy, EN-trained weights) ...")
+        es_model_metrics = evaluate_with_totals(model, spanish_records, usvs, pos_vocab, args.hash_buckets,
+                                                 args.beam_width, args.k, "model")
+        log(f"Spanish (model) : {fmt_recall(es_model_metrics)}")
+
+        es_rng = random.Random(args.seed)
+        log("evaluating Spanish candidate-set recall (random-legal baseline) ...")
+        es_random_metrics = evaluate_with_totals(model, spanish_records, usvs, pos_vocab, args.hash_buckets,
+                                                  args.beam_width, args.k, "random", rng=es_rng)
+        log(f"Spanish (random): {fmt_recall(es_random_metrics)}")
+    else:
+        log("--skip-spanish: skipping Spanish grammar-swap eval")
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -281,15 +328,20 @@ def main() -> None:
         "d_model": args.d_model,
         "config": {"n_train": len(train_recs), "n_dev": len(dev_recs), "n_test": len(test_recs),
                    "epochs": args.epochs, "batch_size": args.batch_size, "seed": args.seed,
-                   "terminal_weight": args.terminal_weight, "device": device},
+                   "terminal_weight": args.terminal_weight, "device": device,
+                   "max_steps": args.max_steps, "subset_seed": args.subset_seed,
+                   "holdout_file": args.holdout_file, "eval_gold": args.eval_gold,
+                   "eval_gold_alt": args.eval_gold_alt},
         "loss_curve": loss_curve,
         "metrics": {"english_test": en_model_metrics, "english_test_random": en_random_metrics,
+                    "english_test_alt": en_alt_metrics,
                     "spanish": es_model_metrics, "spanish_random": es_random_metrics},
         "train_wallclock_s": train_wall,
         "n_policy_params": n_params,
         "split_record_texts": {"train": [r["text"] for r in train_recs],
                                 "dev": [r["text"] for r in dev_recs],
-                                "test": [r["text"] for r in test_recs]},
+                                "test": [r["text"] for r in test_recs],
+                                "holdout": list(holdout_sentences) if holdout_sentences is not None else []},
     }
     torch.save(ckpt, out_path)
     log(f"saved checkpoint -> {out_path}")
@@ -303,14 +355,19 @@ def main() -> None:
           f"(of {len(records)} EN gold available)  |  epochs: {args.epochs}  |  device: {device}")
     print(f"policy params: {n_params:,} (~{n_bytes / 1e6:.3f} MB fp32)")
     print()
-    print("English (held-out test split):")
+    print(f"English ({en_target_name}, best-of-{args.k} + rank1 + forest width):")
     print(f"  model : {fmt_recall(en_model_metrics)}")
+    print(f"  rank1_edge_f1={en_model_metrics.get('rank1_edge_f1', float('nan')):.3f}  "
+          f"mean_forest_width={en_model_metrics.get('mean_forest_width', float('nan')):.2f}")
     print(f"  random: {fmt_recall(en_random_metrics)}")
+    if en_alt_metrics is not None:
+        print(f"  alt-gold target : {fmt_recall(en_alt_metrics)}")
     print()
-    print(f"Spanish grammar-swap ({len(spanish_records)} records, EN-trained weights, zero ES training):")
-    print(f"  model : {fmt_recall(es_model_metrics)}")
-    print(f"  random: {fmt_recall(es_random_metrics)}")
-    print()
+    if not args.skip_spanish:
+        print(f"Spanish grammar-swap ({len(spanish_records)} records, EN-trained weights, zero ES training):")
+        print(f"  model : {fmt_recall(es_model_metrics)}")
+        print(f"  random: {fmt_recall(es_random_metrics)}")
+        print()
     print(f"training wall-clock: {train_wall:.1f}s  |  total wall-clock: {total_wall:.1f}s")
     print(f"checkpoint: {out_path}")
     print("=" * 72)
