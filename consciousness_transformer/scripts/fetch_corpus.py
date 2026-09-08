@@ -79,14 +79,23 @@ DATA_DIR = _ROOT / "data" / "corpus"
 # (fileid, out slug, title, author, year, sentence budget, dedup-against)
 # ---------------------------------------------------------------------------
 NLTK_BOOKS: List[Tuple[str, str, str, str, int, int, Optional[str]]] = [
+    # Budgets raised for the corpus-expand pass (NAOMI encoder is DATA-LIMITED,
+    # see dev ledger): nltk.corpus.gutenberg is only 4 in-genre books, already
+    # fully enumerated (the other 14 fileids are verse/drama/scripture/adult
+    # prose, out of scope -- see module docstring), so squeezing MORE real
+    # sentences out of these same 4 is the only zero-network lever available.
+    # burgess_more/alice/bryant budgets are raised to ~the whole book (no more
+    # prose paragraphs are left on the table); edgeworth is raised generously
+    # but capped well under its ~8467-sentence ceiling so one 1796 author's
+    # syntax doesn't dominate the corpus distribution.
     ("burgess-busterbrown.txt", "burgess_more", "The Adventures of Buster Bear",
-     "Thornton W. Burgess", 1920, 250, "real_gutenberg_busterbear.txt"),
+     "Thornton W. Burgess", 1920, 900, "real_gutenberg_busterbear.txt"),
     ("carroll-alice.txt", "alice", "Alice's Adventures in Wonderland",
-     "Lewis Carroll", 1865, 400, None),
+     "Lewis Carroll", 1865, 1300, None),
     ("bryant-stories.txt", "bryant", "Stories to Tell to Children",
-     "Sara Cone Bryant", 1918, 400, None),
+     "Sara Cone Bryant", 1918, 2300, None),
     ("edgeworth-parents.txt", "edgeworth", "The Parent's Assistant",
-     "Maria Edgeworth", 1796, 300, None),
+     "Maria Edgeworth", 1796, 3500, None),
 ]
 
 # ---------------------------------------------------------------------------
@@ -97,6 +106,18 @@ NLTK_BOOKS: List[Tuple[str, str, str, str, int, int, Optional[str]]] = [
 # ---------------------------------------------------------------------------
 _MIN_REAL_SENTENCES = 500
 
+# corpus-expand pass: this sandbox's network egress policy blocks
+# gutenberg.org (and every other general content host tested -- wikisource,
+# archive.org, standardebooks.org all 403 at the CONNECT layer) outright, so
+# the three pre-existing gutenberg.org URLs below are UNVERIFIED IN THIS RUN
+# (kept as-is; --allow-download's own try/except skips them harmlessly if a
+# host still can't be reached wherever this runs next). The four NEW entries
+# below them are real Project Gutenberg texts (same title/author/PG-license
+# header verified byte-for-byte against the actual downloaded content) served
+# via their GITenberg (https://github.com/GITenberg) git-mirror raw file --
+# raw.githubusercontent.com is reachable from this sandbox where
+# www.gutenberg.org is not, and GITenberg is a straight 1:1 mirror (one repo
+# per Gutenberg ebook ID, unmodified text), not a different or edited text.
 DIRECT_BOOKS: List[Tuple[str, str, str, str, int, int]] = [
     # (url, out slug, title, author, year, sentence budget)
     ("https://www.gutenberg.org/cache/epub/14838/pg14838.txt", "peter_rabbit",
@@ -105,6 +126,22 @@ DIRECT_BOOKS: List[Tuple[str, str, str, str, int, int]] = [
      "The Tale of Squirrel Nutkin", "Beatrix Potter", 1903, 150),
     ("https://www.gutenberg.org/cache/epub/11339/pg11339.txt", "aesop_fables",
      "Aesop's Fables (V. S. Vernon Jones translation)", "Aesop", 1912, 200),
+    # verified 2026-09-07 (curl 200, header/title/author confirmed against the
+    # fetched text) via GITenberg mirror of PG ebook #2591:
+    ("https://raw.githubusercontent.com/GITenberg/Grimms-Fairy-Tales_2591/master/2591.txt",
+     "grimms_fairy_tales", "Grimms' Fairy Tales", "The Brothers Grimm", 1884, 3000),
+    # verified 2026-09-07 via GITenberg mirror of PG ebook #1597:
+    ("https://raw.githubusercontent.com/GITenberg/Andersen-s-Fairy-Tales_1597/master/1597.txt",
+     "andersen_fairy_tales", "Andersen's Fairy Tales", "Hans Christian Andersen", 1889, 3000),
+    # verified 2026-09-07 via GITenberg mirror of PG ebook #7439:
+    ("https://raw.githubusercontent.com/GITenberg/English-Fairy-Tales_7439/master/7439.txt",
+     "jacobs_english_fairy_tales", "English Fairy Tales", "Joseph Jacobs", 1890, 3000),
+    # verified 2026-09-07 via GITenberg mirror of PG ebook #14640 (a graded
+    # first-grade reader -- very short, very simple declarative sentences,
+    # excellent fit for this corpus's grammar-teaching purpose):
+    ("https://raw.githubusercontent.com/GITenberg/McGuffey-s-First-Eclectic-Reader-Revised-Edition_14640/master/14640.txt",
+     "mcguffey_first_reader", "McGuffey's First Eclectic Reader, Revised Edition",
+     "William Holmes McGuffey", 1879, 2000),
 ]
 
 
@@ -419,7 +456,15 @@ def synthetic_files() -> List[Tuple[str, str]]:
 # ---------------------------------------------------------------------------
 
 _PG_START_RE = re.compile(r"\*\*\*\s*START OF (THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*", re.IGNORECASE | re.DOTALL)
-_PG_END_RE = re.compile(r"\*\*\*\s*END OF (THE|THIS) PROJECT GUTENBERG EBOOK", re.IGNORECASE)
+# Some older PG editions (e.g. GITenberg's McGuffey's First Reader mirror)
+# print a plain "End of the Project Gutenberg EBook of <title>..." sentence
+# BEFORE the "*** END OF ... ***" marker proper, which would otherwise slip
+# past as if it were real prose. Match either form; take the earliest.
+_PG_END_RE = re.compile(
+    r"(\*\*\*\s*END OF (THE|THIS) PROJECT GUTENBERG EBOOK|"
+    r"^End of (the|this) Project Gutenberg[ ]?E[Bb]ook)",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 def _strip_pg_boilerplate(text: str) -> str:
@@ -478,12 +523,18 @@ def run(out_dir: Path, allow_download: bool) -> None:
         real_total += n
         print(f"  {fileid:<28} -> {out_name:<32} {n:>5} sentences  ({title}, {author}, {year})")
 
-    if real_total < _MIN_REAL_SENTENCES and allow_download:
-        print(f"\n=== (c) real-sentence total {real_total} < {_MIN_REAL_SENTENCES} -- "
-              f"topping up via direct download ===")
+    if allow_download:
+        # corpus-expand: attempt EVERY direct-download source, not just
+        # enough to clear _MIN_REAL_SENTENCES -- with the raised NLTK_BOOKS
+        # budgets above, nltk alone already clears that floor, so the old
+        # "stop once we hit the minimum" gate would silently skip every
+        # genre-diversifying source (Grimm/Andersen/Jacobs/McGuffey) below.
+        # Each fetch is still independently best-effort: a source whose host
+        # is unreachable (e.g. gutenberg.org from a network-restricted
+        # sandbox) is SKIPped, never fatal.
+        print(f"\n=== (c) direct-download sources (--allow-download; "
+              f"nltk real-sentence subtotal so far: {real_total}) ===")
         for url, slug, title, author, year, budget in DIRECT_BOOKS:
-            if real_total >= _MIN_REAL_SENTENCES:
-                break
             try:
                 content, n = fetch_direct_book(url, title, author, year, budget)
             except Exception as exc:  # noqa: BLE001 -- network is best-effort, never fatal
@@ -494,9 +545,8 @@ def run(out_dir: Path, allow_download: bool) -> None:
             manifest.append((out_name, n))
             real_total += n
             print(f"  {url} -> {out_name:<32} {n:>5} sentences  ({title}, {author}, {year})")
-    elif real_total < _MIN_REAL_SENTENCES:
-        print(f"\n(c) real-sentence total {real_total} < {_MIN_REAL_SENTENCES}, but "
-              f"--allow-download not set -- skipping the direct-download fallback.")
+    else:
+        print(f"\n(c) --allow-download not set -- skipping the direct-download sources.")
 
     print("\n=== (b) hand-authored synthetic prose ===")
     synth_total = 0

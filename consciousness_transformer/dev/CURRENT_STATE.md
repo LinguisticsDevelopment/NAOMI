@@ -95,4 +95,6 @@ Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
 - Hand-gold 16: treat as held-out TEST set per family, not training data.
 - AWAITING LEAD: comprehension-side spike (can a GRU over tensor memory resolve
   a candidate lattice?) -- the thesis risk nothing in this plan touches.
-- D1-D6 implementation dispatched 2026-09-08 (branch `decisions-d1-d6`).
+- D1-D6 implementation MERGED to mainline 2026-09-08 (from branch `decisions-d1-d6`;
+  brings corpus-expand + hand-gold-draft along). Gold builder default is now
+  top-1; PRIMES has I (old encoder checkpoints will fail to load, by design).

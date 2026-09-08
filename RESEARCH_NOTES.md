@@ -1105,3 +1105,38 @@ Director actions: D1-D6 routine dispatched anyway (cheap, uncontroversial,
 trig_01AAtchs2heh9TSMCfGEYXXv -> branch decisions-d1-d6); measurement routine
 dispatched (rank-1 + complement probe -> branch encoder-complement-probe);
 Gold_Expand.ipynb stays GATED on those two results.
+
+### D1-D6 IMPLEMENTED + MERGED (Sonnet routine, director-reviewed, 2026-09-08)
+Branch decisions-d1-d6 (9 commits, on corpus-expand ∪ hand-gold-draft) merged to
+mainline. What changed:
+- D1 build_encoder_gold_v2: DEFAULT forest = top-1. `--forest {top1,margin,all}`,
+  `--forest-margin` (0.02, the QA report's own number); margin mode keeps a 2nd
+  tree only if within margin AND not an exact tie AND structurally distinct on
+  the core skeleton (modifier-attachment wobble ignored). Env vars mirror the
+  flags so Gold_Expand.ipynb needs no edit. Smoke (50 mixed sentences): top1 ->
+  26/26 buildable records have exactly 1 tree, mean nodes/record 32.6 -> 10.0
+  (3.2x smaller targets); margin=0.02 -> {1:22, 2:3, 3:1}.
+- D2 ground/usvs.py: PURE_INTERJECTION_GLOSSES (20 words) minted as
+  `interj.<w>.01` senses via the existing gloss->coordinate pipeline, appended
+  AFTER the fingerprint is computed (fingerprint byte-identical e0daef638b640dd5).
+  Content interjections already resolve through senses_of; no change needed.
+- D3 encoder_model.PRIMES = [YOU, I, <UNK_PRIME>]; clause.FIRST_PERSON_SINGULAR
+  {i, me, myself} routed to prime I by both gold builders; linearize_tree's prime
+  branch now consumes a real surface token (was hard-coded token_index=None) with
+  matching teacher_force_loss/replay buffer fixes. Old checkpoints fail LOUDLY
+  (strict load_state_dict size mismatch) -- run-2 ckpt is now incompatible with
+  mainline code; the rank-1 re-score routine runs on pre-merge mainline, fine.
+- D4 clause.MODIFIER_RELATIONS += QUANTITY/ADDITIVE/FOCUS (structural only; the
+  existing consumers clause_reactor/corpus/curriculum2 filter on that set).
+- D6 clause-level optional `predicate_token_index` carries the stranded aux
+  ("did") for elision/reference predicates; oracle round-trips it. Contract v2
+  doc updated.
+- tests/test_decisions_d1_d6.py: 21 gates, green. 16 hand-gold drafts rebuilt
+  (ugh -> interj.ugh.01; me too -> prime I; the dog did -> carrier @2) and pass
+  linearize+legality+round-trip. Full fast suite: 4 failures, ALL pre-existing
+  on the merge base with byte-identical assertions (garden_path trait templates,
+  morphology byte-identical regression, quantum_adapter two_pps, spanish_freeze)
+  -- not introduced here; carried as known-red, to triage separately.
+Also lands on mainline by this merge: the 16,411-sentence corpus + Gold_Expand.ipynb
+(corpus-expand) and hand_gold.py + HAND_GOLD_DRAFT.md (hand-gold-draft), per the
+lead's locked "keep all sources" decision.
