@@ -1,0 +1,25 @@
+=== encoder training arms ===
+STEPS=8000  MAX_SECONDS=172800  PARALLEL=1
+GOLD_V2=runs/encoder_gold_v2.jsonl  GOLD_V3=runs/encoder_gold_v3.jsonl (available=0)  GOLD_V4B=runs/encoder_gold_v4b.jsonl (available=1)  HARD_GOLD_TRAIN=runs/hard_gold_train.jsonl (available=1)
+HOLDOUT_FILE=runs/holdout_sentences.txt  HOLDOUT_DEV_FILE=runs/holdout_dev_sentences.txt
+EVAL_EVERY=250  KEEP_BEST=1  ARMS=v4b_margin_788
+
+SKIP (missing gold file): v3_788 v3_3000 -- commands are still listed below for reference; they will not run.
+SKIP (not in $ARMS): v2_788 v4b_788 v4b_788_hard v4b_all_788
+Planned commands (7 total, 1 runnable now):
+  [v2_788 seed=1] [SKIP: not in $ARMS] python scripts/train_encoder.py --gold runs/encoder_gold_v2.jsonl --n-train 788 --seed 1 --subset-seed 1 --max-steps 8000 --max-seconds 172800 --holdout-file runs/holdout_sentences.txt --eval-gold runs/encoder_gold_v2.jsonl --eval-every 250 --dev-holdout-file runs/holdout_dev_sentences.txt --keep-best  --beam-width 6 --k 6 --out runs/arms/v2_788_1.pt
+  [v3_788 seed=1] [SKIP: missing gold] [SKIP: not in $ARMS] python scripts/train_encoder.py --gold runs/encoder_gold_v3.jsonl --n-train 788 --seed 1 --subset-seed 1 --max-steps 8000 --max-seconds 172800 --holdout-file runs/holdout_sentences.txt --eval-gold runs/encoder_gold_v2.jsonl --eval-gold-alt runs/encoder_gold_v3.jsonl --eval-every 250 --dev-holdout-file runs/holdout_dev_sentences.txt --keep-best  --beam-width 6 --k 6 --out runs/arms/v3_788_1.pt
+  [v3_3000 seed=1] [SKIP: missing gold] [SKIP: not in $ARMS] python scripts/train_encoder.py --gold runs/encoder_gold_v3.jsonl --n-train 3000 --seed 1 --subset-seed 1 --max-steps 8000 --max-seconds 172800 --holdout-file runs/holdout_sentences.txt --eval-gold runs/encoder_gold_v2.jsonl --eval-gold-alt runs/encoder_gold_v3.jsonl --eval-every 250 --dev-holdout-file runs/holdout_dev_sentences.txt --keep-best  --beam-width 6 --k 6 --out runs/arms/v3_3000_1.pt
+  [v4b_788 seed=1] [SKIP: not in $ARMS] python scripts/train_encoder.py --gold runs/encoder_gold_v4b.jsonl --n-train 788 --seed 1 --subset-seed 1 --max-steps 8000 --max-seconds 172800 --holdout-file runs/holdout_sentences.txt --eval-gold runs/encoder_gold_v2.jsonl --eval-gold-alt runs/encoder_gold_v4b.jsonl --eval-every 250 --dev-holdout-file runs/holdout_dev_sentences.txt --keep-best  --beam-width 6 --k 6 --out runs/arms/v4b_788_1.pt
+  [v4b_788_hard seed=1] [SKIP: not in $ARMS] python scripts/train_encoder.py --gold runs/encoder_gold_v4b.jsonl,runs/hard_gold_train.jsonl --n-train 788 --seed 1 --subset-seed 1 --max-steps 8000 --max-seconds 172800 --holdout-file runs/holdout_sentences.txt --eval-gold runs/encoder_gold_v2.jsonl --eval-gold-alt runs/encoder_gold_v4b.jsonl --eval-every 250 --dev-holdout-file runs/holdout_dev_sentences.txt --keep-best --extra-eval runs/hard_gold_test_filler.jsonl,runs/hard_gold_test_template.jsonl --beam-width 6 --k 6 --out runs/arms/v4b_788_hard_1.pt
+  [v4b_margin_788 seed=1] python scripts/train_encoder.py --gold runs/encoder_gold_v4b_margin.jsonl --n-train 788 --seed 1 --subset-seed 1 --max-steps 8000 --max-seconds 172800 --holdout-file runs/holdout_sentences.txt --eval-gold runs/encoder_gold_v2.jsonl --eval-gold-alt runs/encoder_gold_v4b.jsonl --eval-every 250 --dev-holdout-file runs/holdout_dev_sentences.txt --keep-best  --beam-width 6 --k 6 --out runs/arms/v4b_margin_788_1.pt
+  [v4b_all_788 seed=1] [SKIP: not in $ARMS] python scripts/train_encoder.py --gold runs/encoder_gold_v4b_all.jsonl --n-train 788 --seed 1 --subset-seed 1 --max-steps 8000 --max-seconds 172800 --holdout-file runs/holdout_sentences.txt --eval-gold runs/encoder_gold_v2.jsonl --eval-gold-alt runs/encoder_gold_v4b.jsonl --eval-every 250 --dev-holdout-file runs/holdout_dev_sentences.txt --keep-best  --beam-width 6 --k 6 --out runs/arms/v4b_all_788_1.pt
+
+=== throughput calibration: --smoke --max-steps 30 ===
+measured smoke throughput: 0.2844 s/step -> estimated 2275.2s (0.63h) per arm at 8000 steps
+(smoke dims d_model=64; real arms use d_model=128 and will be slower -- see the session's real-dims calibration)
+
+[v4b_margin_788 seed=1] starting -> runs/arms/v4b_margin_788_1.log
+[v4b_margin_788 seed=1] done -> runs/arms/summary.tsv
+
+All arms done. Summary: runs/arms/summary.tsv
