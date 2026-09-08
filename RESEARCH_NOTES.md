@@ -1421,3 +1421,20 @@ run_encoder_arms.sh: EVAL_EVERY=250 KEEP_BEST=1 defaults, ARMS filter, new arms
 v4b_788 and v4b_788_hard (v4b + generated hard gold, scored on the held-out
 hard-gold splits per family). tests/test_encoder_curve.py. Final eval reported
 for BOTH the kept-best and the last checkpoint.
+
+### GOLD v4b VARIANTS BUILT (2026-09-08) -> branch encoder-gold-v4b-variants
+Same 1,475 sentences, lemmatized POS-aware grounding, three forest policies:
+| policy | records | trees/sent | 1 / 2 / 3+ tree share | derivations | nodes/record (all trees) |
+| top-1  | 987 | 1.000 | 100 / 0 / 0     | 987   | 9.15  |
+| margin | 986 | 1.398 | 79 / 10 / 11    | 1,378 | 14.27 |
+| all    | 986 | 3.563 | 12.5 / 21.7 / 65.8 | 3,513 | 32.88 |
+tree[0] identical across policies (0 mismatches); holdout 98/98 for all.
+Margin's kept 2nd trees: 41.5% differ in clause count, 58.5% in a core role
+assignment -- i.e. genuine structural alternatives, not modifier wobble.
+ARMS-2 DISPATCHED (keep-best on dev, 8,000 max steps, same 98 holdout):
+ R-a: v4b_788 (top-1) + v4b_margin_788, seed 0      -> branch encoder-arms2-a
+ R-b: v4b_all_788 (forest) + v4b_788_hard, seed 0   -> branch encoder-arms2-b
+ R-c: v2_788 (forest control, keep-best) + v4b_margin_788 seed 1 -> encoder-arms2-c
+Question: at equal gold quality, does variety (margin/all) beat top-1, and does
+keep-best rescue top-1? Plus the first per-family numbers on the hard-gold
+held-out templates (v4b_788_hard).
