@@ -539,14 +539,49 @@ def _action_type_class_weights(terminal_weight: float) -> Optional[torch.Tensor]
     return w
 
 
+@dataclass
+class SoftTargetConfig:
+    """Opt-in USVS/semantics-graded soft CE targets (the lead directive of
+    2026-09-08; dev/USVS_GRADED_SCORING.md S5). `None` anywhere a
+    `soft_targets` argument is accepted means "the original one-hot loss",
+    and that path is byte-identical to before this existed.
+
+    Only heads whose CLASSES carry semantic structure are softened:
+    `role` (the role-confusion matrix), `gtype` and `source` (the
+    equivalences dev/ENCODER_IO_CONTRACT_V2.md S4/S4.3 states outright).
+    The action-type / clause-kind / prime heads stay HARD by design -- see
+    the design doc S5.4, which also records WHY there is no sense-candidate
+    head to soften (the encoder never scores one candidate against another)
+    and why the auxiliary node-embedding cosine term is not built."""
+    role: bool = True
+    gtype: bool = True
+    source: bool = True
+    temperature: float = 0.25
+
+
+def _soft_ce(logits: torch.Tensor, target: Sequence[float]) -> torch.Tensor:
+    """Cross-entropy against a full target DISTRIBUTION (rows sum to 1).
+    Reduces to `F.cross_entropy` when the target is one-hot."""
+    t = torch.tensor(list(target), dtype=logits.dtype)
+    return -(t * F.log_softmax(logits, dim=-1)).sum()
+
+
 def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List[Step],
-                        terminal_weight: float = 1.0) -> torch.Tensor:
+                        terminal_weight: float = 1.0,
+                        soft_targets: Optional[SoftTargetConfig] = None) -> torch.Tensor:
     """`terminal_weight` (default 1.0 = unweighted, the original loss)
     up-weights the action-TYPE cross-entropy specifically for the STOP/
     CLOSE_CLAUSE targets (see `TERMINAL_ACTION_TYPES`) via `F.cross_entropy`'s
     per-class `weight`. Only the action-type term is reweighted -- the
     role/kind/gtype/source/prime terms are unaffected, and this is still a
-    pure teacher-forced loss on the oracle derivation, no decode-time change."""
+    pure teacher-forced loss on the oracle derivation, no decode-time change.
+
+    `soft_targets` (default `None` = the original one-hot loss, unchanged)
+    replaces the one-hot CE target with a graded distribution on the
+    role/gtype/source heads -- see `SoftTargetConfig`."""
+    if soft_targets is not None:
+        from . import usvs_graded as ug
+
     enc = model.encode(feats)
     T = enc.shape[0]
     h = model.init_controller_state()
@@ -581,16 +616,29 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
             has_clause = True
         elif step.action in ("GROUND", "ATTACH", "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT"):
             role_logits = model.role_head(h).squeeze(0)
-            losses.append(F.cross_entropy(role_logits.unsqueeze(0),
-                                           torch.tensor([model.role_id(step.role)])))
+            if soft_targets is not None and soft_targets.role:
+                losses.append(_soft_ce(role_logits, ug.soft_role_target(
+                    step.role, model.role_vocab, soft_targets.temperature)))
+            else:
+                losses.append(F.cross_entropy(role_logits.unsqueeze(0),
+                                               torch.tensor([model.role_id(step.role)])))
         if step.action in ("GROUND", "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT") and step.gtype is not None:
             gtype_logits = model.gtype_head(h).squeeze(0)
-            losses.append(F.cross_entropy(gtype_logits.unsqueeze(0),
-                                           torch.tensor([GTYPE_INDEX[step.gtype]])))
+            if soft_targets is not None and soft_targets.gtype:
+                losses.append(_soft_ce(gtype_logits, ug.soft_gtype_target(
+                    step.gtype, GROUNDING_TYPES, soft_targets.temperature)))
+            else:
+                losses.append(F.cross_entropy(gtype_logits.unsqueeze(0),
+                                               torch.tensor([GTYPE_INDEX[step.gtype]])))
         if step.gtype in ("sense", "reference", "elision") and step.source is not None:
             source_logits = model.source_head(h).squeeze(0)
-            losses.append(F.cross_entropy(source_logits.unsqueeze(0),
-                                           torch.tensor([SOURCE_INDEX.get(step.source, 0)])))
+            if soft_targets is not None and soft_targets.source:
+                losses.append(_soft_ce(source_logits, ug.soft_source_target(
+                    step.source if step.source in SOURCE_INDEX else SOURCES[0],
+                    SOURCES, soft_targets.temperature)))
+            else:
+                losses.append(F.cross_entropy(source_logits.unsqueeze(0),
+                                               torch.tensor([SOURCE_INDEX.get(step.source, 0)])))
         if step.action == "EMIT_SYNTH_SLOT" and step.prime is not None:
             prime_logits = model.prime_head(h).squeeze(0)
             losses.append(F.cross_entropy(prime_logits.unsqueeze(0),

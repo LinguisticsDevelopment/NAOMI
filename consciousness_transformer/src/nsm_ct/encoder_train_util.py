@@ -152,9 +152,21 @@ def _f1(p: float, r: float) -> float:
     return 2 * p * r / (p + r)
 
 
+#: The graded-metric field names `evaluate_full(metric=...)` adds, in both
+#: the best-of-k and the rank-1 (`rank1_`-prefixed) views. See
+#: dev/USVS_GRADED_SCORING.md S3.
+GRADED_FIELDS = ("graded_p", "graded_r", "graded_f", "graded_overall",
+                  "clause_count", "clause_kind", "clause_struct")
+
+
+def _empty_graded(prefix: str = "") -> Dict[str, float]:
+    return {prefix + k: float("nan") for k in GRADED_FIELDS}
+
+
 def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets: int,
                    beam_width: int = 6, k: int = 6, policy: str = "model",
-                   rng: Optional[random.Random] = None) -> Dict[str, float]:
+                   rng: Optional[random.Random] = None,
+                   metric: str = "edge") -> Dict[str, float]:
     """`em.evaluate`'s best-of-k oracle metrics PLUS the audit's rank-1
     committed-tree edge P/R/F1 and mean forest width (dev/AUDIT_2026-09-08.md
     finding 5 + recommendation (b); ported from the Part A section added to
@@ -163,7 +175,15 @@ def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets:
     applied both to the whole forest (best-of-k, matching `em.evaluate`
     exactly) and to just its rank-1 (highest-logprob) tree, so every arm
     reports the "encoder works" number alongside the number that survives
-    commitment to a single hypothesis."""
+    commitment to a single hypothesis.
+
+    `metric` (lead directive 2026-09-08; dev/USVS_GRADED_SCORING.md):
+    `"edge"` (default) is the original binary edge-F1 only and is unchanged;
+    `"graded"` ADDS the USVS-graded P/R/F fields (same two views, `graded_*`
+    and `rank1_graded_*`) computed on the SAME decoded forests -- nothing is
+    re-decoded and no existing field changes value; `"both"` is a synonym,
+    kept so a caller can be explicit that it wants the old numbers too."""
+    want_graded = metric in ("graded", "both")
     if not records:
         empty = em.aggregate_recall([])
         empty.update({
@@ -173,17 +193,29 @@ def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets:
             "rank1_structure_recall": float("nan"),
             "mean_forest_width": float("nan"),
         })
+        if want_graded:
+            empty.update(_empty_graded())
+            empty.update(_empty_graded("rank1_"))
         return empty
+
+    if want_graded:
+        from nsm_ct import usvs_graded as ug
 
     scores = []
     rank1_scores = []
     widths = []
+    graded_scores = []
+    rank1_graded_scores = []
     for record in records:
         feats = em.build_features(record, usvs, pos_vocab, hash_buckets)
         forest = em.beam_decode(model, feats, beam_width=beam_width, k=k, policy=policy, rng=rng)
+        rank1 = [forest[0]] if forest else []
         scores.append(em.score_record(record, forest))
-        rank1_scores.append(em.score_record(record, [forest[0]] if forest else []))
+        rank1_scores.append(em.score_record(record, rank1))
         widths.append(len(forest))
+        if want_graded:
+            graded_scores.append(ug.score_record_graded(record, forest, usvs))
+            rank1_graded_scores.append(ug.score_record_graded(record, rank1, usvs))
 
     agg = em.aggregate_recall(scores)
     rank1_agg = em.aggregate_recall(rank1_scores)
@@ -192,6 +224,12 @@ def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets:
     agg["rank1_edge_f1"] = _f1(rank1_agg["edge_precision"], rank1_agg["edge_recall"])
     agg["rank1_structure_recall"] = rank1_agg["structure_recall"]
     agg["mean_forest_width"] = statistics.mean(widths) if widths else float("nan")
+    if want_graded:
+        g = ug.aggregate_graded(graded_scores)
+        g1 = ug.aggregate_graded(rank1_graded_scores)
+        for key in GRADED_FIELDS:
+            agg[key] = g[key]
+            agg["rank1_" + key] = g1[key]
     return agg
 
 
@@ -218,6 +256,7 @@ def evaluate_dev_fast(model, records: Sequence[dict], usvs, pos_vocab, hash_buck
 def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size: int,
                        max_seconds: float, max_steps: Optional[int] = None,
                        terminal_weight: float = 4.0,
+                       soft_targets=None,
                        on_step_50: Optional[Callable] = None,
                        on_epoch_done: Optional[Callable] = None,
                        on_max_seconds: Optional[Callable] = None,
@@ -237,6 +276,12 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
     epochs; `epochs` becomes a ceiling only, so v3@788 and v3@3000 can be
     trained to the SAME optimization budget (dev/AUDIT_2026-09-08.md
     finding 7).
+
+    `soft_targets` (default `None`) is passed straight through to
+    `em.teacher_force_loss` -- an `em.SoftTargetConfig` enables the opt-in
+    USVS/semantics-graded soft CE targets (`--loss usvs-soft`;
+    dev/USVS_GRADED_SCORING.md S5). `None` keeps the original one-hot loss,
+    numerically identical.
 
     `on_optimizer_step`, if given, is called after EVERY completed
     optimizer step (both mid-epoch batches and the per-epoch trailing
@@ -281,7 +326,8 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
                 stopped_early = True
                 stop_reason = "max_seconds"
                 break
-            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=terminal_weight) / batch_size
+            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=terminal_weight,
+                                          soft_targets=soft_targets) / batch_size
             loss.backward()
             epoch_loss += float(loss.item()) * batch_size
             epoch_n += 1

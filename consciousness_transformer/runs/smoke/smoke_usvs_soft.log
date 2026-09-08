@@ -1,0 +1,108 @@
+[   0.0s] loading gold from runs/encoder_gold_v4b.jsonl
+[   0.2s] 987 gold records
+[   0.2s] holdout mode: 98 held-out sentences, pool=791, train subset=150 (subset_seed=0)
+[   0.2s] loading USVS from /home/user/NAOMI/consciousness_transformer/data/usvs
+[  18.9s] USVS loaded: 117679 senses, d_axes=607
+[  18.9s] pos_vocab=15 role_vocab=39
+[  19.0s] policy params: 199,302 (~0.797 MB fp32)
+[  19.0s] building features + derivations for 150 train records
+[  19.1s] 150 teacher-forced derivations
+[  19.1s] dev-holdout eval targets from runs/encoder_gold_v4b.jsonl: matched=98 missing=0
+[  20.4s] loss=usvs-soft (soft role/gtype/source targets, T=0.25); action-type/kind/prime heads stay hard
+[  21.7s] epoch 0 step 50 avg_loss=88.125
+[  22.8s] epoch 0 step 100 avg_loss=83.681
+[  23.9s] epoch 0 step 150 avg_loss=77.997
+[  23.9s] === epoch 0 done: avg_loss=77.997 (n=150 derivations) ===
+[  25.1s] epoch 1 step 200 avg_loss=66.528
+[  26.1s] epoch 1 step 250 avg_loss=68.301
+[  27.2s] epoch 1 step 300 avg_loss=66.211
+[  27.2s] === epoch 1 done: avg_loss=66.211 (n=150 derivations) ===
+[  28.1s] epoch 2 step 350 avg_loss=54.156
+[  29.2s] epoch 2 step 400 avg_loss=60.042
+[  30.3s] epoch 2 step 450 avg_loss=60.776
+[  30.3s] === epoch 2 done: avg_loss=60.776 (n=150 derivations) ===
+[  31.5s] epoch 3 step 500 avg_loss=63.237
+[  32.5s] epoch 3 step 550 avg_loss=57.751
+[  33.7s] epoch 3 step 600 avg_loss=57.590
+[  33.7s] === epoch 3 done: avg_loss=57.590 (n=150 derivations) ===
+[  35.0s] epoch 4 step 650 avg_loss=56.671
+[  36.0s] epoch 4 step 700 avg_loss=54.004
+[  37.1s] epoch 4 step 750 avg_loss=54.717
+[  95.7s] eval step=50 train_avg_loss=54.717 dev_rank1_f1=0.0090 dev_edge_p=0.0151 dev_edge_r=0.0064
+[  95.7s] === epoch 4 done: avg_loss=54.717 (n=150 derivations) ===
+[  96.6s] epoch 5 step 800 avg_loss=49.269
+[  97.6s] epoch 5 step 850 avg_loss=50.807
+[  98.7s] epoch 5 step 900 avg_loss=52.239
+[  98.7s] === epoch 5 done: avg_loss=52.239 (n=150 derivations) ===
+[  99.7s] epoch 6 step 950 avg_loss=48.803
+[ 100.7s] epoch 6 step 1000 avg_loss=50.984
+[ 101.7s] epoch 6 step 1050 avg_loss=50.258
+[ 101.7s] === epoch 6 done: avg_loss=50.258 (n=150 derivations) ===
+[ 102.8s] epoch 7 step 1100 avg_loss=55.384
+[ 104.0s] epoch 7 step 1150 avg_loss=53.163
+[ 105.1s] epoch 7 step 1200 avg_loss=48.902
+[ 105.1s] === epoch 7 done: avg_loss=48.902 (n=150 derivations) ===
+[ 106.1s] epoch 8 step 1250 avg_loss=44.582
+[ 107.3s] epoch 8 step 1300 avg_loss=46.318
+[ 108.4s] epoch 8 step 1350 avg_loss=47.804
+[ 108.4s] === epoch 8 done: avg_loss=47.804 (n=150 derivations) ===
+[ 109.5s] epoch 9 step 1400 avg_loss=51.633
+[ 110.4s] epoch 9 step 1450 avg_loss=48.363
+[ 111.5s] epoch 9 step 1500 avg_loss=46.876
+[ 115.3s] eval step=100 train_avg_loss=46.876 dev_rank1_f1=0.1590 dev_edge_p=0.1983 dev_edge_r=0.1327
+[ 115.3s] === epoch 9 done: avg_loss=46.876 (n=150 derivations) ===
+[ 116.4s] epoch 10 step 1550 avg_loss=46.388
+[ 117.4s] epoch 10 step 1600 avg_loss=47.400
+[ 118.6s] epoch 10 step 1650 avg_loss=45.962
+[ 118.6s] === epoch 10 done: avg_loss=45.962 (n=150 derivations) ===
+[ 119.7s] epoch 11 step 1700 avg_loss=46.376
+[ 120.8s] epoch 11 step 1750 avg_loss=47.310
+[ 121.8s] epoch 11 step 1800 avg_loss=45.127
+[ 121.8s] === epoch 11 done: avg_loss=45.127 (n=150 derivations) ===
+[ 123.0s] epoch 12 step 1850 avg_loss=46.740
+[ 124.1s] epoch 12 step 1900 avg_loss=47.356
+[ 125.1s] epoch 12 step 1950 avg_loss=44.428
+[ 125.1s] === epoch 12 done: avg_loss=44.428 (n=150 derivations) ===
+[ 126.3s] epoch 13 step 2000 avg_loss=46.567
+[ 127.4s] epoch 13 step 2050 avg_loss=45.074
+[ 128.5s] epoch 13 step 2100 avg_loss=43.762
+[ 128.5s] === epoch 13 done: avg_loss=43.762 (n=150 derivations) ===
+[ 129.6s] epoch 14 step 2150 avg_loss=44.932
+[ 130.7s] epoch 14 step 2200 avg_loss=46.991
+[ 131.7s] epoch 14 step 2250 avg_loss=43.141
+[ 132.7s] eval step=150 train_avg_loss=43.141 dev_rank1_f1=0.2303 dev_edge_p=0.2828 dev_edge_r=0.1943
+[ 132.7s] === epoch 14 done: avg_loss=43.141 (n=150 derivations) ===
+[ 133.7s] epoch 15 step 2300 avg_loss=41.080
+[ 134.8s] epoch 15 step 2350 avg_loss=42.370
+[ 135.9s] epoch 15 step 2400 avg_loss=42.583
+[ 135.9s] === epoch 15 done: avg_loss=42.583 (n=150 derivations) ===
+[ 137.2s] epoch 16 step 2450 avg_loss=50.955
+[ 138.3s] epoch 16 step 2500 avg_loss=45.875
+[ 139.2s] epoch 16 step 2550 avg_loss=42.079
+[ 139.2s] === epoch 16 done: avg_loss=42.079 (n=150 derivations) ===
+[ 140.2s] epoch 17 step 2600 avg_loss=41.141
+[ 141.2s] epoch 17 step 2650 avg_loss=42.021
+[ 142.2s] epoch 17 step 2700 avg_loss=41.478
+[ 142.2s] === epoch 17 done: avg_loss=41.478 (n=150 derivations) ===
+[ 143.2s] epoch 18 step 2750 avg_loss=39.008
+[ 144.2s] epoch 18 step 2800 avg_loss=41.564
+[ 145.2s] epoch 18 step 2850 avg_loss=40.930
+[ 145.2s] === epoch 18 done: avg_loss=40.930 (n=150 derivations) ===
+[ 146.3s] epoch 19 step 2900 avg_loss=42.390
+[ 147.3s] epoch 19 step 2950 avg_loss=40.405
+[ 148.3s] epoch 19 step 3000 avg_loss=40.391
+[ 149.3s] eval step=200 train_avg_loss=40.391 dev_rank1_f1=0.2702 dev_edge_p=0.3116 dev_edge_r=0.2386
+[ 149.3s] === epoch 19 done: avg_loss=40.391 (n=150 derivations) ===
+[ 149.3s] training wall-clock: 128.8s (stopped_early=True)
+[ 149.3s] max-steps budget: optimizer_steps=200 (cap=200, stop_reason=max_steps) epoch_fraction=21.333 throughput=1.5525 steps/s (0.6441 s/step)
+[ 149.3s] wrote 4 curve rows -> runs/smoke/smoke_usvs_soft.pt.curve.tsv
+[ 149.3s] holdout eval targets from runs/encoder_gold_v4b.jsonl: matched=98 missing=0
+[ 149.3s] evaluating [last] (model policy) ...
+[ 278.3s] [last] holdout (best-of-6 + rank1 + forest width): {'sense_recall': 0.6781609195402298, 'slot_recall': 0.6492537313432836, 'structure_recall': 0.04081632653061224, 'all_gold_recalled_rate': 0.04081632653061224, 'edge_precision': 0.5482805609756389, 'edge_recall': 0.4289952677707779, 'overgen_ratio': 0.7528365625304398, 'n_records': 98, 'rank1_edge_precision': 0.46189813587772777, 'rank1_edge_recall': 0.2814179867751295, 'rank1_edge_f1': 0.34974740768431173, 'rank1_structure_recall': 0.030612244897959183, 'mean_forest_width': 5.918367346938775, 'graded_p': np.float64(0.6788870389730756), 'rank1_graded_p': np.float64(0.6139224273977435), 'graded_r': np.float64(0.5208735274414552), 'rank1_graded_r': np.float64(0.3592241674658032), 'graded_f': np.float64(0.5725529817015433), 'rank1_graded_f': np.float64(0.4293807636869967), 'graded_overall': np.float64(0.607715952813659), 'rank1_graded_overall': np.float64(0.4642083430114986), 'clause_count': 0.8069727891156464, 'rank1_clause_count': 0.66156462585034, 'clause_kind': 0.8069727891156464, 'rank1_clause_kind': 0.66156462585034, 'clause_struct': 0.8069727891156464, 'rank1_clause_struct': 0.66156462585034}
+[ 278.3s] evaluating [best] (model policy) ...
+[ 404.6s] [best] holdout (best-of-6 + rank1 + forest width): {'sense_recall': 0.6781609195402298, 'slot_recall': 0.6492537313432836, 'structure_recall': 0.04081632653061224, 'all_gold_recalled_rate': 0.04081632653061224, 'edge_precision': 0.5482805609756389, 'edge_recall': 0.4289952677707779, 'overgen_ratio': 0.7528365625304398, 'n_records': 98, 'rank1_edge_precision': 0.46189813587772777, 'rank1_edge_recall': 0.2814179867751295, 'rank1_edge_f1': 0.34974740768431173, 'rank1_structure_recall': 0.030612244897959183, 'mean_forest_width': 5.918367346938775, 'graded_p': np.float64(0.6788870389730756), 'rank1_graded_p': np.float64(0.6139224273977435), 'graded_r': np.float64(0.5208735274414552), 'rank1_graded_r': np.float64(0.3592241674658032), 'graded_f': np.float64(0.5725529817015433), 'rank1_graded_f': np.float64(0.4293807636869967), 'graded_overall': np.float64(0.607715952813659), 'rank1_graded_overall': np.float64(0.4642083430114986), 'clause_count': 0.8069727891156464, 'rank1_clause_count': 0.66156462585034, 'clause_kind': 0.8069727891156464, 'rank1_clause_kind': 0.66156462585034, 'clause_struct': 0.8069727891156464, 'rank1_clause_struct': 0.66156462585034}
+[ 404.6s] evaluating RANDOM baseline on holdout ...
+[ 408.4s] holdout (random baseline): {'sense_recall': 0.027586206896551724, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.008843537414965987, 'edge_recall': 0.004166666666666667, 'overgen_ratio': 0.01904761904761905, 'n_records': 98}
+[ 408.4s] saved BEST checkpoint (step=200, dev_rank1_f1=0.2702) -> runs/smoke/smoke_usvs_soft.pt
+[ 408.4s] saved LAST checkpoint -> runs/smoke/smoke_usvs_soft.pt.last.pt
+[ 408.4s] TOTAL wall-clock: 408.4s

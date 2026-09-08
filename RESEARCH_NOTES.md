@@ -1528,3 +1528,63 @@ arms-1/2 checkpoint on it alongside edge-F1; soft-target loss option for the
 heads that make graded choices; one smoke arm. FairytaleQA is confirmed as
 COMPREHENSION data only (parser sees it only at run time / via judge-admitted
 self-training later).
+
+### USVS-GRADED SCORING BUILT + ALL ARMS RE-SCORED -- ranking moves in the middle, not at the top (2026-09-08)
+Branch usvs-graded-scoring. Design: dev/USVS_GRADED_SCORING.md. Code:
+src/nsm_ct/usvs_graded.py (metric, role-confusion matrix, soft targets),
+teacher_force_loss(..., soft_targets=), evaluate_full(..., metric=),
+scripts/rescore_encoder.py --metric graded, scripts/rescore_graded_arms.py,
+tests/test_usvs_graded.py (22 tests). Table: runs/rescore_graded.txt.
+METRIC: a node = (role, clause index, USVS vector, token span). A `sense` node's
+vector is the normalized MEAN of its CANDIDATE SET (candidates-first -- never a
+pick, on either side); entity/reference/elision/prime get reserved-axis vectors.
+Pairwise score = role-confusion weight x cosine; optimal one-to-one alignment
+(in-module Hungarian, no scipy dep); predicate 2x / core 1x / modifier 0.5x;
+unmatched predicted nodes cost precision, unmatched gold nodes cost recall;
+clause count + kind reported separately. Role matrix lives in ONE editable dict
+(DESCRIPTION~SPECIFICATION 0.5, PLACE~prep-role 0.5, SUBJECT~OBJECT 0.0, ...).
+CONTROLS (n=40 v4b gold): identity 1.000 | corrupted copy 0.393 | random other
+sentence's tree 0.285. That 0.285 is the ambient USVS floor (gloss signatures are
+non-negative), and it is what graded-F must be read against -- NOT 0.
+RE-SCORE (rank-1 committed tree, 98-sentence test holdout, 9 kept-best-where-
+present checkpoints x 2 target sets; edge-F1 reproduces runs/arms/summary.tsv
+exactly, so the two columns share one decode):
+| arm             | v2: edge / graded | v4b: edge / graded |
+| v2_788_0        | **0.583 / 0.623** | 0.465 / 0.556 |
+| v2_788_1        | 0.557 / 0.605     | 0.450 / 0.551 |
+| v3_788_0        | 0.410 / 0.492     | 0.488 / 0.544 |
+| v3_788_1        | 0.373 / 0.472     | 0.416 / 0.517 |
+| v4b_788_0       | 0.391 / 0.459     | **0.491 / 0.581** |
+| v4b_margin_788_0| 0.384 / 0.483     | 0.445 / 0.564 |
+| v4b_margin_788_1| 0.381 / 0.468     | 0.471 / 0.562 |
+| v4b_all_788_0   | 0.420 / 0.487     | 0.470 / 0.557 |
+| v4b_788_hard_0  | 0.312 / 0.390     | 0.404 / 0.498 |
+READ: (1) the WINNER does not change on either target set, nor does the loser --
+arms-2's verdicts stand. (2) The middle of the table reorders, and the informative
+move is v3_788_0: 2nd by edge-F1 on v4b targets (0.488, 0.003 off the winner) but
+7th by graded-F (0.544, 0.037 BELOW it). Its per-arm near-miss credit (graded-F
+minus edge-F1) is the SMALLEST of any arm on its own target shape (+0.056 vs
++0.087..+0.119 for the others): v3's misses are genuinely far in USVS space, and
+binary edge-F1 flattered it. v4b_margin is the opposite (+0.119) -- it misses the
+exact triple most often and lands closest when it does. (3) The two v2 arms have
+the smallest gap on v2 targets (+0.04) and ~+0.10 on v4b targets, i.e. their
+errors against a target shape they never trained on are near-misses, not nonsense.
+LOSS: --loss usvs-soft softens the ROLE head (softmax over the role-confusion row,
+T configurable), the GROUNDING-TYPE head and the SOURCE head (the equivalences the
+contract states itself: reference~elision, context~memory). Action-type / terminal /
+clause-kind / prime heads stay HARD. NOT DONE, with reasons: there is no
+sense-candidate head to soften (the encoder never scores one candidate against
+another -- that is the v2 contract, not an omission), and the auxiliary
+"cosine(node embedding, gold USVS vector)" term has NO hook: the model emits no
+node embedding, so it would need a new Linear(controller_hidden, d_axes) head =
+new architecture, which the directive forbids inventing. That head is the ONLY
+place a sense-space gradient could enter this model and is the obvious next step.
+SMOKE (200 steps, --smoke, v4b gold, same 98 holdout; runs/smoke/): default
+rank-1 edge-F1 0.358 / graded-F 0.423 vs usvs-soft 0.350 / 0.429. A WASH -- both
+arms were still improving at the step cap and this is one seed at ~1/6 the steps
+arms-2's arms needed to peak. Plumbing check, not a verdict. (Train-loss LEVELS
+are not comparable: a soft target has non-zero entropy by construction.)
+Default loss path is numerically unchanged (pinned by test + the arms-v2
+byte-identical baseline-commit regression). 46/46 tests green
+(test_usvs_graded + test_encoder_curve + test_decisions_d1_d6), plus 37 more in
+test_encoder_model/_holdout/test_checkpoint/test_capacity_curve.

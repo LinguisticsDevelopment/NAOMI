@@ -152,6 +152,23 @@ def main():
     ap.add_argument("--patience", type=int, default=None,
                      help="(item B) stop training if --eval-every dev rank-1 F1 hasn't improved "
                           "for this many evals in a row. No effect without --eval-every.")
+    ap.add_argument("--loss", choices=("default", "usvs-soft"), default="default",
+                     help="(lead directive 2026-09-08; dev/USVS_GRADED_SCORING.md S5) "
+                          "'usvs-soft' replaces the one-hot CE target on the role / "
+                          "grounding-type / retrieval-source heads with a graded "
+                          "distribution over the role-confusion matrix and the contract's "
+                          "own type/source equivalences. The action-type, clause-kind and "
+                          "prime heads stay hard. 'default' is the original loss, "
+                          "numerically unchanged.")
+    ap.add_argument("--loss-temperature", type=float, default=0.25,
+                     help="softmax temperature for --loss usvs-soft's target rows "
+                          "(smaller = closer to one-hot).")
+    ap.add_argument("--metric", choices=("edge", "graded", "both"), default="both",
+                     help="which held-out metrics the final eval reports: 'edge' = the "
+                          "original binary edge-F1 only; 'graded'/'both' additionally "
+                          "report the USVS-graded P/R/F on the SAME decoded forests "
+                          "(dev/USVS_GRADED_SCORING.md). Keep-best selection always uses "
+                          "the edge-F1 dev curve, so arms stay comparable to arms-1/2.")
     ap.add_argument("--extra-eval", default=None,
                      help="(item D) comma list of additional gold files to evaluate the saved "
                           "checkpoint on IN FULL (every record in the file is an eval target, not "
@@ -291,10 +308,16 @@ def main():
             return True
         return False
 
+    soft_targets = None
+    if args.loss == "usvs-soft":
+        soft_targets = em.SoftTargetConfig(temperature=args.loss_temperature)
+        print(f"[{time.time()-t0:6.1f}s] loss=usvs-soft (soft role/gtype/source targets, "
+              f"T={args.loss_temperature}); action-type/kind/prime heads stay hard")
+
     result = etu.run_training_loop(
         model, train_items, opt, epochs=epochs, batch_size=batch_size,
         max_seconds=args.max_seconds, max_steps=args.max_steps,
-        terminal_weight=args.terminal_weight,
+        terminal_weight=args.terminal_weight, soft_targets=soft_targets,
         on_step_50=on_step_50, on_epoch_done=on_epoch_done, on_max_seconds=on_max_seconds,
         on_optimizer_step=on_optimizer_step if do_dev_eval else None)
 
@@ -342,19 +365,22 @@ def main():
         print(f"[{time.time()-t0:6.1f}s] evaluating {prefix}(model policy) ...")
         if holdout_sentences is not None:
             m = etu.evaluate_full(model, eval_targets, usvs, pos_vocab, hash_buckets,
-                                   beam_width=args.beam_width, k=args.k, policy="model")
+                                   beam_width=args.beam_width, k=args.k, policy="model",
+                                   metric=args.metric)
             metrics_["holdout"] = m
             print(f"[{time.time()-t0:6.1f}s] {prefix}holdout (best-of-{args.k} + rank1 + forest width): {m}")
 
             if args.eval_gold_alt:
                 m_alt = etu.evaluate_full(model, alt_targets, usvs, pos_vocab, hash_buckets,
-                                           beam_width=args.beam_width, k=args.k, policy="model")
+                                           beam_width=args.beam_width, k=args.k, policy="model",
+                                           metric=args.metric)
                 metrics_["holdout_alt"] = m_alt
                 print(f"[{time.time()-t0:6.1f}s] {prefix}holdout_alt (best-of-{args.k} + rank1 + forest width): {m_alt}")
         else:
             for split_name, split_recs in (("train", train_recs), ("dev", dev_recs), ("test", test_recs)):
                 m = etu.evaluate_full(model, split_recs, usvs, pos_vocab, hash_buckets,
-                                       beam_width=args.beam_width, k=args.k, policy="model")
+                                       beam_width=args.beam_width, k=args.k, policy="model",
+                                       metric=args.metric)
                 metrics_[split_name] = m
                 print(f"[{time.time()-t0:6.1f}s] {prefix}{split_name}: {m}")
         return metrics_
@@ -404,6 +430,8 @@ def main():
         return {"n_train": len(train_recs), "n_dev": len(dev_recs), "n_test": len(test_recs),
                 "epochs": epochs, "batch_size": batch_size, "seed": args.seed,
                 "terminal_weight": args.terminal_weight, "max_steps": args.max_steps,
+                "loss": args.loss, "loss_temperature": args.loss_temperature,
+                "metric": args.metric,
                 "subset_seed": args.subset_seed, "holdout_file": args.holdout_file,
                 "eval_gold": args.eval_gold, "eval_gold_alt": args.eval_gold_alt,
                 "optimizer_steps": result["optimizer_steps"], "stop_reason": result["stop_reason"],
