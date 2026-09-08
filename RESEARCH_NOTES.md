@@ -1320,3 +1320,21 @@ now uses the lemmatized lookup, but v2 and v3-small gold were NOT rebuilt (the
 arms are mid-run on them; both share the defect, so the v2-vs-v3 comparison
 stays fair). NEXT gold build (v4) inherits the fix automatically; expect
 materially more sense-grounded nodes. See dev/HARD_GOLD_GEN_STATS.md v2 notes.
+
+### LLM PARSE JUDGE MERGED (Sonnet routine, 2026-09-08) -> dev/PARSE_JUDGE.md
+src/nsm_ct/tree_render.py (render_tree: sentence + one `[kind] PREDICATE=w
+(gloss) | ROLE=w (gloss)` line per clause, <= 600 chars; the complement probe
+now uses it), src/nsm_ct/parse_judge.py (Judge interface; HaikuJudge =
+claude-haiku-4-5 via messages.parse + Batches API keyed by custom_id, retry/
+backoff, fail-fast on 4xx; MockJudge = J1/J2/J3 + first-sense/POS agreement;
+hard J3 pre-filter before any API call), scripts/judge_parses.py (--filter good
+= the self-training admission gate), scripts/calibrate_judge.py. 32 tests green.
+MOCK calibration: gold 84% good; corrupted 84% detected (100% on predicate-
+swap and phantom-role corruptions; SUBJECT/OBJECT swaps are invisible to
+structure by design -- the Haiku judge exists for those); encoder complement
+16.9% good. Cost estimate ~$0.79 per 1K trees standard, ~$0.40 batched (from
+rendering length, not measured). Haiku calibration NOT run: no API key in the
+sandbox; command in dev/PARSE_JUDGE.md for the lead.
+SIDE-FINDING (consistent with the lemmatization gap): in v2 gold, top-tree
+PREDICATE groundings are entity 1,113 vs sense 820 -- most past-tense verbs
+were never sense-grounded. v4-small (dispatched, lemmatized) should invert that.
