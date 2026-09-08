@@ -57,6 +57,8 @@ MAX_SECONDS="${MAX_SECONDS:-172800}"   # 48h hard per-run ceiling; --max-steps i
 GOLD_V2="${GOLD_V2:-runs/encoder_gold_v2.jsonl}"
 GOLD_V3="${GOLD_V3:-runs/encoder_gold_v3.jsonl}"
 GOLD_V4B="${GOLD_V4B:-runs/encoder_gold_v4b.jsonl}"
+GOLD_V4B_MARGIN="${GOLD_V4B_MARGIN:-runs/encoder_gold_v4b_margin.jsonl}"
+GOLD_V4B_ALL="${GOLD_V4B_ALL:-runs/encoder_gold_v4b_all.jsonl}"
 HARD_GOLD_TRAIN="${HARD_GOLD_TRAIN:-runs/hard_gold_train.jsonl}"
 HARD_GOLD_TEST_FILLER="${HARD_GOLD_TEST_FILLER:-runs/hard_gold_test_filler.jsonl}"
 HARD_GOLD_TEST_TEMPLATE="${HARD_GOLD_TEST_TEMPLATE:-runs/hard_gold_test_template.jsonl}"
@@ -105,6 +107,10 @@ V3_AVAILABLE=1
 if [[ ! -f "$GOLD_V3" ]]; then V3_AVAILABLE=0; fi
 V4B_AVAILABLE=1
 if [[ ! -f "$GOLD_V4B" ]]; then V4B_AVAILABLE=0; fi
+V4B_MARGIN_AVAILABLE=1
+if [[ ! -f "$GOLD_V4B_MARGIN" ]]; then V4B_MARGIN_AVAILABLE=0; fi
+V4B_ALL_AVAILABLE=1
+if [[ ! -f "$GOLD_V4B_ALL" ]]; then V4B_ALL_AVAILABLE=0; fi
 HARD_AVAILABLE=1
 if [[ ! -f "$HARD_GOLD_TRAIN" ]]; then HARD_AVAILABLE=0; fi
 
@@ -115,6 +121,8 @@ ARM_DEFS=(
   "v3_3000:${GOLD_V3}:3000"
   "v4b_788:${GOLD_V4B}:788"
   "v4b_788_hard:${GOLD_V4B},${HARD_GOLD_TRAIN}:788"
+  "v4b_margin_788:${GOLD_V4B_MARGIN}:788"
+  "v4b_all_788:${GOLD_V4B_ALL}:788"
 )
 
 # Whether all the gold files an arm needs are actually present.
@@ -124,6 +132,8 @@ arm_available() {
     v3_788|v3_3000) [[ "$V3_AVAILABLE" == "1" ]] ;;
     v4b_788) [[ "$V4B_AVAILABLE" == "1" ]] ;;
     v4b_788_hard) [[ "$V4B_AVAILABLE" == "1" && "$HARD_AVAILABLE" == "1" ]] ;;
+    v4b_margin_788) [[ "$V4B_MARGIN_AVAILABLE" == "1" ]] ;;
+    v4b_all_788) [[ "$V4B_ALL_AVAILABLE" == "1" ]] ;;
     *) return 0 ;;
   esac
 }
@@ -152,6 +162,18 @@ build_cmd() {
       eval_flags="$eval_flags --eval-gold-alt ${GOLD_V3}"
       ;;
     v4b_788|v4b_788_hard)
+      if [[ "$V4B_AVAILABLE" == "1" ]]; then eval_flags="$eval_flags --eval-gold-alt ${GOLD_V4B}"; fi
+      ;;
+    v4b_margin_788|v4b_all_788)
+      # gold=v4b_margin/v4b_all (richer-than-top-1 v4b variants); score the
+      # holdout against v2 targets (continuity with the v2_788/v3_788
+      # reference numbers) AND v4b top-1 targets (equal-gold-quality
+      # comparison against the v4b_788 arm). NOTE: --eval-gold also drives
+      # the periodic --eval-every dev-holdout target (train_encoder.py
+      # dev_eval_gold_path = args.eval_gold or args.gold), so with
+      # --eval-gold set to v2 here, keep-best selection is actually done
+      # against v2 dev targets, not v4b top-1 -- same as the existing
+      # v4b_788 arm's dev selection.
       if [[ "$V4B_AVAILABLE" == "1" ]]; then eval_flags="$eval_flags --eval-gold-alt ${GOLD_V4B}"; fi
       ;;
   esac
