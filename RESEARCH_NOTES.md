@@ -1226,3 +1226,16 @@ ARMS DISPATCHED: v2_788 vs v3_788, seeds 0 and 1, STEPS=8000 (= run-2's ~8.2K
 optimizer steps: 788 records x ~3.3 derivations/record / batch 32 x 100 epochs),
 holdout = run-2's exact test split, scored on v2 AND v3 targets, rank-1 + forest
 width. Two routines (one per seed), branches encoder-arms-seed0/-seed1.
+
+### LEAD DECISIONS (2026-09-08, after the gate results)
+1. The LEARNED encoder stays the DEFAULT regardless of the v2/v3 arm outcome
+   (robustness; Spanglish/code-switch is only reachable with a learned
+   transducer). The hybrid "parser as encoder" option is REJECTED; the arms
+   now decide HOW to train it, not WHETHER.
+2. Hand-gold is FUNDED as GENERATED data: templates per hard construction
+   family with typed slots (VERB/NOUN/ADJ/PROPN/...) filled from USVS/WordNet
+   pools, seeded, gated through hand_gold.py's validator. Hundreds per family,
+   with filler-held-out AND template-held-out test splits.
+3. No red-pen pass on the 16 drafts; training/eval failures are the review.
+Director: dispatched the generator routine (branch hard-gold-gen). The
+comprehension spike (audit finding 8) still awaiting the lead's answer.

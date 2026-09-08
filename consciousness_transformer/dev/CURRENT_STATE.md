@@ -100,7 +100,11 @@ Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
 - NEXT ACTION 5 (memory-frame decoder): ON HOLD -- its coverage gate failed
   twice; respec toward reduced-realization; confab-rate is the hard gate.
 - NEXT ACTION 6: GPU encoder DROPPED (Python-bound, not FLOP-bound).
-- Hand-gold 16: treat as held-out TEST set per family, not training data.
+- Hand-gold: LEAD 2026-09-08 -> GENERATE it from typed-slot templates (hundreds per
+  family, filler- and template-held-out splits); routine on branch `hard-gold-gen`.
+  The 16 drafts are seeds for the templates, not a red-pen item.
+- LEAD 2026-09-08: learned encoder stays DEFAULT whatever the arms show; hybrid
+  rejected. Arms decide training recipe (top-1 vs forest gold), not existence.
 - AWAITING LEAD: comprehension-side spike (can a GRU over tensor memory resolve
   a candidate lattice?) -- the thesis risk nothing in this plan touches.
 - D1-D6 implementation MERGED to mainline 2026-09-08 (from branch `decisions-d1-d6`;
