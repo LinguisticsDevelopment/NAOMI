@@ -1438,3 +1438,29 @@ ARMS-2 DISPATCHED (keep-best on dev, 8,000 max steps, same 98 holdout):
 Question: at equal gold quality, does variety (margin/all) beat top-1, and does
 keep-best rescue top-1? Plus the first per-family numbers on the hard-gold
 held-out templates (v4b_788_hard).
+
+### FAIRYTALEQA CONVERTED + CHARACTERIZED (2026-09-08) -> dev/FAIRYTALEQA_STATS.md
+Branch k12-fairytaleqa merged: fetch_k12 --source fairytaleqa (277/278 stories,
+4,082 sections, 10,556 QA rows, Apache 2.0, raw data gitignored; manifest +
+10-story sample committed), convert_fairytaleqa.py (--parse none|sample|all),
+build_fairytaleqa_stats.py, eval_prose.py --answer-type entity hook, tests.
+Episodes committed: runs/fairytaleqa_episodes.jsonl (1,886 episodes: train
+1,561 / val 186 / test 139; attribute mix action 31%, causal 27%, character
+13%, feeling 9%, outcome 7%, prediction 7%, setting 7%; explicit 77%).
+NOTE: 1,886 episodes from 10,556 QA rows is NOT yet explained -- the converter
+emits one episode per (section, question); the drop accounting is checked in
+the run log below / next routine. Treat the stats as a characterization of the
+converted subset until confirmed.
+PARSE YIELD on FairytaleQA sentences (2,000-sentence sample, teacher parser):
+strict full-tree 19.8%, usable 58.8%, grounding-fail 40.7% (pronoun-
+unresolvable 14%, unknown-word 10%, unsupported-construction 8%), cap-hit 0.5%.
+Only 2.3% of episodes have EVERY passage sentence usable. The scout's 94% was
+a looser criterion; by the M62 standard, children's prose is NOT easy for the
+teacher -- perception is the bottleneck here too, which is the encoder's job.
+ANSWER TYPES (the number for the comprehension plan): (a) entity/NP verbatim
+in passage 19.5% (367 episodes, all MC-scoreable with the current QA head);
+(b) verb phrase 5.6%; (c) free-text sentence 14.7%; (d) not a substring of
+the passage at all 60.2%. => ~80% of FairytaleQA needs the realization side
+and/or inference beyond a single memory read. The K-12 phase should start on
+the 367 entity items + MCTest (4-way MC, distractors provided) while the
+decoder/realization question is reopened.
