@@ -49,6 +49,7 @@ Usage: python scripts/build_encoder_gold_v2.py
 
 from __future__ import annotations
 
+import argparse
 import glob
 import json
 import os
@@ -62,7 +63,9 @@ from typing import Dict, List, Optional, Tuple
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from nsm_ct.clause import _PRONOUNS, extract_discourse, is_entity  # noqa: E402
+from nsm_ct.clause import (  # noqa: E402
+    FIRST_PERSON_SINGULAR, MODIFIER_RELATIONS, _PRONOUNS, extract_discourse, is_entity,
+)
 from nsm_ct.corpus import iter_sentences  # noqa: E402
 from nsm_ct.ground.usvs import load_usvs  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
@@ -79,6 +82,36 @@ USVS_DIR = ROOT / "data" / "usvs"
 OUT_JSONL = Path(os.environ.get("GOLD_OUT_JSONL", str(ROOT / "runs" / "encoder_gold_v2.jsonl")))
 OUT_STATS = Path(os.environ.get("GOLD_OUT_STATS", str(ROOT / "dev" / "ENCODER_GOLD_V2_STATS.md")))
 TOP_K = 8
+
+# D1 (dev/CURRENT_STATE.md decisions locked, 2026-09-07): gold_qa_report.txt
+# Part B measured the OLD default (clause-level dedup only, no score
+# pruning) at mean_trees=3.46 (61% of records have 3+ trees) and found the
+# extra trees SPURIOUS -- trivial modifier-attachment wobble / dropped
+# clauses, not genuine ambiguity. The new DEFAULT keeps only the top-1
+# parser hypothesis per sentence. `--forest margin` is an opt-in alternative
+# that keeps a 2nd+ tree only when it is BOTH within a small score margin of
+# the top AND structurally distinct (a different clause split or a
+# different role assignment on a content node -- not just a modifier
+# reattaching). 0.02 is that report's own recommended margin (its "EXAMPLES"
+# section: "recommended M=0.02 used for the 'pruning fixes it' cases" --
+# chosen from the tested thresholds [0.0, 0.02, 0.05, 0.1] as the smallest
+# one that still separates the genuinely-ambiguous example from the
+# spurious-extra ones). `--forest all` disables pruning entirely (the OLD
+# behavior: every structurally-deduped top-TOP_K tree is kept). Env-var
+# fallbacks (GOLD_FOREST_MODE/GOLD_FOREST_MARGIN) mirror the
+# GOLD_OUT_JSONL/GOLD_OUT_STATS pattern above so `colab/Gold_Expand.ipynb`
+# (which just runs `python scripts/build_encoder_gold_v2.py` with no args)
+# picks up the new top1 default with NO notebook edit.
+FOREST_MODES = ("top1", "margin", "all")
+FOREST_MODE_DEFAULT = os.environ.get("GOLD_FOREST_MODE", "top1")
+FOREST_MARGIN_DEFAULT = float(os.environ.get("GOLD_FOREST_MARGIN", "0.02"))
+# A gap below this is an EXACT tie, not a close call -- the QA report found
+# ties (54/109 multi-tree sentences) come from parses that dedup to
+# different clause dicts by pure noise (attachment order, etc.) despite
+# genuinely identical scores; margin mode treats these as spurious
+# duplicates of tree[0], never a second genuine reading, however
+# structurally distinct their JSON happens to look.
+_EXACT_TIE_EPS = 1e-6
 
 # corpus-expand: the pre-expansion corpus (~1k sentences) was small enough
 # that an unbounded per-sentence parse never mattered in practice; a
@@ -117,6 +150,11 @@ def ground_word(usvs, word: Optional[str]) -> Dict[str, object]:
       (contract §4.2's explicit "ungrounded content word" case).
     """
     w = (word or "").lower()
+    if w in FIRST_PERSON_SINGULAR:
+        # D3 (dev/CURRENT_STATE.md decisions locked): the speaker is a
+        # grammar-licensed single referent, symmetric with the imperative's
+        # synthesized addressee (prime YOU) -- resolved, no candidate set.
+        return {"type": "prime", "prime": "I", "candidates": None}
     if w in _PRONOUNS:
         return {
             "type": "reference",
@@ -188,12 +226,66 @@ def build_tree(usvs, tokens: List[str], graph) -> Optional[Tuple[Dict, List[Dict
     return {"clauses": clause_dicts}, link_dicts
 
 
-def build_record(usvs, parser: ParserInputEncoder, sentence: str) -> Tuple[Optional[Dict], str, int]:
+def _tree_core_skeleton(tree: Dict) -> Tuple[frozenset, ...]:
+    """D1 margin mode's "is this a genuinely different reading" test: the
+    clause split + core role assignment (relation, token_index) per clause,
+    IGNORING modifier-attachment roles (`nsm_ct.clause.MODIFIER_RELATIONS`
+    -- DESCRIPTION/SPECIFICATION/COMPLEMENT/.../QUANTITY/ADDITIVE/FOCUS).
+    Two trees with the same skeleton differ only by modifier-attachment
+    wobble (an extra/missing descriptor, a different adverb parent) -- the
+    exact "spurious extra hypothesis" shape gold_qa_report.txt's examples
+    (iii+0..iii+3) show pruning is meant to collapse. A different clause
+    count/grouping, a different predicate, or a different relation/index for
+    a CORE role always changes this skeleton -- that is "genuinely distinct"
+    for this decision's purposes."""
+    clauses_sk = []
+    for clause in tree["clauses"]:
+        core = {("PREDICATE", clause.get("predicate"), clause["predicate_grounding"]["type"])}
+        for role in clause["roles"]:
+            if role["relation"] in MODIFIER_RELATIONS:
+                continue
+            core.add((role["relation"], role["token_index"], role["grounding"]["type"]))
+        clauses_sk.append(frozenset(core))
+    return tuple(sorted(clauses_sk, key=lambda s: sorted(map(str, s))))
+
+
+def prune_forest(trees: List[Dict], links_per_tree: List[List[Dict]], scores: List[float],
+                  mode: str, margin: float) -> Tuple[List[Dict], List[List[Dict]]]:
+    """D1: apply the `--forest` policy to an already structurally-deduped,
+    score-sorted (best-first) list of trees. Always keeps `trees[0]` (a
+    record must emit >=1 tree, contract S2)."""
+    if mode not in FOREST_MODES:
+        raise ValueError(f"unknown --forest mode {mode!r} (choose from {FOREST_MODES})")
+    if mode == "all" or len(trees) <= 1:
+        return trees, links_per_tree
+    if mode == "top1":
+        return trees[:1], links_per_tree[:1]
+
+    # mode == "margin"
+    top_score = scores[0]
+    top_skeleton = _tree_core_skeleton(trees[0])
+    kept_trees, kept_links = [trees[0]], [links_per_tree[0]]
+    for tree, link_dicts, score in zip(trees[1:], links_per_tree[1:], scores[1:]):
+        gap = top_score - score
+        if gap <= _EXACT_TIE_EPS:
+            continue  # an exact tie is spurious (see FOREST_MARGIN_DEFAULT note), never kept
+        if gap > margin:
+            continue  # too far below top-1 to be a competing reading
+        if _tree_core_skeleton(tree) == top_skeleton:
+            continue  # modifier-attachment wobble only, not a genuine 2nd reading
+        kept_trees.append(tree)
+        kept_links.append(link_dicts)
+    return kept_trees, kept_links
+
+
+def build_record(usvs, parser: ParserInputEncoder, sentence: str,
+                  forest_mode: str = FOREST_MODE_DEFAULT,
+                  forest_margin: float = FOREST_MARGIN_DEFAULT) -> Tuple[Optional[Dict], str, int]:
     """Returns (record_or_None, outcome_tag, n_raw_hypotheses)."""
     from src.parser.quantum_parser import ParseResourceExceeded  # local import (qp_root on sys.path)
 
     try:
-        graphs, _scores, _margin = parser._parse_topk_one(
+        graphs, scores, _margin = parser._parse_topk_one(
             sentence, k=TOP_K,
             max_hypotheses=CORPUS_MAX_HYPOTHESES, max_seconds=CORPUS_MAX_PARSE_SECONDS,
         )
@@ -211,8 +303,9 @@ def build_record(usvs, parser: ParserInputEncoder, sentence: str) -> Tuple[Optio
 
     trees: List[Dict] = []
     links_per_tree: List[List[Dict]] = []
+    tree_scores: List[float] = []
     seen_trees = set()
-    for graph in graphs:
+    for graph, score in zip(graphs, scores):
         built = build_tree(usvs, tokens, graph)
         if built is None:
             continue
@@ -223,9 +316,13 @@ def build_record(usvs, parser: ParserInputEncoder, sentence: str) -> Tuple[Optio
         seen_trees.add(key)
         trees.append(tree)
         links_per_tree.append(link_dicts)
+        tree_scores.append(score)
 
     if not trees:
         return None, "grounding-fail", len(graphs)
+
+    trees, links_per_tree = prune_forest(trees, links_per_tree, tree_scores,
+                                          forest_mode, forest_margin)
 
     token_sense_candidates = []
     for i, tok in enumerate(tokens):
@@ -246,10 +343,26 @@ def build_record(usvs, parser: ParserInputEncoder, sentence: str) -> Tuple[Optio
     return record, "ok", len(graphs)
 
 
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--forest", choices=FOREST_MODES, default=FOREST_MODE_DEFAULT,
+                   help="forest-width policy (default: %(default)s; env GOLD_FOREST_MODE). "
+                        "'top1' keeps only the best parser hypothesis per sentence; 'margin' "
+                        "also keeps a structurally-distinct 2nd+ tree within --forest-margin "
+                        "of the top score; 'all' disables pruning (pre-D1 behavior).")
+    p.add_argument("--forest-margin", type=float, default=FOREST_MARGIN_DEFAULT,
+                   help="margin mode only: max score gap from top-1 to still keep a "
+                        "structurally-distinct tree (default: %(default)s; env GOLD_FOREST_MARGIN).")
+    return p.parse_args(argv)
+
+
 def main() -> int:
+    args = parse_args()
     t0 = time.time()
     sentences = load_corpus()
     print(f"corpus: {len(sentences)} unique sentences", flush=True)
+    print(f"forest policy: {args.forest}"
+          + (f" (margin={args.forest_margin})" if args.forest == "margin" else ""), flush=True)
 
     print("loading USVS ...", flush=True)
     usvs = load_usvs(USVS_DIR)
@@ -271,7 +384,9 @@ def main() -> int:
 
     with open(OUT_JSONL, "w", encoding="utf-8") as out_f:
         for i, sentence in enumerate(sentences):
-            record, outcome, n_raw = build_record(usvs, parser, sentence)
+            record, outcome, n_raw = build_record(usvs, parser, sentence,
+                                                    forest_mode=args.forest,
+                                                    forest_margin=args.forest_margin)
             outcomes[outcome] += 1
             if record is not None:
                 out_f.write(json.dumps(record) + "\n")
