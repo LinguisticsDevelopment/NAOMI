@@ -23,3 +23,6 @@ measured smoke throughput: 0.5646 s/step -> estimated 4516.8s (1.25h) per arm at
 [v4b_788_hard seed=0] starting -> runs/arms/v4b_788_hard_0.log
 [v4b_all_788 seed=0] starting -> runs/arms/v4b_all_788_0.log
 [v4b_788_hard seed=0] done -> runs/arms/summary.tsv
+[v4b_all_788 seed=0] done -> runs/arms/summary.tsv
+
+All arms done. Summary: runs/arms/summary.tsv
