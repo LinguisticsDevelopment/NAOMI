@@ -74,6 +74,11 @@ from nsm_ct.structure import PARSE_LABELS  # noqa: E402
 from nsm_ct.tokenizer import SimpleTokenizer  # noqa: E402
 
 CORPUS_GLOB = str(ROOT / "data" / "corpus" / "real_*.txt")
+# GOLD_CORPUS_GLOB: overridable via env var (mirrors GOLD_OUT_JSONL below) so a
+# targeted rebuild (e.g. the v2-population-matched v3-small gold) can point at
+# a narrower glob without editing this file; unset, behavior is byte-identical
+# to before (every data/corpus/real_*.txt file).
+CORPUS_GLOB_DEFAULT = os.environ.get("GOLD_CORPUS_GLOB", CORPUS_GLOB)
 USVS_DIR = ROOT / "data" / "usvs"
 # GOLD_OUT_JSONL/GOLD_OUT_STATS: overridable via env var so the overnight
 # corpus-expand run (colab/Gold_Expand.ipynb) can point straight at a
@@ -123,11 +128,22 @@ _EXACT_TIE_EPS = 1e-6
 from nsm_ct.corpus import CORPUS_MAX_HYPOTHESES, CORPUS_MAX_PARSE_SECONDS  # noqa: E402
 
 
-def load_corpus() -> List[str]:
-    """Every unique deduped sentence across ALL ``data/corpus/real_*.txt``."""
+def load_corpus(glob_pattern: str = CORPUS_GLOB_DEFAULT,
+                 allowed_basenames: Optional[List[str]] = None) -> List[str]:
+    """Every unique deduped sentence across the matching corpus files.
+
+    ``allowed_basenames``, when given, is an explicit filename allow-list
+    (applied after the glob) -- e.g. to reproduce the exact v2 sentence
+    population (the ORIGINAL five corpus files) after corpus-expand added
+    more ``real_*.txt`` files to the default glob.
+    """
     seen = set()
     out: List[str] = []
-    for f in sorted(glob.glob(CORPUS_GLOB)):
+    files = sorted(glob.glob(glob_pattern))
+    if allowed_basenames is not None:
+        allowed = set(allowed_basenames)
+        files = [f for f in files if Path(f).name in allowed]
+    for f in files:
         text = Path(f).read_text(encoding="utf-8")
         for s in iter_sentences(text):
             s = s.strip()
@@ -353,14 +369,22 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument("--forest-margin", type=float, default=FOREST_MARGIN_DEFAULT,
                    help="margin mode only: max score gap from top-1 to still keep a "
                         "structurally-distinct tree (default: %(default)s; env GOLD_FOREST_MARGIN).")
+    p.add_argument("--corpus-glob", default=CORPUS_GLOB_DEFAULT,
+                   help="glob for corpus files (default: %(default)s; env GOLD_CORPUS_GLOB).")
+    p.add_argument("--corpus-files", default=None,
+                   help="comma-separated basenames (e.g. real_gutenberg_alice.txt); when given, "
+                        "restricts --corpus-glob's matches to exactly these files.")
     return p.parse_args(argv)
 
 
 def main() -> int:
     args = parse_args()
     t0 = time.time()
-    sentences = load_corpus()
+    corpus_files = args.corpus_files.split(",") if args.corpus_files else None
+    sentences = load_corpus(glob_pattern=args.corpus_glob, allowed_basenames=corpus_files)
     print(f"corpus: {len(sentences)} unique sentences", flush=True)
+    print(f"corpus glob: {args.corpus_glob}"
+          + (f" (files={corpus_files})" if corpus_files else ""), flush=True)
     print(f"forest policy: {args.forest}"
           + (f" (margin={args.forest_margin})" if args.forest == "margin" else ""), flush=True)
 
