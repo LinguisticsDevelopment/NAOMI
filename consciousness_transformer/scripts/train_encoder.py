@@ -120,6 +120,17 @@ def main():
                           "training pool (or, with --holdout-file, from the pool minus the held-out "
                           "sentences); defaults to --seed. Independent of the split seed, so "
                           "v3@788 and v3@3000 are separate, reproducible draws.")
+    ap.add_argument("--n-train-per-file", default=None,
+                     help="(arms-3 minimal support for fixed source ratios) comma list of "
+                          "per-file train-subset sizes, one count per file in --gold's comma "
+                          "list, same order (e.g. --gold a.jsonl,b.jsonl --n-train-per-file "
+                          "788,200). Each file's own records (after --holdout-file / "
+                          "--dev-holdout-file exclusion, and after dropping any text already "
+                          "taken from an earlier file in the list) get their own seeded_subset "
+                          "of the requested size, then all subsets are concatenated -- unlike "
+                          "plain --n-train, which draws ONE stratified subset from the files' "
+                          "UNION and can under-represent a smaller source file. Only valid with "
+                          "--holdout-file; ignored (with --n-train used instead) otherwise.")
     ap.add_argument("--holdout-file", default=None,
                      help="(item C) text file of sentences (one per line) EXCLUDED from training "
                           "and used as the eval set instead of the gold-derived dev/test split. "
@@ -199,14 +210,38 @@ def main():
     dev_eval_sentences: list = []
     if args.holdout_file:
         holdout_sentences = etu.load_holdout_sentences(args.holdout_file)
-        pool = etu.exclude_by_text(records, holdout_sentences)
+        subset_seed = args.subset_seed if args.subset_seed is not None else args.seed
         if do_dev_eval:
             dev_eval_sentences = etu.load_holdout_sentences(args.dev_holdout_file)
-            pool = etu.exclude_by_text(pool, dev_eval_sentences)
-        subset_seed = args.subset_seed if args.subset_seed is not None else args.seed
-        train_recs = etu.seeded_subset(pool, n_train, subset_seed)
-        print(f"[{time.time()-t0:6.1f}s] holdout mode: {len(holdout_sentences)} held-out sentences, "
-              f"pool={len(pool)}, train subset={len(train_recs)} (subset_seed={subset_seed})")
+        if args.n_train_per_file:
+            per_file_n = [int(x) for x in args.n_train_per_file.split(",")]
+            gold_paths = [p.strip() for p in args.gold.split(",") if p.strip()]
+            if len(per_file_n) != len(gold_paths):
+                raise SystemExit(f"--n-train-per-file has {len(per_file_n)} counts but --gold "
+                                  f"lists {len(gold_paths)} files")
+            train_recs = []
+            seen_text = set()
+            per_file_report = []
+            for gp, n_i in zip(gold_paths, per_file_n):
+                file_pool = etu.exclude_by_text(etu.load_gold(gp), holdout_sentences)
+                if do_dev_eval:
+                    file_pool = etu.exclude_by_text(file_pool, dev_eval_sentences)
+                file_pool = [r for r in file_pool if r["text"] not in seen_text]
+                file_subset = etu.seeded_subset(file_pool, n_i, subset_seed)
+                seen_text.update(r["text"] for r in file_subset)
+                train_recs.extend(file_subset)
+                per_file_report.append(f"{gp}: pool={len(file_pool)} subset={len(file_subset)}")
+            print(f"[{time.time()-t0:6.1f}s] holdout mode (per-file subsets): "
+                  f"{len(holdout_sentences)} held-out sentences, "
+                  f"train subset={len(train_recs)} (subset_seed={subset_seed}) -- "
+                  + "; ".join(per_file_report))
+        else:
+            pool = etu.exclude_by_text(records, holdout_sentences)
+            if do_dev_eval:
+                pool = etu.exclude_by_text(pool, dev_eval_sentences)
+            train_recs = etu.seeded_subset(pool, n_train, subset_seed)
+            print(f"[{time.time()-t0:6.1f}s] holdout mode: {len(holdout_sentences)} held-out sentences, "
+                  f"pool={len(pool)}, train subset={len(train_recs)} (subset_seed={subset_seed})")
     else:
         train_recs, dev_recs, test_recs = stratified_split(records, args.seed, n_train, n_dev, n_test)
         print(f"[{time.time()-t0:6.1f}s] split: train={len(train_recs)} dev={len(dev_recs)} test={len(test_recs)}")

@@ -10,9 +10,18 @@
 #   v3_788        -- runs/encoder_gold_v3.jsonl, n_train=788   (same size as v2_788, CLEANER data only)
 #   v3_3000       -- runs/encoder_gold_v3.jsonl, n_train=3000  (v3_788 + MORE data)
 #   v4b_788       -- runs/encoder_gold_v4b.jsonl, n_train=788  (v4b gold, same size as v2_788)
-#   v4b_788_hard  -- runs/encoder_gold_v4b.jsonl + runs/hard_gold_train.jsonl, n_train=788
-#                    (v4b gold topped up with the hard-construction gold; scored on its own
-#                    held-out hard-gold test splits via --extra-eval, reported per family)
+#   v4b_788_hard  -- runs/encoder_gold_v4b.jsonl + runs/hard_gold_train.jsonl (v3, 1038 records,
+#                    ALL of it via --n-train-per-file) + 788 real v4b records (~1.3:1 hard:real)
+#                    (v4b gold topped up with the FULL hard-construction gold; scored on its own
+#                    held-out hard-gold v3 test splits via --extra-eval, reported per family)
+#   v4b_788_hardsmall -- runs/encoder_gold_v4b.jsonl + runs/hard_gold_train_small.jsonl (v3,
+#                    200-record family-stratified sample, ALL of it via --n-train-per-file) +
+#                    788 real v4b records (1:4 hard:real) -- same eval wiring as v4b_788_hard,
+#                    measures whether a lighter hard-gold mix preserves in-domain (v4b/v2) F1
+#                    while still improving the widened families on unseen (test_template) forms.
+#                    arms-3(b): both hard arms use --eval-gold v4b (not v2) so --keep-best
+#                    selects on v4b targets (the reference number this study compares against),
+#                    and --eval-gold-alt v2 for continuity with earlier arms.
 #
 # Comparing v2_788 vs v3_788 isolates data quality (top-1 prune + richer
 # extraction) at equal size and equal optimizer-step budget; v3_788 vs
@@ -60,6 +69,7 @@ GOLD_V4B="${GOLD_V4B:-runs/encoder_gold_v4b.jsonl}"
 GOLD_V4B_MARGIN="${GOLD_V4B_MARGIN:-runs/encoder_gold_v4b_margin.jsonl}"
 GOLD_V4B_ALL="${GOLD_V4B_ALL:-runs/encoder_gold_v4b_all.jsonl}"
 HARD_GOLD_TRAIN="${HARD_GOLD_TRAIN:-runs/hard_gold_train.jsonl}"
+HARD_GOLD_TRAIN_SMALL="${HARD_GOLD_TRAIN_SMALL:-runs/hard_gold_train_small.jsonl}"
 HARD_GOLD_TEST_FILLER="${HARD_GOLD_TEST_FILLER:-runs/hard_gold_test_filler.jsonl}"
 HARD_GOLD_TEST_TEMPLATE="${HARD_GOLD_TEST_TEMPLATE:-runs/hard_gold_test_template.jsonl}"
 HOLDOUT_FILE="${HOLDOUT_FILE:-runs/holdout_sentences.txt}"
@@ -113,6 +123,8 @@ V4B_ALL_AVAILABLE=1
 if [[ ! -f "$GOLD_V4B_ALL" ]]; then V4B_ALL_AVAILABLE=0; fi
 HARD_AVAILABLE=1
 if [[ ! -f "$HARD_GOLD_TRAIN" ]]; then HARD_AVAILABLE=0; fi
+HARD_SMALL_AVAILABLE=1
+if [[ ! -f "$HARD_GOLD_TRAIN_SMALL" ]]; then HARD_SMALL_AVAILABLE=0; fi
 
 # arm_name:gold_file:n_train
 ARM_DEFS=(
@@ -121,6 +133,7 @@ ARM_DEFS=(
   "v3_3000:${GOLD_V3}:3000"
   "v4b_788:${GOLD_V4B}:788"
   "v4b_788_hard:${GOLD_V4B},${HARD_GOLD_TRAIN}:788"
+  "v4b_788_hardsmall:${GOLD_V4B},${HARD_GOLD_TRAIN_SMALL}:788"
   "v4b_margin_788:${GOLD_V4B_MARGIN}:788"
   "v4b_all_788:${GOLD_V4B_ALL}:788"
 )
@@ -132,6 +145,7 @@ arm_available() {
     v3_788|v3_3000) [[ "$V3_AVAILABLE" == "1" ]] ;;
     v4b_788) [[ "$V4B_AVAILABLE" == "1" ]] ;;
     v4b_788_hard) [[ "$V4B_AVAILABLE" == "1" && "$HARD_AVAILABLE" == "1" ]] ;;
+    v4b_788_hardsmall) [[ "$V4B_AVAILABLE" == "1" && "$HARD_SMALL_AVAILABLE" == "1" ]] ;;
     v4b_margin_788) [[ "$V4B_MARGIN_AVAILABLE" == "1" ]] ;;
     v4b_all_788) [[ "$V4B_ALL_AVAILABLE" == "1" ]] ;;
     *) return 0 ;;
@@ -161,8 +175,14 @@ build_cmd() {
     v3_788|v3_3000)
       eval_flags="$eval_flags --eval-gold-alt ${GOLD_V3}"
       ;;
-    v4b_788|v4b_788_hard)
+    v4b_788)
       if [[ "$V4B_AVAILABLE" == "1" ]]; then eval_flags="$eval_flags --eval-gold-alt ${GOLD_V4B}"; fi
+      ;;
+    v4b_788_hard|v4b_788_hardsmall)
+      # arms-3(b): dev-select (--keep-best) on v4b targets, not v2 -- these
+      # arms train ON v4b gold (topped up with hard-gold), so v4b is the
+      # natural reference; --eval-gold-alt v2 kept for continuity.
+      eval_flags="--eval-gold ${GOLD_V4B} --eval-gold-alt ${GOLD_V2}"
       ;;
     v4b_margin_788|v4b_all_788)
       # gold=v4b_margin/v4b_all (richer-than-top-1 v4b variants); score the
@@ -178,8 +198,21 @@ build_cmd() {
       ;;
   esac
   local extra_eval_flag=""
-  if [[ "$arm" == "v4b_788_hard" ]]; then
+  if [[ "$arm" == "v4b_788_hard" || "$arm" == "v4b_788_hardsmall" ]]; then
     extra_eval_flag="--extra-eval ${HARD_GOLD_TEST_FILLER},${HARD_GOLD_TEST_TEMPLATE}"
+  fi
+  # arms-3(b): keep ALL of the (small) hard-gold file's records plus 788
+  # real v4b records, rather than sampling n_train=788 from the UNION pool
+  # (which would under-represent whichever gold file is smaller -- see
+  # scripts/train_encoder.py's --n-train-per-file). One count per file in
+  # ${gold}'s comma list, same order: 788 real, then ALL of the hard file.
+  local n_train_per_file_flag=""
+  if [[ "$arm" == "v4b_788_hard" ]]; then
+    local hard_n; hard_n="$(wc -l < "$HARD_GOLD_TRAIN")"
+    n_train_per_file_flag="--n-train-per-file 788,${hard_n}"
+  elif [[ "$arm" == "v4b_788_hardsmall" ]]; then
+    local hard_small_n; hard_small_n="$(wc -l < "$HARD_GOLD_TRAIN_SMALL")"
+    n_train_per_file_flag="--n-train-per-file 788,${hard_small_n}"
   fi
   local eval_every_flags="--eval-every ${EVAL_EVERY} --dev-holdout-file ${HOLDOUT_DEV_FILE}"
   local keep_best_flag=""
@@ -187,7 +220,7 @@ build_cmd() {
   echo "python scripts/train_encoder.py --gold ${gold} --n-train ${n_train}" \
        "--seed ${seed} --subset-seed ${seed} --max-steps ${STEPS} --max-seconds ${MAX_SECONDS}" \
        "--holdout-file ${HOLDOUT_FILE} ${eval_flags} ${eval_every_flags} ${keep_best_flag} ${extra_eval_flag}" \
-       "--beam-width ${BEAM_WIDTH} --k ${K} --out ${out}"
+       "${n_train_per_file_flag} --beam-width ${BEAM_WIDTH} --k ${K} --out ${out}"
 }
 
 echo "=== encoder training arms ==="
