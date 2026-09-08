@@ -1188,3 +1188,11 @@ fragment family: fund hand-gold at the scale that could teach it (hundreds per
 construction, human time) or drop it from the encoder's remit and let
 comprehension handle fragments via candidates? (3) the comprehension spike
 (audit finding 8) -- go?
+CAVEAT on GATE B (director, after reading runs/complement_probe.txt): the auto-
+judge is LENIENT. J1 accepts any VERB/AUX token as predicate ("may" in "he may be
+a bully"), J2 any NOUN/PRON subject, and neither checks role sanity ("was" as
+PLACE, "'s" as a second SUBJECT) or sense POS (the rendered first candidate for
+verbs is often a noun sense: spread.n.01, saturday.n.01 -- candidates-first
+display, not a pick, but it shows the candidate ORDER is noun-first). So 18.2%
+is an UPPER bound on human-usable output; the 56% cap-hit figure likewise. Lead:
+hand-judge the 77 rendered cases before weighting the cap-hit bucket at all.
