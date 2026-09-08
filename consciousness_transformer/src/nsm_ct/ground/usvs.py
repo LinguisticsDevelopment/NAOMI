@@ -49,6 +49,39 @@ from .relations import RelationGraph
 from . import signal_also_see, signal_domain, signal_genus
 
 SCHEMA_VERSION = "usvs-1"
+
+# ---------------------------------------------------------------------------
+# D2 (dev/CURRENT_STATE.md decisions locked, 2026-09-07): PURE interjections
+# -- exclamations with no WordNet synset at all (`senses_of("ugh") == []`)
+# -- must never ground as bare `entity` (contract S4.2's fallback), which
+# would teach the encoder "interjection => contentless". Content
+# interjections (shit, damn, nonsense, thief, alas, ...) already have a real
+# synset and need no table entry; this covers only the genuinely senseless
+# ones. One-line glosses, gloss-grounded through the SAME
+# sense_usvs_weights/sense_prime_weights pipeline every real WordNet sense
+# uses (see `build_usvs`'s additive step below).
+PURE_INTERJECTION_GLOSSES: Dict[str, str] = {
+    "ugh": "an exclamation expressing disgust or horror",
+    "ah": "an exclamation expressing realization, surprise, or delight",
+    "hey": "an exclamation used to attract attention or express surprise",
+    "ouch": "an exclamation of sudden pain",
+    "phew": "an exclamation expressing relief or exhaustion",
+    "pooh": "an exclamation expressing contempt or impatience",
+    "yuck": "an exclamation expressing disgust",
+    "oops": "an exclamation of mild apology or surprise at a mistake",
+    "hurray": "an exclamation of joy or approval",
+    "argh": "an exclamation expressing frustration or anger",
+    "eek": "an exclamation of alarm or fright",
+    "gosh": "a mild exclamation of surprise",
+    "yikes": "an exclamation of alarm or dismay",
+    "shh": "an exclamation demanding silence",
+    "bah": "an exclamation expressing contempt or annoyance",
+    "hmm": "an exclamation expressing hesitation or thought",
+    "huh": "an exclamation expressing surprise or confusion",
+    "aha": "an exclamation of triumph, surprise, or realization",
+    "whoa": "an exclamation calling for a stop or expressing surprise",
+    "eh": "an exclamation used to seek agreement or express mild surprise",
+}
 _PRIME_SET = frozenset(PRIME_NAMES)
 
 # Antonym provenance tiers, strongest first. Consumers choose their floor;
@@ -403,6 +436,39 @@ def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
     }
     fp = hashlib.sha256(json.dumps(
         {"axes": list(axes.names), "meta": meta}, sort_keys=True).encode()).hexdigest()[:16]
+
+    # 4) D2: PURE interjections, gloss-grounded (see PURE_INTERJECTION_GLOSSES
+    # above). Runs strictly AFTER `fp` is computed from `axes` + `meta`
+    # above -- appending whole new sense rows here cannot perturb either, so
+    # this is PROVABLY fingerprint-inert, the same guarantee the OMW Spanish
+    # lemma extension has (dev/SPANISH_GOLD_V2_STATS.md Task 1), just minting
+    # brand-new sense ids instead of widening an existing one's lemma list
+    # (WordNet has no synset for these words at all, so there is no existing
+    # sense to widen). Each mints one sense id (`interj.<word>.01`) with the
+    # word as its own (sole) lemma, grounded via the identical
+    # sense_usvs_weights-then-sense_prime_weights fallback every real synset
+    # above already goes through -- no new grounding machinery.
+    n_interj = 0
+    for word, gloss in sorted(PURE_INTERJECTION_GLOSSES.items()):
+        sid = f"interj.{word}.01"
+        sense_ids.append(sid)
+        sense_lemmas.append([word])
+        weights = sense_usvs_weights(sid, gloss, [word], placed, axes.names) if sense_grounding == "usvs" else {}
+        if not weights:
+            weights = sense_prime_weights(gloss, depth=sense_depth)
+        row: Dict[int, float] = {}
+        for axis, wgt in weights.items():
+            j = axis_index.get(axis)
+            if j is not None:
+                row[j] = wgt
+        for j in sorted(row):
+            idxs.append(j)
+            vals.append(row[j])
+        indptr.append(len(idxs))
+        n_interj += 1
+    meta["counts"]["pure_interjection_senses"] = n_interj
+    say(f"pure interjections gloss-grounded (post-fingerprint, additive): {n_interj}")
+
     return USVS(version=SCHEMA_VERSION, fingerprint=fp, axes=list(axes.names),
                 core_words=words, core_coords=coords, sense_ids=sense_ids,
                 sense_lemmas=sense_lemmas,
