@@ -13,6 +13,10 @@
 #   v4b_788_hard  -- runs/encoder_gold_v4b.jsonl + runs/hard_gold_train.jsonl, n_train=788
 #                    (v4b gold topped up with the hard-construction gold; scored on its own
 #                    held-out hard-gold test splits via --extra-eval, reported per family)
+#   v4b_margin_788 -- runs/encoder_gold_v4b_margin.jsonl, n_train=788 (v4b margin-gold variant)
+#   v4b_all_788   -- runs/encoder_gold_v4b_all.jsonl, n_train=788 (v4b "all"-mode forest gold,
+#                    ~3,513 derivations for 788 records -- same n_train, many more derivations
+#                    per record, so the same --max-steps budget covers many more epochs)
 #
 # Comparing v2_788 vs v3_788 isolates data quality (top-1 prune + richer
 # extraction) at equal size and equal optimizer-step budget; v3_788 vs
@@ -57,6 +61,8 @@ MAX_SECONDS="${MAX_SECONDS:-172800}"   # 48h hard per-run ceiling; --max-steps i
 GOLD_V2="${GOLD_V2:-runs/encoder_gold_v2.jsonl}"
 GOLD_V3="${GOLD_V3:-runs/encoder_gold_v3.jsonl}"
 GOLD_V4B="${GOLD_V4B:-runs/encoder_gold_v4b.jsonl}"
+GOLD_V4B_MARGIN="${GOLD_V4B_MARGIN:-runs/encoder_gold_v4b_margin.jsonl}"
+GOLD_V4B_ALL="${GOLD_V4B_ALL:-runs/encoder_gold_v4b_all.jsonl}"
 HARD_GOLD_TRAIN="${HARD_GOLD_TRAIN:-runs/hard_gold_train.jsonl}"
 HARD_GOLD_TEST_FILLER="${HARD_GOLD_TEST_FILLER:-runs/hard_gold_test_filler.jsonl}"
 HARD_GOLD_TEST_TEMPLATE="${HARD_GOLD_TEST_TEMPLATE:-runs/hard_gold_test_template.jsonl}"
@@ -105,6 +111,10 @@ V3_AVAILABLE=1
 if [[ ! -f "$GOLD_V3" ]]; then V3_AVAILABLE=0; fi
 V4B_AVAILABLE=1
 if [[ ! -f "$GOLD_V4B" ]]; then V4B_AVAILABLE=0; fi
+V4B_MARGIN_AVAILABLE=1
+if [[ ! -f "$GOLD_V4B_MARGIN" ]]; then V4B_MARGIN_AVAILABLE=0; fi
+V4B_ALL_AVAILABLE=1
+if [[ ! -f "$GOLD_V4B_ALL" ]]; then V4B_ALL_AVAILABLE=0; fi
 HARD_AVAILABLE=1
 if [[ ! -f "$HARD_GOLD_TRAIN" ]]; then HARD_AVAILABLE=0; fi
 
@@ -115,6 +125,8 @@ ARM_DEFS=(
   "v3_3000:${GOLD_V3}:3000"
   "v4b_788:${GOLD_V4B}:788"
   "v4b_788_hard:${GOLD_V4B},${HARD_GOLD_TRAIN}:788"
+  "v4b_margin_788:${GOLD_V4B_MARGIN}:788"
+  "v4b_all_788:${GOLD_V4B_ALL}:788"
 )
 
 # Whether all the gold files an arm needs are actually present.
@@ -124,6 +136,8 @@ arm_available() {
     v3_788|v3_3000) [[ "$V3_AVAILABLE" == "1" ]] ;;
     v4b_788) [[ "$V4B_AVAILABLE" == "1" ]] ;;
     v4b_788_hard) [[ "$V4B_AVAILABLE" == "1" && "$HARD_AVAILABLE" == "1" ]] ;;
+    v4b_margin_788) [[ "$V4B_MARGIN_AVAILABLE" == "1" ]] ;;
+    v4b_all_788) [[ "$V4B_ALL_AVAILABLE" == "1" ]] ;;
     *) return 0 ;;
   esac
 }
@@ -151,7 +165,7 @@ build_cmd() {
     v3_788|v3_3000)
       eval_flags="$eval_flags --eval-gold-alt ${GOLD_V3}"
       ;;
-    v4b_788|v4b_788_hard)
+    v4b_788|v4b_788_hard|v4b_margin_788|v4b_all_788)
       if [[ "$V4B_AVAILABLE" == "1" ]]; then eval_flags="$eval_flags --eval-gold-alt ${GOLD_V4B}"; fi
       ;;
   esac
@@ -171,6 +185,7 @@ build_cmd() {
 echo "=== encoder training arms ==="
 echo "STEPS=$STEPS  MAX_SECONDS=$MAX_SECONDS  PARALLEL=$PARALLEL"
 echo "GOLD_V2=$GOLD_V2  GOLD_V3=$GOLD_V3 (available=$V3_AVAILABLE)  GOLD_V4B=$GOLD_V4B (available=$V4B_AVAILABLE)  HARD_GOLD_TRAIN=$HARD_GOLD_TRAIN (available=$HARD_AVAILABLE)"
+echo "GOLD_V4B_MARGIN=$GOLD_V4B_MARGIN (available=$V4B_MARGIN_AVAILABLE)  GOLD_V4B_ALL=$GOLD_V4B_ALL (available=$V4B_ALL_AVAILABLE)"
 echo "HOLDOUT_FILE=$HOLDOUT_FILE  HOLDOUT_DEV_FILE=$HOLDOUT_DEV_FILE"
 echo "EVAL_EVERY=$EVAL_EVERY  KEEP_BEST=$KEEP_BEST  ARMS=${ARMS:-<all>}"
 echo
