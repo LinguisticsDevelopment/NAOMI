@@ -120,9 +120,13 @@ Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
 - Gold data branches: encoder-gold-v2 (985, forest), encoder-gold-v3-small
   (959, top-1, no lemmatization), encoder-gold-v4b-small (987, top-1,
   lemmatized, POS-aware) -- v4b is the current best gold.
-- RUNNING: arms v2_788 vs v3_788 x seeds 0,1 at 8,000 steps (branches
-  encoder-arms-seed0/1); FairytaleQA -> Episode converter finish run
-  (branch k12-fairytaleqa).
+- ARMS DONE (2 seeds): forest gold rank-1 F1 0.557 (passes the 0.55 gate,
+  reproduces run-2); strict top-1 gold 0.37-0.41 (LOSES; precision collapses).
+  Forest width = beam width, not a gate. See RESEARCH_NOTES 'ARMS seed 1/0'.
+- RUNNING: v4b margin + forest gold variants (encoder-gold-v4b-variants);
+  keep-best/curve tooling (encoder-train-arms-v2); FairytaleQA finish
+  (k12-fairytaleqa). NEXT ARMS: v2 forest / v4b top-1 / v4b margin / v4b
+  forest / v4b+hard, keep-best on dev, same 98 holdout, per-family hard-gold eval.
 - NEXT: (1) read the v2/v3 arm result vs the rank-1 >= 0.55 gate; (2) run
   v4b_788 (+ hard gold mixed in as a 4th arm) on the same holdout; (3) if
   rank-1 clears, scale: v4b-style gold over the 16K corpus (Gold_Expand with

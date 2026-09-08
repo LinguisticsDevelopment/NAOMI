@@ -1401,3 +1401,13 @@ VERDICT: strict top-1 gold at equal budget is worse than forest gold. Next arm
 set adds v4b gold in D1's `margin` mode and in `all` (forest) mode so top-1 vs
 margin vs forest is compared at EQUAL (lemmatized, POS-aware) quality, with
 keep-best checkpointing. Gold builds dispatched (branch encoder-gold-v4b-variants).
+ARMS COMPLETE (both seeds merged; runs/arms/summary.tsv has all four rows):
+| arm | seed | v2-target rank-1 F1 | v3-target rank-1 F1 | best-of-6 edge_P |
+| v2_788 forest | 0 | 0.556 | 0.468 | 0.691 |
+| v2_788 forest | 1 | 0.557 | 0.446 | 0.713 |
+| v3_788 top-1  | 0 | 0.410 | 0.488 | 0.450 |
+| v3_788 top-1  | 1 | 0.373 | 0.420 | 0.442 |
+Note: on the top-1 (v3) targets the two training golds are roughly tied
+(0.45-0.49 vs 0.42-0.49); the forest-trained model is strictly better on
+forest targets and never worse elsewhere. Precision is the big loser under
+top-1 training (0.69-0.71 -> 0.44-0.45): the top-1-trained model over-emits.

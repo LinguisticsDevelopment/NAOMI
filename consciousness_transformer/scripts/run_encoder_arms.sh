@@ -36,6 +36,7 @@ GOLD_V2="${GOLD_V2:-runs/encoder_gold_v2.jsonl}"
 GOLD_V3="${GOLD_V3:-runs/encoder_gold_v3.jsonl}"
 HOLDOUT_FILE="${HOLDOUT_FILE:-runs/holdout_sentences.txt}"
 SEEDS="${SEEDS:-0 1}"
+ARMS="${ARMS:-v2_788 v3_788 v3_3000}"
 BEAM_WIDTH="${BEAM_WIDTH:-6}"
 K="${K:-6}"
 SMOKE_CALIB_STEPS="${SMOKE_CALIB_STEPS:-30}"
@@ -124,6 +125,10 @@ RUNNABLE_COMMANDS=()
 V3_SKIPPED_ARMS=()
 for arm_def in "${ARM_DEFS[@]}"; do
   IFS=':' read -r arm gold n_train <<< "$arm_def"
+  case " $ARMS " in
+    *" $arm "*) ;;
+    *) continue ;;
+  esac
   needs_v3=0
   if [[ "$gold" == "$GOLD_V3" ]]; then needs_v3=1; fi
   for seed in $SEEDS; do
