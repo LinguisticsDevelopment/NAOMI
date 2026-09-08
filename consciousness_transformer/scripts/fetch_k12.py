@@ -312,8 +312,9 @@ def main() -> None:
     ap.add_argument("--allow-download", action="store_true",
                      help="Actually hit the network (github raw mirrors). Never set by default "
                           "or by the test suite -- mirrors scripts/fetch_corpus.py's convention.")
-    ap.add_argument("--fairytaleqa-limit", type=int, default=100,
-                     help="Max FairytaleQA stories to fetch (of 278 total).")
+    ap.add_argument("--fairytaleqa-limit", type=int, default=278,
+                     help="Max FairytaleQA stories to fetch (of 278 total). "
+                          "Default is the full set; lower only for a quick partial fetch.")
     ap.add_argument("--asp-limit", type=int, default=150,
                      help="Max African Storybook English CC-BY stories to fetch.")
     ap.add_argument("--source", action="append", choices=_SOURCES, default=None,

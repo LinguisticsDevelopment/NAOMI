@@ -41,8 +41,8 @@ def _convert(workers=1):
     story_ids = discover_story_ids(in_dir)
     split_map = load_split_map(in_dir)
     section_cache = parse_all_sections(in_dir, story_ids, workers)
-    episodes, answer_type_counts = build_episodes(in_dir, story_ids, split_map, section_cache)
-    return episodes, answer_type_counts, story_ids, split_map
+    episodes, answer_type_counts, drop_reasons = build_episodes(in_dir, story_ids, split_map, section_cache)
+    return episodes, answer_type_counts, story_ids, split_map, drop_reasons
 
 
 # Session-scoped: the real quantum_parser conversion over even 10 stories
@@ -59,8 +59,8 @@ def converted():
 # ---------------------------------------------------------------------------
 
 def test_conversion_is_deterministic(converted):
-    eps_a, _counts_a, _ids_a, _split_a = converted
-    eps_b, _counts_b, _ids_b, _split_b = _convert()
+    eps_a, _counts_a, _ids_a, _split_a, _drops_a = converted
+    eps_b, _counts_b, _ids_b, _split_b, _drops_b = _convert()
     assert len(eps_a) == len(eps_b)
     assert len(eps_a) > 0
     for a, b in zip(eps_a, eps_b):
@@ -84,7 +84,7 @@ _REQUIRED_META_KEYS = {
 
 
 def test_every_episode_has_required_fields(converted):
-    episodes, _counts, _ids, _split_map = converted
+    episodes, _counts, _ids, _split_map, _drops = converted
     assert episodes
     for ep in episodes:
         assert ep.context and all(s.strip() for s in ep.context)
@@ -103,7 +103,7 @@ def test_every_episode_has_required_fields(converted):
 
 def test_one_episode_per_story_section_question_pair(converted):
     import csv
-    episodes, _counts, story_ids, _split_map = converted
+    episodes, _counts, story_ids, _split_map, _drops = converted
     expected = 0
     for sid in story_ids:
         with open(os.path.join(_SAMPLE_DIR, f"{sid}-questions.csv"), encoding="utf-8") as f:
@@ -116,7 +116,7 @@ def test_one_episode_per_story_section_question_pair(converted):
 # ---------------------------------------------------------------------------
 
 def test_split_labels_match_dataset(converted):
-    episodes, _counts, _ids, split_map = converted
+    episodes, _counts, _ids, split_map, _drops = converted
     assert set(split_map.values()) <= {"train", "val", "test"}
     for ep in episodes:
         assert ep.meta["split"] == split_map[ep.meta["story_id"]]

@@ -404,9 +404,17 @@ def _gather_answers(row: dict) -> Tuple[str, List[str]]:
 
 
 def build_episodes(in_dir: Path, story_ids: List[str], split_map: Dict[str, str],
-                    section_cache: Dict[Tuple[str, str], List[str]]) -> Tuple[List[Episode], Counter]:
+                    section_cache: Dict[Tuple[str, str], List[str]]
+                    ) -> Tuple[List[Episode], Counter, Counter]:
+    """Returns ``(episodes, answer_type_counts, drop_reasons)``. ``drop_reasons``
+    gives EVERY QA row in EVERY story's ``*-questions.csv`` exactly one outcome
+    -- ``"emitted"`` or a named drop reason -- so
+    ``sum(drop_reasons.values()) == (total rows read from every questions.csv)``
+    always holds; see dev/FAIRYTALEQA_STATS.md's "Row accounting" section.
+    """
     episodes: List[Episode] = []
     answer_type_counts: Counter = Counter()
+    drop_reasons: Counter = Counter()
 
     for sid in story_ids:
         sections = load_story_sections(in_dir, sid)
@@ -419,6 +427,7 @@ def build_episodes(in_dir: Path, story_ids: List[str], split_map: Dict[str, str]
             for sec in cor_secs:
                 context.extend(sections.get(sec, []))
             if not context:
+                drop_reasons["cor_section-missing"] += 1
                 continue
 
             tags: List[str] = []
@@ -474,8 +483,9 @@ def build_episodes(in_dir: Path, story_ids: List[str], split_map: Dict[str, str]
                 level=0,
                 meta=meta,
             ))
+            drop_reasons["emitted"] += 1
 
-    return episodes, answer_type_counts
+    return episodes, answer_type_counts, drop_reasons
 
 
 def attach_entity_options(episodes: List[Episode], seed: int = 0, n_distractors: int = 3) -> int:
@@ -553,11 +563,16 @@ def main() -> None:
     print(f"[convert_fairytaleqa] {len(story_ids)} stories", flush=True)
 
     section_cache = parse_all_sections(args.in_dir, story_ids, args.workers, mode=args.parse)
-    episodes, answer_type_counts = build_episodes(args.in_dir, story_ids, split_map, section_cache)
+    episodes, answer_type_counts, drop_reasons = build_episodes(
+        args.in_dir, story_ids, split_map, section_cache)
     n_attached = attach_entity_options(episodes)
     print(f"[convert_fairytaleqa] {len(episodes)} episodes, "
           f"{n_attached} with MC options (answer_type=entity, >=2 distractors)", flush=True)
     print(f"[convert_fairytaleqa] answer_type: {dict(answer_type_counts)}", flush=True)
+    total_rows = sum(drop_reasons.values())
+    print(f"[convert_fairytaleqa] row accounting (total {total_rows} QA rows):", flush=True)
+    for reason, n in sorted(drop_reasons.items(), key=lambda kv: -kv[1]):
+        print(f"[convert_fairytaleqa]   {reason:<30} {n:>6}", flush=True)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", encoding="utf-8") as f:
