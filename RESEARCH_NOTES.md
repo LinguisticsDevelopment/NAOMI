@@ -1366,3 +1366,31 @@ began->begin (verb), was (AUX)->entity, engraved->verb sense first. Hard gold
 regenerated with the same helper (splits updated). 47 tests green. Gold v4b
 (branch encoder-gold-v4b-small, jsonl stays there) is the input for the
 lemmatized training arm, to run after the v2/v3 arms finish.
+
+### ARMS seed 1: v2_788 vs v3_788 at 8,000 steps -- TOP-1 GOLD AT EQUAL STEPS LOSES (2026-09-08)
+Branch encoder-arms-seed1 (runs/arms/*.log, summary.tsv, .pt). Same 98 held-out
+sentences, same code (mainline w/ D1-D6), beam 6 / k 6, subset_seed 1.
+| arm (seed 1)      | targets | best-of-6 edge_P/R | rank-1 edge_F1 | struct-exact | width |
+| v2_788 (forest)   | v2      | 0.713 / 0.657      | **0.557**      | 0.066        | 5.99  |
+| v2_788 (forest)   | v3      | 0.712 / 0.489      | 0.446          | 0.032        | 5.99  |
+| v3_788 (top-1)    | v2      | 0.442 / 0.546      | **0.373**      | 0.017        | 5.96  |
+| v3_788 (top-1)    | v3      | 0.540 / 0.537      | 0.421          | 0.021        | 5.95  |
+| run-2 reference   | v2      | 0.700 / 0.695 (k8) | 0.534          | 0.062        | 7.97  |
+READ: (1) the tooling REPRODUCES run-2 (v2_788: rank-1 0.557 vs 0.534, best-of
+0.713 vs 0.700) -- the comparison is trustworthy, and v2-gold training passes the
+rank-1 >= 0.55 gate, barely. (2) Top-1 gold at the SAME optimizer budget is
+clearly WORSE (-0.18 rank-1 on v2 targets, -0.03 even on its own v3 targets).
+Two non-exclusive causes: (a) OVERFIT -- v3 has 1 derivation/record so 8,000
+steps = 325 epochs (v2: 101); (b) the forest's "spurious" alternative trees act
+as data AUGMENTATION (attachment variety) that single-tree gold removes. (3)
+Forest width ~6 for both = beam width; decode always returns k -> width is NOT
+a gold property, dropped as a gate. (4) Structure-exact is ~0.02-0.07 everywhere:
+whole-tree correctness is the real ceiling problem, unchanged by any gold.
+NEXT (tooling in flight, branch encoder-train-arms-v2): keep-best-on-dev
+checkpointing + learning curves separate (a) from (b). Arms: v2_788 (forest),
+v4b_788 (top-1, lemmatized, POS-aware), v4b_788_hard (+generated hard gold,
+scored per family on held-out templates). If v4b-keep-best still loses to
+forest gold, the answer is D1's `margin` mode (keep genuinely distinct
+alternatives) rather than strict top-1 -- a data point for the lead, not a
+relitigation: forest variety appears to be training signal.
+Seed 0 still running; FairytaleQA finish and arms-v2 tooling in flight.
