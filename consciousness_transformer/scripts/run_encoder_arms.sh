@@ -79,6 +79,19 @@ ARM_DEFS=(
   "v3_3000:${GOLD_V3}:3000"
 )
 
+# ARMS restricts which arm names from ARM_DEFS are considered at all (space-
+# separated), default all three -- e.g. ARMS="v2_788 v3_788" to skip v3_3000
+# outright instead of relying on the GOLD_V3-missing skip path.
+ARMS="${ARMS:-v2_788 v3_788 v3_3000}"
+_arms_filtered=()
+for arm_def in "${ARM_DEFS[@]}"; do
+  IFS=':' read -r arm _ _ <<< "$arm_def"
+  for wanted in $ARMS; do
+    if [[ "$arm" == "$wanted" ]]; then _arms_filtered+=("$arm_def"); break; fi
+  done
+done
+ARM_DEFS=("${_arms_filtered[@]}")
+
 build_cmd() {
   local arm="$1" gold="$2" n_train="$3" seed="$4"
   local out="$ARMS_DIR/${arm}_${seed}.pt"
@@ -97,7 +110,7 @@ build_cmd() {
 }
 
 echo "=== encoder training arms ==="
-echo "STEPS=$STEPS  MAX_SECONDS=$MAX_SECONDS  PARALLEL=$PARALLEL"
+echo "STEPS=$STEPS  MAX_SECONDS=$MAX_SECONDS  PARALLEL=$PARALLEL  ARMS=$ARMS"
 echo "GOLD_V2=$GOLD_V2  GOLD_V3=$GOLD_V3 (available=$V3_AVAILABLE)"
 echo "HOLDOUT_FILE=$HOLDOUT_FILE"
 echo

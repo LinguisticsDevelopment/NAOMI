@@ -1,0 +1,16 @@
+=== encoder training arms ===
+STEPS=8000  MAX_SECONDS=172800  PARALLEL=2  ARMS=v2_788 v3_788
+GOLD_V2=runs/encoder_gold_v2.jsonl  GOLD_V3=runs/encoder_gold_v3.jsonl (available=1)
+HOLDOUT_FILE=runs/holdout_sentences.txt
+
+Planned commands (2 total, 2 runnable now):
+  [v2_788 seed=0] python scripts/train_encoder.py --gold runs/encoder_gold_v2.jsonl --n-train 788 --seed 0 --subset-seed 0 --max-steps 8000 --max-seconds 172800 --holdout-file runs/holdout_sentences.txt --eval-gold runs/encoder_gold_v2.jsonl --eval-gold-alt runs/encoder_gold_v3.jsonl --beam-width 6 --k 6 --out runs/arms/v2_788_0.pt
+  [v3_788 seed=0] python scripts/train_encoder.py --gold runs/encoder_gold_v3.jsonl --n-train 788 --seed 0 --subset-seed 0 --max-steps 8000 --max-seconds 172800 --holdout-file runs/holdout_sentences.txt --eval-gold runs/encoder_gold_v2.jsonl --eval-gold-alt runs/encoder_gold_v3.jsonl --beam-width 6 --k 6 --out runs/arms/v3_788_0.pt
+
+=== throughput calibration: --smoke --max-steps 30 ===
+measured smoke throughput: 0.7685 s/step -> estimated 6148.0s (1.71h) per arm at 8000 steps
+(smoke dims d_model=64; real arms use d_model=128 and will be slower -- see the session's real-dims calibration)
+
+[v2_788 seed=0] starting -> runs/arms/v2_788_0.log
+[v3_788 seed=0] starting -> runs/arms/v3_788_0.log
+[v3_788 seed=0] done -> runs/arms/summary.tsv
