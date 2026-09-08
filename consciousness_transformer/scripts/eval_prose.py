@@ -160,9 +160,31 @@ def _group_of(ep: Episode) -> str:
     return "synthetic" if ep.meta.get("source_doc", "").startswith("synthetic_") else "real"
 
 
+def filter_answer_type(episodes: List[Episode], answer_type: str) -> List[Episode]:
+    """K12 FairytaleQA hook (dev/K12_CORPUS_SCOUT.md): keeps only episodes
+    whose ``meta["answer_type"]`` matches (``scripts/convert_fairytaleqa.py``'s
+    (a)-(d) classification -- ``entity`` is the one subset NAOMI's current
+    single-entity-answer MC head can score at all; see
+    dev/FAIRYTALEQA_STATS.md). Also drops any episode with ``options is
+    None`` (an entity-type episode that didn't get >=2 same-attribute
+    distractors -- ``build_clause_batch`` requires ``ep.options`` to be
+    iterable, so these would otherwise crash rather than cleanly build-fail).
+    A no-op (returns ``episodes`` unchanged) when ``answer_type`` is falsy.
+    """
+    if not answer_type:
+        return episodes
+    kept = [e for e in episodes if e.meta.get("answer_type") == answer_type and e.options is not None]
+    print(f"=== --answer-type {answer_type}: {len(kept)}/{len(episodes)} episodes kept "
+          f"(others have a different answer_type or no MC options) ===", flush=True)
+    return kept
+
+
 def run(args) -> None:
     episodes = load_episodes(args.episodes)
     print(f"=== eval_prose: loaded {len(episodes)} episodes from {args.episodes} ===", flush=True)
+    episodes = filter_answer_type(episodes, args.answer_type)
+    if args.limit:
+        episodes = episodes[: args.limit]
     if not episodes:
         print("no episodes to evaluate -- nothing to do.")
         return
@@ -310,7 +332,14 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--ckpt", type=str, required=True, help="Frozen checkpoint path (nsm_ct.checkpoint.save_checkpoint).")
     ap.add_argument("--episodes", type=str, default="runs/prose_episodes.jsonl",
-                     help="JSONL file of converted prose episodes (scripts/convert_corpus.py --out).")
+                     help="JSONL file of converted prose episodes (scripts/convert_corpus.py --out, "
+                          "or scripts/convert_fairytaleqa.py --out for the K12 hook).")
+    ap.add_argument("--answer-type", type=str, default="", choices=["", "entity", "verb_phrase", "free_text", "not_substring"],
+                     help="K12 hook (dev/K12_CORPUS_SCOUT.md): keep only episodes whose "
+                          "meta['answer_type'] matches (scripts/convert_fairytaleqa.py's (a)-(d) "
+                          "classification) AND that carry MC options. Default '' = no filtering "
+                          "(every plain prose episode already has options).")
+    ap.add_argument("--limit", type=int, default=0, help="Evaluate only the first N (post-filter) episodes. 0 = all.")
     ap.add_argument("--batch-size", type=int, default=32,
                      help="Minibatch size for the scored forward pass (0 = full-batch).")
     ap.add_argument("--verbose", action="store_true", help="Dump every evaluated episode's question/options/prediction/gold.")
