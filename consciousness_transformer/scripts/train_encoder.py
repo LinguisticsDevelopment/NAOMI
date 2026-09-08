@@ -163,6 +163,15 @@ def main():
     ap.add_argument("--loss-temperature", type=float, default=0.25,
                      help="softmax temperature for --loss usvs-soft's target rows "
                           "(smaller = closer to one-hot).")
+    ap.add_argument("--aux-usvs", type=float, default=0.0,
+                     help="(lead directive 2026-09-08; dev/USVS_GRADED_SCORING.md S5.4) "
+                          "opt-in USVS-space auxiliary loss weight W. At every node-emitting "
+                          "step (GROUND / EMIT_SYNTH_SLOT / EMIT_UNRESOLVED_SLOT), projects the "
+                          "controller state through the new EncoderModel.usvs_head and adds "
+                          "W * (1 - cosine(projection, gold usvs_graded node vector)), summed "
+                          "over all emitted nodes, to the loss. NOT used for decoding -- the "
+                          "transition system is unchanged. 0.0 (default) = off, byte-identical "
+                          "to before this existed.")
     ap.add_argument("--metric", choices=("edge", "graded", "both"), default="both",
                      help="which held-out metrics the final eval reports: 'edge' = the "
                           "original binary edge-F1 only; 'graded'/'both' additionally "
@@ -251,7 +260,8 @@ def main():
     print(f"[{time.time()-t0:6.1f}s] policy params: {n_params:,} (~{n_bytes/1e6:.3f} MB fp32)")
 
     print(f"[{time.time()-t0:6.1f}s] building features + derivations for {len(train_recs)} train records")
-    train_items = etu.build_train_items(train_recs, usvs, pos_vocab, hash_buckets)
+    train_items = etu.build_train_items(train_recs, usvs, pos_vocab, hash_buckets,
+                                         compute_node_targets=args.aux_usvs > 0.0)
     print(f"[{time.time()-t0:6.1f}s] {len(train_items)} teacher-forced derivations")
     total_items = len(train_items)
 
@@ -313,11 +323,15 @@ def main():
         soft_targets = em.SoftTargetConfig(temperature=args.loss_temperature)
         print(f"[{time.time()-t0:6.1f}s] loss=usvs-soft (soft role/gtype/source targets, "
               f"T={args.loss_temperature}); action-type/kind/prime heads stay hard")
+    if args.aux_usvs > 0.0:
+        print(f"[{time.time()-t0:6.1f}s] --aux-usvs {args.aux_usvs}: USVS-space cosine loss on "
+              f"usvs_head, summed over every node-emitting step")
 
     result = etu.run_training_loop(
         model, train_items, opt, epochs=epochs, batch_size=batch_size,
         max_seconds=args.max_seconds, max_steps=args.max_steps,
         terminal_weight=args.terminal_weight, soft_targets=soft_targets,
+        aux_usvs_weight=args.aux_usvs,
         on_step_50=on_step_50, on_epoch_done=on_epoch_done, on_max_seconds=on_max_seconds,
         on_optimizer_step=on_optimizer_step if do_dev_eval else None)
 
@@ -367,6 +381,8 @@ def main():
             m = etu.evaluate_full(model, eval_targets, usvs, pos_vocab, hash_buckets,
                                    beam_width=args.beam_width, k=args.k, policy="model",
                                    metric=args.metric)
+            if args.aux_usvs > 0.0:
+                m["head_cosine"] = etu.evaluate_head_cosine(model, eval_targets, usvs, pos_vocab, hash_buckets)
             metrics_["holdout"] = m
             print(f"[{time.time()-t0:6.1f}s] {prefix}holdout (best-of-{args.k} + rank1 + forest width): {m}")
 
@@ -374,6 +390,8 @@ def main():
                 m_alt = etu.evaluate_full(model, alt_targets, usvs, pos_vocab, hash_buckets,
                                            beam_width=args.beam_width, k=args.k, policy="model",
                                            metric=args.metric)
+                if args.aux_usvs > 0.0:
+                    m_alt["head_cosine"] = etu.evaluate_head_cosine(model, alt_targets, usvs, pos_vocab, hash_buckets)
                 metrics_["holdout_alt"] = m_alt
                 print(f"[{time.time()-t0:6.1f}s] {prefix}holdout_alt (best-of-{args.k} + rank1 + forest width): {m_alt}")
         else:
@@ -431,6 +449,7 @@ def main():
                 "epochs": epochs, "batch_size": batch_size, "seed": args.seed,
                 "terminal_weight": args.terminal_weight, "max_steps": args.max_steps,
                 "loss": args.loss, "loss_temperature": args.loss_temperature,
+                "aux_usvs": args.aux_usvs,
                 "metric": args.metric,
                 "subset_seed": args.subset_seed, "holdout_file": args.holdout_file,
                 "eval_gold": args.eval_gold, "eval_gold_alt": args.eval_gold_alt,

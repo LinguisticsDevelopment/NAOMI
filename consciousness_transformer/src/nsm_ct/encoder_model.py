@@ -46,6 +46,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from . import usvs_graded as ug
+
 # ---------------------------------------------------------------------------
 # The action / label inventories (spec S2.1, S2.2)
 # ---------------------------------------------------------------------------
@@ -378,6 +380,111 @@ def linearize_tree(record: dict, tree: dict) -> List[Step]:
     return steps
 
 
+def _clause_node_order_normalized(clause: dict) -> List[Tuple[str, dict]]:
+    """Like `clause_node_order`, but for a clause ALREADY in NORMALIZED
+    shape (`clause["predicate"]`/`clause["roles"]` are node dicts with their
+    own `token_index`/`grounding` directly -- `beam_decode`'s output shape,
+    or a gold tree run through `tree_render.normalize_gold_tree`) -- so no
+    `record` lookup is needed to recover the predicate's token_index."""
+    nodes: List[Tuple[str, dict]] = []
+    pred = clause.get("predicate")
+    if pred is not None:
+        nodes.append(("PREDICATE", pred))
+    for r in clause.get("roles", []) or []:
+        nodes.append((r.get("relation") or "?", r))
+    nodes.sort(key=lambda n: (n[1].get("token_index") is None, n[1].get("token_index") or 0))
+    return nodes
+
+
+def linearize_normalized_tree(tree: Optional[dict], T: int) -> List[Step]:
+    """`linearize_tree`'s oracle walk, but for a tree ALREADY in normalized
+    shape (see `_clause_node_order_normalized`) rather than the gold-lattice
+    shape `linearize_tree` consumes. Used by `EncoderModel.node_vectors` to
+    replay a DECODED (or gold, once normalized) tree through the controller
+    without needing the raw gold record -- every value the walk needs
+    (`token_index`, `grounding.type/source/prime`) already lives on the
+    node dicts themselves."""
+    steps: List[Step] = []
+    i = 0
+
+    def shift_to(t: int) -> None:
+        nonlocal i
+        while i < t:
+            steps.append(Step(action="SHIFT", token_index=i))
+            i += 1
+
+    for clause in (tree or {}).get("clauses", []) or []:
+        kind = clause.get("utterance_kind", "proposition")
+        steps.append(Step(action="OPEN_CLAUSE", kind=kind))
+
+        for role, node in _clause_node_order_normalized(clause):
+            g = node.get("grounding") or {}
+            gtype = g.get("type")
+            tidx = node.get("token_index")
+            source = g.get("source")
+            eff_tidx = max(tidx, i) if tidx is not None else None
+            if gtype in ("sense", "entity"):
+                if eff_tidx is not None:
+                    shift_to(eff_tidx)
+                steps.append(Step(action="GROUND", token_index=eff_tidx, role=role,
+                                   gtype=gtype, source=source))
+                if eff_tidx is not None:
+                    i = eff_tidx + 1
+            elif gtype == "prime":
+                if eff_tidx is not None:
+                    shift_to(eff_tidx)
+                steps.append(Step(action="EMIT_SYNTH_SLOT", token_index=eff_tidx, role=role,
+                                   gtype="prime", prime=g.get("prime")))
+                if eff_tidx is not None:
+                    i = eff_tidx + 1
+            elif gtype in ("reference", "elision"):
+                if eff_tidx is not None:
+                    shift_to(eff_tidx)
+                steps.append(Step(action="EMIT_UNRESOLVED_SLOT", token_index=eff_tidx, role=role,
+                                   gtype=gtype, source=source))
+                if eff_tidx is not None:
+                    i = eff_tidx + 1
+
+        steps.append(Step(action="CLOSE_CLAUSE"))
+
+    shift_to(T)
+    steps.append(Step(action="STOP"))
+    return steps
+
+
+def node_targets_for_steps(steps: Sequence[Step], feats: SentenceFeatures, usvs) -> List[Optional[np.ndarray]]:
+    """Gold node vectors aligned 1:1 with `steps` (None at every non-emitting
+    step) -- `usvs_graded.node_vector`, called once per node-emitting step
+    (`NODE_EMIT_ACTIONS`), reusing `feats.sense_cand` for a `sense` node's
+    candidate set (so no `record`/`token_sense_candidates` lookup is
+    needed) and `feats.tokens` for a reserved-block node's surface identity.
+    Meant to be computed ONCE per (record, tree) training item and cached
+    alongside it (see `encoder_train_util.build_train_items`'s
+    `compute_node_targets`) -- NOT recomputed inside the training loop.
+
+    `step.token_index` is bounds-checked against `feats.sense_cand`/
+    `feats.tokens` before indexing: `legal_action_types`'s docstring notes a
+    duplicate-token-index collision can push the oracle's monotonic buffer
+    pointer (and therefore a step's `eff_tidx`) to `>= T`; an out-of-range
+    index is treated as "no coverage" (falls back to the reserved block),
+    exactly like a token USVS doesn't cover."""
+    fake_record = {"tokens": feats.tokens}
+    T = len(feats.sense_cand)
+    out: List[Optional[np.ndarray]] = []
+    for step in steps:
+        if step.action not in NODE_EMIT_ACTIONS:
+            out.append(None)
+            continue
+        g: Dict = {"type": step.gtype}
+        if step.gtype == "prime":
+            g["prime"] = step.prime
+        if step.gtype == "sense" and step.token_index is not None and 0 <= step.token_index < T:
+            g["candidates"] = list(feats.sense_cand[step.token_index])
+        node = {"token_index": step.token_index, "grounding": g}
+        out.append(ug.node_vector(node, fake_record, usvs))
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Grammar-constrained legality mask (spec S3.3, structural preconditions)
 # ---------------------------------------------------------------------------
@@ -483,8 +590,33 @@ class EncoderModel(nn.Module):
         self._none_clause_id = len(CLAUSE_KINDS)
         self._start_action_id = len(ACTION_TYPES)
 
+        # -- opt-in USVS-space auxiliary head (lead directive 2026-09-08;
+        # dev/USVS_GRADED_SCORING.md S5.4: "the nearest hook would be a new
+        # Linear(controller_hidden, d_axes) head trained against the gold
+        # node's USVS vector"). Projects the SAME controller hidden state
+        # `h` the other heads read into the graded metric's node-vector
+        # space (USVS axes + usvs_graded.reserved_size() reserved axes), so
+        # `usvs_graded.node_vector`'s output is directly comparable.
+        #
+        # Constructed LAST, after every other head, so it never perturbs the
+        # RNG draw order (and therefore initial weights) of any pre-existing
+        # parameter -- adding it does not change this model's behavior at
+        # all unless a caller opts in via `teacher_force_loss`'s
+        # `aux_usvs_weight` (default 0.0, unused = byte-identical) or reads
+        # `node_vectors` directly. It is NOT used for decoding: `beam_decode`
+        # / `_apply_action` never touch it, so the transition system is
+        # unchanged either way.
+        self.usvs_head = nn.Linear(controller_hidden, d_axes + ug.reserved_size())
+
     def num_policy_params(self) -> int:
-        return sum(p.numel() for p in self.parameters())
+        """Excludes `usvs_head`: that head is an opt-in AUXILIARY projection
+        never used for decoding (see its docstring in `__init__`), not part
+        of "the policy" this method's callers size/report (the sub-MB
+        transition-parser budget, spec S2.3) -- and its size is dictated by
+        `usvs_graded`'s reserved identity block (4096 axes), which would
+        otherwise dominate the count regardless of whether --aux-usvs is
+        ever used."""
+        return sum(p.numel() for n, p in self.named_parameters() if not n.startswith("usvs_head."))
 
     # -- feature -> per-token encoding --------------------------------------
     def encode(self, feats: SentenceFeatures) -> torch.Tensor:
@@ -510,6 +642,75 @@ class EncoderModel(nn.Module):
     def role_id(self, role: Optional[str]) -> int:
         return self.role_vocab.get(role, self.role_vocab[UNK])
 
+    def load_checkpoint_state(self, state_dict: Dict[str, torch.Tensor]) -> None:
+        """`load_state_dict` for a checkpoint that may pre-date `usvs_head`
+        (every checkpoint saved before this branch). Tolerates exactly ONE
+        shape of drift -- missing `usvs_head.*` keys -- and prints a clear,
+        one-line message when it does; anything else missing or unexpected
+        still raises loudly, preserving this file's existing strict-load
+        invariant (see the PRIMES-vocab comment on this class: a real
+        vocabulary/head-shape mismatch must fail loudly, never silently
+        misalign)."""
+        missing, unexpected = self.load_state_dict(state_dict, strict=False)
+        bad_missing = [k for k in missing if not k.startswith("usvs_head.")]
+        if bad_missing or unexpected:
+            raise RuntimeError(
+                f"checkpoint does not match model: missing={bad_missing} unexpected={list(unexpected)}")
+        n_missing = len(missing) - len(bad_missing)
+        if n_missing:
+            print(f"[encoder] checkpoint has no usvs_head ({n_missing} params) -- "
+                  f"pre-dates the USVS auxiliary head (dev/USVS_GRADED_SCORING.md S5.4); "
+                  f"head left at its random initialization.")
+
+    def node_vectors(self, feats: SentenceFeatures, tree: Optional[dict]) -> List[Dict]:
+        """Diagnostic only (dev/USVS_GRADED_SCORING.md S5.4 part B) -- NOT
+        used for decoding, which is unchanged (`beam_decode`/`_apply_action`
+        never call this). Replays `tree` -- a NORMALIZED-shape tree:
+        `beam_decode`'s own output shape, or a gold tree already run through
+        `tree_render.normalize_gold_tree` -- through this model's controller
+        exactly as `teacher_force_loss` replays the oracle derivation (same
+        `encode`/`controller_step` calls, same buffer-pointer bookkeeping),
+        and projects `usvs_head` at every `NODE_EMIT_ACTIONS` step.
+
+        Returns one dict per emitted node, in the tree's own left-to-right
+        derivation order: `{"role", "clause_index", "is_predicate",
+        "token_index", "vector"}` (`vector` a numpy array in the same
+        USVS-plus-reserved space `usvs_graded.node_vector` returns) -- so a
+        caller can compare it directly, node-for-node, against
+        `usvs_graded.node_vector`/`usvs_graded.flatten_tree` for the SAME
+        tree (see `encoder_train_util.evaluate_head_cosine`)."""
+        steps = linearize_normalized_tree(tree, len(feats.tokens))
+        with torch.no_grad():
+            enc = self.encode(feats)
+            T = enc.shape[0]
+            h = self.init_controller_state()
+            open_kind_id = self._none_clause_id
+            prev_action_id = self._start_action_id
+            i = 0
+            clause_index = -1
+            out: List[Dict] = []
+            for step in steps:
+                i_clamped = min(i, T - 1) if T > 0 else 0
+                enc_i = enc[i_clamped] if T > 0 else torch.zeros(self.d_model)
+                h = self.controller_step(enc_i, open_kind_id, prev_action_id, h)
+
+                if step.action == "OPEN_CLAUSE":
+                    clause_index += 1
+                    open_kind_id = KIND_INDEX.get(step.kind, 0)
+                elif step.action == "CLOSE_CLAUSE":
+                    open_kind_id = self._none_clause_id
+                elif step.action in NODE_EMIT_ACTIONS:
+                    vec = self.usvs_head(h).squeeze(0).numpy()
+                    out.append({"role": step.role, "clause_index": clause_index,
+                                "is_predicate": step.role == "PREDICATE",
+                                "token_index": step.token_index, "vector": vec})
+
+                if step.action in ("SHIFT", "GROUND", "EMIT_UNRESOLVED_SLOT", "EMIT_SYNTH_SLOT") \
+                        and step.token_index is not None:
+                    i = step.token_index + 1
+                prev_action_id = ACTION_INDEX[step.action]
+            return out
+
 
 # ---------------------------------------------------------------------------
 # Teacher-forced loss (spec S3.2) -- action CE + candidate-SET emission.
@@ -528,6 +729,23 @@ class EncoderModel(nn.Module):
 # the encoder never learns to stop, and over-attaches instead (see
 # `_dump_forest`'s docstring for the resulting failure mode).
 TERMINAL_ACTION_TYPES: Tuple[str, ...] = ("CLOSE_CLAUSE", "STOP")
+
+#: Actions that EMIT A TREE NODE (lead directive 2026-09-08;
+#: dev/USVS_GRADED_SCORING.md S5.4 -- "the encoder has NO node embedding and
+#: NEVER scores sense candidates"). Per `linearize_tree`, every node --
+#: PREDICATE or role alike -- is created by exactly one of these three,
+#: dispatched purely on `grounding.type`:
+#:   - GROUND: a `sense` or `entity` node (a resolved content word).
+#:   - EMIT_SYNTH_SLOT: a `prime` node (the imperative's synthesized
+#:     addressee YOU, or a resolved-to-prime "I"/"me"/"myself").
+#:   - EMIT_UNRESOLVED_SLOT: a `reference` or `elision` node (an unresolved
+#:     slot with a `retrieval.source`).
+#: ATTACH is declared in `ACTION_TYPES` but is never legal
+#: (`legal_action_types` never lists it) and never emitted by the oracle
+#: (`linearize_tree`) -- it emits no node and is excluded here on purpose.
+#: This is the hook `EncoderModel.usvs_head` attaches to (see
+#: `teacher_force_loss`'s `aux_usvs_weight` and `EncoderModel.node_vectors`).
+NODE_EMIT_ACTIONS: Tuple[str, ...] = ("GROUND", "EMIT_SYNTH_SLOT", "EMIT_UNRESOLVED_SLOT")
 
 
 def _action_type_class_weights(terminal_weight: float) -> Optional[torch.Tensor]:
@@ -568,7 +786,9 @@ def _soft_ce(logits: torch.Tensor, target: Sequence[float]) -> torch.Tensor:
 
 def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List[Step],
                         terminal_weight: float = 1.0,
-                        soft_targets: Optional[SoftTargetConfig] = None) -> torch.Tensor:
+                        soft_targets: Optional[SoftTargetConfig] = None,
+                        node_targets: Optional[Sequence[Optional[np.ndarray]]] = None,
+                        aux_usvs_weight: float = 0.0) -> torch.Tensor:
     """`terminal_weight` (default 1.0 = unweighted, the original loss)
     up-weights the action-TYPE cross-entropy specifically for the STOP/
     CLOSE_CLAUSE targets (see `TERMINAL_ACTION_TYPES`) via `F.cross_entropy`'s
@@ -578,9 +798,20 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
 
     `soft_targets` (default `None` = the original one-hot loss, unchanged)
     replaces the one-hot CE target with a graded distribution on the
-    role/gtype/source heads -- see `SoftTargetConfig`."""
-    if soft_targets is not None:
-        from . import usvs_graded as ug
+    role/gtype/source heads -- see `SoftTargetConfig`.
+
+    `node_targets` + `aux_usvs_weight` (lead directive 2026-09-08;
+    dev/USVS_GRADED_SCORING.md S5.4) -- the opt-in USVS-space auxiliary
+    loss. `node_targets` is `node_targets_for_steps(steps, feats, usvs)`
+    (one gold `usvs_graded.node_vector`, or `None`, per entry of `steps`,
+    ALREADY computed by the caller -- this function does no USVS lookups
+    itself). At every `NODE_EMIT_ACTIONS` step with a target, projects the
+    SAME controller state `h` the other heads read through `model.usvs_head`
+    and adds `aux_usvs_weight * (1 - cosine(pred, gold))` to the loss.
+    Either `node_targets is None` or `aux_usvs_weight <= 0.0` (both true by
+    default) skips this term entirely -- the returned loss is then the
+    exact pre-existing sum, unchanged."""
+    want_aux = node_targets is not None and aux_usvs_weight > 0.0
 
     enc = model.encode(feats)
     T = enc.shape[0]
@@ -593,7 +824,8 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
     class_weights = _action_type_class_weights(terminal_weight)
 
     losses = []
-    for step in steps:
+    aux_losses = []
+    for step_idx, step in enumerate(steps):
         i_clamped = min(i, T - 1) if T > 0 else 0
         enc_i = enc[i_clamped] if T > 0 else torch.zeros(model.d_model)
         h = model.controller_step(enc_i, open_kind_id, prev_action_id, h)
@@ -644,12 +876,23 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
             losses.append(F.cross_entropy(prime_logits.unsqueeze(0),
                                            torch.tensor([PRIME_INDEX.get(step.prime, PRIME_INDEX["<UNK_PRIME>"])])))
 
+        if want_aux and step.action in NODE_EMIT_ACTIONS:
+            target = node_targets[step_idx]
+            if target is not None:
+                pred_vec = model.usvs_head(h).squeeze(0)
+                target_vec = torch.as_tensor(target, dtype=pred_vec.dtype)
+                cos = F.cosine_similarity(pred_vec.unsqueeze(0), target_vec.unsqueeze(0)).squeeze(0)
+                aux_losses.append(1.0 - cos)
+
         if step.action in ("SHIFT", "GROUND", "EMIT_UNRESOLVED_SLOT", "EMIT_SYNTH_SLOT") \
                 and step.token_index is not None:
             i = step.token_index + 1
         prev_action_id = ACTION_INDEX[step.action]
 
-    return torch.stack(losses).sum()
+    total = torch.stack(losses).sum()
+    if aux_losses:
+        total = total + aux_usvs_weight * torch.stack(aux_losses).sum()
+    return total
 
 
 # ---------------------------------------------------------------------------

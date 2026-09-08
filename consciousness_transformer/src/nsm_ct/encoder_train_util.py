@@ -22,6 +22,7 @@ import statistics
 import time
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
+import numpy as np
 import torch
 
 from nsm_ct import encoder_model as em
@@ -136,13 +137,22 @@ def records_for_sentences(gold_records: Sequence[dict], sentences: Sequence[str]
     return matched, n_missing
 
 
-def build_train_items(records: Sequence[dict], usvs, pos_vocab, hash_buckets: int) -> list:
+def build_train_items(records: Sequence[dict], usvs, pos_vocab, hash_buckets: int,
+                       *, compute_node_targets: bool = False) -> list:
+    """`compute_node_targets` (default `False`, unchanged item shape's
+    THIRD slot is `None`) -- lead directive 2026-09-08
+    (dev/USVS_GRADED_SCORING.md S5.4): precompute each item's gold USVS
+    node vectors ONCE here (`em.node_targets_for_steps`), not inside the
+    training loop, so `--aux-usvs` never re-runs a USVS lookup per epoch.
+    Every item is a `(feats, steps, node_targets)` triple; `run_training_loop`
+    shuffles/consumes them as one unit so the three stay aligned."""
     items = []
     for r in records:
         feats = em.build_features(r, usvs, pos_vocab, hash_buckets)
         for tree in r["lattice"]["trees"]:
             steps = em.linearize_tree(r, tree)
-            items.append((feats, steps))
+            node_targets = em.node_targets_for_steps(steps, feats, usvs) if compute_node_targets else None
+            items.append((feats, steps, node_targets))
     return items
 
 
@@ -253,10 +263,53 @@ def evaluate_dev_fast(model, records: Sequence[dict], usvs, pos_vocab, hash_buck
     return evaluate_full(model, records, usvs, pos_vocab, hash_buckets, beam_width=1, k=1, policy="model")
 
 
+def evaluate_head_cosine(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets: int) -> float:
+    """The `--aux-usvs` diagnostic (dev/USVS_GRADED_SCORING.md S5.4 part B):
+    "does the head learn the [USVS] space?" For every GOLD tree of every
+    record, teacher-force it through the model's controller
+    (`model.node_vectors`, on the SAME `tree_render.normalize_gold_tree`
+    shape `usvs_graded.flatten_tree` consumes) and compare the model's own
+    projected vector at each node against `usvs_graded.node_vector` for
+    that EXACT node -- matched by identity (`clause_index`, `role`,
+    `token_index`, `is_predicate`), not by alignment, since both walks
+    replay the one gold derivation and therefore see the same node set.
+    This is deliberately the GOLD-teacher-forced walk (not a decoded tree):
+    it is the exact distribution `--aux-usvs` trains against, so it
+    isolates "did the head learn the mapping" from "did the transition
+    system decode the right structure" (a separate, unaffected question --
+    S5.4/the model spec: this head is never used for decoding).
+
+    Returns the mean cosine over every node of every gold tree of every
+    record; `nan` if there is nothing to score."""
+    from nsm_ct import usvs_graded as ug
+    from nsm_ct.tree_render import normalize_gold_tree
+
+    cos_vals: List[float] = []
+    for record in records:
+        feats = em.build_features(record, usvs, pos_vocab, hash_buckets)
+        for gold_tree in record.get("lattice", {}).get("trees", []) or []:
+            norm = normalize_gold_tree(record, gold_tree)
+            pred_nodes = model.node_vectors(feats, norm)
+            gold_flat = ug.flatten_tree(record, norm, usvs)
+            gold_by_key = {(n.clause_index, n.role, n.token_index, n.is_predicate): n.vector
+                           for n in gold_flat.nodes}
+            for pn in pred_nodes:
+                key = (pn["clause_index"], pn["role"], pn["token_index"], pn["is_predicate"])
+                gv = gold_by_key.get(key)
+                if gv is None:
+                    continue
+                pv = pn["vector"]
+                denom = float(np.linalg.norm(pv) * np.linalg.norm(gv))
+                if denom > 0.0:
+                    cos_vals.append(float(np.dot(pv, gv) / denom))
+    return float(sum(cos_vals) / len(cos_vals)) if cos_vals else float("nan")
+
+
 def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size: int,
                        max_seconds: float, max_steps: Optional[int] = None,
                        terminal_weight: float = 4.0,
                        soft_targets=None,
+                       aux_usvs_weight: float = 0.0,
                        on_step_50: Optional[Callable] = None,
                        on_epoch_done: Optional[Callable] = None,
                        on_max_seconds: Optional[Callable] = None,
@@ -282,6 +335,12 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
     USVS/semantics-graded soft CE targets (`--loss usvs-soft`;
     dev/USVS_GRADED_SCORING.md S5). `None` keeps the original one-hot loss,
     numerically identical.
+
+    `aux_usvs_weight` (default `0.0`, unchanged) is passed straight through
+    to `em.teacher_force_loss` alongside each item's precomputed
+    `node_targets` (the third slot of every `train_items` entry -- see
+    `build_train_items`'s `compute_node_targets`); `0.0` (or `node_targets`
+    all `None`) adds nothing to the loss.
 
     `on_optimizer_step`, if given, is called after EVERY completed
     optimizer step (both mid-epoch batches and the per-epoch trailing
@@ -321,13 +380,14 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
         opt.zero_grad()
         step_budget_hit = False
         budget_hit_reason = "max_steps"
-        for idx, (feats, steps) in enumerate(train_items):
+        for idx, (feats, steps, node_targets) in enumerate(train_items):
             if time.time() - train_start > max_seconds:
                 stopped_early = True
                 stop_reason = "max_seconds"
                 break
             loss = em.teacher_force_loss(model, feats, steps, terminal_weight=terminal_weight,
-                                          soft_targets=soft_targets) / batch_size
+                                          soft_targets=soft_targets, node_targets=node_targets,
+                                          aux_usvs_weight=aux_usvs_weight) / batch_size
             loss.backward()
             epoch_loss += float(loss.item()) * batch_size
             epoch_n += 1
