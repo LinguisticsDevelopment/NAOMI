@@ -53,7 +53,7 @@ _QP_ROOT = _HERE.parent.parent / "quantum_parser"
 if str(_QP_ROOT) not in sys.path:
     sys.path.insert(0, str(_QP_ROOT))
 
-from nsm_ct.clause import is_entity  # noqa: E402
+from nsm_ct.clause import FIRST_PERSON_SINGULAR, is_entity  # noqa: E402
 from nsm_ct import encoder_model as em  # noqa: E402
 
 
@@ -84,8 +84,11 @@ class W:
 class PRIME:
     """A synthesized filler licensed by the grammar to exactly ONE referent --
     the imperative addressee (contract S5). Resolved, no candidate set, no
-    surface token. NOTE `encoder_model.PRIMES` currently admits only "YOU";
-    anything else trains as `<UNK_PRIME>`."""
+    surface token. `encoder_model.PRIMES` admits "YOU" and "I" (D3); anything
+    else trains as `<UNK_PRIME>`. NOTE: a first-person filler ("me"/"I"/
+    "myself") is better spelled `W("me")` etc. -- `ground_W` routes it to
+    `prime:"I"` automatically (unlike YOU, "I" usually DOES have a surface
+    token, so it keeps its real `token_index` rather than `None`)."""
     prime: str = "YOU"
     word: Optional[str] = None       # readability only; defaults to prime.lower()
 
@@ -195,6 +198,11 @@ def ground_W(usvs, spec: W) -> Dict[str, object]:
     w = spec.word.lower()
     if spec.force_entity:
         return {"type": "entity", "candidates": None}
+    if w in FIRST_PERSON_SINGULAR:
+        # D3 (dev/CURRENT_STATE.md decisions locked): the speaker is a
+        # grammar-licensed single referent, symmetric with the imperative's
+        # synthesized addressee (prime YOU) -- resolved, no candidate set.
+        return {"type": "prime", "prime": "I", "candidates": None}
     if w in _PRONOUNS:
         # identical to the teacher's `ground_word` for a bare pronoun
         return {"type": "reference", "candidates": None,
@@ -329,11 +337,24 @@ def build_tree(usvs, clauses: Sequence[C], tokens: Sequence[str],
             {"type": "elision", "candidates": None,
              "retrieval": {"source": "memory", "method": "elision_inherit_predicate", "ref": None}}
         pred_word = _filler_word(cl.predicate)
-        # the predicate's token_index is not stored on the node (the oracle
-        # re-derives it, encoder_model._predicate_token_index) but it MUST be
+        # A real grounded (sense/entity) predicate's token_index is not
+        # stored on the node -- the oracle re-derives it via the string-match
+        # `encoder_model._predicate_token_index` -- but it MUST still be
         # consumed from the matcher here so the roles' indices line up.
+        pred_token_index = None
         if pg["type"] in ("sense", "entity") and pred_word:
             matcher.match(pred_word)
+        elif pred_word:
+            # D6 (dev/CURRENT_STATE.md decisions locked): an elided/
+            # unresolved predicate MAY still name its stranded surface
+            # carrier -- e.g. `CTX("elision", of=PREDICATE, word="did")` for
+            # "the dog did ." -- so tense/polarity survive even though the
+            # predicate's MEANING (`predicate`, the string field) stays
+            # null. The carrier's index rides the dedicated
+            # `predicate_token_index` field (parallel to roles[j]'s
+            # `token_index`), consumed from the SAME matcher so it can't
+            # collide with a role's own index.
+            pred_token_index = matcher.match(pred_word)
         roles = []
         for relation, spec in cl.roles:
             word = _filler_word(spec)
@@ -344,6 +365,7 @@ def build_tree(usvs, clauses: Sequence[C], tokens: Sequence[str],
         out_clauses.append({
             "predicate": pred_word if pg["type"] in ("sense", "entity") else None,
             "predicate_grounding": pg,
+            "predicate_token_index": pred_token_index,
             "is_question": cl.is_question,
             "utterance_kind": cl.kind,
             "roles": roles,
@@ -494,7 +516,16 @@ def check_schema(record: dict) -> List[str]:
             if pg["type"] not in ("sense", "entity") and clause.get("predicate"):
                 errs.append(f"tree{ti}/clause{ci}: elided predicate must have "
                             f"predicate=null")
-            pidx = em._predicate_token_index(record, clause)
+            if pg["type"] in ("sense", "entity"):
+                pidx = em._predicate_token_index(record, clause)
+            else:
+                # D6: an elided/unresolved predicate may name a stranded
+                # surface carrier via `predicate_token_index` (mirrors
+                # `encoder_model.clause_node_order`'s own routing).
+                pidx = clause.get("predicate_token_index")
+                if pidx is not None and not (0 <= pidx < T):
+                    errs.append(f"tree{ti}/clause{ci}/predicate: "
+                                f"predicate_token_index out of range")
             check_grounding(pg, f"tree{ti}/clause{ci}/predicate", pidx)
             for rj, role in enumerate(clause["roles"]):
                 w = f"tree{ti}/clause{ci}/role{rj}({role['relation']})"
@@ -529,7 +560,7 @@ def replay(record: dict, steps: Sequence[em.Step]) -> List[str]:
             open_clause = True
         elif step.action == "CLOSE_CLAUSE":
             open_clause, has_clause = False, True
-        if step.action in ("SHIFT", "GROUND", "EMIT_UNRESOLVED_SLOT") and \
+        if step.action in ("SHIFT", "GROUND", "EMIT_UNRESOLVED_SLOT", "EMIT_SYNTH_SLOT") and \
                 step.token_index is not None:
             i = step.token_index + 1
     if steps and steps[-1].action != "STOP":
