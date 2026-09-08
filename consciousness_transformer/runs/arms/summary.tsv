@@ -1,2 +1,3 @@
 arm	seed	gold	n_train	optimizer_steps	stop_reason	epoch_fraction	train_wall_s	holdout_v2_edge_precision	holdout_v2_edge_recall	holdout_v2_rank1_edge_f1	holdout_v2_mean_forest_width	holdout_v3_edge_precision	holdout_v3_rank1_edge_f1	checkpoint
 v3_788	1	runs/encoder_gold_v3.jsonl	788	8000	max_steps	324.8731	13192.0	0.4424	0.5458	0.3731	5.96	0.5397	0.4208	runs/arms/v3_788_1.pt
+v2_788	1	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.3861	13763.8	0.7133	0.6575	0.5574	5.99	0.7123	0.4463	runs/arms/v2_788_1.pt
