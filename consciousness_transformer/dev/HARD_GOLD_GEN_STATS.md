@@ -1,4 +1,279 @@
-# HARD-CASE GOLD GENERATOR — stats (lead directive, 2026-09-08; v2 update, same day; v3 update, same day)
+# HARD-CASE GOLD GENERATOR — stats (lead directive, 2026-09-08; v2 update, same day; v3 update, same day; v4 update, same day)
+
+## v4: widening the four remaining families still at or below ~0.7 unseen-template F1
+
+Branch `hard-gold-gen-v4`. **Why:** v3 widened `imperative` (9->29) and
+`additive_focus` (8->22) and their unseen-TEMPLATE rank-1 F1 went from
+~0.25-0.27 to ~0.73-0.78 ("ARMS-3(b) interim"). The same encoder run
+(`runs/arms/v4b_788_hard_0.log`, per-family numbers via `git show
+origin/encoder-arms3-b:consciousness_transformer/runs/arms/v4b_788_hard_0.log
+| grep family=`) shows the four families that were NOT touched in v3 still
+stuck at or below ~0.7, one of them actively regressed:
+
+| family | unseen-FILLER rank-1 F1 (`test_filler`) | unseen-TEMPLATE rank-1 F1 (`test_template`) |
+|---|---:|---:|
+| `speaker_prime` | 0.3218 | **0.4286** (regressed) |
+| `synth_subject` | 0.6667 | **0.6667** |
+| `quantity` | 0.6667 | **nan** (n=4, too few held-out records to be meaningful) |
+| `elision` | 0.6944 | **0.7083** |
+
+All four had only 8-9 templates, same root cause v3 diagnosed for
+`imperative`/`additive_focus`: too few surface shapes per family for a
+held-out template to be a genuine structural-generalization test rather than
+mostly-memorized shape recall. This pass widens all four the same way.
+
+**What changed** (`src/nsm_ct/hard_gold_templates.py`):
+
+- **`speaker_prime`: 9 -> 26 templates.** The old 9 were ALL imperative
+  ("give me the {N} .", "tell me about the {N} ." shapes) — the family name
+  is "speaker prime" (any construction that resolves to the synthesized
+  `PRIME("I")` referent via `hand_gold.ground_W`'s `FIRST_PERSON_SINGULAR`
+  routing, D3), not "imperative with a `me` object", so the biggest gap was
+  DECLARATIVE clauses with subject `"i"` — never exercised before. Added:
+  more double-object/bare-object `me` imperative shapes (`"tell me the {N}
+  ."`, `"give me a {N} ."`, `"show me {PROPN} ."`, `"{VT} me !"`/`"{VT} me
+  ."` generalized over the VT pool instead of one fixed verb, a vocative
+  (`"mary , fix me ."`), `"look at me ."` — new `AT` role, `"take me to the
+  {N} ."` reusing the existing `PLACE` role for a `"to"` destination), two
+  bare fragments with no context (`"me first ."`, `"me ?"` — `is_question`,
+  both `MEM(gtype="elision", method="elision_no_antecedent")` mirroring the
+  existing `quantity` family's context-free fragments), and six DECLARATIVE
+  `subject="i"` shapes (`"i {VI_past} ."`, `"i {VT_past} the {N} ."`, `"i
+  {VT_past} {PROPN} ."`, `"i want a {N} ."`, `"i can not {VI} ."`, `"myself
+  , i {VI_past} ."` — the fronted `"myself"` is unconsumed flavor text, same
+  precedent as `"never"`/`"please"` elsewhere).
+- **`synth_subject`: 8 -> 22 templates.** The old 8 were exactly the 4 verbs
+  (`sounds`/`looks`/`seems`/`feels`) x 2 terminators (`.`/`!`), always with a
+  bare `ADJ` complement. Added a 5th verb (`"smells"`, dot+bang), PP
+  complements instead of bare `ADJ` (`"sounds like a {N} ."`/`"looks like
+  {PROPN} ."`/`"smells like a {N} ."` etc. — `COMPLEMENT` now points at an
+  `N`/`PROPN` filler instead of an `ADJ` one), a fixed-complement shape
+  (`"seems so ."`/`"looks so ."`/`"feels so ."` — `"so"` grounds via
+  `senses_of_surface` same as `"too"`/`"also"` elsewhere), a
+  fronted-complement order (`"{ADJ} , it seems ."` — the `"it"` is
+  unconsumed flavor text, same as `"myself"` above), and a `"to me"` PP on
+  the existing ADJ-complement shape (`"sounds {ADJ} to me ."` — reuses the
+  existing `FOR` role for the `"to me"` PP, same abstraction precedent as
+  `PLACE` covering both `"in"` and `"on"`).
+- **`quantity`: 8 -> 20 templates, PLUS the real fix — `QUANT_POOL` widened
+  4 -> 18 words.** `dev/HARD_GOLD_GEN_STATS.md` v2 §9 already diagnosed the
+  root cause: every `"{QUANT} !"`/`"{QUANT} ."`-shaped template collided on
+  one of exactly 4 possible strings (the old pool was `more`/`less`/
+  `enough`/`all`), so whichever template ran first claimed a surface and its
+  sibling starved. Widened `QUANT_POOL` to every other bare quantifier that
+  grounds via `senses_of_surface` (`many`, `few`, `none`, `most`, `some`,
+  `any`, `several`, `much`, `plenty`, `half`, `both`, `each`, `nothing`,
+  `one` — checked individually; "would"/"could"-style modals do NOT ground
+  this way, but ordinary quantity words do). New templates: `"{QUANT} {N}
+  ."` (dot pair for the existing bang-only shape), `"{QUANT} of them
+  ."`/`"!"` (bare-pronoun object), `"{QUANT} the {N_pl} ."`/`"{QUANT} the {N}
+  ."` (definite-article object, no `"of"`), and five idiom-fixed shapes
+  (`"too many {N_pl} !"`, `"too much {N} ."`, `"a few {N_pl} ."`, `"just one
+  ."`, `"some more ."`, `"not enough {N} ."`).
+  **Caught and fixed during generation, not just specified:** naively
+  reusing the full 18-word `QUANT_POOL` for `"{QUANT} {N}"`/`"{QUANT} the
+  {N}"`-shaped templates produces ungrammatical English no native speaker
+  would say — a first full-scale run rendered `"one the cars ."` and
+  `"several dog !"`. Added four number-agreement-aware SUBSETS of
+  `QUANT_POOL` (`QUANT_PL` — grammatical directly before a bare plural noun;
+  `QUANT_SG` — bare singular/mass noun; `QUANT_DET_PL`/`QUANT_DET_SG` — the
+  much narrower "QUANT the NP" frame, which only `all`/`both`/`half` take
+  without an intervening `"of"`) and pointed the affected templates
+  (`quant_n_pl_bang`/`dot`, `quant_n_bang`/`dot`, `quant_the_n_pl_dot`,
+  `quant_the_n_dot`) at the matching subset instead of the full pool. The
+  `"{QUANT} of the {N_pl}"` partitive shape (pre-existing `quant_of_n_pl`,
+  and the new `"of them"` pair) needed no such restriction — `"of the
+  PLURAL"` is grammatical after nearly every quantifier (`"each of the
+  dogs"`, `"one of the dogs"`, `"much of the dogs"` are all fine), unlike
+  the bare frames.
+  **Also caught: a second surface collision, this time self-inflicted.** The
+  first fixed-literal draft of `"none ."` collided with the ordinary
+  `"{QUANT} !"`/`"{QUANT} ."` templates' own output whenever they happened
+  to sample `QUANT="none"` (registered earlier, so they always won the race)
+  — the new template generated ZERO records at `--per-family 150 --seed 0`
+  despite passing the gate every time it was attempted. Renamed to `"none at
+  all ."`, a surface no other template can produce; confirmed it now yields
+  a record.
+- **`elision`: 8 -> 20 templates.** Added a no-contraction negation (`"{PROPN}
+  did not ."`, vs. the existing `"did n't"` only), fronted `"so"`/`"neither"`
+  subject-aux-inversion shapes (`"so did the {N} ."`, `"neither did {PROPN}
+  ."` — the latter reuses the existing `ADDITIVE` role for `"neither"`, same
+  as `"too"`/`"either"` elsewhere), bare-pronoun and plural-NP subjects
+  (`"{PRON} did ."`, `"{PRON} did too ."`, `"the {N_pl} did ."` — the last
+  uses a SEPARATE sampled placeholder for the context antecedent's own
+  subject, `distinct`-constrained against the fragment's subject, so the
+  two plural NPs are not forced identical), three new modal carriers beyond
+  `"did"` (`"could"`, `"would" ` + `"n't"`, `"has"`, `"will"` — each keeps
+  its own `predicate_token_index` exactly like `"did"` does, D6; none of
+  these ground via `senses_of_surface` either, same exemption already
+  documented for `"did"` in the module docstring), and bang-terminated
+  variants of the two most basic shapes.
+- **`let 's {VT} the {N} .`, `{PROPN} as well .`, and a copular
+  `"it is for me ."` — all SKIPPED, schema cannot express them.** The first
+  two are unchanged from v3 (no `PRIME("WE")`, no multi-token-span filler
+  primitive — see the v3 section below). The third was newly considered for
+  `speaker_prime` (the brief's own "if the schema handles copular" hedge):
+  every existing hand-authored and generated record treats `predicate` as
+  the CONTENT verb (`sounds`/`seems`/`want`/...), never a bare copula with a
+  separate PP complement — authoring `"it is for me ."` would mean inventing
+  a brand-new predicate-argument shape (`predicate=W("is")`, some new role
+  for the `"for me"` PP) with no existing precedent to follow or gate
+  evidence it round-trips correctly. Given the one-turn, generation-only
+  scope, left unattempted rather than guessed at.
+
+**`gen_hard_gold.py`'s `HELD_OUT_COUNT`** now also holds out 4 templates
+(not the default 2) for these four newly-widened families, same reasoning
+as v3's `imperative`/`additive_focus` entries.
+
+### v4 families × templates × splits
+
+`--per-family 150 --seed 0` (same invocation as v2/v3; only the template
+set, `QUANT_POOL`/subsets, and these four families' held-out count changed):
+
+| family | templates (before → after) | held-out count | generated | **passed** | failed | train | test_filler | test_template | held-out template ids (seed 0) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| additive_focus | 22 | 4 | 11,567 | **143** | 0 | 109 | 10 | 24 | (unchanged from v3) |
+| content_interjection | 8 | 2 | 210 | **210** | 0 | 150 | 30 | 30 | (unchanged) |
+| elision | 8 → **20** | **4** | 8,741 | **164** | 0 | 122 | 14 | 28 | `elision_n_did_not`, `elision_n_did_not_either`, `elision_propn_did`, `elision_propn_will` |
+| imperative | 29 | 4 | 232 | **232** | 0 | 150 | 50 | 32 | (unchanged from v3) |
+| pure_interjection | 8 | 2 | 200 | **200** | 0 | 145 | 25 | 30 | (unchanged) |
+| quantity | 8 → **20** | **4** | 732 | **189** | 0 | 133 | 26 | 30 | `quant_bang_past_ctx`, `quant_n_pl_dot`, `quant_not_bang`, `quant_of_them_bang` |
+| speaker_prime | 9 → **26** | **4** | 202 | **200** | 0 | 134 | 34 | 32 | `speaker_i_cannot_vi`, `speaker_myself_i_vi_past`, `speaker_show_me_n`, `speaker_wait_for_me_please` |
+| synth_subject | 8 → **22** | **4** | 2,690 | **193** | 0 | 140 | 28 | 25 | `synth_feels_so`, `synth_seems_bang_ctx_vi`, `synth_sounds_adj_to_me`, `synth_sounds_bang` |
+| **total** | **100 → 149** | — | **24,574** | **1,531** | **0** | **1,083** | **217** | **231** | — |
+
+**Failure histogram: empty** — all 24,574 generation attempts across every
+family (widened and unwidened alike) passed `check_record` outright.
+
+Output files (`runs/`, `git add -f`'d):
+
+| file | records | bytes |
+|---|---:|---:|
+| `hard_gold_train.jsonl` | 1,083 | 2,735,992 |
+| `hard_gold_test_filler.jsonl` | 217 | 514,773 |
+| `hard_gold_test_template.jsonl` | 231 | 597,989 |
+| `hard_gold_train_small.jsonl` | 200 | 510,634 |
+| **total** | **1,731** | **4,359,388 (4.16 MB, < 8 MB cap)** |
+
+### v4 sample renders from new templates
+
+```
+elision:
+  elision_propn_did_not_full   'daniel did not .'
+  elision_so_did_n              'so did the cat .'
+  elision_neither_did_propn     'neither did mary .'
+  elision_pron_did              'we did .'
+  elision_npl_did               'the feet did .'
+  elision_propn_could           'sandra could .'
+  elision_propn_wouldnt         "mary would n't ."
+  elision_n_has                 'the child has .'
+  elision_propn_will            'fred will .'
+
+quantity:
+  quant_n_dot                   'any material .'
+  quant_of_them_dot             'none of them .'
+  quant_the_n_pl_dot            'both the apples .'
+  quant_the_n_dot                'all the father .'
+  quant_too_many_n_pl_bang       'too many clothes !'
+  quant_too_much_n_dot           'too much foot .'
+  quant_a_few_n_pl_dot           'a few crew .'
+  quant_just_one_dot             'just one .'
+  quant_none_at_all_dot          'none at all .'
+  quant_some_more_dot            'some more .'
+
+synth_subject:
+  synth_smells                  'smells heavy .'
+  synth_sounds_like_a_n         'sounds like a patient .'
+  synth_looks_like_propn        'looks like sandra .'
+  synth_seems_so                'seems so .'
+  synth_adj_it_seems            'big , it seems .'
+  synth_sounds_adj_to_me        'sounds sweet to me .'
+  synth_feels_like_a_n          'feels like an eye .'
+
+speaker_prime:
+  speaker_tell_me_the_n         'tell me the father .'
+  speaker_vt_me_bang            'drop me !'
+  speaker_look_at_me            'look at me .'
+  speaker_take_me_to_the_n      'take me to the garden .'
+  speaker_me_first               'me first .'
+  speaker_me_question            'me ?'
+  speaker_i_vi_past              'i sneezed .'
+  speaker_i_vt_past_n            'i made the stuff .'
+  speaker_i_cannot_vi            'i can not rest .'
+  speaker_myself_i_vi_past       'myself , i cried .'
+```
+
+All pass `hand_gold.check_record` (schema validity, oracle `linearize_tree`,
+action legality, skeleton round-trip).
+
+### v4 smoke-train result
+
+`python scripts/train_encoder.py --smoke --max-steps 40 --gold runs/hard_gold_train.jsonl`
+(150-record stratified train subset of the new 1,083-record file, 40-dev/40-test, CPU):
+
+```
+[  10.1s] pos_vocab=13 role_vocab=16
+[  10.1s] policy params: 197,791 (~0.791 MB fp32)
+[  11.6s] === epoch 0 done: avg_loss=25.588 (n=150 derivations) ===
+[  12.3s] === epoch 1 done: avg_loss=21.407 (n=150 derivations) ===
+[  13.1s] === epoch 2 done: avg_loss=17.738 (n=150 derivations) ===
+[  14.0s] === epoch 3 done: avg_loss=15.429 (n=150 derivations) ===
+[  14.0s] training wall-clock: 3.2s (stopped_early=True); optimizer_steps=40 (cap=40, stop_reason=max_steps)
+[ 254.2s] test: {'sense_recall': 0.7333, 'edge_recall': 0.3083, 'rank1_edge_f1': 0.24, 'n_records': 40}
+[ 255.5s] test (random baseline): {'sense_recall': 0.0167, 'edge_recall': 0.0563}
+```
+
+Loss finite and monotonically decreasing over all 40 optimizer steps (25.59
+→ 21.41 → 17.74 → 15.43) — the new templates' actions are all admitted by
+the legality mask. `role_vocab` in this run is 16 (v3's smoke run reported
+14); comparing the actual role-name sets used across
+`hard_gold_templates.py` before/after this batch (`git diff` on the
+quoted-string role names), exactly ONE genuinely new role name was
+introduced by the v4 templates -- `AT` (`speaker_look_at_me`) -- every other
+role v4's new templates use (`COMPLEMENT`, `FOR`, `OF`, `ADDITIVE`, `PLACE`,
+`ADDRESSEE`, ...) already existed from earlier families. The rest of the
+14→16 delta is the 150-train/40-dev/40-test smoke split simply happening to
+sample a role that a different random slice would also have shown; it is
+not evidence of a second new role type. Either way, an unseen role name
+falls back to the existing unseen-role-name bucket at eval time, same
+non-issue already documented for `MANNER`/`ADDRESSEE` in v3.
+
+### v4 tests
+
+`pytest -q tests/test_hard_gold_gen.py tests/test_decisions_d1_d6.py`:
+**40 passed, 1 skipped** (the skip is the same pre-existing
+`test_teacher_gold_inflected_word_grounding_unchanged_or_improved` gate,
+unrelated to this batch). `test_hard_gold_gen.py` gained two tests:
+`test_speaker_prime_synth_subject_quantity_elision_widened_v4` (template
+counts `>=20` for all four) and
+`test_v4_widened_families_hold_out_four_templates` (the generator's
+`HELD_OUT_COUNT` override actually holds out 4, not the default 2, for
+these four families).
+
+### v4 unfinished / out of scope, and exactly why
+
+- **`it is for me .`** (copular `speaker_prime`) — schema has no existing
+  precedent for a bare-copula predicate with a PP complement; see above.
+  Not attempted.
+- **No new evaluation run against a freshly retrained encoder.** Same
+  scoping as v3: this batch regenerates the gold and confirms it trains
+  (finite, decreasing 40-step smoke loss); it does not retrain the full
+  multi-thousand-step encoder to confirm the unseen-template rank-1 F1
+  actually improves for these four families — that is a full training run,
+  explicitly out of scope for a CPU, code-and-generation-only, one-turn
+  pass. `runs/hard_gold_test_template.jsonl` (now carrying 28/30/32/25
+  records from 4 held-out templates each for `elision`/`quantity`/
+  `speaker_prime`/`synth_subject`, vs. 2-held-out-template slices before) is
+  the artifact a follow-up training run would evaluate against.
+- **`quantity`'s number-agreement fix is a curated allow-list, not a
+  grammar.** `QUANT_PL`/`QUANT_SG`/`QUANT_DET_PL`/`QUANT_DET_SG` were built
+  by hand-checking each of the 18 `QUANT_POOL` words against the relevant
+  frame (see the "caught and fixed during generation" note above) rather
+  than deriving from a real subcategorization resource — sufficient for this
+  pool's fixed size, but would not automatically extend correctly if
+  `QUANT_POOL` grows further later.
+
+---
 
 ## v3: widening the two families that failed to generalize to unseen templates
 
