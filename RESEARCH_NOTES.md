@@ -1266,3 +1266,23 @@ llm-parse-judge: tree flattener + Claude Haiku 4.5 good/bad verdict via the
 Anthropic SDK with Batches mode, mock backend for tests, calibration on gold /
 corrupted-gold / encoder-complement trees). Judge = the self-training admission
 filter; low priority, cheap (~$1 per 1K trees at Haiku rates, half in batch).
+
+### HARD-GOLD GENERATOR MERGED (Sonnet routine, 2026-09-08)
+scripts/gen_hard_gold.py + src/nsm_ct/hard_gold_templates.py: 8 families x
+66 typed-slot templates (imperative, pure/content interjection, elision,
+additive/focus, quantity, synth-subject, speaker prime), pools from USVS +
+WordNet (N 60, ADJ 60, VT 40, VI 30, INTERJ_PURE 20, INTERJ_CONTENT 40, PROPN 6
+= the curriculum name universe, PRON 5, QUANT 4). --per-family 100 seed 0 ->
+971 records, 0 gate failures (same gate as the 16 drafts), splits train 687 /
+test_filler 142 / test_template 142 (2 whole templates per family held out).
+Smoke train: loss falls 27.4 -> 16.5 in 40 steps; sense_recall 0.95 vs 0.05
+random. load_gold now accepts comma-separated files (teacher gold + hard gold).
+On mainline: the three split files (2.1 MB); hard_gold_all.jsonl dropped (dup).
+KNOWN GAPS (follow-up dispatched): (1) hand_gold.ground_W / senses_of look up
+the RAW surface, so regular plurals (dogs, boys) and regular pasts (walked)
+return no senses and were excluded from pools -- N_pl is irregular-only (30),
+VI_past only 10. Fix = WordNet morphy lemmatization in the grounding lookup
+(check the teacher-gold path grounds plurals the same way). (2) No a/an
+agreement ("a optic"). (3) Fillers are semantically random ("the poultry
+planted the physician") -- fine for structure, but the judge/encoder should
+not be trained to accept them as MEANINGFUL; keep them for structure only.

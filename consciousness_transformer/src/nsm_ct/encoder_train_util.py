@@ -28,8 +28,26 @@ from nsm_ct import encoder_model as em
 
 
 def load_gold(path: str) -> list:
-    with open(path) as f:
-        return [json.loads(line) for line in f]
+    """`path` is one file, or a comma-separated list (e.g. a teacher gold file
+    plus `runs/hard_gold_train.jsonl`): files are concatenated in order and
+    deduped by surface `text`, keeping the first occurrence -- so a hard-gold
+    file placed after teacher gold never overrides an existing record, and a
+    file listed twice is a no-op rather than a duplicate."""
+    records = []
+    seen_text = set()
+    for p in path.split(","):
+        p = p.strip()
+        if not p:
+            continue
+        with open(p) as f:
+            for line in f:
+                rec = json.loads(line)
+                text = rec.get("text")
+                if text in seen_text:
+                    continue
+                seen_text.add(text)
+                records.append(rec)
+    return records
 
 
 def forest_width_bucket(record: dict) -> int:
