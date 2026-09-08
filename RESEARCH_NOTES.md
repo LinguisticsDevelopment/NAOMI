@@ -1573,3 +1573,24 @@ current architecture. The one hook is a new Linear(controller_hidden, d_axes)
 projection trained with cosine loss against the gold node's USVS vector --
 new architecture, small, opt-in. Dispatched (branch usvs-aux-head) as the
 direct implementation of the lead's "loss in USVS space" directive.
+
+### ARMS-3(b) interim: widened templates FIX imperative/additive generalization (2026-09-08)
+v4b_788 + FULL v3 hard gold (1,038 records, 1.3:1), keep-best (step 2,500):
+in-domain rank-1 F1 0.464 on v4b targets (arms-2 mix with v2 hard gold: 0.404;
+no-mix reference 0.491) / 0.411 on v2 targets. Per-family rank-1 F1 on the v3
+held-out splits (unseen fillers / UNSEEN TEMPLATES, 4 templates held out for
+the widened families):
+| family               | fillers | templates | arms-2 templates |
+| imperative           | 0.915 | **0.781** | 0.272 |
+| additive_focus       | 0.742 | **0.729** | 0.233 |
+| pure_interjection    | 1.000 | 1.000 | 1.000 |
+| content_interjection | 1.000 | 0.978 | 0.979 |
+| elision              | 0.694 | 0.708 | 0.711 |
+| synth_subject        | 0.667 | 0.667 | 0.667 |
+| quantity             | 0.667 | (n=4) | 0.667 |
+| speaker_prime        | 0.322 | 0.429 | 0.662 |
+READ: template variety is what generalization needs -- 29/22 templates moved
+unseen-template scores from ~0.25 to ~0.75. speaker_prime regressed (0.66 ->
+0.43; it was not widened and its n is small) -- next generator pass should widen
+it too. The 1:4 mix arm (200 hard records) is still running; it decides whether
+the in-domain cost (0.491 -> 0.464) can be recovered.
