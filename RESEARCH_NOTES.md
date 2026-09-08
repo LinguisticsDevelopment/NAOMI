@@ -1394,3 +1394,10 @@ forest gold, the answer is D1's `margin` mode (keep genuinely distinct
 alternatives) rather than strict top-1 -- a data point for the lead, not a
 relitigation: forest variety appears to be training signal.
 Seed 0 still running; FairytaleQA finish and arms-v2 tooling in flight.
+SEED 0 REPLICATES (branch encoder-arms-seed0): v2_788 rank-1 F1 0.557 (seed 1:
+0.557 -- identical to 3 decimals), v3_788 0.410 on v2 targets / 0.488 on v3
+targets (seed 1: 0.373 / 0.421). Two seeds, same direction, gap 0.15-0.18.
+VERDICT: strict top-1 gold at equal budget is worse than forest gold. Next arm
+set adds v4b gold in D1's `margin` mode and in `all` (forest) mode so top-1 vs
+margin vs forest is compared at EQUAL (lemmatized, POS-aware) quality, with
+keep-best checkpointing. Gold builds dispatched (branch encoder-gold-v4b-variants).
