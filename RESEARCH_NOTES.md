@@ -974,3 +974,47 @@ McGuffey/Aesop) from ~985 -> several thousand sentences; (2) rebuild gold with t
 NOW-RICHER extraction (mainline) -> encoder_gold_v3; (3) retrain encoder on it
 (bigger n -> higher edge-F1). Corpus-expansion routine dispatched (branch
 corpus-expand + colab/Gold_Expand.ipynb). English-only; Spanish stays held-out.
+
+### CORPUS EXPANDED 11x: 1,475 -> 16,411 unique English sentences (2026-09-07)
+Branch corpus-expand: fetch_corpus.py extended (nltk gutenberg budgets raised +
+verified GITenberg direct-downloads). Sources: Burgess 856, Alice 1220, Bryant
+2245, Edgeworth 3515, Grimm 3003, Andersen 2897, Jacobs English Fairy Tales 2817,
+McGuffey 410 (+synthetics excluded from CORPUS_GLOB). All public-domain simple
+children's-lit English (same genre); English-only (Spanish still held-out).
+Smoke gold build (30 new sentences, richer clause.py): 22 records, modifiers
+(DESCRIPTION/SPECIFICATION/COMPLEMENT) present. colab/Gold_Expand.ipynb built
+(Drive-safe, fsync-per-record, per-sentence cap) -> encoder_gold_v3.jsonl.
+build_encoder_gold_v2.py: env-var out override + parse caps + fsync durability.
+CAVEAT (key): the CPU-only encoder CANNOT train on all 16K in feasible time
+(n=788 x100ep = 3.9h; 16K x100ep ~= 80h). PLAN: build gold (partial ok), TRAIN on
+a ~3-5K SUBSET at ~30 epochs (feasible ~4-7h) -> big edge-F1 jump per the
+data-limited scaling curve. Exploiting the FULL 16K is the trigger for a
+GPU-capable encoder (deferred engineering item, needs lead nod).
+NEXT: lead runs Gold_Expand.ipynb -> encoder_gold_v3; then train encoder on a
+subset (prep that notebook). corpus-expand NOT yet merged to mainline (hold until
+richer gold validated to help).
+
+### GOLD STRATEGY: two-part gold + forest must reflect REAL ambiguity (lead, 2026-09-07)
+Lead re-flagged two things about gold composition:
+1. TEACHER-BULK vs HAND-AUTHORED (the encoder's whole point): the 16K corpus
+   expansion only scales what the DETERMINISTIC teacher can parse (declaratives).
+   The structures the LEARNED encoder exists for -- imperatives (synth SUBJECT=you),
+   interjections (ground token to literal USVS sense + stance kind; connotation is
+   COMPREHENSION-side off GOOD<->BAD, NOT encoder gold), elision/fragments
+   (context_ref antecedent-by-content), synthesized args, code-switch -- appear in
+   ZERO teacher gold and MUST be hand-fabricated. Encoder trains on teacher-bulk
+   UNION hand-authored hard cases (bulk=competence, hand=thesis). Gate: schema must
+   be HUMAN-WRITABLE.
+2. FOREST WIDTH: gold stores lattice.trees = parser top-k, but MOST sentences have
+   ONE valid parse. Storing top-k pollutes gold with INVALID low-confidence parses
+   and trains the encoder to over-emit candidate trees (a distinct over-generation
+   source from the aliasing bug -- "too big trees for no reason"). FIX: margin-based
+   pruning -- keep top-1 unless top-2 within a score margin (genuine ambiguity);
+   most sentences -> 1 tree. The candidate lattice should reflect REAL ambiguity,
+   not parser hypothesis count.
+DISPATCHED (parallel): (A) gold-qa -- per-source parse-quality of new fairy-tale
+sources (yield/node-quality vs Burgess/Alice control) + forest-width distribution
++ margin-pruning test (branch gold-qa). (B) hand-gold-draft (OPUS) -- schema-
+writability gate + existing-hand-gold check + ~16 draft hard-case candidates for
+lead review (branch hand-gold-draft, dev/HAND_GOLD_DRAFT.md). Both analysis/draft
+only; nothing merged. Gate the 16K gold build on QA (source-filter + prune) first.
