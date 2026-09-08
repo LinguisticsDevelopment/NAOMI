@@ -31,3 +31,7 @@ data/decomp_cache*.json
 data/usvs/usvs.npz
 data/usvs/usvs_senses.json.gz
 data/usvs/dictionary.jsonl.gz
+
+# K-12 corpus full downloads (scripts/fetch_k12.py --allow-download).
+# Only the small curated samples under data/k12_samples/ are committed.
+data/k12/

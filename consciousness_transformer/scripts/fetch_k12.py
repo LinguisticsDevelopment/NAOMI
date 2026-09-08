@@ -150,6 +150,7 @@ def fetch_fairytaleqa(out_dir: Path, limit: int) -> List[Tuple[str, int]]:
     if meta_bytes is None:
         print("  fairytaleqa: story_meta.csv unreachable, skipping source entirely")
         return manifest
+    dedup.write_if_new(src_dir / "story_meta.csv", meta_bytes)
 
     reader = csv.DictReader(io.StringIO(meta_bytes.decode("utf-8")))
     rows = list(reader)[:limit]
@@ -268,24 +269,32 @@ def fetch_african_storybook(out_dir: Path, limit: int) -> List[Tuple[str, int]]:
 # main
 # ---------------------------------------------------------------------------
 
-def run(out_dir: Path, allow_download: bool, ftqa_limit: int, asp_limit: int) -> None:
+_SOURCES = ("fairytaleqa", "mctest", "african_storybook")
+
+
+def run(out_dir: Path, allow_download: bool, ftqa_limit: int, asp_limit: int,
+        sources: Optional[List[str]] = None) -> None:
     if not allow_download:
         print("--allow-download not set -- nothing to do (this script only ever "
               "fetches over the network; see dev/K12_CORPUS_SCOUT.md for the "
               "already-committed samples under data/k12_samples/).")
         return
 
+    sources = sources or list(_SOURCES)
     out_dir.mkdir(parents=True, exist_ok=True)
     manifest: List[Tuple[str, int]] = []
 
-    print("=== (1) FairytaleQA ===")
-    manifest += fetch_fairytaleqa(out_dir, ftqa_limit)
+    if "fairytaleqa" in sources:
+        print("=== (1) FairytaleQA ===")
+        manifest += fetch_fairytaleqa(out_dir, ftqa_limit)
 
-    print("\n=== (2) MCTest ===")
-    manifest += fetch_mctest(out_dir)
+    if "mctest" in sources:
+        print("\n=== (2) MCTest ===")
+        manifest += fetch_mctest(out_dir)
 
-    print("\n=== (3) African Storybook Project (English, CC-BY) ===")
-    manifest += fetch_african_storybook(out_dir, asp_limit)
+    if "african_storybook" in sources:
+        print("\n=== (3) African Storybook Project (English, CC-BY) ===")
+        manifest += fetch_african_storybook(out_dir, asp_limit)
 
     print(f"\n=== manifest ({out_dir}) ===")
     manifest_path = out_dir / "MANIFEST.tsv"
@@ -307,8 +316,10 @@ def main() -> None:
                      help="Max FairytaleQA stories to fetch (of 278 total).")
     ap.add_argument("--asp-limit", type=int, default=150,
                      help="Max African Storybook English CC-BY stories to fetch.")
+    ap.add_argument("--source", action="append", choices=_SOURCES, default=None,
+                     help="Restrict the fetch to one source (repeatable). Default: all three.")
     args = ap.parse_args()
-    run(args.out_dir, args.allow_download, args.fairytaleqa_limit, args.asp_limit)
+    run(args.out_dir, args.allow_download, args.fairytaleqa_limit, args.asp_limit, sources=args.source)
 
 
 if __name__ == "__main__":
