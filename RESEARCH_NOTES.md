@@ -1338,3 +1338,16 @@ sandbox; command in dev/PARSE_JUDGE.md for the lead.
 SIDE-FINDING (consistent with the lemmatization gap): in v2 gold, top-tree
 PREDICATE groundings are entity 1,113 vs sense 820 -- most past-tense verbs
 were never sense-grounded. v4-small (dispatched, lemmatized) should invert that.
+
+### GOLD v4-SMALL BUILT (lemmatized) + a POS-blind lemmatizer bug found (2026-09-08)
+Branch encoder-gold-v4-small (NOT merged; superseded by v4b in flight). Same
+1,475-sentence population, 60 s parse cap: 986 records (v3: 959; all 26 v3
+cap-hits recovered), all 1 tree, holdout coverage 98/98, v2 coverage 985/985.
+THE number: sense-grounded nodes 4,306 -> 5,860 (+1,554), entity-grounded
+2,835 -> 1,655; 1,311 groundings exist only because of lemmatization (took ->
+take, depended -> depend, beds -> bed). BUG in the samples: morphy is called
+without POS -> `was` -> lemma `wa` -> washington.n.02; `can` (AUX) -> can.n.01;
+`to` (ADP) -> tho.n.01; VERB `engraved` -> engraved.s.01 (adjective first).
+Fix dispatched (v4b): POS-aware morphy from the tagger tag, no morphy on
+function words, POS-matched senses ordered first (candidates kept). v4b is
+the gold for the lemmatized training arm; v4 is a data point only.
