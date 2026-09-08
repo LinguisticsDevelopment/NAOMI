@@ -3,3 +3,4 @@ v3_788	0	runs/encoder_gold_v3.jsonl	788	8000	max_steps	324.8731	13255.1	0.4508	0
 v2_788	0	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.1858	13635.2	0.6910	0.6909	0.5567	5.95	0.6970	0.4687				101.1858			runs/arms/v2_788_0.pt
 v3_788	1	runs/encoder_gold_v3.jsonl	788	8000	max_steps	324.8731	13192.0	0.4424	0.5458	0.3731	5.96	0.5397	0.4208				324.8731			runs/arms/v3_788_1.pt
 v2_788	1	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.3861	13763.8	0.7133	0.6575	0.5574	5.99	0.7123	0.4463				101.3861			runs/arms/v2_788_1.pt
+v2_788	0	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.1458	5459.2	0.7337	0.6567	0.5828	5.9694			750	0.5170	0.4957	9.4824			runs/arms/v2_788_0.pt
