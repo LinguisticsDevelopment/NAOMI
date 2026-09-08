@@ -5224,3 +5224,211 @@
 [4357.1s] epoch 249 step 246750 avg_loss=0.004
 [4357.7s] epoch 249 step 246800 avg_loss=0.004
 [4358.5s] epoch 249 step 246850 avg_loss=0.004
+[4359.1s] epoch 249 step 246900 avg_loss=0.004
+[4359.8s] epoch 249 step 246950 avg_loss=0.004
+[4360.5s] epoch 249 step 247000 avg_loss=0.003
+[4361.3s] eval step=7750 train_avg_loss=0.003 dev_rank1_f1=0.4299 dev_edge_p=0.4306 dev_edge_r=0.4292
+[4361.3s] === epoch 249 done: avg_loss=0.003 (n=988 derivations) ===
+[4362.1s] epoch 250 step 247050 avg_loss=0.003
+[4362.8s] epoch 250 step 247100 avg_loss=0.004
+[4363.6s] epoch 250 step 247150 avg_loss=0.003
+[4364.4s] epoch 250 step 247200 avg_loss=0.004
+[4365.1s] epoch 250 step 247250 avg_loss=0.004
+[4365.9s] epoch 250 step 247300 avg_loss=0.004
+[4366.7s] epoch 250 step 247350 avg_loss=0.003
+[4367.5s] epoch 250 step 247400 avg_loss=0.003
+[4368.5s] epoch 250 step 247450 avg_loss=0.003
+[4369.5s] epoch 250 step 247500 avg_loss=0.003
+[4370.4s] epoch 250 step 247550 avg_loss=0.003
+[4371.4s] epoch 250 step 247600 avg_loss=0.003
+[4372.2s] epoch 250 step 247650 avg_loss=0.004
+[4372.9s] epoch 250 step 247700 avg_loss=0.003
+[4373.5s] epoch 250 step 247750 avg_loss=0.003
+[4374.4s] epoch 250 step 247800 avg_loss=0.003
+[4375.1s] epoch 250 step 247850 avg_loss=0.003
+[4375.8s] epoch 250 step 247900 avg_loss=0.003
+[4376.6s] epoch 250 step 247950 avg_loss=0.003
+[4377.2s] === epoch 250 done: avg_loss=0.003 (n=988 derivations) ===
+[4377.4s] epoch 251 step 248000 avg_loss=0.003
+[4378.1s] epoch 251 step 248050 avg_loss=0.002
+[4378.8s] epoch 251 step 248100 avg_loss=0.002
+[4379.5s] epoch 251 step 248150 avg_loss=0.003
+[4380.3s] epoch 251 step 248200 avg_loss=0.003
+[4381.1s] epoch 251 step 248250 avg_loss=0.003
+[4382.2s] epoch 251 step 248300 avg_loss=0.003
+[4383.3s] epoch 251 step 248350 avg_loss=0.003
+[4384.2s] epoch 251 step 248400 avg_loss=0.003
+[4385.1s] epoch 251 step 248450 avg_loss=0.003
+[4385.8s] epoch 251 step 248500 avg_loss=0.003
+[4386.6s] epoch 251 step 248550 avg_loss=0.003
+[4387.5s] epoch 251 step 248600 avg_loss=0.003
+[4388.4s] epoch 251 step 248650 avg_loss=0.003
+[4389.3s] epoch 251 step 248700 avg_loss=0.003
+[4390.3s] epoch 251 step 248750 avg_loss=0.003
+[4391.2s] epoch 251 step 248800 avg_loss=0.003
+[4392.0s] epoch 251 step 248850 avg_loss=0.003
+[4393.0s] epoch 251 step 248900 avg_loss=0.003
+[4394.0s] epoch 251 step 248950 avg_loss=0.003
+[4394.5s] === epoch 251 done: avg_loss=0.003 (n=988 derivations) ===
+[4395.0s] epoch 252 step 249000 avg_loss=0.002
+[4396.0s] epoch 252 step 249050 avg_loss=0.003
+[4397.1s] epoch 252 step 249100 avg_loss=0.004
+[4398.2s] epoch 252 step 249150 avg_loss=0.004
+[4399.0s] epoch 252 step 249200 avg_loss=0.004
+[4400.0s] epoch 252 step 249250 avg_loss=0.003
+[4400.8s] epoch 252 step 249300 avg_loss=0.003
+[4401.6s] epoch 252 step 249350 avg_loss=0.003
+[4402.6s] epoch 252 step 249400 avg_loss=0.003
+[4403.6s] epoch 252 step 249450 avg_loss=0.003
+[4404.7s] epoch 252 step 249500 avg_loss=0.003
+[4405.7s] epoch 252 step 249550 avg_loss=0.003
+[4406.7s] epoch 252 step 249600 avg_loss=0.003
+[4407.6s] epoch 252 step 249650 avg_loss=0.003
+[4408.7s] epoch 252 step 249700 avg_loss=0.003
+[4409.6s] epoch 252 step 249750 avg_loss=0.003
+[4410.6s] epoch 252 step 249800 avg_loss=0.003
+[4411.7s] epoch 252 step 249850 avg_loss=0.003
+[4412.8s] epoch 252 step 249900 avg_loss=0.003
+[4413.7s] epoch 252 step 249950 avg_loss=0.003
+[4414.0s] === epoch 252 done: avg_loss=0.003 (n=988 derivations) ===
+[4414.8s] epoch 253 step 250000 avg_loss=0.006
+[4415.7s] epoch 253 step 250050 avg_loss=0.004
+[4416.5s] epoch 253 step 250100 avg_loss=0.003
+[4417.1s] epoch 253 step 250150 avg_loss=0.003
+[4417.9s] epoch 253 step 250200 avg_loss=0.003
+[4418.7s] epoch 253 step 250250 avg_loss=0.003
+[4419.5s] epoch 253 step 250300 avg_loss=0.003
+[4420.3s] epoch 253 step 250350 avg_loss=0.003
+[4421.0s] epoch 253 step 250400 avg_loss=0.003
+[4421.7s] epoch 253 step 250450 avg_loss=0.003
+[4422.6s] epoch 253 step 250500 avg_loss=0.003
+[4423.4s] epoch 253 step 250550 avg_loss=0.003
+[4424.2s] epoch 253 step 250600 avg_loss=0.003
+[4424.9s] epoch 253 step 250650 avg_loss=0.003
+[4425.6s] epoch 253 step 250700 avg_loss=0.003
+[4426.5s] epoch 253 step 250750 avg_loss=0.003
+[4427.4s] epoch 253 step 250800 avg_loss=0.003
+[4428.4s] epoch 253 step 250850 avg_loss=0.003
+[4429.3s] epoch 253 step 250900 avg_loss=0.003
+[4430.3s] epoch 253 step 250950 avg_loss=0.003
+[4430.3s] === epoch 253 done: avg_loss=0.003 (n=988 derivations) ===
+[4431.1s] epoch 254 step 251000 avg_loss=0.004
+[4432.1s] epoch 254 step 251050 avg_loss=0.003
+[4433.0s] epoch 254 step 251100 avg_loss=0.003
+[4433.9s] epoch 254 step 251150 avg_loss=0.003
+[4434.8s] epoch 254 step 251200 avg_loss=0.003
+[4435.6s] epoch 254 step 251250 avg_loss=0.004
+[4436.4s] epoch 254 step 251300 avg_loss=0.003
+[4437.3s] epoch 254 step 251350 avg_loss=0.003
+[4438.2s] epoch 254 step 251400 avg_loss=0.003
+[4439.3s] epoch 254 step 251450 avg_loss=0.003
+[4440.2s] epoch 254 step 251500 avg_loss=0.003
+[4441.2s] epoch 254 step 251550 avg_loss=0.003
+[4442.3s] epoch 254 step 251600 avg_loss=0.004
+[4443.3s] epoch 254 step 251650 avg_loss=0.003
+[4444.2s] epoch 254 step 251700 avg_loss=0.003
+[4445.2s] epoch 254 step 251750 avg_loss=0.003
+[4446.2s] epoch 254 step 251800 avg_loss=0.003
+[4447.0s] epoch 254 step 251850 avg_loss=0.003
+[4448.0s] epoch 254 step 251900 avg_loss=0.003
+[4448.8s] === epoch 254 done: avg_loss=0.003 (n=988 derivations) ===
+[4449.0s] epoch 255 step 251950 avg_loss=0.004
+[4450.1s] epoch 255 step 252000 avg_loss=0.002
+[4451.1s] epoch 255 step 252050 avg_loss=0.002
+[4451.8s] epoch 255 step 252100 avg_loss=0.003
+[4452.7s] epoch 255 step 252150 avg_loss=0.003
+[4453.6s] epoch 255 step 252200 avg_loss=0.003
+[4454.7s] epoch 255 step 252250 avg_loss=0.003
+[4455.9s] epoch 255 step 252300 avg_loss=0.003
+[4456.6s] epoch 255 step 252350 avg_loss=0.003
+[4457.6s] epoch 255 step 252400 avg_loss=0.003
+[4458.5s] epoch 255 step 252450 avg_loss=0.003
+[4459.2s] epoch 255 step 252500 avg_loss=0.003
+[4460.3s] epoch 255 step 252550 avg_loss=0.003
+[4461.2s] epoch 255 step 252600 avg_loss=0.003
+[4462.2s] epoch 255 step 252650 avg_loss=0.003
+[4463.3s] epoch 255 step 252700 avg_loss=0.003
+[4464.3s] epoch 255 step 252750 avg_loss=0.003
+[4465.4s] epoch 255 step 252800 avg_loss=0.003
+[4466.2s] epoch 255 step 252850 avg_loss=0.003
+[4467.3s] epoch 255 step 252900 avg_loss=0.003
+[4467.9s] === epoch 255 done: avg_loss=0.003 (n=988 derivations) ===
+[4468.3s] epoch 256 step 252950 avg_loss=0.003
+[4469.4s] epoch 256 step 253000 avg_loss=0.004
+[4470.2s] epoch 256 step 253050 avg_loss=0.003
+[4471.0s] epoch 256 step 253100 avg_loss=0.003
+[4472.0s] epoch 256 step 253150 avg_loss=0.003
+[4473.0s] epoch 256 step 253200 avg_loss=0.003
+[4473.9s] epoch 256 step 253250 avg_loss=0.003
+[4474.8s] epoch 256 step 253300 avg_loss=0.003
+[4475.7s] epoch 256 step 253350 avg_loss=0.003
+[4476.7s] epoch 256 step 253400 avg_loss=0.003
+[4477.7s] epoch 256 step 253450 avg_loss=0.003
+[4478.7s] epoch 256 step 253500 avg_loss=0.003
+[4479.8s] epoch 256 step 253550 avg_loss=0.003
+[4481.0s] epoch 256 step 253600 avg_loss=0.003
+[4482.0s] epoch 256 step 253650 avg_loss=0.003
+[4482.9s] epoch 256 step 253700 avg_loss=0.003
+[4483.8s] epoch 256 step 253750 avg_loss=0.003
+[4484.6s] epoch 256 step 253800 avg_loss=0.003
+[4485.4s] epoch 256 step 253850 avg_loss=0.003
+[4486.4s] epoch 256 step 253900 avg_loss=0.003
+[4486.6s] === epoch 256 done: avg_loss=0.003 (n=988 derivations) ===
+[4487.3s] epoch 257 step 253950 avg_loss=0.004
+[4488.1s] epoch 257 step 254000 avg_loss=0.003
+[4488.9s] epoch 257 step 254050 avg_loss=0.003
+[4490.0s] epoch 257 step 254100 avg_loss=0.003
+[4491.0s] epoch 257 step 254150 avg_loss=0.004
+[4492.0s] epoch 257 step 254200 avg_loss=0.004
+[4492.9s] epoch 257 step 254250 avg_loss=0.004
+[4493.8s] epoch 257 step 254300 avg_loss=0.004
+[4494.8s] epoch 257 step 254350 avg_loss=0.004
+[4495.8s] epoch 257 step 254400 avg_loss=0.003
+[4496.5s] epoch 257 step 254450 avg_loss=0.003
+[4497.3s] epoch 257 step 254500 avg_loss=0.003
+[4497.9s] epoch 257 step 254550 avg_loss=0.003
+[4498.6s] epoch 257 step 254600 avg_loss=0.003
+[4499.3s] epoch 257 step 254650 avg_loss=0.003
+[4500.0s] epoch 257 step 254700 avg_loss=0.003
+[4500.7s] epoch 257 step 254750 avg_loss=0.003
+[4501.4s] epoch 257 step 254800 avg_loss=0.003
+[4502.1s] epoch 257 step 254850 avg_loss=0.003
+[4502.9s] epoch 257 step 254900 avg_loss=0.003
+[4503.0s] === epoch 257 done: avg_loss=0.003 (n=988 derivations) ===
+[4503.7s] epoch 258 step 254950 avg_loss=0.004
+[4505.0s] eval step=8000 train_avg_loss=0.003 dev_rank1_f1=0.4304 dev_edge_p=0.4303 dev_edge_r=0.4306
+[4505.0s] === epoch 258 done: avg_loss=0.003 (n=64 derivations) ===
+[4505.0s] training wall-clock: 4489.1s (stopped_early=True)
+[4505.0s] max-steps budget: optimizer_steps=8000 (cap=8000, stop_reason=max_steps) epoch_fraction=259.109 throughput=1.7821 steps/s (0.5611 s/step)
+[4505.0s] wrote 32 curve rows -> runs/arms/v4b_788_hardsmall_0.pt.curve.tsv
+[4505.1s] holdout eval targets from runs/encoder_gold_v4b.jsonl: matched=98 missing=0
+[4506.2s] holdout eval targets (alt) from runs/encoder_gold_v2.jsonl: matched=98 missing=0
+[4506.2s] evaluating [last] (model policy) ...
+[4611.9s] [last] holdout (best-of-6 + rank1 + forest width): {'sense_recall': 0.7218390804597701, 'slot_recall': 0.6940298507462687, 'structure_recall': 0.1326530612244898, 'all_gold_recalled_rate': 0.1326530612244898, 'edge_precision': 0.5753692360621975, 'edge_recall': 0.5735748095441973, 'overgen_ratio': 1.098755524520831, 'n_records': 98, 'rank1_edge_precision': 0.4970539714387253, 'rank1_edge_recall': 0.456492090675764, 'rank1_edge_f1': 0.4759103217260455, 'rank1_structure_recall': 0.08163265306122448, 'mean_forest_width': 5.959183673469388}
+[4722.7s] [last] holdout_alt (best-of-6 + rank1 + forest width): {'sense_recall': 0.7079037800687286, 'slot_recall': 0.6335403726708074, 'structure_recall': 0.04979253112033195, 'all_gold_recalled_rate': 0.01020408163265306, 'edge_precision': 0.42878725249673644, 'edge_recall': 0.5174936222130101, 'overgen_ratio': 1.3825689616505943, 'n_records': 98, 'rank1_edge_precision': 0.32554993230006646, 'rank1_edge_recall': 0.4127040523724197, 'rank1_edge_f1': 0.36398252931722125, 'rank1_structure_recall': 0.024896265560165973, 'mean_forest_width': 5.989795918367347}
+[4722.7s] evaluating [best] (model policy) ...
+[4815.8s] [best] holdout (best-of-6 + rank1 + forest width): {'sense_recall': 0.7425287356321839, 'slot_recall': 0.6194029850746269, 'structure_recall': 0.08163265306122448, 'all_gold_recalled_rate': 0.08163265306122448, 'edge_precision': 0.5847942040619111, 'edge_recall': 0.5840078855384978, 'overgen_ratio': 1.0875624941951474, 'n_records': 98, 'rank1_edge_precision': 0.5196360299206702, 'rank1_edge_recall': 0.4337616748331034, 'rank1_edge_f1': 0.47283141865802225, 'rank1_structure_recall': 0.08163265306122448, 'mean_forest_width': 5.948979591836735}
+[4931.7s] [best] holdout_alt (best-of-6 + rank1 + forest width): {'sense_recall': 0.7422680412371134, 'slot_recall': 0.5900621118012422, 'structure_recall': 0.04979253112033195, 'all_gold_recalled_rate': 0.01020408163265306, 'edge_precision': 0.4291471839040866, 'edge_recall': 0.5398167875208691, 'overgen_ratio': 1.341077375005947, 'n_records': 98, 'rank1_edge_precision': 0.33524288919697076, 'rank1_edge_recall': 0.4069835965244129, 'rank1_edge_f1': 0.3676461548580052, 'rank1_structure_recall': 0.024896265560165973, 'mean_forest_width': 5.979591836734694}
+[4931.7s] evaluating RANDOM baseline on holdout ...
+[4934.9s] holdout (random baseline): {'sense_recall': 0.01839080459770115, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0, 'edge_recall': 0.0, 'overgen_ratio': 0.0, 'n_records': 98}
+[4934.9s] extra-eval: runs/hard_gold_test_filler.jsonl
+[5186.6s]   family=additive_focus n=10 rank1_edge_f1=0.5966 p=0.5933 r=0.6000
+[5186.6s]   family=content_interjection n=30 rank1_edge_f1=0.9250 p=0.9278 r=0.9222
+[5186.6s]   family=elision n=15 rank1_edge_f1=0.6722 p=0.6722 r=0.6722
+[5186.6s]   family=imperative n=50 rank1_edge_f1=0.7642 p=0.7751 r=0.7537
+[5186.6s]   family=pure_interjection n=20 rank1_edge_f1=0.9833 p=0.9833 r=0.9833
+[5186.6s]   family=quantity n=20 rank1_edge_f1=0.6667 p=0.6667 r=0.6667
+[5186.6s]   family=speaker_prime n=25 rank1_edge_f1=0.3636 p=0.4000 r=0.3333
+[5186.6s]   family=synth_subject n=30 rank1_edge_f1=0.6667 p=0.6667 r=0.6667
+[5186.6s] extra-eval: runs/hard_gold_test_template.jsonl
+[5412.1s]   family=additive_focus n=24 rank1_edge_f1=0.6803 p=0.6944 r=0.6667
+[5412.1s]   family=content_interjection n=30 rank1_edge_f1=0.8791 p=0.9444 r=0.8222
+[5412.1s]   family=elision n=30 rank1_edge_f1=0.7083 p=0.7083 r=0.7083
+[5412.1s]   family=imperative n=32 rank1_edge_f1=0.6051 p=0.6196 r=0.5911
+[5412.1s]   family=pure_interjection n=30 rank1_edge_f1=0.9714 p=1.0000 r=0.9444
+[5412.1s]   family=quantity n=4 rank1_edge_f1=nan p=0.0000 r=0.0000
+[5412.1s]   family=speaker_prime n=30 rank1_edge_f1=0.3015 p=0.3222 r=0.2833
+[5412.1s]   family=synth_subject n=30 rank1_edge_f1=0.6444 p=0.6444 r=0.6444
+[5412.1s] saved BEST checkpoint (step=1750, dev_rank1_f1=0.4626) -> runs/arms/v4b_788_hardsmall_0.pt
+[5412.1s] saved LAST checkpoint -> runs/arms/v4b_788_hardsmall_0.pt.last.pt
+[5412.1s] TOTAL wall-clock: 5412.1s
