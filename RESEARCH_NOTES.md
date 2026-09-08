@@ -1305,3 +1305,18 @@ fetch from an unrestricted network (scripts/fetch_k12.py has the recipes).
 Samples under data/k12_samples/. NEXT: FairytaleQA -> Episode converter
 (dispatched) so the comprehension phase has real K-12 QA ready when the
 encoder is.
+
+### HARD-GOLD v2 MERGED: lemmatized grounding + a/an agreement (2026-09-08)
+USVS.senses_of_surface(word): raw surface first, then WordNet morphy over
+noun/verb/adj; groundings now carry a `lemma` field (contract v2 updated).
+Pools: N_pl 30 -> 60 (regular plurals now ground), VI_past 10 -> 30, VT_past
+39 -> 40. Regenerated at --per-family 150: 1,368 records, 0 gate failures
+(train 979 / test_filler 185 / test_template 204, 3.3 MB). a/an agreement fixed.
+FINDING (material): the TEACHER gold path did NOT lemmatize either --
+build_encoder_gold_v2.ground_word called raw senses_of, so inflected content
+words in v2/v3 gold (past-tense verbs, plural nouns) ground as bare `entity`
+whenever the surface form is not itself a WordNet lemma. build_encoder_gold_v2
+now uses the lemmatized lookup, but v2 and v3-small gold were NOT rebuilt (the
+arms are mid-run on them; both share the defect, so the v2-vs-v3 comparison
+stays fair). NEXT gold build (v4) inherits the fix automatically; expect
+materially more sense-grounded nodes. See dev/HARD_GOLD_GEN_STATS.md v2 notes.
