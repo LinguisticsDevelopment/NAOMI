@@ -1239,3 +1239,23 @@ width. Two routines (one per seed), branches encoder-arms-seed0/-seed1.
 3. No red-pen pass on the 16 drafts; training/eval failures are the review.
 Director: dispatched the generator routine (branch hard-gold-gen). The
 comprehension spike (audit finding 8) still awaiting the lead's answer.
+
+### LEAD DIRECTION (2026-09-08): self-training loop + revisable comprehension
+- Once the encoder works, it SELF-TRAINS: its good parses on edge cases become
+  gold for the next round (bootstrapping the hard-construction families beyond
+  the generated templates).
+- Comprehension-side resolving is "sort of done" (M53-M57 membrane); with
+  consistent encoder lattices carrying full context it gets easier. Required
+  property: the system must be able to detect that it misunderstood a sentence
+  and RE-EVALUATE when later context arrives -> the candidate lattice (or its
+  provenance) must stay revisable in memory, not be collapsed and discarded.
+- The audit's "comprehension spike" is therefore reframed: not a new build, but
+  an evaluation of the EXISTING resolver on encoder-emitted lattices once the
+  v3 encoder exists, plus the re-evaluation-on-new-context property as a
+  measured capability.
+Director note on self-training: the filter that admits a self-parse to gold
+must not be the model's own confidence (today's gate results show best-of-8 vs
+rank-1 confidence is uncalibrated). Candidates already in the repo: structure-
+match round-trip (encode->decode->re-encode agreement), the no-phantom gate
+(J3, 96% even on failures), teacher agreement where the teacher parses, and
+comprehension-side consistency (a parse that contradicts memory is suspect).
