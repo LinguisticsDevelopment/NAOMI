@@ -1,5 +1,5 @@
-arm	seed	gold	n_train	optimizer_steps	stop_reason	epoch_fraction	train_wall_s	holdout_v2_edge_precision	holdout_v2_edge_recall	holdout_v2_rank1_edge_f1	holdout_v2_mean_forest_width	holdout_v3_edge_precision	holdout_v3_rank1_edge_f1	checkpoint
-v3_788	0	runs/encoder_gold_v3.jsonl	788	8000	max_steps	324.8731	13255.1	0.4508	0.5898	0.4105	5.93	0.6079	0.4880	runs/arms/v3_788_0.pt
-v2_788	0	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.1858	13635.2	0.6910	0.6909	0.5567	5.95	0.6970	0.4687	runs/arms/v2_788_0.pt
-v3_788	1	runs/encoder_gold_v3.jsonl	788	8000	max_steps	324.8731	13192.0	0.4424	0.5458	0.3731	5.96	0.5397	0.4208	runs/arms/v3_788_1.pt
-v2_788	1	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.3861	13763.8	0.7133	0.6575	0.5574	5.99	0.7123	0.4463	runs/arms/v2_788_1.pt
+arm	seed	gold	n_train	optimizer_steps	stop_reason	epoch_fraction	train_wall_s	holdout_v2_edge_precision	holdout_v2_edge_recall	holdout_v2_rank1_edge_f1	holdout_v2_mean_forest_width	holdout_alt_edge_precision	holdout_alt_rank1_edge_f1	best_step	best_dev_rank1_f1	last_dev_rank1_f1	epochs_equivalent	extra_filler_rank1_f1_json	extra_template_rank1_f1_json	checkpoint
+v3_788	0	runs/encoder_gold_v3.jsonl	788	8000	max_steps	324.8731	13255.1	0.4508	0.5898	0.4105	5.93	0.6079	0.4880				324.8731			runs/arms/v3_788_0.pt
+v2_788	0	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.1858	13635.2	0.6910	0.6909	0.5567	5.95	0.6970	0.4687				101.1858			runs/arms/v2_788_0.pt
+v3_788	1	runs/encoder_gold_v3.jsonl	788	8000	max_steps	324.8731	13192.0	0.4424	0.5458	0.3731	5.96	0.5397	0.4208				324.8731			runs/arms/v3_788_1.pt
+v2_788	1	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.3861	13763.8	0.7133	0.6575	0.5574	5.99	0.7123	0.4463				101.3861			runs/arms/v2_788_1.pt
