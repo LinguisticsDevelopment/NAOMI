@@ -1606,3 +1606,13 @@ with the FULL hard gold from now on. At 16K-scale real gold (8,000 records)
 the full hard set is a natural ~1:8, so the next scaling arm should be
 v4b_8000 + hard_gold_train (v4 templates once merged). speaker_prime stays
 weak (0.30-0.43) -> generator v4 widening (in flight).
+
+### HARD-GOLD v4 MERGED: all eight families widened (2026-09-08)
+Templates 100 -> 149 (elision 8->20, quantity 8->20, speaker_prime 9->26,
+synth_subject 8->22; imperative 29 and additive 22 from v3); 4 held out per
+widened family. 1,531 gated records, 0 failures (train 1,083 / test_filler 217
+/ test_template 231); hard_gold_train_small regenerated (200). Schema cannot
+express: `let 's {VT} ...` (first-person-plural synth subject), `{PROPN} as
+well .` (two-token additive particle), `it is for me .` (copular + speaker) --
+noted for a later contract extension. Next: the v4b_8000 + full hard gold arm
+with per-family eval on these wider held-out templates.
