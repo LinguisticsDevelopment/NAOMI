@@ -1286,3 +1286,22 @@ VI_past only 10. Fix = WordNet morphy lemmatization in the grounding lookup
 agreement ("a optic"). (3) Fillers are semantically random ("the poultry
 planted the physician") -- fine for structure, but the judge/encoder should
 not be trained to accept them as MEANINGFUL; keep them for structure only.
+
+### K-12 CORPUS SCOUT MERGED (Sonnet routine, 2026-09-08) -> dev/K12_CORPUS_SCOUT.md
+19 sources evaluated (license, grades, questions?, format, fetch, parse yield).
+TOP-3: (1) FairytaleQA -- Apache 2.0, 278 stories / 10,580 expert-written
+free-text QA pairs with an explicit/implicit tag (explicit = answer in the
+passage; implicit = inference -- a stepping stone toward "not stated"); teacher
+parse yield 94.0% (vs Gutenberg baseline 81.2%). (2) MCTest -- MSR research
+terms, 1,160 grade-school stories x 4 MC questions; 88.0% yield. (3) African
+Storybook -- CC-BY leveled readers, NO questions; 94.0% yield. No source ships
+"not answerable" items; "not stated" must be synthesized (distractor questions
+from other passages) or come later. CLEAR corpus = per-excerpt readability
+score, useful as the curriculum DIFFICULTY ORDER, not as training text.
+CAVEAT: the cloud sandbox's egress blocks huggingface, gutenberg.org, CMU,
+StoryWeaver, ASP, GDL, Bloom, Core Knowledge, EngageNY, Wikipedia -- only
+GitHub-mirrored sources could be fetched; RACE/CBT/CoQA/StoryWeaver need a
+fetch from an unrestricted network (scripts/fetch_k12.py has the recipes).
+Samples under data/k12_samples/. NEXT: FairytaleQA -> Episode converter
+(dispatched) so the comprehension phase has real K-12 QA ready when the
+encoder is.
