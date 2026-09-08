@@ -1,0 +1,23 @@
+corpus: 1475 unique sentences
+corpus glob: data/corpus_v3_small/real_*.txt
+forest policy: top1
+loading USVS ...
+USVS loaded: 9946 core words, 117679 senses
+[ParserInputEncoder] top-k parse failed (Sentence too long (120 > 100)); no hypotheses.
+  ... 100/1475 (296s)
+  ... 200/1475 (495s)
+  ... 300/1475 (526s)
+  ... 400/1475 (666s)
+  ... 500/1475 (741s)
+  ... 600/1475 (782s)
+  ... 700/1475 (821s)
+  ... 800/1475 (866s)
+  ... 900/1475 (921s)
+  ... 1000/1475 (1022s)
+  ... 1100/1475 (1173s)
+  ... 1200/1475 (1324s)
+  ... 1300/1475 (1678s)
+  ... 1400/1475 (1886s)
+wrote 986 records -> runs/encoder_gold_v4_small.jsonl
+outcomes: {'no-hypothesis': 372, 'ok': 986, 'grounding-fail': 107, 'cap-hit': 10}
+wrote stats -> dev/ENCODER_GOLD_V4_SMALL_STATS.md
