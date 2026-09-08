@@ -1,29 +1,29 @@
 [   0.0s] loading gold from runs/encoder_gold_v2.jsonl
-[   0.3s] 985 gold records
-[   0.3s] holdout mode: 98 held-out sentences, pool=887, train subset=150 (subset_seed=0)
-[   0.3s] loading USVS from /home/user/NAOMI/consciousness_transformer/data/usvs
-[  16.6s] USVS loaded: 117679 senses, d_axes=607
-[  16.6s] pos_vocab=15 role_vocab=37
-[  16.6s] policy params: 199,172 (~0.797 MB fp32)
-[  16.6s] building features + derivations for 150 train records
-[  16.8s] 438 teacher-forced derivations
-[  20.8s] epoch 0 step 50 avg_loss=76.539
-[  23.4s] epoch 0 step 100 avg_loss=74.737
-[  25.9s] epoch 0 step 150 avg_loss=74.696
-[  28.4s] epoch 0 step 200 avg_loss=72.181
-[  31.0s] epoch 0 step 250 avg_loss=71.088
-[  33.4s] epoch 0 step 300 avg_loss=69.509
-[  35.8s] epoch 0 step 350 avg_loss=67.701
-[  38.1s] epoch 0 step 400 avg_loss=66.397
-[  40.1s] === epoch 0 done: avg_loss=65.182 (n=438 derivations) ===
-[  40.6s] epoch 1 step 450 avg_loss=51.934
-[  41.6s] === epoch 1 done: avg_loss=49.126 (n=32 derivations) ===
-[  41.6s] training wall-clock: 23.1s (stopped_early=True)
-[  41.6s] max-steps budget: optimizer_steps=30 (cap=30, stop_reason=max_steps) epoch_fraction=1.096 throughput=1.3012 steps/s (0.7685 s/step)
-[  41.6s] evaluating (model policy) ...
-[  41.6s] holdout eval targets from runs/encoder_gold_v2.jsonl: matched=98 missing=0
-[ 148.3s] holdout (best-of-6 + rank1 + forest width): {'sense_recall': 0.0, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0, 'edge_recall': 0.0, 'overgen_ratio': 0.0, 'n_records': 98, 'rank1_edge_precision': 0.0, 'rank1_edge_recall': 0.0, 'rank1_edge_f1': nan, 'rank1_structure_recall': 0.0, 'mean_forest_width': 3.4285714285714284}
-[ 148.3s] evaluating RANDOM baseline on holdout ...
-[ 153.2s] holdout (random baseline): {'sense_recall': 0.027491408934707903, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0054259799157758346, 'edge_recall': 0.005915937803692905, 'overgen_ratio': 0.03290816326530612, 'n_records': 98}
-[ 153.2s] saved checkpoint -> runs/arms/_smoke_calib.pt
-[ 153.2s] TOTAL wall-clock: 153.2s
+[   0.2s] 985 gold records
+[   0.2s] holdout mode: 98 held-out sentences, pool=887, train subset=150 (subset_seed=0)
+[   0.2s] loading USVS from /home/user/NAOMI/consciousness_transformer/data/usvs
+[  13.7s] USVS loaded: 117679 senses, d_axes=607
+[  13.7s] pos_vocab=15 role_vocab=37
+[  13.7s] policy params: 199,172 (~0.797 MB fp32)
+[  13.7s] building features + derivations for 150 train records
+[  13.8s] 438 teacher-forced derivations
+[  17.1s] epoch 0 step 50 avg_loss=76.539
+[  18.8s] epoch 0 step 100 avg_loss=74.737
+[  20.4s] epoch 0 step 150 avg_loss=74.696
+[  22.0s] epoch 0 step 200 avg_loss=72.181
+[  23.7s] epoch 0 step 250 avg_loss=71.088
+[  25.4s] epoch 0 step 300 avg_loss=69.509
+[  27.2s] epoch 0 step 350 avg_loss=67.701
+[  29.0s] epoch 0 step 400 avg_loss=66.397
+[  30.4s] === epoch 0 done: avg_loss=65.182 (n=438 derivations) ===
+[  30.8s] epoch 1 step 450 avg_loss=51.934
+[  31.4s] === epoch 1 done: avg_loss=49.126 (n=32 derivations) ===
+[  31.4s] training wall-clock: 16.1s (stopped_early=True)
+[  31.4s] max-steps budget: optimizer_steps=30 (cap=30, stop_reason=max_steps) epoch_fraction=1.096 throughput=1.8664 steps/s (0.5358 s/step)
+[  31.5s] holdout eval targets from runs/encoder_gold_v2.jsonl: matched=98 missing=0
+[  31.5s] evaluating (model policy) ...
+[  98.4s] holdout (best-of-6 + rank1 + forest width): {'sense_recall': 0.0, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0, 'edge_recall': 0.0, 'overgen_ratio': 0.0, 'n_records': 98, 'rank1_edge_precision': 0.0, 'rank1_edge_recall': 0.0, 'rank1_edge_f1': nan, 'rank1_structure_recall': 0.0, 'mean_forest_width': 3.4285714285714284}
+[  98.4s] evaluating RANDOM baseline on holdout ...
+[ 102.2s] holdout (random baseline): {'sense_recall': 0.027491408934707903, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0054259799157758346, 'edge_recall': 0.005915937803692905, 'overgen_ratio': 0.03290816326530612, 'n_records': 98}
+[ 102.2s] saved checkpoint -> runs/arms/_smoke_calib.pt
+[ 102.2s] TOTAL wall-clock: 102.2s
