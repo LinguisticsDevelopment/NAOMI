@@ -165,9 +165,10 @@ object per §4 replaces the scalar `*_sense_id`):
 |---|---|---|---|
 | `predicate` | string | **yes** | Surface predicate token, or `null` when the predicate is elided (`grounding.type == "elision"`) or synthesized. Copied for readability; the `grounding` is authoritative. |
 | `predicate_grounding` | object | no | The predicate's candidate slot / grounding (§4). Normal verb → `type:"sense"`; elided predicate ("More!") → `type:"elision"`. |
+| `predicate_token_index` | int | **yes, and usually absent** | **Added D6** (dev/CURRENT_STATE.md decisions locked, 2026-09-07). `null`/absent for a real `sense`/`entity` predicate (its index is derived by `encoder_model._predicate_token_index`'s string-match walk, as before) and for an elided predicate with no surface trace at all. Set ONLY when an `elision`/`reference` predicate has a stranded surface CARRIER that is not itself the predicate's meaning — e.g. `did` in "the dog did .", standing in for the elided main verb so its tense/polarity survive. `predicate` itself stays `null` in that case (the carrier is not what the predicate MEANS); `encoder_model.clause_node_order` reads this field for any non-`sense`/`entity` predicate. |
 | `is_question` | bool | no | `Clause.is_question`. Unchanged from v1. |
 | `utterance_kind` | string | no (default `"proposition"`) | Speech-act shape of the clause. `"proposition"` = v1 default (assertion/question). `"imperative"` = has a synthesized addressee subject (§5). `"interjection"` = an exclamation grounded to its literal/gloss sense (§6). **This is the ONLY appraisal-related marker; there is no FEEL/GOOD/BAD explication** — see §6. |
-| `roles[j].relation` | string | no | The role label. **Frozen role vocabulary kept unchanged from v1:** closed core `SUBJECT`, `OBJECT`, `INDIRECT_OBJECT`, `PLACE`, `SOURCE`, `AGENT`, `RECIPIENT`, plus open PP-roles (an uppercased preposition, e.g. `WITH`, `FOR`, `OF`, `ABOUT`). |
+| `roles[j].relation` | string | no | The role label. Closed core kept unchanged from v1: `SUBJECT`, `OBJECT`, `INDIRECT_OBJECT`, `PLACE`, `SOURCE`, `AGENT`, `RECIPIENT`, plus open PP-roles (an uppercased preposition, e.g. `WITH`, `FOR`, `OF`, `ABOUT`). Also in active use, all STRUCTURAL relation labels that never touch USVS sense coordinates or grounding: the modifier roles `DESCRIPTION`/`SPECIFICATION`/`COMPLEMENT`/`SUBJECT_COMPLEMENT` (phase-1 richer-gold extraction, `421f450`) and, **added D4** (dev/CURRENT_STATE.md decisions locked, 2026-09-07), `QUANTITY` (a bare quantifier fragment — "More !"), `ADDITIVE` and `FOCUS` (the "too"/"also" particle). All seven of the non-core labels are collected in `nsm_ct.clause.MODIFIER_RELATIONS`, which downstream "core args" consumers (`clause_reactor.py`, `corpus.py`, `curriculum2.py`) filter out uniformly. |
 | `roles[j].word` | string | **yes** | Surface token filling the role, or `null` for a synthesized/elided filler with no surface token. Copied for readability; `grounding` is authoritative. |
 | `roles[j].token_index` | int | **yes** | Index into `tokens`/`pos` for `word`; `null` when there is no surface token (synthesized or elided fillers). Also the key into `token_sense_candidates` for a `sense` slot. |
 | `roles[j].is_entity` | bool | no | `is_entity(word)` — true for names/pronouns (this grammar's referent variables). Unchanged from v1. |
@@ -312,6 +313,23 @@ there is nothing for comprehension to select. The **frozen role vocabulary**
 (closed core + open PP-roles, §3) is unchanged. Both addenda's `synthesized`
 / `synth_kind` / `filler_kind:"synthesized"` markers collapse into
 `grounding.type:"prime"`.
+
+**D3 (dev/CURRENT_STATE.md decisions locked, 2026-09-07): prime `I`.**
+Canonical NSM has both `I` and `YOU` as substantive primes. The SPEAKER,
+wherever it is the grammar-licensed filler — bare `me`/`I`/`myself`
+(`"tell me ..."`, `"wait for me ."`, `"me too ."`) — grounds the same way,
+symmetric with the addressee:
+
+```json
+{ "relation": "INDIRECT_OBJECT", "word": "me", "token_index": 1, "is_entity": true,
+  "grounding": { "type": "prime", "prime": "I", "candidates": null } }
+```
+
+Unlike the synthesized addressee, a first-person filler usually **does**
+have a surface token, so — unlike `YOU`'s `token_index:null` — it keeps its
+real `token_index`; the oracle (`encoder_model.linearize_tree`'s
+`EMIT_SYNTH_SLOT` branch) shifts to and consumes it exactly like any other
+grounded node. `encoder_model.PRIMES` is now `["YOU", "I", "<UNK_PRIME>"]`.
 
 ---
 
