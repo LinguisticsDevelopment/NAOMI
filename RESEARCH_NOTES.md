@@ -1516,3 +1516,15 @@ test_filler 200 / test_template 210). New runs/hard_gold_train_small.jsonl =
 200-record family-stratified sample for a 1:4 mixing arm. Next arm set (after
 the 16K gold): v4b_3000, v4b_8000, and v4b_788 + hard_small (1:4) with per-
 family extra-eval on the wider held-out templates.
+
+### LEAD DIRECTIVE (2026-09-08): score trees in USVS space, not binary
+Loss and evaluation must compare the FLATTENED output tree to the gold tree in
+USVS space (graded similarity of node groundings, with role/attachment
+weighting), not binary edge match. Today both are binary: teacher-forced CE over
+discrete actions; edge-F1 on exact (role, token) pairs. A near-miss sense or a
+one-head-off modifier scores 0, same as a phantom, and yields no gradient.
+Dispatched (Opus design + build): usvs_tree_similarity metric; re-score every
+arms-1/2 checkpoint on it alongside edge-F1; soft-target loss option for the
+heads that make graded choices; one smoke arm. FairytaleQA is confirmed as
+COMPREHENSION data only (parser sees it only at run time / via judge-admitted
+self-training later).
