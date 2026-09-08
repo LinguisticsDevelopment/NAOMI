@@ -80,3 +80,19 @@ held-out zero-shot grammar-swap exam.
    against structure-match reward + copy-from-structure no-confab gate.
 6. (deferred, needs lead) GPU-capable encoder to exploit the full 16K; K-12
    comprehension phase.
+
+## AUDIT ADDENDUM (2026-09-08) — read dev/AUDIT_2026-09-08.md
+Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
+- NEXT ACTION 3 (Gold_Expand) is GATED on two measurements now in flight
+  (branch `encoder-complement-probe`): (a) rank-1 committed-tree edge-F1 >= 0.55
+  (the 0.70 headline is best-of-8 oracle); (b) encoder usable-rate >= 50% on
+  sentences the TEACHER FAILS (its only value beyond parser distillation).
+- NEXT ACTION 4 (train): never bundle. Arms v2@788 / v3@788 / v3@~3000 at FIXED
+  gradient steps, 2 seeds -> separates "more data" from "cleaner data".
+- NEXT ACTION 5 (memory-frame decoder): ON HOLD -- its coverage gate failed
+  twice; respec toward reduced-realization; confab-rate is the hard gate.
+- NEXT ACTION 6: GPU encoder DROPPED (Python-bound, not FLOP-bound).
+- Hand-gold 16: treat as held-out TEST set per family, not training data.
+- AWAITING LEAD: comprehension-side spike (can a GRU over tensor memory resolve
+  a candidate lattice?) -- the thesis risk nothing in this plan touches.
+- D1-D6 implementation dispatched 2026-09-08 (branch `decisions-d1-d6`).

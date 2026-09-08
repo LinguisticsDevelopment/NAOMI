@@ -1061,3 +1061,47 @@ resume doc (component status + locked decisions + branch map + next-action order
 Context refresh planned; this + RESEARCH_NOTES + memory carry all state.
 NEXT: implement decisions 1-6 (one routine) -> lead red-pens HAND_GOLD_DRAFT.md ->
 run Gold_Expand.ipynb -> train encoder on ~3-5K subset -> build memory-decoder.
+
+### INDEPENDENT AUDIT (Opus, fresh eyes, 2026-09-08) — CONTINUE WITH CHANGES
+Full report: dev/AUDIT_2026-09-08.md. Lead asked "are we pouring energy into a
+bad direction?" Verdict: direction defensible, but the plan spends the week on
+the LEAST uncertain half and bundles three uncontrolled changes (top-1 prune +
+richer extraction + 11x corpus) into one retrain. Load-bearing findings:
+1. The encoder's ONLY value over the teacher parser is on sentences the teacher
+   CANNOT parse (inference needs no parser: build_features ~L201) -- and that has
+   NEVER been measured. Cheap. -> DISPATCHED (trig: encoder-complement-probe).
+2. edge_P 0.70 / structure 0.21 are BEST-OF-8-TREES oracle numbers
+   (_best_tree_overlap ~L912 picks the max-overlap tree; overgen ignores forest
+   width). Rank-1 committed-tree metrics never reported. -> DISPATCHED (same
+   routine). Gate: rank-1 edge-F1 >= 0.55.
+3. Data-limited verdict rests on ONE point (n=788) at fixed epochs (4x the
+   gradient steps of n=200), one seed; 200->400 was flat (+0.008). tf_acc trend
+   mildly supports it. -> FOLDED INTO the v3 training plan: arms v2@788 vs
+   v3@788 vs v3@3000 at FIXED gradient steps, 2 seeds -- answers "more" and
+   "cleaner" separately instead of a seed replication on old gold.
+4. Memory-frame decoder: its OWN build-order gate ("coverage near-total or
+   revisit") failed twice (23.1% -> 30.2%, connectives 39% content) and the
+   design was never revised, yet it is still next-action 5. -> HOLD; respec
+   toward reduced-realization (lead had already reopened that fork). Keep
+   confab-rate as the hard gate; structure-match is diagnostic until its
+   gold-text control clears 0.9.
+5. 16 hand-authored records are ~0.2% of a 8-10K bulk; they cannot TRAIN four
+   constructions. Use them as a held-out TEST set per family. -> recommend to
+   lead (red-pen still needed; they become the exam, not the lesson).
+6. "Universal / grammar-as-input" is not implemented: compute_fired_rules is 7
+   hard-coded POS heuristics; Spanish swap swapped tagger + test-gold generator,
+   not a grammar channel. Spanish gold = 6x6x6 template grid, verbs -> entity;
+   "cross-lingual transfer at scale" is over-sold. -> ledger correction; no
+   further Spanish claims until a real grammar channel exists.
+7. GPU encoder is NOT the bottleneck (per-record training loop, Python-bound,
+   343K params); 16K x 30 epochs ~ 24h CPU, arms parallelise. -> DROP the GPU
+   engineering item. Aurora clock already dropped 08-30; AURORA_SPRINT.md is
+   superseded for sequencing.
+8. Biggest untouched risk: no comprehension-model spec; nobody has shown a small
+   GRU over tensor memory can RESOLVE a candidate lattice at all. A 2-day toy
+   spike over existing gold lattices would say more about the thesis than the
+   16K build. -> LEAD DECISION (architecture).
+Director actions: D1-D6 routine dispatched anyway (cheap, uncontroversial,
+trig_01AAtchs2heh9TSMCfGEYXXv -> branch decisions-d1-d6); measurement routine
+dispatched (rank-1 + complement probe -> branch encoder-complement-probe);
+Gold_Expand.ipynb stays GATED on those two results.
