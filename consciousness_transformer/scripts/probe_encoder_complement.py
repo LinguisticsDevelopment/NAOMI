@@ -60,6 +60,7 @@ from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.nsm_primes import PRIME_NAMES  # noqa: E402
 from nsm_ct.structure import PARSE_LABELS  # noqa: E402
 from train_encoder import load_gold, stratified_split  # noqa: E402
+from nsm_ct.tree_render import node_detail_compact, normalize_gold_tree  # noqa: E402
 
 SEED = 20260908
 N_COMPLEMENT = 100
@@ -241,16 +242,7 @@ def gold_top1_tree(record: dict) -> dict:
     trees = record.get("lattice", {}).get("trees", [])
     if not trees:
         return {"clauses": []}
-    gt = trees[0]
-    clauses = []
-    for cl in gt["clauses"]:
-        pg = cl["predicate_grounding"]
-        pred_idx = em._predicate_token_index(record, cl) if pg["type"] in ("sense", "entity") else None
-        pred = {"relation": "PREDICATE", "token_index": pred_idx, "grounding": pg}
-        roles = [{"relation": r["relation"], "token_index": r["token_index"], "grounding": r["grounding"]}
-                 for r in cl["roles"]]
-        clauses.append({"predicate": pred, "roles": roles, "utterance_kind": cl.get("utterance_kind", "proposition")})
-    return {"clauses": clauses}
+    return normalize_gold_tree(record, trees[0])
 
 
 # ---------------------------------------------------------------------------
@@ -260,18 +252,7 @@ def gold_top1_tree(record: dict) -> dict:
 def render_node(role: str, node: dict, tokens: list) -> str:
     idx = node.get("token_index")
     tok = tokens[idx] if idx is not None and 0 <= idx < len(tokens) else "<none>"
-    g = node.get("grounding", {}) or {}
-    gtype = g.get("type")
-    if gtype == "sense":
-        cands = g.get("candidates") or []
-        sense = cands[0] if cands else "?"
-        detail = f"sense:{sense}"
-    elif gtype == "prime":
-        detail = f"prime:{g.get('prime')}"
-    elif gtype in ("reference", "elision"):
-        detail = f"{gtype}:{g.get('source')}"
-    else:
-        detail = str(gtype)
+    detail = node_detail_compact(node, {"tokens": tokens})
     return f"    {role}: {tok}({detail})"
 
 
