@@ -26,6 +26,12 @@ _GROUNDING_FAIL_REASONS = (
     "unknown-word", "no-parse", "multiple-parses-unresolved",
     "unsupported-construction", "pronoun-unresolvable",
     "no-relation-extracted", "fragment-skipped",
+    # scripts/convert_fairytaleqa.py's per-sentence-safe wrapper
+    # (_parse_section_safe): exceptions quantum_parser itself doesn't turn
+    # into a taxonomy tag (a raw ValueError on a >100-token sentence, or a
+    # RecursionError on pathological nesting), caught per-sentence so they
+    # can't crash the whole conversion run.
+    "sentence-too-long", "max-recursion-depth", "unexpected-error",
 )
 
 
@@ -116,8 +122,10 @@ def build(episodes: List[dict]) -> str:
     # -------------------------------------------------------------------
     lines.append("## Parse yield (over every sentence cited by any episode's passage)")
     lines.append("")
-    lines.append("Every SECTION in the fetch is parsed exactly once through "
-                  "`nsm_ct.corpus.parse_passage` (the real `quantum_parser` "
+    lines.append("Every SECTION selected under the conversion run's `--parse` mode "
+                  "(`scripts/convert_fairytaleqa.py --parse none|sample|all`) is parsed "
+                  "exactly once through its per-sentence-safe wrapper around "
+                  "`nsm_ct.corpus._parse_one_sentence` (the real `quantum_parser` "
                   "teacher, default `CORPUS_MAX_HYPOTHESES`/"
                   "`CORPUS_MAX_PARSE_SECONDS` caps, unmodified) and cached; a "
                   "summary question's multi-section passage stats are the "
@@ -125,7 +133,10 @@ def build(episodes: List[dict]) -> str:
                   "-- see `scripts/convert_fairytaleqa.py`'s module docstring. "
                   "This table is over the resulting per-SECTION sentence set "
                   "(no double-counting a section shared by multiple "
-                  "questions).")
+                  "questions). Under `--parse sample` (the default), this is the "
+                  "stratified ~2,000-sentence sample only, NOT the full corpus -- see "
+                  "the Counts section above for full-corpus episode/question totals, "
+                  "which cover every episode regardless of parse mode.")
     lines.append("")
 
     seen_sections = set()
@@ -158,6 +169,17 @@ def build(episodes: List[dict]) -> str:
                   f"{cap_hit} ({_pct(cap_hit, total_sents)})")
     lines.append(f"- grounding-fail (every other failure reason -- no fact extracted, "
                   f"not a resource cap): {grounding_fail} ({_pct(grounding_fail, total_sents)})")
+    too_long = hist.get("sentence-too-long", 0)
+    max_recursion = hist.get("max-recursion-depth", 0)
+    lines.append(f"  - of which sentence-too-long (>100 tokens -- quantum_parser's own "
+                  f"`max_sentence_length` guard raises a bare `ValueError`, not the caught "
+                  f"`ParseResourceExceeded`, so `scripts/convert_fairytaleqa.py` wraps each "
+                  f"sentence individually to catch it rather than crash the run): "
+                  f"{too_long} ({_pct(too_long, total_sents)})")
+    lines.append(f"  - of which max-recursion-depth (quantum_parser's recursive-descent "
+                  f"grammar hit Python's recursion limit on a pathologically nested "
+                  f"sentence -- same per-sentence catch): "
+                  f"{max_recursion} ({_pct(max_recursion, total_sents)})")
     lines.append("")
     lines.append("Full taxonomy breakdown:")
     lines.append("")
@@ -170,6 +192,12 @@ def build(episodes: List[dict]) -> str:
                   "have EVERY sentence of their passage land in a usable outcome "
                   "(`ok`/`parsed-ambiguous`/`parsed-pronoun-resolved`) -- i.e. fully "
                   "parseable end to end by today's teacher.")
+    unparsed = sum(1 for e in episodes if e["meta"]["parse_stats"]["n_sentences"] == 0)
+    lines.append(f"Note: under `--parse sample`/`none`, most episodes' sections were never "
+                  f"ATTEMPTED at all (not a parse failure) -- {unparsed}/{n} episodes "
+                  f"({_pct(unparsed, n)}) have zero parsed sentences for exactly that reason, "
+                  "so the fully-parseable figure above is only a corpus-wide statement under "
+                  "`--parse all`.")
     lines.append("")
 
     # -------------------------------------------------------------------

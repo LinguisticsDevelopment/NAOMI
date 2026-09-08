@@ -48,7 +48,16 @@ shards sections across ``--workers`` processes (default: all CPU cores).
 Usage:
     python scripts/convert_fairytaleqa.py \\
         --in-dir data/k12/fairytaleqa --out runs/fairytaleqa_episodes.jsonl \\
-        --workers 4
+        --workers 4 --parse sample
+
+``--parse`` (``none``/``sample``/default ``sample``/``all``) makes per-sentence
+parsing OPTIONAL, independent of episode construction (context/question/
+answer/metadata are always built from every episode regardless of this
+flag): ``none`` parses nothing at all; ``sample`` additionally parses a
+stratified random ~2,000-sentence sample (seeded, by passage-length bin,
+:func:`select_sample_sections`) so the corpus parse-yield table stays
+meaningful without the ~31K-sentence full-corpus cost; ``all`` is the
+original full-corpus behavior. See dev/FAIRYTALEQA_STATS.md.
 """
 
 from __future__ import annotations
@@ -63,11 +72,11 @@ import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from nsm_ct.corpus import iter_sentences, parse_passage, taxonomy_counts  # noqa: E402
+from nsm_ct.corpus import _PassageRegistry, _parse_one_sentence, iter_sentences  # noqa: E402
 from nsm_ct.episode import Episode  # noqa: E402
 from nsm_ct.input_encoder import ParserInputEncoder  # noqa: E402
 from nsm_ct.nsm_primes import PRIME_NAMES  # noqa: E402
@@ -189,14 +198,140 @@ def discover_story_ids(in_dir: Path) -> List[str]:
 # parallel per-section parsing
 # ---------------------------------------------------------------------------
 
-def _parse_shard(args: Tuple[Path, List[str]]) -> Dict[Tuple[str, str], List[str]]:
-    """Worker: parses every section of its assigned stories, returns
-    ``{(story_id, section_id): [outcome_tag_per_sentence]}``."""
-    in_dir, story_ids = args
+# Stratified-sample defaults (--parse sample): a fixed seed keeps the sample
+# (and therefore the corpus parse-yield table) reproducible run to run.
+_SAMPLE_SIZE_SENTENCES = 2000
+_SAMPLE_SEED = 0
+
+
+def _section_length_bin(n_sent: int) -> str:
+    if n_sent <= 3:
+        return "short (<=3 sent)"
+    if n_sent <= 7:
+        return "medium (4-7 sent)"
+    if n_sent <= 15:
+        return "long (8-15 sent)"
+    return "very_long (16+ sent)"
+
+
+def select_sample_sections(in_dir: Path, story_ids: List[str], sample_size: int,
+                            seed: int) -> Set[Tuple[str, str]]:
+    """``--parse sample``: a stratified-by-passage-length-bin random sample
+    targeting ``sample_size`` SENTENCES total, sampled at whole-SECTION
+    granularity -- a section is the atomic parse unit (module docstring),
+    so sampling whole sections reproduces exactly what parsing just those
+    sections in isolation would produce. Each length bin contributes
+    sections (seed-shuffled) proportional to its own share of the corpus's
+    total sentences, until that bin's target is hit or the bin runs out.
+    """
+    import random
+
+    all_sections: List[Tuple[str, str, int]] = []
+    for sid in story_ids:
+        for sec_id, sents in load_story_sections(in_dir, sid).items():
+            if sents:
+                all_sections.append((sid, sec_id, len(sents)))
+
+    total_sents = sum(n for _, _, n in all_sections)
+    if total_sents <= sample_size:
+        return {(sid, sec) for sid, sec, _ in all_sections}
+
+    by_bin: Dict[str, List[Tuple[str, str, int]]] = defaultdict(list)
+    for row in all_sections:
+        by_bin[_section_length_bin(row[2])].append(row)
+
+    rng = random.Random(seed)
+    selected: Set[Tuple[str, str]] = set()
+    for rows in by_bin.values():
+        bin_total = sum(n for _, _, n in rows)
+        target = round(sample_size * bin_total / total_sents)
+        rng.shuffle(rows)
+        got = 0
+        for sid, sec, n in rows:
+            if got >= target:
+                break
+            selected.add((sid, sec))
+            got += n
+    return selected
+
+
+_MAX_SENTENCE_LENGTH = 100  # quantum_parser's own config.max_sentence_length default
+
+
+def _parse_section_safe(sents: List[str], parser) -> List[str]:
+    """One outcome tag per sentence of ONE section -- calls
+    ``nsm_ct.corpus._parse_one_sentence`` per sentence (rather than
+    ``parse_passage``'s single call over the whole section) so a
+    pathological sentence can't crash the whole shard/worker.
+
+    Two failure modes need special handling here, both seen on this
+    corpus's real prose:
+
+    * ``quantum_parser``'s own ``ValueError("Sentence too long (...)"``
+      guard (``config.max_sentence_length``, default 100 tokens) is
+      already caught INSIDE ``ParserInputEncoder._parse_topk_one`` (a
+      broad ``except Exception``) and silently downgraded to "no
+      hypotheses" -- it never reaches this function as a raised
+      exception at all, and would otherwise land in the generic
+      ``"no-parse"`` bucket, indistinguishable from every other
+      no-hypotheses cause. Checked directly here (same threshold, same
+      whitespace tokenization ``_parse_one_sentence_uncapped`` itself
+      uses) BEFORE calling the parser at all, so it gets its own
+      ``"sentence-too-long"`` tag and skips a doomed parse attempt.
+    * A ``RecursionError`` from deep tree-walking in
+      ``extract_discourse``/``_extract_triples`` (downstream of the
+      parser's own broad catch, so NOT swallowed there) -- caught here
+      and tagged ``"max-recursion-depth"`` instead of crashing the
+      worker process/pool.
+    """
+    registry = _PassageRegistry()
+    tags: List[str] = []
+    for idx, sent in enumerate(sents):
+        if len(sent.split()) > _MAX_SENTENCE_LENGTH:
+            tags.append("sentence-too-long")
+            continue
+        try:
+            results = _parse_one_sentence(idx, sent, parser, registry=registry)
+        except RecursionError:
+            tags.append("max-recursion-depth")
+            continue
+        except Exception:  # noqa: BLE001 -- deliberate catch-all safety net
+            tags.append("unexpected-error")
+            continue
+        if not results:
+            tags.append("no-relation-extracted")
+            continue
+        # A single _parse_one_sentence call is always homogeneous: either a
+        # list of ParsedClause (all sharing the same ambiguous flag, set
+        # uniformly across `triples`) or a single-element ParseFailure list
+        # -- so the first result's tag applies to the whole sentence.
+        first = results[0]
+        if first.__class__.__name__ == "ParsedClause":
+            if first.hypotheses is not None:
+                tags.append("parsed-ambiguous")
+            elif first.pronoun_candidates is not None:
+                tags.append("parsed-pronoun-resolved")
+            else:
+                tags.append("ok")
+        else:
+            tags.append(first.reason)
+    return tags
+
+
+def _parse_shard(args: Tuple[Path, List[str], Optional[Set[Tuple[str, str]]]]
+                  ) -> Dict[Tuple[str, str], List[str]]:
+    """Worker: parses the requested sections of its assigned stories --
+    ``only`` is ``None`` for every section of every assigned story
+    (``--parse all``), or a specific ``{(story_id, section_id)}`` subset
+    (``--parse sample``), letting the same shard machinery serve both.
+    Returns ``{(story_id, section_id): [outcome_tag_per_sentence]}``."""
+    in_dir, story_ids, only = args
     all_sents: List[str] = []
     per_story_sections: List[Tuple[str, Dict[str, List[str]]]] = []
     for sid in story_ids:
         sections = load_story_sections(in_dir, sid)
+        if only is not None:
+            sections = {sec: sents for sec, sents in sections.items() if (sid, sec) in only}
         per_story_sections.append((sid, sections))
         for sents in sections.values():
             all_sents.extend(sents)
@@ -210,43 +345,45 @@ def _parse_shard(args: Tuple[Path, List[str]]) -> Dict[Tuple[str, str], List[str
             if not sents:
                 out[(sid, sec_id)] = []
                 continue
-            results = parse_passage(sents, parser)
-            # Reproduces taxonomy_counts' own per-sentence precedence
-            # (ambiguous > pronoun-resolved > ok > first failure reason) but
-            # keeps the tag PER sentence index (taxonomy_counts itself only
-            # returns the aggregated Counter) -- this per-sentence record is
-            # what lets a multi-section summary episode's parse_stats be an
-            # exact union of its cited sections' cached outcomes.
-            outcome_by_idx: Dict[int, str] = {}
-            for rr in results:
-                if rr.__class__.__name__ == "ParsedClause":
-                    if rr.hypotheses is not None:
-                        outcome_by_idx[rr.sentence_index] = "parsed-ambiguous"
-                    elif rr.pronoun_candidates is not None:
-                        outcome_by_idx.setdefault(rr.sentence_index, "parsed-pronoun-resolved")
-                    else:
-                        outcome_by_idx.setdefault(rr.sentence_index, "ok")
-                elif rr.sentence_index not in outcome_by_idx:
-                    outcome_by_idx[rr.sentence_index] = rr.reason
-            tags = [outcome_by_idx.get(i, "no-relation-extracted") for i in range(len(sents))]
-            assert sum(taxonomy_counts(results).values()) == len(sents)
+            tags = _parse_section_safe(sents, parser)
+            assert len(tags) == len(sents)
             out[(sid, sec_id)] = tags
     return out
 
 
-def parse_all_sections(in_dir: Path, story_ids: List[str], workers: int) -> Dict[Tuple[str, str], List[str]]:
+def parse_all_sections(in_dir: Path, story_ids: List[str], workers: int,
+                        mode: str = "all", sample_size: int = _SAMPLE_SIZE_SENTENCES,
+                        seed: int = _SAMPLE_SEED) -> Dict[Tuple[str, str], List[str]]:
+    """``mode``: ``"none"`` -- no parsing at all (returns ``{}``); ``"sample"``
+    -- parses a stratified ``sample_size``-sentence sample only (see
+    :func:`select_sample_sections`); ``"all"`` (default, matches the
+    pre-``--parse``-flag behavior every caller not passing ``mode`` still
+    gets) -- parses every section of every given story."""
+    if mode not in ("none", "sample", "all"):
+        raise ValueError(f"unknown parse mode {mode!r}")
+    if mode == "none":
+        return {}
+
+    only: Optional[Set[Tuple[str, str]]] = None
+    shard_story_ids = story_ids
+    if mode == "sample":
+        only = select_sample_sections(in_dir, story_ids, sample_size, seed)
+        only_story_ids = {sid for sid, _ in only}
+        shard_story_ids = [sid for sid in story_ids if sid in only_story_ids]
+
     if workers <= 1:
-        return _parse_shard((in_dir, story_ids))
-    shards = [story_ids[i::workers] for i in range(workers)]
+        return _parse_shard((in_dir, shard_story_ids, only))
+    shards = [shard_story_ids[i::workers] for i in range(workers)]
     shards = [s for s in shards if s]
     t0 = time.time()
     with mp.get_context("spawn").Pool(processes=len(shards)) as pool:
-        results = pool.map(_parse_shard, [(in_dir, s) for s in shards])
+        results = pool.map(_parse_shard, [(in_dir, s, only) for s in shards])
     cache: Dict[Tuple[str, str], List[str]] = {}
     for r in results:
         cache.update(r)
     print(f"[convert_fairytaleqa] parsed {sum(len(v) for v in cache.values())} sentences "
-          f"across {len(cache)} sections in {time.time() - t0:.1f}s ({workers} workers)", flush=True)
+          f"across {len(cache)} sections in {time.time() - t0:.1f}s "
+          f"({workers} workers, --parse {mode})", flush=True)
     return cache
 
 
@@ -395,6 +532,14 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=_ROOT / "runs" / "fairytaleqa_episodes.jsonl")
     ap.add_argument("--workers", type=int, default=os.cpu_count() or 1)
     ap.add_argument("--limit-stories", type=int, default=0, help="0 = all stories.")
+    ap.add_argument("--parse", type=str, default="sample", choices=["none", "sample", "all"],
+                     help="none = every episode still gets its full passage/question/answer/"
+                          "metadata, just no parse_stats outcomes (no parsing at all -- fast). "
+                          "sample (default) = additionally parses a stratified random "
+                          f"~{_SAMPLE_SIZE_SENTENCES}-sentence sample (seeded, by passage-length "
+                          "bin) for the corpus parse-yield table -- only THOSE sentences get an "
+                          "outcome. all = parse every sentence of every section (slow: ~31K "
+                          "sentences corpus-wide -- the original, pre-flag behavior).")
     args = ap.parse_args()
 
     if not args.in_dir.exists():
@@ -407,7 +552,7 @@ def main() -> None:
     split_map = load_split_map(args.in_dir)
     print(f"[convert_fairytaleqa] {len(story_ids)} stories", flush=True)
 
-    section_cache = parse_all_sections(args.in_dir, story_ids, args.workers)
+    section_cache = parse_all_sections(args.in_dir, story_ids, args.workers, mode=args.parse)
     episodes, answer_type_counts = build_episodes(args.in_dir, story_ids, split_map, section_cache)
     n_attached = attach_entity_options(episodes)
     print(f"[convert_fairytaleqa] {len(episodes)} episodes, "
