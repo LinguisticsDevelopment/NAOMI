@@ -1208,3 +1208,21 @@ by tests/test_encoder_holdout.py), scripts/run_encoder_arms.sh (v2_788/v3_788/
 v3_3000 x seeds 0,1; skips v3 arms if gold absent; summary.tsv), colab/
 Encoder_Arms.ipynb. 41 tests green; unchanged-path smoke byte-identical.
 Smoke throughput 0.505 s/step at smoke config (d_model 64).
+
+### GOLD v3-SMALL BUILT (top-1, D1-D6) on v2's exact 1,475-sentence population (2026-09-08)
+Branch encoder-gold-v3-small (jsonl stays there, 8 MB; builder flags + stats +
+pre-expand corpus copies merged to mainline). FINDING en route: corpus-expand
+MODIFIED the original five corpus files in place, so `data/corpus_v3_small/`
+now holds the pre-expand text (rev 9d4aead) -- use those for any v2-comparable
+build. Results: 959 records (v2: 985), ALL exactly 1 tree; nodes/record 8.9
+(v2 22.3 summed over ~3.5 trees); prime I 161; interj.* 1; QUANTITY/ADDITIVE/
+FOCUS 0 (constructions absent from classic prose -- hand-gold territory).
+Coverage: 959/985 v2 sentences; the 26 missing are all long sentences that hit
+the 30 s parse cap under a contended CPU (v3 cap-hit 37 vs v2 11; the other
+outcome buckets are identical). Holdout evaluation against v3 targets may thus
+be on <98 sentences; the runner reports the count. Builder gained
+`--corpus-files` / `--corpus-glob` / GOLD_CORPUS_GLOB.
+ARMS DISPATCHED: v2_788 vs v3_788, seeds 0 and 1, STEPS=8000 (= run-2's ~8.2K
+optimizer steps: 788 records x ~3.3 derivations/record / batch 32 x 100 epochs),
+holdout = run-2's exact test split, scored on v2 AND v3 targets, rank-1 + forest
+width. Two routines (one per seed), branches encoder-arms-seed0/-seed1.
