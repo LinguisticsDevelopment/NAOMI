@@ -154,7 +154,7 @@ def load_corpus(glob_pattern: str = CORPUS_GLOB_DEFAULT,
     return out
 
 
-def ground_word(usvs, word: Optional[str]) -> Dict[str, object]:
+def ground_word(usvs, word: Optional[str], pos_hint: Optional[str] = None) -> Dict[str, object]:
     """The unified ``grounding`` construct (contract §4) for one surface word.
 
     - pronoun -> unresolved ``reference`` slot, run-time memory form
@@ -164,6 +164,13 @@ def ground_word(usvs, word: Optional[str]) -> Dict[str, object]:
       FULL candidate list (no commit).
     - content word the USVS lemma index doesn't cover -> ``entity``
       (contract §4.2's explicit "ungrounded content word" case).
+
+    ``pos_hint`` is the tagger's universal-POS tag for *word* (a
+    ``Tag`` enum name -- ``"NOUN"``/``"VERB"``/``"AUX"``/...), threaded
+    into ``usvs.senses_of_surface`` so lemmatization is POS-aware: function
+    words (AUX/DET/ADP/...) are never morphy-lemmatized, and content words
+    are lemmatized/ranked against the tagger's own part of speech (v4b fix
+    -- see ``dev/ENCODER_GOLD_V4B_SMALL_STATS.md``).
     """
     w = (word or "").lower()
     if w in FIRST_PERSON_SINGULAR:
@@ -179,7 +186,7 @@ def ground_word(usvs, word: Optional[str]) -> Dict[str, object]:
         }
     if is_entity(word or ""):
         return {"type": "entity", "candidates": None}
-    candidates, lemma = usvs.senses_of_surface(w)
+    candidates, lemma = usvs.senses_of_surface(w, pos_hint=pos_hint)
     if candidates:
         return {
             "type": "sense",
@@ -188,6 +195,20 @@ def ground_word(usvs, word: Optional[str]) -> Dict[str, object]:
             "retrieval": {"source": "lexicon", "method": "lemma_senses", "ref": None},
         }
     return {"type": "entity", "candidates": None}
+
+
+def _pos_hint_for(word: Optional[str], tokens: List[str], pos: List[str]) -> Optional[str]:
+    """Non-consuming POS lookup for a predicate/role WORD string: the first
+    token matching *word* case-insensitively. Used only as a lemmatization
+    hint (not for `token_index` recovery, which stays on `_IndexMatcher`'s
+    consume-on-match walk so existing index behavior is untouched)."""
+    if not word:
+        return None
+    w = word.lower()
+    for t, p in zip(tokens, pos):
+        if t.lower() == w:
+            return p
+    return None
 
 
 class _IndexMatcher:
@@ -209,17 +230,20 @@ class _IndexMatcher:
         return dq.popleft()
 
 
-def build_clause_dict(usvs, matcher: _IndexMatcher, cl) -> Dict[str, object]:
-    pred_grounding = ground_word(usvs, cl.predicate)
+def build_clause_dict(usvs, matcher: _IndexMatcher, cl,
+                      tokens: List[str], pos: List[str]) -> Dict[str, object]:
+    pred_grounding = ground_word(usvs, cl.predicate, _pos_hint_for(cl.predicate, tokens, pos))
     roles = []
     for relation, arg in cl.args:
         word = arg.token
+        idx = matcher.match(word)
+        pos_hint = pos[idx] if idx is not None and idx < len(pos) else None
         roles.append({
             "relation": relation,
             "word": word,
-            "token_index": matcher.match(word),
+            "token_index": idx,
             "is_entity": is_entity(word or ""),
-            "grounding": ground_word(usvs, word),
+            "grounding": ground_word(usvs, word, pos_hint),
         })
     return {
         "predicate": cl.predicate,
@@ -230,12 +254,12 @@ def build_clause_dict(usvs, matcher: _IndexMatcher, cl) -> Dict[str, object]:
     }
 
 
-def build_tree(usvs, tokens: List[str], graph) -> Optional[Tuple[Dict, List[Dict]]]:
+def build_tree(usvs, tokens: List[str], pos: List[str], graph) -> Optional[Tuple[Dict, List[Dict]]]:
     clauses, links = extract_discourse(graph)
     if not clauses:
         return None
     matcher = _IndexMatcher(tokens)
-    clause_dicts = [build_clause_dict(usvs, matcher, cl) for cl in clauses]
+    clause_dicts = [build_clause_dict(usvs, matcher, cl, tokens, pos) for cl in clauses]
     link_dicts = [
         {"coordinator": lk.coordinator, "prime": lk.prime, "clause_i": lk.i, "clause_j": lk.j}
         for lk in links
@@ -323,7 +347,7 @@ def build_record(usvs, parser: ParserInputEncoder, sentence: str,
     tree_scores: List[float] = []
     seen_trees = set()
     for graph, score in zip(graphs, scores):
-        built = build_tree(usvs, tokens, graph)
+        built = build_tree(usvs, tokens, pos, graph)
         if built is None:
             continue
         tree, link_dicts = built
@@ -343,7 +367,7 @@ def build_record(usvs, parser: ParserInputEncoder, sentence: str,
 
     token_sense_candidates = []
     for i, tok in enumerate(tokens):
-        cands, lemma = usvs.senses_of_surface(tok)
+        cands, lemma = usvs.senses_of_surface(tok, pos_hint=pos[i])
         cands = list(cands)
         if cands:
             token_sense_candidates.append({
