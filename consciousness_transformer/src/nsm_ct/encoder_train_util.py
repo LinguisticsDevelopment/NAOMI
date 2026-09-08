@@ -195,12 +195,33 @@ def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets:
     return agg
 
 
+def epochs_equivalent(step: int, batch_size: int, total_items: int) -> float:
+    """How many passes over `total_items` `step` optimizer steps of
+    `batch_size` amount to. v3 gold's ~1 derivation/record vs v2 forest
+    gold's ~3.3 means the SAME --max-steps budget on the SAME n_train is a
+    wildly different number of epochs over the corpus (WHY:
+    encoder-train-arms-v2) -- this is the number that makes that visible,
+    for whatever step a checkpoint (best or last) was actually taken at."""
+    return (step * batch_size / total_items) if total_items else float("nan")
+
+
+def evaluate_dev_fast(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets: int) -> Dict[str, float]:
+    """Cheap periodic dev-holdout eval for --eval-every: rank-1 edge-F1 with
+    a single-hypothesis `beam_decode` (beam_width=1, k=1) -- no beam search
+    branching, no best-of-k forest, just the argmax decode -- so it's cheap
+    enough to run every N optimizer steps without materially slowing down
+    training. With k=1 the "best-of-k" and "rank-1" numbers from
+    `evaluate_full` coincide; only the rank-1 fields are meaningful here."""
+    return evaluate_full(model, records, usvs, pos_vocab, hash_buckets, beam_width=1, k=1, policy="model")
+
+
 def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size: int,
                        max_seconds: float, max_steps: Optional[int] = None,
                        terminal_weight: float = 4.0,
                        on_step_50: Optional[Callable] = None,
                        on_epoch_done: Optional[Callable] = None,
-                       on_max_seconds: Optional[Callable] = None) -> dict:
+                       on_max_seconds: Optional[Callable] = None,
+                       on_optimizer_step: Optional[Callable[[int, float, float], Optional[bool]]] = None) -> dict:
     """Teacher-forced training loop shared by scripts/train_encoder.py and
     scripts/colab_train_encoder.py. Reproduces both scripts' original
     inline loops EXACTLY (same control flow, same clip/step/zero_grad
@@ -215,7 +236,16 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
     unconditional per-epoch flush of a partial trailing batch) rather than
     epochs; `epochs` becomes a ceiling only, so v3@788 and v3@3000 can be
     trained to the SAME optimization budget (dev/AUDIT_2026-09-08.md
-    finding 7)."""
+    finding 7).
+
+    `on_optimizer_step`, if given, is called after EVERY completed
+    optimizer step (both mid-epoch batches and the per-epoch trailing
+    partial-batch flush) with `(optimizer_steps, avg_loss_so_far,
+    train_wall_s)` -- the periodic-dev-eval / --keep-best / --patience hook
+    (train-arms v2 item A/B). Returning a truthy value requests an early
+    stop, handled exactly like hitting --max-steps (stop_reason=
+    "patience"). Defaulting to None keeps every existing caller (and the
+    no-flags path) byte-identical: the hook is simply never invoked."""
     loss_curve = []
     step_count = 0
     optimizer_steps = 0
@@ -223,6 +253,15 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
     stopped_early = False
     stop_reason = None
     total_items = len(train_items)
+
+    def _fire_on_optimizer_step() -> bool:
+        """Calls `on_optimizer_step` (if given) with the current
+        optimizer-step count / running avg loss / wall clock; returns
+        whether it requested an early stop."""
+        if on_optimizer_step is None:
+            return False
+        avg_so_far = epoch_loss / max(epoch_n, 1)
+        return bool(on_optimizer_step(optimizer_steps, avg_so_far, time.time() - train_start))
 
     for epoch in range(epochs):
         if time.time() - train_start > max_seconds:
@@ -236,6 +275,7 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
         epoch_n = 0
         opt.zero_grad()
         step_budget_hit = False
+        budget_hit_reason = "max_steps"
         for idx, (feats, steps) in enumerate(train_items):
             if time.time() - train_start > max_seconds:
                 stopped_early = True
@@ -253,6 +293,10 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
                 optimizer_steps += 1
                 if max_steps is not None and optimizer_steps >= max_steps:
                     step_budget_hit = True
+                patience_stop = _fire_on_optimizer_step()
+                if patience_stop and not step_budget_hit:
+                    step_budget_hit = True
+                    budget_hit_reason = "patience"
             if step_count % 50 == 0:
                 avg = epoch_loss / max(epoch_n, 1)
                 loss_curve.append((step_count, avg))
@@ -260,22 +304,25 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
                     on_step_50(epoch, step_count, avg)
             if step_budget_hit:
                 stopped_early = True
-                stop_reason = "max_steps"
+                stop_reason = budget_hit_reason
                 break
         # Unconditional per-epoch flush of a partial trailing batch -- SKIPPED
         # only when the inner loop already stopped exactly on the
-        # --max-steps cap: that break happens right after a real opt.step()
-        # + opt.zero_grad() (no leftover accumulated gradient), so an extra
-        # flush here would silently perform one more optimizer step on
-        # stale/zero gradients, violating "train for exactly N optimizer
-        # steps." A max-seconds break can land mid-batch with real
-        # accumulated gradient, so it still gets the flush.
-        do_trailing_step = not (max_steps is not None and stop_reason == "max_steps")
+        # --max-steps cap (or an --patience stop, same shape): that break
+        # happens right after a real opt.step() + opt.zero_grad() (no
+        # leftover accumulated gradient), so an extra flush here would
+        # silently perform one more optimizer step on stale/zero gradients,
+        # violating "train for exactly N optimizer steps." A max-seconds
+        # break can land mid-batch with real accumulated gradient, so it
+        # still gets the flush.
+        do_trailing_step = stop_reason not in ("max_steps", "patience")
+        trailing_patience_stop = False
         if do_trailing_step:
             torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
             opt.step()
             opt.zero_grad()
             optimizer_steps += 1
+            trailing_patience_stop = _fire_on_optimizer_step()
         avg = epoch_loss / max(epoch_n, 1)
         loss_curve.append((step_count, avg))
         if on_epoch_done:
@@ -283,11 +330,14 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
         if max_steps is not None and optimizer_steps >= max_steps:
             stopped_early = True
             stop_reason = stop_reason or "max_steps"
+        if trailing_patience_stop and not stopped_early:
+            stopped_early = True
+            stop_reason = "patience"
         if stopped_early:
             break
 
     train_wall = time.time() - train_start
-    epoch_fraction = (optimizer_steps * batch_size / total_items) if total_items else float("nan")
+    epoch_fraction = epochs_equivalent(optimizer_steps, batch_size, total_items)
     return {
         "loss_curve": loss_curve,
         "step_count": step_count,

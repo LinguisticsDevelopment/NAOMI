@@ -1,29 +1,51 @@
 #!/usr/bin/env bash
 # Training-arm runner for the encoder scaling replication
-# (dev/AUDIT_2026-09-08.md finding 7 + recommendation (c)):
+# (dev/AUDIT_2026-09-08.md finding 7 + recommendation (c);
+# encoder-train-arms-v2 adds periodic dev eval + keep-best selection so
+# arms with different gold-derivations-per-record aren't compared at a
+# fixed optimizer-step budget that is secretly a very different number of
+# epochs -- see scripts/train_encoder.py's --eval-every/--keep-best):
 #
-#   v2_788   -- runs/encoder_gold_v2.jsonl, n_train=788   (today's data, today's size)
-#   v3_788   -- runs/encoder_gold_v3.jsonl, n_train=788   (same size as v2_788, CLEANER data only)
-#   v3_3000  -- runs/encoder_gold_v3.jsonl, n_train=3000  (v3_788 + MORE data)
+#   v2_788        -- runs/encoder_gold_v2.jsonl, n_train=788   (today's data, today's size)
+#   v3_788        -- runs/encoder_gold_v3.jsonl, n_train=788   (same size as v2_788, CLEANER data only)
+#   v3_3000       -- runs/encoder_gold_v3.jsonl, n_train=3000  (v3_788 + MORE data)
+#   v4b_788       -- runs/encoder_gold_v4b.jsonl, n_train=788  (v4b gold, same size as v2_788)
+#   v4b_788_hard  -- runs/encoder_gold_v4b.jsonl + runs/hard_gold_train.jsonl, n_train=788
+#                    (v4b gold topped up with the hard-construction gold; scored on its own
+#                    held-out hard-gold test splits via --extra-eval, reported per family)
 #
 # Comparing v2_788 vs v3_788 isolates data quality (top-1 prune + richer
 # extraction) at equal size and equal optimizer-step budget; v3_788 vs
 # v3_3000 isolates corpus size at equal quality. Every arm x seed trains for
 # exactly --max-steps optimizer steps (scripts/train_encoder.py item A) on a
 # stratified subset of its gold pool (item B) that EXCLUDES the shared
-# held-out sentences (item C, scripts/make_holdout.py), and is scored on
-# those same held-out sentences against BOTH v2 and v3 targets.
+# held-out sentences (item C, scripts/make_holdout.py) AND the shared dev
+# holdout sentences (--dev-holdout-file, whenever EVAL_EVERY>0), and is
+# scored on the test holdout regardless of which gold file trains it
+# (--eval-gold / --eval-gold-alt).
+#
+# Every arm also gets a periodic dev eval (--eval-every) and keep-best
+# checkpoint selection (--keep-best) by default: --max-steps is the same
+# for every arm, but a single-tree gold record trains many fewer
+# derivations than a forest-gold record, so the SAME step budget is a very
+# different number of epochs over the corpus -- --keep-best scores each arm
+# at ITS OWN best point on the dev holdout instead of wherever --max-steps
+# happens to land, and epochs_equivalent (scripts/train_encoder.py item C)
+# makes that epoch count visible in summary.tsv.
 #
 # Usage:
-#   bash scripts/run_encoder_arms.sh                # sequential, all 6 (arm x seed) runs
+#   bash scripts/run_encoder_arms.sh                # sequential, all (arm x seed) runs
 #   bash scripts/run_encoder_arms.sh --parallel 2    # up to 2 runs at a time
-#   bash scripts/run_encoder_arms.sh --dry-run       # print the 6 commands and exit, no training
+#   bash scripts/run_encoder_arms.sh --dry-run       # print the planned commands and exit, no training
 #   STEPS=20000 bash scripts/run_encoder_arms.sh     # override the optimizer-step budget
+#   ARMS="v2_788 v4b_788" bash scripts/run_encoder_arms.sh   # only run these arms (space/comma list)
+#   EVAL_EVERY=0 KEEP_BEST=0 bash scripts/run_encoder_arms.sh  # opt back out of encoder-train-arms-v2
 #   GOLD_V3=runs/encoder_gold_v3_draft.jsonl bash scripts/run_encoder_arms.sh
 #
-# Do NOT run a full arm without the lead's go-ahead -- at ~40,000 steps this
-# is many CPU-hours per arm x seed (see the printed wall-clock estimate,
-# which is projected from a quick --smoke throughput calibration run first).
+# Do NOT run a full arm without the lead's go-ahead -- at tens of thousands
+# of steps this is many CPU-hours per arm x seed (see the printed wall-clock
+# estimate, which is projected from a quick --smoke throughput calibration
+# run first).
 
 set -uo pipefail
 
@@ -34,11 +56,19 @@ STEPS="${STEPS:-40000}"
 MAX_SECONDS="${MAX_SECONDS:-172800}"   # 48h hard per-run ceiling; --max-steps is the real budget
 GOLD_V2="${GOLD_V2:-runs/encoder_gold_v2.jsonl}"
 GOLD_V3="${GOLD_V3:-runs/encoder_gold_v3.jsonl}"
+GOLD_V4B="${GOLD_V4B:-runs/encoder_gold_v4b.jsonl}"
+HARD_GOLD_TRAIN="${HARD_GOLD_TRAIN:-runs/hard_gold_train.jsonl}"
+HARD_GOLD_TEST_FILLER="${HARD_GOLD_TEST_FILLER:-runs/hard_gold_test_filler.jsonl}"
+HARD_GOLD_TEST_TEMPLATE="${HARD_GOLD_TEST_TEMPLATE:-runs/hard_gold_test_template.jsonl}"
 HOLDOUT_FILE="${HOLDOUT_FILE:-runs/holdout_sentences.txt}"
+HOLDOUT_DEV_FILE="${HOLDOUT_DEV_FILE:-runs/holdout_dev_sentences.txt}"
 SEEDS="${SEEDS:-0 1}"
 BEAM_WIDTH="${BEAM_WIDTH:-6}"
 K="${K:-6}"
 SMOKE_CALIB_STEPS="${SMOKE_CALIB_STEPS:-30}"
+EVAL_EVERY="${EVAL_EVERY:-250}"
+KEEP_BEST="${KEEP_BEST:-1}"
+ARMS="${ARMS:-}"   # space/comma list of arm names to run; empty = all
 
 PARALLEL=1
 DRY_RUN=0
@@ -59,91 +89,142 @@ ARMS_DIR="runs/arms"
 mkdir -p "$ARMS_DIR"
 SUMMARY="$ARMS_DIR/summary.tsv"
 if [[ ! -f "$SUMMARY" ]]; then
-  printf 'arm\tseed\tgold\tn_train\toptimizer_steps\tstop_reason\tepoch_fraction\ttrain_wall_s\tholdout_v2_edge_precision\tholdout_v2_edge_recall\tholdout_v2_rank1_edge_f1\tholdout_v2_mean_forest_width\tholdout_v3_edge_precision\tholdout_v3_rank1_edge_f1\tcheckpoint\n' > "$SUMMARY"
+  printf 'arm\tseed\tgold\tn_train\toptimizer_steps\tstop_reason\tepoch_fraction\ttrain_wall_s\tholdout_v2_edge_precision\tholdout_v2_edge_recall\tholdout_v2_rank1_edge_f1\tholdout_v2_mean_forest_width\tholdout_alt_edge_precision\tholdout_alt_rank1_edge_f1\tbest_step\tbest_dev_rank1_f1\tlast_dev_rank1_f1\tepochs_equivalent\textra_filler_rank1_f1_json\textra_template_rank1_f1_json\tcheckpoint\n' > "$SUMMARY"
 fi
 
 if [[ ! -f "$HOLDOUT_FILE" ]]; then
   echo "ERROR: holdout file $HOLDOUT_FILE not found. Run: python scripts/make_holdout.py" >&2
   exit 1
 fi
+if [[ "$EVAL_EVERY" -gt 0 && ! -f "$HOLDOUT_DEV_FILE" ]]; then
+  echo "ERROR: dev holdout file $HOLDOUT_DEV_FILE not found (needed because EVAL_EVERY=$EVAL_EVERY > 0). Run: python scripts/make_holdout.py" >&2
+  exit 1
+fi
 
 V3_AVAILABLE=1
-if [[ ! -f "$GOLD_V3" ]]; then
-  V3_AVAILABLE=0
-fi
+if [[ ! -f "$GOLD_V3" ]]; then V3_AVAILABLE=0; fi
+V4B_AVAILABLE=1
+if [[ ! -f "$GOLD_V4B" ]]; then V4B_AVAILABLE=0; fi
+HARD_AVAILABLE=1
+if [[ ! -f "$HARD_GOLD_TRAIN" ]]; then HARD_AVAILABLE=0; fi
 
 # arm_name:gold_file:n_train
 ARM_DEFS=(
   "v2_788:${GOLD_V2}:788"
   "v3_788:${GOLD_V3}:788"
   "v3_3000:${GOLD_V3}:3000"
+  "v4b_788:${GOLD_V4B}:788"
+  "v4b_788_hard:${GOLD_V4B},${HARD_GOLD_TRAIN}:788"
 )
+
+# Whether all the gold files an arm needs are actually present.
+arm_available() {
+  local arm="$1"
+  case "$arm" in
+    v3_788|v3_3000) [[ "$V3_AVAILABLE" == "1" ]] ;;
+    v4b_788) [[ "$V4B_AVAILABLE" == "1" ]] ;;
+    v4b_788_hard) [[ "$V4B_AVAILABLE" == "1" && "$HARD_AVAILABLE" == "1" ]] ;;
+    *) return 0 ;;
+  esac
+}
+
+# ARMS env filter (space/comma list of arm names); empty ARMS = run everything.
+arm_selected() {
+  local arm="$1"
+  if [[ -z "$ARMS" ]]; then return 0; fi
+  local a
+  local IFS=' ,'
+  for a in $ARMS; do
+    if [[ "$a" == "$arm" ]]; then return 0; fi
+  done
+  return 1
+}
 
 build_cmd() {
   local arm="$1" gold="$2" n_train="$3" seed="$4"
   local out="$ARMS_DIR/${arm}_${seed}.pt"
-  local log="$ARMS_DIR/${arm}_${seed}.log"
-  local extra_eval=""
-  if [[ "$gold" == "$GOLD_V2" ]]; then
-    extra_eval="--eval-gold ${GOLD_V2}"
-    if [[ "$V3_AVAILABLE" == "1" ]]; then extra_eval="$extra_eval --eval-gold-alt ${GOLD_V3}"; fi
-  else
-    extra_eval="--eval-gold ${GOLD_V2} --eval-gold-alt ${GOLD_V3}"
+  local eval_flags="--eval-gold ${GOLD_V2}"
+  case "$arm" in
+    v2_788)
+      if [[ "$V3_AVAILABLE" == "1" ]]; then eval_flags="$eval_flags --eval-gold-alt ${GOLD_V3}"; fi
+      ;;
+    v3_788|v3_3000)
+      eval_flags="$eval_flags --eval-gold-alt ${GOLD_V3}"
+      ;;
+    v4b_788|v4b_788_hard)
+      if [[ "$V4B_AVAILABLE" == "1" ]]; then eval_flags="$eval_flags --eval-gold-alt ${GOLD_V4B}"; fi
+      ;;
+  esac
+  local extra_eval_flag=""
+  if [[ "$arm" == "v4b_788_hard" ]]; then
+    extra_eval_flag="--extra-eval ${HARD_GOLD_TEST_FILLER},${HARD_GOLD_TEST_TEMPLATE}"
   fi
+  local eval_every_flags="--eval-every ${EVAL_EVERY} --dev-holdout-file ${HOLDOUT_DEV_FILE}"
+  local keep_best_flag=""
+  if [[ "$KEEP_BEST" == "1" ]]; then keep_best_flag="--keep-best"; fi
   echo "python scripts/train_encoder.py --gold ${gold} --n-train ${n_train}" \
        "--seed ${seed} --subset-seed ${seed} --max-steps ${STEPS} --max-seconds ${MAX_SECONDS}" \
-       "--holdout-file ${HOLDOUT_FILE} ${extra_eval}" \
+       "--holdout-file ${HOLDOUT_FILE} ${eval_flags} ${eval_every_flags} ${keep_best_flag} ${extra_eval_flag}" \
        "--beam-width ${BEAM_WIDTH} --k ${K} --out ${out}"
 }
 
 echo "=== encoder training arms ==="
 echo "STEPS=$STEPS  MAX_SECONDS=$MAX_SECONDS  PARALLEL=$PARALLEL"
-echo "GOLD_V2=$GOLD_V2  GOLD_V3=$GOLD_V3 (available=$V3_AVAILABLE)"
-echo "HOLDOUT_FILE=$HOLDOUT_FILE"
+echo "GOLD_V2=$GOLD_V2  GOLD_V3=$GOLD_V3 (available=$V3_AVAILABLE)  GOLD_V4B=$GOLD_V4B (available=$V4B_AVAILABLE)  HARD_GOLD_TRAIN=$HARD_GOLD_TRAIN (available=$HARD_AVAILABLE)"
+echo "HOLDOUT_FILE=$HOLDOUT_FILE  HOLDOUT_DEV_FILE=$HOLDOUT_DEV_FILE"
+echo "EVAL_EVERY=$EVAL_EVERY  KEEP_BEST=$KEEP_BEST  ARMS=${ARMS:-<all>}"
 echo
 
-# Build all 6 (arm x seed) commands unconditionally -- shown in full even
-# when GOLD_V3 is missing, so --dry-run documents the whole plan. Only the
-# RUNNABLE subset (v3 arms dropped if GOLD_V3 is absent) is actually
-# executed below.
+# Build ALL (arm x seed) commands unconditionally -- shown in full even
+# when a gold file is missing or an arm was filtered out by ARMS, so
+# --dry-run documents the whole plan. Only the RUNNABLE subset (arms with
+# all their gold files present AND selected by ARMS) is actually executed
+# below.
 ALL_COMMANDS=()
 RUNNABLE_COMMANDS=()
-V3_SKIPPED_ARMS=()
+SKIPPED_ARMS=()
+FILTERED_ARMS=()
 for arm_def in "${ARM_DEFS[@]}"; do
   IFS=':' read -r arm gold n_train <<< "$arm_def"
-  needs_v3=0
-  if [[ "$gold" == "$GOLD_V3" ]]; then needs_v3=1; fi
   for seed in $SEEDS; do
     cmd="$(build_cmd "$arm" "$gold" "$n_train" "$seed")"
     entry="$arm|$seed|$gold|$n_train|$cmd"
     ALL_COMMANDS+=("$entry")
-    if [[ "$needs_v3" == "1" && "$V3_AVAILABLE" == "0" ]]; then
-      : # not runnable yet
+    if ! arm_selected "$arm"; then
+      : # not runnable this invocation (ARMS filter)
+    elif ! arm_available "$arm"; then
+      : # not runnable (missing gold file)
     else
       RUNNABLE_COMMANDS+=("$entry")
     fi
   done
-  if [[ "$needs_v3" == "1" && "$V3_AVAILABLE" == "0" ]]; then
-    V3_SKIPPED_ARMS+=("$arm")
+  if ! arm_available "$arm"; then
+    SKIPPED_ARMS+=("$arm")
+  elif ! arm_selected "$arm"; then
+    FILTERED_ARMS+=("$arm")
   fi
 done
 
-if [[ "$V3_AVAILABLE" == "0" ]]; then
-  echo "SKIP: arms ${V3_SKIPPED_ARMS[*]} need $GOLD_V3, which does not exist yet -- run the v3 gold build first. Commands are still listed below for reference; they will not run."
+if [[ "${#SKIPPED_ARMS[@]}" -gt 0 ]]; then
+  echo "SKIP (missing gold file): ${SKIPPED_ARMS[*]} -- commands are still listed below for reference; they will not run."
+fi
+if [[ "${#FILTERED_ARMS[@]}" -gt 0 ]]; then
+  echo "SKIP (not in \$ARMS): ${FILTERED_ARMS[*]}"
 fi
 
 echo "Planned commands (${#ALL_COMMANDS[@]} total, ${#RUNNABLE_COMMANDS[@]} runnable now):"
 for entry in "${ALL_COMMANDS[@]}"; do
   IFS='|' read -r arm seed gold n_train cmd <<< "$entry"
   tag=""
-  if [[ "$gold" == "$GOLD_V3" && "$V3_AVAILABLE" == "0" ]]; then tag=" [SKIP: $GOLD_V3 missing]"; fi
+  if ! arm_available "$arm"; then tag=" [SKIP: missing gold]"; fi
+  if ! arm_selected "$arm"; then tag="$tag [SKIP: not in \$ARMS]"; fi
   echo "  [$arm seed=$seed]$tag $cmd"
 done
 echo
 
 COMMANDS=("${RUNNABLE_COMMANDS[@]}")
 if [[ "${#COMMANDS[@]}" -eq 0 ]]; then
-  echo "No arms to run (is $GOLD_V3 missing?)."
+  echo "No arms to run."
 fi
 
 if [[ "$DRY_RUN" == "1" ]]; then
@@ -188,20 +269,39 @@ run_one() {
     return
   fi
   python3 - "$arm" "$seed" "$gold" "$n_train" "$out" "$SUMMARY" <<'PYEOF'
-import sys, torch
+import json, sys, torch
 arm, seed, gold, n_train, out, summary = sys.argv[1:7]
 ckpt = torch.load(out, map_location="cpu", weights_only=False)
 cfg = ckpt["config"]
 m = ckpt["metrics"].get("holdout", {})
 alt = ckpt["metrics"].get("holdout_alt", {})
+
+def fmt(v):
+    try:
+        return f"{float(v):.4f}"
+    except (TypeError, ValueError):
+        return ""
+
+filler_json, template_json = "", ""
+for gp, fam_metrics in (ckpt.get("extra_eval") or {}).items():
+    compact = {fam: (round(fm["rank1_edge_f1"], 4) if fm["rank1_edge_f1"] == fm["rank1_edge_f1"] else None)
+               for fam, fm in fam_metrics.items()}
+    if "filler" in gp:
+        filler_json = json.dumps(compact)
+    elif "template" in gp:
+        template_json = json.dumps(compact)
+
 row = [
     arm, seed, gold, n_train,
     str(cfg.get("optimizer_steps")), str(cfg.get("stop_reason")),
     f"{cfg.get('epoch_fraction', float('nan')):.4f}",
     f"{ckpt.get('train_wallclock_s', float('nan')):.1f}",
-    f"{m.get('edge_precision', float('nan')):.4f}", f"{m.get('edge_recall', float('nan')):.4f}",
-    f"{m.get('rank1_edge_f1', float('nan')):.4f}", f"{m.get('mean_forest_width', float('nan')):.2f}",
-    f"{alt.get('edge_precision', float('nan')):.4f}", f"{alt.get('rank1_edge_f1', float('nan')):.4f}",
+    fmt(m.get("edge_precision")), fmt(m.get("edge_recall")),
+    fmt(m.get("rank1_edge_f1")), fmt(m.get("mean_forest_width")),
+    fmt(alt.get("edge_precision")), fmt(alt.get("rank1_edge_f1")),
+    str(cfg.get("best_step")), fmt(cfg.get("best_dev_rank1_f1")), fmt(cfg.get("last_dev_rank1_f1")),
+    fmt(cfg.get("epochs_equivalent")),
+    filler_json, template_json,
     out,
 ]
 with open(summary, "a") as f:
