@@ -1542,3 +1542,34 @@ gold, holdout excluded, keep-best, 8K max steps) -> encoder-arms3-a; (b) MIX
 v4b_788 + hard_gold_train_small (1:4) with per-family eval on the v3 held-out
 templates -> encoder-arms3-b. Both report edge-F1; the graded USVS metric
 lands separately (branch usvs-graded-scoring) and will re-score these.
+
+### USVS-GRADED SCORING BUILT + ALL ARMS RE-SCORED (Opus routine, 2026-09-08) -> branch usvs-graded-scoring
+src/nsm_ct/usvs_graded.py: node vector = candidate-set mean in USVS + a
+reserved block for entity/reference/elision/prime (type + surface identity);
+pairwise score = role_weight x max(0, cosine); role-confusion matrix in one
+place; predicate 2x / core 1x / modifier 0.5x; exact Hungarian alignment;
+graded P/R/F + clause-structure term; forest handling. Sanity: identity 1.000;
+corrupted 0.393; RANDOM OTHER SENTENCE 0.285 = the ambient USVS floor (sense
+signatures are non-negative) -- every graded number must be read against 0.285,
+not 0. Re-score of all 9 checkpoints (rank-1, 98 holdout):
+| arm            | v2 edge-F1 | v2 graded-F | v4b edge-F1 | v4b graded-F |
+| v2_788 kb      | 0.583 | 0.623 | 0.465 | 0.556 |
+| v4b_788 kb     | 0.391 | 0.459 | 0.491 | 0.581 |
+| v4b_margin s0  | 0.384 | 0.483 | 0.445 | 0.564 |
+| v4b_margin s1  | 0.381 | 0.468 | 0.471 | 0.562 |
+| v4b_all kb     | 0.420 | 0.487 | 0.470 | 0.557 |
+| v3_788 s0      | 0.410 | 0.492 | 0.488 | 0.544 |
+| v4b_788_hard   | 0.312 | 0.390 | 0.404 | 0.498 |
+Ranking on v4b targets unchanged at the top (v4b top-1 leads on both metrics);
+minor reorderings below. The graded scale is compressed (floor 0.285, so
+0.58 graded ~ 0.41 above floor) -- the arms' "wrong" edges are mostly near-
+misses in USVS space, not nonsense, which is what the lead expected.
+SOFT LOSS (--loss usvs-soft): role head soft over the confusion matrix (T=0.25),
+gtype head soft over the contract's equivalences, source head soft
+(context ~ memory); action/terminal/kind/prime heads stay hard. FINDING: the
+encoder NEVER scores sense candidates (candidates-first) and has NO node
+embedding, so a sense-space gradient has no head to attach to under the
+current architecture. The one hook is a new Linear(controller_hidden, d_axes)
+projection trained with cosine loss against the gold node's USVS vector --
+new architecture, small, opt-in. Dispatched (branch usvs-aux-head) as the
+direct implementation of the lead's "loss in USVS space" directive.
