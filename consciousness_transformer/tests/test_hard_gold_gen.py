@@ -108,19 +108,20 @@ def test_different_seeds_can_differ():
 
 
 def test_pools_are_grounded():
-    """Every sampled slot type (excluding PROPN/PRON, which ground by
-    grammar rule rather than sense lookup) must have `usvs.senses_of_surface`
-    non-empty for every pool member. `N_pl`/`VT_past`/`VI_past` now contain
-    regular inflections (`"dogs"`, `"walked"`) that only ground through the
-    morphy fallback, not raw `senses_of` -- this must use the SAME helper
-    the pool builder and the actual grounding path use."""
+    """Every sampled slot type (excluding PROPN/PRON/OBL_PRON, which ground
+    by grammar rule rather than sense lookup) must have
+    `usvs.senses_of_surface` non-empty for every pool member. `N_pl`/
+    `VT_past`/`VI_past` now contain regular inflections (`"dogs"`,
+    `"walked"`) that only ground through the morphy fallback, not raw
+    `senses_of` -- this must use the SAME helper the pool builder and the
+    actual grounding path use."""
     _skip_if_no_usvs()
     from nsm_ct.ground.usvs import load_usvs
     from nsm_ct.hard_gold_templates import build_pools
     usvs = load_usvs(str(_USVS_DIR))
     pools, _ = build_pools(usvs)
     for key, words in pools.items():
-        if key in ("PROPN", "PRON"):
+        if key in ("PROPN", "PRON", "OBL_PRON"):
             continue
         for w in words:
             cands, _ = usvs.senses_of_surface(w)
@@ -274,3 +275,27 @@ def test_each_family_has_at_least_eight_templates():
     by_family = templates_by_family()
     for family, templates in by_family.items():
         assert len(templates) >= 8, f"{family} has only {len(templates)} templates"
+
+
+def test_imperative_and_additive_focus_widened_v3():
+    """hard-gold-gen-v3: `imperative` and `additive_focus` were the two
+    families that failed to generalize to unseen TEMPLATES (0.96->0.27 and
+    0.75->0.23 rank-1 F1, runs/arms/v4b_788_hard_0.log) with only 9/8
+    templates each -- widened so a held-out template is a narrow slice of a
+    wide surface-shape distribution, not most of what exists."""
+    from nsm_ct.hard_gold_templates import templates_by_family
+    by_family = templates_by_family()
+    assert len(by_family["imperative"]) >= 24, (
+        f"imperative has only {len(by_family['imperative'])} templates")
+    assert len(by_family["additive_focus"]) >= 20, (
+        f"additive_focus has only {len(by_family['additive_focus'])} templates")
+
+
+def test_imperative_and_additive_focus_hold_out_four_templates(generated):
+    """`gen_hard_gold.generate`'s `HELD_OUT_COUNT` widens the held-out set
+    for exactly these two families to 4 (up from the default 2) so the
+    unseen-template test split is a stronger structural-generalization
+    check."""
+    _, report = generated
+    assert len(report["families"]["imperative"]["held_out_templates"]) == 4
+    assert len(report["families"]["additive_focus"]["held_out_templates"]) == 4
