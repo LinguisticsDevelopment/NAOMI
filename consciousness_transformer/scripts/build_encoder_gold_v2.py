@@ -179,11 +179,12 @@ def ground_word(usvs, word: Optional[str]) -> Dict[str, object]:
         }
     if is_entity(word or ""):
         return {"type": "entity", "candidates": None}
-    candidates = usvs.senses_of(w)
+    candidates, lemma = usvs.senses_of_surface(w)
     if candidates:
         return {
             "type": "sense",
             "candidates": list(candidates),
+            "lemma": lemma,
             "retrieval": {"source": "lexicon", "method": "lemma_senses", "ref": None},
         }
     return {"type": "entity", "candidates": None}
@@ -342,11 +343,12 @@ def build_record(usvs, parser: ParserInputEncoder, sentence: str,
 
     token_sense_candidates = []
     for i, tok in enumerate(tokens):
-        cands = usvs.senses_of(tok)
+        cands, lemma = usvs.senses_of_surface(tok)
+        cands = list(cands)
         if cands:
             token_sense_candidates.append({
-                "index": i, "token": tok,
-                "sense_candidates": list(cands), "chosen_sense": cands[0],
+                "index": i, "token": tok, "lemma": lemma,
+                "sense_candidates": cands, "chosen_sense": cands[0],
             })
 
     record = {

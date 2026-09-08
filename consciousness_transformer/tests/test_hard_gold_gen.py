@@ -109,8 +109,11 @@ def test_different_seeds_can_differ():
 
 def test_pools_are_grounded():
     """Every sampled slot type (excluding PROPN/PRON, which ground by
-    grammar rule rather than sense lookup) must have `usvs.senses_of`
-    non-empty for every pool member."""
+    grammar rule rather than sense lookup) must have `usvs.senses_of_surface`
+    non-empty for every pool member. `N_pl`/`VT_past`/`VI_past` now contain
+    regular inflections (`"dogs"`, `"walked"`) that only ground through the
+    morphy fallback, not raw `senses_of` -- this must use the SAME helper
+    the pool builder and the actual grounding path use."""
     _skip_if_no_usvs()
     from nsm_ct.ground.usvs import load_usvs
     from nsm_ct.hard_gold_templates import build_pools
@@ -120,7 +123,141 @@ def test_pools_are_grounded():
         if key in ("PROPN", "PRON"):
             continue
         for w in words:
-            assert usvs.senses_of(w), f"pool {key!r} filler {w!r} does not ground"
+            cands, _ = usvs.senses_of_surface(w)
+            assert cands, f"pool {key!r} filler {w!r} does not ground"
+
+
+# ---------------------------------------------------------------------------
+# senses_of_surface / article agreement (hard-gold-gen v2 quality fixes)
+# ---------------------------------------------------------------------------
+
+def test_senses_of_surface_dogs_lemmatizes_to_dog():
+    _skip_if_no_usvs()
+    from nsm_ct.ground.usvs import load_usvs
+    usvs = load_usvs(str(_USVS_DIR))
+    assert usvs.senses_of("dogs") == []  # raw surface: not its own WordNet lemma
+    cands, lemma = usvs.senses_of_surface("dogs")
+    assert lemma == "dog"
+    assert cands
+    assert cands == usvs.senses_of("dog")
+
+
+def test_senses_of_surface_walked_lemmatizes_to_walk():
+    _skip_if_no_usvs()
+    from nsm_ct.ground.usvs import load_usvs
+    usvs = load_usvs(str(_USVS_DIR))
+    assert usvs.senses_of("walked") == []
+    cands, lemma = usvs.senses_of_surface("walked")
+    assert lemma == "walk"
+    assert cands
+    assert cands == usvs.senses_of("walk")
+
+
+def test_senses_of_surface_prefers_raw_surface_when_it_grounds():
+    """A word that already grounds on its own raw surface (e.g. an irregular
+    past that doubles as a WordNet adjective/noun lemma, "closed"/"cut")
+    must NOT be silently re-lemmatized -- the raw candidate set + lemma ==
+    the surface word itself."""
+    _skip_if_no_usvs()
+    from nsm_ct.ground.usvs import load_usvs
+    usvs = load_usvs(str(_USVS_DIR))
+    for w in ("closed", "cut", "wanted"):
+        raw = usvs.senses_of(w)
+        assert raw
+        cands, lemma = usvs.senses_of_surface(w)
+        assert lemma == w
+        assert cands == raw
+
+
+def test_senses_of_surface_unknown_word_returns_empty():
+    _skip_if_no_usvs()
+    from nsm_ct.ground.usvs import load_usvs
+    usvs = load_usvs(str(_USVS_DIR))
+    cands, lemma = usvs.senses_of_surface("xyzzynotarealword")
+    assert cands == []
+    assert lemma == "xyzzynotarealword"
+
+
+def test_article_agreement_never_emits_a_before_vowel_initial_filler():
+    """Every generated `"...a {N}..."`-shaped record must have picked "an"
+    when the filler is vowel-initial (article exceptions aside)."""
+    _skip_if_no_usvs()
+    import re
+    from nsm_ct.hard_gold_templates import article, _ARTICLE_A_EXCEPTIONS
+    for w in ("apple", "eye", "optic", "area", "elephant", "umbrella"):
+        assert w not in _ARTICLE_A_EXCEPTIONS
+        assert article(w) == "an", f"{w!r} should take 'an'"
+    for w in ("dog", "cat", "unicorn", "unit", "university"):
+        assert article(w) == "a", f"{w!r} should take 'a'"
+
+    import gen_hard_gold as ghg
+    out, _ = ghg.generate(per_family=30, seed=0)
+    bad = []
+    for split in out:
+        for rec in out[split]:
+            for m in re.finditer(r"\ba ([A-Za-z]\w*)", rec["text"]):
+                w = m.group(1).lower()
+                if w[:1] in "aeiou" and w not in _ARTICLE_A_EXCEPTIONS:
+                    bad.append(rec["text"])
+    assert not bad, f"'a' before a vowel-initial filler: {bad[:10]}"
+
+
+def test_teacher_gold_inflected_word_grounding_unchanged_or_improved():
+    """`build_encoder_gold_v2.ground_word` now also uses
+    `senses_of_surface`. This does NOT rebuild `runs/encoder_gold_v2.jsonl`
+    (out of scope for this batch) -- it only checks that, for a sample of
+    words the SHIPPED v2 gold grounded as bare `entity` (raw `senses_of`
+    empty), the new helper never makes things worse (a strict superset
+    relationship: `senses_of_surface`'s raw-first branch is exactly the old
+    behavior) and counts how many of them would now ground as `sense`."""
+    _skip_if_no_usvs()
+    gold_path = _ROOT / "runs" / "encoder_gold_v2.jsonl"
+    if not gold_path.exists():
+        pytest.skip("runs/encoder_gold_v2.jsonl not present in this checkout")
+    import json
+    from nsm_ct.ground.usvs import load_usvs
+    usvs = load_usvs(str(_USVS_DIR))
+
+    entity_words = set()
+    with gold_path.open() as fh:
+        for line in fh:
+            rec = json.loads(line)
+            for tree in rec["lattice"]["trees"]:
+                for clause in tree["clauses"]:
+                    pg = clause.get("predicate_grounding", {})
+                    if pg.get("type") == "entity" and clause.get("predicate"):
+                        entity_words.add(clause["predicate"].lower())
+                    for role in clause["roles"]:
+                        g = role.get("grounding", {})
+                        if (g.get("type") == "entity" and role.get("word")
+                                and not role.get("is_entity", False)):
+                            entity_words.add(role["word"].lower())
+
+    # Restrict to plain alphabetic tokens -- quoted-dialogue fragments like
+    # "'ah"/"'ll" are punctuation-glued artifacts, not inflected content
+    # words, and would never lemmatize under any scheme. Also re-check raw
+    # `senses_of` against the LIVE usvs (not just trust the file's stored
+    # grounding): the USVS artifact can gain coverage between the gold
+    # file's build and this checkout's `build_usvs.py` run (e.g. gloss-
+    # grounded interjection senses), so a handful of stored `entity`
+    # groundings are already raw-gettable today and are not the "inflected,
+    # still needs lemmatization" case this test targets.
+    still_entity = sorted(w for w in entity_words
+                          if w.isalpha() and not usvs.senses_of(w))
+    sample = still_entity[:20]
+    assert len(sample) == 20, "fixture too small to sample 20 entity-grounded words"
+
+    improved, unchanged = [], []
+    for w in sample:
+        cands, lemma = usvs.senses_of_surface(w)
+        if cands:
+            improved.append((w, lemma, len(cands)))
+        else:
+            unchanged.append(w)
+
+    print(f"\nteacher-gold sample: {len(improved)}/20 previously-entity words "
+          f"now ground as sense via senses_of_surface: {improved}")
+    assert len(improved) >= 1, "expected at least one inflected word to improve"
 
 
 def test_families_cover_the_eight_hard_case_kinds():
