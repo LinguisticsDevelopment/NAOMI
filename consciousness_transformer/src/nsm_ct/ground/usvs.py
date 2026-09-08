@@ -52,8 +52,64 @@ SCHEMA_VERSION = "usvs-1"
 
 # `USVS.senses_of_surface`'s default morphy POS search order (noun before
 # verb before adjective -- an inflected filler is far more often a plural
-# noun or a past-tense verb than a comparative/superlative adjective).
+# noun or a past-tense verb than a comparative/superlative adjective), used
+# only when no `pos_hint` is given.
 _MORPHY_POS_ORDER: Tuple[str, ...] = ("n", "v", "a")
+
+# v4b: universal-POS (parser tagger tagset, `nsm_ct` `Tag` enum names) ->
+# WordNet POS char set. NOUN/PROPN -> noun; VERB -> verb; ADJ -> adjective
+# (head 'a' AND satellite 's', both queried for candidate-POS matching, but
+# morphy itself only ever takes 'a' -- WordNet's own morphological analyzer
+# has no 's' pos); ADV -> adverb. AUX has no morphy POS of its own (function
+# words are never morphy-lemmatized -- see `_FUNCTION_POS_TAGS` below) but
+# is grammatically verb-like, so it still steers the RAW-surface candidate
+# ORDERING (a modal like "can" should rank its verb sense over the
+# container-noun sense it happens to share a spelling with).
+_UPOS_TO_WN: Dict[str, Tuple[str, ...]] = {
+    "NOUN": ("n",), "PROPN": ("n",),
+    "VERB": ("v",),
+    "ADJ": ("a", "s"),
+    "ADV": ("r",),
+    "AUX": ("v",),
+}
+# The morphy-valid subset of a POS's WordNet tag set (morphy only accepts
+# n/v/a/r -- 's' is not a morphy pos argument).
+_MORPHY_VALID_POS = frozenset({"n", "v", "a", "r"})
+
+# Function-word universal POS tags (parser `Tag` enum): grammatical closed
+# classes that must NEVER be morphy-lemmatized -- an AUX/DET/ADP/... token
+# grounding through WordNet's inflection analyzer is a category error (the
+# analyzer has no notion of "this spelling is doing grammar, not naming a
+# thing"), which is how `was` -> morphy(n) -> `wa` -> `washington.n.02` and
+# `to` -> morphy -> grounded nonsense happen. INTJ is listed here too (it is
+# never morphy-lemmatized either) but content interjections are otherwise
+# handled by the ordinary raw-surface lookup and PURE interjections by
+# `PURE_INTERJECTION_GLOSSES` above -- neither touches morphy regardless.
+_FUNCTION_POS_TAGS = frozenset({
+    "AUX", "DET", "ADP", "PART", "PRON", "CCONJ", "SCONJ",
+    "PUNCT", "NUM", "SYM", "INTJ",
+})
+
+
+def _wn_pos_of_sense_id(sense_id: str) -> Optional[str]:
+    """`"can.v.01"` -> `"v"`; `None` if *sense_id* isn't in that shape (the
+    `interj.<word>.01` / `<lemma>.<pos>.<NN>` synset-name convention)."""
+    parts = sense_id.rsplit(".", 2)
+    return parts[1] if len(parts) == 3 else None
+
+
+def _pos_priority_sort(sense_ids: List[str], wn_pos: Optional[frozenset]
+                       ) -> List[str]:
+    """Stable-reorder *sense_ids* so ones whose own WordNet POS is in
+    *wn_pos* come first -- CANDIDATES-FIRST, nothing is ever dropped."""
+    if not wn_pos:
+        return sense_ids
+    matched = [s for s in sense_ids if _wn_pos_of_sense_id(s) in wn_pos]
+    if not matched:
+        return sense_ids
+    matched_set = set(matched)
+    rest = [s for s in sense_ids if s not in matched_set]
+    return matched + rest
 
 # ---------------------------------------------------------------------------
 # D2 (dev/CURRENT_STATE.md decisions locked, 2026-09-07): PURE interjections
@@ -312,30 +368,86 @@ class USVS:
         []` -- D5, `dev/HAND_GOLD_DRAFT.md`). Tries the raw surface first;
         if that grounds nothing, falls back to WordNet's own morphological
         analyzer (`nltk.corpus.wordnet.morphy`) for noun/verb/adj and retries
-        on the recovered lemma. `pos_hint` (one of `"n"`/`"v"`/`"a"`), when
-        given, is tried first but every POS is still attempted after it --
-        a hint narrows the search, it does not exclude the others.
+        on the recovered lemma.
+
+        `pos_hint` is a universal-POS tag (the parser tagger's `Tag` enum
+        name: `"NOUN"`/`"VERB"`/`"ADJ"`/`"ADV"`/`"AUX"`/... -- see
+        `_UPOS_TO_WN`/`_FUNCTION_POS_TAGS`), NOT a raw WordNet POS char.
+
+        - A FUNCTION tag (`_FUNCTION_POS_TAGS` -- AUX/DET/ADP/PART/PRON/
+          CCONJ/SCONJ/PUNCT/NUM/SYM/INTJ) never reaches morphy: function
+          words are grammar, not content, so lemmatizing them is a category
+          error (`was` -> morphy(n) -> `wa` -> `washington.n.02`). Only the
+          raw surface is looked up (which may itself be empty -> the caller
+          falls back to `type:"entity"`, unchanged from before).
+        - A content tag maps (`_UPOS_TO_WN`) to the WordNet POS(es) morphy
+          should search, and BOTH the raw-surface and the morphy-recovered
+          candidate lists get POS-priority reordered so a sense whose own
+          WordNet POS matches the tagger's tag sorts first -- candidates
+          are re-ordered, never dropped (contract S4.2's full-candidate-set
+          guarantee). This also covers the case where the raw surface
+          already grounds under the WRONG part of speech (`engraved` is
+          itself an adjective lemma -- `engraved.s.01` -- but a VERB-tagged
+          `engraved` should rank `engrave.v.*`, recovered via morphy, first).
+        - No pos_hint (`None`): the legacy noun/verb/adj search order, with
+          one added guard -- a morphy hit whose lemma is suspiciously SHORT
+          (< 3 chars) relative to a surface that is not itself that short is
+          rejected (the closed-class-looking `was` -> `wa` shape); every
+          longer/legitimate morphy lemma is unaffected.
 
         Returns `(candidates, lemma_used)`: `lemma_used == word.lower()`
-        when the raw surface already grounded (no lemmatization needed) or
-        nothing grounds at all; otherwise the morphy lemma whose senses were
-        returned. Callers that need `token_sense_candidates` to stay
+        when the raw surface already grounded (no lemmatization needed, or a
+        pos-matched morphy candidate list was merged into it -- see above)
+        or nothing grounds at all; otherwise the morphy lemma whose senses
+        were returned. Callers that need `token_sense_candidates` to stay
         consistent with a lemma-grounded slot (contract S4.2) must retrieve
         both from this SAME function, not a second `senses_of` call."""
-        w = word.lower()
-        cands = self.senses_of(w)
-        if cands:
-            return cands, w
         from .. import wordnet as _wn_mod
-        order = list(dict.fromkeys(
-            [pos_hint] + list(_MORPHY_POS_ORDER) if pos_hint else _MORPHY_POS_ORDER))
+        w = word.lower()
+        wn_pos = _UPOS_TO_WN.get(pos_hint) if pos_hint else None
+        wn_pos_set = frozenset(wn_pos) if wn_pos else None
+        is_function = pos_hint in _FUNCTION_POS_TAGS
+
+        raw = self.senses_of(w)
+        if raw:
+            ordered = _pos_priority_sort(raw, wn_pos_set)
+            if is_function or wn_pos_set is None:
+                return ordered, w
+            if any(_wn_pos_of_sense_id(s) in wn_pos_set for s in raw):
+                return ordered, w
+            # Raw surface grounds, but under a POS the tagger disagrees
+            # with (`engraved` VERB but only `engraved.s.01` on the raw
+            # lemma) -- pull in the morphy-recovered, POS-matched senses
+            # and rank them first. `lemma` stays the raw surface: the
+            # entry point that actually grounded is still the raw word.
+            for pos in wn_pos:
+                if pos not in _MORPHY_VALID_POS:
+                    continue
+                lemma = _wn_mod.morphy(w, pos)
+                if not lemma or lemma == w:
+                    continue
+                extra = [s for s in self.senses_of(lemma)
+                         if _wn_pos_of_sense_id(s) in wn_pos_set]
+                if extra:
+                    extra_set = set(extra)
+                    return extra + [s for s in ordered if s not in extra_set], w
+            return ordered, w
+
+        if is_function:
+            return [], w
+
+        order = list(wn_pos) if wn_pos_set is not None else list(_MORPHY_POS_ORDER)
         for pos in order:
+            if pos not in _MORPHY_VALID_POS:
+                continue
             lemma = _wn_mod.morphy(w, pos)
             if not lemma or lemma == w:
                 continue
+            if wn_pos_set is None and len(lemma) < 3 and len(w) >= 3:
+                continue  # guard: closed-class-looking `was` -> `wa`
             lemma_cands = self.senses_of(lemma)
             if lemma_cands:
-                return lemma_cands, lemma
+                return _pos_priority_sort(lemma_cands, wn_pos_set), lemma
         return [], w
 
     def similarity(self, a: str, b: str) -> float:

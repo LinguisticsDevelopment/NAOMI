@@ -104,7 +104,11 @@ from .membrane import (NAME_GENDER, PRONOUN_MORPHOLOGY, HypothesisCandidateSet,
 # "parse-resource-capped" failure reason (not a crash, not a silent drop --
 # see FAILURE_REASONS and taxonomy_counts).
 CORPUS_MAX_HYPOTHESES = 4000
-CORPUS_MAX_PARSE_SECONDS = 10.0
+# env override: an unattended overnight/gold-rebuild run can raise this dial
+# (e.g. CORPUS_MAX_PARSE_SECONDS=60) without editing this file -- mirrors the
+# GOLD_OUT_JSONL/GOLD_CORPUS_GLOB override pattern in
+# scripts/build_encoder_gold_v2.py; unset, behavior is byte-identical (10.0).
+CORPUS_MAX_PARSE_SECONDS = float(os.environ.get("CORPUS_MAX_PARSE_SECONDS", "10.0"))
 
 # M58f3: sentinel default for the fallbacks' optional `max_seconds` param
 # (see _quoted_fallback/_attribution_fallback below) -- lets a caller that

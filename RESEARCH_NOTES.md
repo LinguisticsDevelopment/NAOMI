@@ -1351,3 +1351,18 @@ without POS -> `was` -> lemma `wa` -> washington.n.02; `can` (AUX) -> can.n.01;
 Fix dispatched (v4b): POS-aware morphy from the tagger tag, no morphy on
 function words, POS-matched senses ordered first (candidates kept). v4b is
 the gold for the lemmatized training arm; v4 is a data point only.
+
+### GOLD v4b-SMALL: POS-AWARE LEMMATIZATION MERGED (2026-09-08)
+senses_of_surface(word, pos_hint): function tags (AUX/DET/ADP/PART/PRON/CCONJ/
+SCONJ/PUNCT/NUM/SYM) never reach morphy; content tags restrict morphy to the
+mapped WordNet POS and POS-priority-sort the candidates (nothing dropped);
+wrong-POS raw hits get the POS-matched lemma's senses merged in first. Both
+gold builders thread the tagger POS through. v4 -> v4b on the same 1,475
+sentences: records 986 -> 987; sense nodes 5,860 -> 5,411 (function words no
+longer sense-grounded); FIRST-candidate POS matches the tagger 2,440 -> 4,784;
+function-word sense groundings 994 -> 535 (the rest are raw-surface hits, e.g.
+`can`, left as candidates by design); holdout 98/98. Samples: took->take.v.01,
+began->begin (verb), was (AUX)->entity, engraved->verb sense first. Hard gold
+regenerated with the same helper (splits updated). 47 tests green. Gold v4b
+(branch encoder-gold-v4b-small, jsonl stays there) is the input for the
+lemmatized training arm, to run after the v2/v3 arms finish.

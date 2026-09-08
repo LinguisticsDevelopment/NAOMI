@@ -181,13 +181,27 @@ class _Matcher:
         return dq.pop(0)
 
 
-def _sense_grounding(usvs, word: str, lemma: Optional[str]) -> Dict[str, object]:
+def _pos_hint_for(word: Optional[str], tokens: Sequence[str], pos: Sequence[str]) -> Optional[str]:
+    """Non-consuming POS lookup: the first token matching *word*
+    case-insensitively. Lemmatization hint only -- `token_index` recovery
+    stays on `_Matcher`'s own consume-on-match walk, untouched."""
+    if not word:
+        return None
+    w = word.lower()
+    for t, p in zip(tokens, pos):
+        if t.lower() == w:
+            return p
+    return None
+
+
+def _sense_grounding(usvs, word: str, lemma: Optional[str],
+                     pos_hint: Optional[str] = None) -> Dict[str, object]:
     if lemma:
         # explicit override (W.lemma): caller already knows the lemma, no
         # need to run the morphy fallback.
         cands, used = list(usvs.senses_of(lemma)), lemma.lower()
     else:
-        cands, used = usvs.senses_of_surface(word)
+        cands, used = usvs.senses_of_surface(word, pos_hint=pos_hint)
         cands = list(cands)
     if cands:
         return {"type": "sense", "candidates": cands, "lemma": used,
@@ -199,7 +213,7 @@ _PRONOUNS = {"i", "you", "he", "she", "it", "we", "they",
              "him", "her", "them", "us", "me"}
 
 
-def ground_W(usvs, spec: W) -> Dict[str, object]:
+def ground_W(usvs, spec: W, pos_hint: Optional[str] = None) -> Dict[str, object]:
     w = spec.word.lower()
     if spec.force_entity:
         return {"type": "entity", "candidates": None}
@@ -214,7 +228,7 @@ def ground_W(usvs, spec: W) -> Dict[str, object]:
                 "retrieval": {"source": "memory", "method": "coref", "ref": None}}
     if is_entity(spec.word):
         return {"type": "entity", "candidates": None}
-    return _sense_grounding(usvs, spec.word, spec.lemma)
+    return _sense_grounding(usvs, spec.word, spec.lemma, pos_hint)
 
 
 # ---------------------------------------------------------------------------
@@ -321,9 +335,9 @@ def _needs_token_index(spec) -> bool:
     return _filler_word(spec) is not None
 
 
-def _ground(usvs, spec, context: Sequence[dict]) -> Dict[str, object]:
+def _ground(usvs, spec, context: Sequence[dict], pos_hint: Optional[str] = None) -> Dict[str, object]:
     if isinstance(spec, W):
-        return ground_W(usvs, spec)
+        return ground_W(usvs, spec, pos_hint)
     if isinstance(spec, PRIME):
         return {"type": "prime", "prime": spec.prime, "candidates": None}
     if isinstance(spec, CTX):
@@ -334,14 +348,15 @@ def _ground(usvs, spec, context: Sequence[dict]) -> Dict[str, object]:
 
 
 def build_tree(usvs, clauses: Sequence[C], tokens: Sequence[str],
-               context: Sequence[dict]) -> Dict[str, object]:
+               context: Sequence[dict], pos: Sequence[str]) -> Dict[str, object]:
     matcher = _Matcher(tokens)
     out_clauses = []
     for cl in clauses:
-        pg = _ground(usvs, cl.predicate, context) if cl.predicate is not None else \
+        pred_word = _filler_word(cl.predicate)
+        pred_pos_hint = _pos_hint_for(pred_word, tokens, pos)
+        pg = _ground(usvs, cl.predicate, context, pred_pos_hint) if cl.predicate is not None else \
             {"type": "elision", "candidates": None,
              "retrieval": {"source": "memory", "method": "elision_inherit_predicate", "ref": None}}
-        pred_word = _filler_word(cl.predicate)
         # A real grounded (sense/entity) predicate's token_index is not
         # stored on the node -- the oracle re-derives it via the string-match
         # `encoder_model._predicate_token_index` -- but it MUST still be
@@ -364,9 +379,11 @@ def build_tree(usvs, clauses: Sequence[C], tokens: Sequence[str],
         for relation, spec in cl.roles:
             word = _filler_word(spec)
             tidx = matcher.match(word) if _needs_token_index(spec) else None
+            role_pos_hint = pos[tidx] if tidx is not None and tidx < len(pos) \
+                else _pos_hint_for(word, tokens, pos)
             roles.append({"relation": relation, "word": word, "token_index": tidx,
                           "is_entity": bool(word) and is_entity(word),
-                          "grounding": _ground(usvs, spec, context)})
+                          "grounding": _ground(usvs, spec, context, role_pos_hint)})
         out_clauses.append({
             "predicate": pred_word if pg["type"] in ("sense", "entity") else None,
             "predicate_grounding": pg,
@@ -378,15 +395,16 @@ def build_tree(usvs, clauses: Sequence[C], tokens: Sequence[str],
     return {"clauses": out_clauses}
 
 
-def build_token_sense_candidates(usvs, tokens: Sequence[str]) -> List[dict]:
+def build_token_sense_candidates(usvs, tokens: Sequence[str], pos: Sequence[str]) -> List[dict]:
     """Identical to the teacher's: `senses_of_surface` (raw surface, falling
-    back to the WordNet-morphy lemma) on each token, one sparse entry per
-    covered token. Must stay on the SAME lemmatization path as `ground_W`/
-    `_sense_grounding` so a lemma-grounded slot's `candidates` and this
-    table's `sense_candidates` agree byte-for-byte (contract S4.2)."""
+    back to the WordNet-morphy lemma, POS-aware -- v4b) on each token, one
+    sparse entry per covered token. Must stay on the SAME lemmatization path
+    as `ground_W`/`_sense_grounding` so a lemma-grounded slot's `candidates`
+    and this table's `sense_candidates` agree byte-for-byte (contract
+    S4.2) -- including the SAME per-token `pos[i]` hint."""
     out = []
     for i, tok in enumerate(tokens):
-        cands, lemma = usvs.senses_of_surface(tok)
+        cands, lemma = usvs.senses_of_surface(tok, pos_hint=pos[i] if i < len(pos) else None)
         cands = list(cands)
         if cands:
             out.append({"index": i, "token": tok, "lemma": lemma,
@@ -399,10 +417,10 @@ def context_entry(usvs, text: str, clauses: Sequence[C], lang: str = "en") -> di
     dereference a pointer (contract S4.4); `tokens`/`pos`/
     `token_sense_candidates` are carried too since they are free here."""
     tokens, pos = tag(text, lang)
-    tree = build_tree(usvs, clauses, tokens, context=[])
+    tree = build_tree(usvs, clauses, tokens, context=[], pos=pos)
     return {"text": text, "tokens": tokens, "pos": pos,
             "lattice": {"trees": [tree], "discourse_links_per_tree": [[]]},
-            "token_sense_candidates": build_token_sense_candidates(usvs, tokens)}
+            "token_sense_candidates": build_token_sense_candidates(usvs, tokens, pos)}
 
 
 def hand_gold_record(text: str, clauses_spec: Sequence[C], *,
@@ -419,13 +437,13 @@ def hand_gold_record(text: str, clauses_spec: Sequence[C], *,
     context = list(context or [])
     tokens, pos = tag(text, lang)
     specs = list(trees_spec) if trees_spec else [list(clauses_spec)]
-    trees = [build_tree(usvs, s, tokens, context) for s in specs]
+    trees = [build_tree(usvs, s, tokens, context, pos) for s in specs]
     record = {
         "text": text,
         "tokens": tokens,
         "pos": pos,
         "lattice": {"trees": trees, "discourse_links_per_tree": [[] for _ in trees]},
-        "token_sense_candidates": build_token_sense_candidates(usvs, tokens),
+        "token_sense_candidates": build_token_sense_candidates(usvs, tokens, pos),
     }
     if context:
         record["context"] = context

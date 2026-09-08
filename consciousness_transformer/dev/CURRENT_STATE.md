@@ -110,3 +110,22 @@ Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
 - D1-D6 implementation MERGED to mainline 2026-09-08 (from branch `decisions-d1-d6`;
   brings corpus-expand + hand-gold-draft along). Gold builder default is now
   top-1; PRIMES has I (old encoder checkpoints will fail to load, by design).
+
+## 2026-09-08 EVENING STATE (director)
+- Mainline has: D1-D6; measurement tooling (rank-1 + complement probe);
+  train-arms tooling (fixed steps, shared holdout); hard-gold generator v2
+  (1,368 records, lemmatized); K-12 scout (FairytaleQA top-1); LLM parse
+  judge (Haiku 4.5; live calibration needs the lead's API key); POS-aware
+  lemmatized grounding (senses_of_surface + lemma field).
+- Gold data branches: encoder-gold-v2 (985, forest), encoder-gold-v3-small
+  (959, top-1, no lemmatization), encoder-gold-v4b-small (987, top-1,
+  lemmatized, POS-aware) -- v4b is the current best gold.
+- RUNNING: arms v2_788 vs v3_788 x seeds 0,1 at 8,000 steps (branches
+  encoder-arms-seed0/1); FairytaleQA -> Episode converter finish run
+  (branch k12-fairytaleqa).
+- NEXT: (1) read the v2/v3 arm result vs the rank-1 >= 0.55 gate; (2) run
+  v4b_788 (+ hard gold mixed in as a 4th arm) on the same holdout; (3) if
+  rank-1 clears, scale: v4b-style gold over the 16K corpus (Gold_Expand with
+  the lemmatized builder), v3000 arm; (4) K-12 comprehension phase on
+  FairytaleQA once the encoder is fixed.
+
