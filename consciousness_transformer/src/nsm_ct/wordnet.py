@@ -361,6 +361,21 @@ def domains(word: str) -> List[str]:
         return []
 
 
+def morphy(word: str, pos: Optional[str] = None) -> Optional[str]:
+    """WordNet's own morphological analyzer: *word* -> its base lemma for
+    *pos* (one of ``"n"``/``"v"``/``"a"``/``"r"``), or ``None`` if WordNet
+    has no such lemma. ``pos=None`` tries every POS (WordNet's own default
+    order) and returns the first hit. Used to recover a sense-bearing lemma
+    for an inflected surface form (``"dogs"`` -> ``"dog"``, ``"walked"`` ->
+    ``"walk"``) that is not itself a WordNet lemma."""
+    if not wordnet_available():
+        return None
+    try:
+        return _wn().morphy(word, pos)
+    except Exception:  # pragma: no cover
+        return None
+
+
 def all_senses():
     """Iterate EVERY WordNet synset as (sense_id, gloss, lexname, lemmas),
     sorted by sense_id for deterministic artifact builds (M29 USVS)."""

@@ -75,12 +75,23 @@ _ADJ_CURATED = [
 # Plurale-tantum / irregular plurals that (unlike regular "-s" plurals, D5)
 # survive `senses_of` on their own surface form.
 _NOUN_PL_CURATED = [
-    "people", "men", "teeth", "oxen", "cattle", "sheep", "fish", "deer",
+    "people", "men", "women", "children", "teeth", "feet", "mice", "geese",
+    "oxen", "cattle", "sheep", "fish", "deer",
     "police", "folk", "youth", "clothes", "glasses", "scissors", "stairs",
     "pants", "jeans", "shorts", "clergy", "staff", "crew", "troops",
     "cavalry", "infantry", "militia", "personnel", "livestock", "poultry",
     "vermin", "offspring",
 ]
+
+# Singular nouns (that may also appear in the auto-built N pool) whose
+# REGULAR "-s" plural is grammatically wrong because English irregularly
+# pluralizes them -- their correct plural is already in `_NOUN_PL_CURATED`
+# above, so the regular-plural auto-fill below must skip these bases rather
+# than mint "mans"/"womans"/"childs"/"foots"/"tooths"/"mouses"/"gooses"
+# alongside the real irregular form.
+_NOUN_PL_IRREGULAR_BASES = {
+    "man", "woman", "child", "foot", "tooth", "mouse", "goose", "person",
+}
 
 # Canonical entity names (`nsm_ct.episode._NAMES` / `clause._ENTITY_NAMES`):
 # these ground as `type:"entity"` via `is_entity`, not a sense lookup, so they
@@ -231,6 +242,33 @@ def _dedup_keep_order(words: Sequence[str]) -> List[str]:
     return out
 
 
+_VOWELS = set("aeiou")
+
+
+def _regular_plural(noun: str) -> str:
+    """Standard English regular plural (no WordNet involved -- just the
+    surface-form rule; the ground-filter in `build_pools` is what decides
+    whether the result actually survives, via `senses_of_surface`)."""
+    if noun.endswith(("s", "x", "z", "ch", "sh")):
+        return noun + "es"
+    if len(noun) >= 2 and noun[-1] == "y" and noun[-2] not in _VOWELS:
+        return noun[:-1] + "ies"
+    return noun + "s"
+
+
+def _regular_past(verb: str) -> str:
+    """Standard English regular past tense (`-ed`, with the usual
+    e-drop/y-to-i/consonant-doubling spelling rules)."""
+    if verb.endswith("e"):
+        return verb + "d"
+    if len(verb) >= 2 and verb[-1] == "y" and verb[-2] not in _VOWELS:
+        return verb[:-1] + "ied"
+    if (len(verb) >= 3 and verb[-1] not in _VOWELS and verb[-1] not in "wxy"
+            and verb[-2] in _VOWELS and verb[-3] not in _VOWELS):
+        return verb + verb[-1] + "ed"
+    return verb + "ed"
+
+
 def build_pools(usvs) -> Tuple[Dict[str, List[str]], PoolReport]:
     """Build every typed-slot filler pool, gated by `usvs.senses_of`
     non-empty (pronouns/names excepted -- they ground by grammar rule, not
@@ -248,12 +286,20 @@ def build_pools(usvs) -> Tuple[Dict[str, List[str]], PoolReport]:
     pools["ADJ"] = adj_pool
     report.sources["ADJ"] = "curated+auto (adjective/satellite, freq-ranked)"
 
-    npl_ok = [w for w in _NOUN_PL_CURATED if usvs.senses_of(w)]
-    npl_bad = [w for w in _NOUN_PL_CURATED if w not in npl_ok]
-    pools["N_pl"] = npl_ok
-    report.sources["N_pl"] = "curated (irregular plural / plurale tantum)"
-    if npl_bad:
-        report.dropped["N_pl"] = npl_bad
+    npl_curated_ok = [w for w in _NOUN_PL_CURATED if usvs.senses_of_surface(w)[0]]
+    npl_curated_bad = [w for w in _NOUN_PL_CURATED if w not in npl_curated_ok]
+    npl_auto_candidates = [(w, _regular_plural(w)) for w in n_pool
+                            if w not in _NOUN_PL_IRREGULAR_BASES]
+    npl_auto_ok = [pl for _, pl in npl_auto_candidates if usvs.senses_of_surface(pl)[0]]
+    npl_auto_bad = [f"{w}->{pl}" for w, pl in npl_auto_candidates
+                     if not usvs.senses_of_surface(pl)[0]]
+    npl_pool = _dedup_keep_order(npl_curated_ok + npl_auto_ok)[:_POOL_CAP]
+    pools["N_pl"] = npl_pool
+    report.sources["N_pl"] = ("curated irregular plural / plurale tantum + "
+                               "regular plurals of the N pool, both filtered "
+                               "by senses_of_surface (lemmatized ground-filter)")
+    if npl_curated_bad or npl_auto_bad:
+        report.dropped["N_pl"] = npl_curated_bad + npl_auto_bad
 
     pools["PROPN"] = list(PROPN_POOL)
     report.sources["PROPN"] = "canonical entity names (nsm_ct.episode._NAMES) -- entity-grounded, ungated"
@@ -294,25 +340,67 @@ def build_pools(usvs) -> Tuple[Dict[str, List[str]], PoolReport]:
     if vi_bad:
         report.dropped["VI"] = vi_bad
 
+    # Every curated base verb gets a past form: the irregular table's entry
+    # when it has one, else the regular "-ed" rule (D5 fix: previously only
+    # the table's entries were tried, so a base verb missing from the table
+    # -- "walk", "wait" -- never got a VI_past candidate at all). All ground-
+    # filtered through `senses_of_surface`, so a regular "-ed" form now
+    # grounds via its morphy-recovered base-verb lemma instead of needing to
+    # double as its own noun/adjective WordNet lemma.
     vt_past, vi_past, past_bad = [], [], []
-    for base, past in PAST_IRREGULAR.items():
-        if not usvs.senses_of(past):
+    for base in VT_BASE_CURATED + VI_BASE_CURATED:
+        past = PAST_IRREGULAR.get(base) or _regular_past(base)
+        if not usvs.senses_of_surface(past)[0]:
             past_bad.append(f"{base}->{past}")
             continue
         if base in VT_BASE_CURATED:
             vt_past.append(past)
-        elif base in VI_BASE_CURATED:
+        else:
             vi_past.append(past)
-    pools["VT_past"] = vt_past[:40]
-    pools["VI_past"] = vi_past[:30]
-    report.sources["VT_past"] = "curated irregular-past table, filtered by senses_of (D5)"
-    report.sources["VI_past"] = "curated irregular-past table, filtered by senses_of (D5)"
+    pools["VT_past"] = _dedup_keep_order(vt_past)[:40]
+    pools["VI_past"] = _dedup_keep_order(vi_past)[:30]
+    report.sources["VT_past"] = ("irregular-past table + regular \"-ed\" fallback, "
+                                  "filtered by senses_of_surface (D5 fix)")
+    report.sources["VI_past"] = ("irregular-past table + regular \"-ed\" fallback, "
+                                  "filtered by senses_of_surface (D5 fix)")
     if past_bad:
         report.dropped["VT_past/VI_past"] = past_bad
 
     for k, v in pools.items():
         report.sizes[k] = len(v)
     return pools, report
+
+
+# ---------------------------------------------------------------------------
+# 1b. Article agreement ("a"/"an" by the filler's first SOUND, not letter)
+# ---------------------------------------------------------------------------
+
+# Vowel-LETTER-initial words that are actually consonant-SOUND-initial (a
+# "y"/"w"/"h"-glide or a "yoo" vowel) -- take "a", not "an".
+_ARTICLE_A_EXCEPTIONS = {
+    "unicorn", "unicycle", "unique", "unit", "union", "united", "universe",
+    "university", "uniform", "usual", "user", "european", "one", "once",
+    "one-eyed",
+}
+# Consonant-LETTER-initial words with a silent leading consonant (silent
+# "h") -- take "an", not "a".
+_ARTICLE_AN_EXCEPTIONS = {
+    "hour", "honest", "honor", "honorable", "heir", "heiress",
+}
+_VOWEL_LETTERS = set("aeiou")
+
+
+def article(word: str) -> str:
+    """"a" or "an" for *word*, by its first SOUND rather than its first
+    letter -- a small hand exceptions table covers the common
+    letter/sound mismatches (`unicorn`/`hour`); every other filler is
+    plain vowel-letter-initial vs. not."""
+    w = word.lower()
+    if w in _ARTICLE_A_EXCEPTIONS:
+        return "a"
+    if w in _ARTICLE_AN_EXCEPTIONS:
+        return "an"
+    return "an" if w[:1] in _VOWEL_LETTERS else "a"
 
 
 # ---------------------------------------------------------------------------
@@ -579,17 +667,17 @@ _reg(Template("add_me_too", "additive_focus", {"N_pl": "N_pl", "N2": "N"},
            roles=[("SUBJECT", W("me")),
                   ("OBJECT", CTX("elision", of=v["N2"], scope="roles")),
                   ("ADDITIVE", W("too"))])],
-        context=[context_entry(usvs, f"the {v['N_pl']} want a {v['N2']} .",
+        context=[context_entry(usvs, f"the {v['N_pl']} want {article(v['N2'])} {v['N2']} .",
                                 [C(predicate=W("want"),
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])])))
 
 _reg(Template("add_and_a_n_too", "additive_focus", {"N": "N", "N_pl": "N_pl", "N2": "N"},
-    lambda v, usvs: Rendered(f"and a {v['N']} too .",
+    lambda v, usvs: Rendered(f"and {article(v['N'])} {v['N']} too .",
         [C(predicate=CTX("elision", of=PREDICATE, scope="predicates"),
            roles=[("SUBJECT", CTX("reference", of=v["N_pl"], scope="roles")),
                   ("OBJECT", W(v["N"])),
                   ("ADDITIVE", W("too"))])],
-        context=[context_entry(usvs, f"the {v['N_pl']} want a {v['N2']} .",
+        context=[context_entry(usvs, f"the {v['N_pl']} want {article(v['N2'])} {v['N2']} .",
                                 [C(predicate=W("want"),
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])]),
     distinct=[("N", "N2")]))
@@ -600,7 +688,7 @@ _reg(Template("add_propn_too", "additive_focus", {"PROPN": "PROPN", "N_pl": "N_p
            roles=[("SUBJECT", W(v["PROPN"])),
                   ("OBJECT", CTX("elision", of=v["N2"], scope="roles")),
                   ("ADDITIVE", W("too"))])],
-        context=[context_entry(usvs, f"the {v['N_pl']} want a {v['N2']} .",
+        context=[context_entry(usvs, f"the {v['N_pl']} want {article(v['N2'])} {v['N2']} .",
                                 [C(predicate=W("want"),
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])])))
 
@@ -610,7 +698,7 @@ _reg(Template("add_and_propn_too", "additive_focus", {"PROPN": "PROPN", "N_pl": 
            roles=[("SUBJECT", W(v["PROPN"])),
                   ("OBJECT", CTX("elision", of=v["N2"], scope="roles")),
                   ("ADDITIVE", W("too"))])],
-        context=[context_entry(usvs, f"the {v['N_pl']} want a {v['N2']} .",
+        context=[context_entry(usvs, f"the {v['N_pl']} want {article(v['N2'])} {v['N2']} .",
                                 [C(predicate=W("want"),
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])])))
 
@@ -620,17 +708,17 @@ _reg(Template("add_me_also", "additive_focus", {"N_pl": "N_pl", "N2": "N"},
            roles=[("SUBJECT", W("me")),
                   ("OBJECT", CTX("elision", of=v["N2"], scope="roles")),
                   ("ADDITIVE", W("also"))])],
-        context=[context_entry(usvs, f"the {v['N_pl']} want a {v['N2']} .",
+        context=[context_entry(usvs, f"the {v['N_pl']} want {article(v['N2'])} {v['N2']} .",
                                 [C(predicate=W("want"),
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])])))
 
 _reg(Template("add_and_a_n_also", "additive_focus", {"N": "N", "N_pl": "N_pl", "N2": "N"},
-    lambda v, usvs: Rendered(f"and a {v['N']} also .",
+    lambda v, usvs: Rendered(f"and {article(v['N'])} {v['N']} also .",
         [C(predicate=CTX("elision", of=PREDICATE, scope="predicates"),
            roles=[("SUBJECT", CTX("reference", of=v["N_pl"], scope="roles")),
                   ("OBJECT", W(v["N"])),
                   ("ADDITIVE", W("also"))])],
-        context=[context_entry(usvs, f"the {v['N_pl']} want a {v['N2']} .",
+        context=[context_entry(usvs, f"the {v['N_pl']} want {article(v['N2'])} {v['N2']} .",
                                 [C(predicate=W("want"),
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])]),
     distinct=[("N", "N2")]))
@@ -641,7 +729,7 @@ _reg(Template("add_propn_comma_too", "additive_focus", {"PROPN": "PROPN", "N_pl"
            roles=[("SUBJECT", W(v["PROPN"])),
                   ("OBJECT", CTX("elision", of=v["N2"], scope="roles")),
                   ("ADDITIVE", W("too"))])],
-        context=[context_entry(usvs, f"the {v['N_pl']} want a {v['N2']} .",
+        context=[context_entry(usvs, f"the {v['N_pl']} want {article(v['N2'])} {v['N2']} .",
                                 [C(predicate=W("want"),
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])])))
 
@@ -651,7 +739,7 @@ _reg(Template("add_only_propn_too", "additive_focus", {"PROPN": "PROPN", "N_pl":
            roles=[("SUBJECT", W(v["PROPN"])),
                   ("OBJECT", CTX("elision", of=v["N2"], scope="roles")),
                   ("FOCUS", W("only"))])],
-        context=[context_entry(usvs, f"the {v['N_pl']} want a {v['N2']} .",
+        context=[context_entry(usvs, f"the {v['N_pl']} want {article(v['N2'])} {v['N2']} .",
                                 [C(predicate=W("want"),
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])])))
 
@@ -834,7 +922,7 @@ _reg(Template("speaker_vt_it_for_me", "speaker_prime", {"VT": "VT"},
            roles=[("SUBJECT", PRIME("YOU")), ("OBJECT", W("it")), ("FOR", W("me"))])])))
 
 _reg(Template("speaker_bring_me_n", "speaker_prime", {"N": "N"},
-    lambda v, usvs: Rendered(f"bring me a {v['N']} .",
+    lambda v, usvs: Rendered(f"bring me {article(v['N'])} {v['N']} .",
         [C(kind="imperative", predicate=W("bring"),
            roles=[("SUBJECT", PRIME("YOU")), ("INDIRECT_OBJECT", W("me")),
                   ("OBJECT", W(v["N"]))])])))

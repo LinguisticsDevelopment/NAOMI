@@ -182,10 +182,15 @@ class _Matcher:
 
 
 def _sense_grounding(usvs, word: str, lemma: Optional[str]) -> Dict[str, object]:
-    key = (lemma or word).lower()
-    cands = list(usvs.senses_of(key))
+    if lemma:
+        # explicit override (W.lemma): caller already knows the lemma, no
+        # need to run the morphy fallback.
+        cands, used = list(usvs.senses_of(lemma)), lemma.lower()
+    else:
+        cands, used = usvs.senses_of_surface(word)
+        cands = list(cands)
     if cands:
-        return {"type": "sense", "candidates": cands,
+        return {"type": "sense", "candidates": cands, "lemma": used,
                 "retrieval": {"source": "lexicon", "method": "lemma_senses", "ref": None}}
     return {"type": "entity", "candidates": None}
 
@@ -374,13 +379,17 @@ def build_tree(usvs, clauses: Sequence[C], tokens: Sequence[str],
 
 
 def build_token_sense_candidates(usvs, tokens: Sequence[str]) -> List[dict]:
-    """Identical to the teacher's: `senses_of` on the raw surface token, one
-    sparse entry per covered token."""
+    """Identical to the teacher's: `senses_of_surface` (raw surface, falling
+    back to the WordNet-morphy lemma) on each token, one sparse entry per
+    covered token. Must stay on the SAME lemmatization path as `ground_W`/
+    `_sense_grounding` so a lemma-grounded slot's `candidates` and this
+    table's `sense_candidates` agree byte-for-byte (contract S4.2)."""
     out = []
     for i, tok in enumerate(tokens):
-        cands = list(usvs.senses_of(tok))
+        cands, lemma = usvs.senses_of_surface(tok)
+        cands = list(cands)
         if cands:
-            out.append({"index": i, "token": tok,
+            out.append({"index": i, "token": tok, "lemma": lemma,
                         "sense_candidates": cands, "chosen_sense": cands[0]})
     return out
 

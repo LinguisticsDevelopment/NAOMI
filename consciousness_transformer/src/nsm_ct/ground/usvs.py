@@ -50,6 +50,11 @@ from . import signal_also_see, signal_domain, signal_genus
 
 SCHEMA_VERSION = "usvs-1"
 
+# `USVS.senses_of_surface`'s default morphy POS search order (noun before
+# verb before adjective -- an inflected filler is far more often a plural
+# noun or a past-tense verb than a comparative/superlative adjective).
+_MORPHY_POS_ORDER: Tuple[str, ...] = ("n", "v", "a")
+
 # ---------------------------------------------------------------------------
 # D2 (dev/CURRENT_STATE.md decisions locked, 2026-09-07): PURE interjections
 # -- exclamations with no WordNet synset at all (`senses_of("ugh") == []`)
@@ -299,6 +304,39 @@ class USVS:
 
     def senses_of(self, word: str) -> List[str]:
         return self._lemma_index.get(word.lower(), [])
+
+    def senses_of_surface(self, word: str, pos_hint: Optional[str] = None
+                          ) -> Tuple[List[str], str]:
+        """`senses_of`, but for an INFLECTED surface form that is not itself
+        a WordNet lemma (`senses_of("dogs") == []`, `senses_of("walked") ==
+        []` -- D5, `dev/HAND_GOLD_DRAFT.md`). Tries the raw surface first;
+        if that grounds nothing, falls back to WordNet's own morphological
+        analyzer (`nltk.corpus.wordnet.morphy`) for noun/verb/adj and retries
+        on the recovered lemma. `pos_hint` (one of `"n"`/`"v"`/`"a"`), when
+        given, is tried first but every POS is still attempted after it --
+        a hint narrows the search, it does not exclude the others.
+
+        Returns `(candidates, lemma_used)`: `lemma_used == word.lower()`
+        when the raw surface already grounded (no lemmatization needed) or
+        nothing grounds at all; otherwise the morphy lemma whose senses were
+        returned. Callers that need `token_sense_candidates` to stay
+        consistent with a lemma-grounded slot (contract S4.2) must retrieve
+        both from this SAME function, not a second `senses_of` call."""
+        w = word.lower()
+        cands = self.senses_of(w)
+        if cands:
+            return cands, w
+        from .. import wordnet as _wn_mod
+        order = list(dict.fromkeys(
+            [pos_hint] + list(_MORPHY_POS_ORDER) if pos_hint else _MORPHY_POS_ORDER))
+        for pos in order:
+            lemma = _wn_mod.morphy(w, pos)
+            if not lemma or lemma == w:
+                continue
+            lemma_cands = self.senses_of(lemma)
+            if lemma_cands:
+                return lemma_cands, lemma
+        return [], w
 
     def similarity(self, a: str, b: str) -> float:
         """Word-level: placed-core cosine when both are core words; otherwise

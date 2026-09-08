@@ -192,6 +192,12 @@ def main() -> int:
     ap.add_argument("--per-family", type=int, default=100)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out-dir", default=str(OUT_DIR))
+    ap.add_argument("--write-all", action="store_true",
+                     help="also write hard_gold_all.jsonl (train+test_filler+"
+                          "test_template concatenated). Opt-in: it is a pure "
+                          "derived duplicate of the three split files and "
+                          "roughly doubles the on-disk/checked-in size, so "
+                          "the default run does not write it.")
     args = ap.parse_args()
 
     out, report = generate(args.per_family, args.seed)
@@ -205,13 +211,14 @@ def main() -> int:
                 fh.write(json.dumps(rec) + "\n")
         print(f"wrote {path} ({len(out[split])} records)")
 
-    all_path = out_dir / "hard_gold_all.jsonl"
-    with all_path.open("w") as fh:
-        for split in SPLITS:
-            for rec in out[split]:
-                fh.write(json.dumps(rec) + "\n")
-    total = sum(len(out[s]) for s in SPLITS)
-    print(f"wrote {all_path} ({total} records)")
+    if args.write_all:
+        all_path = out_dir / "hard_gold_all.jsonl"
+        with all_path.open("w") as fh:
+            for split in SPLITS:
+                for rec in out[split]:
+                    fh.write(json.dumps(rec) + "\n")
+        total = sum(len(out[s]) for s in SPLITS)
+        print(f"wrote {all_path} ({total} records)")
 
     print("\n=== pool sizes ===")
     for k in sorted(report["pools"].sizes):

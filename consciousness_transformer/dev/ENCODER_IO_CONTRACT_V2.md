@@ -232,6 +232,15 @@ either is legal, `token_sense_candidates` is authoritative when they differ.
 `token_sense_candidates` entry and grounds as `type:"entity"` — the v1
 "ungrounded content word" case, now explicit rather than a `null sense_id`.)
 
+**Lemmatized retrieval (added, hard-gold-gen v2):** `candidates` may come
+from `USVS.senses_of_surface(token)` rather than raw `senses_of(token)` when
+the surface form is an inflection with no WordNet lemma of its own (`"dogs"`,
+`"walked"`) — both `type:"sense"` groundings and their matching
+`token_sense_candidates[i]` entry then also carry a `lemma` field (the lemma
+`candidates` was actually retrieved for; equal to the lowercased surface
+token when no lemmatization was needed), produced by the SAME helper call so
+the two stay byte-identical per §4.2's agreement rule.
+
 ### 4.3 `ref` — addressing an antecedent (reference / elision)
 
 The `ref` object addresses the antecedent a reference/elision slot may point
