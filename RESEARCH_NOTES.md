@@ -1505,3 +1505,14 @@ dispatched to the cloud box (branch encoder-gold-v4b-16k); then arms v4b_3000 /
 v4b_8000 with keep-best on the same 98 holdout = the scaling curve the audit
 asked for, done properly. Separately: hard-gold mix-ratio arm (1:4) and more
 imperative/additive templates.
+
+### HARD-GOLD v3 MERGED: imperative 9 -> 29 templates, additive/focus 8 -> 22 (2026-09-08)
+Motivated by arms-2's per-family result (imperatives/additive memorized per
+template). 86 templates total; 4 templates per family held out for the two
+widened families (imperative held-out: imp_neg_vt_obj, imp_vocative,
+imp_vt_obj_adv, imp_vt_obj_place_on; additive: add_and_a_n_too, add_pron_also,
+add_pron_too, add_propn_also). 1,448 gated records, 0 failures (train 1,038 /
+test_filler 200 / test_template 210). New runs/hard_gold_train_small.jsonl =
+200-record family-stratified sample for a 1:4 mixing arm. Next arm set (after
+the 16K gold): v4b_3000, v4b_8000, and v4b_788 + hard_small (1:4) with per-
+family extra-eval on the wider held-out templates.
