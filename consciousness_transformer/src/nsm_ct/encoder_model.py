@@ -67,7 +67,19 @@ GTYPE_INDEX: Dict[str, int] = {g: i for i, g in enumerate(GROUNDING_TYPES)}
 SOURCES: List[str] = ["lexicon", "self", "context", "memory"]
 SOURCE_INDEX: Dict[str, int] = {s: i for i, s in enumerate(SOURCES)}
 
-PRIMES: List[str] = ["YOU", "<UNK_PRIME>"]
+# D3 (dev/CURRENT_STATE.md decisions locked, 2026-09-07): canonical NSM has
+# both I and YOU as substantive primes -- "I" grounds the SPEAKER wherever
+# it is the grammar-licensed filler (bare "me"/"I"/"myself"), symmetric with
+# the imperative's synthesized addressee prime YOU (see
+# nsm_ct.clause.FIRST_PERSON_SINGULAR, the two gold builders' shared routing
+# set). Adding a prime changes `prime_head`'s output width, so an encoder
+# checkpoint trained before this change is INCOMPATIBLE: every
+# `model.load_state_dict(ckpt["model_state"])` call site in this repo uses
+# PyTorch's default `strict=True`, which already fails LOUDLY (a
+# `RuntimeError` naming the exact size-mismatched parameter) rather than
+# silently misaligning the prime vocabulary -- no old checkpoint can load
+# against this PRIMES list by accident.
+PRIMES: List[str] = ["YOU", "I", "<UNK_PRIME>"]
 PRIME_INDEX: Dict[str, int] = {p: i for i, p in enumerate(PRIMES)}
 
 UNK = "<UNK>"
@@ -270,9 +282,24 @@ def clause_node_order(record: dict, clause: dict) -> List[Tuple[str, dict, Optio
     keeps the oracle's buffer pointer strictly monotonic (spec S3.1's closing
     note: "the same left-to-right, consume-on-match walk"), including
     clauses whose predicate is not the textually-first content word.
+
+    D6 (dev/CURRENT_STATE.md decisions locked, 2026-09-07): a predicate
+    grounded as `elision` (or `reference`) has no `predicate` surface string
+    (it stays `null` -- the elided verb's MEANING is inherited, not this
+    clause's word) but MAY still name a stranded surface carrier -- e.g.
+    "did" in "the dog did ." standing in for the elided main verb, so its
+    tense/polarity survive. That carrier's index rides the clause's own
+    optional `predicate_token_index` field (parallel to `roles[j]`'s
+    `token_index`) rather than the string-match `_predicate_token_index`
+    walk above, which only ever applies to a REAL grounded (`sense`/
+    `entity`) predicate word. Absent (every pre-D6 record) `.get(...)`
+    returns `None`, byte-identical to before this existed.
     """
     pg = clause["predicate_grounding"]
-    pred_idx = _predicate_token_index(record, clause) if pg["type"] in ("sense", "entity") else None
+    if pg["type"] in ("sense", "entity"):
+        pred_idx = _predicate_token_index(record, clause)
+    else:
+        pred_idx = clause.get("predicate_token_index")
     nodes: List[Tuple[str, dict, Optional[int]]] = [("PREDICATE", pg, pred_idx)]
     for role in clause["roles"]:
         nodes.append((role["relation"], role["grounding"], role["token_index"]))
@@ -317,8 +344,18 @@ def linearize_tree(record: dict, tree: dict) -> List[Step]:
                 if eff_tidx is not None:
                     i = eff_tidx + 1
             elif gtype == "prime":
-                steps.append(Step(action="EMIT_SYNTH_SLOT", token_index=None, role=role,
+                # D3: a resolved prime usually has no surface token (the
+                # synthesized imperative addressee), but "me"/"I"/"myself"
+                # grounding to prime I DOES have one -- consume/shift past
+                # it exactly like a sense/entity node so the buffer stays
+                # monotonic and the token isn't left to be silently flushed
+                # by a later SHIFT under a mismatched position.
+                if eff_tidx is not None:
+                    shift_to(eff_tidx)
+                steps.append(Step(action="EMIT_SYNTH_SLOT", token_index=eff_tidx, role=role,
                                    gtype="prime", prime=g.get("prime")))
+                if eff_tidx is not None:
+                    i = eff_tidx + 1
             elif gtype in ("reference", "elision"):
                 if eff_tidx is not None:
                     shift_to(eff_tidx)
@@ -559,7 +596,8 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
             losses.append(F.cross_entropy(prime_logits.unsqueeze(0),
                                            torch.tensor([PRIME_INDEX.get(step.prime, PRIME_INDEX["<UNK_PRIME>"])])))
 
-        if step.action in ("SHIFT", "GROUND", "EMIT_UNRESOLVED_SLOT") and step.token_index is not None:
+        if step.action in ("SHIFT", "GROUND", "EMIT_UNRESOLVED_SLOT", "EMIT_SYNTH_SLOT") \
+                and step.token_index is not None:
             i = step.token_index + 1
         prev_action_id = ACTION_INDEX[step.action]
 
