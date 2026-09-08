@@ -1046,3 +1046,18 @@ HAND-GOLD (branch hand-gold-draft, dev/HAND_GOLD_DRAFT.md, OPUS):
 AWAITING LEAD: (1) forest rule (rec top-1); (2) source keep-all (rec yes);
 (3) review HAND_GOLD_DRAFT.md D2/D3/D4/D6. THEN apply source-filter+prune to
 build_encoder_gold_v2 and run the 16K gold build. Nothing merged/trained yet.
+
+### DECISIONS LOCKED + HANDOFF (2026-09-07) -> see dev/CURRENT_STATE.md
+Lead decisions this session (full detail in dev/CURRENT_STATE.md "DECISIONS LOCKED"):
+  1. Forest -> TOP-1 (spurious multi-trees; keep 2+ only on wide score gap).
+  2. Keep all corpus sources (failures = lost gold not noise).
+  3. D3: add prime I (me->I); YOU exists.
+  4. D4: add role labels QUANTITY/ADDITIVE/FOCUS (structural only, NOT USVS coords).
+  5. D2: interjections ground to a REAL sense (content->WordNet sense; pure ugh/
+     alas -> gloss-ground into USVS); utterance_kind=interjection; no appraisal node.
+  6. D6: elision slots retain surface carrier (keep 'did' token_index for tense/polarity).
+Lead flagged we're getting lost -> wrote dev/CURRENT_STATE.md as the single
+resume doc (component status + locked decisions + branch map + next-action order).
+Context refresh planned; this + RESEARCH_NOTES + memory carry all state.
+NEXT: implement decisions 1-6 (one routine) -> lead red-pens HAND_GOLD_DRAFT.md ->
+run Gold_Expand.ipynb -> train encoder on ~3-5K subset -> build memory-decoder.
