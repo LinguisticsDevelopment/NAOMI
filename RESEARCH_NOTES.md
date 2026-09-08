@@ -1196,3 +1196,15 @@ verbs is often a noun sense: spread.n.01, saturday.n.01 -- candidates-first
 display, not a pick, but it shows the candidate ORDER is noun-first). So 18.2%
 is an UPPER bound on human-usable output; the 56% cap-hit figure likewise. Lead:
 hand-judge the 77 rendered cases before weighting the cap-hit bucket at all.
+
+### TRAINING-ARMS TOOLING MERGED (Sonnet routine, 2026-09-08)
+Branch encoder-train-arms: src/nsm_ct/encoder_train_util.py (shared loop with
+--max-steps exact optimizer-step budget, seeded stratified subsets, holdout by
+sentence text, evaluate_full = best-of-k + rank-1 + forest width), flags on
+train_encoder.py and colab_train_encoder.py (--max-steps, --n-train/--subset-seed,
+--holdout-file/--eval-gold/--eval-gold-alt, --skip-spanish), scripts/make_holdout.py
+(runs/holdout_sentences.txt = the exact seeded n=98 test split of run-2, asserted
+by tests/test_encoder_holdout.py), scripts/run_encoder_arms.sh (v2_788/v3_788/
+v3_3000 x seeds 0,1; skips v3 arms if gold absent; summary.tsv), colab/
+Encoder_Arms.ipynb. 41 tests green; unchanged-path smoke byte-identical.
+Smoke throughput 0.505 s/step at smoke config (d_model 64).
