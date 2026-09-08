@@ -164,7 +164,17 @@ def generate(per_family: int, seed: int) -> Tuple[Dict[str, List[dict]], dict]:
     # makes the unseen-template test split a stronger structural-
     # generalization check (test_template now withholds a full quarter+ of
     # each widened family's surface shapes, not a token 2-of-9 sliver).
-    HELD_OUT_COUNT = {"imperative": 4, "additive_focus": 4}
+    #
+    # v4 (hard-gold-gen-v4): the same story for the four families still at
+    # or below ~0.7 unseen-template rank-1 F1 (speaker_prime 0.4286 --
+    # regressed since v3 -- synth_subject 0.6667, quantity nan/tiny-n,
+    # elision 0.7083, same log) with only 8-9 templates each. All four were
+    # widened (speaker_prime 9->26, synth_subject 8->22, quantity 8->20,
+    # elision 8->20) and now hold out 4 templates too, same reasoning.
+    HELD_OUT_COUNT = {
+        "imperative": 4, "additive_focus": 4,
+        "speaker_prime": 4, "synth_subject": 4, "quantity": 4, "elision": 4,
+    }
 
     for family in FAMILIES:
         templates = by_family[family]

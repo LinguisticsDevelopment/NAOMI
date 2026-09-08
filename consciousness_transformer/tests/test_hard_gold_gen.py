@@ -299,3 +299,25 @@ def test_imperative_and_additive_focus_hold_out_four_templates(generated):
     _, report = generated
     assert len(report["families"]["imperative"]["held_out_templates"]) == 4
     assert len(report["families"]["additive_focus"]["held_out_templates"]) == 4
+
+
+def test_speaker_prime_synth_subject_quantity_elision_widened_v4():
+    """hard-gold-gen-v4: these four families were the ones still at or
+    below ~0.7 unseen-TEMPLATE rank-1 F1 (speaker_prime 0.4286 -- regressed
+    since v3 -- synth_subject 0.6667, quantity nan/tiny-n, elision 0.7083;
+    runs/arms/v4b_788_hard_0.log) with only 8-9 templates each -- widened
+    the same way v3 widened imperative/additive_focus."""
+    from nsm_ct.hard_gold_templates import templates_by_family
+    by_family = templates_by_family()
+    for family, minimum in (("speaker_prime", 20), ("synth_subject", 20),
+                             ("quantity", 20), ("elision", 20)):
+        assert len(by_family[family]) >= minimum, (
+            f"{family} has only {len(by_family[family])} templates")
+
+
+def test_v4_widened_families_hold_out_four_templates(generated):
+    """Same `HELD_OUT_COUNT` widening as v3, applied to the four families
+    widened in v4."""
+    _, report = generated
+    for family in ("speaker_prime", "synth_subject", "quantity", "elision"):
+        assert len(report["families"][family]["held_out_templates"]) == 4

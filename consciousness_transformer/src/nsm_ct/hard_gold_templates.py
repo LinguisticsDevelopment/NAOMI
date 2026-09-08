@@ -111,7 +111,38 @@ PRON_POOL = ["he", "she", "it", "they", "we"]
 # four are in that set) -- reference/memory-grounded, not senses_of-filtered.
 OBL_PRON_POOL = ["him", "her", "them", "us"]
 
-QUANT_POOL = ["more", "less", "enough", "all"]
+# v4 widening (`quantity`): the original 4-word pool meant every "{QUANT}
+# !"/"{QUANT} ." -shaped template collided on one of exactly 4 surface
+# strings regardless of which template produced it (dev/HARD_GOLD_GEN_STATS.md
+# v2 SS9, "quantity's known template-surface-collision issue") -- widened to
+# every other bare quantifier that grounds via `senses_of_surface` ("would"/
+# "could"-style modals do NOT ground this way, but ordinary quantity words
+# do: "many", "few", "none", "most", "some", "any", "several", "much",
+# "plenty", "half", "both", "each", "nothing", "one" all pass).
+QUANT_POOL = [
+    "more", "less", "enough", "all", "many", "few", "none", "most", "some",
+    "any", "several", "much", "plenty", "half", "both", "each", "nothing",
+    "one",
+]
+
+# Number-agreement subsets of QUANT_POOL, for the templates that pair a
+# quantifier directly with a bare noun (no "of"/"the" buffer, where English
+# is far less forgiving than the bare-fragment "{QUANT} !" shape): "many
+# dog"/"several dog" (needs plural), "much car"/"one car" said with a plural
+# (needs singular/mass) are not English. A quantifier immediately before a
+# BARE "the {N}" is narrower still ("each the car"/"one the cars" are not
+# English either -- only "all"/"both"/"half" front a bare "the NP" without
+# an intervening "of").
+QUANT_PL_POOL = [
+    "more", "all", "many", "few", "most", "some", "any", "several", "plenty",
+    "both", "enough", "none", "nothing",
+]
+QUANT_SG_POOL = [
+    "more", "less", "enough", "much", "plenty", "half", "none", "nothing",
+    "each", "one", "any", "some",
+]
+QUANT_DET_PL_POOL = ["all", "both", "half"]
+QUANT_DET_SG_POOL = ["all", "half"]
 
 # Manner/time adverbs (v3 widening, `imperative`): unlike PRON/PROPN these
 # DO need a WordNet sense to ground (they are ordinary content words filling
@@ -329,6 +360,19 @@ def build_pools(usvs) -> Tuple[Dict[str, List[str]], PoolReport]:
     quant_ok = [w for w in QUANT_POOL if usvs.senses_of(w)]
     pools["QUANT"] = quant_ok
     report.sources["QUANT"] = "curated (bare quantifier fragments)"
+
+    pools["QUANT_PL"] = [w for w in QUANT_PL_POOL if usvs.senses_of(w)]
+    report.sources["QUANT_PL"] = ("curated subset of QUANT_POOL grammatical "
+                                   "directly before a bare PLURAL noun")
+    pools["QUANT_SG"] = [w for w in QUANT_SG_POOL if usvs.senses_of(w)]
+    report.sources["QUANT_SG"] = ("curated subset of QUANT_POOL grammatical "
+                                   "directly before a bare SINGULAR/mass noun")
+    pools["QUANT_DET_PL"] = [w for w in QUANT_DET_PL_POOL if usvs.senses_of(w)]
+    report.sources["QUANT_DET_PL"] = ("curated subset of QUANT_POOL grammatical "
+                                       "directly before a bare \"the {N_pl}\"")
+    pools["QUANT_DET_SG"] = [w for w in QUANT_DET_SG_POOL if usvs.senses_of(w)]
+    report.sources["QUANT_DET_SG"] = ("curated subset of QUANT_POOL grammatical "
+                                       "directly before a bare \"the {N}\"")
 
     adv_ok = [w for w in ADV_CURATED if usvs.senses_of(w)]
     adv_bad = [w for w in ADV_CURATED if w not in adv_ok]
@@ -809,6 +853,128 @@ _reg(Template("elision_and_n_did", "elision", {"N": "N", "N_pl": "N_pl", "N2": "
     distinct=[("N", "N2")]))
 
 
+# ---- D2. elision (v4 widening: no-contraction negation, fronted "so"/
+# "neither" inversion, bare-pronoun and plural-NP subjects, modal carriers
+# beyond "did" -- "could"/"would"/"has"/"will", each keeping its own
+# `predicate_token_index` per D6 exactly like "did" -- and bang-terminated
+# variants -- 8 -> 20 templates) -----------------------------------------------
+
+_reg(Template("elision_propn_did_not_full", "elision",
+    {"PROPN": "PROPN", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"{v['PROPN']} did not .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="did"),
+           roles=[("SUBJECT", W(v["PROPN"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))])))
+
+_reg(Template("elision_so_did_n", "elision",
+    {"N": "N", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"so did the {v['N']} .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="did"),
+           roles=[("SUBJECT", W(v["N"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))]),
+    distinct=[("N", "N2")]))
+
+_reg(Template("elision_neither_did_propn", "elision",
+    {"PROPN": "PROPN", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"neither did {v['PROPN']} .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="did"),
+           roles=[("SUBJECT", W(v["PROPN"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles")),
+                  ("ADDITIVE", W("neither"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))])))
+
+_reg(Template("elision_pron_did", "elision",
+    {"PRON": "PRON", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"{v['PRON']} did .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="did"),
+           roles=[("SUBJECT", W(v["PRON"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))])))
+
+_reg(Template("elision_pron_did_too", "elision",
+    {"PRON": "PRON", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"{v['PRON']} did too .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="did"),
+           roles=[("SUBJECT", W(v["PRON"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles")),
+                  ("ADDITIVE", W("too"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))])))
+
+_reg(Template("elision_npl_did", "elision",
+    {"N_pl": "N_pl", "N_pl_ctx": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"the {v['N_pl']} did .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="did"),
+           roles=[("SUBJECT", W(v["N_pl"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl_ctx']} {v['VT_past']} the {v['N2']} .",
+                                [C(predicate=W(v["VT_past"]),
+                                   roles=[("SUBJECT", W(v["N_pl_ctx"])), ("OBJECT", W(v["N2"]))])])]),
+    distinct=[("N_pl", "N_pl_ctx")]))
+
+_reg(Template("elision_n_did_bang", "elision",
+    {"N": "N", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"the {v['N']} did !",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="did"),
+           roles=[("SUBJECT", W(v["N"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))]),
+    distinct=[("N", "N2")]))
+
+_reg(Template("elision_propn_could", "elision",
+    {"PROPN": "PROPN", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"{v['PROPN']} could .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="could"),
+           roles=[("SUBJECT", W(v["PROPN"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))])))
+
+_reg(Template("elision_propn_wouldnt", "elision",
+    {"PROPN": "PROPN", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"{v['PROPN']} would n't .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="would"),
+           roles=[("SUBJECT", W(v["PROPN"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))])))
+
+_reg(Template("elision_n_has", "elision",
+    {"N": "N", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"the {v['N']} has .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="has"),
+           roles=[("SUBJECT", W(v["N"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))]),
+    distinct=[("N", "N2")]))
+
+_reg(Template("elision_propn_will", "elision",
+    {"PROPN": "PROPN", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"{v['PROPN']} will .",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="will"),
+           roles=[("SUBJECT", W(v["PROPN"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))])))
+
+_reg(Template("elision_propn_did_bang", "elision",
+    {"PROPN": "PROPN", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"{v['PROPN']} did !",
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="did"),
+           roles=[("SUBJECT", W(v["PROPN"])),
+                  ("OBJECT", CTX("elision", of=v["N2"], scope="roles"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                _did_context(v))])))
+
+
 # ---- E. additive / focus ----------------------------------------------------
 
 _reg(Template("add_me_too", "additive_focus", {"N_pl": "N_pl", "N2": "N"},
@@ -1094,12 +1260,12 @@ _reg(Template("quant_bang_past_ctx", "quantity", {"QUANT": "QUANT", "N_pl": "N_p
                                 [C(predicate=W(v["VT_past"]),
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])])))
 
-_reg(Template("quant_n_pl_bang", "quantity", {"QUANT": "QUANT", "N_pl": "N_pl"},
+_reg(Template("quant_n_pl_bang", "quantity", {"QUANT": "QUANT_PL", "N_pl": "N_pl"},
     lambda v, usvs: Rendered(f"{v['QUANT']} {v['N_pl']} !",
         [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
            roles=[("OBJECT", W(v["N_pl"])), ("QUANTITY", W(v["QUANT"]))])])))
 
-_reg(Template("quant_n_pl_dot", "quantity", {"QUANT": "QUANT", "N_pl": "N_pl"},
+_reg(Template("quant_n_pl_dot", "quantity", {"QUANT": "QUANT_PL", "N_pl": "N_pl"},
     lambda v, usvs: Rendered(f"{v['QUANT']} {v['N_pl']} .",
         [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
            roles=[("OBJECT", W(v["N_pl"])), ("QUANTITY", W(v["QUANT"]))])])))
@@ -1114,10 +1280,78 @@ _reg(Template("quant_of_n_pl", "quantity", {"QUANT": "QUANT", "N_pl": "N_pl"},
         [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
            roles=[("QUANTITY", W(v["QUANT"])), ("OF", W(v["N_pl"]))])])))
 
-_reg(Template("quant_n_bang", "quantity", {"QUANT": "QUANT", "N": "N"},
+_reg(Template("quant_n_bang", "quantity", {"QUANT": "QUANT_SG", "N": "N"},
     lambda v, usvs: Rendered(f"{v['QUANT']} {v['N']} !",
         [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
            roles=[("QUANTITY", W(v["QUANT"])), ("OBJECT", W(v["N"]))])])))
+
+
+# ---- F2. quantity (v4 widening: dot/bang pairing for every shape, bare-
+# pronoun and definite-article objects, idiom-fixed "too many"/"too much"/
+# "a few"/"some more"/"just one"/"none"/"not enough" -- 8 -> 20 templates,
+# alongside the QUANT_POOL widening above (4 -> 18 words) which is the real
+# fix for the surface-collision issue these bang/dot pairs previously hit
+# head-on at only 4 possible strings) ----------------------------------------
+
+_reg(Template("quant_n_dot", "quantity", {"QUANT": "QUANT_SG", "N": "N"},
+    lambda v, usvs: Rendered(f"{v['QUANT']} {v['N']} .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W(v["QUANT"])), ("OBJECT", W(v["N"]))])])))
+
+_reg(Template("quant_of_them_dot", "quantity", {"QUANT": "QUANT"},
+    lambda v, usvs: Rendered(f"{v['QUANT']} of them .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W(v["QUANT"])), ("OF", W("them"))])])))
+
+_reg(Template("quant_of_them_bang", "quantity", {"QUANT": "QUANT"},
+    lambda v, usvs: Rendered(f"{v['QUANT']} of them !",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W(v["QUANT"])), ("OF", W("them"))])])))
+
+_reg(Template("quant_the_n_pl_dot", "quantity", {"QUANT": "QUANT_DET_PL", "N_pl": "N_pl"},
+    lambda v, usvs: Rendered(f"{v['QUANT']} the {v['N_pl']} .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W(v["QUANT"])), ("OBJECT", W(v["N_pl"]))])])))
+
+_reg(Template("quant_the_n_dot", "quantity", {"QUANT": "QUANT_DET_SG", "N": "N"},
+    lambda v, usvs: Rendered(f"{v['QUANT']} the {v['N']} .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W(v["QUANT"])), ("OBJECT", W(v["N"]))])])))
+
+_reg(Template("quant_too_many_n_pl_bang", "quantity", {"N_pl": "N_pl"},
+    lambda v, usvs: Rendered(f"too many {v['N_pl']} !",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W("many")), ("OBJECT", W(v["N_pl"]))])])))
+
+_reg(Template("quant_too_much_n_dot", "quantity", {"N": "N"},
+    lambda v, usvs: Rendered(f"too much {v['N']} .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W("much")), ("OBJECT", W(v["N"]))])])))
+
+_reg(Template("quant_a_few_n_pl_dot", "quantity", {"N_pl": "N_pl"},
+    lambda v, usvs: Rendered(f"a few {v['N_pl']} .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W("few")), ("OBJECT", W(v["N_pl"]))])])))
+
+_reg(Template("quant_just_one_dot", "quantity", {},
+    lambda v, usvs: Rendered("just one .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W("one"))])])))
+
+_reg(Template("quant_none_at_all_dot", "quantity", {},
+    lambda v, usvs: Rendered("none at all .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W("none"))])])))
+
+_reg(Template("quant_some_more_dot", "quantity", {},
+    lambda v, usvs: Rendered("some more .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W("more"))])])))
+
+_reg(Template("quant_not_enough_n_dot", "quantity", {"N": "N"},
+    lambda v, usvs: Rendered(f"not enough {v['N']} .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("QUANTITY", W("enough")), ("OBJECT", W(v["N"]))])])))
 
 
 # ---- G. synth-subject fragments (propositional anaphora) -------------------
@@ -1201,6 +1435,145 @@ _reg(Template("synth_feels_bang", "synth_subject", {"ADJ": "ADJ", "N_pl": "N_pl"
                                    roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])])))
 
 
+# ---- G2. synth-subject fragments (v4 widening: a fifth verb ("smells"),
+# PP complements ("like a {N}"/"like {PROPN}") instead of only bare ADJ,
+# a fixed-complement shape ("seems so ."/"looks so ."/"feels so ."), a
+# fronted-complement order ("{ADJ} , it seems ."), and a "to me" PP on the
+# existing ADJ-complement shape -- 8 -> 22 templates) -------------------------
+
+_reg(Template("synth_smells", "synth_subject", {"ADJ": "ADJ", "PRON": "PRON", "VI": "VI"},
+    lambda v, usvs: Rendered(f"smells {v['ADJ']} .",
+        [C(predicate=W("smells"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["ADJ"]))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VI']} .",
+                                [C(predicate=W(v["VI"]), roles=[("SUBJECT", W(v["PRON"]))])])])))
+
+_reg(Template("synth_smells_bang", "synth_subject", {"ADJ": "ADJ", "PRON": "PRON", "VI": "VI"},
+    lambda v, usvs: Rendered(f"smells {v['ADJ']} !",
+        [C(predicate=W("smells"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["ADJ"]))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VI']} .",
+                                [C(predicate=W(v["VI"]), roles=[("SUBJECT", W(v["PRON"]))])])])))
+
+_reg(Template("synth_sounds_like_a_n", "synth_subject", {"N": "N", "PRON": "PRON", "VI": "VI"},
+    lambda v, usvs: Rendered(f"sounds like {article(v['N'])} {v['N']} .",
+        [C(predicate=W("sounds"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["N"]))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VI']} .",
+                                [C(predicate=W(v["VI"]), roles=[("SUBJECT", W(v["PRON"]))])])])))
+
+_reg(Template("synth_looks_like_a_n", "synth_subject", {"N": "N", "PRON": "PRON", "VI": "VI"},
+    lambda v, usvs: Rendered(f"looks like {article(v['N'])} {v['N']} .",
+        [C(predicate=W("looks"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["N"]))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VI']} .",
+                                [C(predicate=W(v["VI"]), roles=[("SUBJECT", W(v["PRON"]))])])])))
+
+_reg(Template("synth_smells_like_a_n", "synth_subject", {"N": "N", "PRON": "PRON", "VI": "VI"},
+    lambda v, usvs: Rendered(f"smells like {article(v['N'])} {v['N']} .",
+        [C(predicate=W("smells"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["N"]))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VI']} .",
+                                [C(predicate=W(v["VI"]), roles=[("SUBJECT", W(v["PRON"]))])])])))
+
+_reg(Template("synth_sounds_like_propn", "synth_subject", {"PROPN": "PROPN", "PRON": "PRON", "VI": "VI"},
+    lambda v, usvs: Rendered(f"sounds like {v['PROPN']} .",
+        [C(predicate=W("sounds"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["PROPN"]))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VI']} .",
+                                [C(predicate=W(v["VI"]), roles=[("SUBJECT", W(v["PRON"]))])])])))
+
+_reg(Template("synth_looks_like_propn", "synth_subject", {"PROPN": "PROPN", "PRON": "PRON", "VI": "VI"},
+    lambda v, usvs: Rendered(f"looks like {v['PROPN']} .",
+        [C(predicate=W("looks"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["PROPN"]))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VI']} .",
+                                [C(predicate=W(v["VI"]), roles=[("SUBJECT", W(v["PRON"]))])])])))
+
+_reg(Template("synth_seems_so", "synth_subject", {"PRON": "PRON", "VT": "VT", "N": "N"},
+    lambda v, usvs: Rendered("seems so .",
+        [C(predicate=W("seems"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W("so"))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VT']} the {v['N']} .",
+                                [C(predicate=W(v["VT"]),
+                                   roles=[("SUBJECT", W(v["PRON"])), ("OBJECT", W(v["N"]))])])])))
+
+_reg(Template("synth_looks_so", "synth_subject", {"PRON": "PRON", "VI": "VI"},
+    lambda v, usvs: Rendered("looks so .",
+        [C(predicate=W("looks"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W("so"))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VI']} .",
+                                [C(predicate=W(v["VI"]), roles=[("SUBJECT", W(v["PRON"]))])])])))
+
+_reg(Template("synth_feels_so", "synth_subject", {"N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered("feels so .",
+        [C(predicate=W("feels"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W("so"))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                [C(predicate=W(v["VT_past"]),
+                                   roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])])))
+
+_reg(Template("synth_adj_it_seems", "synth_subject", {"ADJ": "ADJ", "PRON": "PRON", "VT": "VT", "N": "N"},
+    lambda v, usvs: Rendered(f"{v['ADJ']} , it seems .",
+        [C(predicate=W("seems"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["ADJ"]))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VT']} the {v['N']} .",
+                                [C(predicate=W(v["VT"]),
+                                   roles=[("SUBJECT", W(v["PRON"])), ("OBJECT", W(v["N"]))])])])))
+
+_reg(Template("synth_sounds_adj_to_me", "synth_subject", {"ADJ": "ADJ", "PRON": "PRON", "N": "N"},
+    lambda v, usvs: Rendered(f"sounds {v['ADJ']} to me .",
+        [C(predicate=W("sounds"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["ADJ"])), ("FOR", W("me"))])],
+        context=[context_entry(usvs, f"{v['PRON']} go to the {v['N']} .",
+                                [C(predicate=W("go"),
+                                   roles=[("SUBJECT", W(v["PRON"])), ("PLACE", W(v["N"]))])])])))
+
+_reg(Template("synth_feels_like_a_n", "synth_subject", {"N": "N", "N_pl": "N_pl", "N2": "N", "VT_past": "VT_past"},
+    lambda v, usvs: Rendered(f"feels like {article(v['N'])} {v['N']} .",
+        [C(predicate=W("feels"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["N"]))])],
+        context=[context_entry(usvs, f"the {v['N_pl']} {v['VT_past']} the {v['N2']} .",
+                                [C(predicate=W(v["VT_past"]),
+                                   roles=[("SUBJECT", W(v["N_pl"])), ("OBJECT", W(v["N2"]))])])]),
+    distinct=[("N", "N2")]))
+
+_reg(Template("synth_seems_bang_ctx_vi", "synth_subject", {"ADJ": "ADJ", "PRON": "PRON", "VI": "VI"},
+    lambda v, usvs: Rendered(f"seems {v['ADJ']} !",
+        [C(predicate=W("seems"),
+           roles=[("SUBJECT", CTX("reference", of=CLAUSE, scope="clauses",
+                                  method="propositional_anaphora")),
+                  ("COMPLEMENT", W(v["ADJ"]))])],
+        context=[context_entry(usvs, f"{v['PRON']} {v['VI']} .",
+                                [C(predicate=W(v["VI"]), roles=[("SUBJECT", W(v["PRON"]))])])])))
+
+
 # ---- H. speaker prime --------------------------------------------------------
 
 _reg(Template("speaker_tell_about_n", "speaker_prime", {"N": "N"},
@@ -1253,6 +1626,103 @@ _reg(Template("speaker_tell_about_propn", "speaker_prime", {"PROPN": "PROPN"},
         [C(kind="imperative", predicate=W("tell"),
            roles=[("SUBJECT", PRIME("YOU")), ("INDIRECT_OBJECT", W("me")),
                   ("ABOUT", W(v["PROPN"]))])])))
+
+
+# ---- H2. speaker prime (v4 widening: double-object "me" shapes beyond
+# "give"/"show" (regressed to 0.4286 rank-1 F1 unseen-template,
+# runs/arms/v4b_788_hard_0.log), bare-object "{VT} me" shapes, a vocative,
+# "to the {N}" destination PP, bare fragments ("me first ."/"me ?"), and --
+# the biggest gap in the old 9 -- DECLARATIVE clauses with subject "i" (the
+# same `ground_W` FIRST_PERSON_SINGULAR routing to `prime:"I"` that "me"
+# already uses, but as SUBJECT rather than an object) -- 9 -> 26 templates) --
+
+_reg(Template("speaker_tell_me_the_n", "speaker_prime", {"N": "N"},
+    lambda v, usvs: Rendered(f"tell me the {v['N']} .",
+        [C(kind="imperative", predicate=W("tell"),
+           roles=[("SUBJECT", PRIME("YOU")), ("INDIRECT_OBJECT", W("me")),
+                  ("OBJECT", W(v["N"]))])])))
+
+_reg(Template("speaker_give_me_a_n", "speaker_prime", {"N": "N"},
+    lambda v, usvs: Rendered(f"give me {article(v['N'])} {v['N']} .",
+        [C(kind="imperative", predicate=W("give"),
+           roles=[("SUBJECT", PRIME("YOU")), ("INDIRECT_OBJECT", W("me")),
+                  ("OBJECT", W(v["N"]))])])))
+
+_reg(Template("speaker_show_me_propn", "speaker_prime", {"PROPN": "PROPN"},
+    lambda v, usvs: Rendered(f"show me {v['PROPN']} .",
+        [C(kind="imperative", predicate=W("show"),
+           roles=[("SUBJECT", PRIME("YOU")), ("INDIRECT_OBJECT", W("me")),
+                  ("OBJECT", W(v["PROPN"]))])])))
+
+_reg(Template("speaker_vt_me_bang", "speaker_prime", {"VT": "VT"},
+    lambda v, usvs: Rendered(f"{v['VT']} me !",
+        [C(kind="imperative", predicate=W(v["VT"]),
+           roles=[("SUBJECT", PRIME("YOU")), ("OBJECT", W("me"))])])))
+
+_reg(Template("speaker_vt_me_bare", "speaker_prime", {"VT": "VT"},
+    lambda v, usvs: Rendered(f"{v['VT']} me .",
+        [C(kind="imperative", predicate=W(v["VT"]),
+           roles=[("SUBJECT", PRIME("YOU")), ("OBJECT", W("me"))])])))
+
+_reg(Template("speaker_vocative_vt_me", "speaker_prime", {"PROPN": "PROPN", "VT": "VT"},
+    lambda v, usvs: Rendered(f"{v['PROPN']} , {v['VT']} me .",
+        [C(kind="imperative", predicate=W(v["VT"]),
+           roles=[("SUBJECT", PRIME("YOU")), ("ADDRESSEE", W(v["PROPN"])),
+                  ("OBJECT", W("me"))])])))
+
+_reg(Template("speaker_look_at_me", "speaker_prime", {},
+    lambda v, usvs: Rendered("look at me .",
+        [C(kind="imperative", predicate=W("look"),
+           roles=[("SUBJECT", PRIME("YOU")), ("AT", W("me"))])])))
+
+_reg(Template("speaker_bring_me_the_n", "speaker_prime", {"N": "N"},
+    lambda v, usvs: Rendered(f"bring me the {v['N']} .",
+        [C(kind="imperative", predicate=W("bring"),
+           roles=[("SUBJECT", PRIME("YOU")), ("INDIRECT_OBJECT", W("me")),
+                  ("OBJECT", W(v["N"]))])])))
+
+_reg(Template("speaker_take_me_to_the_n", "speaker_prime", {"N": "N"},
+    lambda v, usvs: Rendered(f"take me to the {v['N']} .",
+        [C(kind="imperative", predicate=W("take"),
+           roles=[("SUBJECT", PRIME("YOU")), ("OBJECT", W("me")),
+                  ("PLACE", W(v["N"]))])])))
+
+_reg(Template("speaker_me_first", "speaker_prime", {},
+    lambda v, usvs: Rendered("me first .",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("SUBJECT", W("me")), ("COMPLEMENT", W("first"))])])))
+
+_reg(Template("speaker_me_question", "speaker_prime", {},
+    lambda v, usvs: Rendered("me ?",
+        [C(predicate=MEM(gtype="elision", method="elision_no_antecedent"),
+           roles=[("SUBJECT", W("me"))], is_question=True)])))
+
+_reg(Template("speaker_i_vi_past", "speaker_prime", {"VI_past": "VI_past"},
+    lambda v, usvs: Rendered(f"i {v['VI_past']} .",
+        [C(predicate=W(v["VI_past"]), roles=[("SUBJECT", W("i"))])])))
+
+_reg(Template("speaker_i_vt_past_n", "speaker_prime", {"VT_past": "VT_past", "N": "N"},
+    lambda v, usvs: Rendered(f"i {v['VT_past']} the {v['N']} .",
+        [C(predicate=W(v["VT_past"]),
+           roles=[("SUBJECT", W("i")), ("OBJECT", W(v["N"]))])])))
+
+_reg(Template("speaker_i_vt_past_propn", "speaker_prime", {"VT_past": "VT_past", "PROPN": "PROPN"},
+    lambda v, usvs: Rendered(f"i {v['VT_past']} {v['PROPN']} .",
+        [C(predicate=W(v["VT_past"]),
+           roles=[("SUBJECT", W("i")), ("OBJECT", W(v["PROPN"]))])])))
+
+_reg(Template("speaker_i_want_a_n", "speaker_prime", {"N": "N"},
+    lambda v, usvs: Rendered(f"i want {article(v['N'])} {v['N']} .",
+        [C(predicate=W("want"),
+           roles=[("SUBJECT", W("i")), ("OBJECT", W(v["N"]))])])))
+
+_reg(Template("speaker_i_cannot_vi", "speaker_prime", {"VI": "VI"},
+    lambda v, usvs: Rendered(f"i can not {v['VI']} .",
+        [C(predicate=W(v["VI"]), roles=[("SUBJECT", W("i"))])])))
+
+_reg(Template("speaker_myself_i_vi_past", "speaker_prime", {"VI_past": "VI_past"},
+    lambda v, usvs: Rendered(f"myself , i {v['VI_past']} .",
+        [C(predicate=W(v["VI_past"]), roles=[("SUBJECT", W("i"))])])))
 
 
 FAMILIES: List[str] = sorted({t.family for t in ALL_TEMPLATES})
