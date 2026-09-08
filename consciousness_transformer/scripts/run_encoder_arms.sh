@@ -10,6 +10,8 @@
 #   v3_788        -- runs/encoder_gold_v3.jsonl, n_train=788   (same size as v2_788, CLEANER data only)
 #   v3_3000       -- runs/encoder_gold_v3.jsonl, n_train=3000  (v3_788 + MORE data)
 #   v4b_788       -- runs/encoder_gold_v4b.jsonl, n_train=788  (v4b gold, same size as v2_788)
+#   v4b_3000      -- runs/encoder_gold_v4b_16k.jsonl, n_train=3000  (v4b_788 + MORE data, scaling curve)
+#   v4b_8000      -- runs/encoder_gold_v4b_16k.jsonl, n_train=8000  (v4b_788 + MORE data, scaling curve)
 #   v4b_788_hard  -- runs/encoder_gold_v4b.jsonl + runs/hard_gold_train.jsonl, n_train=788
 #                    (v4b gold topped up with the hard-construction gold; scored on its own
 #                    held-out hard-gold test splits via --extra-eval, reported per family)
@@ -57,6 +59,7 @@ MAX_SECONDS="${MAX_SECONDS:-172800}"   # 48h hard per-run ceiling; --max-steps i
 GOLD_V2="${GOLD_V2:-runs/encoder_gold_v2.jsonl}"
 GOLD_V3="${GOLD_V3:-runs/encoder_gold_v3.jsonl}"
 GOLD_V4B="${GOLD_V4B:-runs/encoder_gold_v4b.jsonl}"
+GOLD_V4B_16K="${GOLD_V4B_16K:-runs/encoder_gold_v4b_16k.jsonl}"
 GOLD_V4B_MARGIN="${GOLD_V4B_MARGIN:-runs/encoder_gold_v4b_margin.jsonl}"
 GOLD_V4B_ALL="${GOLD_V4B_ALL:-runs/encoder_gold_v4b_all.jsonl}"
 HARD_GOLD_TRAIN="${HARD_GOLD_TRAIN:-runs/hard_gold_train.jsonl}"
@@ -107,6 +110,8 @@ V3_AVAILABLE=1
 if [[ ! -f "$GOLD_V3" ]]; then V3_AVAILABLE=0; fi
 V4B_AVAILABLE=1
 if [[ ! -f "$GOLD_V4B" ]]; then V4B_AVAILABLE=0; fi
+V4B_16K_AVAILABLE=1
+if [[ ! -f "$GOLD_V4B_16K" ]]; then V4B_16K_AVAILABLE=0; fi
 V4B_MARGIN_AVAILABLE=1
 if [[ ! -f "$GOLD_V4B_MARGIN" ]]; then V4B_MARGIN_AVAILABLE=0; fi
 V4B_ALL_AVAILABLE=1
@@ -120,6 +125,8 @@ ARM_DEFS=(
   "v3_788:${GOLD_V3}:788"
   "v3_3000:${GOLD_V3}:3000"
   "v4b_788:${GOLD_V4B}:788"
+  "v4b_3000:${GOLD_V4B_16K}:3000"
+  "v4b_8000:${GOLD_V4B_16K}:8000"
   "v4b_788_hard:${GOLD_V4B},${HARD_GOLD_TRAIN}:788"
   "v4b_margin_788:${GOLD_V4B_MARGIN}:788"
   "v4b_all_788:${GOLD_V4B_ALL}:788"
@@ -131,6 +138,7 @@ arm_available() {
   case "$arm" in
     v3_788|v3_3000) [[ "$V3_AVAILABLE" == "1" ]] ;;
     v4b_788) [[ "$V4B_AVAILABLE" == "1" ]] ;;
+    v4b_3000|v4b_8000) [[ "$V4B_16K_AVAILABLE" == "1" ]] ;;
     v4b_788_hard) [[ "$V4B_AVAILABLE" == "1" && "$HARD_AVAILABLE" == "1" ]] ;;
     v4b_margin_788) [[ "$V4B_MARGIN_AVAILABLE" == "1" ]] ;;
     v4b_all_788) [[ "$V4B_ALL_AVAILABLE" == "1" ]] ;;
@@ -163,6 +171,16 @@ build_cmd() {
       ;;
     v4b_788|v4b_788_hard)
       if [[ "$V4B_AVAILABLE" == "1" ]]; then eval_flags="$eval_flags --eval-gold-alt ${GOLD_V4B}"; fi
+      ;;
+    v4b_3000|v4b_8000)
+      # scaling-curve arms trained on the 16K v4b pool: PRIMARY target is
+      # v4b top-1 (current targets, also drives --eval-every dev selection
+      # since dev_eval_gold_path = --eval-gold or --gold); v2 kept as
+      # --eval-gold-alt for continuity with the v2_788/v4b_788 reference
+      # numbers. The 98 holdout (test+dev) sentences' v4b targets are read
+      # from the small ${GOLD_V4B} build (which covers all 98/98), not the
+      # 16K pool.
+      eval_flags="--eval-gold ${GOLD_V4B} --eval-gold-alt ${GOLD_V2}"
       ;;
     v4b_margin_788|v4b_all_788)
       # gold=v4b_margin/v4b_all (richer-than-top-1 v4b variants); score the
