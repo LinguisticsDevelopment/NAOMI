@@ -89,14 +89,15 @@ def build(usvs):
             "slot (the pronoun 'me', reference/memory) in the same clause -- "
             "the encoder must emit one committed node and one candidate slot "
             "side by side.",
-        choice="'me' routed exactly as the teacher's ground_word does for a "
-               "bare pronoun: type reference, retrieval.source 'memory', "
-               "candidates null (retrieved at run time). 'about' is an open "
-               "PP-role ABOUT (attested 41x in teacher gold).",
-        unsure=["'me' in an imperative is ALWAYS the speaker. Should it be "
-                "prime I (resolved) rather than an unresolved memory "
-                "reference? encoder_model.PRIMES currently admits only YOU, "
-                "so prime I would train as <UNK_PRIME>. See decision D3."])
+        choice="'me' is ALWAYS the speaker, so it grounds as the resolved "
+               "prime I (D3, dev/CURRENT_STATE.md decisions locked) -- "
+               "symmetric with the imperative's synthesized addressee prime "
+               "YOU -- rather than an unresolved memory reference. Unlike "
+               "YOU, 'me' HAS a surface token, so it keeps its real "
+               "token_index (1); the oracle's EMIT_SYNTH_SLOT now shifts to "
+               "and consumes it instead of hardcoding token_index=null. "
+               "'about' is an open PP-role ABOUT (attested 41x in teacher "
+               "gold).")
 
     add(hand_gold_record(
         "wait for me .",
@@ -108,7 +109,9 @@ def build(usvs):
             "'Wait !' already in hand-gold has no arguments at all.",
         choice="'for' -> the open PP-role FOR; the preposition token itself is "
                "not grounded (it is flushed by the oracle's terminal SHIFT), "
-               "matching teacher-gold treatment of function words.")
+               "matching teacher-gold treatment of function words. 'me' -- "
+               "the speaker being waited for -- grounds as the resolved "
+               "prime I (D3), same as 'tell me ...' above.")
 
     # ---------------------------------------------------------------- B
     # INTERJECTIONS -- literal/gloss sense + utterance_kind only.
@@ -147,17 +150,20 @@ def build(usvs):
         [C(kind="interjection", predicate=W("ugh"), roles=[])],
         usvs=usvs),
         cat="interjection",
-        why="A GENUINELY pure interjection: senses_of('ugh') == []. Contract "
-            "S4.2 says an uncovered content token grounds as type 'entity' -- "
-            "so the utterance carries no meaning at all beyond its kind.",
-        choice="grounding.type 'entity' (no sense to point at), "
-               "utterance_kind 'interjection'. This is the record that makes "
-               "pre-build checklist item (5) -- pure-interjection USVS "
-               "gloss-senses -- concrete: until that lands, 'ugh' is a "
-               "contentless node.",
-        unsure=["BLOCKED on a decision: leave as 'entity' (honest, but the "
-                "encoder learns 'interjection => entity'), or hold this "
-                "family until gloss-senses are in USVS? See decision D2."])
+        why="A GENUINELY pure interjection: senses_of('ugh') == [] in "
+            "WordNet proper. Contract S4.2 says an uncovered content token "
+            "grounds as type 'entity' -- so without D2, the utterance would "
+            "carry no meaning at all beyond its kind.",
+        choice="D2 (dev/CURRENT_STATE.md decisions locked): 'ugh' is now "
+               "GLOSS-grounded -- `nsm_ct.ground.usvs.PURE_INTERJECTION_GLOSSES` "
+               "mints `interj.ugh.01` ('an exclamation expressing disgust or "
+               "horror') and grounds it through the SAME gloss->coordinate "
+               "pipeline every real WordNet sense uses, additively and "
+               "fingerprint-safe. `senses_of('ugh')` now returns "
+               "['interj.ugh.01'], so `W('ugh')` grounds as an ordinary "
+               "sense slot -- no bare 'entity', no record-level change "
+               "needed here at all. utterance_kind 'interjection' is still "
+               "the only speech-act marker; still NO appraisal node.")
 
     add(hand_gold_record(
         "nonsense !",
@@ -193,13 +199,16 @@ def build(usvs):
             "The teacher cannot posit a node for a word that is not there.",
         choice="Two elision slots, one shape (contract S4.1): predicate "
                "inherits the context predicate, OBJECT inherits the context "
-               "OBJECT; 'more' is an ordinary surface sense slot. "
-               "predicate=null because predicate_grounding.type is 'elision' "
-               "(contract S3). This is contract S8.3's own worked example, "
-               "re-authored through the REAL retrieval pipeline.",
-        unsure=["Role label QUANTITY is used by contract S8.3 but is NOT in "
-                "the frozen role vocabulary of contract S3, and appears 0x in "
-                "teacher gold. See decision D4."])
+               "OBJECT; 'more' is an ordinary surface sense slot under role "
+               "QUANTITY. predicate=null because predicate_grounding.type is "
+               "'elision' (contract S3). This is contract S8.3's own worked "
+               "example, re-authored through the REAL retrieval pipeline. "
+               "QUANTITY is now an official structural role label (D4, "
+               "dev/CURRENT_STATE.md decisions locked) -- a relation label "
+               "only, never touching USVS sense coordinates -- alongside the "
+               "new ADDITIVE/FOCUS and the existing DESCRIPTION/"
+               "SPECIFICATION/COMPLEMENT modifier roles "
+               "(`nsm_ct.clause.MODIFIER_RELATIONS`).")
 
     ctx_want_dog = [context_entry(usvs, "the boys want a dog .",
                                   [C(predicate=W("want"),
@@ -209,20 +218,20 @@ def build(usvs):
         "me too .",
         [C(predicate=CTX("elision", of=PREDICATE, scope="predicates"),
            roles=[("SUBJECT", W("me")),
-                  ("OBJECT", CTX("elision", of="dog", scope="roles"))])],
+                  ("OBJECT", CTX("elision", of="dog", scope="roles")),
+                  ("ADDITIVE", W("too"))])],
         usvs=usvs, context=ctx_want_dog),
         cat="elision",
         why="The ONLY surface content is the subject; predicate and object are "
             "both inherited. A fragment whose overt token is an argument, not "
             "a head.",
-        choice="SUBJECT 'me' = the speaker, emitted as reference/memory (same "
-               "as any bare pronoun). Predicate + OBJECT are context elisions. "
-               "The additive particle 'too' is left UNGROUNDED (flushed by the "
-               "oracle's terminal SHIFT) -- there is no additive-focus role in "
-               "the frozen vocabulary.",
-        unsure=["'too' carries the whole additive meaning of the utterance and "
-                "the record drops it. Add a role (ADDITIVE / FOCUS), or accept "
-                "the loss? See decision D4."])
+        choice="SUBJECT 'me' = the speaker, now the resolved prime I (D3) "
+               "rather than a reference/memory slot -- symmetric with the "
+               "imperative addressee prime YOU, and it keeps its real "
+               "token_index (0). Predicate + OBJECT are context elisions. "
+               "The additive particle 'too' now takes the new ADDITIVE role "
+               "(D4) instead of being dropped -- an ordinary structural "
+               "relation label that never touches USVS grounding.")
 
     ctx_break = [context_entry(usvs, "the boys break the window .",
                                [C(predicate=W("break"),
@@ -230,7 +239,7 @@ def build(usvs):
                                          ("OBJECT", W("window"))])])]
     add(hand_gold_record(
         "the dog did .",
-        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates"),
+        [C(predicate=CTX("elision", of=PREDICATE, scope="predicates", word="did"),
            roles=[("SUBJECT", W("dog")),
                   ("OBJECT", CTX("elision", of="window", scope="roles"))])],
         usvs=usvs, context=ctx_break),
@@ -238,13 +247,18 @@ def build(usvs):
         why="VP-ellipsis with a STRANDED AUXILIARY -- a family neither "
             "existing hand-gold draft covers. 'did' is a surface token that "
             "stands in for the elided predicate without being it.",
-        choice="The elided predicate slot takes NO token_index; 'did' is "
-               "flushed like any other function word. The overt SUBJECT is a "
-               "normal sense slot, the OBJECT is a context elision.",
-        unsure=["The stranded auxiliary carries tense and polarity ('did' vs "
-                "'did n't'), and this record discards both. Should an elision "
-                "slot be allowed to name its surface carrier "
-                "(token_index=2)? See decision D6."])
+        choice="D6 (dev/CURRENT_STATE.md decisions locked): the elided "
+               "predicate slot now KEEPS 'did's token_index (2) via the new "
+               "`predicate_token_index` field -- CTX(..., word='did') -- so "
+               "tense/polarity survive on the stranded auxiliary even though "
+               "the predicate's MEANING is still inherited (predicate=null, "
+               "predicate_grounding.type='elision', ref -> context[0] "
+               "clause 0 PREDICATE 'break'). `encoder_model.clause_node_order` "
+               "now reads this field for any non-sense/non-entity predicate, "
+               "and `linearize_tree`'s EMIT_UNRESOLVED_SLOT shifts to and "
+               "consumes it exactly like any other node with a real surface "
+               "token. The overt SUBJECT is a normal sense slot, the OBJECT "
+               "is a context elision.")
 
     ctx_two = [
         context_entry(usvs, "the girls want a doll .",
@@ -259,7 +273,8 @@ def build(usvs):
         [C(predicate=CTX("elision", of=PREDICATE, scope="predicates",
                          context_index=None),
            roles=[("SUBJECT", CTX("reference", of="girls", scope="roles")),
-                  ("OBJECT", W("hat"))])],
+                  ("OBJECT", W("hat")),
+                  ("ADDITIVE", W("too"))])],
         usvs=usvs, context=ctx_two),
         cat="elision",
         why="MULTI-ENTRY context[] where the antecedent is NOT the most recent "
@@ -271,7 +286,8 @@ def build(usvs):
                "handles) -- the encoder emits the whole retrieved set and "
                "commits to nothing; ref names the gold antecedent in "
                "context[0]. This is the record that makes context_index "
-               "load-bearing.")
+               "load-bearing. 'too' now takes the ADDITIVE role (D4) instead "
+               "of being dropped, same as 'me too .' above.")
 
     # ---------------------------------------------------------------- D
     # SYNTHESIZED / DROPPED ARGUMENTS -- an argument position with no
@@ -372,10 +388,14 @@ def build(usvs):
         unsure=["ref.slot:null is OVERLOADED: contract S8.2 uses null "
                 "role_index to mean 'genuinely ambiguous, not committed', "
                 "while here null slot means 'the antecedent IS the clause'. "
-                "These need distinguishing. See decision D1.",
-                "COMPLEMENT is in clause.py's MODIFIER_RELATIONS but is NOT "
-                "in the contract S3 frozen role vocabulary and appears 0x in "
-                "the current teacher gold. See decision D4."])
+                "These need distinguishing. See decision D1 (HAND_GOLD_DRAFT "
+                "numbering -- distinct from the locked CURRENT_STATE.md D1, "
+                "forest top-1).",
+                "COMPLEMENT (and DESCRIPTION/SPECIFICATION/SUBJECT_COMPLEMENT) "
+                "are usable via clause.py's MODIFIER_RELATIONS but still not "
+                "listed in the contract's own S3 role-vocabulary table -- a "
+                "documentation gap D4 (QUANTITY/ADDITIVE/FOCUS) did not "
+                "itself widen; worth folding in together."])
 
     return D
 
