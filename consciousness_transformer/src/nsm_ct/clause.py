@@ -439,7 +439,26 @@ def _subject_predicate(graph):
 # exclude these so richer extraction doesn't silently change counts the
 # heuristic never meant to track. Shared here (rather than redefined at each
 # consumer) so a future modifier role only needs adding in one place.
-MODIFIER_RELATIONS = frozenset({"DESCRIPTION", "SPECIFICATION", "COMPLEMENT", "SUBJECT_COMPLEMENT"})
+#
+# D4 (dev/CURRENT_STATE.md decisions locked, 2026-09-07): QUANTITY (bare
+# quantifier fragments -- "More !"), ADDITIVE and FOCUS (the "too"/"also"
+# particle) are STRUCTURAL relation labels only -- they never touch USVS
+# sense coordinates or grounding -- and are decorations in exactly the same
+# sense as DESCRIPTION/SPECIFICATION/COMPLEMENT above, so the same
+# downstream "ignore modifier roles when counting core args" consumers
+# (clause_reactor.py, corpus.py, curriculum2.py) must ignore these three too.
+MODIFIER_RELATIONS = frozenset({"DESCRIPTION", "SPECIFICATION", "COMPLEMENT", "SUBJECT_COMPLEMENT",
+                                 "QUANTITY", "ADDITIVE", "FOCUS"})
+
+# D3 (dev/CURRENT_STATE.md decisions locked, 2026-09-07): canonical NSM has
+# both I and YOU as substantive primes. The SPEAKER, wherever it is the
+# grammatically-licensed filler ("me" in "tell me ...", "wait for me .",
+# "me too ."), is symmetric with the imperative's synthesized addressee
+# (prime YOU) -- a grammar-fixed single referent, not a candidate set. Both
+# gold builders (`scripts/hand_gold.py`, `scripts/build_encoder_gold_v2.py`)
+# route these surface forms to `encoder_model`'s resolved `prime:"I"`
+# instead of the generic bare-pronoun reference/memory slot.
+FIRST_PERSON_SINGULAR = frozenset({"i", "me", "myself"})
 
 _MODIFIER_HEAD_FIRST = ("DESCRIPTION", "COMPLEMENT", "SUBJECT_COMPLEMENT")
 
