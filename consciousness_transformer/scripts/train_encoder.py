@@ -6,14 +6,22 @@ source CE -- there is no sense-selection term anywhere) under the S3.3
 grammar-constrained action mask. Reports the S2.3 smoke wall-clock and the
 S6 candidate-set recall on a held-out, forest-width-stratified split.
 
+dev/AUDIT_2026-09-08.md finding 7 + recommendation (c): also supports an
+exact optimizer-step budget (--max-steps) and a shared, gold-file-independent
+held-out sentence set (--holdout-file) so scripts/run_encoder_arms.sh can run
+arms that separate MORE data from CLEANER data at equal optimization budget,
+scored on the SAME held-out sentences. All of this is additive: without
+--max-steps/--holdout-file, behavior is unchanged from before.
+
 Usage:
     python scripts/train_encoder.py --smoke --out runs/encoder_smoke.pt
+    python scripts/train_encoder.py --smoke --max-steps 60 \
+        --holdout-file runs/holdout_sentences.txt --gold runs/encoder_gold_v2.jsonl
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import random
 import sys
 import time
@@ -25,47 +33,17 @@ import torch
 
 from nsm_ct.ground.usvs import load_usvs
 from nsm_ct import encoder_model as em
+from nsm_ct import encoder_train_util as etu
 
-
-def load_gold(path: str) -> list:
-    with open(path) as f:
-        return [json.loads(line) for line in f]
-
-
-def forest_width_bucket(record: dict) -> int:
-    n = len(record["lattice"]["trees"])
-    if n <= 1:
-        return 0
-    if n <= 3:
-        return 1
-    return 2
-
-
-def stratified_split(records: list, seed: int, n_train: int, n_dev: int, n_test: int) -> tuple:
-    """Seeded, forest-width-stratified split (spec S6): buckets = {1-tree,
-    2-3 trees, 4+ trees}, shuffled within bucket, then interleaved so
-    train/dev/test each see all three widths, disjoint records throughout."""
-    rng = random.Random(seed)
-    buckets = {0: [], 1: [], 2: []}
-    for r in records:
-        buckets[forest_width_bucket(r)].append(r)
-    for b in buckets.values():
-        rng.shuffle(b)
-
-    # round-robin merge across buckets (proportional representation)
-    order = []
-    idxs = {0: 0, 1: 0, 2: 0}
-    total = sum(len(b) for b in buckets.values())
-    while len(order) < total:
-        for k in (0, 1, 2):
-            if idxs[k] < len(buckets[k]):
-                order.append(buckets[k][idxs[k]])
-                idxs[k] += 1
-
-    train = order[:n_train]
-    dev = order[n_train:n_train + n_dev]
-    test = order[n_train + n_dev:n_train + n_dev + n_test]
-    return train, dev, test
+# Re-exported for scripts that do `from train_encoder import load_gold,
+# stratified_split` (scripts/rescore_encoder.py, colab_train_encoder.py,
+# colab_train_all.py, eval_encoder.py, diagnose_colab_ckpts.py,
+# _roundtrip_aliasfix.py) -- the implementations now live in
+# nsm_ct.encoder_train_util so scripts/colab_train_encoder.py doesn't
+# duplicate them.
+load_gold = etu.load_gold
+forest_width_bucket = etu.forest_width_bucket
+stratified_split = etu.stratified_split
 
 
 def main():
@@ -91,6 +69,27 @@ def main():
     ap.add_argument("--max-seconds", type=float, default=650.0, help="hard training-time cutoff")
     ap.add_argument("--beam-width", type=int, default=6)
     ap.add_argument("--k", type=int, default=6)
+    ap.add_argument("--max-steps", type=int, default=None,
+                     help="(item A) train for exactly N optimizer steps (gradient updates); "
+                          "--epochs becomes a ceiling only. dev/AUDIT_2026-09-08.md finding 7: "
+                          "fixed-EPOCH runs give bigger n_train arms more gradient updates for "
+                          "free, confounding 'more data' with 'more optimization'.")
+    ap.add_argument("--subset-seed", type=int, default=None,
+                     help="(item B) seed for a stratified subset of size --n-train drawn from the "
+                          "training pool (or, with --holdout-file, from the pool minus the held-out "
+                          "sentences); defaults to --seed. Independent of the split seed, so "
+                          "v3@788 and v3@3000 are separate, reproducible draws.")
+    ap.add_argument("--holdout-file", default=None,
+                     help="(item C) text file of sentences (one per line) EXCLUDED from training "
+                          "and used as the eval set instead of the gold-derived dev/test split. "
+                          "See scripts/make_holdout.py.")
+    ap.add_argument("--eval-gold", default=None,
+                     help="(item C) gold file whose records for the holdout sentences are the eval "
+                          "targets; only used with --holdout-file. Default: --gold.")
+    ap.add_argument("--eval-gold-alt", default=None,
+                     help="(item C) second gold file to ALSO score the holdout sentences against "
+                          "(e.g. score a v3-trained arm against v2 targets for continuity AND v3 "
+                          "targets); only used with --holdout-file.")
     args = ap.parse_args()
 
     if args.smoke:
@@ -110,6 +109,13 @@ def main():
         epochs = args.epochs or 15
         batch_size = args.batch_size or 32
 
+    if args.max_steps is not None and args.epochs is None:
+        # item A: "--max-steps N ... regardless of epochs; epochs becomes a
+        # ceiling only". The user didn't pin --epochs, so raise the ceiling
+        # far above what --max-steps could plausibly need -- --max-steps (or
+        # --max-seconds) is the real budget now, not the smoke/full default.
+        epochs = max(epochs, 100_000)
+
     torch.manual_seed(args.seed)
     random.seed(args.seed)
 
@@ -118,8 +124,18 @@ def main():
     records = load_gold(args.gold)
     print(f"[{time.time()-t0:6.1f}s] {len(records)} gold records")
 
-    train_recs, dev_recs, test_recs = stratified_split(records, args.seed, n_train, n_dev, n_test)
-    print(f"[{time.time()-t0:6.1f}s] split: train={len(train_recs)} dev={len(dev_recs)} test={len(test_recs)}")
+    holdout_sentences = None
+    dev_recs, test_recs = [], []
+    if args.holdout_file:
+        holdout_sentences = etu.load_holdout_sentences(args.holdout_file)
+        pool = etu.exclude_by_text(records, holdout_sentences)
+        subset_seed = args.subset_seed if args.subset_seed is not None else args.seed
+        train_recs = etu.seeded_subset(pool, n_train, subset_seed)
+        print(f"[{time.time()-t0:6.1f}s] holdout mode: {len(holdout_sentences)} held-out sentences, "
+              f"pool={len(pool)}, train subset={len(train_recs)} (subset_seed={subset_seed})")
+    else:
+        train_recs, dev_recs, test_recs = stratified_split(records, args.seed, n_train, n_dev, n_test)
+        print(f"[{time.time()-t0:6.1f}s] split: train={len(train_recs)} dev={len(dev_recs)} test={len(test_recs)}")
 
     print(f"[{time.time()-t0:6.1f}s] loading USVS from {args.usvs_dir}")
     usvs = load_usvs(args.usvs_dir)
@@ -142,71 +158,75 @@ def main():
     print(f"[{time.time()-t0:6.1f}s] policy params: {n_params:,} (~{n_bytes/1e6:.3f} MB fp32)")
 
     print(f"[{time.time()-t0:6.1f}s] building features + derivations for {len(train_recs)} train records")
-    train_items = []
-    for r in train_recs:
-        feats = em.build_features(r, usvs, pos_vocab, hash_buckets)
-        for tree in r["lattice"]["trees"]:
-            steps = em.linearize_tree(r, tree)
-            train_items.append((feats, steps))
+    train_items = etu.build_train_items(train_recs, usvs, pos_vocab, hash_buckets)
     print(f"[{time.time()-t0:6.1f}s] {len(train_items)} teacher-forced derivations")
 
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
 
-    loss_curve = []
-    step_count = 0
-    train_start = time.time()
-    stopped_early = False
-    for epoch in range(epochs):
-        if time.time() - train_start > args.max_seconds:
-            stopped_early = True
-            print(f"[{time.time()-t0:6.1f}s] max-seconds budget hit before epoch {epoch}; stopping")
-            break
-        random.shuffle(train_items)
-        epoch_loss = 0.0
-        epoch_n = 0
-        opt.zero_grad()
-        for idx, (feats, steps) in enumerate(train_items):
-            if time.time() - train_start > args.max_seconds:
-                stopped_early = True
-                break
-            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=args.terminal_weight) / batch_size
-            loss.backward()
-            epoch_loss += float(loss.item()) * batch_size
-            epoch_n += 1
-            step_count += 1
-            if (idx + 1) % batch_size == 0:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
-                opt.step()
-                opt.zero_grad()
-            if step_count % 50 == 0:
-                avg = epoch_loss / max(epoch_n, 1)
-                loss_curve.append((step_count, avg))
-                print(f"[{time.time()-t0:6.1f}s] epoch {epoch} step {step_count} avg_loss={avg:.3f}")
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
-        opt.step()
-        opt.zero_grad()
-        avg = epoch_loss / max(epoch_n, 1)
-        loss_curve.append((step_count, avg))
+    def on_step_50(epoch, step_count, avg):
+        print(f"[{time.time()-t0:6.1f}s] epoch {epoch} step {step_count} avg_loss={avg:.3f}")
+
+    def on_epoch_done(epoch, avg, epoch_n):
         print(f"[{time.time()-t0:6.1f}s] === epoch {epoch} done: avg_loss={avg:.3f} (n={epoch_n} derivations) ===")
-        if stopped_early:
-            break
 
-    train_wall = time.time() - train_start
+    def on_max_seconds(epoch):
+        print(f"[{time.time()-t0:6.1f}s] max-seconds budget hit before epoch {epoch}; stopping")
+
+    result = etu.run_training_loop(
+        model, train_items, opt, epochs=epochs, batch_size=batch_size,
+        max_seconds=args.max_seconds, max_steps=args.max_steps,
+        terminal_weight=args.terminal_weight,
+        on_step_50=on_step_50, on_epoch_done=on_epoch_done, on_max_seconds=on_max_seconds)
+
+    loss_curve = result["loss_curve"]
+    train_wall = result["train_wall"]
+    stopped_early = result["stopped_early"]
     print(f"[{time.time()-t0:6.1f}s] training wall-clock: {train_wall:.1f}s (stopped_early={stopped_early})")
+    if args.max_steps is not None:
+        opt_steps = result["optimizer_steps"]
+        throughput = opt_steps / train_wall if train_wall > 0 else float("nan")
+        s_per_step = train_wall / opt_steps if opt_steps else float("nan")
+        print(f"[{time.time()-t0:6.1f}s] max-steps budget: optimizer_steps={opt_steps} "
+              f"(cap={args.max_steps}, stop_reason={result['stop_reason']}) "
+              f"epoch_fraction={result['epoch_fraction']:.3f} "
+              f"throughput={throughput:.4f} steps/s ({s_per_step:.4f} s/step)")
 
-    print(f"[{time.time()-t0:6.1f}s] evaluating (model policy) train/dev/test ...")
-    rng = random.Random(args.seed)
+    print(f"[{time.time()-t0:6.1f}s] evaluating (model policy) ...")
     metrics = {}
-    for split_name, split_recs in (("train", train_recs), ("dev", dev_recs), ("test", test_recs)):
-        m = em.evaluate(model, split_recs, usvs, pos_vocab, hash_buckets,
-                         beam_width=args.beam_width, k=args.k, policy="model")
-        metrics[split_name] = m
-        print(f"[{time.time()-t0:6.1f}s] {split_name}: {m}")
+    if holdout_sentences is not None:
+        eval_gold_path = args.eval_gold or args.gold
+        eval_records = records if eval_gold_path == args.gold else load_gold(eval_gold_path)
+        eval_targets, n_missing = etu.records_for_sentences(eval_records, holdout_sentences)
+        print(f"[{time.time()-t0:6.1f}s] holdout eval targets from {eval_gold_path}: "
+              f"matched={len(eval_targets)} missing={n_missing}")
+        m = etu.evaluate_full(model, eval_targets, usvs, pos_vocab, hash_buckets,
+                               beam_width=args.beam_width, k=args.k, policy="model")
+        metrics["holdout"] = m
+        print(f"[{time.time()-t0:6.1f}s] holdout (best-of-{args.k} + rank1 + forest width): {m}")
 
-    print(f"[{time.time()-t0:6.1f}s] evaluating RANDOM baseline on test ...")
-    random_metrics = em.evaluate(model, test_recs, usvs, pos_vocab, hash_buckets,
+        if args.eval_gold_alt:
+            alt_records = load_gold(args.eval_gold_alt)
+            alt_targets, alt_missing = etu.records_for_sentences(alt_records, holdout_sentences)
+            print(f"[{time.time()-t0:6.1f}s] holdout eval targets (alt) from {args.eval_gold_alt}: "
+                  f"matched={len(alt_targets)} missing={alt_missing}")
+            m_alt = etu.evaluate_full(model, alt_targets, usvs, pos_vocab, hash_buckets,
+                                       beam_width=args.beam_width, k=args.k, policy="model")
+            metrics["holdout_alt"] = m_alt
+            print(f"[{time.time()-t0:6.1f}s] holdout_alt (best-of-{args.k} + rank1 + forest width): {m_alt}")
+    else:
+        for split_name, split_recs in (("train", train_recs), ("dev", dev_recs), ("test", test_recs)):
+            m = etu.evaluate_full(model, split_recs, usvs, pos_vocab, hash_buckets,
+                                   beam_width=args.beam_width, k=args.k, policy="model")
+            metrics[split_name] = m
+            print(f"[{time.time()-t0:6.1f}s] {split_name}: {m}")
+
+    random_target = eval_targets if holdout_sentences is not None else test_recs
+    random_target_name = "holdout" if holdout_sentences is not None else "test"
+    print(f"[{time.time()-t0:6.1f}s] evaluating RANDOM baseline on {random_target_name} ...")
+    rng = random.Random(args.seed)
+    random_metrics = em.evaluate(model, random_target, usvs, pos_vocab, hash_buckets,
                                   beam_width=args.beam_width, k=args.k, policy="random", rng=rng)
-    print(f"[{time.time()-t0:6.1f}s] test (random baseline): {random_metrics}")
+    print(f"[{time.time()-t0:6.1f}s] {random_target_name} (random baseline): {random_metrics}")
 
     ckpt = {
         "model_state": model.state_dict(),
@@ -217,7 +237,11 @@ def main():
         "d_model": d_model,
         "config": {"n_train": len(train_recs), "n_dev": len(dev_recs), "n_test": len(test_recs),
                    "epochs": epochs, "batch_size": batch_size, "seed": args.seed,
-                   "terminal_weight": args.terminal_weight},
+                   "terminal_weight": args.terminal_weight, "max_steps": args.max_steps,
+                   "subset_seed": args.subset_seed, "holdout_file": args.holdout_file,
+                   "eval_gold": args.eval_gold, "eval_gold_alt": args.eval_gold_alt,
+                   "optimizer_steps": result["optimizer_steps"], "stop_reason": result["stop_reason"],
+                   "epoch_fraction": result["epoch_fraction"]},
         "loss_curve": loss_curve,
         "metrics": metrics,
         "random_baseline_test": random_metrics,
@@ -225,7 +249,8 @@ def main():
         "n_policy_params": n_params,
         "split_record_texts": {"train": [r["text"] for r in train_recs],
                                 "dev": [r["text"] for r in dev_recs],
-                                "test": [r["text"] for r in test_recs]},
+                                "test": [r["text"] for r in test_recs],
+                                "holdout": list(holdout_sentences) if holdout_sentences is not None else []},
     }
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     torch.save(ckpt, args.out)
