@@ -1641,3 +1641,47 @@ one. Not dead -- re-test at 8,000 sentences with W in {0.1, 0.25}, and note the
 graded metric column when the routine's final report lands. The soft-target
 loss alone (roles/gtype/source) was not isolated in this pair; that arm is
 cheap and should run with the retest.
+
+### USVS-space loss retest at 8,000 (ARMS-4b, seed 0, keep-best) -- BOTH ARMS DONE, ROBUST HONEST NEGATIVE (2026-09-09) -> branch encoder-arms4-b
+Isolating the soft-target loss from the aux head at scale, against the
+v4b_8000 default-loss reference (rank-1 edge-F1 0.632 on v4b targets, best
+step 6,500). Two arms, `--loss usvs-soft`, same 8,000-sentence v4b_16k pool
+/ 98-sentence holdout as the scaling curve above; both eval on v4b targets
+(primary) and v2 (alt), --metric graded on both.
+
+| arm | best_step | edge-F1 v4b (best / last) | graded-F v4b (best / last) | edge-F1 v2 (best / last) | graded-F v2 (best / last) | head-cosine v4b/v2 |
+|---|---|---|---|---|---|---|
+| default (reference) | 6,500 | 0.6326 / 0.6277 | n/a (no graded eval recorded; checkpoint not retained) | 0.5342 / 0.5331 | n/a | n/a |
+| soft-only (`LOSS=usvs-soft`) | 7,000 | 0.5787 / 0.5647 | 0.6540 / 0.6480 | 0.4755 / 0.4825 | 0.5706 / 0.5764 | n/a (aux off) |
+| soft + aux W=0.1 (`LOSS=usvs-soft AUX=0.1`) | 5,000 | 0.5768 / 0.5506 | 0.6525 / 0.6289 | 0.4880 / 0.4738 | 0.5749 / 0.5651 | 0.7709 / 0.6511 (best); 0.7679 / 0.6498 (last) |
+
+Neither USVS-space loss variant beats the default at 8,000. The soft-target
+loss ALONE (no aux head) still trails by -0.053 edge-F1 on v4b (0.579 vs
+0.632) and -0.059 on v2 -- so the 788-sentence "honest negative" was never
+about the aux-head pairing specifically; the soft role/gtype/source targets
+themselves cost structural F1, at both scales tested. Lightening the aux
+head from W=0.5 (788-sentence arm) to W=0.1 does not close the gap either:
+soft+aux0.1 sits within noise of soft-only (0.577 vs 0.579 v4b, 0.488 vs
+0.476 v2 -- the W=0.1 aux head is mildly LESS harmful on v2 and mildly more
+on v4b, not a clear win either way) despite the head learning the USVS space
+just as well as at 788 sentences (cosine 0.77 v4b / 0.65 v2, vs 0.80 at
+788). READ: this is now a robust negative across two data scales and two aux
+weights, not a scale-starved one -- the soft CE targets on
+role/grounding-type/source compete with the structural training signal
+regardless of how much data or how light the aux term is. Not recommended
+for the default training recipe.
+
+### USVS-SPACE LOSS: NEGATIVE AT 8,000 TOO -- metric stays, loss dropped (ARMS-4b, 2026-09-09)
+Same 8,000-sentence pool, keep-best, seed 0, v4b targets:
+| loss                          | rank-1 edge-F1 | best step |
+| default (hard CE)             | **0.632** | 6,500 |
+| soft-target only              | 0.579 | 7,000 |
+| soft-target + aux head W=0.1  | 0.577 | 5,000 |
+(at 788: default 0.491; soft + aux W=0.5 0.438.) The graded loss variants
+trail the default by ~0.05 at both scales and in every combination tried.
+DECISION (director): keep the USVS-graded METRIC as the evaluation (it is
+the lead's directive for scoring, and it is more informative than edge-F1);
+train with the hard targets. The aux head stays in the code, off by default.
+Left open: a graded loss might pay once the encoder scores sense candidates
+itself (it does not today -- candidates-first), i.e. it is a comprehension-
+side idea more than an encoder one.
