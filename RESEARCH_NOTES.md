@@ -1641,3 +1641,21 @@ one. Not dead -- re-test at 8,000 sentences with W in {0.1, 0.25}, and note the
 graded metric column when the routine's final report lands. The soft-target
 loss alone (roles/gtype/source) was not isolated in this pair; that arm is
 cheap and should run with the retest.
+
+### USVS-space loss retest at 8,000 (ARMS-4b, seed 0, keep-best) -- IN PROGRESS (2026-09-09) -> branch encoder-arms4-b
+Isolating the soft-target loss from the aux head at scale, against the
+v4b_8000 default-loss reference (rank-1 edge-F1 0.632 on v4b targets, best
+step 6,500; dev/USVS_GRADED_SCORING.md graded metric now also recorded).
+Two arms, `--loss usvs-soft`, same 8,000-sentence v4b_16k pool / 98-sentence
+holdout as the scaling curve above:
+
+**Arm 1 -- soft-target loss only (no aux head), `LOSS=usvs-soft`:**
+best_step=7,000. BEST checkpoint: rank-1 edge-F1 0.5787 / graded-F 0.6540 on
+v4b targets, 0.4755 / 0.5706 on v2. LAST (step 8,000): 0.5647 / 0.6480 on
+v4b, 0.4825 / 0.5764 on v2. The soft-target loss ALONE still trails the
+default loss's 0.632 at this scale (0.579 vs 0.632, -0.053) -- so the arm
+that was never isolated at 788 is a negative here too, not just the
+aux-head pairing.
+
+Arm 2 (soft + aux W=0.1) running; full comparison table lands when both
+arms finish.
