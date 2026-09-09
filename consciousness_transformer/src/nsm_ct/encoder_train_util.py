@@ -22,6 +22,7 @@ import statistics
 import time
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
+import numpy as np
 import torch
 
 from nsm_ct import encoder_model as em
@@ -136,13 +137,22 @@ def records_for_sentences(gold_records: Sequence[dict], sentences: Sequence[str]
     return matched, n_missing
 
 
-def build_train_items(records: Sequence[dict], usvs, pos_vocab, hash_buckets: int) -> list:
+def build_train_items(records: Sequence[dict], usvs, pos_vocab, hash_buckets: int,
+                       *, compute_node_targets: bool = False) -> list:
+    """`compute_node_targets` (default `False`, unchanged item shape's
+    THIRD slot is `None`) -- lead directive 2026-09-08
+    (dev/USVS_GRADED_SCORING.md S5.4): precompute each item's gold USVS
+    node vectors ONCE here (`em.node_targets_for_steps`), not inside the
+    training loop, so `--aux-usvs` never re-runs a USVS lookup per epoch.
+    Every item is a `(feats, steps, node_targets)` triple; `run_training_loop`
+    shuffles/consumes them as one unit so the three stay aligned."""
     items = []
     for r in records:
         feats = em.build_features(r, usvs, pos_vocab, hash_buckets)
         for tree in r["lattice"]["trees"]:
             steps = em.linearize_tree(r, tree)
-            items.append((feats, steps))
+            node_targets = em.node_targets_for_steps(steps, feats, usvs) if compute_node_targets else None
+            items.append((feats, steps, node_targets))
     return items
 
 
@@ -152,9 +162,21 @@ def _f1(p: float, r: float) -> float:
     return 2 * p * r / (p + r)
 
 
+#: The graded-metric field names `evaluate_full(metric=...)` adds, in both
+#: the best-of-k and the rank-1 (`rank1_`-prefixed) views. See
+#: dev/USVS_GRADED_SCORING.md S3.
+GRADED_FIELDS = ("graded_p", "graded_r", "graded_f", "graded_overall",
+                  "clause_count", "clause_kind", "clause_struct")
+
+
+def _empty_graded(prefix: str = "") -> Dict[str, float]:
+    return {prefix + k: float("nan") for k in GRADED_FIELDS}
+
+
 def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets: int,
                    beam_width: int = 6, k: int = 6, policy: str = "model",
-                   rng: Optional[random.Random] = None) -> Dict[str, float]:
+                   rng: Optional[random.Random] = None,
+                   metric: str = "edge") -> Dict[str, float]:
     """`em.evaluate`'s best-of-k oracle metrics PLUS the audit's rank-1
     committed-tree edge P/R/F1 and mean forest width (dev/AUDIT_2026-09-08.md
     finding 5 + recommendation (b); ported from the Part A section added to
@@ -163,7 +185,15 @@ def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets:
     applied both to the whole forest (best-of-k, matching `em.evaluate`
     exactly) and to just its rank-1 (highest-logprob) tree, so every arm
     reports the "encoder works" number alongside the number that survives
-    commitment to a single hypothesis."""
+    commitment to a single hypothesis.
+
+    `metric` (lead directive 2026-09-08; dev/USVS_GRADED_SCORING.md):
+    `"edge"` (default) is the original binary edge-F1 only and is unchanged;
+    `"graded"` ADDS the USVS-graded P/R/F fields (same two views, `graded_*`
+    and `rank1_graded_*`) computed on the SAME decoded forests -- nothing is
+    re-decoded and no existing field changes value; `"both"` is a synonym,
+    kept so a caller can be explicit that it wants the old numbers too."""
+    want_graded = metric in ("graded", "both")
     if not records:
         empty = em.aggregate_recall([])
         empty.update({
@@ -173,17 +203,29 @@ def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets:
             "rank1_structure_recall": float("nan"),
             "mean_forest_width": float("nan"),
         })
+        if want_graded:
+            empty.update(_empty_graded())
+            empty.update(_empty_graded("rank1_"))
         return empty
+
+    if want_graded:
+        from nsm_ct import usvs_graded as ug
 
     scores = []
     rank1_scores = []
     widths = []
+    graded_scores = []
+    rank1_graded_scores = []
     for record in records:
         feats = em.build_features(record, usvs, pos_vocab, hash_buckets)
         forest = em.beam_decode(model, feats, beam_width=beam_width, k=k, policy=policy, rng=rng)
+        rank1 = [forest[0]] if forest else []
         scores.append(em.score_record(record, forest))
-        rank1_scores.append(em.score_record(record, [forest[0]] if forest else []))
+        rank1_scores.append(em.score_record(record, rank1))
         widths.append(len(forest))
+        if want_graded:
+            graded_scores.append(ug.score_record_graded(record, forest, usvs))
+            rank1_graded_scores.append(ug.score_record_graded(record, rank1, usvs))
 
     agg = em.aggregate_recall(scores)
     rank1_agg = em.aggregate_recall(rank1_scores)
@@ -192,6 +234,12 @@ def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets:
     agg["rank1_edge_f1"] = _f1(rank1_agg["edge_precision"], rank1_agg["edge_recall"])
     agg["rank1_structure_recall"] = rank1_agg["structure_recall"]
     agg["mean_forest_width"] = statistics.mean(widths) if widths else float("nan")
+    if want_graded:
+        g = ug.aggregate_graded(graded_scores)
+        g1 = ug.aggregate_graded(rank1_graded_scores)
+        for key in GRADED_FIELDS:
+            agg[key] = g[key]
+            agg["rank1_" + key] = g1[key]
     return agg
 
 
@@ -215,9 +263,53 @@ def evaluate_dev_fast(model, records: Sequence[dict], usvs, pos_vocab, hash_buck
     return evaluate_full(model, records, usvs, pos_vocab, hash_buckets, beam_width=1, k=1, policy="model")
 
 
+def evaluate_head_cosine(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets: int) -> float:
+    """The `--aux-usvs` diagnostic (dev/USVS_GRADED_SCORING.md S5.4 part B):
+    "does the head learn the [USVS] space?" For every GOLD tree of every
+    record, teacher-force it through the model's controller
+    (`model.node_vectors`, on the SAME `tree_render.normalize_gold_tree`
+    shape `usvs_graded.flatten_tree` consumes) and compare the model's own
+    projected vector at each node against `usvs_graded.node_vector` for
+    that EXACT node -- matched by identity (`clause_index`, `role`,
+    `token_index`, `is_predicate`), not by alignment, since both walks
+    replay the one gold derivation and therefore see the same node set.
+    This is deliberately the GOLD-teacher-forced walk (not a decoded tree):
+    it is the exact distribution `--aux-usvs` trains against, so it
+    isolates "did the head learn the mapping" from "did the transition
+    system decode the right structure" (a separate, unaffected question --
+    S5.4/the model spec: this head is never used for decoding).
+
+    Returns the mean cosine over every node of every gold tree of every
+    record; `nan` if there is nothing to score."""
+    from nsm_ct import usvs_graded as ug
+    from nsm_ct.tree_render import normalize_gold_tree
+
+    cos_vals: List[float] = []
+    for record in records:
+        feats = em.build_features(record, usvs, pos_vocab, hash_buckets)
+        for gold_tree in record.get("lattice", {}).get("trees", []) or []:
+            norm = normalize_gold_tree(record, gold_tree)
+            pred_nodes = model.node_vectors(feats, norm)
+            gold_flat = ug.flatten_tree(record, norm, usvs)
+            gold_by_key = {(n.clause_index, n.role, n.token_index, n.is_predicate): n.vector
+                           for n in gold_flat.nodes}
+            for pn in pred_nodes:
+                key = (pn["clause_index"], pn["role"], pn["token_index"], pn["is_predicate"])
+                gv = gold_by_key.get(key)
+                if gv is None:
+                    continue
+                pv = pn["vector"]
+                denom = float(np.linalg.norm(pv) * np.linalg.norm(gv))
+                if denom > 0.0:
+                    cos_vals.append(float(np.dot(pv, gv) / denom))
+    return float(sum(cos_vals) / len(cos_vals)) if cos_vals else float("nan")
+
+
 def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size: int,
                        max_seconds: float, max_steps: Optional[int] = None,
                        terminal_weight: float = 4.0,
+                       soft_targets=None,
+                       aux_usvs_weight: float = 0.0,
                        on_step_50: Optional[Callable] = None,
                        on_epoch_done: Optional[Callable] = None,
                        on_max_seconds: Optional[Callable] = None,
@@ -237,6 +329,18 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
     epochs; `epochs` becomes a ceiling only, so v3@788 and v3@3000 can be
     trained to the SAME optimization budget (dev/AUDIT_2026-09-08.md
     finding 7).
+
+    `soft_targets` (default `None`) is passed straight through to
+    `em.teacher_force_loss` -- an `em.SoftTargetConfig` enables the opt-in
+    USVS/semantics-graded soft CE targets (`--loss usvs-soft`;
+    dev/USVS_GRADED_SCORING.md S5). `None` keeps the original one-hot loss,
+    numerically identical.
+
+    `aux_usvs_weight` (default `0.0`, unchanged) is passed straight through
+    to `em.teacher_force_loss` alongside each item's precomputed
+    `node_targets` (the third slot of every `train_items` entry -- see
+    `build_train_items`'s `compute_node_targets`); `0.0` (or `node_targets`
+    all `None`) adds nothing to the loss.
 
     `on_optimizer_step`, if given, is called after EVERY completed
     optimizer step (both mid-epoch batches and the per-epoch trailing
@@ -276,12 +380,14 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
         opt.zero_grad()
         step_budget_hit = False
         budget_hit_reason = "max_steps"
-        for idx, (feats, steps) in enumerate(train_items):
+        for idx, (feats, steps, node_targets) in enumerate(train_items):
             if time.time() - train_start > max_seconds:
                 stopped_early = True
                 stop_reason = "max_seconds"
                 break
-            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=terminal_weight) / batch_size
+            loss = em.teacher_force_loss(model, feats, steps, terminal_weight=terminal_weight,
+                                          soft_targets=soft_targets, node_targets=node_targets,
+                                          aux_usvs_weight=aux_usvs_weight) / batch_size
             loss.backward()
             epoch_loss += float(loss.item()) * batch_size
             epoch_n += 1

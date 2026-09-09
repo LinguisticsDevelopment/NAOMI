@@ -32,6 +32,7 @@ import torch
 
 from nsm_ct.ground.usvs import load_usvs
 from nsm_ct import encoder_model as em
+from nsm_ct import usvs_graded as ug
 from train_encoder import load_gold, stratified_split  # noqa: E402
 
 
@@ -50,6 +51,11 @@ def main():
     ap.add_argument("--beam-width", type=int, default=8)
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--split", choices=("train", "dev", "test"), default="test")
+    ap.add_argument("--metric", choices=("edge", "graded", "both"), default="edge",
+                     help="(lead directive 2026-09-08; dev/USVS_GRADED_SCORING.md) 'edge' = "
+                          "the original binary edge-F1 report only. 'graded'/'both' ALSO print "
+                          "the USVS-graded P/R/F table, computed on the SAME decoded forests "
+                          "(nothing is re-decoded, no existing number changes).")
     args = ap.parse_args()
 
     print(f"loading checkpoint {args.checkpoint} ...")
@@ -176,7 +182,9 @@ def part_a_report(model, recs, usvs, pos_vocab, ckpt, best8_agg, args) -> None:
     emit(f"PART A: RANK-1 COMMITTED-TREE RE-SCORE (best-of-{args.k} oracle vs commitment)")
     emit("=" * 78)
 
+    want_graded = args.metric in ("graded", "both")
     rank1_scores, k1_scores = [], []
+    graded_best, graded_rank1, graded_k1 = [], [], []
     widths, pooled_edges_list, gold_edges_list, forest_overgens = [], [], [], []
     rank1_vs_k1_mismatches = 0
     for record in recs:
@@ -192,6 +200,10 @@ def part_a_report(model, recs, usvs, pos_vocab, ckpt, best8_agg, args) -> None:
 
         rank1_scores.append(em.score_record(record, top1_of_8))
         k1_scores.append(em.score_record(record, forest1))
+        if want_graded:
+            graded_best.append(ug.score_record_graded(record, forest8, usvs))
+            graded_rank1.append(ug.score_record_graded(record, top1_of_8, usvs))
+            graded_k1.append(ug.score_record_graded(record, forest1, usvs))
         widths.append(len(forest8))
         pooled_n, gold_n, forest_over = _forest_level_overgen(record, forest8)
         pooled_edges_list.append(pooled_n)
@@ -230,6 +242,22 @@ def part_a_report(model, recs, usvs, pos_vocab, ckpt, best8_agg, args) -> None:
     emit("|-------------------------------|--------|--------|---------|-----------------|")
     for name, p, r, f1, sx in rows:
         emit(f"| {name:<29} | {p:.3f}  | {r:.3f}  | {f1:.3f}   | {sx:.3f}           |")
+
+    if want_graded:
+        emit("\n" + "-" * 78)
+        emit("USVS-GRADED re-score of the SAME decoded forests "
+             "(dev/USVS_GRADED_SCORING.md; graded_F is NOT comparable in LEVEL to edge_F1 "
+             "-- read it against the random-tree floor, see the design doc S2.1)")
+        emit("-" * 78)
+        emit("| decode view                  | graded_P | graded_R | graded_F | clause_struct | overall |")
+        emit("|-------------------------------|----------|----------|----------|---------------|---------|")
+        for name, sc in ((f"best-of-{args.k} (oracle)", graded_best),
+                          (f"rank-1 (top of {args.k}-forest)", graded_rank1),
+                          ("k=1 (beam_decode k=1)", graded_k1)):
+            g = ug.aggregate_graded(sc)
+            emit(f"| {name:<29} | {g['graded_p']:.3f}    | {g['graded_r']:.3f}    | "
+                 f"{g['graded_f']:.3f}    | {g['clause_struct']:.3f}         | "
+                 f"{g['graded_overall']:.3f}   |")
 
     mean_width = statistics.mean(widths) if widths else float("nan")
     median_width = statistics.median(widths) if widths else float("nan")

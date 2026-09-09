@@ -1,0 +1,140 @@
+# targets[v2]: matched=98 missing=0 of 98 holdout sentences
+# targets[v4b]: matched=98 missing=0 of 98 holdout sentences
+
+====================================================================================================
+SANITY CONTROLS (on v4b gold targets; graded_F)
+====================================================================================================
+  gold vs itself (must be 1.000)             1.000   (n=40)
+  gold vs corrupted copy                     0.393   (n=40)
+  gold vs a random other sentence's tree     0.285   (n=40)
+  NOTE: the random-tree number is the ambient USVS floor -- USVS sense signatures
+        are non-negative, so unrelated senses have a positive cosine. Read every
+        graded_F below AGAINST that floor, never against 0.
+[  176.7s] v2_788_0                     kept-best v2   edge_F1=0.583 graded_F=0.623
+[  336.1s] v2_788_0                     kept-best v4b  edge_F1=0.465 graded_F=0.556
+[  469.8s] v2_788_1                     final     v2   edge_F1=0.557 graded_F=0.605
+[  623.1s] v2_788_1                     final     v4b  edge_F1=0.450 graded_F=0.551
+[  777.2s] v3_788_0                     final     v2   edge_F1=0.410 graded_F=0.492
+[  927.4s] v3_788_0                     final     v4b  edge_F1=0.488 graded_F=0.544
+[ 1055.4s] v3_788_1                     final     v2   edge_F1=0.373 graded_F=0.472
+[ 1198.8s] v3_788_1                     final     v4b  edge_F1=0.416 graded_F=0.517
+[ 1304.5s] v4b_788_0                    kept-best v2   edge_F1=0.391 graded_F=0.459
+[ 1430.7s] v4b_788_0                    kept-best v4b  edge_F1=0.491 graded_F=0.581
+[ 1574.7s] v4b_788_hard_0               kept-best v2   edge_F1=0.312 graded_F=0.390
+[ 1723.2s] v4b_788_hard_0               kept-best v4b  edge_F1=0.404 graded_F=0.498
+[ 1857.4s] v4b_all_788_0                kept-best v2   edge_F1=0.420 graded_F=0.487
+[ 1988.2s] v4b_all_788_0                kept-best v4b  edge_F1=0.470 graded_F=0.557
+[ 2130.7s] v4b_margin_788_0             kept-best v2   edge_F1=0.384 graded_F=0.483
+[ 2274.4s] v4b_margin_788_0             kept-best v4b  edge_F1=0.445 graded_F=0.564
+[ 2403.4s] v4b_margin_788_1             kept-best v2   edge_F1=0.381 graded_F=0.468
+[ 2526.5s] v4b_margin_788_1             kept-best v4b  edge_F1=0.471 graded_F=0.562
+
+====================================================================================================
+RANK-1 (COMMITTED TREE) RE-SCORE on v2 targets, n=98 holdout sentences
+====================================================================================================
+| arm                          | ckpt      | edge-F1 | graded-F | graded-P | graded-R | clause | width |
+|------------------------------|-----------|---------|----------|----------|----------|--------|-------|
+| v2_788_0                     | kept-best | 0.583   | 0.623    | 0.744    | 0.576    | 0.765  | 5.97  |
+| v2_788_1                     | final     | 0.557   | 0.605    | 0.667    | 0.608    | 0.802  | 5.99  |
+| v3_788_0                     | final     | 0.410   | 0.492    | 0.494    | 0.567    | 0.722  | 5.93  |
+| v4b_all_788_0                | kept-best | 0.420   | 0.487    | 0.517    | 0.519    | 0.777  | 5.97  |
+| v4b_margin_788_0             | kept-best | 0.384   | 0.483    | 0.472    | 0.546    | 0.800  | 6.00  |
+| v3_788_1                     | final     | 0.373   | 0.472    | 0.468    | 0.540    | 0.745  | 5.96  |
+| v4b_margin_788_1             | kept-best | 0.381   | 0.468    | 0.488    | 0.502    | 0.781  | 5.97  |
+| v4b_788_0                    | kept-best | 0.391   | 0.459    | 0.475    | 0.506    | 0.778  | 5.93  |
+| v4b_788_hard_0               | kept-best | 0.312   | 0.390    | 0.417    | 0.425    | 0.702  | 5.87  |
+
+  ranking by edge-F1  : v2_788_0 > v2_788_1 > v4b_all_788_0 > v3_788_0 > v4b_788_0 > v4b_margin_788_0 > v4b_margin_788_1 > v3_788_1 > v4b_788_hard_0
+  ranking by graded-F : v2_788_0 > v2_788_1 > v3_788_0 > v4b_all_788_0 > v4b_margin_788_0 > v3_788_1 > v4b_margin_788_1 > v4b_788_0 > v4b_788_hard_0
+  RANKING CHANGED: YES  (top arm: edge=v2_788_0  graded=v2_788_0)
+
+====================================================================================================
+RANK-1 (COMMITTED TREE) RE-SCORE on v4b targets, n=98 holdout sentences
+====================================================================================================
+| arm                          | ckpt      | edge-F1 | graded-F | graded-P | graded-R | clause | width |
+|------------------------------|-----------|---------|----------|----------|----------|--------|-------|
+| v4b_788_0                    | kept-best | 0.491   | 0.581    | 0.670    | 0.569    | 0.759  | 5.97  |
+| v4b_margin_788_0             | kept-best | 0.445   | 0.564    | 0.622    | 0.562    | 0.811  | 5.99  |
+| v4b_margin_788_1             | kept-best | 0.471   | 0.562    | 0.658    | 0.544    | 0.753  | 5.96  |
+| v4b_all_788_0                | kept-best | 0.470   | 0.557    | 0.659    | 0.526    | 0.776  | 5.98  |
+| v2_788_0                     | kept-best | 0.465   | 0.556    | 0.753    | 0.473    | 0.718  | 5.99  |
+| v2_788_1                     | final     | 0.450   | 0.551    | 0.674    | 0.508    | 0.788  | 5.99  |
+| v3_788_0                     | final     | 0.488   | 0.544    | 0.629    | 0.544    | 0.715  | 5.95  |
+| v3_788_1                     | final     | 0.416   | 0.517    | 0.576    | 0.521    | 0.758  | 5.98  |
+| v4b_788_hard_0               | kept-best | 0.404   | 0.498    | 0.581    | 0.486    | 0.688  | 5.86  |
+
+  ranking by edge-F1  : v4b_788_0 > v3_788_0 > v4b_margin_788_1 > v4b_all_788_0 > v2_788_0 > v2_788_1 > v4b_margin_788_0 > v3_788_1 > v4b_788_hard_0
+  ranking by graded-F : v4b_788_0 > v4b_margin_788_0 > v4b_margin_788_1 > v4b_all_788_0 > v2_788_0 > v2_788_1 > v3_788_0 > v3_788_1 > v4b_788_hard_0
+  RANKING CHANGED: YES  (top arm: edge=v4b_788_0  graded=v4b_788_0)
+
+====================================================================================================
+BEST-OF-K (ORACLE) VIEW, for continuity with runs/arms/summary.tsv
+====================================================================================================
+| arm                          | targets | best-of-k edge-F1 | best-of-k graded-F |
+|------------------------------|---------|-------------------|--------------------|
+| v2_788_0                     | v2      | 0.693             | 0.744              |
+| v2_788_0                     | v4b     | 0.594             | 0.693              |
+| v2_788_1                     | v2      | 0.684             | 0.735              |
+| v2_788_1                     | v4b     | 0.563             | 0.673              |
+| v3_788_0                     | v2      | 0.511             | 0.607              |
+| v3_788_0                     | v4b     | 0.577             | 0.666              |
+| v3_788_1                     | v2      | 0.489             | 0.589              |
+| v3_788_1                     | v4b     | 0.523             | 0.624              |
+| v4b_788_0                    | v2      | 0.487             | 0.567              |
+| v4b_788_0                    | v4b     | 0.579             | 0.680              |
+| v4b_788_hard_0               | v2      | 0.380             | 0.491              |
+| v4b_788_hard_0               | v4b     | 0.494             | 0.613              |
+| v4b_all_788_0                | v2      | 0.533             | 0.626              |
+| v4b_all_788_0                | v4b     | 0.598             | 0.697              |
+| v4b_margin_788_0             | v2      | 0.490             | 0.595              |
+| v4b_margin_788_0             | v4b     | 0.554             | 0.663              |
+| v4b_margin_788_1             | v2      | 0.487             | 0.588              |
+| v4b_margin_788_1             | v4b     | 0.575             | 0.680              |
+
+[2526.5s] done (18 arm x target-set re-scores)
+
+
+====================================================================================================
+READ (analyst note, written from THIS run's numbers -- everything above is machine-generated)
+====================================================================================================
+
+REPRODUCTION CHECK. The edge-F1 column reproduces runs/arms/summary.tsv exactly, so the graded
+column cannot differ because of a different decode: v2_788_0 0.583 (summary 0.5828), v4b_788_0
+0.491 on v4b (0.4906), v4b_margin_788_0 0.445 (0.4453), v4b_all_788_0 0.470, v4b_788_hard_0 0.404.
+
+SCALE. graded-F is NOT on the edge-F1 scale. The controls give the scale it IS on:
+    gold vs itself                        1.000   (ceiling)
+    gold vs corrupted copy                0.393   (SUBJECT/OBJECT swapped, predicate moved to a
+                                                   non-verb, one phantom node added)
+    gold vs a random other sentence       0.285   (floor -- USVS gloss signatures are
+                                                   non-negative, so unrelated senses cosine > 0)
+Every arm above scores well clear of the corrupted-copy control, and the best arms sit roughly
+halfway from the floor to the ceiling. A floor-corrected score (g - 0.285) / 0.715 is a monotone
+transform, so it changes the level but not the ranking.
+
+DID THE RANKING CHANGE? Yes in the middle of the table, no at the top.
+  - v4b targets: the winner is v4b_788_0 under BOTH metrics (0.491 edge / 0.581 graded), and the
+    bottom (v4b_788_hard_0) is last under both. What moves is v3_788_0: 2nd by edge-F1 (0.488,
+    within 0.003 of the winner) but 7th by graded-F (0.544, 0.037 BELOW the winner). And
+    v4b_margin_788_0 climbs 7th -> 2nd.
+  - v2 targets: v2_788_0 and v2_788_1 hold 1st/2nd under both. v3_788_0 rises 4th -> 3rd and
+    v4b_788_0 falls 5th -> 8th.
+
+HOW FAR ARE THE OLD 'WRONG' EDGES? The per-arm graded-F minus edge-F1 gap is the near-miss credit,
+and it is NOT uniform -- which is the whole point:
+    on v4b targets:  v4b_margin_788_0 +0.119  v3_788_1 +0.101  v2_788_1 +0.101  v4b_margin_788_1
+                     +0.091  v2_788_0 +0.091  v4b_788_0 +0.090  v4b_788_hard_0 +0.094
+                     v4b_all_788_0 +0.087  ... v3_788_0 +0.056
+    on v2 targets:   v4b_margin_788_0 / v3_788_1 +0.099 ... v2_788_0 +0.040  v2_788_1 +0.048
+So v3_788_0's misses are the FARTHEST in USVS space of any arm on its own target shape: it looks
+near-tied with the winner on binary edges, and is not. The margin-pruned arms are the opposite --
+they miss the exact (role, token, gtype) triple most often but land close when they do.
+
+The two v2 arms have the SMALLEST gap on v2 targets (+0.040/+0.048) because they already match the
+exact edges; there is less wrong left to be graded. Their gap grows to ~+0.10 on v4b targets,
+where they are scored against a target shape they were never trained on -- i.e. their v4b errors
+are systematically near-misses, not nonsense. That is a claim the binary metric could not make.
+
+CAVEAT. graded-F grades ATTACHMENT and ROLE, not sense choice. Two nodes at the same token index
+carry the same candidate set by construction (the encoder never picks a sense), so no credit is
+ever won or lost on WSD here. See dev/USVS_GRADED_SCORING.md S1.1 and S2.1.

@@ -50,6 +50,8 @@
 #   ARMS="v2_788 v4b_788" bash scripts/run_encoder_arms.sh   # only run these arms (space/comma list)
 #   EVAL_EVERY=0 KEEP_BEST=0 bash scripts/run_encoder_arms.sh  # opt back out of encoder-train-arms-v2
 #   GOLD_V3=runs/encoder_gold_v3_draft.jsonl bash scripts/run_encoder_arms.sh
+#   METRIC=edge bash scripts/run_encoder_arms.sh    # opt back out of the USVS-graded columns
+#   LOSS=usvs-soft bash scripts/run_encoder_arms.sh # train with the graded soft CE targets
 #
 # Do NOT run a full arm without the lead's go-ahead -- at tens of thousands
 # of steps this is many CPU-hours per arm x seed (see the printed wall-clock
@@ -215,19 +217,29 @@ build_cmd() {
     n_train_per_file_flag="--n-train-per-file 788,${hard_small_n}"
   fi
   local eval_every_flags="--eval-every ${EVAL_EVERY} --dev-holdout-file ${HOLDOUT_DEV_FILE}"
+  # lead directive 2026-09-08 (dev/USVS_GRADED_SCORING.md): every arm prints
+  # the USVS-graded P/R/F alongside the old binary edge-F1 from now on.
+  # LOSS=usvs-soft additionally swaps in the graded soft CE targets.
+  local loss_flag=""
+  if [[ "$LOSS" != "default" ]]; then loss_flag="--loss ${LOSS} --loss-temperature ${LOSS_TEMPERATURE}"; fi
   local keep_best_flag=""
   if [[ "$KEEP_BEST" == "1" ]]; then keep_best_flag="--keep-best"; fi
   echo "python scripts/train_encoder.py --gold ${gold} --n-train ${n_train}" \
        "--seed ${seed} --subset-seed ${seed} --max-steps ${STEPS} --max-seconds ${MAX_SECONDS}" \
        "--holdout-file ${HOLDOUT_FILE} ${eval_flags} ${eval_every_flags} ${keep_best_flag} ${extra_eval_flag}" \
-       "${n_train_per_file_flag} --beam-width ${BEAM_WIDTH} --k ${K} --out ${out}"
+       "${n_train_per_file_flag} --beam-width ${BEAM_WIDTH} --k ${K} --metric ${METRIC} ${loss_flag} --out ${out}"
 }
+
+METRIC="${METRIC:-both}"
+LOSS="${LOSS:-default}"
+LOSS_TEMPERATURE="${LOSS_TEMPERATURE:-0.25}"
 
 echo "=== encoder training arms ==="
 echo "STEPS=$STEPS  MAX_SECONDS=$MAX_SECONDS  PARALLEL=$PARALLEL"
 echo "GOLD_V2=$GOLD_V2  GOLD_V3=$GOLD_V3 (available=$V3_AVAILABLE)  GOLD_V4B=$GOLD_V4B (available=$V4B_AVAILABLE)  HARD_GOLD_TRAIN=$HARD_GOLD_TRAIN (available=$HARD_AVAILABLE)"
 echo "HOLDOUT_FILE=$HOLDOUT_FILE  HOLDOUT_DEV_FILE=$HOLDOUT_DEV_FILE"
 echo "EVAL_EVERY=$EVAL_EVERY  KEEP_BEST=$KEEP_BEST  ARMS=${ARMS:-<all>}"
+echo "METRIC=$METRIC  LOSS=$LOSS (T=$LOSS_TEMPERATURE)"
 echo
 
 # Build ALL (arm x seed) commands unconditionally -- shown in full even
