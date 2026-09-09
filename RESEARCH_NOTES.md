@@ -1685,3 +1685,23 @@ train with the hard targets. The aux head stays in the code, off by default.
 Left open: a graded loss might pay once the encoder scores sense candidates
 itself (it does not today -- candidates-first), i.e. it is a comprehension-
 side idea more than an encoder one.
+
+### MAIN LINE AT FULL SCALE: v4b ALL 10,225 + full v4 hard gold (ARMS-4a, 2026-09-09) -- THE CHECKPOINT
+Keep-best at step 8,000 of 12,000 (dev 0.550; ~34 epochs total), 98 holdout:
+| targets | rank-1 edge-F1 | P | R | struct-exact |
+| v4b (current) | **0.622** | **0.750** | 0.716 | 0.214 |
+| v2 (old)      | 0.551 | 0.594 | 0.718 | 0.112 |
+vs v4b_8000 (no hard gold): 0.632 / P 0.713 / struct 0.214 -- equal within
+noise, precision +0.04. Adding the 1,083 hard records at ~1:9 cost nothing.
+Hard families (v4 held-out; unseen fillers / unseen templates): pure interj
+1.00/1.00, content interj 0.99/0.83, imperative 0.83/0.66, additive 0.75/0.75,
+elision 0.68/0.68, quantity 0.67/0.54, synth_subject 0.65/0.53, speaker_prime
+0.36/0.41. At 1:9 the hard families sit ~0.1 below the 1.3:1 mix on unseen
+templates; speaker_prime remains the weak family even after v4 widening.
+CHECKPOINT: branch encoder-arms4-a, runs/arms/v4b_all_hard_0.pt (kept-best).
+This is the encoder for the comprehension phase. Scaling is not saturated
+(10K -> ? ); next gold = the K-12 readers (v5). Dispatched: v5 gold build over
+FairytaleQA sentences (branch encoder-gold-v5-k12); and an Opus design +
+prototype of ENCODER-DRIVEN episode building (learned encoder's lattice ->
+Episode, replacing the parser in corpus.py) measured on the 1,923 entity-
+answer FairytaleQA items (branch encoder-episodes).

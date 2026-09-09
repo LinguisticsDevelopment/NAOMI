@@ -152,8 +152,12 @@ Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
   0.285); USVS aux loss hurt at 788 (retest at 8,000 in flight).
 - Gold branches: encoder-gold-v4b-16k (10,225 records, 68 MB), -v4b-variants,
   -v4b-small, -v2. Hard gold v4 committed on mainline (runs/hard_gold_*.jsonl).
-- RUNNING: arms-4a v4b ALL 10,225 + full v4 hard gold (encoder-arms4-a);
-  arms-4b USVS-loss retest at 8,000 (encoder-arms4-b).
+- DONE: arms-4a -> THE CHECKPOINT: rank-1 0.622 / P 0.750 / struct 0.214 on
+  current targets, hard families intact at 1:9 (branch encoder-arms4-a,
+  runs/arms/v4b_all_hard_0.pt). arms-4b: USVS-space loss negative at 8K too
+  (metric kept, loss dropped).
+- RUNNING: v5 gold over FairytaleQA sentences (encoder-gold-v5-k12);
+  encoder-driven episode builder design+prototype (encoder-episodes, Opus).
 - NEXT: (1) if arms-4a holds ~0.63+ with hard families ~0.75+, that checkpoint
   is the encoder for the comprehension phase; (2) next corpus expansion = the
   K-12 readers (FairytaleQA 10,556 passages parse ~60% usable) -> v5 gold;
