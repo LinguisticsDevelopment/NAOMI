@@ -54,6 +54,11 @@
 #   GOLD_V3=runs/encoder_gold_v3_draft.jsonl bash scripts/run_encoder_arms.sh
 #   METRIC=edge bash scripts/run_encoder_arms.sh    # opt back out of the USVS-graded columns
 #   LOSS=usvs-soft bash scripts/run_encoder_arms.sh # train with the graded soft CE targets
+#   AUX=0.1 bash scripts/run_encoder_arms.sh         # opt-in USVS-space aux-cosine head, weight W
+#   RUN_TAG=softonly bash scripts/run_encoder_arms.sh  # suffix arm/log/checkpoint names so two
+#                                                       # loss-variant runs of the SAME arm (e.g.
+#                                                       # v4b_8000 with different LOSS/AUX) don't
+#                                                       # clobber each other's output files
 #
 # Do NOT run a full arm without the lead's go-ahead -- at tens of thousands
 # of steps this is many CPU-hours per arm x seed (see the printed wall-clock
@@ -176,7 +181,8 @@ arm_selected() {
 
 build_cmd() {
   local arm="$1" gold="$2" n_train="$3" seed="$4"
-  local out="$ARMS_DIR/${arm}_${seed}.pt"
+  local tagged_arm="${arm}${RUN_TAG:+_${RUN_TAG}}"
+  local out="$ARMS_DIR/${tagged_arm}_${seed}.pt"
   local eval_flags="--eval-gold ${GOLD_V2}"
   case "$arm" in
     v2_788)
@@ -230,6 +236,7 @@ build_cmd() {
   # LOSS=usvs-soft additionally swaps in the graded soft CE targets.
   local loss_flag=""
   if [[ "$LOSS" != "default" ]]; then loss_flag="--loss ${LOSS} --loss-temperature ${LOSS_TEMPERATURE}"; fi
+  if [[ -n "${AUX:-}" ]]; then loss_flag="$loss_flag --aux-usvs ${AUX}"; fi
   local keep_best_flag=""
   if [[ "$KEEP_BEST" == "1" ]]; then keep_best_flag="--keep-best"; fi
   echo "python scripts/train_encoder.py --gold ${gold} --n-train ${n_train}" \
@@ -247,7 +254,7 @@ echo "STEPS=$STEPS  MAX_SECONDS=$MAX_SECONDS  PARALLEL=$PARALLEL"
 echo "GOLD_V2=$GOLD_V2  GOLD_V3=$GOLD_V3 (available=$V3_AVAILABLE)  GOLD_V4B=$GOLD_V4B (available=$V4B_AVAILABLE)  HARD_GOLD_TRAIN=$HARD_GOLD_TRAIN (available=$HARD_AVAILABLE)"
 echo "HOLDOUT_FILE=$HOLDOUT_FILE  HOLDOUT_DEV_FILE=$HOLDOUT_DEV_FILE"
 echo "EVAL_EVERY=$EVAL_EVERY  KEEP_BEST=$KEEP_BEST  ARMS=${ARMS:-<all>}"
-echo "METRIC=$METRIC  LOSS=$LOSS (T=$LOSS_TEMPERATURE)"
+echo "METRIC=$METRIC  LOSS=$LOSS (T=$LOSS_TEMPERATURE)  AUX=${AUX:-<off>}  RUN_TAG=${RUN_TAG:-<none>}"
 echo
 
 # Build ALL (arm x seed) commands unconditionally -- shown in full even
@@ -334,16 +341,17 @@ echo
 run_one() {
   local entry="$1"
   IFS='|' read -r arm seed gold n_train cmd <<< "$entry"
-  local log="$ARMS_DIR/${arm}_${seed}.log"
-  local out="$ARMS_DIR/${arm}_${seed}.pt"
-  echo "[$arm seed=$seed] starting -> $log"
+  local tagged_arm="${arm}${RUN_TAG:+_${RUN_TAG}}"
+  local log="$ARMS_DIR/${tagged_arm}_${seed}.log"
+  local out="$ARMS_DIR/${tagged_arm}_${seed}.pt"
+  echo "[$tagged_arm seed=$seed] starting -> $log"
   nohup nice -n 10 bash -c "$cmd" > "$log" 2>&1
   local rc=$?
   if [[ $rc -ne 0 ]]; then
-    echo "[$arm seed=$seed] FAILED (exit $rc) -- see $log" >&2
+    echo "[$tagged_arm seed=$seed] FAILED (exit $rc) -- see $log" >&2
     return
   fi
-  python3 - "$arm" "$seed" "$gold" "$n_train" "$out" "$SUMMARY" <<'PYEOF'
+  python3 - "$tagged_arm" "$seed" "$gold" "$n_train" "$out" "$SUMMARY" <<'PYEOF'
 import json, sys, torch
 arm, seed, gold, n_train, out, summary = sys.argv[1:7]
 ckpt = torch.load(out, map_location="cpu", weights_only=False)
@@ -382,7 +390,7 @@ row = [
 with open(summary, "a") as f:
     f.write("\t".join(row) + "\n")
 PYEOF
-  echo "[$arm seed=$seed] done -> $SUMMARY"
+  echo "[$tagged_arm seed=$seed] done -> $SUMMARY"
 }
 export -f run_one
 export ARMS_DIR SUMMARY
