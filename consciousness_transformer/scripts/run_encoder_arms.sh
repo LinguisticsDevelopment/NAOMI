@@ -24,6 +24,11 @@
 #                    and --eval-gold-alt v2 for continuity with earlier arms.
 #   v4b_3000      -- runs/encoder_gold_v4b_16k.jsonl, n_train=3000  (v4b_788 + MORE data, scaling curve)
 #   v4b_8000      -- runs/encoder_gold_v4b_16k.jsonl, n_train=8000  (v4b_788 + MORE data, scaling curve)
+#   v4b_all_hard  -- runs/encoder_gold_v4b_16k.jsonl (ALL 10,225) + runs/hard_gold_train.jsonl
+#                    (ALL 1,083, ~1:9 hard:v4b) via --n-train-per-file 10225,1083 -- the top of
+#                    the scaling curve, topped up with the full v4 hard-construction gold; scored
+#                    on v4b/v2 holdouts AND per-family on the v4 held-out test_filler/test_template
+#                    splits via --extra-eval (same wiring as v4b_788_hard).
 #
 # Comparing v2_788 vs v3_788 isolates data quality (top-1 prune + richer
 # extraction) at equal size and equal optimizer-step budget; v3_788 vs
@@ -145,6 +150,7 @@ ARM_DEFS=(
   "v4b_788_hardsmall:${GOLD_V4B},${HARD_GOLD_TRAIN_SMALL}:788"
   "v4b_margin_788:${GOLD_V4B_MARGIN}:788"
   "v4b_all_788:${GOLD_V4B_ALL}:788"
+  "v4b_all_hard:${GOLD_V4B_16K},${HARD_GOLD_TRAIN}:10225"
 )
 
 # Whether all the gold files an arm needs are actually present.
@@ -155,6 +161,7 @@ arm_available() {
     v4b_788) [[ "$V4B_AVAILABLE" == "1" ]] ;;
     v4b_3000|v4b_8000) [[ "$V4B_16K_AVAILABLE" == "1" ]] ;;
     v4b_788_hard) [[ "$V4B_AVAILABLE" == "1" && "$HARD_AVAILABLE" == "1" ]] ;;
+    v4b_all_hard) [[ "$V4B_16K_AVAILABLE" == "1" && "$HARD_AVAILABLE" == "1" ]] ;;
     v4b_788_hardsmall) [[ "$V4B_AVAILABLE" == "1" && "$HARD_SMALL_AVAILABLE" == "1" ]] ;;
     v4b_margin_788) [[ "$V4B_MARGIN_AVAILABLE" == "1" ]] ;;
     v4b_all_788) [[ "$V4B_ALL_AVAILABLE" == "1" ]] ;;
@@ -188,7 +195,7 @@ build_cmd() {
     v4b_788)
       if [[ "$V4B_AVAILABLE" == "1" ]]; then eval_flags="$eval_flags --eval-gold-alt ${GOLD_V4B}"; fi
       ;;
-    v4b_788_hard|v4b_788_hardsmall|v4b_3000|v4b_8000)
+    v4b_788_hard|v4b_788_hardsmall|v4b_3000|v4b_8000|v4b_all_hard)
       # arms-3(b): dev-select (--keep-best) on v4b targets, not v2 -- these
       # arms train ON v4b gold (topped up with hard-gold), so v4b is the
       # natural reference; --eval-gold-alt v2 kept for continuity.
@@ -208,7 +215,7 @@ build_cmd() {
       ;;
   esac
   local extra_eval_flag=""
-  if [[ "$arm" == "v4b_788_hard" || "$arm" == "v4b_788_hardsmall" ]]; then
+  if [[ "$arm" == "v4b_788_hard" || "$arm" == "v4b_788_hardsmall" || "$arm" == "v4b_all_hard" ]]; then
     extra_eval_flag="--extra-eval ${HARD_GOLD_TEST_FILLER},${HARD_GOLD_TEST_TEMPLATE}"
   fi
   # arms-3(b): keep ALL of the (small) hard-gold file's records plus 788
@@ -223,6 +230,11 @@ build_cmd() {
   elif [[ "$arm" == "v4b_788_hardsmall" ]]; then
     local hard_small_n; hard_small_n="$(wc -l < "$HARD_GOLD_TRAIN_SMALL")"
     n_train_per_file_flag="--n-train-per-file 788,${hard_small_n}"
+  elif [[ "$arm" == "v4b_all_hard" ]]; then
+    local v4b_16k_n hard_n
+    v4b_16k_n="$(wc -l < "$GOLD_V4B_16K")"
+    hard_n="$(wc -l < "$HARD_GOLD_TRAIN")"
+    n_train_per_file_flag="--n-train-per-file ${v4b_16k_n},${hard_n}"
   fi
   local eval_every_flags="--eval-every ${EVAL_EVERY} --dev-holdout-file ${HOLDOUT_DEV_FILE}"
   # lead directive 2026-09-08 (dev/USVS_GRADED_SCORING.md): every arm prints
