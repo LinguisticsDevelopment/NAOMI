@@ -1616,3 +1616,28 @@ express: `let 's {VT} ...` (first-person-plural synth subject), `{PROPN} as
 well .` (two-token additive particle), `it is for me .` (copular + speaker) --
 noted for a later contract extension. Next: the v4b_8000 + full hard gold arm
 with per-family eval on these wider held-out templates.
+
+### THE SCALING CURVE (ARMS-3a, seed 0, keep-best, same 98 holdout) -- DATA-LIMITED CONFIRMED, PROPERLY (2026-09-09)
+| train sentences (v4b gold) | rank-1 F1 v4b targets | P | struct-exact | rank-1 F1 v2 targets | best step (epochs) |
+| 788    | 0.491 | 0.585 | 0.05 | 0.391 | 1,250 (50) |
+| 3,000  | 0.549 | 0.667 | 0.19 | 0.480 | 1,750 (19) |
+| 8,000  | **0.632** | **0.713** | **0.21** | 0.534 | 6,500 (26) |
+Monotone and still climbing at 8,000 (dev rank-1 0.53 at the best step; last-
+step test ~equal to best -> not yet saturated). Whole-tree exact 5% -> 21%.
+This is the audit's scaling gate passed on the CURRENT targets with keep-best:
+the committed encoder clears 0.55 at 3,000 sentences and 0.63 at 8,000 -- the
+learned encoder is earning its place, and the lever is exactly what the lead
+said: way more grammatical English gold. Next: 10,225 (all of the 16K gold) +
+full v4 hard gold; then the next corpus expansion (the K-12 readers parse at
+~60-94% and are the natural next source).
+
+### USVS AUX HEAD: honest negative at 788 (2026-09-09) -> branch usvs-aux-head (merged)
+Opt-in Linear(controller -> USVS axes) + cosine loss on emitted nodes, W=0.5,
+with --loss usvs-soft. The head LEARNS the space (mean cosine to gold node
+vectors 0.80 on the holdout) but the committed tree got WORSE: rank-1 0.438 vs
+0.491 (v4b targets), 0.340 vs 0.391 (v2). One seed, one weight, 788 sentences.
+READ: at this data scale the auxiliary objective competes with the structural
+one. Not dead -- re-test at 8,000 sentences with W in {0.1, 0.25}, and note the
+graded metric column when the routine's final report lands. The soft-target
+loss alone (roles/gtype/source) was not isolated in this pair; that arm is
+cheap and should run with the retest.
