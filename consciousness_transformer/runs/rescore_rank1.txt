@@ -1,0 +1,23 @@
+
+==============================================================================
+PART A: RANK-1 COMMITTED-TREE RE-SCORE (best-of-8 oracle vs commitment)
+==============================================================================
+
+sanity check: rank-1-vs-k=1 tree mismatches = 0/98 (should be 0 -- k only truncates beam_decode's already-sorted output)
+
+reproduction check vs ledger's previously reported best-of-8 numbers (dev/CURRENT_STATE.md, dev/AUDIT_2026-09-08.md; NOT the stale runs/rescore_prev.txt, which re-scored the pre-aliasing-fix run-1 checkpoint):
+  edge_precision: prev=0.700  now=0.700  MATCH (tol=0.02)
+  overgen_ratio: prev=1.080  now=1.082  MATCH (tol=0.02)
+  structure_recall: prev=0.212  now=0.212  MATCH (tol=0.02)
+
+| decode view                  | edge_P | edge_R | edge_F1 | structure_exact |
+|-------------------------------|--------|--------|---------|-----------------|
+| best-of-8 (oracle)            | 0.700  | 0.695  | 0.698   | 0.212           |
+| rank-1 (top of 8-forest)      | 0.559  | 0.512  | 0.534   | 0.062           |
+| k=1 (beam_decode k=1)         | 0.559  | 0.512  | 0.534   | 0.062           |
+
+forest width (trees emitted per sentence, n=98): mean=7.97  median=8.0  min=6  max=8
+forest-level over-generation (ALL forest trees pooled, deduped edges, vs gold -- distinct from the best-SINGLE-tree overgen_ratio above): total emitted edges=1531  total gold edges=1323  ratio=1.157  (mean per-record ratio=3.363)
+
+GATE (audit): rank-1 edge-F1 >= 0.55 -> 'encoder works' verdict survives commitment.
+  rank-1 edge-F1 = 0.534 < 0.55 -> FAILS. The best-of-8 headline does NOT survive commitment to the model's own top hypothesis.

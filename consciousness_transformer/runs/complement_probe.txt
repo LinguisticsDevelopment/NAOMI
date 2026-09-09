@@ -1,0 +1,1267 @@
+PART B -- complement probe: all 100 rendered outputs
+(5 best-looking / 5 worst-looking first, by index; seed=20260908)
+==============================================================================
+
+----- 5 BEST-LOOKING -----
+
+[0] he may be a bully , because great big people are very apt to be bullies , and though i have n't seen him , i guess buster bear is big enough from all i have heard , but i do n't see how he is a thief , " said grandfather frog .
+    NOTE: rank 1 best: 3/3 criteria pass (cap-hit, bin D)
+  POS: he/PRON may/AUX be/AUX a/DET bully/NOUN ,/PUNCT because/SCONJ great/ADJ big/ADJ people/NOUN are/AUX very/ADV apt/ADJ to/ADP be/AUX bullies/NOUN ,/PUNCT and/CCONJ though/SCONJ i/PRON have/AUX n't/PART seen/VERB him/PRON ,/PUNCT i/PRON guess/VERB buster/NOUN bear/VERB is/AUX big/ADJ enough/ADV from/ADP all/ADJ i/PRON have/AUX heard/VERB ,/PUNCT but/CCONJ i/PRON do/AUX n't/PART see/VERB how/ADV he/PRON is/AUX a/DET thief/NOUN ,/PUNCT "/PUNCT said/VERB grandfather/NOUN frog/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: may(sense:may.n.01)
+    SUBJECT: he(reference:memory)
+    OFF: i(reference:memory)
+  clause 1 (proposition):
+    PREDICATE: is(entity)
+    SUBJECT: he(reference:memory)
+    OBJECT: thief(sense:thief.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[6] a little bright-eyed terrier , you know , with oh , such long curly brown hair !
+    NOTE: rank 2 best: 3/3 criteria pass (grounding-fail, bin C)
+  POS: a/DET little/ADJ bright-eyed/VERB terrier/NOUN ,/PUNCT you/PROPN know/VERB ,/PUNCT with/ADP oh/NOUN ,/PUNCT such/ADV long/ADJ curly/ADJ brown/ADJ hair/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: know(sense:know.n.01)
+    SUBJECT: you(reference:memory)
+    WITH: oh(sense:ohio.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[12] that 's a funny thing for hair to do -- rise up all of a sudden -- is n't it ?
+    NOTE: rank 3 best: 3/3 criteria pass (grounding-fail, bin C)
+  POS: that/PRON 's/PART a/DET funny/ADJ thing/NOUN for/ADP hair/NOUN to/ADP do/AUX --/PUNCT rise/VERB up/ADV all/ADJ of/ADP a/DET sudden/ADJ --/PUNCT is/AUX n't/PART it/PRON ?/PUNCT
+  clause 0 (proposition):
+    PREDICATE: do(sense:bash.n.02)
+    SUBJECT: thing(sense:thing.n.01)
+    FOR: hair(sense:hair.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[23] in the pleasant valley of ashton there lived an elderly woman of the name of preston .
+    NOTE: rank 4 best: 3/3 criteria pass (grounding-fail, bin C)
+  POS: in/ADP the/DET pleasant/ADJ valley/NOUN of/ADP ashton/NOUN there/ADV lived/VERB an/DET elderly/ADJ woman/NOUN of/ADP the/DET name/NOUN of/ADP preston/PROPN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: lived(entity)
+    SUBJECT: valley(sense:valley.n.01)
+    OBJECT: woman(sense:woman.n.01)
+    OF: name(sense:name.n.01)
+    OF: preston(entity)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[25] there seemed to be no use in waiting by the little door , so she went back to the table , half hoping she might find another key on it , or at any rate a book of rules for shutting people up like telescopes : this time she found a little bottle on it , ( 'which certainly was not here before , ' said alice , ) and round the neck of the bottle was a paper label , with the words 'drink me' beautifully printed on it in large letters .
+    NOTE: rank 5 best: 3/3 criteria pass (cap-hit, bin D)
+  POS: there/ADV seemed/VERB to/ADP be/AUX no/DET use/VERB in/ADP waiting/VERB by/ADP the/DET little/ADJ door/NOUN ,/PUNCT so/CCONJ she/PRON went/VERB back/ADV to/ADP the/DET table/NOUN ,/PUNCT half/NOUN hoping/VERB she/PRON might/AUX find/VERB another/ADJ key/NOUN on/ADP it/PRON ,/PUNCT or/CCONJ at/ADP any/ADV rate/NOUN a/DET book/NOUN of/ADP rules/NOUN for/ADP shutting/VERB people/NOUN up/ADV like/VERB telescopes/VERB :/PUNCT this/DET time/NOUN she/PRON found/VERB a/DET little/ADJ bottle/NOUN on/ADP it/PRON ,/PUNCT (/PUNCT 'which/NOUN certainly/ADV was/AUX not/PART here/ADV before/ADP ,/PUNCT '/PUNCT said/VERB alice/PROPN ,/PUNCT )/PUNCT and/CCONJ round/ADJ the/DET neck/NOUN of/ADP the/DET bottle/NOUN was/AUX a/DET paper/NOUN label/VERB ,/PUNCT with/ADP the/DET words/NOUN 'drink/NOUN me'/NOUN beautifully/ADV printed/VERB on/ADP it/PRON in/ADP large/ADJ letters/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: went(entity)
+    SUBJECT: she(reference:memory)
+    PLACE: table(sense:table.n.01)
+  clause 1 (proposition):
+    PREDICATE: find(sense:discovery.n.03)
+    SUBJECT: she(reference:memory)
+    OBJECT: key(sense:key.n.01)
+    ABOUT: it(reference:memory)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+
+----- 5 WORST-LOOKING -----
+
+[85] " too bad .
+    NOTE: rank 1 worst: 1/3 criteria pass (grounding-fail, bin A)
+  POS: "/PUNCT too/ADV bad/ADJ ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(sense:?)
+    SUBJECT: <none>(sense:?)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[89] but at last she stood quite still , and spoke boldly and proudly .
+    NOTE: rank 2 worst: 1/3 criteria pass (grounding-fail, bin B)
+  POS: but/CCONJ at/ADP last/ADJ she/PRON stood/VERB quite/ADV still/ADV ,/PUNCT and/CCONJ spoke/VERB boldly/ADV and/CCONJ proudly/ADV ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: stood(entity)
+    SUBJECT: she(reference:memory)
+    PLACE: boldly(sense:boldly.r.01)
+  clause 1 (proposition):
+    PREDICATE: and(entity)
+    PLACE: proudly(sense:proudly.r.01)
+    SUBJECT: .(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=11 pos=CCONJ)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[90] too bad !
+    NOTE: rank 3 worst: 1/3 criteria pass (grounding-fail, bin A)
+  POS: too/ADV bad/ADJ !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(sense:?)
+    SUBJECT: <none>(sense:?)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[33] quick , now ! '
+    NOTE: rank 4 worst: 0/3 criteria pass (grounding-fail, bin A)
+  POS: quick/ADJ ,/PUNCT now/ADV !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    PLACE: !(sense:exclamation_mark.n.01)
+    PLACE: <none>(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=False  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+    - J3 fail (total nodes 3 > content tokens 2)
+
+[88] " come and get it . "
+    NOTE: rank 5 worst: 0/3 criteria pass (grounding-fail, bin A)
+  POS: "/PUNCT come/VERB and/CCONJ get/VERB it/PRON ./PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: .(sense:?)
+    PLACE: come(sense:semen.n.01)
+    SUBJECT: it(reference:memory)
+  clause 1 (proposition):
+    PREDICATE: "(entity)
+    PLACE: <none>(entity)
+    SUBJECT: <none>(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=False  USABLE=False
+    - clause 0: J1 fail (predicate token_index=5 pos=PUNCT)
+    - clause 1: J1 fail (predicate token_index=6 pos=PUNCT)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+    - J3 fail (total nodes 6 > content tokens 4)
+
+
+----- ALL 100 (index order) -----
+
+[0] he may be a bully , because great big people are very apt to be bullies , and though i have n't seen him , i guess buster bear is big enough from all i have heard , but i do n't see how he is a thief , " said grandfather frog .
+    NOTE: cap-hit, bin D, teacher_s=30.003, enc_s=0.1418
+  POS: he/PRON may/AUX be/AUX a/DET bully/NOUN ,/PUNCT because/SCONJ great/ADJ big/ADJ people/NOUN are/AUX very/ADV apt/ADJ to/ADP be/AUX bullies/NOUN ,/PUNCT and/CCONJ though/SCONJ i/PRON have/AUX n't/PART seen/VERB him/PRON ,/PUNCT i/PRON guess/VERB buster/NOUN bear/VERB is/AUX big/ADJ enough/ADV from/ADP all/ADJ i/PRON have/AUX heard/VERB ,/PUNCT but/CCONJ i/PRON do/AUX n't/PART see/VERB how/ADV he/PRON is/AUX a/DET thief/NOUN ,/PUNCT "/PUNCT said/VERB grandfather/NOUN frog/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: may(sense:may.n.01)
+    SUBJECT: he(reference:memory)
+    OFF: i(reference:memory)
+  clause 1 (proposition):
+    PREDICATE: is(entity)
+    SUBJECT: he(reference:memory)
+    OBJECT: thief(sense:thief.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[1] then the rabbit 's voice along -- 'catch him , you by the hedge ! '
+    NOTE: grounding-fail, bin C, teacher_s=0.070, enc_s=0.0283
+  POS: then/ADV the/DET rabbit/NOUN 's/PART voice/NOUN along/ADP --/PUNCT 'catch/NOUN him/PRON ,/PUNCT you/PROPN by/ADP the/DET hedge/NOUN !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: him(reference:memory)
+    SUBJECT: you(reference:memory)
+    PLACE: hedge(sense:hedge.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+
+[2] this was what they were saying : -- " you are the biggest thing on the land , brother elephant , " said the whale , " and i am the biggest thing in the sea ; if we join together we can rule all the animals in the world , and have our way about everything . "
+    NOTE: cap-hit, bin D, teacher_s=30.005, enc_s=1.9137
+  POS: this/DET was/AUX what/PRON they/PRON were/AUX saying/VERB :/PUNCT --/PUNCT "/PUNCT you/PROPN are/AUX the/DET biggest/ADJ thing/NOUN on/ADP the/DET land/NOUN ,/PUNCT brother/NOUN elephant/NOUN ,/PUNCT "/PUNCT said/VERB the/DET whale/NOUN ,/PUNCT "/PUNCT and/CCONJ i/PRON am/AUX the/DET biggest/ADJ thing/NOUN in/ADP the/DET sea/NOUN ;/PUNCT if/SCONJ we/PRON join/VERB together/ADV we/PRON can/AUX rule/NOUN all/ADJ the/DET animals/NOUN in/ADP the/DET world/NOUN ,/PUNCT and/CCONJ have/AUX our/DET way/NOUN about/ADP everything/PRON ./PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: was(entity)
+    SUBJECT: this(entity)
+    INDIRECT_OBJECT: what(entity)
+    OBJECT: they(reference:memory)
+  J1(predicate-ok)=True  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[3] said alice , a good deal frightened at the sudden change , but very glad to find herself still in existence ; 'and now for the garden ! '
+    NOTE: grounding-fail, bin D, teacher_s=0.296, enc_s=2.9328
+  POS: said/VERB alice/PROPN ,/PUNCT a/DET good/ADJ deal/VERB frightened/ADJ at/ADP the/DET sudden/ADJ change/VERB ,/PUNCT but/CCONJ very/ADV glad/ADJ to/ADP find/VERB herself/PRON still/ADV in/ADP existence/NOUN ;/PUNCT 'and/NOUN now/ADV for/ADP the/DET garden/NOUN !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    PLACE: find(sense:discovery.n.03)
+    OBJECT: herself(entity)
+    PLACE: existence(sense:being.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[4] why , little joe otter to be sure .
+    NOTE: grounding-fail, bin B, teacher_s=0.038, enc_s=0.0241
+  POS: why/ADV ,/PUNCT little/ADJ joe/PROPN otter/NOUN to/ADP be/AUX sure/ADJ ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: joe(entity)
+    SUBJECT: otter(sense:otter.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+
+[5] 'why , she , of course , ' said the dodo , pointing to alice with one finger ; and the whole party at once crowded round her , calling out in a confused way , 'prizes !
+    NOTE: grounding-fail, bin D, teacher_s=0.541, enc_s=2.3539
+  POS: 'why/NOUN ,/PUNCT she/PRON ,/PUNCT of/ADP course/NOUN ,/PUNCT '/PUNCT said/VERB the/DET dodo/NOUN ,/PUNCT pointing/VERB to/ADP alice/PROPN with/ADP one/ADJ finger/NOUN ;/PUNCT and/CCONJ the/DET whole/ADJ party/NOUN at/ADP once/ADV crowded/VERB round/ADJ her/PRON ,/PUNCT calling/VERB out/ADJ in/ADP a/DET confused/VERB way/NOUN ,/PUNCT 'prizes/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    OF: course(sense:course.n.01)
+    SUBJECT: pointing(entity)
+    PLACE: alice(entity)
+    WITH: one(sense:one.n.01)
+    OBJECT: finger(sense:finger.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[6] a little bright-eyed terrier , you know , with oh , such long curly brown hair !
+    NOTE: grounding-fail, bin C, teacher_s=0.289, enc_s=0.0278
+  POS: a/DET little/ADJ bright-eyed/VERB terrier/NOUN ,/PUNCT you/PROPN know/VERB ,/PUNCT with/ADP oh/NOUN ,/PUNCT such/ADV long/ADJ curly/ADJ brown/ADJ hair/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: know(sense:know.n.01)
+    SUBJECT: you(reference:memory)
+    WITH: oh(sense:ohio.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[7] " me , " said little joe in a rather faint voice .
+    NOTE: grounding-fail, bin B, teacher_s=0.057, enc_s=0.0241
+  POS: "/PUNCT me/PRON ,/PUNCT "/PUNCT said/VERB little/ADJ joe/PROPN in/ADP a/DET rather/ADV faint/ADJ voice/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: joe(entity)
+    PLACE: faint(sense:faint.n.01)
+    SUBJECT: voice(sense:voice.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+
+[8] said alice to herself .
+    NOTE: grounding-fail, bin A, teacher_s=0.004, enc_s=2.7279
+  POS: said/VERB alice/PROPN to/ADP herself/PRON ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    PLACE: herself(entity)
+    PLACE: <none>(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[9] which way ? ' , holding her hand on the top of her head to feel which way it was growing , and she was quite surprised to find that she remained the same size : to be sure , this generally happens when one eats cake , but alice had got so much into the way of expecting nothing but out-of-the-way things to happen , that it seemed quite dull and stupid for life to go on in the common way .
+    NOTE: cap-hit, bin D, teacher_s=30.059, enc_s=2.4312
+  POS: which/PRON way/NOUN ?/PUNCT '/PUNCT ,/PUNCT holding/VERB her/PRON hand/NOUN on/ADP the/DET top/NOUN of/ADP her/PRON head/NOUN to/ADP feel/VERB which/PRON way/NOUN it/PRON was/AUX growing/VERB ,/PUNCT and/CCONJ she/PRON was/AUX quite/ADV surprised/VERB to/ADP find/VERB that/PRON she/PRON remained/VERB the/DET same/ADJ size/NOUN :/PUNCT to/ADP be/AUX sure/ADJ ,/PUNCT this/DET generally/ADV happens/VERB when/ADV one/ADJ eats/VERB cake/NOUN ,/PUNCT but/CCONJ alice/PROPN had/AUX got/VERB so/CCONJ much/ADV into/ADP the/DET way/NOUN of/ADP expecting/VERB nothing/PRON but/CCONJ out-of-the-way/NOUN things/NOUN to/ADP happen/VERB ,/PUNCT that/PRON it/PRON seemed/VERB quite/ADV dull/ADJ and/CCONJ stupid/ADJ for/ADP life/NOUN to/ADP go/VERB on/ADP in/ADP the/DET common/ADJ way/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: growing(sense:growth.n.01)
+    SUBJECT: way(sense:manner.n.01)
+    SUBJECT: it(reference:memory)
+    PLACE: way(sense:manner.n.01)
+  clause 1 (proposition):
+    PREDICATE: seemed(entity)
+    SUBJECT: it(reference:memory)
+    OBJECT: dull(sense:dull.v.01)
+  clause 2 (proposition):
+    PREDICATE: and(entity)
+    PLACE: stupid(sense:stupid.n.01)
+    SUBJECT: for(reference:memory)
+  clause 3 (proposition):
+    PREDICATE: go(sense:go.n.01)
+    PLACE: way(sense:manner.n.01)
+    SUBJECT: .(sense:?)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 2: J1 fail (predicate token_index=71 pos=CCONJ)
+    - clause 2: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+    - clause 3: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[10] near the ruins of the castle of rossmore , in ireland , is a small cabin , in which there once lived a widow and her four children .
+    NOTE: grounding-fail, bin D, teacher_s=0.328, enc_s=2.4807
+  POS: near/ADP the/DET ruins/NOUN of/ADP the/DET castle/NOUN of/ADP rossmore/PROPN ,/PUNCT in/ADP ireland/NOUN ,/PUNCT is/AUX a/DET small/ADJ cabin/NOUN ,/PUNCT in/ADP which/PRON there/ADV once/ADV lived/VERB a/DET widow/NOUN and/CCONJ her/PRON four/ADJ children/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: lived(entity)
+    PLACE: ruins(entity)
+    SUBJECT: which(entity)
+    OBJECT: widow(sense:widow.n.01)
+  clause 1 (proposition):
+    PREDICATE: and(sense:?)
+    OBJECT: four(sense:four.n.01)
+    OBJECT: children(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=24 pos=CCONJ)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[11] " there comes a foolish green fly , " said he .
+    NOTE: grounding-fail, bin B, teacher_s=0.010, enc_s=0.0607
+  POS: "/PUNCT there/ADV comes/VERB a/DET foolish/ADJ green/ADJ fly/VERB ,/PUNCT "/PUNCT said/VERB he/PRON ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(reference:memory)
+    SUBJECT: he(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+
+[12] that 's a funny thing for hair to do -- rise up all of a sudden -- is n't it ?
+    NOTE: grounding-fail, bin C, teacher_s=0.090, enc_s=3.2427
+  POS: that/PRON 's/PART a/DET funny/ADJ thing/NOUN for/ADP hair/NOUN to/ADP do/AUX --/PUNCT rise/VERB up/ADV all/ADJ of/ADP a/DET sudden/ADJ --/PUNCT is/AUX n't/PART it/PRON ?/PUNCT
+  clause 0 (proposition):
+    PREDICATE: do(sense:bash.n.02)
+    SUBJECT: thing(sense:thing.n.01)
+    FOR: hair(sense:hair.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[13] 311 sentences , 15 passages .
+    NOTE: grounding-fail, bin A, teacher_s=0.003, enc_s=2.8557
+  POS: 311/NUM sentences/NOUN ,/PUNCT 15/NUM passages/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: passages(entity)
+    SUBJECT: sentences(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=4 pos=NOUN)
+
+[14] " the very thing for the king 's dinner ! "
+    NOTE: grounding-fail, bin B, teacher_s=0.003, enc_s=3.4846
+  POS: "/PUNCT the/DET very/ADV thing/NOUN for/ADP the/DET king/NOUN 's/PART dinner/NOUN !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: dinner(sense:dinner.n.01)
+    SUBJECT: thing(sense:thing.n.01)
+    FOR: king(sense:king.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=8 pos=NOUN)
+
+[15] # real prose ( m58a ) -- thornton w .
+    NOTE: grounding-fail, bin B, teacher_s=0.007, enc_s=2.3392
+  POS: #/PUNCT real/ADJ prose/NOUN (/PUNCT m58a/NOUN )/PUNCT --/PUNCT thornton/NOUN w/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: thornton(sense:thornton.n.01)
+    SUBJECT: w(sense:tungsten.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+
+[16] come here directly , and get ready for your walk ! "
+    NOTE: grounding-fail, bin B, teacher_s=0.010, enc_s=3.2006
+  POS: come/VERB here/ADV directly/ADV ,/PUNCT and/CCONJ get/VERB ready/ADJ for/ADP your/DET walk/VERB !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: get(sense:get.n.01)
+    PLACE: walk(sense:walk.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[17] there , on the bank beside the little pool , were the heads of three trout .
+    NOTE: grounding-fail, bin C, teacher_s=0.136, enc_s=0.0338
+  POS: there/ADV ,/PUNCT on/ADP the/DET bank/NOUN beside/ADP the/DET little/ADJ pool/NOUN ,/PUNCT were/AUX the/DET heads/NOUN of/ADP three/ADJ trout/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    PLACE: bank(sense:bank.n.01)
+    PLACE: pool(sense:pool.n.01)
+    OBJECT: heads(entity)
+    OF: three(sense:three.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[18] " it 's too bad to waste such a fine fish , " said buster thoughtfully .
+    NOTE: grounding-fail, bin C, teacher_s=0.144, enc_s=0.0310
+  POS: "/PUNCT it/PRON 's/PART too/ADV bad/ADJ to/ADP waste/VERB such/ADV a/DET fine/ADJ fish/NOUN ,/PUNCT "/PUNCT said/VERB buster/NOUN thoughtfully/ADV ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    PLACE: waste(sense:waste.n.01)
+    PLACE: fish(sense:fish.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[19] " he 's somewhere up the laughing brook .
+    NOTE: grounding-fail, bin B, teacher_s=0.024, enc_s=2.6123
+  POS: "/PUNCT he/PRON 's/PART somewhere/ADV up/ADV the/DET laughing/VERB brook/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: brook(sense:brook.n.01)
+    SUBJECT: laughing(sense:laughing.s.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=7 pos=NOUN)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[20] next came an angry voice -- the rabbit 's -- 'pat !
+    NOTE: grounding-fail, bin B, teacher_s=0.023, enc_s=0.0230
+  POS: next/ADJ came/VERB an/DET angry/ADJ voice/NOUN --/PUNCT the/DET rabbit/NOUN 's/PART --/PUNCT 'pat/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: an(sense:associate_in_nursing.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=2 pos=DET)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[21] overhead hung bunches of sausages , and there were spicy apples in barrels standing about .
+    NOTE: grounding-fail, bin C, teacher_s=0.296, enc_s=3.2199
+  POS: overhead/ADV hung/VERB bunches/NOUN of/ADP sausages/NOUN ,/PUNCT and/CCONJ there/ADV were/AUX spicy/ADJ apples/NOUN in/ADP barrels/NOUN standing/VERB about/ADP ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: bunches(entity)
+    PLACE: hung(entity)
+    OF: sausages(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=2 pos=NOUN)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[22] said the mouse , turning to alice , and sighing .
+    NOTE: grounding-fail, bin B, teacher_s=0.013, enc_s=2.6658
+  POS: said/VERB the/DET mouse/NOUN ,/PUNCT turning/VERB to/ADP alice/PROPN ,/PUNCT and/CCONJ sighing/VERB ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: .(entity)
+    PLACE: alice(entity)
+    SUBJECT: sighing(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=10 pos=PUNCT)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[23] in the pleasant valley of ashton there lived an elderly woman of the name of preston .
+    NOTE: grounding-fail, bin C, teacher_s=0.039, enc_s=0.0384
+  POS: in/ADP the/DET pleasant/ADJ valley/NOUN of/ADP ashton/NOUN there/ADV lived/VERB an/DET elderly/ADJ woman/NOUN of/ADP the/DET name/NOUN of/ADP preston/PROPN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: lived(entity)
+    SUBJECT: valley(sense:valley.n.01)
+    OBJECT: woman(sense:woman.n.01)
+    OF: name(sense:name.n.01)
+    OF: preston(entity)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[24] hopkins had sold the gold coins , and some of the others ; and he flattered himself that the children , and the young ladies , to whom he now found they had been shown , could not tell whether what they had seen were gold or not , and he was not in the least apprehensive that those of henry the seventh 's reign should be reclaimed from him as he thought they had escaped attention .
+    NOTE: cap-hit, bin D, teacher_s=30.005, enc_s=1.8400
+  POS: hopkins/NOUN had/AUX sold/VERB the/DET gold/NOUN coins/NOUN ,/PUNCT and/CCONJ some/ADJ of/ADP the/DET others/ADJ ;/PUNCT and/CCONJ he/PRON flattered/VERB himself/PRON that/PRON the/DET children/NOUN ,/PUNCT and/CCONJ the/DET young/ADJ ladies/NOUN ,/PUNCT to/ADP whom/PRON he/PRON now/ADV found/VERB they/PRON had/AUX been/AUX shown/VERB ,/PUNCT could/AUX not/PART tell/VERB whether/SCONJ what/PRON they/PRON had/AUX seen/VERB were/AUX gold/NOUN or/CCONJ not/PART ,/PUNCT and/CCONJ he/PRON was/AUX not/PART in/ADP the/DET least/ADV apprehensive/ADJ that/PRON those/DET of/ADP henry/NOUN the/DET seventh/ADJ 's/PART reign/VERB should/AUX be/AUX reclaimed/VERB from/ADP him/PRON as/ADV he/PRON thought/VERB they/PRON had/AUX escaped/VERB attention/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: sold(sense:sold.a.01)
+    SUBJECT: hopkins(sense:hopkins.n.01)
+    FOR: him(reference:memory)
+  clause 1 (proposition):
+    PREDICATE: he(entity)
+    SUBJECT: as(reference:memory)
+    OBJECT: thought(sense:idea.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=71 pos=PRON)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[25] there seemed to be no use in waiting by the little door , so she went back to the table , half hoping she might find another key on it , or at any rate a book of rules for shutting people up like telescopes : this time she found a little bottle on it , ( 'which certainly was not here before , ' said alice , ) and round the neck of the bottle was a paper label , with the words 'drink me' beautifully printed on it in large letters .
+    NOTE: cap-hit, bin D, teacher_s=30.004, enc_s=2.4353
+  POS: there/ADV seemed/VERB to/ADP be/AUX no/DET use/VERB in/ADP waiting/VERB by/ADP the/DET little/ADJ door/NOUN ,/PUNCT so/CCONJ she/PRON went/VERB back/ADV to/ADP the/DET table/NOUN ,/PUNCT half/NOUN hoping/VERB she/PRON might/AUX find/VERB another/ADJ key/NOUN on/ADP it/PRON ,/PUNCT or/CCONJ at/ADP any/ADV rate/NOUN a/DET book/NOUN of/ADP rules/NOUN for/ADP shutting/VERB people/NOUN up/ADV like/VERB telescopes/VERB :/PUNCT this/DET time/NOUN she/PRON found/VERB a/DET little/ADJ bottle/NOUN on/ADP it/PRON ,/PUNCT (/PUNCT 'which/NOUN certainly/ADV was/AUX not/PART here/ADV before/ADP ,/PUNCT '/PUNCT said/VERB alice/PROPN ,/PUNCT )/PUNCT and/CCONJ round/ADJ the/DET neck/NOUN of/ADP the/DET bottle/NOUN was/AUX a/DET paper/NOUN label/VERB ,/PUNCT with/ADP the/DET words/NOUN 'drink/NOUN me'/NOUN beautifully/ADV printed/VERB on/ADP it/PRON in/ADP large/ADJ letters/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: went(entity)
+    SUBJECT: she(reference:memory)
+    PLACE: table(sense:table.n.01)
+  clause 1 (proposition):
+    PREDICATE: find(sense:discovery.n.03)
+    SUBJECT: she(reference:memory)
+    OBJECT: key(sense:key.n.01)
+    ABOUT: it(reference:memory)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[26] said the rabbit angrily .
+    NOTE: grounding-fail, bin A, teacher_s=0.003, enc_s=2.6235
+  POS: said/VERB the/DET rabbit/NOUN angrily/ADV ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(sense:?)
+    SUBJECT: <none>(sense:?)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[27] make a light ! "
+    NOTE: grounding-fail, bin A, teacher_s=0.005, enc_s=3.2828
+  POS: make/VERB a/DET light/NOUN !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: !(sense:exclamation_mark.n.01)
+    SUBJECT: light(sense:light.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=3 pos=PUNCT)
+
+[28] said alice aloud , addressing nobody in particular .
+    NOTE: grounding-fail, bin B, teacher_s=0.005, enc_s=0.0206
+  POS: said/VERB alice/PROPN aloud/ADV ,/PUNCT addressing/VERB nobody/PRON in/ADP particular/ADJ ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: addressing(entity)
+    PLACE: particular(sense:particular.n.01)
+    SUBJECT: .(sense:?)
+  J1(predicate-ok)=True  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[29] she drew her foot as far down the chimney as she could , and waited till she heard a little animal ( she could n't guess of what sort it was ) scratching and scrambling about in the chimney close above her : then , saying to herself 'this is bill , ' she gave one sharp kick , and waited to see what would happen next .
+    NOTE: cap-hit, bin D, teacher_s=30.005, enc_s=2.0492
+  POS: she/PRON drew/VERB her/PRON foot/NOUN as/ADV far/ADV down/ADV the/DET chimney/NOUN as/ADV she/PRON could/AUX ,/PUNCT and/CCONJ waited/VERB till/NOUN she/PRON heard/VERB a/DET little/ADJ animal/NOUN (/PUNCT she/PRON could/AUX n't/PART guess/VERB of/ADP what/PRON sort/NOUN it/PRON was/AUX )/PUNCT scratching/VERB and/CCONJ scrambling/VERB about/ADP in/ADP the/DET chimney/NOUN close/VERB above/ADP her/PRON :/PUNCT then/ADV ,/PUNCT saying/VERB to/ADP herself/PRON 'this/NOUN is/AUX bill/NOUN ,/PUNCT '/PUNCT she/PRON gave/VERB one/ADJ sharp/ADJ kick/VERB ,/PUNCT and/CCONJ waited/VERB to/ADP see/VERB what/PRON would/AUX happen/VERB next/ADJ ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: drew(sense:drew.n.01)
+    SUBJECT: she(reference:memory)
+    OBJECT: foot(sense:foot.n.01)
+    OBJECT: chimney(sense:chimney.n.01)
+    OBJECT: she(reference:memory)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[30] said alice , always ready to make herself useful , and looking anxiously about her .
+    NOTE: grounding-fail, bin C, teacher_s=0.075, enc_s=2.4464
+  POS: said/VERB alice/PROPN ,/PUNCT always/ADV ready/ADJ to/ADP make/VERB herself/PRON useful/ADJ ,/PUNCT and/CCONJ looking/VERB anxiously/ADV about/ADP her/PRON ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    PLACE: make(sense:brand.n.02)
+    OBJECT: herself(entity)
+    PLACE: her(reference:memory)
+  clause 1 (proposition):
+    PREDICATE: <none>(sense:?)
+    SUBJECT: .(sense:?)
+    PLACE: <none>(sense:?)
+    PLACE: <none>(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+    - clause 1: J1 fail (predicate token_index=None pos=None)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[31] good night ! -- good-bye ! "
+    NOTE: grounding-fail, bin A, teacher_s=0.002, enc_s=3.5437
+  POS: good/ADJ night/NOUN !/PUNCT --/PUNCT good-bye/NOUN !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: !(sense:exclamation_mark.n.01)
+    SUBJECT: night(sense:night.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=2 pos=PUNCT)
+
+[32] the lion above could n't stand that .
+    NOTE: grounding-fail, bin A, teacher_s=0.011, enc_s=3.1113
+  POS: the/DET lion/NOUN above/ADP could/AUX n't/PART stand/VERB that/PRON ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: stand(sense:base.n.08)
+    SUBJECT: lion(sense:lion.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[33] quick , now ! '
+    NOTE: grounding-fail, bin A, teacher_s=0.002, enc_s=3.2217
+  POS: quick/ADJ ,/PUNCT now/ADV !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    PLACE: !(sense:exclamation_mark.n.01)
+    PLACE: <none>(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=False  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+    - J3 fail (total nodes 3 > content tokens 2)
+
+[34] said buster bear .
+    NOTE: grounding-fail, bin A, teacher_s=0.004, enc_s=2.6242
+  POS: said/VERB buster/NOUN bear/VERB ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: bear(sense:bear.n.01)
+    SUBJECT: buster(sense:fellow.n.06)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[35] please , ma'am , is this new zealand or australia ? '
+    NOTE: grounding-fail, bin B, teacher_s=0.010, enc_s=2.9276
+  POS: please/VERB ,/PUNCT ma'am/NOUN ,/PUNCT is/AUX this/DET new/ADJ zealand/NOUN or/CCONJ australia/NOUN ?/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: this(entity)
+    PLACE: zealand(entity)
+  clause 1 (proposition):
+    PREDICATE: or(sense:oregon.n.01)
+    OBJECT: australia(sense:australia.n.01)
+    SUBJECT: ?(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=5 pos=DET)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+    - clause 1: J1 fail (predicate token_index=8 pos=CCONJ)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[36] let me see : that would be four thousand miles down , i think -- ' ( for , you see , alice had learnt several things of this sort in her lessons in the schoolroom , and though this was not a very good opportunity for showing off her knowledge , as there was no one to listen to her , still it was good practice to say it over ) ' -- yes , that 's about the right distance -- but then i wonder what latitude or longitude i 've got to ? '
+    NOTE: cap-hit, bin D, teacher_s=30.006, enc_s=1.6962
+  POS: let/VERB me/PRON see/VERB :/PUNCT that/PRON would/AUX be/AUX four/ADJ thousand/NOUN miles/NOUN down/ADV ,/PUNCT i/PRON think/VERB --/PUNCT '/PUNCT (/PUNCT for/ADP ,/PUNCT you/PROPN see/VERB ,/PUNCT alice/PROPN had/AUX learnt/VERB several/ADJ things/NOUN of/ADP this/DET sort/NOUN in/ADP her/PRON lessons/NOUN in/ADP the/DET schoolroom/NOUN ,/PUNCT and/CCONJ though/SCONJ this/DET was/AUX not/PART a/DET very/ADV good/ADJ opportunity/NOUN for/ADP showing/VERB off/ADP her/PRON knowledge/NOUN ,/PUNCT as/ADV there/ADV was/AUX no/DET one/ADJ to/ADP listen/VERB to/ADP her/PRON ,/PUNCT still/ADV it/PRON was/AUX good/ADJ practice/NOUN to/ADP say/VERB it/PRON over/ADP )/PUNCT '/PUNCT --/PUNCT yes/NOUN ,/PUNCT that/PRON 's/PART about/ADP the/DET right/NOUN distance/NOUN --/PUNCT but/CCONJ then/ADV i/PRON wonder/VERB what/PRON latitude/NOUN or/CCONJ longitude/NOUN i/PRON 've/AUX got/VERB to/ADP ?/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: think(sense:think.n.01)
+    SUBJECT: thousand(sense:thousand.n.01)
+    SUBJECT: i(reference:memory)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[37] come and help me out of this ! '
+    NOTE: grounding-fail, bin B, teacher_s=0.008, enc_s=0.0209
+  POS: come/VERB and/CCONJ help/VERB me/PRON out/ADJ of/ADP this/DET !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: out(sense:out.n.01)
+    PLACE: come(sense:semen.n.01)
+    SUBJECT: me(reference:memory)
+    OBJECT: this(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=4 pos=ADJ)
+
+[38] heads below ! '
+    NOTE: grounding-fail, bin A, teacher_s=0.002, enc_s=3.3801
+  POS: heads/NOUN below/ADP !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: heads(entity)
+    PLACE: !(sense:exclamation_mark.n.01)
+    THROUGH: '(sense:?)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=False  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - J3 fail (total nodes 4 > content tokens 2)
+
+[39] the hen-mother did not know what in the world to do with the queer little half-chick .
+    NOTE: grounding-fail, bin C, teacher_s=0.128, enc_s=0.0396
+  POS: the/DET hen-mother/NOUN did/AUX not/PART know/VERB what/PRON in/ADP the/DET world/NOUN to/ADP do/AUX with/ADP the/DET queer/ADJ little/ADJ half-chick/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: .(entity)
+    SUBJECT: world(sense:universe.n.01)
+    WITH: half-chick(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=16 pos=PUNCT)
+
+[40] " that 's a very fine looking trout .
+    NOTE: grounding-fail, bin B, teacher_s=0.043, enc_s=3.0163
+  POS: "/PUNCT that/PRON 's/PART a/DET very/ADV fine/ADJ looking/VERB trout/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: trout(sense:trout.n.01)
+    SUBJECT: looking(sense:look.n.02)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=7 pos=NOUN)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[41] and there , before him , stood a queer little red man !
+    NOTE: grounding-fail, bin B, teacher_s=0.035, enc_s=2.8157
+  POS: and/CCONJ there/ADV ,/PUNCT before/ADP him/PRON ,/PUNCT stood/VERB a/DET queer/ADJ little/ADJ red/ADJ man/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: stood(entity)
+    SUBJECT: him(reference:memory)
+    OBJECT: man(sense:man.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[42] oh my fur and whiskers !
+    NOTE: grounding-fail, bin A, teacher_s=0.005, enc_s=3.7989
+  POS: oh/NOUN my/DET fur/NOUN and/CCONJ whiskers/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: fur(sense:fur.n.01)
+    SUBJECT: oh(sense:ohio.n.01)
+    OF: whiskers(sense:beard.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=2 pos=NOUN)
+
+[43] when all these were paid away , there was not enough left to pay both the rent of the cabin and a year 's schooling for herself and sisters which was due to the schoolmistress in a neighbouring village .
+    NOTE: grounding-fail, bin D, teacher_s=0.621, enc_s=2.5320
+  POS: when/ADV all/ADJ these/DET were/AUX paid/VERB away/ADV ,/PUNCT there/ADV was/AUX not/PART enough/ADV left/VERB to/ADP pay/VERB both/ADJ the/DET rent/VERB of/ADP the/DET cabin/NOUN and/CCONJ a/DET year/NOUN 's/PART schooling/VERB for/ADP herself/PRON and/CCONJ sisters/NOUN which/PRON was/AUX due/ADJ to/ADP the/DET schoolmistress/NOUN in/ADP a/DET neighbouring/VERB village/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: was(entity)
+    PLACE: cabin(sense:cabin.n.01)
+    SUBJECT: which(entity)
+    OBJECT: due(sense:due.n.01)
+    PLACE: schoolmistress(sense:schoolmarm.n.01)
+  clause 1 (proposition):
+    PREDICATE: in(entity)
+    PLACE: a(sense:angstrom.n.01)
+    SUBJECT: neighbouring(entity)
+    OBJECT: village(sense:village.n.01)
+    PLACE: .(sense:?)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=35 pos=ADP)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[44] said the eaglet .
+    NOTE: grounding-fail, bin A, teacher_s=0.002, enc_s=3.2948
+  POS: said/VERB the/DET eaglet/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: .(sense:?)
+    SUBJECT: eaglet(sense:eaglet.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=3 pos=PUNCT)
+
+[45] the lion above shook his mane again and growled again , and made a terrible face .
+    NOTE: grounding-fail, bin C, teacher_s=0.029, enc_s=3.0533
+  POS: the/DET lion/NOUN above/ADP shook/VERB his/DET mane/NOUN again/ADV and/CCONJ growled/VERB again/ADV ,/PUNCT and/CCONJ made/VERB a/DET terrible/ADJ face/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: shook(sense:shook.n.01)
+    SUBJECT: lion(sense:lion.n.01)
+    OBJECT: mane(sense:mane.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[46] cried the mouse , in a shrill , passionate voice .
+    NOTE: grounding-fail, bin B, teacher_s=0.011, enc_s=0.0216
+  POS: cried/VERB the/DET mouse/NOUN ,/PUNCT in/ADP a/DET shrill/ADJ ,/PUNCT passionate/ADJ voice/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: voice(sense:voice.n.01)
+    SUBJECT: passionate(sense:passionate.a.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=9 pos=NOUN)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[47] the idea ! "
+    NOTE: grounding-fail, bin A, teacher_s=0.001, enc_s=2.8675
+  POS: the/DET idea/NOUN !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: !(sense:exclamation_mark.n.01)
+    SUBJECT: idea(sense:idea.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=2 pos=PUNCT)
+
+[48] when she got to the door , she found she had forgotten the little golden key , and when she went back to the table for it , she found she could not possibly reach it : she could see it quite plainly through the glass , and she tried her best to climb up one of the legs of the table , but it was too slippery ; and when she had tired herself out with trying , the poor little thing sat down and cried .
+    NOTE: cap-hit, bin D, teacher_s=30.005, enc_s=1.9199
+  POS: when/ADV she/PRON got/VERB to/ADP the/DET door/NOUN ,/PUNCT she/PRON found/VERB she/PRON had/AUX forgotten/VERB the/DET little/ADJ golden/ADJ key/NOUN ,/PUNCT and/CCONJ when/ADV she/PRON went/VERB back/ADV to/ADP the/DET table/NOUN for/ADP it/PRON ,/PUNCT she/PRON found/VERB she/PRON could/AUX not/PART possibly/ADV reach/VERB it/PRON :/PUNCT she/PRON could/AUX see/VERB it/PRON quite/ADV plainly/ADV through/ADP the/DET glass/NOUN ,/PUNCT and/CCONJ she/PRON tried/VERB her/PRON best/ADJ to/ADP climb/VERB up/ADV one/ADJ of/ADP the/DET legs/NOUN of/ADP the/DET table/NOUN ,/PUNCT but/CCONJ it/PRON was/AUX too/ADV slippery/ADJ ;/PUNCT and/CCONJ when/ADV she/PRON had/AUX tired/ADJ herself/PRON out/ADJ with/ADP trying/VERB ,/PUNCT the/DET poor/ADJ little/ADJ thing/NOUN sat/VERB down/ADV and/CCONJ cried/VERB ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: got(entity)
+    SUBJECT: she(reference:memory)
+    PLACE: door(sense:door.n.01)
+  clause 1 (proposition):
+    PREDICATE: forgotten(entity)
+    SUBJECT: she(reference:memory)
+    OBJECT: key(sense:key.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[49] " 'see , all my leaves are dark crimson .
+    NOTE: grounding-fail, bin B, teacher_s=0.051, enc_s=3.1106
+  POS: "/PUNCT 'see/NOUN ,/PUNCT all/ADJ my/DET leaves/VERB are/AUX dark/ADJ crimson/ADJ ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: are(sense:are.n.01)
+    SUBJECT: leaves(entity)
+    OBJECT: crimson(sense:crimson.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[50] at the jerk , up came the whale out of the water .
+    NOTE: grounding-fail, bin B, teacher_s=0.053, enc_s=2.8124
+  POS: at/ADP the/DET jerk/VERB ,/PUNCT up/ADV came/VERB the/DET whale/NOUN out/ADJ of/ADP the/DET water/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: jerk(sense:jerk.n.01)
+    SUBJECT: whale(sense:giant.n.04)
+    OF: water(sense:water.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[51] 'well , i 'll eat it , ' said alice , 'and if it makes me grow larger , i can reach the key ; and if it makes me grow smaller , i can creep under the door ; so either way i 'll get into the garden , and i do n't care which happens ! '
+    NOTE: cap-hit, bin D, teacher_s=30.003, enc_s=2.8387
+  POS: 'well/NOUN ,/PUNCT i/PRON 'll/AUX eat/VERB it/PRON ,/PUNCT '/PUNCT said/VERB alice/PROPN ,/PUNCT 'and/NOUN if/SCONJ it/PRON makes/VERB me/PRON grow/VERB larger/ADJ ,/PUNCT i/PRON can/AUX reach/VERB the/DET key/NOUN ;/PUNCT and/CCONJ if/SCONJ it/PRON makes/VERB me/PRON grow/VERB smaller/ADJ ,/PUNCT i/PRON can/AUX creep/VERB under/ADP the/DET door/NOUN ;/PUNCT so/CCONJ either/DET way/NOUN i/PRON 'll/AUX get/VERB into/ADP the/DET garden/NOUN ,/PUNCT and/CCONJ i/PRON do/AUX n't/PART care/VERB which/PRON happens/VERB !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: eat(sense:eat.v.01)
+    SUBJECT: i(reference:memory)
+    OBJECT: it(reference:memory)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[52] you see when he had found the heads of those trout on the bank he knew right away that some one else had been fishing , and that was why he could n't catch any ; but it did n't seem possible that little billy mink could have eaten all those trout , and farmer brown 's boy did n't once think of little joe otter , and so he was very , very much puzzled .
+    NOTE: cap-hit, bin D, teacher_s=30.005, enc_s=2.0674
+  POS: you/PROPN see/VERB when/ADV he/PRON had/AUX found/VERB the/DET heads/NOUN of/ADP those/DET trout/NOUN on/ADP the/DET bank/NOUN he/PRON knew/VERB right/NOUN away/ADV that/PRON some/ADJ one/ADJ else/ADV had/AUX been/AUX fishing/NOUN ,/PUNCT and/CCONJ that/PRON was/AUX why/ADV he/PRON could/AUX n't/PART catch/VERB any/ADV ;/PUNCT but/CCONJ it/PRON did/AUX n't/PART seem/VERB possible/ADJ that/PRON little/ADJ billy/NOUN mink/NOUN could/AUX have/AUX eaten/VERB all/ADJ those/DET trout/NOUN ,/PUNCT and/CCONJ farmer/NOUN brown/ADJ 's/PART boy/NOUN did/AUX n't/PART once/ADV think/VERB of/ADP little/ADJ joe/PROPN otter/NOUN ,/PUNCT and/CCONJ so/CCONJ he/PRON was/AUX very/ADV ,/PUNCT very/ADV much/ADV puzzled/VERB ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: see(sense:see.n.01)
+    SUBJECT: you(reference:memory)
+    OF: trout(sense:trout.n.01)
+  clause 1 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: he(reference:memory)
+    OBJECT: right(sense:right.n.01)
+    OBJECT: he(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=None pos=None)
+
+[53] " the idea ! "
+    NOTE: grounding-fail, bin A, teacher_s=0.001, enc_s=2.7794
+  POS: "/PUNCT the/DET idea/NOUN !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: !(sense:exclamation_mark.n.01)
+    SUBJECT: idea(sense:idea.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=3 pos=PUNCT)
+
+[54] run home this moment , and fetch me a pair of gloves and a fan !
+    NOTE: grounding-fail, bin C, teacher_s=0.192, enc_s=3.2601
+  POS: run/VERB home/NOUN this/DET moment/NOUN ,/PUNCT and/CCONJ fetch/VERB me/PRON a/DET pair/NOUN of/ADP gloves/NOUN and/CCONJ a/DET fan/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: moment(sense:moment.n.01)
+    SUBJECT: this(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=3 pos=NOUN)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[55] the city mouse just whispered , " sh ! "
+    NOTE: grounding-fail, bin B, teacher_s=0.004, enc_s=0.0178
+  POS: the/DET city/NOUN mouse/NOUN just/ADV whispered/ADJ ,/PUNCT "/PUNCT sh/PROPN !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: mouse(sense:mouse.n.01)
+    SUBJECT: city(sense:city.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=2 pos=NOUN)
+
+[56] " and do n't you recollect , mary , your picking out the gold ones , and telling mr . hopkins that they were gold ; and he said you knew nothing of the matter ; and i was going to tell him that miss isabella had tried them , and knew that they were gold ?
+    NOTE: cap-hit, bin D, teacher_s=30.004, enc_s=2.0571
+  POS: "/PUNCT and/CCONJ do/AUX n't/PART you/PROPN recollect/VERB ,/PUNCT mary/NOUN ,/PUNCT your/DET picking/VERB out/ADJ the/DET gold/NOUN ones/NOUN ,/PUNCT and/CCONJ telling/VERB mr/NOUN ./PUNCT hopkins/NOUN that/PRON they/PRON were/AUX gold/NOUN ;/PUNCT and/CCONJ he/PRON said/VERB you/PROPN knew/VERB nothing/PRON of/ADP the/DET matter/NOUN ;/PUNCT and/CCONJ i/PRON was/AUX going/VERB to/ADP tell/VERB him/PRON that/PRON miss/VERB isabella/NOUN had/AUX tried/VERB them/PRON ,/PUNCT and/CCONJ knew/VERB that/PRON they/PRON were/AUX gold/NOUN ?/PUNCT
+  clause 0 (proposition):
+    PREDICATE: recollect(sense:remember.v.01)
+    SUBJECT: you(reference:memory)
+    OBJECT: gold(sense:gold.n.01)
+  clause 1 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: ?(reference:memory)
+    OBJECT: <none>(sense:?)
+  clause 2 (proposition):
+    PREDICATE: <none>(entity)
+    OBJECT: <none>(reference:memory)
+    OBJECT: <none>(sense:?)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=None pos=None)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+    - clause 2: J1 fail (predicate token_index=None pos=None)
+    - clause 2: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[57] thought alice .
+    NOTE: grounding-fail, bin A, teacher_s=0.002, enc_s=3.2465
+  POS: thought/VERB alice/PROPN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: .(entity)
+    SUBJECT: alice(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=2 pos=PUNCT)
+
+[58] when the mouse heard this , it turned round and swam slowly back to her : its face was quite pale ( with passion , alice thought ) , and it said in a low trembling voice , 'let us get to the shore , and then i 'll tell you my history , and you 'll understand why it is i hate cats and dogs . '
+    NOTE: cap-hit, bin D, teacher_s=30.003, enc_s=1.8475
+  POS: when/ADV the/DET mouse/NOUN heard/VERB this/DET ,/PUNCT it/PRON turned/VERB round/ADJ and/CCONJ swam/VERB slowly/ADV back/ADV to/ADP her/PRON :/PUNCT its/DET face/NOUN was/AUX quite/ADV pale/ADJ (/PUNCT with/ADP passion/NOUN ,/PUNCT alice/PROPN thought/VERB )/PUNCT ,/PUNCT and/CCONJ it/PRON said/VERB in/ADP a/DET low/ADJ trembling/ADJ voice/NOUN ,/PUNCT 'let/NOUN us/PRON get/VERB to/ADP the/DET shore/NOUN ,/PUNCT and/CCONJ then/ADV i/PRON 'll/AUX tell/VERB you/PROPN my/DET history/NOUN ,/PUNCT and/CCONJ you/PROPN 'll/AUX understand/VERB why/ADV it/PRON is/AUX i/PRON hate/VERB cats/NOUN and/CCONJ dogs/NOUN ./PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: heard(sense:heard.s.01)
+    SUBJECT: mouse(sense:mouse.n.01)
+    OBJECT: cats(entity)
+  clause 1 (proposition):
+    PREDICATE: and(entity)
+    OBJECT: dogs(entity)
+    SUBJECT: .(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=64 pos=CCONJ)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[59] caroline also found out that many of the coins were very valuable as curiosities .
+    NOTE: grounding-fail, bin B, teacher_s=0.089, enc_s=0.0262
+  POS: caroline/ADJ also/ADV found/VERB out/ADJ that/PRON many/ADJ of/ADP the/DET coins/NOUN were/AUX very/ADV valuable/ADJ as/ADV curiosities/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: were(entity)
+    SUBJECT: coins(entity)
+    INDIRECT_OBJECT: valuable(sense:valuable.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[60] you do it ! -- that i wo n't , then ! -- bill 's to go down -- here , bill !
+    NOTE: grounding-fail, bin C, teacher_s=0.075, enc_s=3.0055
+  POS: you/PROPN do/AUX it/PRON !/PUNCT --/PUNCT that/PRON i/PRON wo/PROPN n't/PART ,/PUNCT then/ADV !/PUNCT --/PUNCT bill/NOUN 's/PART to/ADP go/VERB down/ADV --/PUNCT here/ADV ,/PUNCT bill/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: do(sense:bash.n.02)
+    SUBJECT: you(reference:memory)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[61] these rushes are in best condition in the height of summer , but may be gathered so as to serve the purpose well quite on to autumn .
+    NOTE: grounding-fail, bin D, teacher_s=0.305, enc_s=2.3217
+  POS: these/DET rushes/VERB are/AUX in/ADP best/ADJ condition/NOUN in/ADP the/DET height/NOUN of/ADP summer/NOUN ,/PUNCT but/CCONJ may/AUX be/AUX gathered/ADJ so/CCONJ as/ADV to/ADP serve/VERB the/DET purpose/NOUN well/ADV quite/ADV on/ADP to/ADP autumn/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: well(sense:well.n.01)
+    PLACE: height(sense:height.n.01)
+    SUBJECT: purpose(sense:purpose.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=22 pos=ADV)
+
+[62] goody grope said she would rather have spirits of some kind or other than milk ; but mary had no spirits to give her ; so she sat herself down close to the fire , and after she had sighed and groaned and smoked for some time , she said to mary , " well , and what have you done with the treasure you had the luck to find ? "
+    NOTE: cap-hit, bin D, teacher_s=30.004, enc_s=1.7699
+  POS: goody/NOUN grope/VERB said/VERB she/PRON would/AUX rather/ADV have/AUX spirits/NOUN of/ADP some/ADJ kind/NOUN or/CCONJ other/ADJ than/PROPN milk/NOUN ;/PUNCT but/CCONJ mary/NOUN had/AUX no/DET spirits/NOUN to/ADP give/VERB her/PRON ;/PUNCT so/CCONJ she/PRON sat/VERB herself/PRON down/ADV close/VERB to/ADP the/DET fire/NOUN ,/PUNCT and/CCONJ after/ADP she/PRON had/AUX sighed/VERB and/CCONJ groaned/VERB and/CCONJ smoked/VERB for/ADP some/ADJ time/NOUN ,/PUNCT she/PRON said/VERB to/ADP mary/NOUN ,/PUNCT "/PUNCT well/ADV ,/PUNCT and/CCONJ what/PRON have/AUX you/PROPN done/VERB with/ADP the/DET treasure/NOUN you/PROPN had/AUX the/DET luck/NOUN to/ADP find/VERB ?/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: grope(sense:grope.n.01)
+    SUBJECT: goody(sense:dainty.n.01)
+    PLACE: fire(sense:fire.n.01)
+  clause 1 (proposition):
+    PREDICATE: and(entity)
+    SUBJECT: ,(entity)
+    PLACE: after(sense:after.s.01)
+    PLACE: she(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=35 pos=CCONJ)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[63] there , on the lowest shelf , behind some stone jars , stood a big paper bag of brown sugar .
+    NOTE: grounding-fail, bin C, teacher_s=0.398, enc_s=0.0404
+  POS: there/ADV ,/PUNCT on/ADP the/DET lowest/ADJ shelf/NOUN ,/PUNCT behind/ADP some/ADJ stone/NOUN jars/VERB ,/PUNCT stood/VERB a/DET big/ADJ paper/NOUN bag/NOUN of/ADP brown/ADJ sugar/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: bag(sense:bag.n.01)
+    PLACE: shelf(sense:shelf.n.01)
+    SUBJECT: paper(sense:paper.n.01)
+    OF: sugar(sense:sugar.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=16 pos=NOUN)
+
+[64] by and by the moon peeped in at the window .
+    NOTE: grounding-fail, bin B, teacher_s=0.006, enc_s=2.9481
+  POS: by/ADP and/CCONJ by/ADP the/DET moon/NOUN peeped/VERB in/ADP at/ADP the/DET window/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: peeped(entity)
+    SUBJECT: moon(sense:moon.n.01)
+    PLACE: window(sense:window.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[65] and at last she spread out her hand again , and made another snatch in the air .
+    NOTE: grounding-fail, bin C, teacher_s=0.175, enc_s=2.5955
+  POS: and/CCONJ at/ADP last/ADJ she/PRON spread/VERB out/ADJ her/PRON hand/NOUN again/ADV ,/PUNCT and/CCONJ made/VERB another/ADJ snatch/VERB in/ADP the/DET air/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: spread(sense:spread.n.01)
+    SUBJECT: she(reference:memory)
+    OBJECT: hand(sense:hand.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[66] snapped little joe .
+    NOTE: grounding-fail, bin A, teacher_s=0.005, enc_s=3.5359
+  POS: snapped/VERB little/ADJ joe/PROPN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: little(sense:little.n.01)
+    OBJECT: joe(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[67] fumed the whale .
+    NOTE: grounding-fail, bin A, teacher_s=0.005, enc_s=2.5720
+  POS: fumed/VERB the/DET whale/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: fumed(sense:fumed.s.01)
+    OBJECT: whale(sense:giant.n.04)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[68] edmund , who was a courageous lad , and proud of showing his courage , laughed at their cowardice ; but mary , who was very prudent , persuaded her brother to ask an experienced mason , who was building at his master 's , to come and give his opinion , whether their part of the castle was safe to live in or not .
+    NOTE: cap-hit, bin D, teacher_s=30.004, enc_s=2.9588
+  POS: edmund/PROPN ,/PUNCT who/PRON was/AUX a/DET courageous/ADJ lad/NOUN ,/PUNCT and/CCONJ proud/ADJ of/ADP showing/VERB his/DET courage/NOUN ,/PUNCT laughed/VERB at/ADP their/DET cowardice/NOUN ;/PUNCT but/CCONJ mary/NOUN ,/PUNCT who/PRON was/AUX very/ADV prudent/ADJ ,/PUNCT persuaded/VERB her/PRON brother/NOUN to/ADP ask/VERB an/DET experienced/VERB mason/NOUN ,/PUNCT who/PRON was/AUX building/VERB at/ADP his/DET master/NOUN 's/PART ,/PUNCT to/ADP come/VERB and/CCONJ give/VERB his/DET opinion/NOUN ,/PUNCT whether/SCONJ their/DET part/NOUN of/ADP the/DET castle/NOUN was/AUX safe/ADJ to/ADP live/VERB in/ADP or/CCONJ not/PART ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: was(entity)
+    SUBJECT: who(sense:world_health_organization.n.01)
+    OBJECT: lad(sense:chap.n.01)
+    PLACE: come(sense:semen.n.01)
+    OBJECT: opinion(sense:opinion.n.01)
+  clause 1 (proposition):
+    PREDICATE: ,(entity)
+    SUBJECT: whether(sense:?)
+    PLACE: their(sense:?)
+    OBJECT: part(sense:part.n.01)
+  clause 2 (proposition):
+    PREDICATE: the(entity)
+    SUBJECT: of(entity)
+    OBJECT: safe(sense:safe.n.01)
+    PLACE: live(sense:populate.v.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=51 pos=PUNCT)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+    - clause 2: J1 fail (predicate token_index=56 pos=DET)
+    - clause 2: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[69] " dear me ! "
+    NOTE: grounding-fail, bin A, teacher_s=0.003, enc_s=2.8235
+  POS: "/PUNCT dear/ADJ me/PRON !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: dear(sense:beloved.n.01)
+    SUBJECT: me(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=False  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - J3 fail (total nodes 3 > content tokens 2)
+
+[70] the mouse did not notice this question , but hurriedly went on , ' " -- found it advisable to go with edgar atheling to meet william and offer him the crown .
+    NOTE: grounding-fail, bin D, teacher_s=1.203, enc_s=3.0159
+  POS: the/DET mouse/NOUN did/AUX not/PART notice/VERB this/DET question/NOUN ,/PUNCT but/CCONJ hurriedly/ADV went/VERB on/ADP ,/PUNCT '/PUNCT "/PUNCT --/PUNCT found/VERB it/PRON advisable/ADJ to/ADP go/VERB with/ADP edgar/NOUN atheling/VERB to/ADP meet/VERB william/PROPN and/CCONJ offer/VERB him/PRON the/DET crown/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: atheling(entity)
+    SUBJECT: it(reference:memory)
+    SUBJECT: edgar(sense:edgar.n.01)
+    PLACE: meet(sense:meet.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[71] but all at once , in the midst of their eating , there came a scratching at the door and a sharp , loud _miaouw_ !
+    NOTE: grounding-fail, bin D, teacher_s=0.174, enc_s=2.2509
+  POS: but/CCONJ all/ADJ at/ADP once/ADV ,/PUNCT in/ADP the/DET midst/NOUN of/ADP their/DET eating/VERB ,/PUNCT there/ADV came/VERB a/DET scratching/VERB at/ADP the/DET door/NOUN and/CCONJ a/DET sharp/ADJ ,/PUNCT loud/ADJ _miaouw_/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: came(entity)
+    PLACE: midst(sense:midst.n.01)
+    PLACE: door(sense:door.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[72] " it 's of no use to try to fish here .
+    NOTE: grounding-fail, bin B, teacher_s=0.043, enc_s=2.4581
+  POS: "/PUNCT it/PRON 's/PART of/ADP no/DET use/VERB to/ADP try/VERB to/ADP fish/NOUN here/ADV ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: use(sense:use.n.01)
+    PLACE: try(sense:attempt.n.01)
+    PLACE: fish(sense:fish.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[73] so did grandfather frog .
+    NOTE: grounding-fail, bin A, teacher_s=0.006, enc_s=3.1892
+  POS: so/CCONJ did/AUX grandfather/NOUN frog/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: frog(sense:frog.n.01)
+    SUBJECT: grandfather(sense:grandfather.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=3 pos=NOUN)
+
+[74] 'poor little thing ! '
+    NOTE: grounding-fail, bin A, teacher_s=0.003, enc_s=2.6727
+  POS: 'poor/NOUN little/ADJ thing/NOUN !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: little(sense:little.n.01)
+    SUBJECT: 'poor(entity)
+    OBJECT: thing(sense:thing.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=1 pos=ADJ)
+
+[75] mary , encouraged by these kind friends , went on with her little manufacture with increased activity .
+    NOTE: grounding-fail, bin C, teacher_s=0.178, enc_s=2.9708
+  POS: mary/NOUN ,/PUNCT encouraged/VERB by/ADP these/DET kind/NOUN friends/NOUN ,/PUNCT went/VERB on/ADP with/ADP her/PRON little/ADJ manufacture/VERB with/ADP increased/VERB activity/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    PLACE: activity(sense:activity.n.01)
+    SUBJECT: .(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[76] mary did not choose to have anything to do with these people .
+    NOTE: grounding-fail, bin B, teacher_s=0.088, enc_s=2.4609
+  POS: mary/NOUN did/AUX not/PART choose/VERB to/ADP have/AUX anything/PRON to/ADP do/AUX with/ADP these/DET people/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: did(entity)
+    SUBJECT: mary(entity)
+    PLACE: people(sense:people.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[77] think of the luck of these childer , that have found a pot of gold , and such great , grand friends , and a slated house , and all : and here am i , with scarce a rag to cover me , and not a potato to put into my mouth ! -- i , that have been looking under ground all my days for treasure , not to have a halfpenny at the last , to buy me tobacco ! "
+    NOTE: cap-hit, bin D, teacher_s=30.008, enc_s=2.3669
+  POS: think/VERB of/ADP the/DET luck/NOUN of/ADP these/DET childer/NOUN ,/PUNCT that/PRON have/AUX found/VERB a/DET pot/NOUN of/ADP gold/NOUN ,/PUNCT and/CCONJ such/ADV great/ADJ ,/PUNCT grand/ADJ friends/NOUN ,/PUNCT and/CCONJ a/DET slated/VERB house/NOUN ,/PUNCT and/CCONJ all/ADJ :/PUNCT and/CCONJ here/ADV am/AUX i/PRON ,/PUNCT with/ADP scarce/ADV a/DET rag/NOUN to/ADP cover/VERB me/PRON ,/PUNCT and/CCONJ not/PART a/DET potato/NOUN to/ADP put/VERB into/ADP my/DET mouth/NOUN !/PUNCT --/PUNCT i/PRON ,/PUNCT that/PRON have/AUX been/AUX looking/VERB under/ADP ground/NOUN all/ADJ my/DET days/NOUN for/ADP treasure/NOUN ,/PUNCT not/PART to/ADP have/AUX a/DET halfpenny/NOUN at/ADP the/DET last/ADJ ,/PUNCT to/ADP buy/VERB me/PRON tobacco/NOUN !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: !(sense:exclamation_mark.n.01)
+    PLACE: put(sense:put_option.n.02)
+    PLACE: mouth(sense:mouth.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=53 pos=PUNCT)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[78] catch hold of this rope -- will the roof bear ? -- mind that loose slate -- oh , it 's coming down !
+    NOTE: grounding-fail, bin C, teacher_s=0.246, enc_s=0.0351
+  POS: catch/VERB hold/VERB of/ADP this/DET rope/NOUN --/PUNCT will/AUX the/DET roof/NOUN bear/VERB ?/PUNCT --/PUNCT mind/NOUN that/PRON loose/ADJ slate/VERB --/PUNCT oh/NOUN ,/PUNCT it/PRON 's/PART coming/VERB down/ADV !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: hold(sense:clasp.n.02)
+    OF: this(entity)
+    OF: rope(sense:rope.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[79] said the cloud .
+    NOTE: grounding-fail, bin A, teacher_s=0.003, enc_s=2.6641
+  POS: said/VERB the/DET cloud/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: .(sense:?)
+    SUBJECT: cloud(sense:cloud.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=3 pos=PUNCT)
+
+[80] when he was questioned by gilbert why he did not bring an answer , he did not attempt to make any excuse ; he did not say , " there was no answer , please your honour , " or , " they bid me not to wait , " etc . ; but he told exactly the truth ; and though gilbert scolded him for being so impatient as not to wait , yet his telling the truth was more to the boy 's advantage than any excuse he could have made .
+    NOTE: cap-hit, bin D, teacher_s=30.006, enc_s=1.6514
+  POS: when/ADV he/PRON was/AUX questioned/VERB by/ADP gilbert/NOUN why/ADV he/PRON did/AUX not/PART bring/VERB an/DET answer/VERB ,/PUNCT he/PRON did/AUX not/PART attempt/VERB to/ADP make/VERB any/ADV excuse/NOUN ;/PUNCT he/PRON did/AUX not/PART say/VERB ,/PUNCT "/PUNCT there/ADV was/AUX no/DET answer/VERB ,/PUNCT please/VERB your/DET honour/NOUN ,/PUNCT "/PUNCT or/CCONJ ,/PUNCT "/PUNCT they/PRON bid/VERB me/PRON not/PART to/ADP wait/VERB ,/PUNCT "/PUNCT etc/PROPN ./PUNCT ;/PUNCT but/CCONJ he/PRON told/VERB exactly/ADV the/DET truth/NOUN ;/PUNCT and/CCONJ though/SCONJ gilbert/NOUN scolded/VERB him/PRON for/ADP being/AUX so/CCONJ impatient/ADJ as/ADV not/PART to/ADP wait/VERB ,/PUNCT yet/CCONJ his/DET telling/VERB the/DET truth/NOUN was/AUX more/ADV to/ADP the/DET boy/NOUN 's/PART advantage/NOUN than/PROPN any/ADV excuse/NOUN he/PRON could/AUX have/AUX made/VERB ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: questioned(entity)
+    SUBJECT: he(reference:memory)
+    PLACE: gilbert(sense:gilbert.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[81] then silence , and then another confusion of voices -- 'hold up his head -- brandy now -- do n't choke him -- how was it , old fellow ?
+    NOTE: grounding-fail, bin D, teacher_s=0.310, enc_s=2.7443
+  POS: then/ADV silence/NOUN ,/PUNCT and/CCONJ then/ADV another/ADJ confusion/NOUN of/ADP voices/NOUN --/PUNCT 'hold/NOUN up/ADV his/DET head/NOUN --/PUNCT brandy/NOUN now/ADV --/PUNCT do/AUX n't/PART choke/VERB him/PRON --/PUNCT how/ADV was/AUX it/PRON ,/PUNCT old/ADJ fellow/NOUN ?/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: then(sense:then.n.01)
+    OBJECT: confusion(sense:confusion.n.01)
+    OF: voices(entity)
+    OF: 'hold(entity)
+  clause 1 (proposition):
+    PREDICATE: was(entity)
+    SUBJECT: him(reference:memory)
+    OBJECT: it(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[82] why , there 's hardly room for you , and no room at all for any lesson-books ! '
+    NOTE: grounding-fail, bin C, teacher_s=0.089, enc_s=2.2970
+  POS: why/ADV ,/PUNCT there/ADV 's/PART hardly/ADV room/NOUN for/ADP you/PROPN ,/PUNCT and/CCONJ no/DET room/NOUN at/ADP all/ADJ for/ADP any/ADV lesson-books/NOUN !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    PLACE: you(reference:memory)
+    SUBJECT: at(sense:astatine.n.01)
+    PLACE: lesson-books(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[83] " dear , dear ! "
+    NOTE: grounding-fail, bin A, teacher_s=0.011, enc_s=3.3725
+  POS: "/PUNCT dear/ADJ ,/PUNCT dear/ADJ !/PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: dear(sense:beloved.n.01)
+    SUBJECT: dear(sense:beloved.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=3 pos=ADJ)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[84] that 'll be a comfort , one way -- never to be an old woman -- but then -- always to have lessons to learn !
+    NOTE: grounding-fail, bin D, teacher_s=0.334, enc_s=0.0553
+  POS: that/PRON 'll/AUX be/AUX a/DET comfort/NOUN ,/PUNCT one/ADJ way/NOUN --/PUNCT never/ADV to/ADP be/AUX an/DET old/ADJ woman/NOUN --/PUNCT but/CCONJ then/ADV --/PUNCT always/ADV to/ADP have/AUX lessons/NOUN to/ADP learn/VERB !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: lessons(entity)
+    SUBJECT: to(sense:tho.n.01)
+    PLACE: learn(sense:learn.v.01)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=22 pos=NOUN)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[85] " too bad .
+    NOTE: grounding-fail, bin A, teacher_s=0.001, enc_s=2.7306
+  POS: "/PUNCT too/ADV bad/ADJ ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(sense:?)
+    SUBJECT: <none>(sense:?)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[86] " it 's very curious , " muttered buster , " very curious indeed .
+    NOTE: grounding-fail, bin B, teacher_s=0.004, enc_s=0.0360
+  POS: "/PUNCT it/PRON 's/PART very/ADV curious/ADJ ,/PUNCT "/PUNCT muttered/VERB buster/NOUN ,/PUNCT "/PUNCT very/ADV curious/ADJ indeed/ADV ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: it(reference:memory)
+    PLACE: curious(sense:curious.s.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+
+[87] on the shelves were jars of butter , and cheeses in bags and out of bags .
+    NOTE: grounding-fail, bin C, teacher_s=0.089, enc_s=3.1216
+  POS: on/ADP the/DET shelves/NOUN were/AUX jars/VERB of/ADP butter/NOUN ,/PUNCT and/CCONJ cheeses/NOUN in/ADP bags/NOUN and/CCONJ out/ADJ of/ADP bags/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: jars(entity)
+    PLACE: butter(sense:butter.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[88] " come and get it . "
+    NOTE: grounding-fail, bin A, teacher_s=0.002, enc_s=2.6147
+  POS: "/PUNCT come/VERB and/CCONJ get/VERB it/PRON ./PUNCT "/PUNCT
+  clause 0 (proposition):
+    PREDICATE: .(sense:?)
+    PLACE: come(sense:semen.n.01)
+    SUBJECT: it(reference:memory)
+  clause 1 (proposition):
+    PREDICATE: "(entity)
+    PLACE: <none>(entity)
+    SUBJECT: <none>(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=False  USABLE=False
+    - clause 0: J1 fail (predicate token_index=5 pos=PUNCT)
+    - clause 1: J1 fail (predicate token_index=6 pos=PUNCT)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+    - J3 fail (total nodes 6 > content tokens 4)
+
+[89] but at last she stood quite still , and spoke boldly and proudly .
+    NOTE: grounding-fail, bin B, teacher_s=0.098, enc_s=3.0703
+  POS: but/CCONJ at/ADP last/ADJ she/PRON stood/VERB quite/ADV still/ADV ,/PUNCT and/CCONJ spoke/VERB boldly/ADV and/CCONJ proudly/ADV ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: stood(entity)
+    SUBJECT: she(reference:memory)
+    PLACE: boldly(sense:boldly.r.01)
+  clause 1 (proposition):
+    PREDICATE: and(entity)
+    PLACE: proudly(sense:proudly.r.01)
+    SUBJECT: .(reference:memory)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 1: J1 fail (predicate token_index=11 pos=CCONJ)
+    - clause 1: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[90] too bad !
+    NOTE: grounding-fail, bin A, teacher_s=0.001, enc_s=2.5933
+  POS: too/ADV bad/ADJ !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(sense:?)
+    SUBJECT: <none>(sense:?)
+  J1(predicate-ok)=False  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[91] said the whale .
+    NOTE: grounding-fail, bin A, teacher_s=0.003, enc_s=3.3040
+  POS: said/VERB the/DET whale/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: .(sense:?)
+    SUBJECT: whale(sense:giant.n.04)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=3 pos=PUNCT)
+
+[92] fetch it here , lad ! -- here , put 'em up at this corner -- no , tie 'em together first -- they do n't reach half high enough yet -- oh !
+    NOTE: grounding-fail, bin D, teacher_s=0.744, enc_s=2.7241
+  POS: fetch/VERB it/PRON here/ADV ,/PUNCT lad/NOUN !/PUNCT --/PUNCT here/ADV ,/PUNCT put/VERB 'em/NOUN up/ADV at/ADP this/DET corner/NOUN --/PUNCT no/DET ,/PUNCT tie/VERB 'em/NOUN together/ADV first/ADJ --/PUNCT they/PRON do/AUX n't/PART reach/VERB half/NOUN high/ADJ enough/ADV yet/CCONJ --/PUNCT oh/NOUN !/PUNCT
+  clause 0 (proposition):
+    PREDICATE: lad(sense:chap.n.01)
+    SUBJECT: it(reference:memory)
+  clause 1 (proposition):
+    PREDICATE: do(sense:bash.n.02)
+    SUBJECT: they(reference:memory)
+    OBJECT: !(sense:exclamation_mark.n.01)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=4 pos=NOUN)
+
+[93] but the insolence of his normans -- " how are you getting on now , my dear ? '
+    NOTE: grounding-fail, bin C, teacher_s=0.081, enc_s=0.0335
+  POS: but/CCONJ the/DET insolence/NOUN of/ADP his/DET normans/NOUN --/PUNCT "/PUNCT how/ADV are/AUX you/PROPN getting/VERB on/ADP now/ADV ,/PUNCT my/DET dear/ADJ ?/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: getting(sense:acquiring.n.01)
+    SUBJECT: insolence(sense:crust.n.03)
+    SUBJECT: you(reference:memory)
+    PLACE: ,(entity)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[94] 'i wo n't indeed ! '
+    NOTE: grounding-fail, bin A, teacher_s=0.001, enc_s=3.1226
+  POS: 'i/NOUN wo/PROPN n't/PART indeed/ADV !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: <none>(entity)
+    SUBJECT: 'i(entity)
+    SUBJECT: wo(entity)
+  J1(predicate-ok)=False  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J1 fail (predicate token_index=None pos=None)
+
+[95] when edmund was about twelve years old , his friend gilbert sent for him one day , and told him that his master had given him leave to have a boy in the house to assist him , and that his master told him he might choose one in the neighbourhood .
+    NOTE: cap-hit, bin D, teacher_s=30.003, enc_s=2.0478
+  POS: when/ADV edmund/PROPN was/AUX about/ADP twelve/ADJ years/NOUN old/ADJ ,/PUNCT his/DET friend/NOUN gilbert/NOUN sent/VERB for/ADP him/PRON one/ADJ day/NOUN ,/PUNCT and/CCONJ told/VERB him/PRON that/PRON his/DET master/NOUN had/AUX given/VERB him/PRON leave/VERB to/ADP have/AUX a/DET boy/NOUN in/ADP the/DET house/NOUN to/ADP assist/VERB him/PRON ,/PUNCT and/CCONJ that/PRON his/DET master/NOUN told/VERB him/PRON he/PRON might/AUX choose/VERB one/ADJ in/ADP the/DET neighbourhood/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: was(entity)
+    SUBJECT: edmund(entity)
+    OBJECT: years(sense:old_age.n.01)
+    FOR: him(reference:memory)
+  clause 1 (proposition):
+    PREDICATE: choose(sense:choose.v.01)
+    SUBJECT: him(reference:memory)
+    SUBJECT: he(reference:memory)
+    OBJECT: one(sense:one.n.01)
+    PLACE: neighbourhood(sense:vicinity.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[96] just then she heard something splashing about in the pool a little way off , and she swam nearer to make out what it was : at first she thought it must be a walrus or hippopotamus , but then she remembered how small she was now , and she soon made out that it was only a mouse that had slipped in like herself .
+    NOTE: cap-hit, bin D, teacher_s=30.004, enc_s=1.9912
+  POS: just/ADV then/ADV she/PRON heard/VERB something/PRON splashing/VERB about/ADP in/ADP the/DET pool/NOUN a/DET little/ADJ way/NOUN off/ADP ,/PUNCT and/CCONJ she/PRON swam/VERB nearer/ADV to/ADP make/VERB out/ADJ what/PRON it/PRON was/AUX :/PUNCT at/ADP first/ADJ she/PRON thought/VERB it/PRON must/AUX be/AUX a/DET walrus/NOUN or/CCONJ hippopotamus/NOUN ,/PUNCT but/CCONJ then/ADV she/PRON remembered/VERB how/ADV small/ADJ she/PRON was/AUX now/ADV ,/PUNCT and/CCONJ she/PRON soon/ADV made/VERB out/ADJ that/PRON it/PRON was/AUX only/ADV a/DET mouse/NOUN that/PRON had/AUX slipped/VERB in/ADP like/VERB herself/PRON ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: heard(sense:heard.s.01)
+    SUBJECT: she(reference:memory)
+    INDIRECT_OBJECT: something(entity)
+    PLACE: pool(sense:pool.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[97] last came a little feeble , squeaking voice , ( 'that 's bill , ' thought alice , ) 'well , i hardly know -- no more , thank ye ; i 'm better now -- but i 'm a deal too flustered to tell you -- all i know is , something comes at me like a jack-in-the-box , and up i goes like a sky-rocket ! '
+    NOTE: cap-hit, bin D, teacher_s=30.005, enc_s=0.7541
+  POS: last/ADJ came/VERB a/DET little/ADJ feeble/ADJ ,/PUNCT squeaking/VERB voice/NOUN ,/PUNCT (/PUNCT 'that/NOUN 's/PART bill/NOUN ,/PUNCT '/PUNCT thought/VERB alice/PROPN ,/PUNCT )/PUNCT 'well/NOUN ,/PUNCT i/PRON hardly/ADV know/VERB --/PUNCT no/DET more/ADV ,/PUNCT thank/VERB ye/PROPN ;/PUNCT i/PRON 'm/AUX better/ADJ now/ADV --/PUNCT but/CCONJ i/PRON 'm/AUX a/DET deal/VERB too/ADV flustered/ADJ to/ADP tell/VERB you/PROPN --/PUNCT all/ADJ i/PRON know/VERB is/AUX ,/PUNCT something/PRON comes/VERB at/ADP me/PRON like/VERB a/DET jack-in-the-box/NOUN ,/PUNCT and/CCONJ up/ADV i/PRON goes/VERB like/VERB a/DET sky-rocket/NOUN !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: came(entity)
+    SUBJECT: last(sense:stopping_point.n.01)
+    OBJECT: like(sense:like.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=False  J3(no-phantoms)=True  USABLE=False
+    - clause 0: J2 fail (no NOUN/PROPN/PRON SUBJECT)
+
+[98] why , there 's hardly enough of me left to make one respectable person ! '
+    NOTE: grounding-fail, bin C, teacher_s=0.071, enc_s=0.0311
+  POS: why/ADV ,/PUNCT there/ADV 's/PART hardly/ADV enough/ADV of/ADP me/PRON left/VERB to/ADP make/VERB one/ADJ respectable/ADJ person/NOUN !/PUNCT '/PUNCT
+  clause 0 (proposition):
+    PREDICATE: left(sense:left.n.01)
+    SUBJECT: me(reference:memory)
+    PLACE: make(sense:brand.n.02)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
+[99] " it will go near to break my jem 's heart , " said dame preston to herself , as she sat one evening beside the fire stirring the embers , and considering how she had best open the matter to her son , who stood opposite to her , eating a dry crust of bread very heartily for supper .
+    NOTE: cap-hit, bin D, teacher_s=30.004, enc_s=2.6746
+  POS: "/PUNCT it/PRON will/AUX go/VERB near/ADP to/ADP break/VERB my/DET jem/NOUN 's/PART heart/NOUN ,/PUNCT "/PUNCT said/VERB dame/NOUN preston/PROPN to/ADP herself/PRON ,/PUNCT as/ADV she/PRON sat/VERB one/ADJ evening/NOUN beside/ADP the/DET fire/NOUN stirring/VERB the/DET embers/NOUN ,/PUNCT and/CCONJ considering/VERB how/ADV she/PRON had/AUX best/ADJ open/VERB the/DET matter/NOUN to/ADP her/PRON son/NOUN ,/PUNCT who/PRON stood/VERB opposite/ADJ to/ADP her/PRON ,/PUNCT eating/VERB a/DET dry/VERB crust/NOUN of/ADP bread/NOUN very/ADV heartily/ADV for/ADP supper/NOUN ./PUNCT
+  clause 0 (proposition):
+    PREDICATE: go(sense:go.n.01)
+    SUBJECT: it(reference:memory)
+    PLACE: herself(entity)
+  clause 1 (proposition):
+    PREDICATE: sat(sense:saturday.n.01)
+    SUBJECT: she(reference:memory)
+    OBJECT: evening(sense:evening.n.01)
+    BESIDE: fire(sense:fire.n.01)
+    OBJECT: stirring(sense:stirring.n.01)
+  J1(predicate-ok)=True  J2(subject-ok)=True  J3(no-phantoms)=True  USABLE=True
+
