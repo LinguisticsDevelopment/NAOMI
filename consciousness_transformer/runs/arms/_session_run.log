@@ -25,3 +25,6 @@ measured smoke throughput: 0.5533 s/step -> estimated 6639.6s (1.84h) per arm at
 (smoke dims d_model=64; real arms use d_model=128 and will be slower -- see the session's real-dims calibration)
 
 [v4b_all_hard seed=0] starting -> runs/arms/v4b_all_hard_0.log
+[v4b_all_hard seed=0] done -> runs/arms/summary.tsv
+
+All arms done. Summary: runs/arms/summary.tsv

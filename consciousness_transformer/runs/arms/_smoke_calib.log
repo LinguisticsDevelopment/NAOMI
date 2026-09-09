@@ -1,29 +1,29 @@
 [   0.0s] loading gold from runs/encoder_gold_v2.jsonl
-[   0.5s] 985 gold records
-[   0.5s] holdout mode: 98 held-out sentences, pool=887, train subset=150 (subset_seed=0)
-[   0.5s] loading USVS from /home/user/NAOMI/consciousness_transformer/data/usvs
-[  16.7s] USVS loaded: 117679 senses, d_axes=607
-[  16.7s] pos_vocab=15 role_vocab=37
-[  16.7s] policy params: 199,172 (~0.797 MB fp32)
-[  16.7s] building features + derivations for 150 train records
-[  16.9s] 438 teacher-forced derivations
-[  20.6s] epoch 0 step 50 avg_loss=76.539
-[  22.2s] epoch 0 step 100 avg_loss=74.737
-[  23.8s] epoch 0 step 150 avg_loss=74.696
-[  25.3s] epoch 0 step 200 avg_loss=72.181
-[  27.0s] epoch 0 step 250 avg_loss=71.088
-[  28.6s] epoch 0 step 300 avg_loss=69.509
-[  30.0s] epoch 0 step 350 avg_loss=67.701
-[  31.6s] epoch 0 step 400 avg_loss=66.397
-[  33.0s] === epoch 0 done: avg_loss=65.182 (n=438 derivations) ===
-[  33.4s] epoch 1 step 450 avg_loss=51.934
-[  34.0s] === epoch 1 done: avg_loss=49.126 (n=32 derivations) ===
-[  34.0s] training wall-clock: 15.1s (stopped_early=True)
-[  34.0s] max-steps budget: optimizer_steps=30 (cap=30, stop_reason=max_steps) epoch_fraction=1.096 throughput=1.9812 steps/s (0.5048 s/step)
-[  34.0s] holdout eval targets from runs/encoder_gold_v2.jsonl: matched=98 missing=0
-[  34.0s] evaluating (model policy) ...
-[ 100.0s] holdout (best-of-6 + rank1 + forest width): {'sense_recall': 0.0, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0, 'edge_recall': 0.0, 'overgen_ratio': 0.0, 'n_records': 98, 'rank1_edge_precision': 0.0, 'rank1_edge_recall': 0.0, 'rank1_edge_f1': nan, 'rank1_structure_recall': 0.0, 'mean_forest_width': 3.4285714285714284}
-[ 100.0s] evaluating RANDOM baseline on holdout ...
-[ 103.7s] holdout (random baseline): {'sense_recall': 0.027491408934707903, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0054259799157758346, 'edge_recall': 0.005915937803692905, 'overgen_ratio': 0.03290816326530612, 'n_records': 98}
-[ 103.7s] saved checkpoint -> runs/arms/_smoke_calib.pt
-[ 103.7s] TOTAL wall-clock: 103.7s
+[   0.2s] 985 gold records
+[   0.2s] holdout mode: 98 held-out sentences, pool=887, train subset=150 (subset_seed=0)
+[   0.2s] loading USVS from /home/user/NAOMI/consciousness_transformer/data/usvs
+[  13.6s] USVS loaded: 117679 senses, d_axes=607
+[  13.6s] pos_vocab=15 role_vocab=37
+[  13.6s] policy params: 199,172 (~0.797 MB fp32)
+[  13.6s] building features + derivations for 150 train records
+[  13.7s] 438 teacher-forced derivations
+[  17.1s] epoch 0 step 50 avg_loss=76.539
+[  18.8s] epoch 0 step 100 avg_loss=74.737
+[  20.6s] epoch 0 step 150 avg_loss=74.696
+[  22.2s] epoch 0 step 200 avg_loss=72.181
+[  23.9s] epoch 0 step 250 avg_loss=71.088
+[  25.7s] epoch 0 step 300 avg_loss=69.509
+[  27.5s] epoch 0 step 350 avg_loss=67.701
+[  29.3s] epoch 0 step 400 avg_loss=66.397
+[  30.8s] === epoch 0 done: avg_loss=65.182 (n=438 derivations) ===
+[  31.2s] epoch 1 step 450 avg_loss=51.934
+[  31.9s] === epoch 1 done: avg_loss=49.126 (n=32 derivations) ===
+[  31.9s] training wall-clock: 16.6s (stopped_early=True)
+[  31.9s] max-steps budget: optimizer_steps=30 (cap=30, stop_reason=max_steps) epoch_fraction=1.096 throughput=1.8075 steps/s (0.5533 s/step)
+[  31.9s] holdout eval targets from runs/encoder_gold_v2.jsonl: matched=98 missing=0
+[  31.9s] evaluating (model policy) ...
+[  95.9s] holdout (best-of-6 + rank1 + forest width): {'sense_recall': 0.0, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0, 'edge_recall': 0.0, 'overgen_ratio': 0.0, 'n_records': 98, 'rank1_edge_precision': 0.0, 'rank1_edge_recall': 0.0, 'rank1_edge_f1': nan, 'rank1_structure_recall': 0.0, 'mean_forest_width': 3.4285714285714284, 'graded_p': np.float64(0.3388605442176871), 'rank1_graded_p': np.float64(0.36139455782312924), 'graded_r': np.float64(0.13542158510645896), 'rank1_graded_r': np.float64(0.11639755857943127), 'graded_f': np.float64(0.18816631061173605), 'rank1_graded_f': np.float64(0.16800620089422452), 'graded_overall': np.float64(0.2894906837478668), 'rank1_graded_overall': np.float64(0.24856632518185953), 'clause_count': 0.8636621315192743, 'rank1_clause_count': 0.7050736961451246, 'clause_kind': 0.8636621315192743, 'rank1_clause_kind': 0.7050736961451246, 'clause_struct': 0.8636621315192743, 'rank1_clause_struct': 0.7050736961451246}
+[  95.9s] evaluating RANDOM baseline on holdout ...
+[  99.7s] holdout (random baseline): {'sense_recall': 0.027491408934707903, 'slot_recall': 0.0, 'structure_recall': 0.0, 'all_gold_recalled_rate': 0.0, 'edge_precision': 0.0054259799157758346, 'edge_recall': 0.005915937803692905, 'overgen_ratio': 0.03290816326530612, 'n_records': 98}
+[  99.7s] saved checkpoint -> runs/arms/_smoke_calib.pt
+[  99.7s] TOTAL wall-clock: 99.7s
