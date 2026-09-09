@@ -139,3 +139,25 @@ Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
   the lemmatized builder), v3000 arm; (4) K-12 comprehension phase on
   FairytaleQA once the encoder is fixed.
 
+## 2026-09-09 01:00Z STATE (director) -- supersedes the evening-state section above where they differ
+- THE SCALING CURVE (keep-best, current v4b targets, 98 holdout): rank-1 edge-F1
+  0.491 @788 -> 0.549 @3,000 -> 0.632 @8,000; struct-exact 5% -> 21%; still
+  climbing. The learned encoder is data-limited and earning its place. Gate
+  (0.55 on current targets) PASSED at 3,000.
+- Settled today: top-1 gold is fine (forest-vs-top-1 was a target-shape
+  artifact); keep-best is essential; lemmatized POS-aware grounding (v4b) is
+  the gold standard; full hard gold in the mix (in-domain cost ~0.02, hard
+  families +0.1-0.5); template variety is what hard-construction
+  generalization needs (149 templates now); USVS-graded metric exists (floor
+  0.285); USVS aux loss hurt at 788 (retest at 8,000 in flight).
+- Gold branches: encoder-gold-v4b-16k (10,225 records, 68 MB), -v4b-variants,
+  -v4b-small, -v2. Hard gold v4 committed on mainline (runs/hard_gold_*.jsonl).
+- RUNNING: arms-4a v4b ALL 10,225 + full v4 hard gold (encoder-arms4-a);
+  arms-4b USVS-loss retest at 8,000 (encoder-arms4-b).
+- NEXT: (1) if arms-4a holds ~0.63+ with hard families ~0.75+, that checkpoint
+  is the encoder for the comprehension phase; (2) next corpus expansion = the
+  K-12 readers (FairytaleQA 10,556 passages parse ~60% usable) -> v5 gold;
+  (3) comprehension phase on the 1,923 entity-answer FairytaleQA items + MCTest;
+  (4) decoder/realization reopened (80% of FairytaleQA answers need it);
+  (5) lead: run the Haiku judge calibration (dev/PARSE_JUDGE.md) when convenient.
+
