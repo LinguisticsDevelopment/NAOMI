@@ -22,6 +22,8 @@
 #                    arms-3(b): both hard arms use --eval-gold v4b (not v2) so --keep-best
 #                    selects on v4b targets (the reference number this study compares against),
 #                    and --eval-gold-alt v2 for continuity with earlier arms.
+#   v4b_3000      -- runs/encoder_gold_v4b_16k.jsonl, n_train=3000  (v4b_788 + MORE data, scaling curve)
+#   v4b_8000      -- runs/encoder_gold_v4b_16k.jsonl, n_train=8000  (v4b_788 + MORE data, scaling curve)
 #
 # Comparing v2_788 vs v3_788 isolates data quality (top-1 prune + richer
 # extraction) at equal size and equal optimizer-step budget; v3_788 vs
@@ -68,6 +70,7 @@ MAX_SECONDS="${MAX_SECONDS:-172800}"   # 48h hard per-run ceiling; --max-steps i
 GOLD_V2="${GOLD_V2:-runs/encoder_gold_v2.jsonl}"
 GOLD_V3="${GOLD_V3:-runs/encoder_gold_v3.jsonl}"
 GOLD_V4B="${GOLD_V4B:-runs/encoder_gold_v4b.jsonl}"
+GOLD_V4B_16K="${GOLD_V4B_16K:-runs/encoder_gold_v4b_16k.jsonl}"
 GOLD_V4B_MARGIN="${GOLD_V4B_MARGIN:-runs/encoder_gold_v4b_margin.jsonl}"
 GOLD_V4B_ALL="${GOLD_V4B_ALL:-runs/encoder_gold_v4b_all.jsonl}"
 HARD_GOLD_TRAIN="${HARD_GOLD_TRAIN:-runs/hard_gold_train.jsonl}"
@@ -119,6 +122,8 @@ V3_AVAILABLE=1
 if [[ ! -f "$GOLD_V3" ]]; then V3_AVAILABLE=0; fi
 V4B_AVAILABLE=1
 if [[ ! -f "$GOLD_V4B" ]]; then V4B_AVAILABLE=0; fi
+V4B_16K_AVAILABLE=1
+if [[ ! -f "$GOLD_V4B_16K" ]]; then V4B_16K_AVAILABLE=0; fi
 V4B_MARGIN_AVAILABLE=1
 if [[ ! -f "$GOLD_V4B_MARGIN" ]]; then V4B_MARGIN_AVAILABLE=0; fi
 V4B_ALL_AVAILABLE=1
@@ -134,6 +139,8 @@ ARM_DEFS=(
   "v3_788:${GOLD_V3}:788"
   "v3_3000:${GOLD_V3}:3000"
   "v4b_788:${GOLD_V4B}:788"
+  "v4b_3000:${GOLD_V4B_16K}:3000"
+  "v4b_8000:${GOLD_V4B_16K}:8000"
   "v4b_788_hard:${GOLD_V4B},${HARD_GOLD_TRAIN}:788"
   "v4b_788_hardsmall:${GOLD_V4B},${HARD_GOLD_TRAIN_SMALL}:788"
   "v4b_margin_788:${GOLD_V4B_MARGIN}:788"
@@ -146,6 +153,7 @@ arm_available() {
   case "$arm" in
     v3_788|v3_3000) [[ "$V3_AVAILABLE" == "1" ]] ;;
     v4b_788) [[ "$V4B_AVAILABLE" == "1" ]] ;;
+    v4b_3000|v4b_8000) [[ "$V4B_16K_AVAILABLE" == "1" ]] ;;
     v4b_788_hard) [[ "$V4B_AVAILABLE" == "1" && "$HARD_AVAILABLE" == "1" ]] ;;
     v4b_788_hardsmall) [[ "$V4B_AVAILABLE" == "1" && "$HARD_SMALL_AVAILABLE" == "1" ]] ;;
     v4b_margin_788) [[ "$V4B_MARGIN_AVAILABLE" == "1" ]] ;;
@@ -180,7 +188,7 @@ build_cmd() {
     v4b_788)
       if [[ "$V4B_AVAILABLE" == "1" ]]; then eval_flags="$eval_flags --eval-gold-alt ${GOLD_V4B}"; fi
       ;;
-    v4b_788_hard|v4b_788_hardsmall)
+    v4b_788_hard|v4b_788_hardsmall|v4b_3000|v4b_8000)
       # arms-3(b): dev-select (--keep-best) on v4b targets, not v2 -- these
       # arms train ON v4b gold (topped up with hard-gold), so v4b is the
       # natural reference; --eval-gold-alt v2 kept for continuity.

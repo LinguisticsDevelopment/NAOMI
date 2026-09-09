@@ -1,13 +1,13 @@
 arm	seed	gold	n_train	optimizer_steps	stop_reason	epoch_fraction	train_wall_s	holdout_v2_edge_precision	holdout_v2_edge_recall	holdout_v2_rank1_edge_f1	holdout_v2_mean_forest_width	holdout_v3_edge_precision	holdout_v3_rank1_edge_f1	checkpoint
-v2_788	0	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.1858	13635.2	0.6910	0.6909	0.5567	5.95			runs/arms/v2_788_0.pt
 v2_788	0	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.1458	5459.2	0.7337	0.6567	0.5828	5.9694			runs/arms/v2_788_0.pt
 v2_788	1	runs/encoder_gold_v2.jsonl	788	8000	max_steps	101.3861	13763.8	0.7133	0.6575	0.5574	5.99			runs/arms/v2_788_1.pt
 v3_788	0	runs/encoder_gold_v3.jsonl	788	8000	max_steps	324.8731	13255.1	0.4508	0.5898	0.4105	5.93			runs/arms/v3_788_0.pt
 v3_788	1	runs/encoder_gold_v3.jsonl	788	8000	max_steps	324.8731	13192.0	0.4424	0.5458	0.3731	5.96			runs/arms/v3_788_1.pt
+v4b_3000	0	runs/encoder_gold_v4b_16k.jsonl	3000	8000	max_steps	85.3333	9286.8	0.6671	0.6744	0.5495	5.9694	0.5117	0.4808	1750
 v4b_788	0	runs/encoder_gold_v4b.jsonl	788	8000	max_steps	324.8731	9543.1	0.4412	0.5444	0.3914	5.9286	0.5847	0.4906	1250
 v4b_788_hard	0	runs/encoder_gold_v4b.jsonl,runs/hard_gold_train.jsonl	788	8000	max_steps	324.8731	5625.3	0.3474	0.4199	0.3119	5.8673			runs/arms/v4b_788_hard_0.pt
+v4b_788_hardsmall	0	runs/encoder_gold_v4b.jsonl,runs/hard_gold_train_small.jsonl	788	8000	max_steps	259.1093	4489.1	0.5848	0.5840	0.4728	5.9490	0.4291	0.3676	1750
+v4b_8000	0	runs/encoder_gold_v4b_16k.jsonl	8000	8000	max_steps	32.0000	9012.4	0.7136	0.7245	0.6326	5.9898	0.5671	0.5342	6500
 v4b_all_788	0	runs/encoder_gold_v4b_all.jsonl	788	8000	max_steps	89.6359	9706.9	0.4953	0.5767	0.4205	5.9694			runs/arms/v4b_all_788_0.pt
 v4b_margin_788	0	runs/encoder_gold_v4b_margin.jsonl	788	8000	max_steps	231.4647	11130.5	0.4389	0.5535	0.3836	6.0000	0.5537	0.4453	6750
 v4b_margin_788	1	runs/encoder_gold_v4b_margin.jsonl	788	8000	max_steps	231.4647	6321.8	0.4396	0.5464	0.3812	5.9694			runs/arms/v4b_margin_788_1.pt
-v4b_788_hard	0	runs/encoder_gold_v4b.jsonl,runs/hard_gold_train.jsonl	788	8000	max_steps	140.1972	3103.8	0.5442	0.5744	0.4645	6.0000	0.4403	0.4107	2500	0.4369	0.4213	43.8116	{"additive_focus": 0.7424, "content_interjection": 1.0, "elision": 0.6944, "imperative": 0.9149, "pure_interjection": 1.0, "quantity": 0.6667, "speaker_prime": 0.3218, "synth_subject": 0.6667}	{"additive_focus": 0.729, "content_interjection": 0.9778, "elision": 0.7083, "imperative": 0.7812, "pure_interjection": 1.0, "quantity": null, "speaker_prime": 0.4286, "synth_subject": 0.6667}	runs/arms/v4b_788_hard_0.pt
-v4b_788_hardsmall	0	runs/encoder_gold_v4b.jsonl,runs/hard_gold_train_small.jsonl	788	8000	max_steps	259.1093	4489.1	0.5848	0.5840	0.4728	5.9490	0.4291	0.3676	1750	0.4626	0.4304	56.6802	{"additive_focus": 0.5966, "content_interjection": 0.925, "elision": 0.6722, "imperative": 0.7642, "pure_interjection": 0.9833, "quantity": 0.6667, "speaker_prime": 0.3636, "synth_subject": 0.6667}	{"additive_focus": 0.6803, "content_interjection": 0.8791, "elision": 0.7083, "imperative": 0.6051, "pure_interjection": 0.9714, "quantity": null, "speaker_prime": 0.3015, "synth_subject": 0.6444}	runs/arms/v4b_788_hardsmall_0.pt
