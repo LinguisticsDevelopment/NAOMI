@@ -71,10 +71,9 @@ The first 50 sentences in that file's own order were pulled, matched to
 their `encoder_gold_v4b_16k.jsonl` record (all 50 matched byte-for-byte on
 `text`), and the kept tree (`lattice.trees[0]`, the only tree -- `--forest
 top1`) rendered to a flattened `clause: PRED(role=token, ...)` form
-(`scripts/render_holdout50.py`, scratch tool, not committed -- the
-rendering logic is simple enough to inline here and not worth maintaining
-as a long-term script). Each was read against the source sentence and
-given one of six judgments:
+(`scripts/render_holdout50.py`, a small rendering helper committed alongside
+this doc for reproducibility, not meant as a long-term maintained tool).
+Each was read against the source sentence and given one of six judgments:
 
 - **FULL** -- all propositional content in the sentence is present in the tree (possibly reorganized/imperfectly attached, but nothing with real content is missing).
 - **DROPPED_CLAUSE** -- a finite clause carrying real content is entirely absent from the tree (quoted below, per sentence).
