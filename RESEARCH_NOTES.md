@@ -1734,3 +1734,26 @@ still needed as parsed FairytaleQA for episodes). (2) follows (1). Held for
 LEAD: freeze encoder scaling; permit the hybrid comparison (3) as a
 MEASUREMENT (learned encoder stays default per 09-08 decision until a number
 says otherwise).
+
+### K-12 BENCHMARK FIXED + CHEAT BASELINES (2026-10-15) -> branch k12-bench-fix
+Full report: consciousness_transformer/dev/K12_BENCHMARK_FIX.md. Fixed
+convert_fairytaleqa.py's distractor policy: --distractors same-passage
+(default) draws distractors from the episode's OWN passage instead of other
+stories, so passage-presence no longer identifies the answer. Gate (substring
+cheat <= random+0.10) PASSED first try, same 584/584 entity episodes surviving
+(>=2 distractors) as before -- no iteration needed. Cross-story substring cheat
+0.973 -> same-passage 0.250 (== random exactly). Added
+scripts/cheat_baselines_k12.py (random/majority/substring/word-overlap) and
+ran it on cross-story, same-passage, and newly-converted MCTest mc160
+train+dev (400 eps, native in-story distractors, gate PASSES at 0.260 vs
+0.350 -- was never broken). Added scripts/cheat_encoder_baseline.py: the
+audit's POS heuristic, scored through the real score_record/aggregate_recall
+path -- measures edge-F1 0.268 (P0.246/R0.295) on the 98-sentence v2 holdout
+vs encoder-gold-v4b-16k gold (fetched fresh, 10,225 records), vs the
+encoder's 0.622 rank-1 -- margin +0.354, notably BELOW the audit's hand
+estimate (0.40, never run against code); now wired into train_encoder.py's
+final report and eval_encoder.py by default. 14 new tests (distractor
+policy, cheat baselines, heuristic baseline), all passing; one pre-existing,
+unrelated eval_prose.py test failure found (not touched this branch). Full
+1,315-test suite does not finish in a 10-min cap (pre-existing quantum_parser
+slowness, not from this change).
