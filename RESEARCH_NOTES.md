@@ -1705,3 +1705,30 @@ FairytaleQA sentences (branch encoder-gold-v5-k12); and an Opus design +
 prototype of ENCODER-DRIVEN episode building (learned encoder's lattice ->
 Episode, replacing the parser in corpus.py) measured on the 1,923 entity-
 answer FairytaleQA items (branch encoder-episodes).
+
+### GOLD v5-K12 BUILT (2026-10-15) -> branch encoder-gold-v5-k12
+
+FairytaleQA fetch (277/278 stories; snow-man 404s, known gap) -> sentence
+corpus `data/corpus/k12_fairytaleqa_{train,val,test}.txt` (30,690 sentences,
+4,082 sections, FairytaleQA's own story split) + sidecar manifest
+(`runs/k12_fairytaleqa_manifest.jsonl`) for per-sentence story/section
+traceability. Regenerated `runs/holdout_dev_sentences.txt` against the
+fetched v4b-16k gold (existing `holdout_sentences.txt` untouched); 0
+overlap with either holdout file (disjoint corpora, expected).
+400-sentence pilot (114s/4 workers) projected 146 min for the full corpus
+(>45 min gate) -> restricted to a seeded random 81-WHOLE-TRAIN-STORY subset
+(8,420 sentences) sized to ~40 min. Actual build: **1,825s (30.4 min)**,
+4 workers, default 10s/sentence cap -- notably faster than projected,
+likely because the pilot's per-worker USVS-load startup cost dominated at
+n=100/worker vs n~2,100/worker here (flagged for next time: re-time with a
+bigger pilot before restricting). Yield **73.2%** (6,160/8,420) vs v4b-16k's
+62.3% -- FairytaleQA's grade-school prose parses cleaner than Gutenberg, as
+`dev/K12_CORPUS_SCOUT.md` predicted. Full breakdown, length-bin/node-type
+tables, and the v4b-16k comparison: `dev/ENCODER_GOLD_V5_K12_STATS.md`.
+val/test splits NOT attempted this run (train-only subset already exceeded
+budget). `pytest -x -q tests`: 68/68 passed within the 10-min cap, suite
+did not finish in that window (1,301 tests collected; pre-existing, not
+caused by this change -- the one full-corpus-glob test is `@pytest.mark.slow`
+and excluded by default). NEXT: a longer, un-time-boxed run over the full
+30,690-sentence corpus to get gold v5 proper, and re-time a bigger pilot
+first to pick the restriction honestly next time.
