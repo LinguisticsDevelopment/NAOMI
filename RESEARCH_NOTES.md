@@ -1759,3 +1759,27 @@ total, file:line in the doc. Est. gain (rough, n=50 extrapolation): mean
 VERB coverage 53.5% -> high-60s/low-70s%; large residual gap remains. NEXT:
 lead decides on the 3-part fix before resuming encoder scaling (already
 frozen per audit #2).
+
+### CLAUSE EXTRACTION FIX (B1+C1+B2) -> branch clause-extraction-fix (2026-10-15)
+
+Implemented the gold-coverage audit's proposed 3-part fix (clause.py,
+extraction-only, parser/USVS/encoder untouched): B1 gave
+`_secondary_fact_clauses` a bare-subject fallback (mirrors
+`_primary_discourse`'s own); C1 added a structural guard
+(`clause_idx in by_coord`) so VP-coordination builds one clause per
+coordinated VERB instead of misrouting into coordinated-VALUE with the
+coordinator token as a fake shared predicate; B2 added
+`_recover_reporting_matrix_clauses` to recover postposed-subject
+attribution ("said X"/"thought X", no SUBJECT edge at all) via a closed
+REPORTING_VERBS list. 7 new regression tests, all pass; the
+clause.py-dependent test subset (40 files/~583 tests -- the full
+1302-test suite does not complete near the stated 10min cap in this env):
+576 passed / 4 failed, all 4 confirmed PRE-EXISTING (byte-identical on
+unmodified clause.py) and unrelated. Before/after gold sample (98 holdout
++ seeded 300 random corpus sentences, shrunk from 400): mean VERB
+coverage 54.3% -> 67.9% (+13.6pt), <50%-verb-covered 36.8% -> 20.3%,
+multi-verb-collapsed-to-1-clause 30.6% -> 16.4%. Re-judged the 33
+original DROPPED_CLAUSE cases: 14 FULL, 4 PARTIAL, 15 still dropped
+(parse-cap sentences + the out-of-scope subordinate-embedding bucket +
+a few orphaned verb nodes with no edges at all). 0 newly wrong. Full
+writeup: dev/CLAUSE_EXTRACTION_FIX.md.

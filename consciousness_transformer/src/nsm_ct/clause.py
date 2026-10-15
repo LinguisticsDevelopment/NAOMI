@@ -138,6 +138,18 @@ ATTRIBUTION_VERBS = {"said", "replied", "cried", "asked", "answered", "shouted",
 
 _QUOTE_TOKENS = {'"', "``", "''", "'"}
 
+# B2 fix (dev/GOLD_COVERAGE_AUDIT.md "B2"): quote-attribution word order
+# ("said little jack", "replied peggy", "thought buster") postposes the
+# subject AFTER the reporting verb. This grammar has no subject-inversion
+# rule for it, so the postposed subject is attached as the verb's OBJECT/
+# INDIRECT_OBJECT instead (its ordinary SVO expectation) and the verb node
+# gets NO SUBJECT edge at all -- invisible to both _primary_discourse (needs
+# a SUBJECT edge to resolve `pred`) and _secondary_fact_clauses (walks
+# existing SUBJECT edges only). REPORTING_VERBS extends ATTRIBUTION_VERBS
+# with the cognition verbs the audit's "Proposed fix" calls out (closed-class,
+# same discipline as that set).
+REPORTING_VERBS = ATTRIBUTION_VERBS | {"thought", "promised", "perceived", "wondered"}
+
 
 def strip_attribution(tokens: Sequence[str]) -> Optional[Tuple[List[str], Optional[str]]]:
     """Recognize + remove a narration/attribution frame wrapped around a
@@ -632,6 +644,19 @@ def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx:
                                  modifier_idxs={s_idx})
             out.append(_fact_clause(graph, subj, pred, rel, val_idx, extra,
                                      is_question=_is_question(graph, c_idx)))
+        else:
+            # B1 fix (dev/GOLD_COVERAGE_AUDIT.md "B1"): a bare intransitive
+            # secondary/coordinated clause ("he just laughed", "the boy ran")
+            # has no PP and no OBJECT/INDIRECT_OBJECT, so val_idx is never
+            # found above -- this used to be silently skipped (no fallback),
+            # unlike _primary_discourse's OWN bare-subject fallback for the
+            # exact same shape (clause.py's "bare subject-only fact" branch).
+            # Mirrors that fallback here so the clause is still emitted.
+            args = [("SUBJECT", _syn("NOMINAL", subj, "SUBJECT"))]
+            args.extend(_extra_args(graph, c_idx, modifier_idxs={s_idx}))
+            out.append(Clause(predicate=pred or "is", args=args,
+                               head=_syn("CLAUSE", pred),
+                               is_question=_is_question(graph, c_idx)))
     return out
 
 
@@ -691,6 +716,44 @@ def _recover_coordinated_clause_orphans(graph) -> List[Clause]:
     return out
 
 
+def _recover_reporting_matrix_clauses(graph) -> List[Clause]:
+    """Recover a reporting/cognition matrix clause whose subject was postposed.
+
+    See the :data:`REPORTING_VERBS` note above for the mechanism. Scoped to
+    PREDICATE/CLAUSE nodes whose own token is in that small closed list AND
+    that have NO SUBJECT edge of their own (the defect's signature) -- every
+    node :func:`_primary_discourse`/:func:`_secondary_fact_clauses` already
+    turned into a clause has a SUBJECT edge by construction, so this can
+    never duplicate one of their clauses. The postposed subject is the
+    RIGHTMOST OBJECT/INDIRECT_OBJECT child (the head noun of the subject NP;
+    a misattached premodifier, when the parser also split one off, sorts
+    before it) -- confirmed against the 3 holdout cases this targets ("said
+    little jack" -> SUBJECT=jack with INDIRECT_OBJECT=little left over as an
+    extra role, not lost).
+    """
+    out: List[Clause] = []
+    subj_owned = {p for p, _c in graph.edges_of("SUBJECT")}
+    for idx, label, tok in graph.nodes:
+        if label not in ("PREDICATE", "CLAUSE") or idx in subj_owned:
+            continue
+        if (tok or "").lower() not in REPORTING_VERBS:
+            continue
+        obj_edges = [(p, c) for (t, p, c) in graph.edges
+                     if t in ("OBJECT", "INDIRECT_OBJECT") and p == idx
+                     and (graph.token(c) or "") not in _PUNCT]
+        if not obj_edges:
+            continue
+        _p, subj_idx = max(obj_edges, key=lambda pc: pc[1])
+        subj = graph.token(subj_idx)
+        if subj is None:
+            continue
+        args = [("SUBJECT", _syn("NOMINAL", subj, "SUBJECT"))]
+        args.extend(_extra_args(graph, idx, exclude={subj_idx}))
+        out.append(Clause(predicate=tok, args=args, head=_syn("CLAUSE", tok),
+                           is_question=_is_question(graph, idx)))
+    return out
+
+
 def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Clause], List[DiscourseLink]]:
     """The original single-clause-graph logic, factored out so
     :func:`extract_discourse` can append independent later-sentence clauses
@@ -737,6 +800,34 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
                                    args=[("SUBJECT", _syn("NOMINAL", graph.token(el), "SUBJECT"))] + extra,
                                    head=_syn("CLAUSE", pred), is_question=is_q)
                            for el in elements]
+            prime = _COORD_PRIME.get(coordinator)
+            links = [DiscourseLink(coordinator, prime, 0, j) for j in range(1, len(clauses))]
+            return clauses, links
+
+        # C1 fix (dev/GOLD_COVERAGE_AUDIT.md "C1"): VP-coordination ("the
+        # lion shook his mane and showed his teeth") attaches the shared
+        # SUBJECT edge to the COORDINATOR node itself (clause_idx IS the
+        # coordinator, so `pred` -- graph.token(clause_idx) -- is the
+        # coordinator's own surface token "and"/"or"/"but", not a real
+        # predicate). The "coordinated VALUE" branch below is for a
+        # DIFFERENT shape (one real shared predicate, several coordinated
+        # PP/value objects) and would otherwise build one clause per
+        # coordinated VERB using that fake shared "predicate" -- exactly
+        # the WRONG_PRED bug. Detected structurally (clause_idx is itself a
+        # coordinator target), not lexically, so it can never misfire on a
+        # genuine coordinated-value clause (whose predicate node is never
+        # also a coordinator child).
+        if clause_idx in by_coord:
+            vp_elements = sorted(set(by_coord[clause_idx]))
+            coordinator = _COORDINATOR_LABEL.get((graph.token(clause_idx) or "").lower(), "AND")
+            clauses = []
+            for el in vp_elements:
+                el_pred = graph.token(el)
+                extra = _extra_args(graph, el, modifier_idxs={subj_idx})
+                clauses.append(Clause(
+                    predicate=el_pred or "is",
+                    args=[("SUBJECT", _syn("NOMINAL", subj, "SUBJECT"))] + extra,
+                    head=_syn("CLAUSE", el_pred), is_question=_is_question(graph, el)))
             prime = _COORD_PRIME.get(coordinator)
             links = [DiscourseLink(coordinator, prime, 0, j) for j in range(1, len(clauses))]
             return clauses, links
@@ -828,6 +919,7 @@ def extract_discourse(graph) -> Tuple[List[Clause], List[DiscourseLink]]:
     if len(subs) > 1:
         clauses = clauses + _secondary_fact_clauses(graph, subs, clause_idx)
     clauses = clauses + _recover_coordinated_clause_orphans(graph)
+    clauses = clauses + _recover_reporting_matrix_clauses(graph)
     return clauses, links
 
 
