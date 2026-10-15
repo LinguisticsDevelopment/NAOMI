@@ -1705,3 +1705,32 @@ FairytaleQA sentences (branch encoder-gold-v5-k12); and an Opus design +
 prototype of ENCODER-DRIVEN episode building (learned encoder's lattice ->
 Episode, replacing the parser in corpus.py) measured on the 1,923 entity-
 answer FairytaleQA items (branch encoder-episodes).
+
+### INDEPENDENT AUDIT #2 (Opus, fresh eyes, 2026-10-15) -- CONTINUE WITH CHANGES: freeze encoder, front-load comprehension
+Full report: consciousness_transformer/dev/AUDIT_2026-10-15.md. Five weeks idle
+since 09-09; the two routines dispatched then (encoder-gold-v5-k12,
+encoder-episodes) never pushed and the trigger list was empty -- lost.
+Load-bearing findings:
+1. 0.622 rank-1 edge-F1 is honestly measured: no train/holdout leakage (0 of
+   10,225 records overlap the 98 at Jaccard>=0.8), keep-best picks on dev not
+   test, rank-1 = forest[0] sorted by logprob, modifier roles counted.
+2. BUT no cheat baseline (CLAUDE.md law). A ~30-line POS heuristic scores
+   edge-F1 0.40 on the same holdout -> real margin ~+0.22. Metric lenient:
+   sense choice never scored, edges pooled across clauses.
+3. Teacher gold is PARTIAL: ~46% of VERB tokens appear in their gold tree; 39%
+   of records cover <50% of verbs. The student learns to drop clauses too.
+4. The planned FairytaleQA MC benchmark is BROKEN: distractors come from OTHER
+   stories while the answer is verbatim in the passage; "pick the option in
+   the passage" scores ~97% (553/584 + 31 ties, 0 misses).
+5. Previous audit's finding 8 (comprehension spike) still IGNORED; finding 1
+   (complement) measured once, never on the new checkpoint; hybrid rejected
+   before any downstream number existed.
+Recommended order (info/hour): (1) fix benchmark + cheat baselines; (2) e2e
+QA spike on teacher-built episodes w/ memory-severed control; (3) encoder vs
+teacher vs hybrid downstream; (4) gold clause-coverage audit; (5) abstention.
+DIRECTOR (2026-10-15): dispatched (1) -> branch k12-bench-fix, (4) ->
+gold-coverage-audit, and re-dispatched v5 gold -> encoder-gold-v5-k12 (cheap,
+still needed as parsed FairytaleQA for episodes). (2) follows (1). Held for
+LEAD: freeze encoder scaling; permit the hybrid comparison (3) as a
+MEASUREMENT (learned encoder stays default per 09-08 decision until a number
+says otherwise).

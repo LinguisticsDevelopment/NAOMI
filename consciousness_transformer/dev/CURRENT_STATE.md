@@ -165,3 +165,32 @@ Independent audit verdict: CONTINUE WITH CHANGES. Changes to the plan above:
   (4) decoder/realization reopened (80% of FairytaleQA answers need it);
   (5) lead: run the Haiku judge calibration (dev/PARSE_JUDGE.md) when convenient.
 
+
+## 2026-10-15 STATE (director) -- supersedes the 09-09 section where they differ
+- Nothing landed 09-09 -> 10-15. The v5-gold and encoder-episodes routines
+  were lost (no branches, no runs). Encoder checkpoint (0.622 / P 0.750,
+  branch encoder-arms4-a) is unchanged and is FROZEN pending the lead.
+- AUDIT #2 (dev/AUDIT_2026-10-15.md): CONTINUE WITH CHANGES -> freeze the
+  encoder, front-load comprehension. The MC benchmark was cheatable at ~97%;
+  no cheat baseline next to the encoder number (POS heuristic = 0.40); teacher
+  gold covers ~46% of verbs; comprehension-side thesis still untested.
+- IN FLIGHT (cloud Sonnet routines, 2026-10-15 20:30Z):
+  * k12-bench-fix: same-passage distractors (default), cheat_baselines_k12.py
+    (random/majority/substring/overlap), MCTest mc160 in Episode schema,
+    cheat_encoder_baseline.py printed next to every encoder number. Gate:
+    substring cheat <= random+0.10.
+  * gold-coverage-audit: verb/noun/clause coverage over the 16K gold; 50
+    holdout trees hand-categorized; root cause per dropped clause. Gate: >30%
+    dropped content clauses -> fix extraction before more encoder scoring.
+  * encoder-gold-v5-k12: top-1 lemmatized gold over FairytaleQA sentences,
+    split-aware corpus files + story-id manifest.
+- NEXT (after k12-bench-fix lands): END-TO-END QA SPIKE on teacher-built
+  episodes (corpus.py -> train_prose/eval_prose) over the fixed FairytaleQA
+  entity items + MCTest mc160, with the memory-severed control. Gate: >= cheat
+  + 10 points AND severed memory -> within 3 points of random. This is the
+  thesis test. Then encoder-vs-teacher-vs-hybrid downstream (lead permission),
+  then the abstention probe (wrong-passage pairs; abstain >=70% / <=15%).
+- LEAD DECISIONS WANTED: (a) confirm encoder freeze (no v5/16K+ scaling arms
+  until a downstream number exists); (b) allow the hybrid comparison as a
+  measurement; (c) decoder: DECODER_MEMORY_DESIGN.md is on hold in name only --
+  needs a respec or a formal retirement.
