@@ -1734,3 +1734,28 @@ still needed as parsed FairytaleQA for episodes). (2) follows (1). Held for
 LEAD: freeze encoder scaling; permit the hybrid comparison (3) as a
 MEASUREMENT (learned encoder stays default per 09-08 decision until a number
 says otherwise).
+
+### GOLD COVERAGE AUDIT (2026-10-15) -> branch gold-coverage-audit
+Full report: consciousness_transformer/dev/GOLD_COVERAGE_AUDIT.md. Reproduces
++ sharpens audit #2 finding 3. All 10,225 records, torch-free
+(scripts/audit_gold_coverage.py): mean VERB coverage 53.5%, 40.5% of records
+<50% VERB-covered; 31.9% of 8,009 multi-verb records collapse to ONE clause.
+Worst source: edgeworth/grimms/andersen (~49-51%); worst length bin: 26+tok
+(42.6%). Hand audit, first 50 holdout sentences (fixed split, no regen
+needed): 33/50 (66%) DROPPED_CLAUSE, 7 WRONG_PRED, 1 WRONG_ATTACH, 1
+DROPPED_ARG, 8 FULL. GATE (>30% -> fix extraction first): FAILS, 2x over.
+ROOT CAUSE, empirically checked (ran all top-8 parser hyps through
+extract_discourse, not just hyp[0], on 4 samples): parser (A) + D1 top-1
+pruning (C) RULED OUT -- every hypothesis agrees. Cause is (B) extraction,
+3 bugs in src/nsm_ct/clause.py: B1 bare-intransitive 2nd/coordinated clause
+has no val_idx fallback (_secondary_fact_clauses:630, cf. working fallback
+at 804-808); C1 VP-coordination ("did A and did B") misroutes through the
+coordinated-VALUE branch, predicate="and" (clause.py:744-755); B2 no path
+exists for reported-speech/cognition matrix clauses ("said X", "X thought")
+-- their SUBJECT edge is never subs[0]. B1+C1+B2 = primary cause for ~25/40
+cases; rest is unwalked subordinate/relative embedding (architectural, not
+1 bug). Fix proposed (NOT implemented, per scope): 3 changes, ~45 lines
+total, file:line in the doc. Est. gain (rough, n=50 extrapolation): mean
+VERB coverage 53.5% -> high-60s/low-70s%; large residual gap remains. NEXT:
+lead decides on the 3-part fix before resuming encoder scaling (already
+frozen per audit #2).
