@@ -129,13 +129,26 @@ from nsm_ct.corpus import CORPUS_MAX_HYPOTHESES, CORPUS_MAX_PARSE_SECONDS  # noq
 
 
 def load_corpus(glob_pattern: str = CORPUS_GLOB_DEFAULT,
-                 allowed_basenames: Optional[List[str]] = None) -> List[str]:
+                 allowed_basenames: Optional[List[str]] = None,
+                 extra_glob_pattern: Optional[str] = None,
+                 exclude: Optional[set] = None) -> List[str]:
     """Every unique deduped sentence across the matching corpus files.
 
     ``allowed_basenames``, when given, is an explicit filename allow-list
     (applied after the glob) -- e.g. to reproduce the exact v2 sentence
     population (the ORIGINAL five corpus files) after corpus-expand added
     more ``real_*.txt`` files to the default glob.
+
+    ``extra_glob_pattern``, when given, is a SECOND glob whose matching
+    files are appended after ``glob_pattern``'s (e.g. a different corpus
+    population, like the K-12 FairytaleQA sentences, mixed into the same
+    build) -- same first-occurrence-wins global dedup applies across BOTH
+    globs combined, primary glob first.
+
+    ``exclude``, when given, is a set of already-normalized sentence
+    strings (e.g. the held-out eval sentences) dropped from the output --
+    checked the same way ``seen`` is, so an excluded sentence also never
+    gets counted against a later duplicate's "first occurrence".
     """
     seen = set()
     out: List[str] = []
@@ -143,11 +156,14 @@ def load_corpus(glob_pattern: str = CORPUS_GLOB_DEFAULT,
     if allowed_basenames is not None:
         allowed = set(allowed_basenames)
         files = [f for f in files if Path(f).name in allowed]
+    if extra_glob_pattern:
+        files = files + sorted(glob.glob(extra_glob_pattern))
+    exclude = exclude or set()
     for f in files:
         text = Path(f).read_text(encoding="utf-8")
         for s in iter_sentences(text):
             s = s.strip()
-            if not s or s in seen:
+            if not s or s in seen or s in exclude:
                 continue
             seen.add(s)
             out.append(s)
@@ -400,6 +416,15 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument("--corpus-files", default=None,
                    help="comma-separated basenames (e.g. real_gutenberg_alice.txt); when given, "
                         "restricts --corpus-glob's matches to exactly these files.")
+    p.add_argument("--extra-glob", default=None,
+                   help="a SECOND glob, appended after --corpus-glob's matches (same "
+                        "first-occurrence-wins global dedup across both) -- e.g. mixing a "
+                        "different corpus population into one build.")
+    p.add_argument("--exclude-file", default=None,
+                   help="newline-delimited file of already-normalized sentence text (e.g. "
+                        "runs/holdout_sentences.txt) to drop from the build population -- so a "
+                        "gold build can exclude held-out eval sentences at the corpus level "
+                        "instead of relying on --holdout-file at train time.")
     p.add_argument("--workers", type=int, default=1,
                    help="shard the (already deduped, ordered) sentence list across N fork()ed "
                         "subprocesses, each independently loading USVS + building its own parser "
@@ -538,10 +563,16 @@ def main() -> int:
     args = parse_args()
     t0 = time.time()
     corpus_files = args.corpus_files.split(",") if args.corpus_files else None
-    sentences = load_corpus(glob_pattern=args.corpus_glob, allowed_basenames=corpus_files)
+    exclude = None
+    if args.exclude_file:
+        exclude = {ln.strip() for ln in Path(args.exclude_file).read_text(encoding="utf-8").splitlines() if ln.strip()}
+    sentences = load_corpus(glob_pattern=args.corpus_glob, allowed_basenames=corpus_files,
+                             extra_glob_pattern=args.extra_glob, exclude=exclude)
     print(f"corpus: {len(sentences)} unique sentences", flush=True)
     print(f"corpus glob: {args.corpus_glob}"
-          + (f" (files={corpus_files})" if corpus_files else ""), flush=True)
+          + (f" (files={corpus_files})" if corpus_files else "")
+          + (f" + extra_glob={args.extra_glob}" if args.extra_glob else "")
+          + (f" (excluding {len(exclude)} holdout sentences)" if exclude else ""), flush=True)
     print(f"forest policy: {args.forest}"
           + (f" (margin={args.forest_margin})" if args.forest == "margin" else ""), flush=True)
 

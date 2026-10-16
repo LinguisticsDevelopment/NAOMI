@@ -3470,3 +3470,26 @@ default None -> e.g. 30.0). This bounds EVERY caller at once, cannot bind
 on curriculum (ms) or normal prose (2-10s), and turns the hang into a
 catchable ParseResourceExceeded that build_one's existing guard drops.
 Fix dispatched (M58g); prose training resumes after.
+
+### Encoder goal: gold v6 built with fixed extraction -> branch encoder-gold-v6
+
+Rebuilt the teacher gold on `clause-extraction-fix`'s B1+C1+B2 clause.py
+(the owner's "keep finalizing the encoder" directive). Holdout re-baseline
+first (94/98 test, 98/98 dev rebuilt): mean VERB coverage 54.1%->70.2%,
+multi-verb-collapse 27.5%->11.8% on the same 94 sentences both sides;
+POS-cheat baseline reproduces the documented 0.268 edge-F1 on v4b-holdout
+exactly, 0.288 on v6-holdout -- **no encoder-arms4-a checkpoint could be
+scored**: CURRENT_STATE.md's "THE CHECKPOINT" (runs/arms/v4b_all_hard_0.pt)
+was never actually committed to git (only its .log/.curve.tsv are on that
+branch; `*.pt` is gitignored and this one wasn't force-added) -- a real gap,
+flagged, not silently patched. Full gold v6: Gutenberg kept whole
+(16,217 sent.) + a seeded 125-whole-story K-12 subset (13,999 sent.,
+`scripts/select_k12_whole_stories.py`, new), holdout excluded at the corpus
+level (`build_encoder_gold_v2.py` gained `--extra-glob`/`--exclude-file`) --
+22,990/30,232 ok (76.0% yield, vs v4b-16k's 62.3%), mean VERB coverage
+53.5%->67.8%, multi-verb-collapse 31.9%->17.5%, every Gutenberg source and
+every length bin improved. 94.1 min wall-clock (4 workers). Targeted tests
+(`-k "clause or gold or encoder"`): 136 passed, 0 failed, 28 skipped.
+`runs/encoder_gold_v6.jsonl` gzipped (150MB->17MB) and force-added. Next:
+retrain the encoder on this gold and re-score against the checkpoint gap
+above once a comparable checkpoint exists.
