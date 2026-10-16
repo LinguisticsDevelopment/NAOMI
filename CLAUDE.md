@@ -23,38 +23,38 @@
 - Curriculum design law: the gold-determinant must not itself be
   answer-predictive — it selects the READING; the answer must flow only
   through the bound choice.
-- Commit + push per milestone with a RESEARCH_NOTES ledger entry, win or
-  lose.
+- Commit + push per milestone with a ledger entry, win or lose.
 
-## M57 memory-schema decision (2026-08-11)
-- Attribute facts are ordinary writes INTO the entity⊗relation⊗value
-  tensor memory: `e_instance ⊗ attr:<name> ⊗ value`. Inverse queries and
-  resolver candidate evidence come from the same store via the existing
-  query ops.
-- The instance registry is an INDEX only (minted instance atoms, id →
-  vector) so candidate generation can enumerate instances. No knowledge
-  lives in it.
-- Provenance (source, language, timestamp, trust) is a membrane-side
-  append-only log, one record per gated write — it cannot live in the
-  tensor (superposition destroys the audit trail).
+## Progress tracking (user directive, 2026-10-16)
+- Track progress against **`GOALS.md`** (repo root) — update the relevant
+  goal's status/evidence there when a result lands. Do not introduce new
+  M-numbers. Ledger entries (`consciousness_transformer/RESEARCH_NOTES.md`)
+  are titled `"<Goal>: <result>"`, not by milestone number. Old M-numbers
+  are still findable via `consciousness_transformer/dev/archive/MILESTONE_MAP.md`.
+
+## Decisions log
+Dated decisions (memory schema, LTM, executor D1/D2, the dropped sprint
+clock, the 2026-10-16 encoder/decoder calls) are recorded in **`GOALS.md`**'s
+"Decisions log" section, each filed under the goal it affects, not here.
+One-line index of what's there:
+- Memory schema (2026-08-11): attribute facts are ordinary tensor writes;
+  the instance registry is an index only; provenance lives in an
+  append-only log outside the tensor.
+- LTM (2026-08-30): separate additive-read LTM tensor, STM-only writes,
+  identity linking via the existing resolver, consolidation as a gated
+  substate event. See `dev/LTM_DESIGN_BRIEF.md` §5.
+- Executor (2026-08-30): hard selection for memory-key addresses, soft for
+  distributions/scalars; the controller's self-loop carries control signals
+  only, never register data. See `dev/EXECUTOR_DESIGN.md` §6.
+- Sprint clock dropped (2026-08-30): Aurora deadline no longer governs
+  sequencing.
+- Encoder unfrozen / decoder stays on hold (2026-10-16): see `GOALS.md`
+  goals 1 and 6.
 
 ## Pointers
-- Session handoff: `consciousness_transformer/dev/HANDOFF.md` (read
-  order for the design docs is in there).
-- Sprint clock + priorities: `consciousness_transformer/dev/AURORA_SPRINT.md`.
-- Venv recipe if missing: `uv venv` + torch-cpu + nltk wordnet/omw-1.4.
-
-## LTM decisions (user, 2026-08-30) — see dev/LTM_DESIGN_BRIEF.md §5
-Separate LTM tensor (additive reads, STM-only writes); identity linking
-through the EXISTING resolver contract (from_ltm feature + link_threshold
-dial); consolidation as a named substate event (READING→WIND-DOWN→
-CONSOLIDATE) gated by trust_ltm on provenance; tier-generic consolidate op
-so truth-memory promotion reuses it later.
-
-## Executor decisions (user, 2026-08-30) — see dev/EXECUTOR_DESIGN.md §6
-D1: HARD (straight-through) selection for memory keys (Addr); soft only for
-Dist/Scalar. D2: the GRU self-loops per op-step as the program counter,
-fed CONTROL signals only (prev op, step, register types, scalar margins)
-— never register data vectors (Harvard split). Track A remains the
-tournament baseline; LOFO (leave-one-program-family-out) is Phase 2's
-first gate; PROVENANCE/FORCE are not selectable ops.
+- Current status, what's proven, what's next: `GOALS.md` (repo root).
+- Setup, repo map, where to read next: `README.md` (repo root).
+- Research ledger: `consciousness_transformer/RESEARCH_NOTES.md`.
+- Venv recipe if missing: CPU-torch wheel index + `pip install -e .` +
+  `nltk.download('wordnet'/'omw-1.4'/'omw-2.0')` — full recipe in
+  `README.md`.
