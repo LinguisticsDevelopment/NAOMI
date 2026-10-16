@@ -1,0 +1,61 @@
+{
+  "dataset": "ftqa",
+  "coverage": {
+    "train": {
+      "items": 37,
+      "passages": 6,
+      "distinct_context_variants": 20,
+      "sentence_clause_coverage": 0.8686440677966102,
+      "n_sentences": 236,
+      "answerable_from_memory_ceiling": 0.8108108108108109,
+      "elapsed_sec": 99.4
+    },
+    "val": {
+      "items": 30,
+      "passages": 3,
+      "distinct_context_variants": 28,
+      "sentence_clause_coverage": 0.9371980676328503,
+      "n_sentences": 207,
+      "answerable_from_memory_ceiling": 0.9,
+      "elapsed_sec": 176.0
+    },
+    "test": {
+      "items": 33,
+      "passages": 4,
+      "distinct_context_variants": 21,
+      "sentence_clause_coverage": 0.9036697247706422,
+      "n_sentences": 218,
+      "answerable_from_memory_ceiling": 0.7878787878787878,
+      "elapsed_sec": 164.5
+    }
+  },
+  "n_train": 35,
+  "n_val": 25,
+  "n_test": 25,
+  "best_val_acc": 0.47999998927116394,
+  "train_elapsed_min": 17.55,
+  "build_elapsed_sec": 14.3,
+  "total_elapsed_min": 25.14,
+  "random_floor": 0.25,
+  "cheat_baselines": {
+    "n_loaded": 25,
+    "n_scorable": 25,
+    "random": 0.25,
+    "majority": 0.04,
+    "majority_text": "golden hair",
+    "passage_substring": 0.25,
+    "passage_substring_unique_correct": 0,
+    "passage_substring_ties": 25,
+    "passage_substring_misses": 0,
+    "word_overlap": 0.4
+  },
+  "best_cheat": 0.4,
+  "model_acc": 0.4000000059604645,
+  "memory_severed_acc": 0.4000000059604645,
+  "n_answerable_subset": 19,
+  "acc_on_answerable_subset": 0.42105263471603394,
+  "gate_acc_vs_cheat": false,
+  "gate_severed_vs_random": false,
+  "GATE_PASS": false,
+  "peak_rss_mb": 4908.06640625
+}

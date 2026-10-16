@@ -3470,3 +3470,28 @@ default None -> e.g. 30.0). This bounds EVERY caller at once, cannot bind
 on curriculum (ms) or normal prose (2-10s), and turns the hang into a
 catchable ParseResourceExceeded that build_one's existing guard drops.
 Fix dispatched (M58g); prose training resumes after.
+
+### E2E QA SPIKE (thesis test, teacher-built episodes) -> branch e2e-qa-spike
+Full report: consciousness_transformer/dev/E2E_QA_SPIKE.md. dev/AUDIT_2026-10-15.md
+F.2, the untouched comprehension spike: teacher-built episodes (deterministic
+parser + clause.py, NOT the encoder) over FairytaleQA entity-MC + MCTest
+mc160, native story splits, through train_prose.py's resolver/QA head, vs
+random/cheat_baselines_k12/memory-severed controls. Gap found first:
+build_clause_batch's kind=="prose" branch silently DROPPED every free-form MC
+question (no NAME/"the NOUN" for _question_entity) -- fixed with a minimal
+generic-question-step adapter (clause_reactor.py, ~20 lines, additive; old
+templated path byte-identical, 2 new tests). Parse coverage (86.9-95.5%) and
+answerable-from-memory ceiling (78.8-93.8%) both healthy -- not the
+bottleneck. GATE FAILS both datasets, but INCONCLUSIVE not a falsification:
+FairytaleQA model/memory-severed accuracy were IDENTICAL (0.400/0.400,
+n=25) -- head-not-using-memory confounded by data starvation (35-37/24
+train items). Scale hard-capped: full-corpus parse-build projected HOURS
+(per-question context variants, not per-story) against the ~90min budget,
+so this ran passage-capped (6/3/4 per split) per CLAUDE.md's shrink-and-
+say-so rule -- pipeline-integration validated, not yet a power-adequate
+thesis test. Wall-clock: FTQA 25.14min, MCTest 8.88min. Tests: 2 new pass;
+focused subset 51 passed/0 failed before the pre-existing 10min-cap cutoff
+(quantum_parser slowness, on record already). NEXT: a dedicated multi-hour
+full-scale run is the real gate test; this spike's infra (negative parse
+cache, context-tuple-keyed coverage, known-bad-sentence prefilter) makes
+that affordable.

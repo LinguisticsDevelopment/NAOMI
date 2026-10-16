@@ -2493,11 +2493,31 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
             # instance/rich/document's own internally-built question steps).
             steps, cand_sets = _prose_steps(ep, parser, resolver, codec, cache, meaning_source)
             qent = _question_entity(ep.question)
-            if qent is None:
-                continue
-            qrel = _queried_role(ep.question)
-            steps.append((_ent_vec(qent, resolver, codec, cache, meaning_source),
-                          codec.filler_vec("rel:" + qrel), z, q_pred, z, 1))
+            if qent is not None:
+                qrel = _queried_role(ep.question)
+                steps.append((_ent_vec(qent, resolver, codec, cache, meaning_source),
+                              codec.filler_vec("rel:" + qrel), z, q_pred, z, 1))
+            else:
+                # E2E QA SPIKE minimal adapter (dev/E2E_QA_SPIKE.md): a
+                # free-form MC question (convert_fairytaleqa.py/
+                # convert_mctest.py -- real benchmark text, not corpus.py's
+                # own self-generated "where is the X ?" questions) usually
+                # has no NAME/"the NOUN" for _question_entity to anchor on
+                # ("who was skilled in magic more than most fishes ?"), so
+                # the old behavior (``continue`` -- drop the episode
+                # outright) would silently zero out every real MC item. A
+                # GENERIC question step -- a fixed, never-written
+                # (entity, relation) marker address -- keeps mem_read ~0
+                # at this one step, but the GRU's recurrent STATE already
+                # carries everything the passage's write steps above fed
+                # into it; the response head's contrastive
+                # cosine(response, options) scoring (every other episode
+                # kind's own answer path) runs unchanged. This is the
+                # literal "score each option against memory, pick argmax"
+                # adapter: no new model code, no new answer path, just a
+                # question step that doesn't require a templated address.
+                steps.append((codec.filler_vec("var:QUERY"), codec.filler_vec("rel:ANSWER"),
+                              z, q_pred, z, 1))
         else:
             steps = []
             pronoun_idx = ep.meta.get("pronoun_sentence_index")
