@@ -41,12 +41,14 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import torch
 
 from nsm_ct.ground.usvs import load_usvs
 from nsm_ct import encoder_model as em
 from nsm_ct import encoder_train_util as etu
+from cheat_encoder_baseline import evaluate_heuristic  # noqa: E402
 
 # Re-exported for scripts that do `from train_encoder import load_gold,
 # stratified_split` (scripts/rescore_encoder.py, colab_train_encoder.py,
@@ -460,6 +462,18 @@ def main():
     random_metrics = em.evaluate(model, random_target, usvs, pos_vocab, hash_buckets,
                                   beam_width=args.beam_width, k=args.k, policy="random", rng=rng)
     print(f"[{time.time()-t0:6.1f}s] {random_target_name} (random baseline): {random_metrics}")
+
+    # dev/AUDIT_2026-10-15.md / dev/K12_BENCHMARK_FIX.md: CLAUDE.md's "every
+    # capability curriculum ships with its cheat-baseline at floor" law --
+    # the POS-heuristic cheat baseline now prints next to every encoder
+    # number by default, not just on request (scripts/cheat_encoder_baseline.py).
+    heuristic_metrics = evaluate_heuristic(random_target)
+    heuristic_f1 = etu._f1(heuristic_metrics["edge_precision"], heuristic_metrics["edge_recall"])
+    print(f"[{time.time()-t0:6.1f}s] {random_target_name} (POS-heuristic cheat baseline): "
+          f"edge_f1={heuristic_f1:.4f} p={heuristic_metrics['edge_precision']:.4f} "
+          f"r={heuristic_metrics['edge_recall']:.4f} "
+          f"struct_exact={heuristic_metrics['structure_recall']:.4f}  vs. "
+          f"rank1_edge_f1={_rank1_f1(metrics.get('holdout', metrics.get('test', {})))}")
 
     extra_eval_results = {}
     if args.extra_eval:
