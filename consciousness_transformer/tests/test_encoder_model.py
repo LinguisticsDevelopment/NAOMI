@@ -1,4 +1,4 @@
-"""Gates for the candidate-lattice encoder (dev/ENCODER_MODEL_SPEC.md S5):
+"""Gates for the candidate-lattice encoder (dev/design/ENCODER_MODEL_SPEC.md S5):
 the oracle round-trips a gold tree, the mask never admits an illegal action
 (and never excludes a gold one), and sense emission always copies the FULL
 candidate set -- never a single sense (the model spec's core invariant:

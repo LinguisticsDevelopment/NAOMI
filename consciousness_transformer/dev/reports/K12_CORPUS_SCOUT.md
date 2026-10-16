@@ -1,10 +1,10 @@
 # K-12 Comprehension-QA Corpus Scout
 
 Status: SCOUT REPORT, nothing trained. Author: k12-scout session, 2026-09-08.
-Motivated by `dev/UNIVERSAL_ENCODER_DESIGN.md` §0/§5 (the pivot away from
+Motivated by `dev/design/UNIVERSAL_ENCODER_DESIGN.md` §0/§5 (the pivot away from
 fabricated clause-holdout QA toward real graded reading material with real
 comprehension questions, "not stated" a first-class answer, bottom-up
-sentences -> passages -> long reading) and `dev/ROADMAP_LONG_TERM.md`.
+sentences -> passages -> long reading) and `dev/design/ROADMAP_LONG_TERM.md`.
 Nothing has been sourced before this scout; this is the first pass.
 
 **Network reality check (read this before the table):** this sandbox's
@@ -55,7 +55,7 @@ whoever runs `scripts/fetch_k12.py` next from a less restricted network.
 graph with >=1 clause carrying a real non-punctuation SUBJECT) on 50
 sentences per source, pulled from the samples actually fetched into
 `data/k12_samples/`. The existing in-repo Gutenberg baseline
-(`dev/M62_GOLD_VOLUME_PROBE.md`, 500 sentences across `real_*.txt`) is
+(`dev/archive/M62_GOLD_VOLUME_PROBE.md`, 500 sentences across `real_*.txt`) is
 **81.2% overall**, dragged down hard in the shortest-sentence bin (A<=8
 tokens: 50.4%, dominated by bare interjections/imperatives per
 `UNIVERSAL_ENCODER_DESIGN.md` §9). All three K-12 candidates measured here

@@ -62,7 +62,7 @@ under-covered in its arguments.
 # Part 2 -- Hand audit of 50 holdout trees
 
 Methodology: `runs/holdout_sentences.txt` (98 sentences, the existing
-committed test-split file; `dev/ENCODER_GOLD_V4B_16K_STATS.md` already
+committed test-split file; `dev/reports/ENCODER_GOLD_V4B_16K_STATS.md` already
 verified 98/98 of it is covered by `encoder_gold_v4b_16k.jsonl`, so no
 regeneration via `scripts/make_holdout.py` was needed or attempted -- the
 seed/split this file encodes, per that doc, is `seed=0, n_train=788,

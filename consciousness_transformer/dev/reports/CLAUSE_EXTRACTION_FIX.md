@@ -1,6 +1,6 @@
 # Clause Extraction Fix (B1 + C1 + B2) — branch `clause-extraction-fix`
 
-Implements the three targeted fixes `dev/GOLD_COVERAGE_AUDIT.md` ("Part 3 --
+Implements the three targeted fixes `dev/reports/GOLD_COVERAGE_AUDIT.md` ("Part 3 --
 Root cause" / "Proposed fix") specified but deliberately did not implement.
 Extraction-only: no change to the parser grammar, USVS, or the encoder. The
 clause/role schema is unchanged; only more clauses come out of
@@ -192,7 +192,7 @@ predicted.
 
 Re-ran the same 98 holdout sentences through both builds and compared the
 kept tree's clause-predicate list for each of the 33 sentences the original
-hand audit marked `DROPPED_CLAUSE` (`dev/GOLD_COVERAGE_AUDIT.md` Part 2).
+hand audit marked `DROPPED_CLAUSE` (`dev/reports/GOLD_COVERAGE_AUDIT.md` Part 2).
 "FULL" here means the specific clause/predicate the original audit quoted as
 missing is now present (not a re-run of the full 6-way hand-audit taxonomy,
 which would need re-reading all 33 trees against the source text from

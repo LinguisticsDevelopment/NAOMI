@@ -1,7 +1,7 @@
 # Encoder full English train — stats (2026-09-04)
 
 Full (non-smoke) train of `nsm_ct.encoder_model.EncoderModel` on all 985
-records of `runs/encoder_gold_v2.jsonl` (spec `dev/ENCODER_MODEL_SPEC.md`).
+records of `runs/encoder_gold_v2.jsonl` (spec `dev/design/ENCODER_MODEL_SPEC.md`).
 Checkpoint: `runs/encoder_full.pt`.
 
 ## Config

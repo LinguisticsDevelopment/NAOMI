@@ -1,4 +1,4 @@
-"""Tests for the LLM parse judge (dev/PARSE_JUDGE.md): `nsm_ct.tree_render`
+"""Tests for the LLM parse judge (dev/archive/PARSE_JUDGE.md): `nsm_ct.tree_render`
 and `nsm_ct.parse_judge`.
 """
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Training-arm runner for the encoder scaling replication
-# (dev/AUDIT_2026-09-08.md finding 7 + recommendation (c);
+# (dev/archive/AUDIT_2026-09-08.md finding 7 + recommendation (c);
 # encoder-train-arms-v2 adds periodic dev eval + keep-best selection so
 # arms with different gold-derivations-per-record aren't compared at a
 # fixed optimizer-step budget that is secretly a very different number of
@@ -243,7 +243,7 @@ build_cmd() {
     n_train_per_file_flag="--n-train-per-file ${v4b_16k_n},${hard_n}"
   fi
   local eval_every_flags="--eval-every ${EVAL_EVERY} --dev-holdout-file ${HOLDOUT_DEV_FILE}"
-  # lead directive 2026-09-08 (dev/USVS_GRADED_SCORING.md): every arm prints
+  # lead directive 2026-09-08 (dev/reports/USVS_GRADED_SCORING.md): every arm prints
   # the USVS-graded P/R/F alongside the old binary edge-F1 from now on.
   # LOSS=usvs-soft additionally swaps in the graded soft CE targets.
   local loss_flag=""

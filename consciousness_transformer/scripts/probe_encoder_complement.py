@@ -1,4 +1,4 @@
-"""PART B -- teacher-complement probe (dev/AUDIT_2026-09-08.md action 1).
+"""PART B -- teacher-complement probe (dev/archive/AUDIT_2026-09-08.md action 1).
 
 The encoder is trained to imitate the deterministic teacher parser; on
 teacher-parseable text it is, by construction, never better than the

@@ -28,7 +28,7 @@ Usage:
     python scripts/audit_gold_coverage.py \
         --gold runs/encoder_gold_v4b_16k.jsonl \
         --corpus-glob "data/corpus/real_*.txt" \
-        --out dev/GOLD_COVERAGE_AUDIT.md
+        --out dev/reports/GOLD_COVERAGE_AUDIT.md
 """
 from __future__ import annotations
 

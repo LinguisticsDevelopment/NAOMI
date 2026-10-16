@@ -1,5 +1,5 @@
 """Gates for the opt-in USVS-space auxiliary head (`--aux-usvs`; lead
-directive follow-up to dev/USVS_GRADED_SCORING.md S5.4: "the encoder has NO
+directive follow-up to dev/reports/USVS_GRADED_SCORING.md S5.4: "the encoder has NO
 node embedding and NEVER scores sense candidates ... the nearest hook would
 be a new Linear(controller_hidden, d_axes) head").
 

@@ -1,14 +1,14 @@
 """The deterministic op library: consciousness_transformer's explicit
 instruction set, in one place.
 
-dev/OP_INVENTORY.md names 22 ops, fixed vs. learned, and where each lives
+dev/design/OP_INVENTORY.md names 22 ops, fixed vs. learned, and where each lives
 today (scattered across `entity_memory.py`, `instances.py`, `ltm.py`,
 `resolver.py`, and inline in `clause_reactor.py`). This module is the
 robustification pass for that inventory: **one pure function per op**,
 covering every FIXED op the table lists plus the ones OP_INVENTORY names
 as gaps (recency, cleanup-with-abstain, permute, temporal links, register
 file). It does not change any existing call path -- see
-`dev/OP_LIBRARY_MAP.md` for exactly where each op below will plug into
+`dev/design/OP_LIBRARY_MAP.md` for exactly where each op below will plug into
 `clause_reactor.py` at a LATER integration milestone.
 
 Literature grounding (cited per-op below, not repeated here): VSA
@@ -77,14 +77,14 @@ EPS = 1e-8  # same norm+eps convention as instances.py's _cosine / clause_reacto
 CLEANUP_MARGIN: float = 0.1
 """`cleanup`'s abstain threshold: below this top1-top2 score gap, cleanup
 reports `abstain=True` instead of trusting its argmax -- the `caution`
-dial (dev/MIND_INTERFACE.md) made concrete for the cleanup op."""
+dial (dev/design/MIND_INTERFACE.md) made concrete for the cleanup op."""
 
 FORGET_DECAY: float = 1.0
 """`forget_decay`'s multiplicative rate; `1.0` = off (identity, byte-
 exact no-op) -- MIND_INTERFACE.md's "byte-identical by default" rule."""
 
 PATIENCE: int = 12  # raised 6->12 (director, 2026-08-30): K_max must fit the longest gold program (writeback_addr_redirect = 12 op-steps; EXECUTOR_DESIGN Sec 1.3)
-"""`halt`'s thinking-budget cutoff -- matches dev/TRACK_C_DESIGN.md
+"""`halt`'s thinking-budget cutoff -- matches dev/design/TRACK_C_DESIGN.md
 Sec.1.6's `K_max = 6` ("one slack step over the longest known [4-5 step]
 gold program"), the same `patience` dial MIND_INTERFACE.md names."""
 
@@ -129,7 +129,7 @@ def bind_write(
 ) -> torch.Tensor:
     """VSA **bind** (Plate 1995 HRR; Smolensky 1990 TPR) plus a DNC-style
     gated write: direct wrap of `nsm_ct.entity_memory.write`
-    (dev/OP_INVENTORY.md's "write (bind)" row).
+    (dev/design/OP_INVENTORY.md's "write (bind)" row).
 
     Parameters
     ----------
@@ -166,7 +166,7 @@ def bind_write(
 
 def unbind_query(memory: torch.Tensor, entity: torch.Tensor, relation: torch.Tensor) -> torch.Tensor:
     """VSA **unbind** (matched-filter decoding, Plate/Kanerva/Gayler):
-    direct wrap of `nsm_ct.entity_memory.query` (dev/OP_INVENTORY.md's
+    direct wrap of `nsm_ct.entity_memory.query` (dev/design/OP_INVENTORY.md's
     "query" row). Same batched/unbatched convenience as `bind_write`.
 
     Returns
@@ -183,7 +183,7 @@ def unbind_query(memory: torch.Tensor, entity: torch.Tensor, relation: torch.Ten
 def inverse_query_entity(memory: torch.Tensor, relation: torch.Tensor, value: torch.Tensor) -> torch.Tensor:
     """VSA **unbind** along the ENTITY axis instead of the value axis:
     direct wrap of `nsm_ct.entity_memory.query_entity`
-    (dev/OP_INVENTORY.md's "query_entity (inverse)" row) -- "who holds
+    (dev/design/OP_INVENTORY.md's "query_entity (inverse)" row) -- "who holds
     (relation, value)?" instead of `unbind_query`'s "what does (entity,
     relation) hold?". Same batched/unbatched convenience as `bind_write`.
     """
@@ -203,7 +203,7 @@ def superpose_vote(
     accumulate additively so the majority direction wins) realized as
     `bind_write` with `overwrite=0`: `nsm_ct.entity_memory.write`'s own
     "a vote -- repeated assertions accumulate" branch
-    (dev/OP_INVENTORY.md's "write (bind)" row, "overwrite vs vote" row).
+    (dev/design/OP_INVENTORY.md's "write (bind)" row, "overwrite vs vote" row).
     Same batched/unbatched convenience as `bind_write`.
     """
     gate_t = gate if torch.is_tensor(gate) else torch.as_tensor(gate, dtype=torch.float32)
@@ -243,7 +243,7 @@ def cleanup(
     codebook entry, and report whether the match is decisive enough to
     trust (`abstain_flag`) -- the `caution` dial (MIND_INTERFACE.md) made
     concrete: this realizes sanctioned uncertainty forms 3 and 4 (a low
-    margin, an abstention) as one gate, `dev/OP_INVENTORY.md`'s "caution
+    margin, an abstention) as one gate, `dev/design/OP_INVENTORY.md`'s "caution
     never gates anything" gap. `nsm_ct.tpr.TPRCodec.cleanup` is the
     existing single-vector, cosine-only, dict-keyed analogue; this is its
     batched, dot-or-cosine, tensor-codebook generalization.
@@ -408,9 +408,9 @@ def unpermute(vec: torch.Tensor, k: int) -> torch.Tensor:
 def allocate(registry: InstanceRegistry, name_hint: str) -> Tuple[str, torch.Tensor]:
     """DNC-style **allocation** (Graves et al. 2016: a fresh address for
     new content, gated by a learned usage vector in the DNC; here, the
-    deterministic v1 policy dev/OP_INVENTORY.md Sec.4 requires before any
+    deterministic v1 policy dev/design/OP_INVENTORY.md Sec.4 requires before any
     learned gate is added) realized as
-    `nsm_ct.instances.InstanceRegistry.mint` (dev/OP_INVENTORY.md's
+    `nsm_ct.instances.InstanceRegistry.mint` (dev/design/OP_INVENTORY.md's
     "mint (instance)" row) -- direct re-export under the op-algebra's
     DNC-derived name, no new logic.
     """
@@ -436,11 +436,11 @@ def recency(
     """Centering-theory-style salience features (Grosz, Joshi & Weinstein
     1995; Walker, Joshi & Prince 1998: the most recently/frequently
     mentioned entity is the likeliest pronoun referent), as per-candidate
-    scorer features -- dev/OP_INVENTORY.md's named gap ("no recency
+    scorer features -- dev/design/OP_INVENTORY.md's named gap ("no recency
     feature in the resolver... same-gender pronoun / ambiguous name cases
     stay low; resolver has no recency register at all"). Feeds the same
     per-candidate feature slot `evidence_interaction` already occupies
-    (dev/TRACK_C_DESIGN.md Sec.1.4's `P.feat[i]`).
+    (dev/design/TRACK_C_DESIGN.md Sec.1.4's `P.feat[i]`).
 
     Parameters
     ----------
@@ -528,7 +528,7 @@ def forget_decay(memory: torch.Tensor, decay: float = FORGET_DECAY) -> torch.Ten
     consolidation (McClelland, McNaughton & O'Reilly 1995's complementary
     learning systems: a fast-decaying store alongside a slow, curated
     one). `decay=1.0` (the `FORGET_DECAY` default) is the identity, byte-
-    exact no-op -- dev/OP_INVENTORY.md Sec.4's "deterministic v1 policy
+    exact no-op -- dev/design/OP_INVENTORY.md Sec.4's "deterministic v1 policy
     first" rule; this has no live call path yet.
     """
     return memory * decay
@@ -536,7 +536,7 @@ def forget_decay(memory: torch.Tensor, decay: float = FORGET_DECAY) -> torch.Ten
 
 # ---------------------------------------------------------------------------
 # CONTROL -- deterministic reference implementations of the Track C ops
-# the executor will later route between (dev/TRACK_C_DESIGN.md Sec.1.3/1.5).
+# the executor will later route between (dev/design/TRACK_C_DESIGN.md Sec.1.3/1.5).
 # ---------------------------------------------------------------------------
 def select(logits: torch.Tensor, mask: Optional[torch.Tensor] = None, *, hard: bool) -> torch.Tensor:
     """Track C's `select` op: `({Scalar}_C) -> Dist` -- identical to
@@ -577,7 +577,7 @@ def abstain(
 ) -> Union[Optional[str], List[Optional[str]]]:
     """MIND_INTERFACE.md's sanctioned uncertainty forms 3 (low margin) and
     4 (an abstention answer), made into one deterministic gate --
-    dev/OP_INVENTORY.md's "abstain (idk/MAYBE)" row, whose gap note reads
+    dev/design/OP_INVENTORY.md's "abstain (idk/MAYBE)" row, whose gap note reads
     "`caution`/margin never gates anything... OPEN-binding and margin-
     gated abstention are unimplemented". This is that gate.
 
@@ -621,7 +621,7 @@ def abstain(
 
 
 def compare(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-    """Track C's `compare` op (dev/TRACK_C_DESIGN.md Sec.1.3): `(Vec,
+    """Track C's `compare` op (dev/design/TRACK_C_DESIGN.md Sec.1.3): `(Vec,
     Vec) -> Scalar` (cosine), feeding `branch`'s condition -- exists
     today only at the FINAL output stage (`cosine(response_vec,
     option_vecs)`), "not currently used inside any resolver"; this is the
@@ -665,7 +665,7 @@ def branch(
 
 
 def halt(step: Union[torch.Tensor, int], budget: int = PATIENCE) -> torch.Tensor:
-    """Track C's chain-length budget (dev/TRACK_C_DESIGN.md Sec.1.6): the
+    """Track C's chain-length budget (dev/design/TRACK_C_DESIGN.md Sec.1.6): the
     `patience` dial (MIND_INTERFACE.md) made concrete as a hard cutoff --
     "at `K_max` an implicit SELECT+EMIT fires regardless of whether the
     router asked for it".
@@ -705,7 +705,7 @@ def emit(state_vec: torch.Tensor, mem_read: torch.Tensor) -> torch.Tensor:
 
 # ---------------------------------------------------------------------------
 # REGISTERS -- the executor's program trace format
-# (dev/TRACK_C_DESIGN.md Sec.1.4's G./P. register model, generalized to
+# (dev/design/TRACK_C_DESIGN.md Sec.1.4's G./P. register model, generalized to
 # one named [B, R, d] bank instead of separately-typed python attributes).
 # ---------------------------------------------------------------------------
 @dataclass
@@ -715,7 +715,7 @@ class RegisterFile:
     step)` -- **the trace supervision format for Track C**: a gold
     program is exactly a sequence of these triples, and this is the
     concrete container an executor's routing policy will learn to
-    reproduce (dev/TRACK_C_DESIGN.md Sec.1.5: "the program is the
+    reproduce (dev/design/TRACK_C_DESIGN.md Sec.1.5: "the program is the
     sequence of (op, which registers) choices a router makes").
 
     Generalizes TRACK_C_DESIGN.md Sec.1.4's `G.*`/`P.*[i]` register model
@@ -732,7 +732,7 @@ class RegisterFile:
         Register name -> row index into `values`.
     slot_type : dict[str, str]
         Register name -> Track C type tag (`"Addr"`, `"Vec"`, `"Feat"`,
-        `"Scalar"`, `"Dist"` -- dev/TRACK_C_DESIGN.md Sec.1.2). `Scalar`
+        `"Scalar"`, `"Dist"` -- dev/design/TRACK_C_DESIGN.md Sec.1.2). `Scalar`
         registers are stored broadcast across every one of the `d`
         columns (so the underlying tensor stays uniformly `[B, R, d]`);
         `read` collapses a `Scalar` register back to `[B]` via `.mean`

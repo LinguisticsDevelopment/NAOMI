@@ -1,6 +1,6 @@
 """Tests for M59a: episodic LONG-TERM MEMORY (nsm_ct.ltm +
 scripts._train_common.DocumentRunner). See CLAUDE.md's "LTM decisions" and
-dev/LTM_DESIGN_BRIEF.md Sec.5 (locked design) for the contract these tests
+dev/design/LTM_DESIGN_BRIEF.md Sec.5 (locked design) for the contract these tests
 hold the implementation to: a separate LTM tensor, additive reads
 (``memory + ltm``), STM-only writes, a tier-generic ``promote`` op, and the
 wind-down/consolidate substate machine.

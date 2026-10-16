@@ -6,13 +6,13 @@ It specifies **the model** — the learned universal encoder — that reads a
 sentence and **emits the V2 candidate lattice**.
 
 Read first, in order:
-- `dev/ENCODER_IO_CONTRACT_V2.md` — the exact OUTPUT the model must emit (the
+- `dev/design/ENCODER_IO_CONTRACT_V2.md` — the exact OUTPUT the model must emit (the
   candidate lattice). This spec's tensors serialize to that schema; every field
   name below is its vocabulary.
-- `dev/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md` — the grammar as retrieval-conditioned
+- `dev/design/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md` — the grammar as retrieval-conditioned
   INPUT and the **action space** (§4: the 4 candidates-first actions; §5: the 7
   rules). The model's action head decodes over exactly that inventory.
-- `dev/UNIVERSAL_ENCODER_DESIGN.md` §2 (mechanism), §11 (the pivot), §1 (the
+- `dev/design/UNIVERSAL_ENCODER_DESIGN.md` §2 (mechanism), §11 (the pivot), §1 (the
   invariant: learned pieces are *boundary transducers only*, never knowledge).
 
 **The one-line contract of this model.** It is *literally a token→tree-SET
@@ -352,7 +352,7 @@ The impl **wires to** these; it does not rebuild the parser or the lexicon.
 | **structure / top-k** (teacher gold + optional inference feature) | `nsm_ct.input_encoder.ParserInputEncoder._parse_topk_one(sentence, k, max_hypotheses, max_seconds)` → `(graphs, scores, margin)`; `_parse_graph_one` for k=1 | the teacher the model distills; do **not** call it inside the trained model's forward — it is only the gold source (and, if wanted, a training-time comparison) |
 | graph → clauses + links | `nsm_ct.clause.extract_discourse(graph)` → `(clauses, links)` | the same extraction the gold builder runs; reuse for oracle verification |
 | primes for `GROUND_PRIME` / gloss-added senses | `nsm_ct.ground.usvs` (`ground/usvs.py` gloss→prime→coordinate pipeline, contract §6) | pure interjection / imperative `YOU` grounding data — deterministic, not learned |
-| grammar rules + action space | `dev/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md` §4 (4 actions) + §5 (7 rules, `trigger`/`licenses`/`action_map`) | the declarative inventory the fired-rule matcher (§3.3) and mask read. NB: `mind/grammar.py` is the OLD membrane controlled-language parser — **not** this inventory; do not confuse them |
+| grammar rules + action space | `dev/design/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md` §4 (4 actions) + §5 (7 rules, `trigger`/`licenses`/`action_map`) | the declarative inventory the fired-rule matcher (§3.3) and mask read. NB: `mind/grammar.py` is the OLD membrane controlled-language parser — **not** this inventory; do not confuse them |
 | gold data + its builder | `runs/encoder_gold_v2.jsonl` (985 records) + `scripts/build_encoder_gold_v2.py` + `dev/ENCODER_GOLD_V2_STATS.md` | training set; builder docstring documents which constructs are/ aren't in Stage-i gold (§5) |
 
 New code lives under a new `src/nsm_ct/encoder/` package + `scripts/` +

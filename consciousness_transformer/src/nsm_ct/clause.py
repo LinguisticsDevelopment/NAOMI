@@ -26,7 +26,7 @@ from .tpr import TPRCodec
 
 # Entities are *variables* (referents), not meanings: explicit names + pronouns.
 _ENTITY_NAMES = {n.lower() for n in _NAMES}
-# M57e (morphology signals, dev/AURORA_SPRINT.md's 2026-08-11
+# M57e (morphology signals, dev/archive/AURORA_SPRINT.md's 2026-08-11
 # reprioritization): the English set is UNCHANGED (byte-identical --
 # tests/test_morphology.py's English-parsing regression checks this); the
 # Spanish 3rd-person personal pronouns (M-ES1's reported blocker: "they
@@ -138,7 +138,7 @@ ATTRIBUTION_VERBS = {"said", "replied", "cried", "asked", "answered", "shouted",
 
 _QUOTE_TOKENS = {'"', "``", "''", "'"}
 
-# B2 fix (dev/GOLD_COVERAGE_AUDIT.md "B2"): quote-attribution word order
+# B2 fix (dev/reports/GOLD_COVERAGE_AUDIT.md "B2"): quote-attribution word order
 # ("said little jack", "replied peggy", "thought buster") postposes the
 # subject AFTER the reporting verb. This grammar has no subject-inversion
 # rule for it, so the postposed subject is attached as the verb's OBJECT/
@@ -645,7 +645,7 @@ def _secondary_fact_clauses(graph, subs: List[Tuple[int, int]], skip_clause_idx:
             out.append(_fact_clause(graph, subj, pred, rel, val_idx, extra,
                                      is_question=_is_question(graph, c_idx)))
         else:
-            # B1 fix (dev/GOLD_COVERAGE_AUDIT.md "B1"): a bare intransitive
+            # B1 fix (dev/reports/GOLD_COVERAGE_AUDIT.md "B1"): a bare intransitive
             # secondary/coordinated clause ("he just laughed", "the boy ran")
             # has no PP and no OBJECT/INDIRECT_OBJECT, so val_idx is never
             # found above -- this used to be silently skipped (no fallback),
@@ -804,7 +804,7 @@ def _primary_discourse(graph, subj, pred, clause_idx, subj_idx) -> Tuple[List[Cl
             links = [DiscourseLink(coordinator, prime, 0, j) for j in range(1, len(clauses))]
             return clauses, links
 
-        # C1 fix (dev/GOLD_COVERAGE_AUDIT.md "C1"): VP-coordination ("the
+        # C1 fix (dev/reports/GOLD_COVERAGE_AUDIT.md "C1"): VP-coordination ("the
         # lion shook his mane and showed his teeth") attaches the shared
         # SUBJECT edge to the COORDINATOR node itself (clause_idx IS the
         # coordinator, so `pred` -- graph.token(clause_idx) -- is the

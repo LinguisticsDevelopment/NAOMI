@@ -1,4 +1,4 @@
-"""M58e: THE FIRST PROSE-TRAINING SCRIPT (dev/AURORA_SPRINT.md, RESEARCH_NOTES
+"""M58e: THE FIRST PROSE-TRAINING SCRIPT (dev/archive/AURORA_SPRINT.md, RESEARCH_NOTES
 M58a-d). M58b/d measured the FROZEN M60 checkpoint zero-shot on converted
 prose episodes (scripts/eval_prose.py): 0.583 -> 0.558 after M58d's PLACE
 grounding fix, with the honest diagnosis that the fix is now structurally

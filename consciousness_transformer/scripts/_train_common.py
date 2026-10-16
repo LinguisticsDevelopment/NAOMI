@@ -17,7 +17,7 @@ rule against unverified "should be faster" claims.
 
 M59a (episodic LTM, CLAUDE.md's "LTM decisions"): this module also hosts
 :class:`DocumentRunner`, the wind-down/consolidate substate machine
-(dev/OP_INVENTORY.md's "wind-down / consolidate" row) that drives
+(dev/design/OP_INVENTORY.md's "wind-down / consolidate" row) that drives
 multi-passage documents through :class:`~nsm_ct.clause_reactor.
 ClauseReactor` with a persisted LTM tensor -- see :mod:`nsm_ct.ltm`'s
 module docstring for the full document/passage/registry contract, and
@@ -194,7 +194,7 @@ class DocumentRunner:
     - **WIND_DOWN**: a NAMED event, fired unconditionally at the end of
       every passage's reading -- a v1 NO-OP (recorded in the passage's
       report under ``"events"``), the hook for a future ``patience`` dial
-      (dev/OP_INVENTORY.md's dials table: "not set" today) that would let a
+      (dev/design/OP_INVENTORY.md's dials table: "not set" today) that would let a
       passage's reading run stop early/late based on the controller's own
       state instead of always running every step of the batch.
     - **CONSOLIDATE**: :func:`nsm_ct.ltm.promote` copies this passage's OWN
@@ -245,7 +245,7 @@ class DocumentRunner:
         # PASSAGES CONSOLIDATED SO FAR on top of the existing per-step
         # B*T*d^3 footprint this module's own docstring already flags as
         # the dominant training-memory cost (RESEARCH_NOTES tail,
-        # dev/LTM_DESIGN_BRIEF.md Sec.2's capacity-probe note: "an LTM
+        # dev/design/LTM_DESIGN_BRIEF.md Sec.2's capacity-probe note: "an LTM
         # tensor that accumulates across MANY episodes inside one training
         # run is a second, likely worse instance of the same footprint
         # problem"). Detaching ``ltm`` after each passage's CONSOLIDATE

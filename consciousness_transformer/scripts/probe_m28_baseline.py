@@ -1,4 +1,4 @@
-"""Probe: M28.0 — the WordNet-only baseline audit (Step A, dev/SEMANTIC_MAPPING_PLAN.md).
+"""Probe: M28.0 — the WordNet-only baseline audit (Step A, dev/archive/SEMANTIC_MAPPING_PLAN.md).
 
 One table, one split policy: where the CURRENT signal set (synonym, antonym,
 similar, is_a, meronym, derivational, verb_group + lexname/attribute axes) tops

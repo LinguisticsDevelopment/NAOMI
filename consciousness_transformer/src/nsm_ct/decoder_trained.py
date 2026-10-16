@@ -1,7 +1,7 @@
 """The TRAINED reconstruction decoder (learned realizer).
 
 RESEARCH_NOTES.md "DECODER PLAN UPDATE" (lead, 2026-09-05) supersedes the
-Phase-1 deterministic-only plan in `dev/DECODER_DESIGN.md`: the decoder is now
+Phase-1 deterministic-only plan in `dev/archive/DECODER_DESIGN.md`: the decoder is now
 a small LEARNED model, trained SELF-SUPERVISED by RECONSTRUCTION and tested by
 ROUND-TRIP (autoencoder):
 
@@ -18,7 +18,7 @@ sense disambiguation, so this module never reads `sense_id`/candidate lists
 uses), and the node's realized surface word straight from `record["tokens"]`.
 
 NO-CONFAB, enforced by construction (the same discipline as `decoder.py`'s
-Phase-1 gate, `dev/DECODER_DESIGN.md` §4):
+Phase-1 gate, `dev/archive/DECODER_DESIGN.md` §4):
   - The decoder never has a free vocabulary distribution. Every step's output
     is one of (a) COPY one of the structure's own nodes' surface words, or
     (b) GENERATE from a small CLOSED function-word vocabulary mined from the

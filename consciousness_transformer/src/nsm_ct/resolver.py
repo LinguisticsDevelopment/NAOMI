@@ -1,4 +1,4 @@
-"""M53b: the resolver contract (dev/MIND_INTERFACE.md §3, dev/RESOLVER_BUILD_PLAN.md
+"""M53b: the resolver contract (dev/design/MIND_INTERFACE.md §3, dev/archive/RESOLVER_BUILD_PLAN.md
 Phase 2 "Agent 3") -- Track A (:class:`CorefHead`, a coref-specialized module) and
 Track B (:class:`SharedScorer`, one shared collapse mechanism meant to generalize to
 senses/parse-hypotheses in M54/M55) behind ONE interface, so
@@ -55,7 +55,7 @@ def query_candidates(memory: torch.Tensor, cand_entity: torch.Tensor,
 
     Shared by :class:`nsm_ct.clause_reactor.ClauseReactor` (the one call site that
     matters) and by tests, so the "loop over C is fine" design decision
-    (dev/RESOLVER_BUILD_PLAN.md Phase 2) lives in exactly one place.
+    (dev/archive/RESOLVER_BUILD_PLAN.md Phase 2) lives in exactly one place.
     """
     b, C, d = cand_entity.shape
     if C == 0:
@@ -67,7 +67,7 @@ def query_candidates_per_addr(memory: torch.Tensor, cand_query_entity: torch.Ten
                                cand_query_relation: torch.Tensor) -> torch.Tensor:
     """Like :func:`query_candidates`, but each candidate supplies its OWN
     relation, not one clause-level relation shared by every candidate --
-    M55a's per-candidate ``Addr`` register (dev/TRACK_C_DESIGN.md Sec 1.10:
+    M55a's per-candidate ``Addr`` register (dev/design/TRACK_C_DESIGN.md Sec 1.10:
     "WHICH (entity, relation) to query is itself part of what each [parse]
     hypothesis asserts"). ``cand_query_entity``/``cand_query_relation`` are
     both ``[B, C, d]``; returns ``[B, C, d]``, one ``em.query`` per
@@ -131,7 +131,7 @@ class CorefHead(Resolver):
     ``in_dim = 2*dim + FEATURE_DIM + 1``; with ``dim=32`` that's 71, hidden=24 ->
     1,753 params (well under the 20k budget; scales as O(dim), not O(dim^2)).
 
-    M56b (`dev/TRACK_C_DESIGN.md` §1.8, RESEARCH_NOTES M56): the membrane's v1
+    M56b (`dev/design/TRACK_C_DESIGN.md` §1.8, RESEARCH_NOTES M56): the membrane's v1
     candidate-set contract carried exactly one feature slot -- the MENTION's,
     broadcast identically to every candidate -- so a coref head had geometric
     access to "who is being asked about" but NOT to "what is candidate c's own
@@ -310,7 +310,7 @@ def make_resolver(track: str, dim: int, hidden: int = 128, *, use_cand_feature: 
 
 
 # ---------------------------------------------------------------------------
-# M54 -- sense collapse joins the same membrane (dev/RESOLVER_BUILD_PLAN.md
+# M54 -- sense collapse joins the same membrane (dev/archive/RESOLVER_BUILD_PLAN.md
 # Phase 3). Track A gets its OWN specialist (:class:`SenseHead`, the M34
 # ``sense_chooser`` architecture ported onto this contract) since M53's
 # CorefHead is coref-SPECIALIZED by design and not meant to generalize.
@@ -353,7 +353,7 @@ class SenseHead(Resolver):
     running thought-state) and like :class:`CorefHead`'s "no controller
     state" specialist design (Track A's whole argument is that a narrow,
     local-match head suffices; whatever it can't see is the point being
-    tested, not an oversight -- see ``dev/RESOLVER_BUILD_PLAN.md`` Phase 3's
+    tested, not an oversight -- see ``dev/archive/RESOLVER_BUILD_PLAN.md`` Phase 3's
     A-vs-B framing). With ``dim=32, hidden=32``: ``in_dim=96`` ->
     ``96*32+32=3,104`` -> ``32*1+1=33``; total 3,137 params (well under the
     20k budget, and smaller than M34's own 24.7k because ``dim`` here is 32
@@ -388,7 +388,7 @@ def make_sense_resolver(track: str, dim: int, hidden: int = 128) -> Resolver:
 # ---------------------------------------------------------------------------
 # M55b -- the garden-path (parse-hypothesis) collapse joins the same
 # membrane (RESEARCH_NOTES M55a's flagged caveat, M55b's redesign in
-# nsm_ct.curriculum2.GardenPathCurriculumGenerator, dev/TRACK_C_DESIGN.md
+# nsm_ct.curriculum2.GardenPathCurriculumGenerator, dev/design/TRACK_C_DESIGN.md
 # Sec 1.10). Track A gets its OWN specialist, :class:`RankHead`, following
 # :class:`SenseHead`'s pattern exactly (interact-based, param count
 # independent of candidate-set size); Track B reuses :class:`SharedScorer`
@@ -406,7 +406,7 @@ class RankHead(Resolver):
     vector (``ClauseBatch.hyp_cand_entity`` -- e.g. the homograph's own
     vector for the OBJECT reading, name_a's for the VERB reading; see
     ``clause_reactor._garden_path_steps``'s docstring: "candidate identity
-    IS the entity this reading's address is about") -- dev/TRACK_C_DESIGN.md
+    IS the entity this reading's address is about") -- dev/design/TRACK_C_DESIGN.md
     Sec 1.10 calls this the hypothesis's ``P.addr[i]``. ``mem_read`` is that
     SAME reading's per-candidate ``Addr`` readout
     (:func:`query_candidates_per_addr`, Sec 1.10's ``P.mem[i] =

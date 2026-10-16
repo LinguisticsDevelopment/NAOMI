@@ -1,4 +1,4 @@
-"""Tests for the Phase-1 decoder (dev/DECODER_DESIGN.md): rule-grounded
+"""Tests for the Phase-1 decoder (dev/archive/DECODER_DESIGN.md): rule-grounded
 short-answer realization, and the no-confabulation ablation gate (design §4.2)
 that makes M65's invariant executable — sever the memory->decoder link and the
 output MUST collapse to abstention, never fabricated content.

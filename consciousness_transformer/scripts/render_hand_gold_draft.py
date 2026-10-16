@@ -1,5 +1,5 @@
 """Render runs/hand_gold_draft.jsonl into the examples section of
-dev/HAND_GOLD_DRAFT.md, spliced in place between the BEGIN/END GENERATED
+dev/archive/HAND_GOLD_DRAFT.md, spliced in place between the BEGIN/END GENERATED
 EXAMPLES markers -- so the readable trees can never drift from the records.
 The prose around the markers is hand-written and is left untouched.
 """

@@ -1,9 +1,9 @@
 """Tests for the deterministic op library (nsm_ct.ops) -- the robustification
-pass + Track C instruction set described in dev/OP_LIBRARY_MAP.md. Each op's
+pass + Track C instruction set described in dev/design/OP_LIBRARY_MAP.md. Each op's
 algebraic property gets its own test; a composed-program test exercises
 several ops chained through a RegisterFile with a trace recorded, mirroring
 the shape a future executor's gold program would take
-(dev/TRACK_C_DESIGN.md Sec.1.5). No parser dependency -- synthetic-tensor
+(dev/design/TRACK_C_DESIGN.md Sec.1.5). No parser dependency -- synthetic-tensor
 tests, mirroring tests/test_instances.py's own isolation discipline.
 """
 
@@ -556,7 +556,7 @@ def test_register_file_write_does_not_mutate_prior_read():
 
 # ---------------------------------------------------------------------------
 # Composed program: write 3 facts -> query -> cleanup -> compare -> branch,
-# through a RegisterFile with a trace recorded (dev/TRACK_C_DESIGN.md's
+# through a RegisterFile with a trace recorded (dev/design/TRACK_C_DESIGN.md's
 # gold-program shape).
 # ---------------------------------------------------------------------------
 def test_composed_program_write_query_cleanup_compare_branch():

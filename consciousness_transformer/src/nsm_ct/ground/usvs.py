@@ -365,7 +365,7 @@ class USVS:
                           ) -> Tuple[List[str], str]:
         """`senses_of`, but for an INFLECTED surface form that is not itself
         a WordNet lemma (`senses_of("dogs") == []`, `senses_of("walked") ==
-        []` -- D5, `dev/HAND_GOLD_DRAFT.md`). Tries the raw surface first;
+        []` -- D5, `dev/archive/HAND_GOLD_DRAFT.md`). Tries the raw surface first;
         if that grounds nothing, falls back to WordNet's own morphological
         analyzer (`nltk.corpus.wordnet.morphy`) for noun/verb/adj and retries
         on the recovered lemma.
@@ -541,7 +541,7 @@ def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
         if max_senses is not None and k >= max_senses:
             break
         sense_ids.append(sid)
-        # Additive lemma-index widening only (dev/SPANISH_SWAP_FEASIBILITY.md
+        # Additive lemma-index widening only (dev/archive/SPANISH_SWAP_FEASIBILITY.md
         # Check 1): union OMW Spanish lemmas, keyed to this SAME sense_id, into
         # the lemma list. Grounding (weights below) never reads `lemmas` --
         # see the SENSE_W_GENUS comment above -- so this cannot perturb the
@@ -591,7 +591,7 @@ def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
     # above). Runs strictly AFTER `fp` is computed from `axes` + `meta`
     # above -- appending whole new sense rows here cannot perturb either, so
     # this is PROVABLY fingerprint-inert, the same guarantee the OMW Spanish
-    # lemma extension has (dev/SPANISH_GOLD_V2_STATS.md Task 1), just minting
+    # lemma extension has (dev/archive/SPANISH_GOLD_V2_STATS.md Task 1), just minting
     # brand-new sense ids instead of widening an existing one's lemma list
     # (WordNet has no synset for these words at all, so there is no existing
     # sense to widen). Each mints one sense id (`interj.<word>.01`) with the

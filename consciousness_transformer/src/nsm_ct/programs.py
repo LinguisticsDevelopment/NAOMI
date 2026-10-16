@@ -1,4 +1,4 @@
-"""EXECUTOR PHASE 1: the six gold programs as DATA (dev/EXECUTOR_DESIGN.md
+"""EXECUTOR PHASE 1: the six gold programs as DATA (dev/design/EXECUTOR_DESIGN.md
 Sec.1.1's frozen v0 register table), plus the mapping from a real
 :class:`~nsm_ct.clause_reactor.ClauseBatch` (row, step) to which of these six
 families the EXISTING pipeline implicitly runs there.
@@ -19,7 +19,7 @@ itself applies them (mutually exclusive per row: an inverse-query row is
 never also an addr-redirect row), and returns which of the six families that
 (row, step) is -- this function IS the "pipeline as one fixed program" claim:
 if it ever needs a seventh branch to stay exhaustive over a real batch, the
-claim is false and dev/EXECUTOR_DESIGN.md Sec.1.1's register table is
+claim is false and dev/design/EXECUTOR_DESIGN.md Sec.1.1's register table is
 incomplete.
 
 Two caveats already known from reading ``clause_reactor.py`` (see
@@ -27,7 +27,7 @@ Two caveats already known from reading ``clause_reactor.py`` (see
 discussion, not repeated here):
 
 - ``CAND_FOR`` (programs 4/6, step 1) is a NO-OP/pass-through in this
-  Executor: ``dev/OP_INVENTORY.md`` marks ``candidates_for``/``inverse_query``
+  Executor: ``dev/design/OP_INVENTORY.md`` marks ``candidates_for``/``inverse_query``
   as "offline-tested -- not yet the live batch-build path" -- every
   candidate set a real batch carries today was pre-enumerated by the
   CURRICULUM generator, not searched for live off ``V_desc`` at run time.
@@ -98,7 +98,7 @@ __all__ = [
 
 @dataclass(frozen=True)
 class Step:
-    """One row of dev/EXECUTOR_DESIGN.md Sec.1.1's register table: an op
+    """One row of dev/design/EXECUTOR_DESIGN.md Sec.1.1's register table: an op
     name, the register names it READS (``"state"`` is the clause-level GRU
     state -- not a Sec.1.1 register, called out there as such, kept as a
     literal string here rather than a fake register so a reader can tell
@@ -114,7 +114,7 @@ class Step:
 
 
 def _epilogue(x: str, *, write: bool) -> List[Step]:
-    """dev/EXECUTOR_DESIGN.md Sec.1.1's ``EPILOGUE-W[X]``/``EPILOGUE-Q[X]``
+    """dev/design/EXECUTOR_DESIGN.md Sec.1.1's ``EPILOGUE-W[X]``/``EPILOGUE-Q[X]``
     macro, expanded to its primitive ops. ``write=True`` -> EPILOGUE-W (ends
     in a write, ``TICK -> GATE/OVERWRITE/NEGATE -> WRITE -> RESPOND/RESPONSE
     -> HALT``); ``write=False`` -> EPILOGUE-Q (the same minus
@@ -143,7 +143,7 @@ def _epilogue(x: str, *, write: bool) -> List[Step]:
 
 
 # ---------------------------------------------------------------------------
-# The six gold programs, transcribed verbatim off dev/EXECUTOR_DESIGN.md
+# The six gold programs, transcribed verbatim off dev/design/EXECUTOR_DESIGN.md
 # Sec.1.1's table (T1-T3, the Phase-3 transfer tasks, are explicitly OUT of
 # Phase 1 scope -- "curricula not authored until Phase 3, after M59b").
 # ---------------------------------------------------------------------------
@@ -233,7 +233,7 @@ FAMILY_NAMES: Tuple[str, ...] = tuple(GOLD_PROGRAMS.keys())
 # off the SAME structural flags ClauseReactor._collapse itself branches on,
 # in the SAME priority order (mutually exclusive per row/step by
 # construction -- clause_reactor.py's own candidate-kind sets never overlap
-# on one row/step, verified by dev/EXECUTOR_DESIGN.md Sec.1.4's "candidate
+# on one row/step, verified by dev/design/EXECUTOR_DESIGN.md Sec.1.4's "candidate
 # families are mutually exclusive per row/step" claim).
 # ---------------------------------------------------------------------------
 def program_for_step(batch, t: int) -> List[str]:
@@ -280,7 +280,7 @@ def program_for_step_batch(batch) -> List[List[str]]:
 
 
 def family_of_step(batch, t: int) -> List[str]:
-    """EXECUTOR PHASE 2 (dev/EXECUTOR_DESIGN.md Sec.3's LOFO gate): the
+    """EXECUTOR PHASE 2 (dev/design/EXECUTOR_DESIGN.md Sec.3's LOFO gate): the
     per-(row) gold family at clause step ``t``, length ``B`` -- the name
     ``scripts/train_executor.py``'s LOFO splitter and
     :meth:`nsm_ct.executor.Executor.run_learned` key trace-loss masking

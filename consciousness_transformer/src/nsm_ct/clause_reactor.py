@@ -937,7 +937,7 @@ def _writeback_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]
 
 
 # M57c (instance atoms + definite-description referring expressions,
-# dev/MIND_INTERFACE.md's v2 addendum, CLAUDE.md's M57 memory-schema
+# dev/design/MIND_INTERFACE.md's v2 addendum, CLAUDE.md's M57 memory-schema
 # decision): an InstanceCurriculumGenerator episode (curriculum2.py --
 # gated on ``ep.meta["kind"] == "instance"``, a key no other generator
 # sets). Parser-free, sibling to :func:`_writeback_steps` for the SAME
@@ -952,7 +952,7 @@ def _writeback_steps(ep, resolver, codec: TPRCodec, cache: Dict[str, np.ndarray]
 # registry), NOT grounded from the codec's ``var:<name>`` hash. Two
 # instances sharing a name (the two-Marys premise) therefore mint to
 # genuinely DIFFERENT atoms (``inst:mary#1`` != ``inst:mary#2``) -- the
-# standing defect dev/MIND_INTERFACE.md's v2 addendum names explicitly.
+# standing defect dev/design/MIND_INTERFACE.md's v2 addendum names explicitly.
 #
 # World (fixed roles "a"/"b"/"c", matching InstanceCurriculumGenerator's
 # own bookkeeping so curriculum meta never needs to touch instance ids or
@@ -1981,7 +1981,7 @@ class ClauseBatch:
     cand_prior: Optional[torch.Tensor] = None    # [B, T, C]     structural prior (uniform v1)
     cand_feature: Optional[torch.Tensor] = None  # [B, T, F]     mention feature vector (0 elsewhere)
     cand_gold: Optional[torch.Tensor] = None     # [B, T]        long; gold candidate index, -1 elsewhere
-    # M56b (dev/TRACK_C_DESIGN.md §1.8 "the missing register"): each
+    # M56b (dev/design/TRACK_C_DESIGN.md §1.8 "the missing register"): each
     # CANDIDATE's own feature vector (membrane.EntityCandidateSet.
     # cand_features), as opposed to cand_feature above (the MENTION's,
     # broadcast). None whenever no EntityCandidateSet carried cand_features
@@ -2022,7 +2022,7 @@ class ClauseBatch:
     # MEASURED, not guessed -- see RESEARCH_NOTES M54b).
     sense_cand_subject: Optional[torch.Tensor] = None      # [B, T, d]  homograph event's SUBJECT var-atom (0 elsewhere)
     sense_cand_subject_rel: Optional[torch.Tensor] = None  # [B, T, d]  relation to query the subject under (0 elsewhere)
-    # M55a (dev/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a): the v1
+    # M55a (dev/design/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a): the v1
     # "parse hypothesis" candidate set (nsm_ct.membrane.HypothesisCandidateSet)
     # for a garden-path collapse step -- a THIRD, separate tensor group (same
     # rationale as sense_cand_* being separate from cand_*: a hypothesis
@@ -2069,7 +2069,7 @@ class ClauseBatch:
     # does, via :func:`build_clause_batch`).
     cand_forced_index: Optional[torch.Tensor] = None  # [B, T]  long; forced candidate index, -1 = not forced
     # M57c (instance atoms + definite-description referring expressions,
-    # dev/MIND_INTERFACE.md's v2 addendum): ONE new field, kept deliberately
+    # dev/design/MIND_INTERFACE.md's v2 addendum): ONE new field, kept deliberately
     # separate from every cand_* tensor above (same "fourth optional field
     # to guard" discipline the M57b fields already established) -- a batch
     # with no evidence-relation candidate set (every pre-M57c batch, and
@@ -2129,7 +2129,7 @@ class ClauseBatch:
     # never by :meth:`ClauseReactor.forward` itself (no arithmetic reads
     # this field -- it rides alongside the tensors, not through them).
     step_meta: Optional[List[List[Optional[dict]]]] = None  # [B][T] plain dicts
-    # M59a (episodic LTM, CLAUDE.md's "LTM decisions" / dev/LTM_DESIGN_BRIEF.md
+    # M59a (episodic LTM, CLAUDE.md's "LTM decisions" / dev/design/LTM_DESIGN_BRIEF.md
     # Sec.5 point 2 -- "identity linking through the EXISTING resolver
     # contract"): ONE new field, appended LAST (after step_meta) so every
     # pre-M59a POSITIONAL ``ClauseBatch(...)`` call site (build_clause_batch's
@@ -2150,7 +2150,7 @@ class ClauseBatch:
     # milestone builds, same "hand this to the next milestone" contract
     # ``membrane.EntityCandidateSet.from_ltm`` documents on its own field.
     cand_from_ltm: Optional[torch.Tensor] = None  # [B, T, C]  0/1, 0 elsewhere
-    # M60 (op-library integration, dev/OP_LIBRARY_MAP.md's ``recency`` row --
+    # M60 (op-library integration, dev/design/OP_LIBRARY_MAP.md's ``recency`` row --
     # RESEARCH_NOTES "M57 battery #3": recency-only referent cases, e.g. the
     # "ambiguous_name" instance/rich device, sit at chance): ONE new field,
     # appended LAST (after cand_from_ltm) so every pre-M60 POSITIONAL
@@ -2161,7 +2161,7 @@ class ClauseBatch:
     # each candidate set's ``mention_steps``/``mention_counts`` (see
     # membrane.EntityCandidateSet's own docstring paragraph) against the
     # step's own index -- deterministic, no learned parameters (centering-
-    # theory salience, dev/OP_INVENTORY.md's DNC temporal-link-style
+    # theory salience, dev/design/OP_INVENTORY.md's DNC temporal-link-style
     # ordering). ``None`` for every batch with no candidate set carrying
     # ``mention_steps`` at all -- the SAME "only if present" discipline
     # every optional field above establishes. Consumed by
@@ -2344,7 +2344,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
     byte-identity guarantee every other optional field here makes.
 
     M57c (instance atoms + definite-description referring expressions,
-    dev/MIND_INTERFACE.md's v2 addendum): an episode whose meta carries
+    dev/design/MIND_INTERFACE.md's v2 addendum): an episode whose meta carries
     ``kind == "instance"`` (``curriculum2.InstanceCurriculumGenerator``
     only) is routed WHOLESALE through :func:`_instance_steps` (see that
     function's own extensive docstring for the full design: instance atoms
@@ -2677,7 +2677,7 @@ def build_clause_batch(episodes, parser, resolver, codec: TPRCodec,
                     if cs.from_ltm is not None:
                         cand_from_ltm[i, t, :len(cs.candidates)] = torch.from_numpy(cs.from_ltm)
 
-        # M60 (op-library integration -- RECENCY, dev/OP_LIBRARY_MAP.md's
+        # M60 (op-library integration -- RECENCY, dev/design/OP_LIBRARY_MAP.md's
         # ``recency`` row): cand_recency, only allocated when at least one
         # EntityCandidateSet in this batch actually carries mention_steps
         # (_instance_steps/_rich_steps's overwrite/question candidate sets
@@ -2950,7 +2950,7 @@ class ClauseReactor(nn.Module):
         falsy (every batch without an instance inverse-query episode) is a
         no-op.
 
-    M59a (episodic LTM, CLAUDE.md's "LTM decisions" / dev/LTM_DESIGN_BRIEF.md
+    M59a (episodic LTM, CLAUDE.md's "LTM decisions" / dev/design/LTM_DESIGN_BRIEF.md
     Sec.5): :meth:`forward`'s new optional ``ltm`` argument -- when set, every
     READ in this class (the step ``mem_read``, the post-collapse re-read
     above, the entity-axis inverse read, and every read INSIDE this method:
@@ -3008,8 +3008,8 @@ class ClauseReactor(nn.Module):
         # Default ``None`` -- byte-identical to every pre-M57c.3 forward:
         # the whole block is skipped whenever this is ``None``.
         self.evidence_prior_beta = evidence_prior_beta
-        # M60 (op-library integration -- CLEANUP, dev/OP_LIBRARY_MAP.md's
-        # ``cleanup`` row / dev/OP_INVENTORY.md's "caution never gates
+        # M60 (op-library integration -- CLEANUP, dev/design/OP_LIBRARY_MAP.md's
+        # ``cleanup`` row / dev/design/OP_INVENTORY.md's "caution never gates
         # anything" gap): when ``True`` AND the model is in EVAL mode
         # (``not self.training`` -- "at eval only", never during training),
         # ``forward`` runs :func:`nsm_ct.ops.cleanup` over the final
@@ -3088,7 +3088,7 @@ class ClauseReactor(nn.Module):
         M55a's hypothesis branch (new) is arithmetically the ENTITY branch's
         twin, not the sense branch's: each candidate's per-candidate ``Addr``
         (``batch.hyp_cand_query_entity``/``hyp_cand_query_relation`` --
-        dev/TRACK_C_DESIGN.md Sec 1.10) is queried via
+        dev/design/TRACK_C_DESIGN.md Sec 1.10) is queried via
         :func:`~nsm_ct.resolver.query_candidates_per_addr` (the ENTITY
         branch's :func:`~nsm_ct.resolver.query_candidates` twin -- per-
         candidate relation instead of one clause-shared relation), and the
@@ -3516,7 +3516,7 @@ class ClauseReactor(nn.Module):
         # to float rounding, asserted in tests/test_ops_integration.py); the
         # value here is ``cleanup_margin``/``cleanup_abstain``, the
         # :data:`nsm_ct.ops.CAUTION`-gated "the mind may abstain" dial made
-        # real (dev/OP_INVENTORY.md's "caution never gates anything" gap).
+        # real (dev/design/OP_INVENTORY.md's "caution never gates anything" gap).
         # Default ``self.cleanup=False`` skips this block entirely --
         # byte-identical to pre-M60 ``out`` for every existing caller.
         if self.cleanup and not self.training:

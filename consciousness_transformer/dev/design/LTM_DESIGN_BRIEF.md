@@ -93,7 +93,7 @@ not a drop-in LTM for the current substrate.
 | **C. Hybrid (tensor recall + graph audit)** | Tensor is the fast-path LTM (as in A); graph is written IN PARALLEL, off the training critical path, purely for audit/identity-linking evidence — the graph never feeds the loss. | Linking done off the tensor (cosine, as A) but VERIFIED/logged against the graph's exact attribute index — a two-source check (a linking decision the tensor made can be audited exactly, not just trusted). | Same as A on the hot path (tensor ops only); graph write is an O(1) side effect per consolidation event, off the gradient path — no training-time cost added. | Same as A, with the graph available as a tie-breaker when the tensor's cosine margin is itself low (a genuine use for the graph beyond audit). | Best of both: tensor's `ProvenanceLog` (already built) for the fast path, graph edges for a redundant, exactly-queryable second copy. | Same capacity risk as A on the hot path; the graph gives a way to VALIDATE whether tensor capacity is degrading (compare tensor-answer vs graph-ground-truth as corpus size grows) — i.e., C turns "the capacity probe" into a standing regression instrument, not a one-off measurement. | Same curriculum as A, PLUS one extra metric for free: tensor-vs-graph agreement rate as a function of corpus size — this IS the capacity curve, generated as a byproduct instead of a separate probe. |
 | **D. (not recommended, recorded for completeness) Reuse `mind/knowledge.py` KnowledgeGraph directly** | Fully deterministic, already built, already measured (M1-M4). | Referent-node dedup by label — i.e., identity IS the string, the EXACT defect M57a's instance atoms were built to fix. | Cheap (graph query). | Truth-tagged clauses (`meta["truth"]`) give a form of abstention but not the four-form contract (candidate sets / margins) inv. #3 requires. | Native (meta dict per clause). | Untested at the entity-instance / attribute-fact schema; built for a 7-relation toy curriculum, not instance-keyed facts. | N/A — would require porting M57a's instance/attribute schema onto `MeaningGraph` nodes first, which is most of option B's build cost anyway, with none of option B's tensor-parity story. |
 
-Capacity probe (dev/CAPACITY_CURVE.md does not exist yet): what it must
+Capacity probe (dev/reports/CAPACITY_CURVE.md does not exist yet): what it must
 measure before A or C is trusted past a two-passage toy — recall accuracy
 (or resolver-linking accuracy) vs. (a) number of consolidated instances,
 (b) number of attribute facts per instance, (c) number of passages
@@ -218,5 +218,5 @@ Decisions the lead must make:
    consolidate op is TIER-GENERIC from day one (tier N → N+1 with a dial
    and an evidence criterion), so LTM→Truth later reuses the same code
    with `trust_truth` + a corroboration-count criterion.
-5. Capacity probe: DONE standalone (dev/CAPACITY_CURVE.md) before any
+5. Capacity probe: DONE standalone (dev/reports/CAPACITY_CURVE.md) before any
    consolidation training — resolved.

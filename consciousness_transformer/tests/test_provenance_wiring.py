@@ -1,5 +1,5 @@
 """Tests for M57d: wiring PROVENANCE into ClauseReactor's live reactor
-writes (dev/MIND_INTERFACE.md invariant #4, CLAUDE.md's M57 memory-schema
+writes (dev/design/MIND_INTERFACE.md invariant #4, CLAUDE.md's M57 memory-schema
 decision). See src/nsm_ct/provenance.py's own module docstring for the
 full design: ClauseReactor.forward's ``return_write_trace`` flag,
 ClauseBatch's ``step_meta`` field, and this module's record_writes/

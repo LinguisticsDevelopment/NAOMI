@@ -1,4 +1,4 @@
-"""EXECUTOR PHASE 1 (dev/EXECUTOR_DESIGN.md Sec.5's phase-0/1 row): the
+"""EXECUTOR PHASE 1 (dev/design/EXECUTOR_DESIGN.md Sec.5's phase-0/1 row): the
 register machine + the six gold programs (:mod:`nsm_ct.programs`) as data +
 the bootstrap anchor -- NO learned op/argument selection yet (Phase 2).
 
@@ -10,7 +10,7 @@ policy but operating at different granularity:
    GRANULARITY forward() itself operates at: one named op-stage call per
    CLAUSE STEP, over the WHOLE BATCH at once, with per-ROW behavior coming
    from the SAME ``torch.where``/mask arithmetic ``_collapse``/``forward``
-   already use (mirrors dev/EXECUTOR_DESIGN.md Sec.1.4's bootstrap trace
+   already use (mirrors dev/design/EXECUTOR_DESIGN.md Sec.1.4's bootstrap trace
    verbatim, op-stage for op-stage). This is what makes it possible to
    reproduce a batch whose rows follow DIFFERENT gold families (Sec.1.4:
    "candidate families are mutually exclusive per row/step, so a real trace
@@ -38,7 +38,7 @@ wraps ``entity_memory.query_entity`` -- see ``ops.py``'s own docstrings) --
 this is what makes the reproduction in (1) a real regression test of the
 op-dispatch layer, not a tautology.
 
-D1 (soft vs hard selection, CLAUDE.md/dev/EXECUTOR_DESIGN.md Sec.6): any
+D1 (soft vs hard selection, CLAUDE.md/dev/design/EXECUTOR_DESIGN.md Sec.6): any
 register whose type is ``"Addr"`` (a memory KEY) is selected HARD --
 straight-through argmax -- regardless of training/eval mode; ``Dist``/
 ``Scalar`` registers may be soft. ``Executor.hard_keys`` (default ``True``)
@@ -59,7 +59,7 @@ argmax collapse are the SAME arithmetic then) -- see this module's
 train-mode use, which Phase 2 (D1's "soft-vs-argmax delta at every gate"
 reporting requirement) has to resolve, not this milestone.
 
-D2 (control vs data path, CLAUDE.md/dev/EXECUTOR_DESIGN.md Sec.6): Phase 1
+D2 (control vs data path, CLAUDE.md/dev/design/EXECUTOR_DESIGN.md Sec.6): Phase 1
 has no learned op/arg selection at all (program membership is 100%
 determined by the batch's own structural flags via
 :func:`nsm_ct.programs.program_for_step`), so there is no ``OpSelect``/
@@ -101,7 +101,7 @@ reader of just this module sees them, not only the report):
    storage) is a Phase 2 need.
 3. K_max naming COLLISION: ``ops.PATIENCE`` (already shipped, default
    ``6``, cites "TRACK_C_DESIGN Sec.1.6's K_max=6") and
-   dev/EXECUTOR_DESIGN.md Sec.1.3's own "``K_max`` (default 12)" name the
+   dev/design/EXECUTOR_DESIGN.md Sec.1.3's own "``K_max`` (default 12)" name the
    SAME concept (the per-clause op-loop budget) with DIFFERENT numbers.
    Measured here (see :meth:`Executor.program_length`): every candidate-
    bearing gold program's op-LOOP length (QUERY.../TICK/GATE/OVERWRITE/
@@ -119,7 +119,7 @@ reader of just this module sees them, not only the report):
    over budget) before Phase 2 makes ``K_max`` a real training-time cutoff.
 4. Sense-collapse (M54) and hypothesis/garden-path-collapse (M55a) branches
    are OUT of Phase 1 scope -- no gold program in
-   dev/EXECUTOR_DESIGN.md Sec.1.1 covers them (the design doc's own
+   dev/design/EXECUTOR_DESIGN.md Sec.1.1 covers them (the design doc's own
    Sec.1.4 bootstrap-trace listing marks ``[sense]``/``[hyp]`` brackets as
    "Track A capabilities this trace must still reproduce but aren't among
    Sec.1.1's nine registers-frozen programs"). ``run()`` asserts neither
@@ -131,7 +131,7 @@ reader of just this module sees them, not only the report):
 5. ``CAND_FOR`` (programs 4/6, step 1) is a documented no-op/pass-through
    here, not a design flaw introduced by this milestone -- see
    ``programs.py``'s module docstring for why (``candidates_for`` is not
-   yet the live batch-build path, dev/OP_INVENTORY.md Sec.5).
+   yet the live batch-build path, dev/design/OP_INVENTORY.md Sec.5).
 """
 
 from __future__ import annotations
@@ -153,7 +153,7 @@ from .programs import Step, program_for_step
 
 __all__ = ["Executor"]
 
-# EXECUTOR PHASE 2: each family's op-loop ENTRY op (dev/EXECUTOR_DESIGN.md
+# EXECUTOR PHASE 2: each family's op-loop ENTRY op (dev/design/EXECUTOR_DESIGN.md
 # Sec.1.1's Step[0] per program) -- see src/nsm_ct/op_select.py's module
 # docstring point 1 for what this drives (OpSelect's gold target) and does
 # not drive (execution, which stays the SAME structural dispatch run()
@@ -292,7 +292,7 @@ class Executor:
             return_memory: bool = False, return_mem_read: bool = False,
             return_registers: bool = False, force_plain_fact: bool = False) -> Dict[str, torch.Tensor]:
         """Reproduce ``ClauseReactor.forward(batch, ltm=ltm, ...)``.
-        ``force_plain_fact`` (EXECUTOR PHASE 2, dev/EXECUTOR_DESIGN.md
+        ``force_plain_fact`` (EXECUTOR PHASE 2, dev/design/EXECUTOR_DESIGN.md
         Sec.3's LOFO floor arm -- "op selection frozen to the plain-fact
         program"): when ``True``, every candidate-collapse branch AND the
         inverse-query branch are skipped UNCONDITIONALLY regardless of what
@@ -652,7 +652,7 @@ class Executor:
                      dest_mode: str = "hard",
                      return_write_trace: bool = False,
                      return_memory: bool = False) -> Dict[str, torch.Tensor]:
-        """PHASE 2 (dev/EXECUTOR_DESIGN.md Sec.2/Sec.3). See
+        """PHASE 2 (dev/design/EXECUTOR_DESIGN.md Sec.2/Sec.3). See
         src/nsm_ct/op_select.py's module docstring for the two learned
         decisions (entry op, EMIT destination) this method trains, and
         this module's own D1/D2 paragraphs for the policy both obey.

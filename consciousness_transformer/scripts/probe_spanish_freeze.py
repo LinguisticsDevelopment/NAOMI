@@ -1,4 +1,4 @@
-"""Probe: the Spanish Freeze Test (dev/ROADMAP_LONG_TERM.md), perception side.
+"""Probe: the Spanish Freeze Test (dev/design/ROADMAP_LONG_TERM.md), perception side.
 
 Charter (the roadmap's own words): sense signatures are keyed to Princeton
 SYNSET IDs, not English strings (OMW links Spanish lemmas to the same

@@ -1,4 +1,4 @@
-"""Parser round 2 (dev/AURORA_SPRINT.md / RESEARCH_NOTES M58c's own "next
+"""Parser round 2 (dev/archive/AURORA_SPRINT.md / RESEARCH_NOTES M58c's own "next
 round" pointer): routes prose pronouns through the mind's membrane resolver
 instead of the parser's own deterministic guess, strips attribution frames
 around a quoted core clause, and adds a plain-OBJECT question template so

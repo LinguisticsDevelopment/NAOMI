@@ -112,7 +112,7 @@ ANTHROPIC_API_KEY=... python scripts/judge_parses.py \
     --backend haiku --batch --filter good
 
 # calibration with the real judge too (only runs if a key is set; otherwise
-# prints this exact command and skips, per dev/PARSE_JUDGE.md's own policy
+# prints this exact command and skips, per dev/archive/PARSE_JUDGE.md's own policy
 # of never asking for a key)
 ANTHROPIC_API_KEY=... python scripts/calibrate_judge.py --backend haiku
 ```
@@ -124,7 +124,7 @@ Measured `HaikuJudge` usage is printed by `judge_parses.py` after every run
 dollar estimate). Absent a live run in this environment (no
 `ANTHROPIC_API_KEY` set here), the estimate below is derived from the
 rendering length actually produced on 100 real gold records plus the fixed
-rubric/question text (`dev/PARSE_JUDGE.md`'s own numbers, not a live
+rubric/question text (`dev/archive/PARSE_JUDGE.md`'s own numbers, not a live
 measurement):
 
 - Rubric + question: ~1,600 chars (~400 tokens, fixed per request --

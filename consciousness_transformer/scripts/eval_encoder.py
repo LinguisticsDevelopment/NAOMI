@@ -1,5 +1,5 @@
 """Standalone candidate-set-recall eval for a trained encoder checkpoint
-(dev/ENCODER_MODEL_SPEC.md S6 / dev/ENCODER_IO_CONTRACT_V2.md S7).
+(dev/design/ENCODER_MODEL_SPEC.md S6 / dev/design/ENCODER_IO_CONTRACT_V2.md S7).
 
 Recomputes the SAME held-out split the checkpoint's training run used (same
 seed + split sizes, so dev/test are exactly the records the model never
@@ -71,7 +71,7 @@ def main():
                                      commit_margin=args.commit_margin)
         random_metrics = em.evaluate(model, recs, usvs, pos_vocab, ckpt["hash_buckets"],
                                       beam_width=args.beam_width, k=args.k, policy="random", rng=rng)
-        # dev/AUDIT_2026-10-15.md / dev/K12_BENCHMARK_FIX.md: the POS-heuristic
+        # dev/reports/AUDIT_2026-10-15.md / dev/reports/K12_BENCHMARK_FIX.md: the POS-heuristic
         # cheat baseline, by default, next to every encoder number (CLAUDE.md's
         # "every capability curriculum ships with its cheat-baseline at floor").
         heuristic_metrics = evaluate_heuristic(recs)

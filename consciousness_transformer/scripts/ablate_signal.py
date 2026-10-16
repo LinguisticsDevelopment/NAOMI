@@ -1,4 +1,4 @@
-"""Run the Step B ablation for one signal module (dev/SEMANTIC_MAPPING_PLAN.md).
+"""Run the Step B ablation for one signal module (dev/archive/SEMANTIC_MAPPING_PLAN.md).
 
 A signal lives at ``nsm_ct.ground.signal_<name>`` and exposes
 ``extras(vocab, graph) -> dict`` with any of: close_extra (list of word pairs),

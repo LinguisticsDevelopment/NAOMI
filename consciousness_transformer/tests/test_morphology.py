@@ -1,5 +1,5 @@
 """Tests for M57e: morphology signals (number + gender subtypes) flowing
-parser -> membrane -> memory attributes -- dev/AURORA_SPRINT.md's
+parser -> membrane -> memory attributes -- dev/archive/AURORA_SPRINT.md's
 2026-08-11 reprioritization item, the last piece of the M57 "comprehensive
 memory" milestone.
 

@@ -6,9 +6,9 @@ hand-draft proposals (`ENCODER_GRAMMAR_FORMAT_PROPOSAL.md` on branches
 formalism, updated to the **candidates-first world** locked by the CORE
 BOUNDARY DECISION and the Appraisal grounding DECISION (both lead, 2026-09-04).
 
-Read `dev/ENCODER_IO_CONTRACT_V2.md` first — this format's only job is to
+Read `dev/design/ENCODER_IO_CONTRACT_V2.md` first — this format's only job is to
 *license* the structures that contract serializes, and every `licenses`
-fragment below is written in its vocabulary. Read `dev/UNIVERSAL_ENCODER_DESIGN.md`
+fragment below is written in its vocabulary. Read `dev/design/UNIVERSAL_ENCODER_DESIGN.md`
 §2.4 (action space) and §11 (the pivot) for how a grammar becomes an encoder
 *input* rather than a program.
 

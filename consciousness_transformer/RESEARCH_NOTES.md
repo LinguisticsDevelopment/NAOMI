@@ -1550,7 +1550,7 @@ are the GRU controller family + the drive MLP, exactly matching the thesis
 re-lands on the right seam: sense → *placed* M19–M25 coordinate → meaning-graph
 filler handles (not the deleted meaning-bag channel).
 
-### M28.0 — the WordNet-only baseline audit (Step A of dev/SEMANTIC_MAPPING_PLAN.md, MEASURED)
+### M28.0 — the WordNet-only baseline audit (Step A of dev/archive/SEMANTIC_MAPPING_PLAN.md, MEASURED)
 
 Plans now live in `dev/` (`SEMANTIC_MAPPING_PLAN.md` middle-term,
 `ROADMAP_LONG_TERM.md` reference) — per the user: tightly scoped immediate steps,
@@ -1679,7 +1679,7 @@ signature → meaning-graph filler handles.
 
 ### M30 — the WSD gate on SemCor (USVS viability test #1; MEASURED — robust honest negative)
 
-The first integration gate (dev/INTEGRATION_PLAN.md): do USVS sense signatures
+The first integration gate (dev/archive/INTEGRATION_PLAN.md): do USVS sense signatures
 carry enough signal to disambiguate in context? Tested **training-free** by
 design (`scripts/probe_wsd_semcor.py`) so the number measures the artifact, not
 a model: context = leave-one-out mean of the sentence's other annotated words'
@@ -2702,7 +2702,7 @@ A 3, B 1 (pronoun round overturned on capacity appeal), senses to neither
 
 ### M56 — Track C design spike: verdict "more research"; and a hole blown in M53's halo (DESIGN + one measured finding)
 
-`dev/TRACK_C_DESIGN.md` (629 lines, Sonnet research agent, no code
+`dev/design/TRACK_C_DESIGN.md` (629 lines, Sonnet research agent, no code
 touched). Op algebra formalized (7 ops explain the whole A/B record:
 mem_query, feature_match, prior, interact, score, select, emit; register
 model; K_max=6 halting; gold programs written out for both solved tasks).
@@ -3583,7 +3583,7 @@ M63.1c (branch encoder-handgold-v1, commit 5317d13, opus): 33 hand-authored
 gold records for the 3 families the teacher structurally can't emit
 (imperative synth-subject, interjection appraisal, elision-with-context) +
 dev/ENCODER_IO_CONTRACT_ADDENDUM.md (the context_ref construct) +
-dev/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md (encoder-reference grammar format, 6
+dev/design/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md (encoder-reference grammar format, 6
 rules). Key design result: point-to-context = "select a node from the
 retrieved MEMORY-candidate set", exactly symmetric to grounding = "select a
 sense from the retrieved SENSE-candidate set" -> ONE retrieval-select action
@@ -3713,7 +3713,7 @@ five are ironed out.
 Autonomous pipeline (philosophy locked: encoder = candidate-lattice
 transducer, comprehension disambiguates). Status as it progresses:
 - STEP 1 DONE + MERGED (2714a2f): canonical candidates-first I/O contract
-  dev/ENCODER_IO_CONTRACT_V2.md. Verified: lattice replaces committed tree
+  dev/design/ENCODER_IO_CONTRACT_V2.md. Verified: lattice replaces committed tree
   (all senses/node + top-k forest + unresolved slots); ONE unified
   `grounding` construct (types sense/reference/elision share candidates+
   retrieval envelope; source lexicon/self/context/memory); imperative synth
@@ -3721,7 +3721,7 @@ transducer, comprehension disambiguates). Status as it progresses:
   utterance_kind:"interjection"; connotation is comprehension-side); eval =
   candidate-SET recall (sense/structure/slot recall). Design doc §11 added.
 - STEP 2 (gold regen -> candidate lattice) + STEP 4 (decoder design): FIRED.
-- STEP 4 DONE + MERGED (07b1bbe): dev/DECODER_DESIGN.md. Phase-1 rule-grounded
+- STEP 4 DONE + MERGED (07b1bbe): dev/archive/DECODER_DESIGN.md. Phase-1 rule-grounded
   short-answer realizer (sense_id->lemma via sense_lemmas, entity book,
   grammar-forward word order); abstention ("I don't know") first-class;
   no-confab ABLATION gate (sever memory->decoder => output collapses to
@@ -3738,7 +3738,7 @@ transducer, comprehension disambiguates). Status as it progresses:
   {type:sense, candidates:[...]} (NO committed pick), utterance_kind,
   reference slots. Data kept on branch. (Minor: some corpus header lines leak
   as junk records -- cleanup deferred, non-blocking.)
-- STEP 3 DONE + MERGED (a081a80): dev/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md
+- STEP 3 DONE + MERGED (a081a80): dev/design/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md
   canonical, candidates-first. Rules LICENSE + emit candidate/unresolved slots,
   never disambiguate; action_map to encoder actions; interjection SIMPLIFIED to
   ground-only (appraisal/FEEL/reaction-index DROPPED); utterance_kind has no
@@ -3752,7 +3752,7 @@ transducer, comprehension disambiguates). Status as it progresses:
   (sever memory->decoder => "I don't know.", zero content-word leak).
   Reuses membrane.py RELATION_TEMPLATES/render_fact; new realize() API +
   sense_id->lemma + entity book + abstention fallback. DECODER READY.
-- STEP 5 DONE + MERGED (64488c2): dev/ENCODER_MODEL_SPEC.md. Sound:
+- STEP 5 DONE + MERGED (64488c2): dev/design/ENCODER_MODEL_SPEC.md. Sound:
   never-argmax (candidate-pick not representable), sub-MB controller
   (~0.33M params), CPU-trainable smoke <=10min, loss = candidate-SET
   emission (copy gold set), eval = candidate-set recall, concrete impl
@@ -3812,7 +3812,7 @@ comprehension model into.
 
 ### Spanish grammar-SWAP-test feasibility: READY (2026-09-04)
 
-Probe (branch spanish-swap-feasibility, dev/SPANISH_SWAP_FEASIBILITY.md).
+Probe (branch spanish-swap-feasibility, dev/archive/SPANISH_SWAP_FEASIBILITY.md).
 The swap test (train encoder EN, then feed Spanish grammar+senses+text to the
 SAME weights) is a DATA swap, no encoder change -- confirmed feasible.
 - CHECK 1 (USVS resolves Spanish): NO out-of-box (English lemmas only), but
@@ -3879,7 +3879,7 @@ so it doesn't confound. Then the STOP-action fix to finish structure.
 Ran the ENGLISH-only-trained encoder (encoder_full.pt, frozen) on 208
 never-seen SPANISH lattice records; Spanish senses+grammar swapped into the
 memory input; same USVS (fp e0daef638b640dd5 intact, perro->dog.n.01), same
-metric, no retrain. Branch encoder-swap-test (45f88ff), dev/SWAP_TEST_RESULTS.md.
+metric, no retrain. Branch encoder-swap-test (45f88ff), dev/reports/SWAP_TEST_RESULTS.md.
 
 RESULT (Spanish, n=208):
 - SENSE recall (candidate-set / grounding-SITE recall): 1.000 (308/308) vs
@@ -4274,7 +4274,7 @@ function-word glue, DROP round-trip-exact as the goal (cheap, on-thesis, but
 capped by quality). Reduced-realization makes connectives clean BY CONSTRUCTION
 (drop gap-content, keep gap-function) but does NOT fix the wrong-constituent
 quality issue. Either way a GOLD-QUALITY AUDIT is needed -> dispatched.
-Connects to dev/ENCODER_DATA_STRATEGY.md: the lever is tree RICHNESS/CORRECTNESS,
+Connects to dev/archive/ENCODER_DATA_STRATEGY.md: the lever is tree RICHNESS/CORRECTNESS,
 not sentence count. HELD for lead decision; encoder-data research done (6564173).
 
 ### GOLD-QUALITY AUDIT (director, hand + objective over all 985) (2026-09-06)
@@ -4493,7 +4493,7 @@ DISPATCHED (parallel): (A) gold-qa -- per-source parse-quality of new fairy-tale
 sources (yield/node-quality vs Burgess/Alice control) + forest-width distribution
 + margin-pruning test (branch gold-qa). (B) hand-gold-draft (OPUS) -- schema-
 writability gate + existing-hand-gold check + ~16 draft hard-case candidates for
-lead review (branch hand-gold-draft, dev/HAND_GOLD_DRAFT.md). Both analysis/draft
+lead review (branch hand-gold-draft, dev/archive/HAND_GOLD_DRAFT.md). Both analysis/draft
 only; nothing merged. Gate the 16K gold build on QA (source-filter + prune) first.
 
 ### GOLD QA + HAND-GOLD DRAFT results (2026-09-07)
@@ -4509,7 +4509,7 @@ QA (branch gold-qa, runs/gold_qa_report.txt):
   Andersen/McGuffey 58-62% vs Burgess control 82%; suspect-role 26-28% vs 18%.
   But parse-FAILURES = lost gold not noise; OK trees only modestly noisier; top-1
   pruning cleans further. REC: keep all sources.
-HAND-GOLD (branch hand-gold-draft, dev/HAND_GOLD_DRAFT.md, OPUS):
+HAND-GOLD (branch hand-gold-draft, dev/archive/HAND_GOLD_DRAFT.md, OPUS):
 - SCHEMA IS HUMAN-WRITABLE (yes). Human writes ~4-10 lines (surface, clause
   split, utterance_kind, predicate, role labels, filler = W()/PRIME()/CTX()/
   MEM()); scripts/hand_gold.py fills tokens/pos(real tagger)/candidates/indices/
@@ -4540,7 +4540,7 @@ NEXT: implement decisions 1-6 (one routine) -> lead red-pens HAND_GOLD_DRAFT.md 
 run Gold_Expand.ipynb -> train encoder on ~3-5K subset -> build memory-decoder.
 
 ### INDEPENDENT AUDIT (Opus, fresh eyes, 2026-09-08) — CONTINUE WITH CHANGES
-Full report: dev/AUDIT_2026-09-08.md. Lead asked "are we pouring energy into a
+Full report: dev/archive/AUDIT_2026-09-08.md. Lead asked "are we pouring energy into a
 bad direction?" Verdict: direction defensible, but the plan spends the week on
 the LEAST uncertain half and bundles three uncontrolled changes (top-1 prune +
 richer extraction + 11x corpus) into one retrain. Load-bearing findings:
@@ -4764,7 +4764,7 @@ agreement ("a optic"). (3) Fillers are semantically random ("the poultry
 planted the physician") -- fine for structure, but the judge/encoder should
 not be trained to accept them as MEANINGFUL; keep them for structure only.
 
-### K-12 CORPUS SCOUT MERGED (Sonnet routine, 2026-09-08) -> dev/K12_CORPUS_SCOUT.md
+### K-12 CORPUS SCOUT MERGED (Sonnet routine, 2026-09-08) -> dev/reports/K12_CORPUS_SCOUT.md
 19 sources evaluated (license, grades, questions?, format, fetch, parse yield).
 TOP-3: (1) FairytaleQA -- Apache 2.0, 278 stories / 10,580 expert-written
 free-text QA pairs with an explicit/implicit tag (explicit = answer in the
@@ -4796,9 +4796,9 @@ whenever the surface form is not itself a WordNet lemma. build_encoder_gold_v2
 now uses the lemmatized lookup, but v2 and v3-small gold were NOT rebuilt (the
 arms are mid-run on them; both share the defect, so the v2-vs-v3 comparison
 stays fair). NEXT gold build (v4) inherits the fix automatically; expect
-materially more sense-grounded nodes. See dev/HARD_GOLD_GEN_STATS.md v2 notes.
+materially more sense-grounded nodes. See dev/archive/HARD_GOLD_GEN_STATS.md v2 notes.
 
-### LLM PARSE JUDGE MERGED (Sonnet routine, 2026-09-08) -> dev/PARSE_JUDGE.md
+### LLM PARSE JUDGE MERGED (Sonnet routine, 2026-09-08) -> dev/archive/PARSE_JUDGE.md
 src/nsm_ct/tree_render.py (render_tree: sentence + one `[kind] PREDICATE=w
 (gloss) | ROLE=w (gloss)` line per clause, <= 600 chars; the complement probe
 now uses it), src/nsm_ct/parse_judge.py (Judge interface; HaikuJudge =
@@ -4811,7 +4811,7 @@ swap and phantom-role corruptions; SUBJECT/OBJECT swaps are invisible to
 structure by design -- the Haiku judge exists for those); encoder complement
 16.9% good. Cost estimate ~$0.79 per 1K trees standard, ~$0.40 batched (from
 rendering length, not measured). Haiku calibration NOT run: no API key in the
-sandbox; command in dev/PARSE_JUDGE.md for the lead.
+sandbox; command in dev/archive/PARSE_JUDGE.md for the lead.
 SIDE-FINDING (consistent with the lemmatization gap): in v2 gold, top-tree
 PREDICATE groundings are entity 1,113 vs sense 820 -- most past-tense verbs
 were never sense-grounded. v4-small (dispatched, lemmatized) should invert that.
@@ -4916,7 +4916,7 @@ Question: at equal gold quality, does variety (margin/all) beat top-1, and does
 keep-best rescue top-1? Plus the first per-family numbers on the hard-gold
 held-out templates (v4b_788_hard).
 
-### FAIRYTALEQA CONVERTED + CHARACTERIZED (2026-09-08) -> dev/FAIRYTALEQA_STATS.md
+### FAIRYTALEQA CONVERTED + CHARACTERIZED (2026-09-08) -> dev/reports/FAIRYTALEQA_STATS.md
 Branch k12-fairytaleqa merged: fetch_k12 --source fairytaleqa (277/278 stories,
 4,082 sections, 10,556 QA rows, Apache 2.0, raw data gitignored; manifest +
 10-story sample committed), convert_fairytaleqa.py (--parse none|sample|all),
@@ -5184,7 +5184,7 @@ Episode, replacing the parser in corpus.py) measured on the 1,923 entity-
 answer FairytaleQA items (branch encoder-episodes).
 
 ### INDEPENDENT AUDIT #2 (Opus, fresh eyes, 2026-10-15) -- CONTINUE WITH CHANGES: freeze encoder, front-load comprehension
-Full report: consciousness_transformer/dev/AUDIT_2026-10-15.md. Five weeks idle
+Full report: consciousness_transformer/dev/reports/AUDIT_2026-10-15.md. Five weeks idle
 since 09-09; the two routines dispatched then (encoder-gold-v5-k12,
 encoder-episodes) never pushed and the trigger list was empty -- lost.
 Load-bearing findings:
@@ -5213,7 +5213,7 @@ MEASUREMENT (learned encoder stays default per 09-08 decision until a number
 says otherwise).
 
 ### GOLD COVERAGE AUDIT (2026-10-15) -> branch gold-coverage-audit
-Full report: consciousness_transformer/dev/GOLD_COVERAGE_AUDIT.md. Reproduces
+Full report: consciousness_transformer/dev/reports/GOLD_COVERAGE_AUDIT.md. Reproduces
 + sharpens audit #2 finding 3. All 10,225 records, torch-free
 (scripts/audit_gold_coverage.py): mean VERB coverage 53.5%, 40.5% of records
 <50% VERB-covered; 31.9% of 8,009 multi-verb records collapse to ONE clause.
@@ -5259,10 +5259,10 @@ multi-verb-collapsed-to-1-clause 30.6% -> 16.4%. Re-judged the 33
 original DROPPED_CLAUSE cases: 14 FULL, 4 PARTIAL, 15 still dropped
 (parse-cap sentences + the out-of-scope subordinate-embedding bucket +
 a few orphaned verb nodes with no edges at all). 0 newly wrong. Full
-writeup: dev/CLAUSE_EXTRACTION_FIX.md.
+writeup: dev/reports/CLAUSE_EXTRACTION_FIX.md.
 
 ### K-12 BENCHMARK FIXED + CHEAT BASELINES (2026-10-15) -> branch k12-bench-fix
-Full report: consciousness_transformer/dev/K12_BENCHMARK_FIX.md. Fixed
+Full report: consciousness_transformer/dev/reports/K12_BENCHMARK_FIX.md. Fixed
 convert_fairytaleqa.py's distractor policy: --distractors same-passage
 (default) draws distractors from the episode's OWN passage instead of other
 stories, so passage-presence no longer identifies the answer. Gate (substring

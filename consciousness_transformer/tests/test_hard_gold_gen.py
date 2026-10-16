@@ -1,6 +1,6 @@
 """Gates for the generated hard-case gold (lead directive, 2026-09-08):
 `scripts/gen_hard_gold.py` + `src/nsm_ct/hard_gold_templates.py` generalize
-the 16 hand-authored drafts (`dev/HAND_GOLD_DRAFT.md`) into typed-slot
+the 16 hand-authored drafts (`dev/archive/HAND_GOLD_DRAFT.md`) into typed-slot
 templates filled at scale. Every generated record must pass the same gate
 the drafts pass (`hand_gold.check_record`); this file checks the GENERATOR's
 own invariants -- family coverage, split disjointness, determinism.

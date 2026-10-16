@@ -1,7 +1,7 @@
 """The learned universal encoder: a candidate-lattice emitter.
 
-Builds to `dev/ENCODER_MODEL_SPEC.md` (+ `dev/ENCODER_IO_CONTRACT_V2.md`,
-`dev/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md`). This module is a *token -> tree-SET
+Builds to `dev/design/ENCODER_MODEL_SPEC.md` (+ `dev/design/ENCODER_IO_CONTRACT_V2.md`,
+`dev/design/ENCODER_GRAMMAR_FORMAT_PROPOSAL.md`). This module is a *token -> tree-SET
 transducer*: a small retrieval-conditioned, grammar-constrained neural
 transition parser. It NEVER argmaxes a sense, an attachment, or an antecedent
 -- there is no head anywhere in this file that scores one sense/candidate
@@ -591,7 +591,7 @@ class EncoderModel(nn.Module):
         self._start_action_id = len(ACTION_TYPES)
 
         # -- opt-in USVS-space auxiliary head (lead directive 2026-09-08;
-        # dev/USVS_GRADED_SCORING.md S5.4: "the nearest hook would be a new
+        # dev/reports/USVS_GRADED_SCORING.md S5.4: "the nearest hook would be a new
         # Linear(controller_hidden, d_axes) head trained against the gold
         # node's USVS vector"). Projects the SAME controller hidden state
         # `h` the other heads read into the graded metric's node-vector
@@ -659,11 +659,11 @@ class EncoderModel(nn.Module):
         n_missing = len(missing) - len(bad_missing)
         if n_missing:
             print(f"[encoder] checkpoint has no usvs_head ({n_missing} params) -- "
-                  f"pre-dates the USVS auxiliary head (dev/USVS_GRADED_SCORING.md S5.4); "
+                  f"pre-dates the USVS auxiliary head (dev/reports/USVS_GRADED_SCORING.md S5.4); "
                   f"head left at its random initialization.")
 
     def node_vectors(self, feats: SentenceFeatures, tree: Optional[dict]) -> List[Dict]:
-        """Diagnostic only (dev/USVS_GRADED_SCORING.md S5.4 part B) -- NOT
+        """Diagnostic only (dev/reports/USVS_GRADED_SCORING.md S5.4 part B) -- NOT
         used for decoding, which is unchanged (`beam_decode`/`_apply_action`
         never call this). Replays `tree` -- a NORMALIZED-shape tree:
         `beam_decode`'s own output shape, or a gold tree already run through
@@ -731,7 +731,7 @@ class EncoderModel(nn.Module):
 TERMINAL_ACTION_TYPES: Tuple[str, ...] = ("CLOSE_CLAUSE", "STOP")
 
 #: Actions that EMIT A TREE NODE (lead directive 2026-09-08;
-#: dev/USVS_GRADED_SCORING.md S5.4 -- "the encoder has NO node embedding and
+#: dev/reports/USVS_GRADED_SCORING.md S5.4 -- "the encoder has NO node embedding and
 #: NEVER scores sense candidates"). Per `linearize_tree`, every node --
 #: PREDICATE or role alike -- is created by exactly one of these three,
 #: dispatched purely on `grounding.type`:
@@ -760,13 +760,13 @@ def _action_type_class_weights(terminal_weight: float) -> Optional[torch.Tensor]
 @dataclass
 class SoftTargetConfig:
     """Opt-in USVS/semantics-graded soft CE targets (the lead directive of
-    2026-09-08; dev/USVS_GRADED_SCORING.md S5). `None` anywhere a
+    2026-09-08; dev/reports/USVS_GRADED_SCORING.md S5). `None` anywhere a
     `soft_targets` argument is accepted means "the original one-hot loss",
     and that path is byte-identical to before this existed.
 
     Only heads whose CLASSES carry semantic structure are softened:
     `role` (the role-confusion matrix), `gtype` and `source` (the
-    equivalences dev/ENCODER_IO_CONTRACT_V2.md S4/S4.3 states outright).
+    equivalences dev/design/ENCODER_IO_CONTRACT_V2.md S4/S4.3 states outright).
     The action-type / clause-kind / prime heads stay HARD by design -- see
     the design doc S5.4, which also records WHY there is no sense-candidate
     head to soften (the encoder never scores one candidate against another)
@@ -801,7 +801,7 @@ def teacher_force_loss(model: EncoderModel, feats: SentenceFeatures, steps: List
     role/gtype/source heads -- see `SoftTargetConfig`.
 
     `node_targets` + `aux_usvs_weight` (lead directive 2026-09-08;
-    dev/USVS_GRADED_SCORING.md S5.4) -- the opt-in USVS-space auxiliary
+    dev/reports/USVS_GRADED_SCORING.md S5.4) -- the opt-in USVS-space auxiliary
     loss. `node_targets` is `node_targets_for_steps(steps, feats, usvs)`
     (one gold `usvs_graded.node_vector`, or `None`, per entry of `steps`,
     ALREADY computed by the caller -- this function does no USVS lookups

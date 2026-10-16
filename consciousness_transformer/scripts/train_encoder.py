@@ -1,4 +1,4 @@
-"""Teacher-forced training of the candidate-lattice encoder (dev/ENCODER_MODEL_SPEC.md).
+"""Teacher-forced training of the candidate-lattice encoder (dev/design/ENCODER_MODEL_SPEC.md).
 
 Trains `nsm_ct.encoder_model.EncoderModel` on `runs/encoder_gold_v2.jsonl`
 with the spec S3.2 loss (action-type CE + typed-arg CE + grounding-type CE +
@@ -6,7 +6,7 @@ source CE -- there is no sense-selection term anywhere) under the S3.3
 grammar-constrained action mask. Reports the S2.3 smoke wall-clock and the
 S6 candidate-set recall on a held-out, forest-width-stratified split.
 
-dev/AUDIT_2026-09-08.md finding 7 + recommendation (c): also supports an
+dev/archive/AUDIT_2026-09-08.md finding 7 + recommendation (c): also supports an
 exact optimizer-step budget (--max-steps) and a shared, gold-file-independent
 held-out sentence set (--holdout-file) so scripts/run_encoder_arms.sh can run
 arms that separate MORE data from CLEANER data at equal optimization budget,
@@ -114,7 +114,7 @@ def main():
     ap.add_argument("--k", type=int, default=6)
     ap.add_argument("--max-steps", type=int, default=None,
                      help="(item A) train for exactly N optimizer steps (gradient updates); "
-                          "--epochs becomes a ceiling only. dev/AUDIT_2026-09-08.md finding 7: "
+                          "--epochs becomes a ceiling only. dev/archive/AUDIT_2026-09-08.md finding 7: "
                           "fixed-EPOCH runs give bigger n_train arms more gradient updates for "
                           "free, confounding 'more data' with 'more optimization'.")
     ap.add_argument("--subset-seed", type=int, default=None,
@@ -166,7 +166,7 @@ def main():
                      help="(item B) stop training if --eval-every dev rank-1 F1 hasn't improved "
                           "for this many evals in a row. No effect without --eval-every.")
     ap.add_argument("--loss", choices=("default", "usvs-soft"), default="default",
-                     help="(lead directive 2026-09-08; dev/USVS_GRADED_SCORING.md S5) "
+                     help="(lead directive 2026-09-08; dev/reports/USVS_GRADED_SCORING.md S5) "
                           "'usvs-soft' replaces the one-hot CE target on the role / "
                           "grounding-type / retrieval-source heads with a graded "
                           "distribution over the role-confusion matrix and the contract's "
@@ -177,7 +177,7 @@ def main():
                      help="softmax temperature for --loss usvs-soft's target rows "
                           "(smaller = closer to one-hot).")
     ap.add_argument("--aux-usvs", type=float, default=0.0,
-                     help="(lead directive 2026-09-08; dev/USVS_GRADED_SCORING.md S5.4) "
+                     help="(lead directive 2026-09-08; dev/reports/USVS_GRADED_SCORING.md S5.4) "
                           "opt-in USVS-space auxiliary loss weight W. At every node-emitting "
                           "step (GROUND / EMIT_SYNTH_SLOT / EMIT_UNRESOLVED_SLOT), projects the "
                           "controller state through the new EncoderModel.usvs_head and adds "
@@ -189,7 +189,7 @@ def main():
                      help="which held-out metrics the final eval reports: 'edge' = the "
                           "original binary edge-F1 only; 'graded'/'both' additionally "
                           "report the USVS-graded P/R/F on the SAME decoded forests "
-                          "(dev/USVS_GRADED_SCORING.md). Keep-best selection always uses "
+                          "(dev/reports/USVS_GRADED_SCORING.md). Keep-best selection always uses "
                           "the edge-F1 dev curve, so arms stay comparable to arms-1/2.")
     ap.add_argument("--extra-eval", default=None,
                      help="(item D) comma list of additional gold files to evaluate the saved "
@@ -463,7 +463,7 @@ def main():
                                   beam_width=args.beam_width, k=args.k, policy="random", rng=rng)
     print(f"[{time.time()-t0:6.1f}s] {random_target_name} (random baseline): {random_metrics}")
 
-    # dev/AUDIT_2026-10-15.md / dev/K12_BENCHMARK_FIX.md: CLAUDE.md's "every
+    # dev/reports/AUDIT_2026-10-15.md / dev/reports/K12_BENCHMARK_FIX.md: CLAUDE.md's "every
     # capability curriculum ships with its cheat-baseline at floor" law --
     # the POS-heuristic cheat baseline now prints next to every encoder
     # number by default, not just on request (scripts/cheat_encoder_baseline.py).

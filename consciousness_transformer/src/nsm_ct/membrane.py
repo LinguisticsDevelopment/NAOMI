@@ -1,12 +1,12 @@
 """The perception<->mind membrane (M53a): candidate-set types + the data.
 
-dev/MIND_INTERFACE.md's v1 IN table says perception never guesses: anything
+dev/design/MIND_INTERFACE.md's v1 IN table says perception never guesses: anything
 it cannot resolve deterministically (a pronoun's antecedent, a homograph's
 sense, a low-margin parse) crosses the boundary as a **candidate set** --
 a list of options with structural priors -- rather than a forced choice.
 This module defines that shape (dataclasses + numpy only, **no torch**: the
 membrane types are perception-side, the resolver that will consume them is
-the next agent's model-side work, dev/RESOLVER_BUILD_PLAN.md Phase 2
+the next agent's model-side work, dev/archive/RESOLVER_BUILD_PLAN.md Phase 2
 "Agent 3") plus the deterministic pieces M53a needs to exercise the pipeline
 end to end:
 
@@ -53,7 +53,7 @@ class Candidate:
     prior. Priors are uniform in v1 (nothing here is learned -- perception
     stays untrained and honest about uncertainty).
 
-    M55a (dev/TRACK_C_DESIGN.md Sec 1.10, the "M55 gold program" gap):
+    M55a (dev/design/TRACK_C_DESIGN.md Sec 1.10, the "M55 gold program" gap):
     ``query_entity``/``query_relation`` -- a candidate's OWN memory-query
     address. Sec 1.10 found that for a garden-path parse hypothesis, WHICH
     (entity, relation) is even worth querying is itself part of what that
@@ -110,7 +110,7 @@ class EntityCandidateSet(CandidateSet):
     is each CANDIDATE's own deterministic feature vector (same recipe as
     ``feature``/:func:`mention_feature_vector`, applied to the candidate's
     own key instead of the mention's surface word). This is the register
-    `dev/TRACK_C_DESIGN.md` §1.7/§1.8 finds MISSING from the v1 membrane --
+    `dev/design/TRACK_C_DESIGN.md` §1.7/§1.8 finds MISSING from the v1 membrane --
     without it, nothing in the candidate-set contract carries a candidate's
     OWN gender/person signal, so a coref head can only memorize a
     closed-world name->response lookup, not geometrically compare the
@@ -132,7 +132,7 @@ class EntityCandidateSet(CandidateSet):
     address-vs-value split this flag drives.
 
     M57c (instance atoms + definite-description referring expressions,
-    dev/MIND_INTERFACE.md's v2 addendum): ``evidence_relation`` -- default
+    dev/design/MIND_INTERFACE.md's v2 addendum): ``evidence_relation`` -- default
     ``None``, byte-identical for every pre-M57c caller -- names an
     ATTRIBUTE (``"kind"``, ``"gender"``, ...; grounded downstream as
     ``codec.filler_vec("attr:" + evidence_relation)``, the SAME convention
@@ -169,7 +169,7 @@ class EntityCandidateSet(CandidateSet):
     field and :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse`'s entity
     branch for where this is consumed.
 
-    M59a (episodic LTM, CLAUDE.md's "LTM decisions" / dev/LTM_DESIGN_BRIEF.md
+    M59a (episodic LTM, CLAUDE.md's "LTM decisions" / dev/design/LTM_DESIGN_BRIEF.md
     Sec.5 point 2, "identity linking through the EXISTING resolver
     contract"): ``from_ltm`` -- default ``None``, byte-identical for every
     pre-M59a caller (every M53a/M53b/M57b/M57c set built before this
@@ -191,7 +191,7 @@ class EntityCandidateSet(CandidateSet):
     the SAME per-candidate feature-register path M57c.3's
     ``evidence_interaction`` scalar already uses.
 
-    M60 (op-library integration, dev/OP_LIBRARY_MAP.md's ``recency`` row --
+    M60 (op-library integration, dev/design/OP_LIBRARY_MAP.md's ``recency`` row --
     RESEARCH_NOTES "M57 battery #3": recency-only referent cases, e.g. the
     ``ambiguous_name`` device tested here, sit at chance because nothing in
     the register carries discourse-order salience at all -- see
@@ -363,7 +363,7 @@ def entity_registry(context_sentences: List[str], parser) -> List[str]:
     """Entity atoms (proper names) introduced by ``context_sentences``, in
     order of first mention -- the STM-side registry the v1 "entity" IN row
     needs ("candidates come from prior context sentences",
-    dev/RESOLVER_BUILD_PLAN.md Phase 2). Pronoun subjects are never
+    dev/archive/RESOLVER_BUILD_PLAN.md Phase 2). Pronoun subjects are never
     registered as candidates themselves (an unresolved mention can't stand
     in as someone else's antecedent). LTM candidates are out of scope for
     v1 by design (MIND_INTERFACE.md §5) -- this only ever looks at the
@@ -400,7 +400,7 @@ def pronoun_entity_candidate_set(pronoun: str, registry: List[str], *,
     n = max(len(registry), 1)
     candidates = [Candidate(key=name, prior=1.0 / n) for name in registry]
     gold_index = registry.index(gold_antecedent) if gold_antecedent in registry else None
-    # M56b: per-candidate feature register (dev/TRACK_C_DESIGN.md §1.8's
+    # M56b: per-candidate feature register (dev/design/TRACK_C_DESIGN.md §1.8's
     # "GAP: no such op/register exists today") -- each candidate's OWN
     # deterministic feature vector, exactly mention_feature_vector applied
     # to the candidate's key (candidate keys are surface-name strings, same
@@ -497,7 +497,7 @@ def sense_candidate_set(word: str, *, gold_sense: Optional[str] = None,
 # ---------------------------------------------------------------------------
 # M55a: garden-path parse-hypothesis candidate sets -- the v1 IN table's
 # "parse hypothesis" row (scripts/probe_m55_hyp_survey.py's survey; see
-# dev/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a). Reuses the generic
+# dev/design/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a). Reuses the generic
 # CandidateSet shape exactly as M53a's own docstring promised M55 would, but
 # is the FIRST candidate kind whose members carry their own per-candidate
 # query address (Candidate.query_entity/query_relation above) instead of a
@@ -544,7 +544,7 @@ def hypothesis_candidate_set(readings: List[Tuple[str, float, str, str]], *,
 
 
 # ---------------------------------------------------------------------------
-# Spanish Freeze Test (dev/ROADMAP_LONG_TERM.md): Spanish 3rd-person pronoun
+# Spanish Freeze Test (dev/design/ROADMAP_LONG_TERM.md): Spanish 3rd-person pronoun
 # feature profiles.
 #
 # NOT added into ``_PRONOUN_EXTRA`` above: that dict has an asserted
@@ -612,7 +612,7 @@ def mention_feature_vector_es(word: str) -> np.ndarray:
 
 # ---------------------------------------------------------------------------
 # M57e (morphology signals -- number + gender subtypes,
-# dev/AURORA_SPRINT.md's 2026-08-11 reprioritization: "morphological
+# dev/archive/AURORA_SPRINT.md's 2026-08-11 reprioritization: "morphological
 # signals (number/gender subtypes) flowing parser->membrane->memory
 # attributes"): a small, explicit surface-form -> (gender, number, person)
 # lookup, English AND Spanish, the LOCKED-DESIGN table this task names.

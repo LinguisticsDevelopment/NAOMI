@@ -12,7 +12,7 @@ Written against the **two-part gold decision** (lead, 2026-09-07,
 encoder exists for appear in **zero** teacher gold and must be hand-fabricated.
 The gate on that plan was: **is the schema human-writable?**
 
-Schema authority: `dev/ENCODER_IO_CONTRACT_V2.md` (canonical v2). Honored
+Schema authority: `dev/design/ENCODER_IO_CONTRACT_V2.md` (canonical v2). Honored
 throughout: the **CORE BOUNDARY** decision (the encoder emits a candidate
 lattice and commits to nothing), the **Appraisal grounding** decision (no
 emotion node, no reaction-sense inventory — connotation is comprehension-side),

@@ -1,7 +1,7 @@
 """Tests for M53a: the membrane types (nsm_ct.membrane) + how
 nsm_ct.clause_reactor.build_clause_batch carries pronoun candidate sets
-through the batch. See dev/MIND_INTERFACE.md and
-dev/RESOLVER_BUILD_PLAN.md Phase 2.
+through the batch. See dev/design/MIND_INTERFACE.md and
+dev/archive/RESOLVER_BUILD_PLAN.md Phase 2.
 """
 
 from __future__ import annotations
@@ -273,7 +273,7 @@ def test_to_and_subset_carry_cand_fields_when_present():
 
 
 # ---------------------------------------------------------------------------
-# M56b: the per-candidate feature register (dev/TRACK_C_DESIGN.md §1.8's
+# M56b: the per-candidate feature register (dev/design/TRACK_C_DESIGN.md §1.8's
 # "GAP: no such op/register exists today" -- EntityCandidateSet.cand_features
 # + ClauseBatch.cand_feature_per_candidate).
 # ---------------------------------------------------------------------------

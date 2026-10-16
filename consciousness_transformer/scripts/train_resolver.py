@@ -1,6 +1,6 @@
 """Resolver training script: M53's pronoun collapse (Track A CorefHead vs
 Track B SharedScorer vs --gold-binding, the M53a placeholder ceiling) EXTENDED
-for M54's sense collapse (dev/RESOLVER_BUILD_PLAN.md Phase 3): the SAME two
+for M54's sense collapse (dev/archive/RESOLVER_BUILD_PLAN.md Phase 3): the SAME two
 tracks now ALSO resolve homograph senses in the same forward pass (Track A
 gets a SECOND, sense-specialist head -- SenseHead; Track B reuses its ONE
 SharedScorer instance for both candidate kinds, ``resolver is sense_resolver``
@@ -311,7 +311,7 @@ def build_m54b_curriculum(n_episodes: int, seed: int):
 
 
 def build_m55a_curriculum(n_episodes: int, seed: int):
-    """M55a's mix (RESEARCH_NOTES M55a, dev/TRACK_C_DESIGN.md Sec 1.10): 50%
+    """M55a's mix (RESEARCH_NOTES M55a, dev/design/TRACK_C_DESIGN.md Sec 1.10): 50%
     old L1-6 + 50% the NEW garden-path curriculum
     (curriculum2.generate_garden_path_episodes) -- mirrors
     :func:`build_m54b_curriculum`'s exact "isolate the one new capability"
@@ -470,7 +470,7 @@ def garden_path_binding_stats(out, batch, va_eps):
 
 
 def _held_out_name_pools(held_out_female: str, held_out_male: str):
-    """M56b (dev/TRACK_C_DESIGN.md §1.8/Risk #4, RESEARCH_NOTES M56): split
+    """M56b (dev/design/TRACK_C_DESIGN.md §1.8/Risk #4, RESEARCH_NOTES M56): split
     curriculum2's fixed pronoun name pools into a TRAIN pool (every name
     except the two held out) and a HELD-OUT pool (exactly the two held-out
     names) -- disjoint by construction. Raises loudly on a typo'd name
@@ -912,7 +912,7 @@ def main() -> None:
                           "CorefHead (old: use_cand_feature=False, and fixed: use_cand_feature=True) "
                           "on pronoun-only episodes from a TRAIN name pool, evaluates RESOLVER BINDING "
                           "ACCURACY on a train-name val split AND a disjoint held-out-name-only batch, "
-                          "prints the 2x2 table (see dev/TRACK_C_DESIGN.md §1.8, RESEARCH_NOTES M56/M56b)")
+                          "prints the 2x2 table (see dev/design/TRACK_C_DESIGN.md §1.8, RESEARCH_NOTES M56/M56b)")
     ap.add_argument("--held-out-female", default="sandra",
                      help="--held-out-name-ablation only: which curriculum2._FEMALE_NAMES entry to hold out")
     ap.add_argument("--held-out-male", default="bill",

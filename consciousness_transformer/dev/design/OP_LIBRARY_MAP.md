@@ -2,7 +2,7 @@
 
 `src/nsm_ct/ops.py` (library) + `tests/test_ops.py` (54 tests). Library-only
 milestone -- nothing below is wired into `clause_reactor.py` yet; this is
-the plan for the LATER integration milestone. `dev/OP_INVENTORY.md` row
+the plan for the LATER integration milestone. `dev/design/OP_INVENTORY.md` row
 names in the third column.
 
 | op (`ops.py`) | plugs into (file:function) | OP_INVENTORY row / gap closed | battery subset to move on integration |

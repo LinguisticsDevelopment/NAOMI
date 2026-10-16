@@ -52,7 +52,7 @@ def main():
     ap.add_argument("--k", type=int, default=8)
     ap.add_argument("--split", choices=("train", "dev", "test"), default="test")
     ap.add_argument("--metric", choices=("edge", "graded", "both"), default="edge",
-                     help="(lead directive 2026-09-08; dev/USVS_GRADED_SCORING.md) 'edge' = "
+                     help="(lead directive 2026-09-08; dev/reports/USVS_GRADED_SCORING.md) 'edge' = "
                           "the original binary edge-F1 report only. 'graded'/'both' ALSO print "
                           "the USVS-graded P/R/F table, computed on the SAME decoded forests "
                           "(nothing is re-decoded, no existing number changes).")
@@ -131,7 +131,7 @@ def main():
 # whichever single tree `_best_tree_overlap` selected.
 # ---------------------------------------------------------------------------
 
-# The ledger's (dev/CURRENT_STATE.md, dev/AUDIT_2026-09-08.md) previously
+# The ledger's (dev/CURRENT_STATE.md, dev/archive/AUDIT_2026-09-08.md) previously
 # reported best-of-8 numbers for THIS checkpoint (run-2, post aliasing-fix).
 # NOTE: the `rescore_prev.txt`/`rescore_output.txt` file fetched by the
 # setup step is a STALE re-score of the run-1 checkpoint (commit 921f8af,
@@ -217,7 +217,7 @@ def part_a_report(model, recs, usvs, pos_vocab, ckpt, best8_agg, args) -> None:
          "(should be 0 -- k only truncates beam_decode's already-sorted output)")
 
     emit("\nreproduction check vs ledger's previously reported best-of-{} numbers "
-         "(dev/CURRENT_STATE.md, dev/AUDIT_2026-09-08.md; NOT the stale "
+         "(dev/CURRENT_STATE.md, dev/archive/AUDIT_2026-09-08.md; NOT the stale "
          "runs/rescore_prev.txt, which re-scored the pre-aliasing-fix run-1 "
          "checkpoint):".format(args.k))
     for name, prev, now in (
@@ -246,7 +246,7 @@ def part_a_report(model, recs, usvs, pos_vocab, ckpt, best8_agg, args) -> None:
     if want_graded:
         emit("\n" + "-" * 78)
         emit("USVS-GRADED re-score of the SAME decoded forests "
-             "(dev/USVS_GRADED_SCORING.md; graded_F is NOT comparable in LEVEL to edge_F1 "
+             "(dev/reports/USVS_GRADED_SCORING.md; graded_F is NOT comparable in LEVEL to edge_F1 "
              "-- read it against the random-tree floor, see the design doc S2.1)")
         emit("-" * 78)
         emit("| decode view                  | graded_P | graded_R | graded_F | clause_struct | overall |")

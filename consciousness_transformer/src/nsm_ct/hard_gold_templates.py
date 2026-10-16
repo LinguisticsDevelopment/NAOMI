@@ -1,5 +1,5 @@
 """Typed-slot templates for hard-case gold generation (lead directive,
-2026-09-08): the 16 hand-authored drafts in `dev/HAND_GOLD_DRAFT.md` /
+2026-09-08): the 16 hand-authored drafts in `dev/archive/HAND_GOLD_DRAFT.md` /
 `scripts/build_hand_gold_draft.py` prove the v2 schema is human-writable for
 the constructions the deterministic teacher can never produce gold for
 (imperatives, interjections, elision/fragments, additive/focus, quantity
@@ -113,7 +113,7 @@ OBL_PRON_POOL = ["him", "her", "them", "us"]
 
 # v4 widening (`quantity`): the original 4-word pool meant every "{QUANT}
 # !"/"{QUANT} ." -shaped template collided on one of exactly 4 surface
-# strings regardless of which template produced it (dev/HARD_GOLD_GEN_STATS.md
+# strings regardless of which template produced it (dev/archive/HARD_GOLD_GEN_STATS.md
 # v2 SS9, "quantity's known template-surface-collision issue") -- widened to
 # every other bare quantifier that grounds via `senses_of_surface` ("would"/
 # "could"-style modals do NOT ground this way, but ordinary quantity words
@@ -188,7 +188,7 @@ VI_BASE_CURATED = [
     "wander", "travel", "return",
 ]
 
-# Irregular-past table, hand curated (D5, dev/HAND_GOLD_DRAFT.md: regular
+# Irregular-past table, hand curated (D5, dev/archive/HAND_GOLD_DRAFT.md: regular
 # "-ed" forms are almost never their own WordNet lemma, so a *generated*
 # "wanted"/"asked"/"helped" pool would fail the ground-filter wholesale;
 # irregular pasts that happen to double as a noun/adjective lemma --
@@ -669,7 +669,7 @@ _reg(Template("imp_vt_obj_bang", "imperative", {"VT": "VT", "N": "N"},
            roles=[("SUBJECT", PRIME("YOU")), ("OBJECT", W(v["N"]))])])))
 
 # NOT expressible with the current schema, so deliberately SKIPPED (see
-# dev/HARD_GOLD_GEN_STATS.md v3 addendum): `let 's {VT} the {N} .` needs a
+# dev/archive/HARD_GOLD_GEN_STATS.md v3 addendum): `let 's {VT} the {N} .` needs a
 # synthesized first-person-PLURAL subject, but `encoder_model.PRIMES` only
 # admits "YOU" and "I" (D3) -- a `PRIME("WE")` filler would train as the
 # catch-all `<UNK_PRIME>` bucket, which is not a real gold target, not a

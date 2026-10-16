@@ -1,4 +1,4 @@
-"""Gate for the v4b fix (`dev/ENCODER_GOLD_V4B_SMALL_STATS.md`): v4-small's
+"""Gate for the v4b fix (`dev/archive/ENCODER_GOLD_V4B_SMALL_STATS.md`): v4-small's
 `senses_of_surface` lemmatized every inflected surface form through
 WordNet's `morphy` regardless of part of speech, which is POS-BLIND --
 morphy has no notion of "this token is doing grammar, not naming a thing",

@@ -384,7 +384,7 @@ def test_run_arm_new_tracks_execute_on_m54b_mix(track):
 
 
 # ---------------------------------------------------------------------------
-# 6. M56b: the held-out-name ablation (dev/TRACK_C_DESIGN.md §1.8/Risk #4,
+# 6. M56b: the held-out-name ablation (dev/design/TRACK_C_DESIGN.md §1.8/Risk #4,
 #    RESEARCH_NOTES M56/M56b) -- scripts/train_resolver.py's
 #    _held_out_name_pools + run_held_out_name_ablation.
 # ---------------------------------------------------------------------------

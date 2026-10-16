@@ -3,7 +3,7 @@ teacher-forced op-selection convergence, the six-family corpus builder,
 the LOFO splitter, oracle/floor arm equivalence, and a SHORT (smoke-scale,
 non-gating) end-to-end LOFO run.
 
-Per dev/EXECUTOR_DESIGN.md's own rule (CLAUDE.md: "Smoke-scale results
+Per dev/design/EXECUTOR_DESIGN.md's own rule (CLAUDE.md: "Smoke-scale results
 NEVER gate curriculum validity"), the end-to-end LOFO test at the bottom
 PRINTS its numbers and asserts only that the machinery runs end-to-end
 without crashing -- it does NOT assert a GO/KILL threshold.
@@ -225,7 +225,7 @@ def test_d1_hard_dest_matches_argmax_regardless_of_soft_distribution():
 
 
 def test_d1_addr_write_violation_masking_mechanism():
-    """dev/EXECUTOR_DESIGN.md Sec.1.3's <=1-WRITE invariant, applied to a
+    """dev/design/EXECUTOR_DESIGN.md Sec.1.3's <=1-WRITE invariant, applied to a
     LEARNED (adversarial) op sequence -- op_select.mask_second_write masks
     and COUNTS rather than raising (contrast with Executor.
     execute_step_program's assertion-based Tier-2 mechanism, Phase 1)."""

@@ -1,7 +1,7 @@
 """Tests for M54: sense collapse joins the same membrane.
 
-Covers dev/MIND_INTERFACE.md's v1 "value" IN row and
-dev/RESOLVER_BUILD_PLAN.md Phase 3 -- nsm_ct.membrane's SenseCandidateSet,
+Covers dev/design/MIND_INTERFACE.md's v1 "value" IN row and
+dev/archive/RESOLVER_BUILD_PLAN.md Phase 3 -- nsm_ct.membrane's SenseCandidateSet,
 nsm_ct.resolver's SenseHead (Track A) + SharedScorer reused unchanged
 (Track B), and nsm_ct.clause_reactor's batch-build sense packing +
 _collapse extension. Mirrors tests/test_membrane.py's and

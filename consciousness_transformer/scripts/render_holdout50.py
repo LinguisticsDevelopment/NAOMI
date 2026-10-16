@@ -1,5 +1,5 @@
 """Render the first 50 holdout sentences' gold trees in a compact, readable
-form for the hand audit (dev/GOLD_COVERAGE_AUDIT.md section 2). Scratch tool,
+form for the hand audit (dev/reports/GOLD_COVERAGE_AUDIT.md section 2). Scratch tool,
 not part of the committed audit script -- stdlib only.
 """
 import json

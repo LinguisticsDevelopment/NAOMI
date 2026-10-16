@@ -590,8 +590,8 @@ def generate_scaled_episodes(n: int, seed: int = 0, template_set: str = "AB",
 # ---------------------------------------------------------------------------
 # M52 -- multi-arg TRANSFER curriculum (give/hand/pass/take:
 # AGENT/OBJECT/RECIPIENT/SOURCE/PLACE). The curriculum half of the M52
-# plumbing prerequisite for the resolver work (dev/MIND_INTERFACE.md,
-# dev/RESOLVER_BUILD_PLAN.md Phase 1); the reactor half is
+# plumbing prerequisite for the resolver work (dev/design/MIND_INTERFACE.md,
+# dev/archive/RESOLVER_BUILD_PLAN.md Phase 1); the reactor half is
 # :mod:`nsm_ct.clause_reactor`'s per-role step unrolling
 # (``_context_steps``/``_queried_role``).
 #
@@ -775,7 +775,7 @@ def generate_transfer_episodes(n: int, seed: int = 0, num_options: int = 4) -> L
 # ---------------------------------------------------------------------------
 # M53a -- pronoun-binding curriculum, ANTI-RECENCY BY DESIGN.
 #
-# dev/MIND_INTERFACE.md's v1 "entity" IN row + dev/RESOLVER_BUILD_PLAN.md
+# dev/design/MIND_INTERFACE.md's v1 "entity" IN row + dev/archive/RESOLVER_BUILD_PLAN.md
 # Phase 2: a pronoun's true antecedent must NOT be recoverable by "pick the
 # most recently introduced entity" alone, or the curriculum would let a
 # resolver (or a non-resolver) win by a shortcut that has nothing to do with
@@ -996,7 +996,7 @@ def generate_pronoun_episodes(n: int, seed: int = 0, num_options: int = 4, *,
 
 def nearest_entity_baseline(episodes: List[Episode]) -> Dict[str, float]:
     """The scripted NEAREST-ENTITY coreference baseline
-    (dev/RESOLVER_BUILD_PLAN.md Phase 2's data-design check): resolve every
+    (dev/archive/RESOLVER_BUILD_PLAN.md Phase 2's data-design check): resolve every
     pronoun to the MOST RECENTLY introduced entity (name_b -- the second
     "went to" sentence), predict that entity's place, score against the
     episode's actual (gender-resolved) gold answer. Reads ``ep.meta``
@@ -1247,7 +1247,7 @@ def generate_writeback_episodes(n: int, seed: int = 0, num_options: int = 4, *,
 
 # ---------------------------------------------------------------------------
 # M57c -- instance atoms + definite-description referring expressions
-# (dev/MIND_INTERFACE.md's v2 addendum, CLAUDE.md's M57 memory-schema
+# (dev/design/MIND_INTERFACE.md's v2 addendum, CLAUDE.md's M57 memory-schema
 # decision): the two-Marys curriculum.
 #
 # World, every episode: THREE person instances, roles fixed "a"/"b"/"c"
@@ -1313,7 +1313,7 @@ def generate_writeback_episodes(n: int, seed: int = 0, num_options: int = 4, *,
 # machinery (nsm_ct.clause_reactor._instance_steps's question branch),
 # exercising the identical resolution mechanism at READ time that the
 # overwrite step exercises at WRITE time -- the unification
-# dev/MIND_INTERFACE.md's addendum promises. Answer: the OVERWRITE value
+# dev/design/MIND_INTERFACE.md's addendum promises. Answer: the OVERWRITE value
 # if target == referent (answerable only via a correct redirect +
 # overwrite, then a correct redirect + read), else the target's OWN
 # baseline value (the redirect-free control condition). ``stale_attr``
@@ -1500,7 +1500,7 @@ def generate_instance_episodes(n: int, seed: int = 0, num_options: int = 4, *,
 
 # ---------------------------------------------------------------------------
 # RICH-EPISODE curriculum (the "stop requiring minimal episodes" priority,
-# CLAUDE.md's 2026-08-30 reprioritization / dev/AURORA_SPRINT.md): a direct
+# CLAUDE.md's 2026-08-30 reprioritization / dev/archive/AURORA_SPRINT.md): a direct
 # generalization of M57c's two-Marys world (InstanceCurriculumGenerator,
 # fixed 3 entities / 1 overwrite statement) to N entities (3-8, sampled per
 # episode) and K referring/overwrite statements (1-4, sampled per episode),
@@ -1737,9 +1737,9 @@ class RichEpisodeGenerator:
         self.min_referring, self.max_referring = min_referring, max_referring
         self.min_attrs, self.max_attrs = min_attrs, max_attrs
         self.inverse_frac = inverse_frac
-        # M57e (morphology signals, dev/AURORA_SPRINT.md's 2026-08-11
+        # M57e (morphology signals, dev/archive/AURORA_SPRINT.md's 2026-08-11
         # reprioritization): fraction of episodes that additionally mint a
-        # PLURAL group referent (the DRT move, dev/MIND_INTERFACE.md's v2
+        # PLURAL group referent (the DRT move, dev/design/MIND_INTERFACE.md's v2
         # addendum) from an explicit coordination sentence -- see the
         # "optional PLURAL group" block in :meth:`_episode` for the full
         # mechanism. Default ``0.0`` -- opt-in, like ``inverse_frac`` --
@@ -1890,11 +1890,11 @@ class RichEpisodeGenerator:
         for stmt in statements:
             stmt["gold_instance_id"] = registry_ids[stmt["referent"]]
 
-        # -- optional PLURAL group (M57e, dev/AURORA_SPRINT.md's 2026-08-11
+        # -- optional PLURAL group (M57e, dev/archive/AURORA_SPRINT.md's 2026-08-11
         # reprioritization "morphological signals (number/gender subtypes)
         # flowing parser->membrane->memory attributes"): an explicit
         # coordination sentence ("A and B went to the park .") mints a NEW
-        # group discourse referent (the DRT move, dev/MIND_INTERFACE.md's v2
+        # group discourse referent (the DRT move, dev/design/MIND_INTERFACE.md's v2
         # addendum) holding attr:number=pl plus one attr:member fact per
         # member (nsm_ct.clause_reactor._rich_steps mints it and writes
         # those facts -- see that function), followed by a plural-pronoun
@@ -2092,7 +2092,7 @@ def generate_rich_episodes(n: int, seed: int = 0, num_options: int = 4, *,
 # src/nsm_ct/ltm.py's module docstring ("Interface contract for the
 # curriculum agent") for the binding contract this generator's output must
 # satisfy -- nothing here builds LTM, this is the SHAPE the curriculum has to
-# hand back -- and dev/LTM_DESIGN_BRIEF.md Sec.5 for the locked LTM design
+# hand back -- and dev/design/LTM_DESIGN_BRIEF.md Sec.5 for the locked LTM design
 # this milestone tests.
 #
 # A DOCUMENT is an ORDERED list of PASSAGES: Episodes sharing one
@@ -2778,7 +2778,7 @@ def association_only_baseline(episodes: List[Episode], dim: int = 64) -> Dict[st
 
 
 # ---------------------------------------------------------------------------
-# M55a: the garden-path curriculum (dev/TRACK_C_DESIGN.md Sec 1.10,
+# M55a: the garden-path curriculum (dev/design/TRACK_C_DESIGN.md Sec 1.10,
 # RESEARCH_NOTES M55a). Built ONLY from the ambiguity shape
 # scripts/probe_m55_hyp_survey.py's survey proved real: "{n} can {h} ."
 # produces an EXACT structural-score tie (margin 0.0) between two
@@ -3149,7 +3149,7 @@ def garden_path_association_baseline(episodes: List[Episode], dim: int = 64) -> 
 
 
 # ===========================================================================
-# Spanish Freeze Test (dev/ROADMAP_LONG_TERM.md "The Spanish Freeze Test")
+# Spanish Freeze Test (dev/design/ROADMAP_LONG_TERM.md "The Spanish Freeze Test")
 # ===========================================================================
 # Append-only from here down: nothing above this line is touched. Perception-
 # side, curriculum-scale surface templates for the L1-6-equivalent PLACE/MOVE

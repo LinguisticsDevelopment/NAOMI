@@ -56,7 +56,7 @@ mostly-memorized shape recall. This pass widens all four the same way.
   existing `FOR` role for the `"to me"` PP, same abstraction precedent as
   `PLACE` covering both `"in"` and `"on"`).
 - **`quantity`: 8 -> 20 templates, PLUS the real fix — `QUANT_POOL` widened
-  4 -> 18 words.** `dev/HARD_GOLD_GEN_STATS.md` v2 §9 already diagnosed the
+  4 -> 18 words.** `dev/archive/HARD_GOLD_GEN_STATS.md` v2 §9 already diagnosed the
   root cause: every `"{QUANT} !"`/`"{QUANT} ."`-shaped template collided on
   one of exactly 4 possible strings (the old pool was `more`/`less`/
   `enough`/`all`), so whichever template ran first claimed a surface and its
@@ -537,7 +537,7 @@ in its own §9 ("unfinished / out of scope"):
    `usvs.senses_of(w)` directly), so this is the SAME helper on both gold
    paths, not two divergent ones. Every `type:"sense"` grounding (and its
    `token_sense_candidates` entry) now also carries a `lemma` field
-   (`dev/ENCODER_IO_CONTRACT_V2.md` §4.2 updated). `runs/encoder_gold_v2.jsonl`
+   (`dev/design/ENCODER_IO_CONTRACT_V2.md` §4.2 updated). `runs/encoder_gold_v2.jsonl`
    itself is NOT rebuilt (out of scope, would touch a separately-owned
    artifact) — §9 below reports how many of a 20-word sample of its
    previously-`entity`-grounded inflected words would now ground as `sense`.
@@ -562,7 +562,7 @@ updated pool table (`N_pl` 30→60, `VI_past` 10→30, `VT_past` 39→40).
 
 ## 1. Why: the two-part-gold decision, generalized
 
-`dev/HAND_GOLD_DRAFT.md` established that the v2 lattice schema is
+`dev/archive/HAND_GOLD_DRAFT.md` established that the v2 lattice schema is
 human-writable for the constructions the deterministic teacher parser can
 never produce gold for — imperatives (synthesized SUBJECT), interjections
 (pure and content), elision/fragments (VP-ellipsis, dropped arguments),
@@ -658,7 +658,7 @@ and, if a template starts throwing, `test_all_records_pass_the_gate`).
 | slot type | n | source |
 |---|---:|---|
 | `N` (noun, sg) | 60 | curated boost (24 child-register words) + automated: USVS core words whose first WordNet sense is a noun in a concrete lexname (`noun.animal/artifact/body/food/object/plant/substance/person/location/shape`), frequency-ranked (WordNet tagged-sense count), `senses_of` non-empty |
-| `N_pl` | **60** (was 30) | **v2 fix.** Curated irregular plurals / plurale tantum (`people`, `men`, `women`, `children`, `teeth`, `feet`, `sheep`, `police`, `scissors`, `staff`, `troops`, ...; 8 more irregulars added to the curated list itself — `women`/`children`/`feet`/`mice`/`geese` were previously missing) **+ regular "-s" plurals of the `N` pool** (`dogs`, `boxes`, `houses`, ...), filtered through the new `USVS.senses_of_surface` (raw surface, falling back to WordNet morphy) instead of raw `senses_of` — this is D5's fix (b), "lemmatize at retrieval time" (`dev/HAND_GOLD_DRAFT.md`). A noun whose OWN irregular plural is curated (`man`→`men`, `woman`→`women`, `child`→`children`, `foot`→`feet`, `tooth`→`teeth`, `mouse`→`mice`, `goose`→`geese`, `person`→`people`) is skipped in the regular-plural auto-fill so it doesn't ALSO mint a wrong `"mans"`/`"womans"`-style form alongside the real irregular. Capped at 60 (`_POOL_CAP`, same cap as `N`/`ADJ`) — every N-pool noun's regular plural that isn't skipped this way grounds, so the pool is cap-limited, not availability-limited. |
+| `N_pl` | **60** (was 30) | **v2 fix.** Curated irregular plurals / plurale tantum (`people`, `men`, `women`, `children`, `teeth`, `feet`, `sheep`, `police`, `scissors`, `staff`, `troops`, ...; 8 more irregulars added to the curated list itself — `women`/`children`/`feet`/`mice`/`geese` were previously missing) **+ regular "-s" plurals of the `N` pool** (`dogs`, `boxes`, `houses`, ...), filtered through the new `USVS.senses_of_surface` (raw surface, falling back to WordNet morphy) instead of raw `senses_of` — this is D5's fix (b), "lemmatize at retrieval time" (`dev/archive/HAND_GOLD_DRAFT.md`). A noun whose OWN irregular plural is curated (`man`→`men`, `woman`→`women`, `child`→`children`, `foot`→`feet`, `tooth`→`teeth`, `mouse`→`mice`, `goose`→`geese`, `person`→`people`) is skipped in the regular-plural auto-fill so it doesn't ALSO mint a wrong `"mans"`/`"womans"`-style form alongside the real irregular. Capped at 60 (`_POOL_CAP`, same cap as `N`/`ADJ`) — every N-pool noun's regular plural that isn't skipped this way grounds, so the pool is cap-limited, not availability-limited. |
 | `ADJ` | 60 | curated boost (39 common descriptive adjectives) + automated: USVS core words whose first sense is `a`/`s` (adjective/satellite), comparatives/superlatives and quantifier-adjectives (`many`, `less`, `-er`/`-est`) excluded, frequency-ranked |
 | `PROPN` | 6 | `nsm_ct.episode._NAMES` verbatim (`mary`, `john`, `sandra`, `daniel`, `bill`, `fred`) — the SAME name universe as teacher-bulk gold and the hand-gold drafts, deliberately not widened. Grounds via `is_entity` (`type:"entity"`), not a sense lookup, so not filtered by `senses_of` |
 | `PRON` | 5 | `he`, `she`, `it`, `they`, `we` — bare 3rd-person pronouns. Grounds via the `_PRONOUNS`/`memory`/`coref` branch of `hand_gold.ground_W` regardless of WordNet coverage, so not filtered either. (`I`/`me`/`myself` are deliberately excluded from this pool — they route to the resolved prime `I`, D3, and are used as fixed lexical anchors, e.g. `"me too ."`, not sampled slot fillers.) |

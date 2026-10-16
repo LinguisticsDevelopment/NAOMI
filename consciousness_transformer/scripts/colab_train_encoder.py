@@ -1,5 +1,5 @@
 """Self-contained Colab driver: train the candidate-lattice encoder
-(dev/ENCODER_MODEL_SPEC.md) to convergence from a single command, then
+(dev/design/ENCODER_MODEL_SPEC.md) to convergence from a single command, then
 report EN candidate-set recall and the Spanish grammar-swap eval.
 
 This is glue, not a second implementation: the actual training step
@@ -108,7 +108,7 @@ def train(model, train_items, epochs, batch_size, lr, max_seconds, t0, log, term
 
     `terminal_weight` up-weights the STOP/CLOSE_CLAUSE action-type CE loss
     (spec fix, DIAGNOSIS 2026-09-06); see `em.teacher_force_loss`. `max_steps`
-    caps optimizer steps rather than epochs (dev/AUDIT_2026-09-08.md finding
+    caps optimizer steps rather than epochs (dev/archive/AUDIT_2026-09-08.md finding
     7); see `run_training_loop`."""
     opt = torch.optim.Adam(model.parameters(), lr=lr)
 
@@ -148,7 +148,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--records", type=int, default=984,
                      help="total gold records to split into train/dev/test (~80/10/10); "
-                          "984 reproduces the dev/ENCODER_MODEL_SPEC.md S2.3 full-Stage-i split "
+                          "984 reproduces the dev/design/ENCODER_MODEL_SPEC.md S2.3 full-Stage-i split "
                           "(788/98/98) out of the 985 available")
     ap.add_argument("--epochs", type=int, default=50,
                      help="~50-60 min end-to-end on this project's CPU dev box at the default "
@@ -172,7 +172,7 @@ def main() -> None:
     ap.add_argument("--k", type=int, default=6)
     ap.add_argument("--max-steps", type=int, default=None,
                      help="(item A) train for exactly N optimizer steps; --epochs becomes a "
-                          "ceiling only (dev/AUDIT_2026-09-08.md finding 7)")
+                          "ceiling only (dev/archive/AUDIT_2026-09-08.md finding 7)")
     ap.add_argument("--subset-seed", type=int, default=None,
                      help="(item B) seed for a stratified subset of size --records drawn from the "
                           "training pool (or, with --holdout-file, the pool minus the held-out "

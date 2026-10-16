@@ -1,4 +1,4 @@
-"""EXECUTOR PHASE 2 training script (dev/EXECUTOR_DESIGN.md Sec.2/Sec.3,
+"""EXECUTOR PHASE 2 training script (dev/design/EXECUTOR_DESIGN.md Sec.2/Sec.3,
 CLAUDE.md's executor D1/D2 decisions): trains :class:`nsm_ct.op_select.
 OpSelect`/``ArgSelect`` alongside a :class:`~nsm_ct.clause_reactor.
 ClauseReactor` via :meth:`nsm_ct.executor.Executor.run_learned`, on a mixed
@@ -8,7 +8,7 @@ FAMILY_NAMES`) -- old L1-6 + M53a ``PronounCurriculumGenerator`` +
 ``RichEpisodeGenerator`` + ``DocumentGenerator`` (via
 ``_train_common.DocumentRunner`` for passage-0 LTM consolidation, see
 :func:`build_document_items`) -- and reports the LOFO gate's per-family
-numbers (dev/EXECUTOR_DESIGN.md Sec.3).
+numbers (dev/design/EXECUTOR_DESIGN.md Sec.3).
 
 Scope note (read src/nsm_ct/op_select.py's own module docstring first):
 this milestone's ``run_learned`` learns exactly TWO decision points per
@@ -114,7 +114,7 @@ def build_document_items(n: int, seed: int, dim: int, meaning, codec: TPRCodec) 
     LTM tensor is what the final passage's ``recall_link`` collapse reads.
     ``final_batch`` is the ONE passage this script actually runs through
     ``Executor.run_learned`` (its mention step is the family-6
-    ``recall_link`` program, dev/EXECUTOR_DESIGN.md Sec.1.1)."""
+    ``recall_link`` program, dev/design/EXECUTOR_DESIGN.md Sec.1.1)."""
     episodes = generate_document_episodes(n, seed=seed)
     docs: Dict[str, list] = {}
     for ep in episodes:
@@ -401,7 +401,7 @@ def print_report(results: Dict[str, dict], *, title: str,
 
 
 # ---------------------------------------------------------------------------
-# Kill-criteria instrumentation (dev/EXECUTOR_DESIGN.md Sec.3): wall-clock
+# Kill-criteria instrumentation (dev/design/EXECUTOR_DESIGN.md Sec.3): wall-clock
 # ratio vs forward(), peak RSS -- mirrors tests/test_executor_phase1.py's
 # own kill-criteria test, extended to run_learned().
 # ---------------------------------------------------------------------------

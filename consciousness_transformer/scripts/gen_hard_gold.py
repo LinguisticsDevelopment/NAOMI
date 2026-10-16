@@ -3,7 +3,7 @@
 directive, 2026-09-08).
 
 The 16 hand-authored drafts (`scripts/build_hand_gold_draft.py`,
-`dev/HAND_GOLD_DRAFT.md`) proved the v2 lattice schema is human-writable for
+`dev/archive/HAND_GOLD_DRAFT.md`) proved the v2 lattice schema is human-writable for
 the constructions the deterministic teacher can never emit gold for
 (imperatives, interjections, elision/fragments, additive/focus, quantity
 fragments, synthesized subjects) -- but 16 records cannot train anything.

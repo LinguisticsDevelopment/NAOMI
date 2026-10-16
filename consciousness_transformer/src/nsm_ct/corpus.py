@@ -1,4 +1,4 @@
-"""M58a: the CORPUS -> EPISODE CONVERTER (dev/AURORA_SPRINT.md, dev/NEXT_ARC_PLAN.md M57).
+"""M58a: the CORPUS -> EPISODE CONVERTER (dev/archive/AURORA_SPRINT.md, dev/archive/NEXT_ARC_PLAN.md M57).
 
 Turns real (or synthetic-but-wild) prose into :class:`~nsm_ct.episode.Episode`
 objects with SELF-GENERATED comprehension questions -- no hand labeling. The

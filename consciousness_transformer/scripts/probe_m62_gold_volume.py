@@ -1,5 +1,5 @@
 """M62b: teacher gold-volume probe on the in-repo real corpus, binned by
-sentence length (dev/UNIVERSAL_ENCODER_DESIGN.md open question #2: "how
+sentence length (dev/design/UNIVERSAL_ENCODER_DESIGN.md open question #2: "how
 much teacher gold does real text actually yield?"). Measurement only --
 no model code, no source changes.
 

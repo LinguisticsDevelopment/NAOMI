@@ -2,7 +2,7 @@
 clauses unroll into consecutive (entity, role, value) steps sharing the
 entity) + the multi-arg TRANSFER curriculum (curriculum2.py).
 
-See dev/MIND_INTERFACE.md and dev/RESOLVER_BUILD_PLAN.md Phase 1.
+See dev/design/MIND_INTERFACE.md and dev/archive/RESOLVER_BUILD_PLAN.md Phase 1.
 """
 
 from __future__ import annotations

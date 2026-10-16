@@ -1,6 +1,6 @@
 """Build FULL per-sentence teacher-parse outcomes over the entire in-repo real
 corpus (`data/corpus/real_*.txt`, 1,475 unique sentences) -- the teacher-
-complement audit (dev/AUDIT_2026-09-08.md action 1) needs the complete failure
+complement audit (dev/archive/AUDIT_2026-09-08.md action 1) needs the complete failure
 population (grounding-fail / cap-hit / no-hypothesis / too-long / full-tree)
 to stratify a 100-sentence sample by outcome x length bin; `runs/m62_probe.csv`
 only covers a seeded 500-sentence SAMPLE of the 1,475 (probe_m62_gold_volume.py's

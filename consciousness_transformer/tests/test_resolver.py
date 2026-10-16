@@ -1,6 +1,6 @@
 """Tests for M53b: the resolver contract (nsm_ct.resolver) + its OPTIONAL
-integration into nsm_ct.clause_reactor.ClauseReactor. See dev/MIND_INTERFACE.md
-§3 and dev/RESOLVER_BUILD_PLAN.md Phase 2 "Agent 3".
+integration into nsm_ct.clause_reactor.ClauseReactor. See dev/design/MIND_INTERFACE.md
+§3 and dev/archive/RESOLVER_BUILD_PLAN.md Phase 2 "Agent 3".
 
 No parser dependency anywhere here (unlike tests/test_membrane.py) -- these are
 synthetic-tensor tests of the resolver contract + the reactor's optional collapse
@@ -379,7 +379,7 @@ def test_determinism_same_seed_same_outputs(track):
 
 
 # ---------------------------------------------------------------------------
-# 7. M56b: the per-candidate feature register (dev/TRACK_C_DESIGN.md §1.8's
+# 7. M56b: the per-candidate feature register (dev/design/TRACK_C_DESIGN.md §1.8's
 #    "GAP: no such op/register exists today"). CorefHead.use_cand_feature
 #    (default False, byte-identical) plus ClauseReactor's opt-in dispatch of
 #    batch.cand_feature_per_candidate -- see resolver.py's CorefHead

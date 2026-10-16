@@ -1,6 +1,6 @@
-"""K-12 MC-benchmark cheat baselines (dev/K12_BENCHMARK_FIX.md).
+"""K-12 MC-benchmark cheat baselines (dev/reports/K12_BENCHMARK_FIX.md).
 
-dev/AUDIT_2026-10-15.md section C: the FairytaleQA entity MC benchmark's
+dev/reports/AUDIT_2026-10-15.md section C: the FairytaleQA entity MC benchmark's
 ``cross-story`` distractor policy lets "pick the option that appears
 verbatim in the passage" score ~97% (553/584 outright + 31 ties, 0 misses
 on the committed ``runs/fairytaleqa_episodes.jsonl``), because only the

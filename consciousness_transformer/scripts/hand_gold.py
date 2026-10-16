@@ -1,6 +1,6 @@
 """Hand-authored gold: a human-writable spec -> a schema-valid v2 lattice record.
 
-`dev/ENCODER_IO_CONTRACT_V2.md` is the schema this emits. The point of this
+`dev/design/ENCODER_IO_CONTRACT_V2.md` is the schema this emits. The point of this
 module is the **schema-writability gate** (lead, 2026-09-07): the deterministic
 teacher can only parse declaratives, so the structures the LEARNED encoder
 exists for -- imperatives (synthesized SUBJECT), interjections, elision /
@@ -73,7 +73,7 @@ class W:
     `senses_of` returns [] for it). OFF by default: the teacher bulk gold
     retrieves on the raw surface token, and hand gold is UNIONed with it, so
     diverging here would give the encoder two different gtype targets for the
-    same shape of token. See dev/HAND_GOLD_DRAFT.md, open decision D5.
+    same shape of token. See dev/archive/HAND_GOLD_DRAFT.md, open decision D5.
     """
     word: str
     lemma: Optional[str] = None

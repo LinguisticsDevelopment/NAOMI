@@ -1,5 +1,5 @@
-"""M58a corpus->episode converter CLI (see dev/AURORA_SPRINT.md M58,
-dev/NEXT_ARC_PLAN.md M57 "the corpus campaign").
+"""M58a corpus->episode converter CLI (see dev/archive/AURORA_SPRINT.md M58,
+dev/archive/NEXT_ARC_PLAN.md M57 "the corpus campaign").
 
 Reads plain-text files (each blank-line-separated block = one passage),
 runs every passage through :mod:`nsm_ct.corpus` (the SAME parser path
@@ -171,7 +171,7 @@ def write_taxonomy_doc(path: str, group_taxonomy, group_sentence_total, failure_
         "`ok` (parsed_passage produced at least one (entity, relation, value)",
         "triple) or one of the six failure reasons below. This is the REAL",
         "failure map week 2's parser/extraction round is driven by (see",
-        "dev/AURORA_SPRINT.md \"Week 2\").",
+        "dev/archive/AURORA_SPRINT.md \"Week 2\").",
         "",
         "## Histogram",
         "",

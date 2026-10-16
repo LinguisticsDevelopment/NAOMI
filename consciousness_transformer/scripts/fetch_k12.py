@@ -1,4 +1,4 @@
-"""scripts/fetch_k12.py -- K-12 comprehension-QA corpus fetcher (dev/K12_CORPUS_SCOUT.md).
+"""scripts/fetch_k12.py -- K-12 comprehension-QA corpus fetcher (dev/reports/K12_CORPUS_SCOUT.md).
 
 Fetches the scout's TOP-3 real, license-cleared K-12 reading sources into
 ``data/k12/<source>/``, mirroring ``scripts/fetch_corpus.py``'s conventions:
@@ -9,7 +9,7 @@ and a manifest is printed/written at the end.
 
 Unlike ``fetch_corpus.py`` (raw prose only), these three sources ship real
 human-authored comprehension QUESTIONS with gold answers -- see
-dev/K12_CORPUS_SCOUT.md for the full source-by-source comparison and the
+dev/reports/K12_CORPUS_SCOUT.md for the full source-by-source comparison and the
 license text/URL for each. License check happens up front, per source,
 before any network call: :data:`SOURCE_LICENSES` names the exact license
 this script relies on, and :func:`_print_license_notice` prints it so a
@@ -27,7 +27,7 @@ this script relies on, and :func:`_print_license_notice` prints it so a
 (2) MCTest (github.com/mcobzarenco/mctest mirror of the original Microsoft
     Research release, data/MCTest/*; original terms: Microsoft Research
     Data License -- research use; NOT independently re-verified for
-    commercial redistribution in this script, see dev/K12_CORPUS_SCOUT.md
+    commercial redistribution in this script, see dev/reports/K12_CORPUS_SCOUT.md
     licensing caveats) -- grade-school fictional stories (mc160, aimed at
     ~7-year-olds) and harder mc500 stories, each with exactly 4
     multiple-choice questions and a gold answer letter. Fetched as the
@@ -68,12 +68,12 @@ from typing import Dict, List, Optional, Tuple
 
 _ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = _ROOT / "data" / "k12"
-_UA = {"User-Agent": "naomi-k12-fetch/1.0 (+dev/K12_CORPUS_SCOUT.md)"}
+_UA = {"User-Agent": "naomi-k12-fetch/1.0 (+dev/reports/K12_CORPUS_SCOUT.md)"}
 _TIMEOUT = 20
 
 # ---------------------------------------------------------------------------
 # license notices -- printed up front, one per source, before any fetch.
-# See dev/K12_CORPUS_SCOUT.md for the full verification writeup.
+# See dev/reports/K12_CORPUS_SCOUT.md for the full verification writeup.
 # ---------------------------------------------------------------------------
 SOURCE_LICENSES: Dict[str, str] = {
     "fairytaleqa": (
@@ -90,7 +90,7 @@ SOURCE_LICENSES: Dict[str, str] = {
         "co-located with this specific mirror, so the exact terms are "
         "NOT independently re-verified here -- confirm against Microsoft "
         "Research's own MCTest page before any commercial reuse. See "
-        "dev/K12_CORPUS_SCOUT.md licensing caveats."
+        "dev/reports/K12_CORPUS_SCOUT.md licensing caveats."
     ),
     "african_storybook": (
         "African Storybook Project (github.com/global-asp/asp-source, "
@@ -276,7 +276,7 @@ def run(out_dir: Path, allow_download: bool, ftqa_limit: int, asp_limit: int,
         sources: Optional[List[str]] = None) -> None:
     if not allow_download:
         print("--allow-download not set -- nothing to do (this script only ever "
-              "fetches over the network; see dev/K12_CORPUS_SCOUT.md for the "
+              "fetches over the network; see dev/reports/K12_CORPUS_SCOUT.md for the "
               "already-committed samples under data/k12_samples/).")
         return
 

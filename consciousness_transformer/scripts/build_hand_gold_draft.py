@@ -1,7 +1,7 @@
 """DRAFT hard-case hand-gold candidates for lead review -- NOT merged gold.
 
 Writes `runs/hand_gold_draft.jsonl` (records) and the readable companion
-`dev/HAND_GOLD_DRAFT.md`. Every record goes through `hand_gold.check_record`
+`dev/archive/HAND_GOLD_DRAFT.md`. Every record goes through `hand_gold.check_record`
 (schema + oracle linearize + action legality + skeleton round-trip) and
 `hand_gold.check_trains` (a real teacher-forced loss on a fresh policy).
 
@@ -32,7 +32,7 @@ OUT_JSONL = _HERE.parent / "runs" / "hand_gold_draft.jsonl"
 
 def build(usvs):
     """Returns [(record, note_dict), ...]. `note` is the human-facing
-    rationale rendered into dev/HAND_GOLD_DRAFT.md."""
+    rationale rendered into dev/archive/HAND_GOLD_DRAFT.md."""
     D = []
 
     def add(rec, *, cat, why, choice, unsure=None):

@@ -1,6 +1,6 @@
-"""Tests for the same-passage MC distractor policy (dev/K12_BENCHMARK_FIX.md
+"""Tests for the same-passage MC distractor policy (dev/reports/K12_BENCHMARK_FIX.md
 item 1a) -- scripts/convert_fairytaleqa.py's fix for the broken
-cross-story distractor policy dev/AUDIT_2026-10-15.md's audit flagged
+cross-story distractor policy dev/reports/AUDIT_2026-10-15.md's audit flagged
 (passage-presence alone identified the gold answer at ~97%).
 
 No network, no full corpus fetch: builds small in-memory Episode fixtures

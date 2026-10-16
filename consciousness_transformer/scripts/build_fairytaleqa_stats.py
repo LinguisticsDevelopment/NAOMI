@@ -1,4 +1,4 @@
-"""Writes dev/FAIRYTALEQA_STATS.md from the converted FairytaleQA episodes
+"""Writes dev/reports/FAIRYTALEQA_STATS.md from the converted FairytaleQA episodes
 (``scripts/convert_fairytaleqa.py --out``) -- counts by split/attribute/
 explicit-implicit, passage-length distributions, the corpus-wide parse-yield
 table (strict-full-tree / usable / cap-hit / grounding-fail, over every
@@ -8,7 +8,7 @@ and 10 example Q/A pairs per attribute.
 Usage:
     python scripts/build_fairytaleqa_stats.py \\
         --episodes runs/fairytaleqa_episodes.jsonl \\
-        --out dev/FAIRYTALEQA_STATS.md
+        --out dev/reports/FAIRYTALEQA_STATS.md
 """
 
 from __future__ import annotations
@@ -58,7 +58,7 @@ def build(episodes: List[dict]) -> str:
                   f"`scripts/convert_fairytaleqa.py`'s output "
                   f"({n} episodes, one per (story section(s), question) pair "
                   "of the full 277/278-story fetch -- see "
-                  "dev/K12_CORPUS_SCOUT.md and "
+                  "dev/reports/K12_CORPUS_SCOUT.md and "
                   "data/k12_samples/fairytaleqa_full_sample/MANIFEST.json).")
     lines.append("")
 

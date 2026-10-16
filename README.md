@@ -25,15 +25,31 @@ honest negatives) is `consciousness_transformer/RESEARCH_NOTES.md`.
   and `src/nsm_ct/mind/` is the learned policy + the two loops (conscious /
   subconscious) built on top of it. `scripts/` holds every training, probe,
   and corpus-building entry point; `tests/` is the gate suite; `dev/` is the
-  design docs and research reports (`dev/archive/` for the superseded ones).
+  design docs and research reports — `dev/design/` (live design-of-record),
+  `dev/reports/` (current measurement evidence), `dev/archive/` (superseded);
+  see `dev/INDEX.md`.
   See `consciousness_transformer/README.md` for the module-level map.
 - **`quantum_parser/`** — the deterministic, language-agnostic grammar
   parser `consciousness_transformer` reads text through (one grammar file per
   language). Actively used, not legacy, even though its own docs predate the
   mind/ line and talk about an earlier framing of the project.
-- **`parser/`, `webber/`, `drill/`, `junk/`, `ref/`** — **legacy.** Early Go
-  and scratch prototypes that predate the NSM/meaning-space line entirely.
-  Kept for history; nothing here is built or imported by
+- **`parser/`, `webber/`** — **legacy.** Early standalone Go prototypes
+  (tree/detree parsing, a translation experiment) that predate the
+  NSM/meaning-space line entirely. Not built or imported by
+  `consciousness_transformer` or `quantum_parser`.
+- **`drill/`** — **legacy.** Scratch data/scripts (a WordNet-from-Prolog
+  dump, a spreadsheet, an sqlite conversion helper) from the same early
+  period. Not used by anything current.
+- **`ref/`** — **legacy.** One reference-notes text file
+  (`possibleRules.txt`) from the same early period.
+- **`junk/`** — **legacy, and literally named junk.** Two small files
+  (`junk.py`, `rules.json`) — a scratch POS-tagging exercise against the
+  early rule format. Nothing reads or imports this directory; it's a
+  reasonable candidate for deletion, left to the owner to decide (see the
+  cleanup session's final note).
+- **`assignments.json`, `rules.json`, `windows_install.txt`** (repo root) —
+  **legacy.** Leftover grammar-rule/config data and a Windows setup note
+  from the `parser/`-era Go prototype. Not read by
   `consciousness_transformer` or `quantum_parser`.
 
 ## Setup and tests

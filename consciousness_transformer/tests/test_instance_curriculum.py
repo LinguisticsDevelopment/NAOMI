@@ -3,7 +3,7 @@ referring expressions + the two-Marys curriculum.
 
 Integrates M57a's InstanceRegistry (nsm_ct.instances) with M57b's proven
 resolver-driven write-back mechanism (nsm_ct.clause_reactor._writeback_steps /
-ClauseReactor's address-redirect collapse). See dev/MIND_INTERFACE.md's "v2
+ClauseReactor's address-redirect collapse). See dev/design/MIND_INTERFACE.md's "v2
 addendum -- the entity-instance subsystem", CLAUDE.md's M57 memory-schema
 decision, and nsm_ct.clause_reactor._instance_steps's own extensive
 docstring for the full design.

@@ -1,6 +1,6 @@
 # The learned EXECUTOR: Track C made concrete
 
-Decision doc, not a survey (2026-08-30; revised same day to fold in `dev/EXECUTOR_DESIGN_REVIEW.md` — every finding accepted, applied throughout, decisions in §6). For the lead's review before any executor code exists. Read order: `dev/TRACK_C_DESIGN.md` (§1.8/§1.10 — the "acid test" §1.1 now runs on all nine programs), `dev/OP_INVENTORY.md`, `dev/OP_LIBRARY_MAP.md`, `dev/MIND_INTERFACE.md`, `dev/LTM_DESIGN_BRIEF.md` §5, `src/nsm_ct/ops.py` (op signatures + `RegisterFile` trace format, used verbatim below), `src/nsm_ct/ltm.py` (M59a — LTM ops **built**), `src/nsm_ct/clause_reactor.py`, `src/nsm_ct/resolver.py`.
+Decision doc, not a survey (2026-08-30; revised same day to fold in `dev/archive/EXECUTOR_DESIGN_REVIEW.md` — every finding accepted, applied throughout, decisions in §6). For the lead's review before any executor code exists. Read order: `dev/design/TRACK_C_DESIGN.md` (§1.8/§1.10 — the "acid test" §1.1 now runs on all nine programs), `dev/design/OP_INVENTORY.md`, `dev/design/OP_LIBRARY_MAP.md`, `dev/design/MIND_INTERFACE.md`, `dev/design/LTM_DESIGN_BRIEF.md` §5, `src/nsm_ct/ops.py` (op signatures + `RegisterFile` trace format, used verbatim below), `src/nsm_ct/ltm.py` (M59a — LTM ops **built**), `src/nsm_ct/clause_reactor.py`, `src/nsm_ct/resolver.py`.
 
 ## 0. Framing
 

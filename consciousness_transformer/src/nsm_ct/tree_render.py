@@ -1,9 +1,9 @@
 """Compact, LLM-friendly flattening of a parse tree, for the parse judge
-(dev/PARSE_JUDGE.md) and for `scripts/probe_encoder_complement.py`'s
+(dev/archive/PARSE_JUDGE.md) and for `scripts/probe_encoder_complement.py`'s
 human-readable renderer (`render_block`'s per-clause lines factor through
 here now).
 
-Two tree shapes exist in this codebase (dev/ENCODER_IO_CONTRACT_V2.md):
+Two tree shapes exist in this codebase (dev/design/ENCODER_IO_CONTRACT_V2.md):
 
 - **normalized / decode-time** shape, what `encoder_model.beam_decode`
   returns and what the judge always renders: a clause is

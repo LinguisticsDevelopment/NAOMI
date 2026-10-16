@@ -1,5 +1,5 @@
 """Tests for the Spanish Freeze Test's perception-side deliverables (see
-dev/ROADMAP_LONG_TERM.md "The Spanish Freeze Test" and
+dev/design/ROADMAP_LONG_TERM.md "The Spanish Freeze Test" and
 scripts/probe_spanish_freeze.py).
 
 Covers: es_lexicon.json.gz build determinism, Spanish template verification

@@ -2,9 +2,9 @@
 
 M57's closing ask (RESEARCH_NOTES tail, 2026-08-30): before LTM and before
 M58 prose, write down every operation the system performs, fixed vs learned,
-in one place. Read order behind this doc: `dev/MIND_INTERFACE.md` (dials,
-invariants), `dev/TRACK_C_DESIGN.md` §1 (the op algebra + type notation
-reused below — `Addr`/`Vec`/`Feat`/`Scalar`/`Dist`), `dev/LTM_DESIGN_BRIEF.md`
+in one place. Read order behind this doc: `dev/design/MIND_INTERFACE.md` (dials,
+invariants), `dev/design/TRACK_C_DESIGN.md` §1 (the op algebra + type notation
+reused below — `Addr`/`Vec`/`Feat`/`Scalar`/`Dist`), `dev/design/LTM_DESIGN_BRIEF.md`
 §5 (locked LTM decisions, the PLANNED rows' source of truth).
 
 ## 0. Thesis

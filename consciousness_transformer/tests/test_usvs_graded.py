@@ -1,5 +1,5 @@
 """Gates for the USVS-GRADED scoring + soft-target loss (lead directive
-2026-09-08; dev/USVS_GRADED_SCORING.md).
+2026-09-08; dev/reports/USVS_GRADED_SCORING.md).
 
 The three sanity controls the directive names (identity = 1.0, corrupted <
 identity, a random other sentence's tree ~ the ambient floor), the role

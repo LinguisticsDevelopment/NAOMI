@@ -1,6 +1,6 @@
 """Phase-1 decoder — rule-grounded short-answer realizer (M65).
 
-``dev/DECODER_DESIGN.md`` §2-4: the decoder consumes the RESOLVED grounded
+``dev/archive/DECODER_DESIGN.md`` §2-4: the decoder consumes the RESOLVED grounded
 answer structure comprehension hands off (every sense chosen, every reference
 bound) and realizes surface text through exactly two lookups — USVS
 ``sense_id -> lemma`` and entity ``handle -> name`` — plus the closed-class

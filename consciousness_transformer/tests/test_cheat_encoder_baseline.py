@@ -1,4 +1,4 @@
-"""Tests for scripts/cheat_encoder_baseline.py (dev/K12_BENCHMARK_FIX.md
+"""Tests for scripts/cheat_encoder_baseline.py (dev/reports/K12_BENCHMARK_FIX.md
 item 2) -- 3 tiny hand-built gold records, scored through the SAME
 ``nsm_ct.encoder_model.score_record``/``aggregate_recall`` the learned
 encoder itself is scored with (no parallel metric). Expected precision/

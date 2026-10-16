@@ -5,7 +5,7 @@ Guards against the bug this audit found: an earlier fetch-time default
 stories) silently truncated the corpus long before conversion ever ran,
 and nothing checked that every QA row was accounted for. ``build_episodes``
 now labels every row it reads ``"emitted"`` or a named drop reason (see
-dev/FAIRYTALEQA_STATS.md's "Row accounting" section) -- this test runs it
+dev/reports/FAIRYTALEQA_STATS.md's "Row accounting" section) -- this test runs it
 over the small, committed 10-story sample (no network, no full
 ``data/k12/fairytaleqa/`` fetch required) and checks the count is exact
 and every reason is a real, named one (never the catch-all ``"other"``).

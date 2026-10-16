@@ -313,7 +313,7 @@ marked an interjection utterance; connotation/valence is a *comprehension-side*
 learned inference, out of scope for the encoder; (iii) the synthesized
 imperative subject (prime `YOU`) and the frozen role vocabulary are kept.
 
-**Canonical schema:** see `dev/ENCODER_IO_CONTRACT_V2.md` — the single
+**Canonical schema:** see `dev/design/ENCODER_IO_CONTRACT_V2.md` — the single
 candidates-first I/O contract that supersedes v1 (`dev/ENCODER_IO_CONTRACT.md`,
 one committed tree) and reconciles the two hand-draft addenda. This design doc
 remains the entry point; V2 is the authoritative serialization schema.

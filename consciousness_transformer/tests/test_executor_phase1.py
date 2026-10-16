@@ -1,5 +1,5 @@
 """EXECUTOR PHASE 1 tests: the bootstrap anchor
-(dev/EXECUTOR_DESIGN.md Sec.1.4 -- "today's pipeline as one fixed program"),
+(dev/design/EXECUTOR_DESIGN.md Sec.1.4 -- "today's pipeline as one fixed program"),
 the honesty machinery (<=1-WRITE, D1 hard/soft), trace round-tripping, the
 ``program_for_step`` exhaustiveness claim, and the Sec.3 compute
 kill-criteria instrumentation.
@@ -97,7 +97,7 @@ def _document_single_passage_batch():
     episodes (own ``InstanceRegistry``, per ``ltm.py``'s "Interface
     contract"), built into ONE batch, run with ``ltm=None`` (no prior
     passage exists yet for passage 0 -- see this file's module docstring
-    and dev/EXECUTOR_DESIGN.md's own note that ``cand_from_ltm`` is not
+    and dev/design/EXECUTOR_DESIGN.md's own note that ``cand_from_ltm`` is not
     exercised by this milestone's generator battery)."""
     eps = generate_document_episodes(30, seed=3)
     docs: dict = {}
@@ -335,7 +335,7 @@ def test_trace_round_trips_through_json():
 
 
 # ---------------------------------------------------------------------------
-# 6. Compute kill-criteria instrumentation (dev/EXECUTOR_DESIGN.md Sec.3):
+# 6. Compute kill-criteria instrumentation (dev/design/EXECUTOR_DESIGN.md Sec.3):
 #    per-clause wall-clock, Executor vs forward, and peak RSS.
 # ---------------------------------------------------------------------------
 def test_kill_criteria_wall_clock_and_rss():

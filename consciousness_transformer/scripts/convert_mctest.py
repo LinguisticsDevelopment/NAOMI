@@ -1,5 +1,5 @@
-"""MCTest -> NAOMI Episode converter (dev/K12_CORPUS_SCOUT.md's #2 pick,
-dev/K12_BENCHMARK_FIX.md item 1c).
+"""MCTest -> NAOMI Episode converter (dev/reports/K12_CORPUS_SCOUT.md's #2 pick,
+dev/reports/K12_BENCHMARK_FIX.md item 1c).
 
 Unlike FairytaleQA, MCTest ships its OWN in-story 4-way MC distractors --
 no distractor-synthesis policy is needed or applied here; this script is a

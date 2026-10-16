@@ -161,11 +161,11 @@ def _group_of(ep: Episode) -> str:
 
 
 def filter_answer_type(episodes: List[Episode], answer_type: str) -> List[Episode]:
-    """K12 FairytaleQA hook (dev/K12_CORPUS_SCOUT.md): keeps only episodes
+    """K12 FairytaleQA hook (dev/reports/K12_CORPUS_SCOUT.md): keeps only episodes
     whose ``meta["answer_type"]`` matches (``scripts/convert_fairytaleqa.py``'s
     (a)-(d) classification -- ``entity`` is the one subset NAOMI's current
     single-entity-answer MC head can score at all; see
-    dev/FAIRYTALEQA_STATS.md). Also drops any episode with ``options is
+    dev/reports/FAIRYTALEQA_STATS.md). Also drops any episode with ``options is
     None`` (an entity-type episode that didn't get >=2 same-attribute
     distractors -- ``build_clause_batch`` requires ``ep.options`` to be
     iterable, so these would otherwise crash rather than cleanly build-fail).
@@ -335,7 +335,7 @@ def main() -> None:
                      help="JSONL file of converted prose episodes (scripts/convert_corpus.py --out, "
                           "or scripts/convert_fairytaleqa.py --out for the K12 hook).")
     ap.add_argument("--answer-type", type=str, default="", choices=["", "entity", "verb_phrase", "free_text", "not_substring"],
-                     help="K12 hook (dev/K12_CORPUS_SCOUT.md): keep only episodes whose "
+                     help="K12 hook (dev/reports/K12_CORPUS_SCOUT.md): keep only episodes whose "
                           "meta['answer_type'] matches (scripts/convert_fairytaleqa.py's (a)-(d) "
                           "classification) AND that carry MC options. Default '' = no filtering "
                           "(every plain prose episode already has options).")

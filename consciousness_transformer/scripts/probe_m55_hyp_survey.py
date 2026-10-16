@@ -2,8 +2,8 @@
 grammar actually produce multiple non-equivalent, close-margin top hypotheses
 TODAY -- BEFORE any input_encoder/membrane code is written. Read-only against
 quantum_parser (no code changes here); the result table is the load-bearing
-deliverable for M55a's report (dev/NEXT_ARC_PLAN.md M55, RESEARCH_NOTES M56/
-M56b/M56c, dev/TRACK_C_DESIGN.md Sec 1.10).
+deliverable for M55a's report (dev/archive/NEXT_ARC_PLAN.md M55, RESEARCH_NOTES M56/
+M56b/M56c, dev/design/TRACK_C_DESIGN.md Sec 1.10).
 
 Method: parser.parse(words) already deduplicates structurally-EQUIVALENT
 hypotheses at every grammar-rule application step (QuantumParser.parse's
@@ -101,7 +101,7 @@ HAND_SHAPES = [
 def _clause_signature(hyp) -> frozenset:
     """The ROLE-LEVEL reading a hypothesis asserts: {(predicate, relation,
     arg_token)} across every clause -- exactly the "which (entity, relation)
-    is even worth querying" content dev/TRACK_C_DESIGN.md Sec 1.10 says is
+    is even worth querying" content dev/design/TRACK_C_DESIGN.md Sec 1.10 says is
     PART OF what a hypothesis asserts. Two hypotheses with different node
     objects/edge sets but the SAME signature are semantically the same
     reading for our purposes (e.g. a stray NIL-node variant) -- not the

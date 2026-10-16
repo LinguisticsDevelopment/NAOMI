@@ -1,4 +1,4 @@
-"""Tests for scripts/cheat_baselines_k12.py (dev/K12_BENCHMARK_FIX.md item
+"""Tests for scripts/cheat_baselines_k12.py (dev/reports/K12_BENCHMARK_FIX.md item
 1b) -- a 5-episode fixture with hand-computed expected values for all four
 baselines (random, majority, passage-substring, word-overlap), including
 the tie-break ("ties -> random among tied", expressed as expected credit

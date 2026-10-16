@@ -50,18 +50,18 @@ gold it trains on has been fixed.
   milestone map).
 - The encoder is real but modest: rank-1 edge-F1 0.622 (P 0.750) on the frozen
   checkpoint, vs a POS-heuristic cheat baseline of **0.268** — a genuine +0.354
-  margin (`consciousness_transformer/dev/AUDIT_2026-10-15.md`,
-  `dev/K12_BENCHMARK_FIX.md`, `scripts/cheat_encoder_baseline.py`). It is
+  margin (`consciousness_transformer/dev/reports/AUDIT_2026-10-15.md`,
+  `dev/reports/K12_BENCHMARK_FIX.md`, `scripts/cheat_encoder_baseline.py`). It is
   data-limited (0.49 @788 -> 0.55 @3,000 -> 0.63 @8,000 records), one seed per
   point.
 - The gold it trains on was dropping clauses: verb coverage was 53.5%, 40.5%
   of records under 50% covered. The 2026-10-15 clause-extraction fix (three
   targeted bugs in `clause.py`) moved that to **54.3% -> 67.9%** mean verb
   coverage, re-saving 14 of 33 originally dropped-clause holdout sentences as
-  fully recovered (`consciousness_transformer/dev/GOLD_COVERAGE_AUDIT.md`,
-  `dev/CLAUSE_EXTRACTION_FIX.md`).
+  fully recovered (`consciousness_transformer/dev/reports/GOLD_COVERAGE_AUDIT.md`,
+  `dev/reports/CLAUSE_EXTRACTION_FIX.md`).
 - The Spanish grammar-swap acceptance test transfers on one metric with the
-  encoder frozen (`dev/SWAP_TEST_RESULTS.md`) — see "Any language" below.
+  encoder frozen (`dev/reports/SWAP_TEST_RESULTS.md`) — see "Any language" below.
 
 **Open.** Whether the encoder actually helps comprehension downstream (vs.
 just the deterministic parser on what it already covers) is still
@@ -89,7 +89,7 @@ consolidation are all built and gated.
 
 **Proven, with numbers:**
 - Capacity: dim-48 memory holds ~256 facts at >=0.95 forward recall
-  (`dev/CAPACITY_CURVE.md`).
+  (`dev/reports/CAPACITY_CURVE.md`).
 - Entity-instance subsystem (registry + attribute facts + provenance) built
   and resolver-driven write-back proven at full scale.
 - The read path (post-collapse read at the resolved address + entity-axis
@@ -99,7 +99,7 @@ consolidation are all built and gated.
 - Episodic LTM proven: consolidation carries facts across passages; identity
   linking through the existing resolver contract hits 1.000.
 (All of the above: `consciousness_transformer/RESEARCH_NOTES.md`, M57/M57a-c
-and M59 in the milestone map; design: `dev/LTM_DESIGN_BRIEF.md`.)
+and M59 in the milestone map; design: `dev/design/LTM_DESIGN_BRIEF.md`.)
 
 **Open.** Pruning/forgetting policy at scale beyond what's been tested;
 truth-memory promotion (reusing the tier-generic consolidate op for facts
@@ -130,9 +130,9 @@ slot.
 - Memory-context WSD rematch against the M30 MFS floor: won honestly.
 - v1 membrane gate: pronouns and senses proven together at full scale (readings
   — garden-path ambiguity resolution — leak again under the combined load;
-  deprioritized, see `dev/AURORA_SPRINT.md`'s 2026-08-11 reprioritization).
+  deprioritized, see `dev/archive/AURORA_SPRINT.md`'s 2026-08-11 reprioritization).
 (`RESEARCH_NOTES.md` M52-M56c in the milestone map; design:
-`dev/MIND_INTERFACE.md`.)
+`dev/design/MIND_INTERFACE.md`.)
 
 **Open.** The coherence `IterativeSenseResolver` (`src/nsm_ct/wsd.py`) has no
 correctness measurement yet. Garden-path reading collapse was deprioritized in
@@ -167,7 +167,7 @@ passages, with a memory-severed control) is in flight.
   converted and gates the same way at 0.260 vs a 0.350 gate (never was broken).
   `scripts/cheat_baselines_k12.py` and `scripts/cheat_encoder_baseline.py` are
   now wired into the standard report for every future number on this
-  benchmark. (`dev/K12_BENCHMARK_FIX.md`, `dev/AUDIT_2026-10-15.md`.)
+  benchmark. (`dev/reports/K12_BENCHMARK_FIX.md`, `dev/reports/AUDIT_2026-10-15.md`.)
 
 **Open.** The end-to-end QA spike (teacher-built episodes over the fixed
 FairytaleQA entity items + MCTest, with a severed-memory control) is running
@@ -216,9 +216,9 @@ and FORCE are deliberately not selectable ops. The Advice Test (acquiring a new
 task purely by explanation, zero retraining) is a far-endgame target, not
 scoped yet.
 
-**Next.** No specific run in flight; the design is `dev/EXECUTOR_DESIGN.md`
-(D1/D2 and the full decision set), read-ordered behind `dev/TRACK_C_DESIGN.md`,
-`dev/OP_INVENTORY.md`, and `dev/MIND_INTERFACE.md`.
+**Next.** No specific run in flight; the design is `dev/design/EXECUTOR_DESIGN.md`
+(D1/D2 and the full decision set), read-ordered behind `dev/design/TRACK_C_DESIGN.md`,
+`dev/design/OP_INVENTORY.md`, and `dev/design/MIND_INTERFACE.md`.
 
 ---
 
@@ -236,11 +236,11 @@ content words and confabulated (train token-acc 0.79 vs dev 0.16) because the
 grounded structure covers only ~24% of surface tokens — exact-surface
 reconstruction by copy is structurally impossible. The replacement design
 (retrieval-augmented realizer over dialectic memory,
-`dev/DECODER_MEMORY_DESIGN.md`, now carrying an ON HOLD banner) failed its
+`dev/design/DECODER_MEMORY_DESIGN.md`, now carrying an ON HOLD banner) failed its
 coverage gate twice and was never rebuilt against a reduced-realization spec.
 First-words-out (single-clause, stilted-but-correct realization through the
 grammar run backwards) was scoped as part of the real-prose comprehension
-step (`dev/NEXT_ARC_PLAN.md` M57) and hasn't happened yet either.
+step (`dev/archive/NEXT_ARC_PLAN.md` M57) and hasn't happened yet either.
 
 **Next.** Nothing, by design, until "Answer from memory" reports a real
 number.
@@ -264,10 +264,10 @@ is inspectable by construction.
   stream level (`RESEARCH_NOTES.md`, M-ES1).
 - The grammar-swap acceptance test (EN-trained encoder, frozen weights,
   evaluated on Spanish records) transfers on one metric
-  (`dev/SWAP_TEST_RESULTS.md`).
+  (`dev/reports/SWAP_TEST_RESULTS.md`).
 
 **Open.** The decisive, real-text-scale version of the test
-(`dev/ROADMAP_LONG_TERM.md`, "The Spanish Freeze Test") is sequenced *after*
+(`dev/design/ROADMAP_LONG_TERM.md`, "The Spanish Freeze Test") is sequenced *after*
 English real-text comprehension reaches its own ceiling — i.e., it waits on
 "Answer from memory" landing a real number first. The far-future
 "Grammar-as-Memory" arc (grammar rules as addressable, inducible memory rather
@@ -293,19 +293,19 @@ ledger entries should cite the topic, matching the headings below.
   (`from_ltm` feature + `link_threshold` dial); consolidation as a named
   substate event (READING -> WIND-DOWN -> CONSOLIDATE) gated by `trust_ltm`
   on provenance; the consolidate op is tier-generic so truth-memory promotion
-  can reuse it later. See `dev/LTM_DESIGN_BRIEF.md` §5.
+  can reuse it later. See `dev/design/LTM_DESIGN_BRIEF.md` §5.
 - **2026-08-30 — executor.** D1: hard (straight-through) selection for memory
   keys (Addr); soft selection only for Dist/Scalar types. D2: the GRU
   self-loop carries only control signals (prev op, step, register types,
   scalar margins), never register data (the Harvard split). Track A stays the
   tournament baseline; LOFO is Phase 2's first gate; PROVENANCE/FORCE are not
-  selectable ops. See `dev/EXECUTOR_DESIGN.md` §6.
+  selectable ops. See `dev/design/EXECUTOR_DESIGN.md` §6.
 - **2026-08-30 — the sprint clock is dropped.** The Aurora compute deadline no
   longer governs sequencing (Aurora may not happen; that's acceptable).
   Standing priority order from that point: stop requiring minimal episodes
   (long, many-entity discourse) -> make memory comprehensive for the v2 design
   (provenance, morphology, inverse queries, capacity curves, episodic LTM) ->
-  then the real-prose test. See `dev/AURORA_SPRINT.md`.
+  then the real-prose test. See `dev/archive/AURORA_SPRINT.md`.
 - **2026-10-16 — encoder unfrozen.** Keep finalizing the encoder (close to
   done): retrain on gold rebuilt with the fixed clause extraction
   (`encoder-gold-v6`, in flight), beat the POS cheat baseline clearly, confirm

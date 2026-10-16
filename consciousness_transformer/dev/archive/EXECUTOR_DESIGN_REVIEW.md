@@ -1,4 +1,4 @@
-# Adversarial review of dev/EXECUTOR_DESIGN.md
+# Adversarial review of dev/design/EXECUTOR_DESIGN.md
 
 Read-only review, 2026-08-30. Against EXECUTOR_DESIGN.md, TRACK_C_DESIGN.md §§1-2/4.5-5, OP_INVENTORY.md §§1/4/5, MIND_INTERFACE.md invariants, CLAUDE.md ops rules, RESEARCH_NOTES M56b/M56c/M57#3, and `src/nsm_ct/clause_reactor.py`/`ltm.py` as they actually stand.
 

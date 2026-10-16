@@ -1,4 +1,4 @@
-"""USVS-GRADED tree scoring + soft targets (dev/USVS_GRADED_SCORING.md).
+"""USVS-GRADED tree scoring + soft targets (dev/reports/USVS_GRADED_SCORING.md).
 
 The lead directive of 2026-09-08 (`RESEARCH_NOTES.md`): the loss and the
 evaluation must score the FLATTENED output tree against the gold tree in
@@ -48,7 +48,7 @@ from .tree_render import normalize_gold_tree
 #: covered by a family rule below) is 0.0.
 ROLE_CONFUSION: Dict[frozenset, float] = {
     # modifier family -- the labels the richer-gold extraction most often
-    # trades between (dev/ENCODER_IO_CONTRACT_V2.md S3)
+    # trades between (dev/design/ENCODER_IO_CONTRACT_V2.md S3)
     frozenset({"DESCRIPTION", "SPECIFICATION"}): 0.5,
     frozenset({"COMPLEMENT", "SUBJECT_COMPLEMENT"}): 0.5,
     frozenset({"DESCRIPTION", "COMPLEMENT"}): 0.3,
@@ -99,7 +99,7 @@ def is_pp_role(relation: str) -> bool:
 
 def role_weight(a: Optional[str], b: Optional[str]) -> float:
     """Role-agreement weight in [0, 1] for a (predicted, gold) role pair --
-    symmetric. See dev/USVS_GRADED_SCORING.md S3.2."""
+    symmetric. See dev/reports/USVS_GRADED_SCORING.md S3.2."""
     if a is None or b is None:
         return 0.0
     if a == b:
@@ -161,7 +161,7 @@ _RESERVED_TYPES: Tuple[str, ...] = ("sense", "entity", "reference", "elision", "
 #: one axis would score as identical, so this is sized to make that
 #: negligible (~0.02% per node pair) rather than merely unlikely; it is the
 #: one place the reserved block is approximate, and it is a stated failure
-#: mode in dev/USVS_GRADED_SCORING.md S2.2.
+#: mode in dev/reports/USVS_GRADED_SCORING.md S2.2.
 IDENT_AXES = 4096
 #: Weight on the TYPE block; the identity axis carries the rest of the unit
 #: norm. Same type + same identity -> cosine 1.0 (they "compare exactly");
@@ -444,7 +444,7 @@ def usvs_tree_similarity(pred_tree: Optional[dict], gold_tree: Optional[dict],
                           use_hungarian: bool = True,
                           pred_record: Optional[dict] = None) -> Dict[str, float]:
     """Graded similarity of a predicted tree against a gold tree in USVS
-    space (dev/USVS_GRADED_SCORING.md S3). Both trees are NORMALIZED-shape
+    space (dev/reports/USVS_GRADED_SCORING.md S3). Both trees are NORMALIZED-shape
     unless `gold_is_lattice`, in which case `gold_tree` is one entry of
     `record["lattice"]["trees"]` and is normalized here.
 

@@ -1,4 +1,4 @@
-"""Gates for genus-differentia gloss parsing (signal_genus, dev/SIGNALS_AUDIT.md #1)."""
+"""Gates for genus-differentia gloss parsing (signal_genus, dev/archive/SIGNALS_AUDIT.md #1)."""
 
 from __future__ import annotations
 

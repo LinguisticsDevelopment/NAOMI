@@ -69,7 +69,7 @@ AUX_WEIGHT = 0.5   # resolver cross-entropy weight added to the answer loss -- s
 # --evidence-prior structural-prior mix (softmax(s_c * beta)) -- see
 # ClauseReactor's own evidence_prior_beta docstring paragraph.
 EVIDENCE_PRIOR_BETA = 5.0
-# M60 (op-library integration, dev/OP_LIBRARY_MAP.md's ``recency`` row):
+# M60 (op-library integration, dev/design/OP_LIBRARY_MAP.md's ``recency`` row):
 # nsm_ct.ops.recency always contributes exactly THREE extra per-candidate
 # register columns (steps_since, log_count, is_most_recent) -- see
 # ClauseBatch.cand_recency's own docstring. Added UNCONDITIONALLY to

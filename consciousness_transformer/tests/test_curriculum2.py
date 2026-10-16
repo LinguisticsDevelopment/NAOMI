@@ -342,7 +342,7 @@ def test_scaled_mode_introduces_no_new_sentence_shapes():
 
 
 # ---------------------------------------------------------------------------
-# M53a -- pronoun-binding curriculum (dev/RESOLVER_BUILD_PLAN.md Phase 2)
+# M53a -- pronoun-binding curriculum (dev/archive/RESOLVER_BUILD_PLAN.md Phase 2)
 # ---------------------------------------------------------------------------
 def test_pronoun_templates_all_roles_correct():
     results = verify_pronoun_templates()
@@ -404,7 +404,7 @@ def test_pronoun_gender_uniquely_identifies_antecedent():
 
 
 # ---------------------------------------------------------------------------
-# M56b: splittable name pools (dev/TRACK_C_DESIGN.md §1.8/Risk #4,
+# M56b: splittable name pools (dev/design/TRACK_C_DESIGN.md §1.8/Risk #4,
 # RESEARCH_NOTES M56/M56b's held-out-name ablation) -- PronounCurriculumGenerator's
 # female_names/male_names constructor override.
 # ---------------------------------------------------------------------------

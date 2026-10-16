@@ -1,6 +1,6 @@
 """Tests for M57a: the entity-instance subsystem (nsm_ct.instances).
 
-See dev/MIND_INTERFACE.md's "v2 addendum -- the entity-instance subsystem"
+See dev/design/MIND_INTERFACE.md's "v2 addendum -- the entity-instance subsystem"
 and CLAUDE.md's "M57 memory-schema decision". No parser dependency -- these
 are synthetic-tensor tests of the registry/write/query/candidate-generation
 machinery, deliberately isolated from quantum_parser so they run everywhere

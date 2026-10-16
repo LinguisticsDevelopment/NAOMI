@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Judge a gold or encoder-decoded parse tree per sentence with the LLM
-parse judge (dev/PARSE_JUDGE.md) -- the admission gate for self-training on
+parse judge (dev/archive/PARSE_JUDGE.md) -- the admission gate for self-training on
 the encoder's own good parses (see `nsm_ct.parse_judge` module docstring).
 
 For each input record, writes back a `judge` field:

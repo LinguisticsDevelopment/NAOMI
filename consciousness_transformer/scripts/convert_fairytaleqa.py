@@ -1,5 +1,5 @@
 """FairytaleQA -> NAOMI Episode converter (K12 comprehension-QA campaign,
-dev/K12_CORPUS_SCOUT.md's #1 pick).
+dev/reports/K12_CORPUS_SCOUT.md's #1 pick).
 
 Reads the full fetch (``data/k12/fairytaleqa/`` -- ``scripts/fetch_k12.py
 --source fairytaleqa --allow-download``) and produces ONE
@@ -21,7 +21,7 @@ Reads the full fetch (``data/k12/fairytaleqa/`` -- ``scripts/fetch_k12.py
   (mirrors ``nsm_ct.corpus.make_episodes``' own same-relation distractor
   convention). Every other episode carries ``options=None`` (open-ended;
   NAOMI's current MC-only QA head can't score these yet -- see
-  dev/FAIRYTALEQA_STATS.md's answer-type breakdown for why).
+  dev/reports/FAIRYTALEQA_STATS.md's answer-type breakdown for why).
 * ``meta`` -- ``story_id``, ``section_id`` (the cor_section list, as given),
   ``ex_or_im`` (annotator 1's ``ex-or-im1``; ``ex_or_im2`` also carried),
   ``attribute`` (normalized -- see :data:`_ATTRIBUTE_MAP``), ``attribute2``
@@ -57,7 +57,7 @@ flag): ``none`` parses nothing at all; ``sample`` additionally parses a
 stratified random ~2,000-sentence sample (seeded, by passage-length bin,
 :func:`select_sample_sections`) so the corpus parse-yield table stays
 meaningful without the ~31K-sentence full-corpus cost; ``all`` is the
-original full-corpus behavior. See dev/FAIRYTALEQA_STATS.md.
+original full-corpus behavior. See dev/reports/FAIRYTALEQA_STATS.md.
 """
 
 from __future__ import annotations
@@ -88,7 +88,7 @@ DEFAULT_IN_DIR = _ROOT / "data" / "k12" / "fairytaleqa"
 
 # "usable" (a real fact was extracted, ambiguous or pronoun-resolved
 # included) vs. "strict full-tree" (unambiguous, no pronoun fallback) --
-# see module docstring / dev/FAIRYTALEQA_STATS.md's own 4-bucket table.
+# see module docstring / dev/reports/FAIRYTALEQA_STATS.md's own 4-bucket table.
 _USABLE_OUTCOMES = {"ok", "parsed-ambiguous", "parsed-pronoun-resolved"}
 _STRICT_OUTCOME = "ok"
 _CAP_OUTCOME = "parse-resource-capped"
@@ -410,7 +410,7 @@ def build_episodes(in_dir: Path, story_ids: List[str], split_map: Dict[str, str]
     gives EVERY QA row in EVERY story's ``*-questions.csv`` exactly one outcome
     -- ``"emitted"`` or a named drop reason -- so
     ``sum(drop_reasons.values()) == (total rows read from every questions.csv)``
-    always holds; see dev/FAIRYTALEQA_STATS.md's "Row accounting" section.
+    always holds; see dev/reports/FAIRYTALEQA_STATS.md's "Row accounting" section.
     """
     episodes: List[Episode] = []
     answer_type_counts: Counter = Counter()
@@ -491,17 +491,17 @@ def build_episodes(in_dir: Path, story_ids: List[str], split_map: Dict[str, str]
 def attach_entity_options_cross_story(episodes: List[Episode], seed: int = 0,
                                        n_distractors: int = 3) -> int:
     """``--distractors cross-story`` (the ORIGINAL, now-broken policy --
-    dev/AUDIT_2026-10-15.md section C / dev/K12_BENCHMARK_FIX.md): M58d-style
+    dev/reports/AUDIT_2026-10-15.md section C / dev/reports/K12_BENCHMARK_FIX.md): M58d-style
     MC options for the ``entity``-answer-type subset only (the ONLY subset
     NAOMI's current single-entity-answer QA head can score -- see module
-    docstring / dev/FAIRYTALEQA_STATS.md). Distractors: other entity-type
+    docstring / dev/reports/FAIRYTALEQA_STATS.md). Distractors: other entity-type
     gold answers of the SAME normalized attribute, corpus-WIDE (i.e. drawn
     from OTHER stories), deduped, deterministically shuffled per episode.
     Kept only for comparison against ``same-passage`` -- BROKEN as a
     benchmark, because a distractor from another story is (overwhelmingly)
     never a substring of THIS episode's passage while the gold answer
     always is, so "pick the option that occurs in the passage" cheats at
-    ~97% (dev/K12_BENCHMARK_FIX.md). An episode with fewer than
+    ~97% (dev/reports/K12_BENCHMARK_FIX.md). An episode with fewer than
     ``n_distractors`` available same-attribute distractors keeps
     ``options=None`` (open-ended; not MC-scoreable). Returns the count of
     episodes that got options attached.
@@ -543,7 +543,7 @@ def attach_entity_options_cross_story(episodes: List[Episode], seed: int = 0,
 
 
 # ---------------------------------------------------------------------------
-# same-passage distractors (the fix -- dev/K12_BENCHMARK_FIX.md)
+# same-passage distractors (the fix -- dev/reports/K12_BENCHMARK_FIX.md)
 # ---------------------------------------------------------------------------
 
 def _qp_tag_sentence():
@@ -658,7 +658,7 @@ def attach_entity_options_same_passage(episodes: List[Episode], seed: int = 0,
 def attach_entity_options(episodes: List[Episode], seed: int = 0, n_distractors: int = 3,
                            policy: str = "same-passage") -> int:
     """Dispatches to :func:`attach_entity_options_same_passage` (default) or
-    :func:`attach_entity_options_cross_story` -- see dev/K12_BENCHMARK_FIX.md
+    :func:`attach_entity_options_cross_story` -- see dev/reports/K12_BENCHMARK_FIX.md
     for why the default changed."""
     if policy == "same-passage":
         return attach_entity_options_same_passage(episodes, seed, n_distractors)

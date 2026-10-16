@@ -1,6 +1,6 @@
 """M59a: episodic LONG-TERM MEMORY (LTM) -- see CLAUDE.md's "LTM decisions"
-and dev/LTM_DESIGN_BRIEF.md Sec.5 (locked design) for the decisions this
-module implements. dev/OP_INVENTORY.md's op table names the four ops this
+and dev/design/LTM_DESIGN_BRIEF.md Sec.5 (locked design) for the decisions this
+module implements. dev/design/OP_INVENTORY.md's op table names the four ops this
 milestone builds: **recall** (additive LTM read), **link** (LTM identity,
 via the existing resolver), **wind-down/consolidate** (a substate machine,
 ``scripts/_train_common.DocumentRunner``), and **promote** (tier-generic
@@ -49,7 +49,7 @@ Locked design, restated as code contracts:
    curriculum-side, not as a fourth answer option the resolver has to
    learn.
 
-Dials (dev/MIND_INTERFACE.md invariant #6: dials are explicit named
+Dials (dev/design/MIND_INTERFACE.md invariant #6: dials are explicit named
 scalars, never magic numbers): :data:`TRUST_LTM` (STM->LTM promotion gate),
 :data:`LINK_THRESHOLD` (identity-linking collapse-vs-mint-new threshold),
 :data:`LTM_DETACH` (whether ``DocumentRunner`` detaches the LTM tensor
@@ -171,7 +171,7 @@ NEW: int = -1  # link_decision sentinel: no candidate cleared LINK_THRESHOLD -- 
 # recall -- not a new op, just the additive read (design decision #1).
 # ---------------------------------------------------------------------------
 def mem_total(memory: torch.Tensor, ltm: Optional[torch.Tensor]) -> torch.Tensor:
-    """The **recall** op (dev/OP_INVENTORY.md's "recall (additive LTM
+    """The **recall** op (dev/design/OP_INVENTORY.md's "recall (additive LTM
     read)" row): every read this milestone touches -- the step
     ``mem_read``, the post-collapse re-read, candidate-evidence reads via
     :func:`nsm_ct.resolver.query_candidates`, the entity-axis inverse read
@@ -229,7 +229,7 @@ def promote(
     timestamp: float,
 ) -> Tuple[torch.Tensor, int]:
     """Tier-generic gated copy: ``(Mem_N, ProvenanceLog, Scalar) -> Mem_{N+1}``
-    (dev/OP_INVENTORY.md's **promote** row). The SAME function serves
+    (dev/design/OP_INVENTORY.md's **promote** row). The SAME function serves
     STM->LTM (``dial_name="trust_ltm"``, ``dial=`` :data:`TRUST_LTM`, the
     default ``criterion``) and, later, LTM->Truth (``dial_name=
     "trust_truth"``, a corroboration-count ``criterion``) -- see
@@ -320,7 +320,7 @@ def promote(
 # link -- deterministic v1 collapse-vs-mint-new decision (design decision #5).
 # ---------------------------------------------------------------------------
 def link_decision(probs: torch.Tensor, threshold: float = LINK_THRESHOLD) -> torch.Tensor:
-    """Deterministic v1 policy for **link** (dev/OP_INVENTORY.md's "link
+    """Deterministic v1 policy for **link** (dev/design/OP_INVENTORY.md's "link
     (LTM identity)" row): given a probability distribution ``probs`` over
     an entity candidate set (the SAME ``[..., C]`` shape/space
     :meth:`nsm_ct.clause_reactor.ClauseReactor._collapse`'s entity branch

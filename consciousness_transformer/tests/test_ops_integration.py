@@ -1,13 +1,13 @@
 """M60 (op-library integration): RECENCY (a deterministic per-candidate
 salience feature for the resolver) and CLEANUP (codebook cleanup on the
 answer path with a caution margin) wired into Track A's reactor --
-dev/OP_LIBRARY_MAP.md's ``recency``/``cleanup`` rows, closing two gaps
+dev/design/OP_LIBRARY_MAP.md's ``recency``/``cleanup`` rows, closing two gaps
 RESEARCH_NOTES "M57 battery #3" recorded: recency-only referent cases
 (the ``ambiguous_name`` instance/rich device) sit at CHANCE because
 nothing in the register carries discourse-order salience at all (see
 tests/test_evidence_interaction.py's ``_train_short`` docstring, which
 excludes this exact device from ITS OWN interaction-feature test for this
-reason), and ``caution``/margin never gates anything (dev/OP_INVENTORY.md
+reason), and ``caution``/margin never gates anything (dev/design/OP_INVENTORY.md
 Sec.5).
 
 Covers:

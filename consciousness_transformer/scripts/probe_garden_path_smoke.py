@@ -10,7 +10,7 @@ Also reports the two M55a honesty-gate baselines: PARSER-TOP-1 (always
 trust the parser's own best_hypothesis(), no memory) and ASSOCIATION-ONLY
 (bag-of-words over context vs options) -- both must sit near/at floor
 (~0.5, chance) by curriculum construction (see
-dev/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a,
+dev/design/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a,
 scripts/probe_m55_hyp_survey.py's survey).
 
 Usage: python scripts/probe_garden_path_smoke.py

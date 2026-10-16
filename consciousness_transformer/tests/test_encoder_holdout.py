@@ -1,4 +1,4 @@
-"""Tests for the shared held-out sentence workflow (dev/AUDIT_2026-09-08.md
+"""Tests for the shared held-out sentence workflow (dev/archive/AUDIT_2026-09-08.md
 finding 7 + recommendation (c)): scripts/make_holdout.py and the
 nsm_ct.encoder_train_util helpers scripts/train_encoder.py /
 scripts/colab_train_encoder.py use for --holdout-file / --n-train

@@ -1,5 +1,5 @@
 """Genus-differentia gloss parsing -- an independent hypernym signal (M26+,
-dev/SIGNALS_AUDIT.md #1).
+dev/archive/SIGNALS_AUDIT.md #1).
 
 WordNet glosses are near-formulaic: a noun gloss states its genus (the
 immediate category) up front, then differentiates it --
@@ -209,7 +209,7 @@ def genus_of(gloss: str) -> Optional[str]:
 
 
 # ---------------------------------------------------------------------------
-# Harness contract (scripts/ablate_signal.py, dev/SEMANTIC_MAPPING_PLAN.md).
+# Harness contract (scripts/ablate_signal.py, dev/archive/SEMANTIC_MAPPING_PLAN.md).
 # ---------------------------------------------------------------------------
 
 

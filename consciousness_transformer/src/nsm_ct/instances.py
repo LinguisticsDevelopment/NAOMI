@@ -1,5 +1,5 @@
 """M57a: the entity-instance subsystem (registry + minting + attribute-fact
-writes + provenance log). See dev/MIND_INTERFACE.md's "v2 addendum -- the
+writes + provenance log). See dev/design/MIND_INTERFACE.md's "v2 addendum -- the
 entity-instance subsystem" and CLAUDE.md's "M57 memory-schema decision".
 
 Standing defect this fixes: today an entity atom is minted deterministically
@@ -346,7 +346,7 @@ def candidates_for(
     ``candidates_for(attr_name="kind", target_vec=vec("doctor"))``.
 
     ``score`` -- ``"dot"`` (default) or ``"cosine"``. Recorded gap this
-    fixes (dev/OP_INVENTORY.md Sec.5, "``candidates_for`` has no tie-
+    fixes (dev/design/OP_INVENTORY.md Sec.5, "``candidates_for`` has no tie-
     break"): when a relation has exactly ONE writer in the whole memory,
     every OTHER instance's readout at that relation is a small SCALED COPY
     of the writer's value (interference term ``(other_atom . writer_atom) *

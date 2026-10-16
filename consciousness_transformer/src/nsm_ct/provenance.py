@@ -9,7 +9,7 @@ ProvenanceLog`) for the *offline* attribute-fact API
 (:func:`nsm_ct.instances.write_attribute`); this module is the SAME log
 wired onto the reactor's OWN live writes (:meth:`nsm_ct.clause_reactor.
 ClauseReactor.forward`'s ``em.write`` call) instead, making
-dev/MIND_INTERFACE.md invariant #4 ("every memory write is gated, local, and
+dev/design/MIND_INTERFACE.md invariant #4 ("every memory write is gated, local, and
 auditable") true of a trained model's actual training-time/eval-time
 behavior, not just of a hand-driven demonstration.
 

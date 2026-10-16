@@ -1,5 +1,5 @@
 """Tests for M55a/M55b: the membrane half of parse-hypothesis collapse
-(dev/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a/M55b, dev/NEXT_ARC_PLAN.md
+(dev/design/TRACK_C_DESIGN.md Sec 1.10, RESEARCH_NOTES M55a/M55b, dev/archive/NEXT_ARC_PLAN.md
 M55). Covers:
 
 1. The per-candidate Addr register plumbing (membrane.Candidate.query_entity/

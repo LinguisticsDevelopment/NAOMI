@@ -1,5 +1,5 @@
 """Self-contained Colab driver: train BOTH the candidate-lattice ENCODER
-(dev/ENCODER_MODEL_SPEC.md) and the learned reconstruction DECODER
+(dev/design/ENCODER_MODEL_SPEC.md) and the learned reconstruction DECODER
 (RESEARCH_NOTES.md "DECODER PLAN UPDATE") in a single run, then chain them
 into the autoencoder ROUND-TRIP test the lead asked for:
 
@@ -235,7 +235,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--enc-records", type=int, default=984,
                      help="EN gold records for the encoder split (~80/10/10 train/dev/test); "
-                          "984 reproduces the dev/ENCODER_MODEL_SPEC.md S2.3 full-Stage-i split")
+                          "984 reproduces the dev/design/ENCODER_MODEL_SPEC.md S2.3 full-Stage-i split")
     ap.add_argument("--enc-epochs", type=int, default=300,
                      help="run-2 default (DIAGNOSIS 2026-09-06): run-1's 50 epochs was severely "
                           "undertrained on top of the missing STOP/CLOSE_CLAUSE weighting -- see "

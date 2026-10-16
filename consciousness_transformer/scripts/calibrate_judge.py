@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Calibration harness for the LLM parse judge (dev/PARSE_JUDGE.md).
+"""Calibration harness for the LLM parse judge (dev/archive/PARSE_JUDGE.md).
 
 Three sets, built from `runs/encoder_gold_v2.jsonl` (+ `runs/complement_probe.txt`
 when present):

@@ -117,7 +117,7 @@ def build(sample_n: int) -> None:
         "# FairytaleQA -- full-fetch manifest + sample\n\n"
         f"MANIFEST.json indexes all {len(rows)} stories from the full "
         f"`scripts/fetch_k12.py --source fairytaleqa --allow-download` fetch "
-        f"({fetched} fetched successfully -- see dev/FAIRYTALEQA_STATS.md for "
+        f"({fetched} fetched successfully -- see dev/reports/FAIRYTALEQA_STATS.md for "
         "why any are missing) with per-story split/section/question counts "
         "and sha256 of both CSVs. The raw fetch itself lives in "
         "`data/k12/fairytaleqa/` (gitignored -- re-fetch with the command "

@@ -41,7 +41,7 @@ assumed broken too -- keeps total runtime near budget; sequential writes
 make the naive full grid too slow otherwise).
 
 Outputs: runs/capacity_curve.csv (gitignored, full grid) and
-dev/CAPACITY_CURVE.md (compact per-dim summary + "so what").
+dev/reports/CAPACITY_CURVE.md (compact per-dim summary + "so what").
 """
 
 from __future__ import annotations

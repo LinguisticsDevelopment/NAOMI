@@ -1,5 +1,5 @@
 """Write the shared held-out sentence files for the encoder training arms
-(dev/AUDIT_2026-09-08.md finding 7 + recommendation (c)).
+(dev/archive/AUDIT_2026-09-08.md finding 7 + recommendation (c)).
 
 `runs/holdout_sentences.txt` = the sentence texts of the CURRENT seeded v2
 test split (n~98, same seed/split sizes as run-2 -- default seed=0,

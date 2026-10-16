@@ -1,6 +1,6 @@
 """Re-score EVERY arms-1/arms-2 checkpoint with the USVS-graded metric next
 to the old binary edge-F1 -- no retraining (lead directive 2026-09-08, part
-C; dev/USVS_GRADED_SCORING.md).
+C; dev/reports/USVS_GRADED_SCORING.md).
 
 The question the lead asked: does the ARM RANKING change when a near-miss
 stops scoring like a phantom, and how far do the old "wrong" edges actually

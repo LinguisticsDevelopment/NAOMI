@@ -11,7 +11,7 @@ the number measures USVS itself, not a model. Resolvers:
 - random   — sanity floor.
 
 Reports all-instances AND polysemous-only accuracy (MFS is inflated by
-monosemous words), plus per-POS. Decision rule (dev/INTEGRATION_PLAN.md):
+monosemous words), plus per-POS. Decision rule (dev/archive/INTEGRATION_PLAN.md):
 USVS-sim >= MFS on polysemous -> signatures are viable for the perception slot;
 well below -> documented negative, fix is grounding depth not resolver machinery.
 

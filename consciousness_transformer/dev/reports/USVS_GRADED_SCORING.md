@@ -35,7 +35,7 @@ gradient carries no notion of "you were close".
 
 ## 1. What the schema actually supports (and what it does not)
 
-Read against `dev/ENCODER_IO_CONTRACT_V2.md` §3–§4:
+Read against `dev/design/ENCODER_IO_CONTRACT_V2.md` §3–§4:
 
 1. **The encoder never picks a sense.** Contract §0/§4.2 and
    `encoder_model.py`'s module docstring: a `sense` node carries the *whole*

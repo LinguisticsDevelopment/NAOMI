@@ -42,10 +42,10 @@ One-line index of what's there:
   append-only log outside the tensor.
 - LTM (2026-08-30): separate additive-read LTM tensor, STM-only writes,
   identity linking via the existing resolver, consolidation as a gated
-  substate event. See `dev/LTM_DESIGN_BRIEF.md` §5.
+  substate event. See `dev/design/LTM_DESIGN_BRIEF.md` §5.
 - Executor (2026-08-30): hard selection for memory-key addresses, soft for
   distributions/scalars; the controller's self-loop carries control signals
-  only, never register data. See `dev/EXECUTOR_DESIGN.md` §6.
+  only, never register data. See `dev/design/EXECUTOR_DESIGN.md` §6.
 - Sprint clock dropped (2026-08-30): Aurora deadline no longer governs
   sequencing.
 - Encoder unfrozen / decoder stays on hold (2026-10-16): see `GOALS.md`

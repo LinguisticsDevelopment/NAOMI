@@ -1,4 +1,4 @@
-"""The Step B ablation harness (dev/SEMANTIC_MAPPING_PLAN.md).
+"""The Step B ablation harness (dev/archive/SEMANTIC_MAPPING_PLAN.md).
 
 One honest, reusable judge for every candidate signal: compute the M28.0 metric
 table with and without a signal's extras, across train-split jitters, and report

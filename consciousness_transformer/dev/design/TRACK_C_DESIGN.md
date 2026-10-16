@@ -1,6 +1,6 @@
 # Track C research spike: a chained op algebra for the resolver
 
-M56 deliverable (dev/NEXT_ARC_PLAN.md). Research/design only — no source code
+M56 deliverable (dev/archive/NEXT_ARC_PLAN.md). Research/design only — no source code
 changed to produce this document. Charter: single-step routing over op
 outputs is just Track B with named features (user's brake, 2026-08-10); a
 real instruction-set machine CHAINS, one op's output feeding the next
@@ -15,7 +15,7 @@ Grounding for every claim below: `src/nsm_ct/resolver.py`,
 `src/nsm_ct/entity_memory.py`, `src/nsm_ct/membrane.py`,
 `src/nsm_ct/sense_chooser.py`, `src/nsm_ct/clause_reactor.py`
 (`ClauseReactor._collapse`), `RESEARCH_NOTES.md` M53–M54c,
-`dev/MIND_INTERFACE.md`, `dev/ROADMAP_LONG_TERM.md` ("The Advice Test").
+`dev/design/MIND_INTERFACE.md`, `dev/design/ROADMAP_LONG_TERM.md` ("The Advice Test").
 One fact below was checked empirically for this spike (small script,
 reported inline) because the record didn't already contain it.
 
@@ -487,7 +487,7 @@ recording as such, not conflating with a flat "C failed").
 
 Train ops + routing on pronoun + sense traces only (Stages 1-2 above).
 Then present a **new collapse type with no new ops and few/zero new
-traces**: M55's parse-hypothesis collapse (`dev/RESOLVER_BUILD_PLAN.md`
+traces**: M55's parse-hypothesis collapse (`dev/archive/RESOLVER_BUILD_PLAN.md`
 Phase 4 — garden-path sentences, parser emits top-K structural
 hypotheses with margins, the mind picks). This candidate set slots into
 the SAME typed registers with no new op required:
@@ -522,7 +522,7 @@ sub-conditions, precisely specified:
   trace-supervised (a small nudge, not a new Stage 1). Success bar: come
   within noise of Track A's own M55 rank head, once that number exists
   (M55 has not been run yet — this spike predates it per
-  `dev/NEXT_ARC_PLAN.md`'s sequencing, so the threshold is stated
+  `dev/archive/NEXT_ARC_PLAN.md`'s sequencing, so the threshold is stated
   relative to a number that will exist before Track C's own gate run,
   not fabricated here).
 

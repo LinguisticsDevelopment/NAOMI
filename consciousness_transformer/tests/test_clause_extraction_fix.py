@@ -1,7 +1,7 @@
 """Regression tests for the B1/C1/B2 clause-extraction fixes.
 
-See ``dev/GOLD_COVERAGE_AUDIT.md`` ("Part 3 -- Root cause" / "Proposed fix")
-and ``dev/CLAUSE_EXTRACTION_FIX.md`` for the full writeup. Each sentence
+See ``dev/reports/GOLD_COVERAGE_AUDIT.md`` ("Part 3 -- Root cause" / "Proposed fix")
+and ``dev/reports/CLAUSE_EXTRACTION_FIX.md`` for the full writeup. Each sentence
 below is quoted verbatim from ``runs/holdout_sentences.txt`` (the 50-tree
 hand audit's own holdout file), so these are real prose failures, not
 synthetic cases.

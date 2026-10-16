@@ -116,7 +116,7 @@ def _merge_graphs(graphs: List["object"]):
 
 
 # ---------------------------------------------------------------------------
-# Spanish Freeze Test (dev/ROADMAP_LONG_TERM.md): the language/grammar seam.
+# Spanish Freeze Test (dev/design/ROADMAP_LONG_TERM.md): the language/grammar seam.
 #
 # clause.py's ``_PREP_RELATION`` (English preposition-token -> role-label map)
 # is a bare module-level dict, not a parameter threaded through

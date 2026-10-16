@@ -4,7 +4,7 @@ split (spec S6), seeded pool subsetting, the shared held-out-sentence eval
 path, and the teacher-forced training loop with an optional exact
 optimizer-step budget.
 
-dev/AUDIT_2026-09-08.md finding 7 + recommendation (c): the encoder's
+dev/archive/AUDIT_2026-09-08.md finding 7 + recommendation (c): the encoder's
 data-limited verdict rested on FIXED-EPOCH runs (n=788 got ~4x the gradient
 steps of n=200), and the v3-gold retrain bundled top-1 pruning + richer
 extraction + an 11x corpus into one uncontrolled run. This module gives
@@ -141,7 +141,7 @@ def build_train_items(records: Sequence[dict], usvs, pos_vocab, hash_buckets: in
                        *, compute_node_targets: bool = False) -> list:
     """`compute_node_targets` (default `False`, unchanged item shape's
     THIRD slot is `None`) -- lead directive 2026-09-08
-    (dev/USVS_GRADED_SCORING.md S5.4): precompute each item's gold USVS
+    (dev/reports/USVS_GRADED_SCORING.md S5.4): precompute each item's gold USVS
     node vectors ONCE here (`em.node_targets_for_steps`), not inside the
     training loop, so `--aux-usvs` never re-runs a USVS lookup per epoch.
     Every item is a `(feats, steps, node_targets)` triple; `run_training_loop`
@@ -164,7 +164,7 @@ def _f1(p: float, r: float) -> float:
 
 #: The graded-metric field names `evaluate_full(metric=...)` adds, in both
 #: the best-of-k and the rank-1 (`rank1_`-prefixed) views. See
-#: dev/USVS_GRADED_SCORING.md S3.
+#: dev/reports/USVS_GRADED_SCORING.md S3.
 GRADED_FIELDS = ("graded_p", "graded_r", "graded_f", "graded_overall",
                   "clause_count", "clause_kind", "clause_struct")
 
@@ -178,7 +178,7 @@ def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets:
                    rng: Optional[random.Random] = None,
                    metric: str = "edge") -> Dict[str, float]:
     """`em.evaluate`'s best-of-k oracle metrics PLUS the audit's rank-1
-    committed-tree edge P/R/F1 and mean forest width (dev/AUDIT_2026-09-08.md
+    committed-tree edge P/R/F1 and mean forest width (dev/archive/AUDIT_2026-09-08.md
     finding 5 + recommendation (b); ported from the Part A section added to
     scripts/rescore_encoder.py on branch `encoder-complement-probe`). A
     forest of up to k trees is decoded ONCE per record; `em.score_record` is
@@ -187,7 +187,7 @@ def evaluate_full(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets:
     reports the "encoder works" number alongside the number that survives
     commitment to a single hypothesis.
 
-    `metric` (lead directive 2026-09-08; dev/USVS_GRADED_SCORING.md):
+    `metric` (lead directive 2026-09-08; dev/reports/USVS_GRADED_SCORING.md):
     `"edge"` (default) is the original binary edge-F1 only and is unchanged;
     `"graded"` ADDS the USVS-graded P/R/F fields (same two views, `graded_*`
     and `rank1_graded_*`) computed on the SAME decoded forests -- nothing is
@@ -264,7 +264,7 @@ def evaluate_dev_fast(model, records: Sequence[dict], usvs, pos_vocab, hash_buck
 
 
 def evaluate_head_cosine(model, records: Sequence[dict], usvs, pos_vocab, hash_buckets: int) -> float:
-    """The `--aux-usvs` diagnostic (dev/USVS_GRADED_SCORING.md S5.4 part B):
+    """The `--aux-usvs` diagnostic (dev/reports/USVS_GRADED_SCORING.md S5.4 part B):
     "does the head learn the [USVS] space?" For every GOLD tree of every
     record, teacher-force it through the model's controller
     (`model.node_vectors`, on the SAME `tree_render.normalize_gold_tree`
@@ -327,13 +327,13 @@ def run_training_loop(model, train_items: list, opt, *, epochs: int, batch_size:
     steps* (gradient updates -- i.e. `opt.step()` calls, including the
     unconditional per-epoch flush of a partial trailing batch) rather than
     epochs; `epochs` becomes a ceiling only, so v3@788 and v3@3000 can be
-    trained to the SAME optimization budget (dev/AUDIT_2026-09-08.md
+    trained to the SAME optimization budget (dev/archive/AUDIT_2026-09-08.md
     finding 7).
 
     `soft_targets` (default `None`) is passed straight through to
     `em.teacher_force_loss` -- an `em.SoftTargetConfig` enables the opt-in
     USVS/semantics-graded soft CE targets (`--loss usvs-soft`;
-    dev/USVS_GRADED_SCORING.md S5). `None` keeps the original one-hot loss,
+    dev/reports/USVS_GRADED_SCORING.md S5). `None` keeps the original one-hot loss,
     numerically identical.
 
     `aux_usvs_weight` (default `0.0`, unchanged) is passed straight through

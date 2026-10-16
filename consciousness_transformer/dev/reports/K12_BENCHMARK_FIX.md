@@ -1,6 +1,6 @@
 # K-12 benchmark fix + cheat baselines (2026-10-15, branch `k12-bench-fix`)
 
-Scope: dev/AUDIT_2026-10-15.md sections C ("the planned K-12 benchmark can
+Scope: dev/reports/AUDIT_2026-10-15.md sections C ("the planned K-12 benchmark can
 be solved by string matching") and A.1 (the encoder's headline edge-F1 has
 no cheat baseline beside it), worked per that audit's "F. Next two weeks,
 item 1 (fix the benchmarks, ≈2h, no torch)". CLAUDE.md's "cheat-baseline
@@ -144,7 +144,7 @@ comparison on MCTest, same caveat as 3a's word-overlap residual.
 ### 3c. Encoder heuristic cheat baseline (98-sentence v2 holdout, scored
 against `encoder-gold-v4b-16k`'s gold records)
 
-| | heuristic | encoder (rank-1, from dev/AUDIT_2026-09-08.md) |
+| | heuristic | encoder (rank-1, from dev/archive/AUDIT_2026-09-08.md) |
 |---|---|---|
 | edge_precision | 0.246 | -- |
 | edge_recall | 0.295 | -- |

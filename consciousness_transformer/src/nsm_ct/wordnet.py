@@ -390,7 +390,7 @@ def all_senses():
 def spanish_lemmas(sense_id: str) -> List[str]:
     """OMW Spanish (``lang="spa"``) lemma names for the synset *sense_id*,
     keyed to the SAME synset id as its English lemmas -- no re-grounding,
-    just a wider lemma->sense_id lookup (see ``dev/SPANISH_SWAP_FEASIBILITY.md``
+    just a wider lemma->sense_id lookup (see ``dev/archive/SPANISH_SWAP_FEASIBILITY.md``
     Check 1). Lowercased, deduped. Empty list if WordNet/OMW is unavailable
     or the synset has no Spanish layer."""
     if not wordnet_available():

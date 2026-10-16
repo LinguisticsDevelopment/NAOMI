@@ -2,7 +2,7 @@
 English-gloss decomposition :class:`~nsm_ct.meaning.NSMMeaningResolver`
 already does.
 
-The Spanish Freeze Test's central mechanism (dev/ROADMAP_LONG_TERM.md): sense
+The Spanish Freeze Test's central mechanism (dev/design/ROADMAP_LONG_TERM.md): sense
 signatures are keyed to SYNSET IDs, not English strings -- "jardín" and
 "garden" both resolve (via OMW's Spanish lemma layer) to ``garden.n.01``, so
 they should produce the SAME meaning tree. ``NSMMeaningResolver``'s WordNet
@@ -13,7 +13,7 @@ content. :class:`SpanishMeaningResolver`'s fix is a single translation step
 BEFORE handing off to the untouched parent logic: look up the word's OMW-es
 synsets, take the first (index 0 -- OMW's own MFS-like order, NOT
 necessarily English WordNet's own MFS order for the same concept; this is
-the "expected leak" dev/ROADMAP_LONG_TERM.md calls out, quantified by
+the "expected leak" dev/design/ROADMAP_LONG_TERM.md calls out, quantified by
 ``scripts/probe_spanish_freeze.py``), and resolve using that synset's own
 first English lemma -- reusing 100% of ``NSMMeaningResolver``'s prime/
 molecule/explication-store/gloss-decomposition machinery unchanged (no

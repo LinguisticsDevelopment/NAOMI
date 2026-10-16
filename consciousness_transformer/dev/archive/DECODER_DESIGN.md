@@ -1,8 +1,8 @@
 # Decoder Design — the OUTPUT half of the I/O layer (grounded answer → surface text)
 
 Status: DRAFT for lead review. Nothing built yet. Author: decoder design pass,
-2026-09-04. Companion to `dev/UNIVERSAL_ENCODER_DESIGN.md` (the mind's INPUT half)
-and `dev/ENCODER_IO_CONTRACT_V2.md` (the candidates-first grounded schema). This
+2026-09-04. Companion to `dev/design/UNIVERSAL_ENCODER_DESIGN.md` (the mind's INPUT half)
+and `dev/design/ENCODER_IO_CONTRACT_V2.md` (the candidates-first grounded schema). This
 doc specs the OUTPUT half: how a grounded answer chosen by comprehension becomes
 surface text, and why that path **cannot confabulate**.
 

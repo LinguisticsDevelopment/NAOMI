@@ -1,4 +1,4 @@
-"""EXECUTOR PHASE 2 (dev/EXECUTOR_DESIGN.md Sec.2, CLAUDE.md's D1/D2
+"""EXECUTOR PHASE 2 (dev/design/EXECUTOR_DESIGN.md Sec.2, CLAUDE.md's D1/D2
 executor decisions): the LEARNED op/argument-selection heads --
 ``OpSelect`` (categorical, over the op vocabulary) and ``ArgSelect``
 (pointer, over the FIXED register file) -- consumed by
@@ -6,7 +6,7 @@ executor decisions): the LEARNED op/argument-selection heads --
 
 Scope, read before the classes below (also documented at
 ``executor.py``'s ``run_learned`` module note, kept in sync): the v0
-register table (dev/EXECUTOR_DESIGN.md Sec.1.1, transcribed verbatim as
+register table (dev/design/EXECUTOR_DESIGN.md Sec.1.1, transcribed verbatim as
 data in :mod:`nsm_ct.programs`) is, per FAMILY, a fully deterministic flat
 ``Step`` list with NO within-family branching -- every op, every register
 read/written, is pinned the moment a clause step's FAMILY is known. The
@@ -46,7 +46,7 @@ would, for any of them, return their single legal register with
 probability 1 (no learned parameter exercised) -- EMIT is the only entry
 with more than one candidate slot today. This is not a special case
 hand-cut to fit; it is what the FROZEN v0 register table actually
-contains (D3, dev/EXECUTOR_DESIGN.md Sec.6) -- extending it is a
+contains (D3, dev/design/EXECUTOR_DESIGN.md Sec.6) -- extending it is a
 Phase-3-or-later, register-file-unfreezing decision, not this milestone's.
 """
 
@@ -86,7 +86,7 @@ for _op in ENTRY_OPS:
 # The FIXED (non-per-candidate) v0 register file -- exactly the slot map
 # Executor.run() itself allocates (executor.py's `ops.RegisterFile.create`
 # call). ArgSelect points at these by NAME/IDENTITY (a learned embedding
-# per slot) -- never their live DATA (dev/EXECUTOR_DESIGN.md Sec.2: "never
+# per slot) -- never their live DATA (dev/design/EXECUTOR_DESIGN.md Sec.2: "never
 # P.addr[i]'s raw identity vectors as key" -- the SAME discipline, applied
 # here to the fixed bank since Phase 2 does not implement a per-candidate
 # ArgSelect at all, see module docstring).
@@ -326,7 +326,7 @@ def count_params(*modules: nn.Module) -> int:
 
 
 def lofo_keep_mask(families: Sequence[str], lofo_family: Optional[str]) -> List[bool]:
-    """dev/EXECUTOR_DESIGN.md Sec.3's LOFO gate, as a pure, directly
+    """dev/design/EXECUTOR_DESIGN.md Sec.3's LOFO gate, as a pure, directly
     testable function: ``True`` at row ``i`` means step ``i``'s gold
     family (:func:`nsm_ct.programs.family_of_step`) gets trace
     supervision this call; ``False`` means it is DROPPED entirely (Sec.3:
@@ -399,7 +399,7 @@ def family_balance_weights(counts: Dict[str, int], *, power: float = 0.5) -> Dic
 
 
 def mask_second_write(op_sequence: Sequence[str]) -> Tuple[List[str], int]:
-    """dev/EXECUTOR_DESIGN.md Sec.1.3's <=1-WRITE-per-clause invariant,
+    """dev/design/EXECUTOR_DESIGN.md Sec.1.3's <=1-WRITE-per-clause invariant,
     applied to a LEARNED (possibly wrong) flat op sequence rather than
     raising: every ``"WRITE"`` in ``op_sequence`` AFTER the first is
     replaced with the sentinel ``"_MASKED_WRITE"``. Returns ``(masked,

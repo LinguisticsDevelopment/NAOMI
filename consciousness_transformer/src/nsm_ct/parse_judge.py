@@ -1,4 +1,4 @@
-"""LLM-as-judge for flattened parse trees (dev/PARSE_JUDGE.md).
+"""LLM-as-judge for flattened parse trees (dev/archive/PARSE_JUDGE.md).
 
 WHY this exists (lead, 2026-09-08): once the encoder self-trains, its own
 good parses on edge cases become gold for the next round. The admission
