@@ -488,13 +488,21 @@ def build_episodes(in_dir: Path, story_ids: List[str], split_map: Dict[str, str]
     return episodes, answer_type_counts, drop_reasons
 
 
-def attach_entity_options(episodes: List[Episode], seed: int = 0, n_distractors: int = 3) -> int:
-    """M58d-style MC options for the ``entity``-answer-type subset only
-    (the ONLY subset NAOMI's current single-entity-answer QA head can score
-    -- see module docstring / dev/FAIRYTALEQA_STATS.md). Distractors: other
-    entity-type gold answers of the SAME normalized attribute, corpus-wide,
-    deduped, deterministically shuffled per episode. An episode with fewer
-    than ``n_distractors`` available same-attribute distractors keeps
+def attach_entity_options_cross_story(episodes: List[Episode], seed: int = 0,
+                                       n_distractors: int = 3) -> int:
+    """``--distractors cross-story`` (the ORIGINAL, now-broken policy --
+    dev/AUDIT_2026-10-15.md section C / dev/K12_BENCHMARK_FIX.md): M58d-style
+    MC options for the ``entity``-answer-type subset only (the ONLY subset
+    NAOMI's current single-entity-answer QA head can score -- see module
+    docstring / dev/FAIRYTALEQA_STATS.md). Distractors: other entity-type
+    gold answers of the SAME normalized attribute, corpus-WIDE (i.e. drawn
+    from OTHER stories), deduped, deterministically shuffled per episode.
+    Kept only for comparison against ``same-passage`` -- BROKEN as a
+    benchmark, because a distractor from another story is (overwhelmingly)
+    never a substring of THIS episode's passage while the gold answer
+    always is, so "pick the option that occurs in the passage" cheats at
+    ~97% (dev/K12_BENCHMARK_FIX.md). An episode with fewer than
+    ``n_distractors`` available same-attribute distractors keeps
     ``options=None`` (open-ended; not MC-scoreable). Returns the count of
     episodes that got options attached.
     """
@@ -523,6 +531,8 @@ def attach_entity_options(episodes: List[Episode], seed: int = 0, n_distractors:
             if len(distractors) >= n_distractors:
                 break
         if len(distractors) < 2:
+            ep.options = None
+            ep.answer_idx = None
             continue
         options = distractors + [gold]
         rng.shuffle(options)
@@ -530,6 +540,164 @@ def attach_entity_options(episodes: List[Episode], seed: int = 0, n_distractors:
         ep.answer_idx = options.index(gold)
         n_attached += 1
     return n_attached
+
+
+# ---------------------------------------------------------------------------
+# same-passage distractors (the fix -- dev/K12_BENCHMARK_FIX.md)
+# ---------------------------------------------------------------------------
+
+def _qp_tag_sentence():
+    """Lazily import quantum_parser's own POS tagger (same ``qp_root``
+    resolution ``nsm_ct.input_encoder.ParserInputEncoder``/``nsm_ct.corpus``
+    use: ``consciousness_transformer/scripts/.. -> NAOMI/quantum_parser``)."""
+    import sys as _sys
+
+    qp_root = str((_ROOT / ".." / "quantum_parser").resolve())
+    if qp_root not in _sys.path:
+        _sys.path.insert(0, qp_root)
+    from src.parser.pos_tagger import tag_sentence  # type: ignore
+    from src.parser.enums import Tag  # type: ignore
+    return tag_sentence, Tag
+
+
+_NP_MAX_LEN = 4  # mirrors classify_answer_type's own "entity" length cap
+
+
+def _np_chunks_in_sentence(sentence: str, tag_sentence, Tag) -> List[Tuple[str, bool, bool]]:
+    """``[(span_text, preceded_by_adp, head_is_propn), ...]`` -- every
+    ``DET? (ADJ|NUM)* (NOUN|PROPN)+`` run of length <= ``_NP_MAX_LEN`` in
+    the sentence, via the project's own POS tagger (not a second grammar --
+    this is chunking, not parsing). ``preceded_by_adp``/``head_is_propn``
+    are what the attribute-aware preference below keys on (a PLACE-like or
+    PROPN-headed span for ``setting``/``character`` questions)."""
+    words = tag_sentence(sentence)
+    n = len(words)
+    out: List[Tuple[str, bool, bool]] = []
+    i = 0
+    while i < n:
+        if words[i].pos not in (Tag.DET, Tag.ADJ, Tag.NOUN, Tag.PROPN, Tag.NUM):
+            i += 1
+            continue
+        j = i
+        while j < n and words[j].pos in (Tag.DET, Tag.ADJ, Tag.NUM):
+            j += 1
+        head_start = j
+        while j < n and words[j].pos in (Tag.NOUN, Tag.PROPN):
+            j += 1
+        if j > head_start and (j - i) <= _NP_MAX_LEN:
+            preceded_by_adp = i > 0 and words[i - 1].pos == Tag.ADP
+            head_is_propn = words[j - 1].pos == Tag.PROPN
+            out.append((" ".join(w.text for w in words[i:j]), preceded_by_adp, head_is_propn))
+        i = j if j > i else i + 1
+    return out
+
+
+def attach_entity_options_same_passage(episodes: List[Episode], seed: int = 0,
+                                        n_distractors: int = 3) -> int:
+    """``--distractors same-passage`` (default -- the fix, dev/
+    K12_BENCHMARK_FIX.md): distractors are noun-phrase spans drawn from the
+    episode's OWN passage (``ep.context``), so every option -- gold AND
+    distractors alike -- is a verbatim passage substring and "pick the
+    option that occurs in the passage" stops identifying the answer.
+    Preference order: same-attribute spans first (``character`` ->
+    PROPN-headed; ``setting`` -> PLACE-like, preceded by a preposition or
+    PROPN-headed), topped up with any other passage NP chunk when the
+    preferred pool runs short ("falling back to any passage NP" per the
+    task). An episode with fewer than 2 available distractors keeps
+    ``options=None`` (open-ended; not MC-scoreable -- same contract as
+    ``cross-story``). Returns the count of episodes that got options
+    attached.
+    """
+    import random
+
+    tag_sentence, Tag = _qp_tag_sentence()
+    n_attached = 0
+    for i, ep in enumerate(episodes):
+        if ep.meta.get("answer_type") != "entity" or not ep.answer_text:
+            continue
+        gold = ep.answer_text
+        gold_norm = " ".join(gold.lower().split())
+        attribute = ep.meta.get("attribute", "")
+
+        seen = {gold_norm}
+        preferred: List[str] = []
+        generic: List[str] = []
+        for sent in ep.context:
+            for text, preceded_by_adp, head_is_propn in _np_chunks_in_sentence(sent, tag_sentence, Tag):
+                norm = " ".join(text.lower().split())
+                if not norm or norm in seen or norm in gold_norm or gold_norm in norm:
+                    continue
+                seen.add(norm)
+                generic.append(text)
+                if attribute == "character" and head_is_propn:
+                    preferred.append(text)
+                elif attribute == "setting" and (preceded_by_adp or head_is_propn):
+                    preferred.append(text)
+
+        rng = random.Random(seed + i)
+        pref_shuffled = list(preferred)
+        rng.shuffle(pref_shuffled)
+        chosen = pref_shuffled[:n_distractors]
+        if len(chosen) < n_distractors:
+            fallback = [t for t in generic if t not in chosen]
+            rng.shuffle(fallback)
+            chosen += fallback[: n_distractors - len(chosen)]
+
+        if len(chosen) < 2:
+            ep.options = None
+            ep.answer_idx = None
+            continue
+        options = chosen + [gold]
+        rng.shuffle(options)
+        ep.options = options
+        ep.answer_idx = options.index(gold)
+        n_attached += 1
+    return n_attached
+
+
+def attach_entity_options(episodes: List[Episode], seed: int = 0, n_distractors: int = 3,
+                           policy: str = "same-passage") -> int:
+    """Dispatches to :func:`attach_entity_options_same_passage` (default) or
+    :func:`attach_entity_options_cross_story` -- see dev/K12_BENCHMARK_FIX.md
+    for why the default changed."""
+    if policy == "same-passage":
+        return attach_entity_options_same_passage(episodes, seed, n_distractors)
+    if policy == "cross-story":
+        return attach_entity_options_cross_story(episodes, seed, n_distractors)
+    raise ValueError(f"unknown --distractors policy {policy!r}")
+
+
+_EPISODE_FIELDS = {f.name for f in dataclasses.fields(Episode)}
+
+
+def _load_episodes_jsonl(path: Path) -> List[Episode]:
+    """``--regen-options-from``'s loader: one :class:`Episode` per line, as
+    written by this script's own ``json.dumps(dataclasses.asdict(ep))``
+    (mirrors ``scripts/eval_prose.py``'s ``load_episodes``)."""
+    episodes: List[Episode] = []
+    with path.open(encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            kwargs = {k: v for k, v in row.items() if k in _EPISODE_FIELDS}
+            episodes.append(Episode(**kwargs))
+    return episodes
+
+
+def regen_options_from_episodes(episodes: List[Episode], seed: int, n_distractors: int,
+                                 policy: str) -> int:
+    """Re-applies a distractor policy to an ALREADY-BUILT episode list (e.g.
+    loaded back from a previously-written ``--out`` jsonl) without
+    re-fetching/re-parsing the source corpus -- ``ep.context``/``answer_text``/
+    ``meta`` already carry everything either policy needs. Clears any
+    existing ``options``/``answer_idx`` first so this is idempotent
+    regardless of which policy produced the file being re-processed."""
+    for ep in episodes:
+        ep.options = None
+        ep.answer_idx = None
+    return attach_entity_options(episodes, seed=seed, n_distractors=n_distractors, policy=policy)
 
 
 # ---------------------------------------------------------------------------
@@ -550,7 +718,36 @@ def main() -> None:
                           "bin) for the corpus parse-yield table -- only THOSE sentences get an "
                           "outcome. all = parse every sentence of every section (slow: ~31K "
                           "sentences corpus-wide -- the original, pre-flag behavior).")
+    ap.add_argument("--distractors", type=str, default="same-passage",
+                     choices=["same-passage", "cross-story"],
+                     help="MC distractor policy for entity-type episodes (dev/"
+                          "K12_BENCHMARK_FIX.md). same-passage (default, the fix): distractors "
+                          "are NP spans from the episode's OWN passage, so passage-presence no "
+                          "longer identifies the answer. cross-story (the original, broken "
+                          "policy): distractors are other stories' same-attribute answers -- "
+                          "kept only for comparison, see --regen-options-from.")
+    ap.add_argument("--regen-options-from", type=Path, default=None,
+                     help="Skip fetching/parsing the source corpus entirely: load episodes "
+                          "already written by a previous run of this script (any --distractors "
+                          "policy) from this jsonl path, re-apply --distractors to them, and "
+                          "write the result to --out. Lets both policies be compared on the "
+                          "EXACT same underlying episode set.")
     args = ap.parse_args()
+
+    if args.regen_options_from is not None:
+        episodes = _load_episodes_jsonl(args.regen_options_from)
+        print(f"[convert_fairytaleqa] loaded {len(episodes)} episodes from "
+              f"{args.regen_options_from} for --distractors {args.distractors} regen", flush=True)
+        n_attached = regen_options_from_episodes(episodes, seed=0, n_distractors=3,
+                                                  policy=args.distractors)
+        print(f"[convert_fairytaleqa] {n_attached} episodes got MC options "
+              f"(--distractors {args.distractors})", flush=True)
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        with args.out.open("w", encoding="utf-8") as f:
+            for ep in episodes:
+                f.write(json.dumps(dataclasses.asdict(ep)) + "\n")
+        print(f"[convert_fairytaleqa] wrote {len(episodes)} episodes -> {args.out}", flush=True)
+        return
 
     if not args.in_dir.exists():
         raise SystemExit(f"{args.in_dir} not found -- run scripts/fetch_k12.py "
@@ -565,9 +762,10 @@ def main() -> None:
     section_cache = parse_all_sections(args.in_dir, story_ids, args.workers, mode=args.parse)
     episodes, answer_type_counts, drop_reasons = build_episodes(
         args.in_dir, story_ids, split_map, section_cache)
-    n_attached = attach_entity_options(episodes)
+    n_attached = attach_entity_options(episodes, policy=args.distractors)
     print(f"[convert_fairytaleqa] {len(episodes)} episodes, "
-          f"{n_attached} with MC options (answer_type=entity, >=2 distractors)", flush=True)
+          f"{n_attached} with MC options (answer_type=entity, >=2 distractors, "
+          f"--distractors {args.distractors})", flush=True)
     print(f"[convert_fairytaleqa] answer_type: {dict(answer_type_counts)}", flush=True)
     total_rows = sum(drop_reasons.values())
     print(f"[convert_fairytaleqa] row accounting (total {total_rows} QA rows):", flush=True)

@@ -26,7 +26,9 @@ import torch
 
 from nsm_ct.ground.usvs import load_usvs
 from nsm_ct import encoder_model as em
+from nsm_ct import encoder_train_util as etu
 from train_encoder import load_gold, stratified_split  # noqa: E402
+from cheat_encoder_baseline import evaluate_heuristic  # noqa: E402
 
 
 def main():
@@ -69,9 +71,16 @@ def main():
                                      commit_margin=args.commit_margin)
         random_metrics = em.evaluate(model, recs, usvs, pos_vocab, ckpt["hash_buckets"],
                                       beam_width=args.beam_width, k=args.k, policy="random", rng=rng)
+        # dev/AUDIT_2026-10-15.md / dev/K12_BENCHMARK_FIX.md: the POS-heuristic
+        # cheat baseline, by default, next to every encoder number (CLAUDE.md's
+        # "every capability curriculum ships with its cheat-baseline at floor").
+        heuristic_metrics = evaluate_heuristic(recs)
+        heuristic_metrics["edge_f1"] = etu._f1(heuristic_metrics["edge_precision"],
+                                                heuristic_metrics["edge_recall"])
         print(f"=== {name} (n={len(recs)}) ===")
-        print("  model :", json.dumps(model_metrics, indent=2))
-        print("  random:", json.dumps(random_metrics, indent=2))
+        print("  model    :", json.dumps(model_metrics, indent=2))
+        print("  random   :", json.dumps(random_metrics, indent=2))
+        print("  heuristic:", json.dumps(heuristic_metrics, indent=2))
 
 
 if __name__ == "__main__":
