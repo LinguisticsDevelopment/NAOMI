@@ -1,5 +1,14 @@
 # Decoder v2 — retrieval-augmented realizer over dialectic memory
 
+> **ON HOLD (owner decision, 2026-10-16).** The decoder confabulated; the
+> owner's read is that memory recall is not mature enough yet for realization
+> to be trustworthy. Revisit only after memory recall / end-to-end QA from
+> memory is proven (see `GOALS.md`, "Answer from memory" and "Speak"). Until
+> then the system must abstain rather than make up an answer. The design
+> below is kept as the plan for when this reopens; it has not been revised
+> against that decision and should be re-read with it before any build
+> resumes.
+
 Status: DESIGN (lead-approved direction 2026-09-06). Supersedes the
 `function_vocab`-based realizer in `src/nsm_ct/decoder_trained.py`, which the
 2026-09-06 audit found broken: `build_function_vocab` mined 2047 *content*
