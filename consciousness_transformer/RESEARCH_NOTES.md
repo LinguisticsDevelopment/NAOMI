@@ -3493,3 +3493,20 @@ every length bin improved. 94.1 min wall-clock (4 workers). Targeted tests
 `runs/encoder_gold_v6.jsonl` gzipped (150MB->17MB) and force-added. Next:
 retrain the encoder on this gold and re-score against the checkpoint gap
 above once a comparable checkpoint exists.
+
+### Read: encoder retrained on gold v6 (seed 0) -> branch encoder-v6-seed0
+
+`v6_all_hard` seed 0: same hparams/12K-step cap as the lost `v4b_all_hard_0`,
+gold=encoder_gold_v6 (22,990) + hard_gold_train (1,083), keep-best on v6 dev
+holdout. 8,660s total (2.41h, under budget), best step=11,000. **v6 TEST
+holdout (94): rank1 edge-F1 0.708 (P 0.739/R 0.680) vs POS-cheat 0.288
+(reproduces ledger exactly) vs random 0.000; clause-count recall 0.901.**
+Scored on a RECONSTRUCTED old-style v4b holdout (original `encoder_gold_v4b_16k.jsonl`
+never committed, same loss pattern as the checkpoint gap above -- rebuilt by
+checking out pre-fix `clause.py`@ad017fb, restored after): rank1-F1 0.629 vs
+old arm's logged 0.623 -- a wash on the old (buggier) gold standard, but the
+v6 standard is the one that actually recovers the dropped verbs, so 0.708 is
+the number to carry forward. Hard-family extra-eval intact/improved across
+the board except speaker_prime (pre-existing weak spot). Checkpoint
+force-added (lost-checkpoint gap closed). Full writeup:
+`dev/reports/ENCODER_V6_SEED0.md`.
