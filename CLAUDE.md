@@ -28,6 +28,22 @@
   curriculum-era laws below (smoke/full inversions, held-out-atom tests,
   curriculum design law) apply again when learned components return.
 
+## Design rules (owner, 2026-11-14 — do not relitigate)
+- **No hand-written language patterns in code.** No word lists, regexes or
+  heuristics that encode English (or any language) in Python. Language
+  rules live ONLY in the grammar files (`quantum_parser/grammars/*.json`);
+  everything else is learned or language-neutral.
+- **No rule-based answerer.** Answering is learned by the consciousness
+  model operating on memory. The encoder only turns text into trees; it is
+  never trained or asked to "comprehend".
+- **Trees are graded, with reasons.** A tree gets a percentage score and a
+  breakdown of what is wrong (clause dropped, token missing, role wrong);
+  that breakdown is the training feedback.
+- **Encoder and decoder are trained as a pair** (round trip text -> tree ->
+  text), with the middle tree validated independently so the pair cannot
+  drift into a private code. The decoder hold is lifted for this role only;
+  speaking answers stays parked.
+
 ## Ops rules (learned hard — do not relitigate)
 
 **Mainline.** `master` is mainline (owner, 2026-11-14) — build feature

@@ -507,6 +507,23 @@ ledger entries should cite the topic, matching the headings below.
 - **2026-11-14 — decoder stays on hold** (unchanged from 2026-10-16).
 - **2026-11-14 — director may push to `master`.**
 
+- **2026-11-14 — no hand patterns; answering is learned; encoder+decoder
+  train as a pair.** Hand-written language patterns in code and a rule-based
+  answerer are antithetical: the second-pass "question-side fixes" and
+  `recall.py` were removed the same day (kept under
+  `consciousness_transformer/archive/naomi_scaffold/`; their benchmark
+  numbers are a signpost of what trees must contain, not a system result).
+  Language rules live only in grammar files. The encoder only parses; the
+  consciousness model learns to answer from memory. Encoder training
+  signals, in the owner's words: (1) how correct the tree is, as a
+  percentage with specific feedback (clause dropped, what is missing);
+  (2) paired with comprehension, checking the answer state in USVS;
+  (3) plus the decoder, natural-language answer to a natural-language
+  question; (4) encoder+decoder round trip, same text in and out. Chosen
+  direction: train encoder and decoder together (4) with the middle tree
+  validated independently (1), to break the chicken-and-egg between them.
+  This lifts the 2026-10-16 decoder hold for the round-trip role only.
+
 ## Ops rules
 
 The working agreement (who writes code, agent discipline, training-run rules,
