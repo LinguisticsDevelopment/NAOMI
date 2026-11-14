@@ -1,5 +1,9 @@
 # dev/ index
 
+> **Note (2026-11-14):** the design docs for the executor, LTM, membrane and
+> decoder describe code that is now archived under `consciousness_transformer/archive/`.
+> They remain as design references, not as descriptions of live code.
+
 `dev/` holds design docs and research reports, grouped by what they're for.
 For current project status, read `GOALS.md` at the repo root first — it's
 built from these. One line per doc below.

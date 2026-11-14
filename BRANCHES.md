@@ -1,3 +1,7 @@
+`master` is the mainline (owner, 2026-11-14).
+2026-11-14 refactor: curriculum-era code moved to `consciousness_transformer/archive/`, new minimal loop in `consciousness_transformer/src/naomi/`; the inventory below predates it.
+`integration-2026-11` (commit 2e18721) is the frozen pre-refactor snapshot — do not move or delete it.
+
 # Branch inventory (2026-11-14 integration cleanup)
 
 Written during the `integration-2026-11` cleanup. 98 remote branches

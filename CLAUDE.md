@@ -13,6 +13,21 @@
 - Agents are foreground-only for training runs, never touch git, and
   smoke tests they run must be ≤2.5 min.
 
+## Layout after the 2026-11-14 refactor (owner directive)
+- Live code is small on purpose: `consciousness_transformer/src/naomi/`
+  (the minimal read -> remember -> recall loop), a slim
+  `consciousness_transformer/src/nsm_ct/` (reader, grounding, graph, tensor
+  core), ~20 scripts, ~40 tests. Everything else is under
+  `consciousness_transformer/archive/` (same relative paths). Do not build
+  on archived code; bring a piece back only when the minimal loop needs it,
+  rewritten small.
+- `integration-2026-11` (2e18721) is the frozen pre-refactor snapshot —
+  never move or delete it.
+- While the work is this experimental, heavy validation is deferred (owner,
+  2026-11-14): one cheat baseline per reported number is enough. The
+  curriculum-era laws below (smoke/full inversions, held-out-atom tests,
+  curriculum design law) apply again when learned components return.
+
 ## Ops rules (learned hard — do not relitigate)
 
 **Mainline.** `master` is mainline (owner, 2026-11-14) — build feature
@@ -56,8 +71,8 @@ exists on `origin` (`git branch -r` / `git ls-remote`) before treating the
 work as done — a "pushed" claim in an agent's final message is not
 verification.
 
-**Test tiers.** `pytest -m "not slow" -q` is the fast tier (<10 min on this
-CPU box) and is the default (see `pyproject.toml`'s `addopts`).
+**Test tiers.** `pytest -m "not slow" -q` is the fast tier (~4 min on this
+CPU box after the refactor) and is the default (see `pyproject.toml`'s `addopts`).
 `pytest -m slow` is the full tier — quantum_parser-heavy tests
 (full-corpus reparse, `test_fairytaleqa.py`, anything that builds gold over
 real text) are the ones that blow the 10-min budget; run the full tier
