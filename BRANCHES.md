@@ -7,7 +7,7 @@ later in the same cleanup (see its row below) — counts reflect all 99.
 `master` had been stale since 2025 and the de
 facto mainline was `claude/m27-m28-cleanup` (last real merge 2026-10-15).
 This file is the one-time audit of all of them. It does not get maintained
-going forward — `integration-2026-11` (see `CLAUDE.md`) is now the single
+going forward — `master` (fast-forwarded to `integration-2026-11`; see `CLAUDE.md`) is now the single
 place work lands, so this list should only shrink as the deletions below
 happen, never grow back to this size.
 

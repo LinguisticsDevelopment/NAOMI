@@ -15,9 +15,12 @@
 
 ## Ops rules (learned hard — do not relitigate)
 
-**Mainline.** `integration-2026-11` is mainline — build on it, PR/merge
-into it. (The prior de facto mainline, `claude/m27-m28-cleanup`, is
-superseded; `master` has been stale since 2025. See `BRANCHES.md` for the
+**Mainline.** `master` is mainline (owner, 2026-11-14) — build feature
+branches off it; the director merges them back. (`integration-2026-11` was
+the cleanup branch that brought `master` current; `claude/m27-m28-cleanup`
+and `director-*` are historical. The director session may push: repo
+`.claude/settings.json` allows normal pushes, denies force-push and branch
+deletion. See `BRANCHES.md` for the
 full inventory and why ~95 other branches are not where you think the
 latest work is.) To propose a merge: `git merge --no-ff <branch> -m "..."`,
 then resolve conflicts — `RESEARCH_NOTES.md` conflicts are almost always

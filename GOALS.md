@@ -379,6 +379,10 @@ ledger entries should cite the topic, matching the headings below.
   seven goals in this file, not against M-numbers. New ledger entries are
   titled "`<Goal>: <result>`". Old M-numbers remain findable via
   `consciousness_transformer/dev/archive/MILESTONE_MAP.md`.
+- **2026-11-14 — `master` is the mainline.** Fast-forwarded to the
+  `integration-2026-11` cleanup branch; feature work branches off `master` and the
+  director merges it back. The director session has push permission via repo
+  `.claude/settings.json` (normal pushes allowed; force-push and branch deletion denied).
 - **2026-11-14 — next-step planning handed to a fresh Fable session after
   this cleanup.** This integration (branch `integration-2026-11`: October's
   nine unmerged branches plus `encoder-vs-parser`, encoder v6 landed on two
