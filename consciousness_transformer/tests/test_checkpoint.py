@@ -190,6 +190,7 @@ def _val_total(stdout: str) -> str:
     raise AssertionError(f"no 'val total=' line in:\n{stdout}")
 
 
+@pytest.mark.slow
 def test_train_instances_save_then_load_reproduces_val_total(tmp_path):
     ckpt = str(tmp_path / "instances.pt")
     save_out = _run(["train_instances.py", "--track", "A", "--episodes", "48", "--dim", "8",
@@ -203,6 +204,7 @@ def test_train_instances_save_then_load_reproduces_val_total(tmp_path):
     assert _val_total(save_out) == _val_total(load_out)
 
 
+@pytest.mark.slow
 def test_train_writeback_save_then_load_reproduces_val_total(tmp_path):
     ckpt = str(tmp_path / "writeback.pt")
     save_out = _run(["train_writeback.py", "--track", "A", "--episodes", "48", "--dim", "8",
@@ -224,6 +226,7 @@ def test_save_and_load_together_errors(tmp_path):
     assert "mutually exclusive" in result.stderr
 
 
+@pytest.mark.slow
 def test_eval_checkpoint_runs_on_fresh_seed_and_prints_report_keys(tmp_path):
     ckpt = str(tmp_path / "for_eval.pt")
     _run(["train_instances.py", "--track", "A", "--episodes", "48", "--dim", "8", "--hidden", "12",

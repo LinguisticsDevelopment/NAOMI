@@ -288,6 +288,7 @@ def test_forest_mode_default_is_top1():
 
 
 @pytest.mark.skipif(not (_ROOT / "data" / "corpus").exists(), reason="needs data/corpus")
+@pytest.mark.slow
 def test_top1_mode_yields_one_tree_per_sentence_over_a_corpus_sample(usvs):
     """The task's own unit-test requirement: building over ~20 corpus
     sentences yields trees-per-sentence == 1 for every emitted record in

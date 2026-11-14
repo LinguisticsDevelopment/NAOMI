@@ -240,13 +240,18 @@ def _build_batch_and_forward(files):
     assert torch.isfinite(out["answer_logits"]).all()
 
 
+@pytest.mark.slow
 def test_converted_episodes_build_batch_and_forward():
     """M58f3: runs on a SMALL subset of data/corpus (one real-prose file +
-    one synthetic file) rather than the full 8-file corpus, so this test
-    (part of the default suite gate) finishes in a couple of minutes instead
-    of ~19. Still exercises the real parse->episode->batch->forward path on
-    both a messy real-prose file and a synthetic one; see the
-    @pytest.mark.slow variant below for full-corpus coverage.
+    one synthetic file) rather than the full 8-file corpus. Still exercises
+    the real parse->episode->batch->forward path on both a messy real-prose
+    file and a synthetic one; see the full-corpus variant below.
+
+    2026-11 integration cleanup: this was documented as "a couple of
+    minutes instead of ~19" but measured at ~9 min on this CPU box (real
+    quantum_parser parsing dominates even one real-prose file) -- marked
+    slow alongside its full-corpus sibling rather than left in the fast
+    tier on a stale time estimate.
     """
     files = sorted(glob.glob(os.path.join(_DATA_DIR, "*.txt")))
     subset = [f for f in files if os.path.basename(f) in

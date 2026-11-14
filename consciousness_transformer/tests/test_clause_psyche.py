@@ -1,5 +1,6 @@
 """Stage 5 — ClausePsyche generates a clause meaning-object (Frobenius + decode)."""
 
+import pytest
 import torch
 import torch.nn.functional as F
 
@@ -136,6 +137,7 @@ def test_abstain_head_learns_the_unanswerable_flag():
     assert float(p[should].mean()) > float(p[~should].mean()) + 0.3   # abstains when it should
 
 
+@pytest.mark.slow
 def test_hop_loop_learns_two_hop_composition():
     # The looping model learns a 2-hop chain (A is_a B; B can C -> A can C). (A short
     # chain like this can also be carried single-pass by the GRU; the hop loop's real
@@ -162,6 +164,7 @@ def test_halting_forward_reports_bounded_ponder():
     assert float(ponder.min()) >= 0.0 and float(ponder.max()) <= 5.0   # respects the cap
 
 
+@pytest.mark.slow
 def test_halting_model_still_learns_to_reason():
     # PonderNet regime: the asymmetric reward + exploration prior (which escapes the
     # step-1 cold-start collapse) still learns to produce correct answers.
@@ -177,6 +180,7 @@ def test_halting_model_still_learns_to_reason():
         assert clause_decode_accuracy(model(batch), batch) > 0.5   # reward+prior learns (vs collapse)
 
 
+@pytest.mark.slow
 def test_halting_produces_an_answer_within_the_cap():
     # The PonderNet produce-answer distribution commits within the hop budget (it does
     # not run away to the cap, nor is it forced to step 1). Depth-adaptive stepping is

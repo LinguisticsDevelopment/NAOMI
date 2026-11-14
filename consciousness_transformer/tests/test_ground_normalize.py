@@ -50,6 +50,7 @@ def test_constant_axis_does_not_blow_up():
 
 
 @wn_required
+@pytest.mark.slow
 def test_normalization_reduces_overlap_and_holds_discrimination():
     vocab = gloss_vocabulary(1200)
     g = RelationGraph.build(vocab)

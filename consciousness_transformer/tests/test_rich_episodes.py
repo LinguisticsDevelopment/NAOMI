@@ -16,6 +16,7 @@ discipline).
 
 from __future__ import annotations
 
+import pytest
 import torch
 import torch.nn.functional as F
 
@@ -361,6 +362,7 @@ def _freeze_write_mechanics(model: ClauseReactor):
         p.requires_grad_(False)
 
 
+@pytest.mark.slow
 def test_end_to_end_forced_gold_overwritten_question_answers_correctly():
     meaning = _meaning()
     codec = TPRCodec(dim=24)

@@ -23,6 +23,7 @@ import sys
 from collections import Counter
 
 import numpy as np
+import pytest
 import torch
 import torch.nn.functional as F
 
@@ -306,6 +307,7 @@ def test_forced_gold_type_iii_original_fact_intact():
 # 4. Short training: link accuracy > 0.8, type-(i) accuracy above chance;
 #    the same with LTM zeroed stays at the chance floor.
 # ---------------------------------------------------------------------------
+@pytest.mark.slow
 def test_short_training_link_and_type_i_accuracy_vs_ltm_zeroed_floor():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../scripts")
     from train_ltm import build_documents, evaluate, run_documents_train

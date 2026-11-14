@@ -15,6 +15,11 @@ import sys
 
 import pytest
 
+# Real quantum_parser conversion over the 10-story sample corpus runs
+# ~10 min on a CPU box (dominated by the session-scoped fixture every test
+# here shares) -- the whole module is excluded from the fast tier.
+pytestmark = pytest.mark.slow
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 
 from convert_fairytaleqa import (  # noqa: E402

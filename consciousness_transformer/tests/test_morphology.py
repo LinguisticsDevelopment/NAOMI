@@ -446,6 +446,7 @@ def _freeze_write_mechanics(model: ClauseReactor):
         p.requires_grad_(False)
 
 
+@pytest.mark.slow
 def test_end_to_end_forced_gold_plural_question_answers_via_group():
     """Smoke-scale (n_entities fixed at 3, K=1 referring statement) to stay
     inside the agent-ops ≤2.5min budget -- full-batch training over a

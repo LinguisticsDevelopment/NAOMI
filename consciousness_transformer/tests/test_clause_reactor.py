@@ -122,6 +122,7 @@ def _logic_env():
     return parser, NSMMeaningResolver(), TPRCodec(dim=48)
 
 
+@pytest.mark.slow
 def test_reactor_learns_disjunction_resolution_emergently():
     """Answer-only supervision drives decide_truth: on "A or B" + "not A", the
     reactor learns to SUBTRACT the refuted value and answer the survivor — no aux

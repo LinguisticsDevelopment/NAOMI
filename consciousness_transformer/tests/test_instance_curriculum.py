@@ -18,6 +18,7 @@ from __future__ import annotations
 import contextlib
 
 import numpy as np
+import pytest
 import torch
 import torch.nn.functional as F
 
@@ -680,6 +681,7 @@ def _freeze_write_mechanics(model: ClauseReactor):
         p.requires_grad_(False)
 
 
+@pytest.mark.slow
 def test_end_to_end_forced_gold_description_targeted_question_answers_correctly():
     """The measured RESEARCH_NOTES "M57c battery #1" failure cell,
     reproduced and fixed: forced-gold collapse (BOTH the overwrite step
@@ -724,6 +726,7 @@ def test_end_to_end_forced_gold_description_targeted_question_answers_correctly(
     assert acc >= 0.9, acc
 
 
+@pytest.mark.slow
 def test_end_to_end_inverse_query_forced_writes_answers_correctly():
     """The OTHER measured RESEARCH_NOTES "M57c battery #1" failure:
     inverse_query scored BELOW chance (0.138 vs 0.333) because no
