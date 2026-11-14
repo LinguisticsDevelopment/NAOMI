@@ -19,12 +19,12 @@ memory, written by ordinary graph/tensor writes, never by training. See
 
 | Goal | Status |
 |---|---|
-| Read | in progress — encoder v6 beats cheat baseline; hybrid reader live in `naomi`, weak on roles/possessors/predicate nominals |
+| Read | in progress — reader is pattern-free again; trees keep only ~40% of tokens, so the tree format must be enriched before encoder+decoder paired training |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
-| Answer from memory | in progress — minimal loop answers ~30% of real-prose questions at 71-87% accuracy and abstains correctly; overall still below the word-overlap cheat |
+| Answer from memory | not started in its proper form — the rule-based answerer was removed (owner, 2026-11-14); answering will be learned by the consciousness after the encoder/decoder pair works |
 | Reason | in progress on archived code; to be re-attached on the minimal loop |
-| Speak | on hold |
+| Speak | decoder un-parked as the encoder's round-trip partner only; must be learned (grammar cannot generate) |
 | Any language | working at curriculum scale (archived code), not yet at real-text scale |
 
 **2026-11-14 refactor.** The curriculum-era code was moved to
@@ -506,6 +506,23 @@ ledger entries should cite the topic, matching the headings below.
   conversation — deliberately loose, open to discussion.
 - **2026-11-14 — decoder stays on hold** (unchanged from 2026-10-16).
 - **2026-11-14 — director may push to `master`.**
+
+- **2026-11-14 — no hand patterns; answering is learned; encoder+decoder
+  train as a pair.** Hand-written language patterns in code and a rule-based
+  answerer are antithetical: the second-pass "question-side fixes" and
+  `recall.py` were removed the same day (kept under
+  `consciousness_transformer/archive/naomi_scaffold/`; their benchmark
+  numbers are a signpost of what trees must contain, not a system result).
+  Language rules live only in grammar files. The encoder only parses; the
+  consciousness model learns to answer from memory. Encoder training
+  signals, in the owner's words: (1) how correct the tree is, as a
+  percentage with specific feedback (clause dropped, what is missing);
+  (2) paired with comprehension, checking the answer state in USVS;
+  (3) plus the decoder, natural-language answer to a natural-language
+  question; (4) encoder+decoder round trip, same text in and out. Chosen
+  direction: train encoder and decoder together (4) with the middle tree
+  validated independently (1), to break the chicken-and-egg between them.
+  This lifts the 2026-10-16 decoder hold for the round-trip role only.
 
 ## Ops rules
 
