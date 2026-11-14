@@ -42,6 +42,16 @@
   heuristics that encode English (or any language) in Python. Language
   rules live ONLY in the grammar files (`quantum_parser/grammars/*.json`);
   everything else is learned or language-neutral.
+- **Meaning lives in USVS, and only there.** USVS is a minimal set of
+  named dimensions; NSM primes are the starting set, not a limit. Special
+  dimensions may be added by hand for the awkward cases (negation,
+  known/new, not-known, possession, time...). A closed-class word is
+  defined by its position on those dimensions, stored as per-language data.
+  Nothing outside USVS may define or special-case a word: no grammar label,
+  extraction rule or code path for negation, questions, tense, etc. — the
+  behaviour must fall out of where the word sits. Every word goes into the
+  tree as a grounded node; trees nest; names are variables with no meaning
+  point; idioms are facts in memory.
 - **No rule-based answerer.** Answering is learned by the consciousness
   model operating on memory. The encoder only turns text into trees; it is
   never trained or asked to "comprehend".
