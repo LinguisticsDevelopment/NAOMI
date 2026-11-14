@@ -1,0 +1,61 @@
+{
+  "dataset": "mctest",
+  "coverage": {
+    "train": {
+      "items": 24,
+      "passages": 6,
+      "distinct_context_variants": 6,
+      "sentence_clause_coverage": 0.945054945054945,
+      "n_sentences": 91,
+      "answerable_from_memory_ceiling": 0.7916666666666666,
+      "elapsed_sec": 17.9
+    },
+    "val": {
+      "items": 12,
+      "passages": 3,
+      "distinct_context_variants": 3,
+      "sentence_clause_coverage": 0.9552238805970149,
+      "n_sentences": 67,
+      "answerable_from_memory_ceiling": 0.9166666666666666,
+      "elapsed_sec": 8.6
+    },
+    "test": {
+      "items": 16,
+      "passages": 4,
+      "distinct_context_variants": 4,
+      "sentence_clause_coverage": 0.94,
+      "n_sentences": 50,
+      "answerable_from_memory_ceiling": 0.9375,
+      "elapsed_sec": 7.6
+    }
+  },
+  "n_train": 24,
+  "n_val": 12,
+  "n_test": 16,
+  "best_val_acc": 0.3333333432674408,
+  "train_elapsed_min": 8.09,
+  "build_elapsed_sec": 12.0,
+  "total_elapsed_min": 8.88,
+  "random_floor": 0.25,
+  "cheat_baselines": {
+    "n_loaded": 16,
+    "n_scorable": 16,
+    "random": 0.25,
+    "majority": 0.0625,
+    "majority_text": "The city",
+    "passage_substring": 0.3020833333333333,
+    "passage_substring_unique_correct": 3,
+    "passage_substring_ties": 6,
+    "passage_substring_misses": 5,
+    "word_overlap": 0.53125
+  },
+  "best_cheat": 0.53125,
+  "model_acc": 0.25,
+  "memory_severed_acc": 0.1875,
+  "n_answerable_subset": 15,
+  "acc_on_answerable_subset": 0.20000000298023224,
+  "gate_acc_vs_cheat": false,
+  "gate_severed_vs_random": false,
+  "GATE_PASS": false,
+  "peak_rss_mb": 3628.0546875
+}
