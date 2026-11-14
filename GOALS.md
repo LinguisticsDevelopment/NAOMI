@@ -19,10 +19,10 @@ memory, written by ordinary graph/tensor writes, never by training. See
 
 | Goal | Status |
 |---|---|
-| Read | in progress — encoder unfrozen, retraining on fixed gold |
+| Read | in progress — encoder v6 retrained, clearly beats cheat baseline |
 | Remember | working |
 | Resolve | working, with an open WSD gap |
-| Answer from memory | in progress — benchmark fixed, e2e spike in flight |
+| Answer from memory | in progress — e2e spike inconclusive, full-scale run next |
 | Reason | in progress |
 | Speak | on hold |
 | Any language | working at curriculum scale, not yet at real-text scale |
@@ -62,16 +62,41 @@ gold it trains on has been fixed.
   `dev/reports/CLAUSE_EXTRACTION_FIX.md`).
 - The Spanish grammar-swap acceptance test transfers on one metric with the
   encoder frozen (`dev/reports/SWAP_TEST_RESULTS.md`) — see "Any language" below.
+- **Gold v6 (2026-10-15, built on the clause-extraction fix):** 22,990
+  records (76.0% yield of 30,232 attempted) over the full Gutenberg
+  population plus a seeded 125-whole-story K-12 FairytaleQA subset, holdout
+  excluded at the corpus level. Mean VERB coverage **67.8%** (vs v4b-16k's
+  53.5%). `consciousness_transformer/runs/encoder_gold_v6.jsonl.gz`;
+  `dev/reports/ENCODER_GOLD_V6_STATS.md`.
+- **Encoder v6, two seeds (2026-10-15/2026-11), confirms the retrain clearly
+  beats the cheat baseline:** seed 0 rank-1 edge-F1 **0.708** (P 0.739 /
+  R 0.680), seed 1 **0.677**, both on the 94-sentence v6 holdout, both vs
+  POS-cheat **0.288** (the v6-holdout cheat floor; reproduces the documented
+  0.268 v4b-holdout number) and random 0.000. Clause-count recall 0.901
+  (seed 0). Weak families on both seeds: `speaker_prime`, `quantity`.
+  Reference checkpoint: `consciousness_transformer/runs/arms/v6_all_hard_seed0.pt`
+  (seed 0 — the higher of the two and the one to build on).
+  `dev/reports/ENCODER_V6_SEED0.md`, `dev/reports/ENCODER_V6_SEED1.md`,
+  `runs/ARTIFACTS.md` (how to load it). This closes a real gap found along
+  the way: the prior "THE CHECKPOINT" (`v4b_all_hard_0.pt`) had never
+  actually been committed (only its log/curve were force-added, the `.pt`
+  itself slipped through `.gitignore`) — a best checkpoint was lost. Both
+  v6 checkpoints are now force-added.
 
 **Open.** Whether the encoder actually helps comprehension downstream (vs.
 just the deterministic parser on what it already covers) is still
-unmeasured — that is gated on the "Answer from memory" spike below. Code-
-switching / multilingual input to the encoder itself doesn't exist (its
-hard-coded POS rules and prime set are English-only).
+unmeasured — that is gated on the "Answer from memory" spike below, and is
+the question the pending `encoder-vs-parser` probe is meant to answer (see
+"Next"). Code-switching / multilingual input to the encoder itself doesn't
+exist (its hard-coded POS rules and prime set are English-only).
 
-**Next.** `encoder-gold-v6` (in flight): rebuild gold on the fixed clause
-extraction, retrain, beat the POS cheat baseline clearly, confirm with a
-second seed.
+**Next.** An `encoder-vs-parser` probe — teacher-built vs. encoder-built
+episodes through the same downstream QA head — is the natural next step to
+settle the "Open" question above, and is referenced as in-flight in the
+2026-11-14 owner handoff; it was **not found as a pushed branch** at
+integration-cleanup time (2026-11-14) — confirm with the owner whether it
+was dispatched but lost (the branch-loss pattern `BRANCHES.md` documents
+elsewhere) or not yet started before relying on it.
 
 ---
 
@@ -150,10 +175,12 @@ abstaining rather than inventing an answer when memory doesn't contain it.
 This is the thesis's central untested risk: the whole architecture is proven
 on synthetic curricula, not yet on real text at scale.
 
-**Status: in progress.** The zero-shot number exists and is honest; the first
-K-12-style benchmark was found to be solvable by cheating and has just been
-fixed; the full end-to-end spike (teacher-built episodes over real K-12
-passages, with a memory-severed control) is in flight.
+**Status: in progress.** The zero-shot number exists and is honest; the
+K-12-style benchmark was found to be solvable by cheating and has been
+fixed; the first end-to-end spike (teacher-built episodes over real K-12
+passages, with a memory-severed control) landed and was **inconclusive**.
+A full-scale, un-time-boxed run is the next step, now handed to a fresh
+session for next-step planning (see Decisions log, 2026-11-14).
 
 **Proven, with numbers:**
 - Zero-shot prose number (frozen system, self-generated QA): overall 0.583 vs
@@ -168,18 +195,38 @@ passages, with a memory-severed control) is in flight.
   `scripts/cheat_baselines_k12.py` and `scripts/cheat_encoder_baseline.py` are
   now wired into the standard report for every future number on this
   benchmark. (`dev/reports/K12_BENCHMARK_FIX.md`, `dev/reports/AUDIT_2026-10-15.md`.)
+- **E2E QA spike (teacher-built episodes, branch `e2e-qa-spike`) — landed,
+  INCONCLUSIVE, not a falsification.** Found and fixed a real gap first:
+  `clause_reactor.py`'s question-step adapter was silently dropping every
+  free-form MC question (no NAME/"the NOUN" match) — fixed additively (~20
+  lines), 2 new tests. Parse coverage **87-95%** and answer-in-memory
+  ceiling **79-94%** both healthy on both datasets (FairytaleQA, MCTest
+  mc160) — the pipeline isn't the bottleneck. The gate (model accuracy >=
+  best cheat baseline + 10pts AND memory-severed ablation within 3pts of
+  random) **FAILS**, but inconclusively: model and memory-severed accuracy
+  were **IDENTICAL (0.400 / 0.400, n=25)** on FairytaleQA — a
+  head-not-using-memory result confounded by data starvation (the run was
+  passage-capped per CLAUDE.md's shrink-and-say-so rule: full-corpus parse
+  build projected hours against a ~90min budget, so this ran on 6/3/4
+  passages per split). `dev/reports/E2E_QA_SPIKE.md`;
+  `runs/ARTIFACTS.md` for the spike's checkpoints/metrics files.
 
-**Open.** The end-to-end QA spike (teacher-built episodes over the fixed
-FairytaleQA entity items + MCTest, with a severed-memory control) is running
-(branch `e2e-qa-spike`) but has not reported a number yet. Downstream
-comparison of teacher-built vs. encoder-built episodes hasn't run. Abstention
-on mismatched-passage ("not stated") questions hasn't been measured directly
-yet — it's designed (pair a question with the wrong story's passage, gate on
-abstain-rate >=70% mismatched / <=15% matched) but not run.
+**Open.** The spike above did not have the scale to tell "memory isn't
+helping" apart from "not enough data to tell" — that is the live open
+question, not a closed negative. Downstream comparison of teacher-built vs.
+encoder-built episodes hasn't run (see the pending `encoder-vs-parser`
+probe under the Read goal). Abstention on mismatched-passage ("not stated")
+questions hasn't been measured directly yet — it's designed (pair a
+question with the wrong story's passage, gate on abstain-rate >=70%
+mismatched / <=15% matched) but not run.
 
-**Next.** Land the e2e spike's number: gate is test accuracy >= best cheat
-baseline + 10 points AND the memory-severed ablation within 3 points of
-random. If it fails, this becomes the project's only work until it doesn't.
+**Next.** A full-scale, un-time-boxed run of the e2e spike (the passage cap
+was the confound) is the next step to get a power-adequate answer; the
+spike's own infra (negative parse cache, context-tuple-keyed coverage,
+known-bad-sentence prefilter) makes that affordable. Per the 2026-11-14
+owner decision, deciding how/when to run it (and the rest of the
+"Answer from memory" roadmap) is handed to a fresh session for next-step
+planning rather than fixed here.
 
 ---
 
@@ -318,6 +365,15 @@ ledger entries should cite the topic, matching the headings below.
   seven goals in this file, not against M-numbers. New ledger entries are
   titled "`<Goal>: <result>`". Old M-numbers remain findable via
   `consciousness_transformer/dev/archive/MILESTONE_MAP.md`.
+- **2026-11-14 — next-step planning handed to a fresh Fable session after
+  this cleanup.** This integration (branch `integration-2026-11`: October's
+  nine unmerged branches, encoder v6 landed on two seeds, the e2e spike's
+  inconclusive result, the CLAUDE.md/README ops rewrite, the branch
+  inventory and root tidy below) was done by a Sonnet routine so a fresh
+  Fable session could read the repo cold from one branch and decide what's
+  next for "Read" (the `encoder-vs-parser` probe, if it exists) and "Answer
+  from memory" (the full-scale e2e re-run) without first having to untangle
+  ~95 branches. See `BRANCHES.md` and `consciousness_transformer/runs/ARTIFACTS.md`.
 
 ## Ops rules
 
