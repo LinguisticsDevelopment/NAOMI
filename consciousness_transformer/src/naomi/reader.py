@@ -443,6 +443,21 @@ class Reader:
                 tgt.args.append(self._filler(prole or "OBJECT", tokens[n], n, pos))
             tgt.args.append(self._filler("POSSESSOR", tokens[p], p, pos))
 
+    def _relatives(self, clauses, tokens, pos) -> None:
+        """A relative pronoun subject ("a fox, WHO was preparing ...") is replaced by the
+        nearest preceding noun, so the clause says something about that noun."""
+        for c in clauses:
+            for a in c.args:
+                if a.role == "SUBJECT" and a.token in ("who", "which", "that") and a.token_index:
+                    j = a.token_index - 1
+                    while j >= 0 and pos[j] in ("PUNCT", "ADP", "DET", "ADJ") and tokens[j] != "of":
+                        j -= 1
+                    while j >= 0 and pos[j] not in ("NOUN", "PROPN") and a.token_index - j < 6:
+                        j -= 1
+                    if j >= 0 and pos[j] in ("NOUN", "PROPN"):
+                        n = self._filler("SUBJECT", tokens[j], j, pos)
+                        a.token, a.lemma, a.token_index, a.senses = n.token, n.lemma, n.token_index, n.senses
+
     def _copulas(self, clauses, tokens, pos) -> None:
         """Keep the predicate nominal / adjective of be, become, seem, look, feel, call,
         name as an ATTRIBUTE filler (both readers drop it)."""
@@ -721,6 +736,7 @@ class Reader:
     def _finish(self, sentence, clauses, tokens, pos, sentence_index):
         clauses = self._repair_bare_aux(clauses, tokens, pos)
         self._possessives(clauses, tokens, pos)
+        self._relatives(clauses, tokens, pos)
         self._copulas(clauses, tokens, pos)
         self._quantities(clauses, tokens, pos)
         self._negation(clauses, tokens)

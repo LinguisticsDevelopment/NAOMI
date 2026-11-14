@@ -22,7 +22,7 @@ memory, written by ordinary graph/tensor writes, never by training. See
 | Read | in progress — encoder v6 beats cheat baseline; hybrid reader live in `naomi`, weak on roles/possessors/predicate nominals |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
-| Answer from memory | in progress — minimal loop runs on real prose and abstains correctly; not yet above the word-overlap cheat |
+| Answer from memory | in progress — minimal loop answers ~30% of real-prose questions at 71-87% accuracy and abstains correctly; overall still below the word-overlap cheat |
 | Reason | in progress on archived code; to be re-attached on the minimal loop |
 | Speak | on hold |
 | Any language | working at curriculum scale (archived code), not yet at real-text scale |
@@ -290,19 +290,43 @@ is in memory (the loss is question-tree-to-stored-tree matching).
   read->remember->recall loop..."; artifacts in
   `consciousness_transformer/runs/ARTIFACTS.md`.
 
+- **Second pass, question-side fixes (2026-11-14, still no training):**
+  possessors, copular complements (symmetric `be`), quantities, a
+  surface-pattern question builder, clause splitting, shallow he/she/it
+  coreference, stricter option backing.
+
+  | | MCTest (400) before -> after | FairytaleQA (222) before -> after |
+  |---|---|---|
+  | answered | 15.0% -> 30.0% | 20.7% -> 31.1% |
+  | accuracy when answered | 55.0% -> 70.8% (85/120) | 69.6% -> 87.0% (60/69) |
+  | accuracy, random guess on abstain | 29.5% -> 38.8% | 34.2% -> 44.3% |
+  | wrong-passage abstain | 100% -> 99.8% | 98.6% -> 99.5% |
+  | question-shuffled control: answered / accuracy | 12.2% / 28.6% | 10.8% / 25.0% |
+  | word-overlap cheat | 45.0% | 56.3% |
+
+  The shuffled-question control falls to chance, so answers depend on the
+  question. Still below the word-overlap cheat overall because it abstains
+  on ~70%. **Caveats:** the fixes were developed while looking at failures
+  from these same items (120/80-item subsets), so these are development
+  numbers, not held-out ones; and questions are now built by hand-written
+  surface patterns in `src/naomi/reader.py` rather than by the grammar
+  parser or the encoder — scaffolding that the learned reader should
+  replace. Remaining failures: why/inference questions, answers that are a
+  phrase or clause, appositives ("Reynard the fox"), parser garbage on
+  long/quoted sentences, wrong pronoun antecedents.
+
 **Open.** Question-side matching (see failure causes above); reader gaps
 (predicate nominals/adjectives, possessors, coreference). The wrong-passage
 abstain rate is partly the multiple-choice rule, so a cleaner abstention
 measurement (memory refusing on its own) is still open. Only one cheat
 baseline per number is run for now (owner direction, 2026-11-14).
 
-**Next.** Fix the question side: possessive tokenisation, copular/attribute
-questions, how-many/how-much, hole-role errors. Re-run the same two
-benchmarks (`scripts/naomi_run.py bench`, then `report`); target: answer
-rate up substantially with accuracy-when-answered held, and overall accuracy
-above the word-overlap cheat. Then: keep predicate nominals/adjectives and
-possessors in the reader; simple coreference; then bring the learned
-reasoning model back on top of the graph operations.
+**Next.** (1) Get held-out numbers: run the unchanged loop on FairytaleQA
+stories it has not been developed on (198 of 277 stories have no question
+files in the repo yet — needs a download). (2) Raise the answer rate:
+appositives and naming, phrase/clause answers, multi-sentence support.
+(3) Move the question handling from hand patterns into the learned reader.
+(4) Bring the learned reasoning model back on top of the graph operations.
 
 ---
 

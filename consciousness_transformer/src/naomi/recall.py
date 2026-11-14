@@ -178,6 +178,13 @@ def _score(q: ClauseTree, hole: Filler, c: StoredClause):
             content += W_PRED
             backed = True
             notes.append(f"pred:{W_PRED:g}")
+        elif ct.predicate.lemma == "be" and any(
+                a.role == "OBJECT" and a.lemma == q.predicate.lemma for a in ct.args):
+            vb = next(a for a in ct.args if a.role == "OBJECT" and a.lemma == q.predicate.lemma)
+            used[id(vb)] = vb
+            content += W_XCOMP      # progressive / passive parsed as be(OBJECT=verb)
+            backed = True
+            notes.append(f"be+verb:{W_XCOMP:g}")
         elif hole.role == "ATTRIBUTE" and q.predicate.lemma in COPULAS and cand_copular:
             content += W_XCOMP      # "how did X feel/look" ~ "X was/felt ADJ"
             backed = True

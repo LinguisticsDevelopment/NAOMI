@@ -138,7 +138,12 @@ story). No training; reader is parser + encoder v6 fallback. Ledger entry:
   `python scripts/naomi_run.py report --in runs/naomi_bench_mctest.jsonl`.
 - **`runs/naomi_failures_mctest.jsonl`**, **`runs/naomi_failures_ftqa.jsonl`**
   — the failed items, kept for the failure-cause analysis.
-- **`runs/naomi_read_cache.jsonl`** (6.5MB) — on-disk read cache for the
+- **`runs/naomi_bench_{mctest,ftqa}_v2.jsonl`**, **`naomi_failures_*_v2.jsonl`**,
+  **`naomi_bench_*_v2_shuffled.jsonl`** — the second pass (question-side
+  fixes) and its question-shuffled control (`bench --shuffle-questions`).
+- **`runs/naomi_read_cache.jsonl.gz`** (3.5MB; `gunzip -k` it to
+  `runs/naomi_read_cache.jsonl` before running, the plain file is 46MB and
+  not tracked) — on-disk read cache for the
   reader (sentence -> read result); `bench` uses it by default
   (`--cache runs/naomi_read_cache.jsonl`), which makes re-runs fast. Delete
   it to force a fresh read.
