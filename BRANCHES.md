@@ -1,7 +1,10 @@
 # Branch inventory (2026-11-14 integration cleanup)
 
-Written during the `integration-2026-11` cleanup. 98 remote branches existed
-at the time (`git branch -r`); `master` had been stale since 2025 and the de
+Written during the `integration-2026-11` cleanup. 98 remote branches
+existed when this inventory was first drawn up (`git branch -r`); a 99th,
+`encoder-vs-parser`, was pushed and merged into `integration-2026-11`
+later in the same cleanup (see its row below) — counts reflect all 99.
+`master` had been stale since 2025 and the de
 facto mainline was `claude/m27-m28-cleanup` (last real merge 2026-10-15).
 This file is the one-time audit of all of them. It does not get maintained
 going forward — `integration-2026-11` (see `CLAUDE.md`) is now the single
@@ -151,9 +154,10 @@ commit log) and applied the same read to the other 93.
 | `encoder-v6-seed0` | 2026-10-17 | 0 | **MERGED** | merged into `integration-2026-11` in this cleanup — THE reference checkpoint |
 | `encoder-v6-seed1` | 2026-10-17 | 0 | **MERGED** | merged into `integration-2026-11` in this cleanup |
 | `claude/review-recent-pushes-or4o2e` | 2026-11-14 | 2 | **KEEP** | stray branch from an unrelated review session today, forked from an old (pre-docs-cleanup) point; only unique content is `.claude/settings.json` (git-push permission rules) — not merged here since it's outside this task's scope and touches repo permissions; owner should decide whether to port the settings.json rule |
+| `encoder-vs-parser` | 2026-11-14 | 0 | **MERGED** | pushed after this inventory's first pass; merge-base was `c411b59` (already an ancestor), so the merge brought in exactly its own 5 files — encoder-vs-parser head-to-head result now in `GOALS.md`'s Read goal |
 
-Counts: **51 MERGED**, **28 ARTIFACT-ONLY**, **18 SUPERSEDED**, **1 KEEP**
-(98 total).
+Counts: **52 MERGED**, **28 ARTIFACT-ONLY**, **18 SUPERSEDED**, **1 KEEP**
+(99 total).
 
 ## Recommended deletion
 
@@ -162,7 +166,7 @@ either fully contained in `integration-2026-11` or has nothing left in it
 that isn't already captured here or in the ledger. None of this list was
 deleted by me — deleting branches is a judgment call for the owner, not an
 autonomous cleanup action. If the owner agrees with the verdicts above, the
-one-liner to delete all 97 of them:
+one-liner to delete all 98 of them:
 
 ```bash
 git push origin --delete \
@@ -190,10 +194,10 @@ git push origin --delete \
   usvs-aux-head encoder-arms4-a encoder-arms4-b encoder-complement-probe \
   k12-bench-fix gold-coverage-audit director-2026-10-15 encoder-gold-v5-k12 \
   clause-extraction-fix claude/m27-m28-cleanup docs-cleanup e2e-qa-spike \
-  encoder-gold-v6 encoder-v6-seed0 encoder-v6-seed1
+  encoder-gold-v6 encoder-v6-seed0 encoder-v6-seed1 encoder-vs-parser
 ```
 
-(97 branch names — every row above with a verdict of MERGED, ARTIFACT-ONLY,
+(98 branch names — every row above with a verdict of MERGED, ARTIFACT-ONLY,
 or SUPERSEDED. `claude/review-recent-pushes-or4o2e` is deliberately left
 off this list.)
 
