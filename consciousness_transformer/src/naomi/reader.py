@@ -43,6 +43,7 @@ def _norm(text: str) -> str:
     punctuation and the n't contraction the way the parser's tagger expects."""
     import re
     t = text.strip().lower().replace("\u2019", "'")
+    t = re.sub(r"(\w)'s\b", r"\1 's", t)  # possessive / "'s" clitic -> own token
     t = re.sub(r"\bcan't\b", "can n't", t)
     t = re.sub(r"\bwon't\b", "will n't", t)
     t = re.sub(r"\b(\w+)n't\b", r"\1 n't", t)
