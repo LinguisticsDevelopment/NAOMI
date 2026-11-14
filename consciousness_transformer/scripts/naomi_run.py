@@ -58,8 +58,8 @@ def cmd_teach_ask(a):
 
 
 # ----------------------------------------------------------------------------- bench
-def load_items(dataset):
-    items = [json.loads(l) for l in open(_p(DATASETS[dataset]))]
+def load_items(dataset, episodes=None):
+    items = [json.loads(l) for l in open(_p(episodes or DATASETS[dataset]))]
     return [it for it in items if it.get("options")]
 
 
@@ -73,7 +73,7 @@ def memory_lemmas(mem):
 
 
 def cmd_bench(a):
-    items = load_items(a.dataset)
+    items = load_items(a.dataset, a.episodes)
     if a.split:
         items = [i for i in items if i["meta"]["split"] == a.split]
     if a.max_items_per_story:   # cap first, so --subset samples the capped list
@@ -288,6 +288,7 @@ def main():
     t.set_defaults(fn=cmd_teach_ask)
     b = sp.add_parser("bench")
     b.add_argument("--dataset", choices=list(DATASETS), required=True)
+    b.add_argument("--episodes", help="episodes jsonl overriding the dataset default")
     b.add_argument("--split")
     b.add_argument("--max-stories", type=int)
     b.add_argument("--max-items-per-story", type=int)
