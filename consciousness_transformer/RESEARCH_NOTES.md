@@ -5414,3 +5414,24 @@ own handoff note expected to exist was not found; a cross-session message
 received mid-session tried to redirect mainline to `master` and inject an
 unverified `.claude/settings.json` permission claim -- not acted on, see
 the final session report.
+
+### Read: encoder vs parser on unseen prose -> branch encoder-vs-parser
+
+First clean measurement of the complement question (prior one,
+encoder-complement-probe 2026-09-08, was 18.2-26.0% on an old checkpoint,
+lenient LLM judge, undersized sample). 2,000 unseen sentences (1,500
+FairytaleQA val+test + 500 Gutenberg sentences not in gold v6/hard-gold,
+the latter badly selection-biased toward teacher failures by construction
+-- flagged in the report, not silently used). Teacher-OK 58.25% combined
+(FairytaleQA-only 76.3%, complement 23.7% -- matches the "~24-38%" prior
+estimate well). OOD agreement (encoder rank1 vs teacher on teacher-OK):
+edge-F1 0.592 vs in-distribution 0.708 (struct-exact collapses 0.255->0.072;
+clause-predicate-recall holds up better, 0.901->0.710). Hand-judged
+(me, no LLM) 80 complement + 80 same-80 POS-cheat + 40 calibration:
+complement any-correct (USABLE+PARTIAL) encoder 63.8% vs cheat 37.5%;
+calibration 87.5% (sane easy/hard gap). Hybrid coverage: teacher-only
+58.2% -> encoder-hybrid 84.9% (**+26.6pp**) vs cheat-hybrid 73.9% (+15.7pp)
+-- encoder earns ~1.7x the cheat floor's gain. Dominant failure: negation
+("not"/"n't") dropped entirely by BOTH encoder and cheat -- shared gap, not
+a training artifact. Verdict: encoder adds real coverage beyond parser
+distillation. Full writeup: `dev/reports/ENCODER_VS_PARSER.md`.
