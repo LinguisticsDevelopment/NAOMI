@@ -1,5 +1,30 @@
 # NAOMI
 
+## Start here (new agent? read in this order)
+
+1. This file (`README.md`) — what NAOMI is, repo map, setup.
+2. **[`GOALS.md`](GOALS.md)** — current status per goal, with evidence and
+   next steps. The source of truth for "where does the project stand."
+3. **[`CLAUDE.md`](CLAUDE.md)** — the working agreement: mainline branch,
+   how to merge, cloud-job recipe, artifact discipline, test tiers.
+4. **`consciousness_transformer/dev/INDEX.md`** — index of every design doc
+   and research report, grouped by what it's for.
+5. The tail of **`consciousness_transformer/RESEARCH_NOTES.md`** (the
+   ledger) — the last 2-3 entries, for what actually happened most recently;
+   `GOALS.md` is the distilled status, this is the raw blow-by-blow.
+
+Five commands to get running (full recipe + why each one, below):
+
+```bash
+cd consciousness_transformer
+pip install --index-url https://download.pytorch.org/whl/cpu torch && pip install -e '.[dev]'
+python -c "import nltk; [nltk.download(x) for x in ('wordnet','omw-1.4','omw-2.0')]"
+python scripts/build_usvs.py
+pytest -m "not slow" -q    # fast tier, <10 min — see CLAUDE.md for the full tier
+```
+
+---
+
 NAOMI is a research project building a system you can **talk to**, that
 **remembers**, **reasons** (derive-or-abstain, with a faithful trace), and
 that you can **teach** — on the thesis that everything it holds and
@@ -74,13 +99,8 @@ go through a single cloud routine at a time — see `CLAUDE.md`'s ops rules.
 
 ## Where to read next
 
-1. **[`GOALS.md`](GOALS.md)** — current status per goal, with evidence and
-   next steps. Start here.
-2. **[`CLAUDE.md`](CLAUDE.md)** — the working agreement: how agents are
-   dispatched, the ops rules, the standing decisions log pointer.
-3. **`consciousness_transformer/RESEARCH_NOTES.md`** — the ledger. Entries
-   before 2026-10-16 are titled by M-number (see
-   `consciousness_transformer/dev/archive/MILESTONE_MAP.md` to place one
-   against a goal); entries after are titled by goal.
-4. **`consciousness_transformer/MIND_ARCHITECTURE.md`** — the design contract
-   the `mind/` build follows.
+See "Start here" at the top. One more pointer not in that list:
+**`consciousness_transformer/MIND_ARCHITECTURE.md`** — the design contract
+the `mind/` build follows. Ledger entries before 2026-10-16 are titled by
+M-number (see `consciousness_transformer/dev/archive/MILESTONE_MAP.md` to
+place one against a goal); entries after are titled by goal.

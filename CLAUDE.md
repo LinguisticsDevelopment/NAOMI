@@ -14,6 +14,53 @@
   smoke tests they run must be ≤2.5 min.
 
 ## Ops rules (learned hard — do not relitigate)
+
+**Mainline.** `integration-2026-11` is mainline — build on it, PR/merge
+into it. (The prior de facto mainline, `claude/m27-m28-cleanup`, is
+superseded; `master` has been stale since 2025. See `BRANCHES.md` for the
+full inventory and why ~95 other branches are not where you think the
+latest work is.) To propose a merge: `git merge --no-ff <branch> -m "..."`,
+then resolve conflicts — `RESEARCH_NOTES.md` conflicts are almost always
+"keep every entry, both sides, in date order" in the canonical
+`consciousness_transformer/RESEARCH_NOTES.md`; root `RESEARCH_NOTES.md`
+stays a one-line pointer, never a copy. Run the focused tests for whatever
+the branch touched before committing the merge.
+
+**Cloud-job recipe** (every cloud session reinstalls from scratch — budget
+~2 min for this, it is not the 20-min reinstall it used to be if you use
+the CPU wheel index):
+```bash
+cd consciousness_transformer
+pip install --index-url https://download.pytorch.org/whl/cpu torch --extra-index-url https://pypi.org/simple numpy nltk pytest
+pip install -e .
+python -c "import nltk; [nltk.download(x) for x in ('wordnet','omw-1.4','omw-2.0')]"
+python scripts/build_usvs.py
+```
+
+**Artifacts — force-add or lose them.** `runs/` and checkpoints are
+gitignored by default. **Always `git add -f`** any checkpoint/gold/log a
+run produces that a future session will need, and merge it back to
+mainline before the branch is abandoned — a best checkpoint
+(`v4b_all_hard_0.pt`, "THE CHECKPOINT" per its own ledger entry) was lost
+exactly this way: never force-added, only its `.log`/`.curve.tsv` survived.
+See `consciousness_transformer/runs/ARTIFACTS.md` for what's on mainline
+and how to load it; keep that file current when you add more.
+
+**Dispatched work — verify it landed.** Dispatched routines/agents have
+gone missing (lost work, not just lost checkpoints) **twice** on record.
+After every dispatched job, the director must confirm a branch actually
+exists on `origin` (`git branch -r` / `git ls-remote`) before treating the
+work as done — a "pushed" claim in an agent's final message is not
+verification.
+
+**Test tiers.** `pytest -m "not slow" -q` is the fast tier (<10 min on this
+CPU box) and is the default (see `pyproject.toml`'s `addopts`).
+`pytest -m slow` is the full tier — quantum_parser-heavy tests
+(full-corpus reparse, `test_fairytaleqa.py`, anything that builds gold over
+real text) are the ones that blow the 10-min budget; run the full tier
+before trusting a change that touches `clause.py`, `corpus.py`, or
+`quantum_parser` broadly, not just the fast tier.
+
 - ONE training run at a time; long runs via `nohup` + `nice`, logging to
   `runs/*.log`; watchers grep the run's UNIQUE script name.
 - Smoke-scale results NEVER gate curriculum validity — only full-scale
