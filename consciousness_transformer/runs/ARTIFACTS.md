@@ -112,6 +112,17 @@ for on a side branch. For the branches these came from and their verdicts, see
   controls, parse coverage, answerable-from-memory ceiling). Full report:
   `dev/reports/E2E_QA_SPIKE.md`.
 
+## Encoder vs. parser head-to-head (the complement-coverage proof)
+
+- **`runs/encoder_vs_parser_judged.jsonl`** (375KB) — per-sentence output
+  of `scripts/encoder_vs_parser_probe.py`'s 2,000-sentence unseen-prose run
+  (1,500 FairytaleQA val/test + 500 Gutenberg not in gold v6/hard-gold) plus
+  `scripts/_apply_judgments.py`'s hand-judgments (no LLM) merged in: 80
+  complement + 80 matched + 40 calibration sentences judged
+  USABLE/PARTIAL/WRONG. Encoder any-correct on the complement 63.8% vs.
+  POS-cheat 37.5%; hybrid coverage 84.9% (+26.6pp over teacher-only). Full
+  writeup: `dev/reports/ENCODER_VS_PARSER.md`.
+
 ## Not included here
 
 `runs/arms/*.pt.last.pt` (last-step duplicates of the two v6 checkpoints
