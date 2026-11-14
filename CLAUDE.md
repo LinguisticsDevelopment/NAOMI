@@ -28,6 +28,15 @@
   curriculum-era laws below (smoke/full inversions, held-out-atom tests,
   curriculum design law) apply again when learned components return.
 
+## How to check work (owner, 2026-11-14)
+- **Check the method before the machinery.** Before building, fixing or
+  measuring anything, state in plain words which part of the architecture
+  it is, what that part is supposed to learn versus be given, and what
+  signal teaches it — and confirm that with the owner when it is not
+  already settled. A passing gate on the wrong method is how the project
+  ran in circles. Machinery-level validation (gates, controls, baselines)
+  comes after the method is agreed, and stays light while experimental.
+
 ## Design rules (owner, 2026-11-14 — do not relitigate)
 - **No hand-written language patterns in code.** No word lists, regexes or
   heuristics that encode English (or any language) in Python. Language
