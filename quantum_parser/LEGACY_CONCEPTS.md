@@ -31,7 +31,7 @@ This became the **51 fixed anchor dimensions** + **461 learned dimensions** in t
 
 ### File Structure (for reference)
 ```
-parser/                        (Old Go implementation)
+legacy/parser/                 (Old Go implementation)
 ├── parser.go                  Main entry point
 ├── cores/
 │   ├── parser.go              Core parsing logic
@@ -334,15 +334,15 @@ lemma, _, _ := lem.Lemma(token.Text, token.Tag)
 
 If you need to understand the original implementation:
 
-**Core logic**:
-- `parser/parser.go` - Main entry point
-- `parser/cores/parser.go` - Core parsing algorithm
-- `parser/cores/masher.go` - Tree combination logic
+**Core logic** (moved to `legacy/` in the 2026-11 integration cleanup):
+- `legacy/parser/parser.go` - Main entry point
+- `legacy/parser/cores/parser.go` - Core parsing algorithm
+- `legacy/parser/cores/masher.go` - Tree combination logic
 
 **Grammar/Rules**:
-- `assignments.json` - Relationship type definitions
-- `rules.json` - Original grammar rules
-- `ref/possibleRules.txt` - Rule notation reference
+- `legacy/assignments.json` - Relationship type definitions
+- `legacy/rules.json` - Original grammar rules
+- `legacy/ref/possibleRules.txt` - Rule notation reference
 
 **Data**:
 - `en.lmm` - Lemmatization model

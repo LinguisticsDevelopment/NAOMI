@@ -31,7 +31,7 @@ Explanation of why these changes were needed
 **Status:** Pending - Grammar files not yet created
 
 **Next Steps:**
-1. Port English grammar from webber/english_rules.json
+1. Port English grammar from legacy/webber/english_rules.json
 2. Validate against test sentences
 3. Design Spanish grammar from scratch
 4. Document all decisions here

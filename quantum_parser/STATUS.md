@@ -123,7 +123,7 @@ best = chart.best_hypothesis()
 ### Immediate (Next Session):
 
 1. **Create Full English Grammar** 
-   - Port rules from webber/english_rules.json
+   - Port rules from legacy/webber/english_rules.json
    - Convert to new verbose format
    - Test on real sentences
 

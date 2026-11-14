@@ -33,24 +33,24 @@ honest negatives) is `consciousness_transformer/RESEARCH_NOTES.md`.
   parser `consciousness_transformer` reads text through (one grammar file per
   language). Actively used, not legacy, even though its own docs predate the
   mind/ line and talk about an earlier framing of the project.
-- **`parser/`, `webber/`** — **legacy.** Early standalone Go prototypes
-  (tree/detree parsing, a translation experiment) that predate the
-  NSM/meaning-space line entirely. Not built or imported by
-  `consciousness_transformer` or `quantum_parser`.
-- **`drill/`** — **legacy.** Scratch data/scripts (a WordNet-from-Prolog
-  dump, a spreadsheet, an sqlite conversion helper) from the same early
-  period. Not used by anything current.
-- **`ref/`** — **legacy.** One reference-notes text file
-  (`possibleRules.txt`) from the same early period.
-- **`junk/`** — **legacy, and literally named junk.** Two small files
-  (`junk.py`, `rules.json`) — a scratch POS-tagging exercise against the
-  early rule format. Nothing reads or imports this directory; it's a
-  reasonable candidate for deletion, left to the owner to decide (see the
-  cleanup session's final note).
-- **`assignments.json`, `rules.json`, `windows_install.txt`** (repo root) —
-  **legacy.** Leftover grammar-rule/config data and a Windows setup note
-  from the `parser/`-era Go prototype. Not read by
-  `consciousness_transformer` or `quantum_parser`.
+- **`legacy/`** — everything that predates the NSM/meaning-space line
+  entirely and that nothing current reads or imports (verified by grep
+  against `consciousness_transformer/` and `quantum_parser/` before the
+  move; the only hits were documentary mentions in
+  `quantum_parser/LEGACY_CONCEPTS.md`/`GRAMMAR_UPDATES.md`, not code).
+  Moved here as one batch in the 2026-11 integration cleanup:
+  - `legacy/parser/`, `legacy/webber/` — early standalone Go prototypes
+    (tree/detree parsing, a translation experiment).
+  - `legacy/drill/` — scratch data/scripts (a WordNet-from-Prolog dump, a
+    spreadsheet, an sqlite conversion helper) from the same early period.
+  - `legacy/ref/` — one reference-notes text file (`possibleRules.txt`).
+  - `legacy/junk/` — literally named junk. Two small files (`junk.py`,
+    `rules.json`) — a scratch POS-tagging exercise against the early rule
+    format; a reasonable candidate for outright deletion, left to the
+    owner to decide.
+  - `legacy/assignments.json`, `legacy/rules.json`,
+    `legacy/windows_install.txt` — leftover grammar-rule/config data and a
+    Windows setup note from the `parser/`-era Go prototype.
 
 ## Setup and tests
 
