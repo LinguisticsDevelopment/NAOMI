@@ -60,7 +60,7 @@ for on a side branch. For the branches these came from and their verdicts, see
 - **`runs/hard_gold_train.jsonl`** (1,083 records) — the hand/template
   hard-gold mix (8 families: pure/content interjection, imperative,
   additive, elision, quantity, synth_subject, speaker_prime) built by
-  `scripts/hard_gold_gen.py`, widened to v4 (all families). Mixed into
+  `scripts/gen_hard_gold.py`, widened to v4 (all families). Mixed into
   every encoder training run at ~1:9 (hard:main) since `encoder-arms4-a`.
 - **`runs/holdout_sentences.txt`** / **`runs/holdout_dev_sentences.txt`**
   (98 lines each) — the frozen plain-text sentence lists that
@@ -94,19 +94,21 @@ for on a side branch. For the branches these came from and their verdicts, see
   policy (same-passage is the fixed default — see
   `dev/reports/K12_BENCHMARK_FIX.md`; cross-story is kept for the cheat
   comparison in that report).
-  Load with `nsm_ct`'s `Episode` loader (`src/nsm_ct/episode.py`) — one
+  Load with `nsm_ct`'s `Episode` dataclass (`src/nsm_ct/episode.py`, slimmed 2026-11-14; original loader code in `archive/src/nsm_ct/episode.py`) — one
   JSON Episode per line.
 - **`runs/mctest_mc160_episodes.jsonl`** (400 lines) — MCTest mc160
   train+dev converted the same way, native in-story distractors.
 
-## E2E QA spike (inconclusive — see GOALS.md "Answer-from-memory" goal)
+## E2E QA spike (archived, superseded — see GOALS.md "Answer from memory" goal)
 
 - **`runs/e2e_qa_spike_ftqa.pt`** / **`e2e_qa_spike_mctest.pt`** (~700KB
-  each) — small QA-head checkpoints from `scripts/e2e_qa_spike.py`'s
+  each) — small QA-head checkpoints from `archive/scripts/e2e_qa_spike.py`'s (archived 2026-11-14)
   passage-capped (n=25 / n≈12) run over teacher-built (not encoder-built)
   episodes. Model and memory-severed control were identical (0.400/0.400)
   — data-starved, not evidence either way. Not reference checkpoints; kept
   only so the spike is reproducible without re-running the parse build.
+  Superseded 2026-11-14: the spike's QA adapter and memory-severed control
+  were flawed (see GOALS.md), so these files are not evidence either way.
 - **`runs/e2e_qa_spike_ftqa.json`** / **`e2e_qa_spike_mctest.json`** — the
   spike's result/metrics dump (accuracy vs random/cheat/memory-severed
   controls, parse coverage, answerable-from-memory ceiling). Full report:
@@ -117,11 +119,37 @@ for on a side branch. For the branches these came from and their verdicts, see
 - **`runs/encoder_vs_parser_judged.jsonl`** (375KB) — per-sentence output
   of `scripts/encoder_vs_parser_probe.py`'s 2,000-sentence unseen-prose run
   (1,500 FairytaleQA val/test + 500 Gutenberg not in gold v6/hard-gold) plus
-  `scripts/_apply_judgments.py`'s hand-judgments (no LLM) merged in: 80
+  `archive/scripts/_apply_judgments.py`'s (archived) hand-judgments (no LLM) merged in: 80
   complement + 80 matched + 40 calibration sentences judged
   USABLE/PARTIAL/WRONG. Encoder any-correct on the complement 63.8% vs.
   POS-cheat 37.5%; hybrid coverage 84.9% (+26.6pp over teacher-only). Full
   writeup: `dev/reports/ENCODER_VS_PARSER.md`.
+
+## NAOMI minimal loop — first end-to-end benchmark (2026-11-14)
+
+Produced by `scripts/naomi_run.py bench` over the episode files above
+(MCTest mc160: 400 items; FairytaleQA same-passage: 222 items, max 3 per
+story). No training; reader is parser + encoder v6 fallback. Ledger entry:
+"Answer from memory: minimal read->remember->recall loop..." in
+`RESEARCH_NOTES.md`.
+
+- **`runs/naomi_bench_mctest.jsonl`**, **`runs/naomi_bench_ftqa.jsonl`** —
+  one JSON record per item, including the wrong-passage runs. Score with
+  `python scripts/naomi_run.py report --in runs/naomi_bench_mctest.jsonl`.
+- **`runs/naomi_failures_mctest.jsonl`**, **`runs/naomi_failures_ftqa.jsonl`**
+  — the failed items, kept for the failure-cause analysis.
+- **`runs/naomi_bench_{mctest,ftqa}_v2.jsonl`**, **`naomi_failures_*_v2.jsonl`**,
+  **`naomi_bench_*_v2_shuffled.jsonl`** — the second pass (question-side
+  fixes) and its question-shuffled control (`bench --shuffle-questions`).
+- **`runs/naomi_read_cache.jsonl.gz`** (3.5MB; `gunzip -k` it to
+  `runs/naomi_read_cache.jsonl` before running, the plain file is 46MB and
+  not tracked) — on-disk read cache for the
+  reader (sentence -> read result); `bench` uses it by default
+  (`--cache runs/naomi_read_cache.jsonl`), which makes re-runs fast. Delete
+  it to force a fresh read.
+- Reproduce: `python scripts/naomi_run.py bench --dataset mctest --wrong-passage`
+  (resumable, stops starting new items after `--time-limit` s, default 110;
+  re-run to continue), then `report`.
 
 ## Not included here
 

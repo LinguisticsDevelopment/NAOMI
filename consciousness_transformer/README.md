@@ -1,142 +1,41 @@
-# NSM Consciousness Transformer — a meaning-space mind (part of NAOMI)
+# consciousness_transformer — live code map (2026-11-14)
 
-One system you can **talk to**, that **remembers**, **reasons** (derive-or-abstain,
-with a faithful trace), and that you can **teach** — built on the thesis that
-everything the system holds and manipulates is a **meaning object** over ~65 NSM
-primes, never tokens.
+The reader/grounding core plus a new minimal read -> remember -> recall loop.
+Thesis, status and next steps: `../GOALS.md`. Design contract:
+`MIND_ARCHITECTURE.md`. Research ledger: `RESEARCH_NOTES.md`. The
+curriculum-era code (executor, ops, membrane, the `mind/` package, old
+decoder, 90+ scripts, 80+ tests) was moved to `archive/` on 2026-11-14 with
+the same relative paths; see `archive/README.md`. The pre-refactor module
+map is `archive/README_pre_refactor.md`.
 
-Two cleanly separated kinds of learning (the spine):
+## Live modules
 
-- **Weights hold zero information.** Gradient descent touches only the cognitive
-  policy — how to perceive, recall, infer, respond. No facts, rules, or taxonomy
-  are ever baked into weights.
-- **All content lives in the graph.** Teaching is a graph write (instant,
-  non-destructive, inspectable), never a weight update.
+`src/naomi/` — the minimal loop (~1,350 lines with the runner):
+- `types.py` — shared contract (Filler, ClauseTree, ReadResult, Answer, LAYERS).
+- `reader.py` — hybrid reader: deterministic parser first, encoder v6 fallback; candidate senses kept uncommitted; negation and question holes marked; on-disk read cache.
+- `memory.py` — one layered graph of meaning trees on `nsm_ct.meaning_graph`, each clause also a TPR tensor handle; provenance outside the tensor.
+- `recall.py` — question tree with a hole -> tensor-similarity candidates -> structural confirmation -> answer or abstain. No learned parts.
+- `mind.py` — `Mind.teach / ask / say / sleep / forget`.
 
-The design contract is [`MIND_ARCHITECTURE.md`](MIND_ARCHITECTURE.md); the full
-measured research log (every milestone, including the honest negatives and the
-M24 leakage audit) is [`RESEARCH_NOTES.md`](RESEARCH_NOTES.md).
+`src/nsm_ct/` — reader and grounding core:
+- `encoder_model.py`, `encoder_train_util.py`, `input_encoder.py` — the learned encoder (v6 checkpoint: `runs/ARTIFACTS.md`).
+- `clause.py`, `corpus.py`, `quantum_adapter.py`, `tokenizer.py`, `hard_gold_templates.py` — clause extraction, corpus/gold building, the bridge to `../quantum_parser`.
+- `meaning_graph.py`, `tpr.py`, `data_structures.py`, `serialization.py`, `structure.py`, `thought.py`, `tree_render.py`, `candidates.py` — graph store with vector handles + lossless structure, TPR binding, candidate types.
+- `meaning.py`, `nsm_primes.py`, `nsm_molecules.py`, `explications.py`, `wordnet.py`, `usvs_graded.py`, `ground/` — NSM primes, word meaning, and the USVS grounded lexical space.
+- `episode.py` — slimmed to the `Episode` dataclass (full original in `archive/src/nsm_ct/episode.py`).
+- `mind/` — only `datasets/` remains (SimLex data); the package itself is archived.
 
-> **History note:** the original scaffold here was a token-fed transformer used as
-> a state-transition function. The clause/mind line superseded it; the token stack
-> was removed (git tag `token-stack-final` holds the last commit that contains it).
-> The surviving transformer count in this package: **zero** — the learned parts are
-> a small GRU controller + heads and a tiny drive MLP.
+`scripts/` (19 files) — `naomi_run.py` (runner, below); encoder training/eval/gold (`train_encoder.py`, `eval_encoder.py`, `rescore_encoder.py`, `build_encoder_gold_v2.py`, `build_holdout_gold.py`, `make_holdout.py`, `gen_hard_gold.py`, `hand_gold.py`, `run_encoder_arms.sh`); `build_usvs.py`; benchmark converters and cheat baselines (`convert_fairytaleqa.py`, `convert_mctest.py`, `build_k12_fairytaleqa_corpus.py`, `fetch_k12.py`, `cheat_baselines_k12.py`, `cheat_encoder_baseline.py`); encoder-vs-parser probes (`encoder_vs_parser_probe.py`, `probe_encoder_complement.py`).
 
-## What's here
+`tests/` (38 files) — `test_naomi_*.py` cover the new loop; the rest cover the reader/grounding core. Default tier is `pytest -m "not slow"`.
 
-**The substrate (deterministic, inspectable — never trained):**
+Other: `data/` (USVS, corpora, K-12 samples), `runs/` (checkpoints, gold, benchmark outputs; `runs/ARTIFACTS.md` is the index), `dev/` (design docs and reports; `dev/INDEX.md`), `configs/`, `colab/`, `logs/`.
 
-- `nsm_primes.py` — the canonical ~65 NSM primes (the only atomic vectors).
-- `tpr.py`, `clause.py`, `entity_memory.py` — Tensor Product Representation
-  binding: clauses as d×d meaning matrices over primes; an order-3
-  `entity⊗relation⊗value` working memory. Zero token embeddings.
-- `meaning_graph.py`, `collapse.py`, `serialization.py` — the dual-coded graph
-  store: every node carries a lossy vector *handle* + a lossless serialized
-  *structure* (correctness always routes through the structure).
-- `meaning.py`, `nsm_molecules.py`, `wordnet.py`, `explications.py` — word
-  meaning by precedence: prime → cited NSM molecule → WordNet-gloss
-  decomposition → SOMEONE/SOMETHING. Nothing is ever hallucinated.
-- `ground/` — the **grounded lexical space** (M17–M25): a minimal set of named,
-  interpretable axes over which word-senses are *placed* by deterministic
-  propagation. Honest held-out numbers: synonym AUC 0.86, syn>ant 0.756,
-  hypernym 0.72, random-pair ≈ 0. The measured boundary: antonymy is a signed
-  **relation**, composition is an **operation**, reasoning is **dynamics** —
-  structure layered on the space, not more axes.
-- `reasoning_oracle.py` — the symbolic floor: forward chaining + unification
-  (reproduces ProofWriter open-world gold at 0.989). Teacher and validator,
-  never the runtime's only path.
-- `wsd.py` — sense inventories (incl. `GroundedWordNetSenseInventory`, whose
-  sense signatures come from the grounding work) + the coherence-driven
-  `IterativeSenseResolver` (standalone; not yet wired into the loop).
-
-**The mind (`src/nsm_ct/mind/` — the learned policy + the two loops):**
-
-- `schema.py`, `knowledge.py`, `persistence.py` — the frozen meaning-object
-  contract; LTM as a durable, disk-persistent graph with variable-bearing Horn
-  rules *as graph data*.
-- `ops.py`, `executor.py` — the cognitive instruction set {PERCEIVE, RECALL,
-  INFER, CONSOLIDATE, SUPERSEDE, RESPOND, HALT} over live STM + LTM.
-- `controller.py`, `controller_losses.py`, `teacher.py`, `proof_search.py` —
-  the learned navigation policy (which rule/relation to follow next; backward
-  chaining took ProofWriter depth-2 from 0.48 → ~1.0). The engine derives;
-  the controller only navigates.
-- `conscious_loop.py`, `subconscious_loop.py` — the one-door clause feed
-  (`consume`/`converse`) and the background consolidate/offline-infer/self-train
-  loop.
-- `grammar.py`, `membrane.py`, `verbalize.py` — the owned, deterministic
-  controlled-English membrane (parse ↔ render, round-trip-tested); answers
-  verbalize their *actual* derivation chain.
-- `coref.py`, `routing.py`, `conversation.py`, `drive*.py` — pronoun
-  resolution, the learned absorb-vs-answer routing, stateful multi-turn
-  conversation (ask-when-blocked, resolve-later), and the RL-trained
-  initiative drive (when to volunteer/ask/stay quiet).
-
-## Quick start
+## Run it
 
 ```bash
 cd consciousness_transformer
-pip install -e '.[dev]'     # torch (CPU is fine), numpy, pyyaml, nltk, pytest
-python -c "import nltk; nltk.download('wordnet'); nltk.download('omw-1.4')"
-pytest                      # the full gate suite
-
-python scripts/talk.py      # talk to it in controlled English
-python scripts/train_proofwriter.py --backward   # learned proof navigation
-python scripts/train_drive_rl.py                 # the initiative drive (RL)
-python scripts/probe_ground_understanding.py     # grounded-space evaluation
+python scripts/naomi_run.py teach-ask --text "Mary has a red ball." --ask "Who has a red ball?"
+python scripts/naomi_run.py bench --dataset mctest --wrong-passage   # resumable; see --help
+python scripts/naomi_run.py report --in runs/naomi_bench_mctest.jsonl
 ```
-
-Example (`talk.py`, no pretraining — knowledge is taught in-session):
-
-```
-> a beagle is a dog.
-> a dog can bark.
-> what can a beagle do?
-Because a beagle is a dog and a dog can bark, a beagle can bark. A beagle can bark.
-```
-
-## Where the research stands
-
-The short version of `RESEARCH_NOTES.md`:
-
-- **Reasoning:** multi-hop traversal works and generalizes when the loop reads
-  its own output (focus-chaining, held-out depth-3 ≈ 0.97 with adequate hops);
-  learned *when-to-stop* is still maturing. Backward (goal-directed) navigation
-  is the proven direction for rule-chaining.
-- **Grounding:** the lexical space is settled (named axes + deterministic
-  placement; sense-nodes and trained embeddings both measured and rejected).
-  The open work is **composition over grounded primes** — clauses as operations
-  (negation/antonymy as signed ops), not points.
-- **WSD:** grounded sense signatures exist end to end; the coherence resolver
-  runs but has **no correctness measurement yet** (vs. the MFS baseline on gold
-  data) — that gate decides what sits in the perception slot.
-- **Honesty rules:** any propagation metric must exclude its scored pairs
-  (M24); a substrate milestone counts only when a downstream consumer
-  measurably benefits.
-
-## Layout
-
-```
-consciousness_transformer/
-├── README.md / MIND_ARCHITECTURE.md / RESEARCH_NOTES.md
-├── pyproject.toml
-├── src/nsm_ct/
-│   ├── nsm_primes.py  tpr.py  clause.py  entity_memory.py   # the TPR substrate
-│   ├── meaning_graph.py  collapse.py  serialization.py      # dual-coded graph store
-│   ├── meaning.py  nsm_molecules.py  wordnet.py  wsd.py     # word meaning + senses
-│   ├── ground/                                              # the grounded lexical space
-│   ├── clause_reactor.py  clause_psyche.py                  # the GRU controller family
-│   ├── reasoning_oracle.py  episode.py                      # symbolic floor + curricula
-│   ├── input_encoder.py  quantum_adapter.py  tokenizer.py   # parser front-end (text reader)
-│   └── mind/                                                # the two loops + membrane + drive
-├── scripts/            # talk / train_* / probe_* (each probe is a milestone gate)
-└── tests/              # the gate suite
-```
-
-## Open problems
-
-See `RESEARCH_NOTES.md` §1–§9 and the post-grounding roadmap: composition over
-grounded primes (the central problem), the WSD-vs-MFS gate, antonymy as a
-first-class signed-edge layer, what the consciousness state should represent,
-cross-episode credit assignment, and the textbook north star
-(`episode.py::TextbookSource`).

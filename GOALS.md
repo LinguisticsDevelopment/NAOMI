@@ -19,13 +19,21 @@ memory, written by ordinary graph/tensor writes, never by training. See
 
 | Goal | Status |
 |---|---|
-| Read | in progress — encoder v6 retrained, clearly beats cheat baseline |
-| Remember | working |
-| Resolve | working, with an open WSD gap |
-| Answer from memory | in progress — e2e spike inconclusive, full-scale run next |
-| Reason | in progress |
+| Read | in progress — encoder v6 beats cheat baseline; hybrid reader live in `naomi`, weak on roles/possessors/predicate nominals |
+| Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
+| Resolve | working on archived code, with an open WSD gap; to be re-attached |
+| Answer from memory | in progress — minimal loop answers ~30% of real-prose questions at 71-87% accuracy and abstains correctly; overall still below the word-overlap cheat |
+| Reason | in progress on archived code; to be re-attached on the minimal loop |
 | Speak | on hold |
-| Any language | working at curriculum scale, not yet at real-text scale |
+| Any language | working at curriculum scale (archived code), not yet at real-text scale |
+
+**2026-11-14 refactor.** The curriculum-era code was moved to
+`consciousness_transformer/archive/` (same relative paths; pre-refactor tree
+also at branch `integration-2026-11`, commit 2e18721). Live code is the slim
+`consciousness_transformer/src/nsm_ct` reader/grounding core plus the new
+`consciousness_transformer/src/naomi` read -> remember -> recall loop. Paths
+below that say `archive/...` point at code that no longer runs from the live
+tree.
 
 ---
 
@@ -42,11 +50,12 @@ coverage.
 **Status: in progress.** The grounded lexical space (USVS) is settled and not
 being revisited. The learned encoder was frozen pending a downstream
 measurement; the owner unfroze it on 2026-10-16 to finish out, now that the
-gold it trains on has been fixed.
+gold it trains on has been fixed. The hybrid reader runs end to end in
+`src/naomi/reader.py` (2026-11-14).
 
 **Proven, with numbers:**
 - USVS grounding is done: synonym AUC 0.86, syn>ant 0.756, hypernym 0.72,
-  random-pair ~0 (`consciousness_transformer/README.md`, M17-M29 in the
+  random-pair ~0 (`consciousness_transformer/archive/README_pre_refactor.md`, M17-M29 in the
   milestone map).
 - The encoder is real but modest: rank-1 edge-F1 0.622 (P 0.750) on the frozen
   checkpoint, vs a POS-heuristic cheat baseline of **0.268** — a genuine +0.354
@@ -98,17 +107,33 @@ gold it trains on has been fixed.
   encoder and cheat. OOD generalization cost: edge-F1 0.708 (in-distribution)
   -> 0.592 (OOD, vs. teacher on teacher-OK sentences). `dev/reports/ENCODER_VS_PARSER.md`.
 
+- **Hybrid reader in the minimal loop (2026-11-14,
+  `consciousness_transformer/src/naomi/reader.py`):** deterministic parser
+  first, encoder v6 as fallback. On 300 MCTest sentences: >=1 clause for
+  99.3% (parser 289, encoder 9, none 2), ~0.17 s/sentence, 6.2% of clauses
+  negated. Negation is now marked deterministically per clause (the parser
+  and the encoder both drop it on real prose, where 22.5% of FairytaleQA
+  passage sentences and 10.3% of MCTest ones contain a negation cue).
+
+**Known reader weaknesses (2026-11-14).** Noisy argument roles on real
+prose; predicate nominals/adjectives dropped ("he was not a favourite"
+loses "favourite"); possessors dropped ("jim 's father"); subjects lost
+across coordination/ellipsis.
+
 **Open.** This answers "does the encoder add coverage beyond the parser"
-(yes) but not "does that extra coverage actually help downstream
-comprehension" — that's still gated on the "Answer from memory" spike
-below, which hasn't yet compared teacher-built vs. encoder-built episodes
-through the QA head. Code-switching / multilingual input to the encoder
+(yes). Whether the extra coverage helps downstream comprehension is not yet
+measured through the new loop (in the first end-to-end run the encoder
+supplied the support for 2 of 60 answered MCTest items; see "Answer from
+memory"). Code-switching / multilingual input to the encoder
 itself doesn't exist (its hard-coded POS rules and prime set are
 English-only).
 
-**Next.** The downstream comparison — teacher-built vs. encoder-built
-episodes through the same QA head — is still open; the encoder-vs-parser
-result above makes a stronger case that it's worth running.
+**Next.** Keep predicate nominals/adjectives and possessors in the reader;
+fix argument-role noise; add simple coreference. The encoder is a learned
+parser driven by the grammar file and will probably replace the
+deterministic parser (2026-11-14 decision); the reader passes candidate word
+senses up rather than committing to one. The question-side fixes under
+"Answer from memory" come first.
 
 ---
 
@@ -121,10 +146,16 @@ tensor for what survives consolidation; every write carries provenance
 (source, language, timestamp, trust) in an append-only log outside the tensor,
 since superposition would destroy an audit trail stored inside it.
 
-**Status: working.** The schema, the instance registry, write-back, LTM, and
-consolidation are all built and gated.
+**Status: working on the archived flat-tensor path; live memory changed.**
+The results below were all measured on the curriculum-era code now under
+`consciousness_transformer/archive/` (the flat order-3 tensor, instance
+registry, `ltm.py`, `membrane.py`). The live memory since 2026-11-14 is the
+layered graph of meaning trees in `consciousness_transformer/src/naomi/memory.py`
+(layers current / short_term / long_term / fact, working names; every clause
+also has a TPR tensor handle). It has **not** been re-proven for capacity,
+LTM or consolidation. The schema decisions in the log below were made for the archived path.
 
-**Proven, with numbers:**
+**Proven, with numbers (archived path):**
 - Capacity: dim-48 memory holds ~256 facts at >=0.95 forward recall
   (`dev/reports/CAPACITY_CURVE.md`).
 - Entity-instance subsystem (registry + attribute facts + provenance) built
@@ -142,8 +173,9 @@ and M59 in the milestone map; design: `dev/design/LTM_DESIGN_BRIEF.md`.)
 truth-memory promotion (reusing the tier-generic consolidate op for facts
 that graduate from "believed" to "known") is designed but not built.
 
-**Next.** No specific run in flight; this goal is in the "working, revisit
-when the next goal needs more of it" state.
+**Next.** Re-establish capacity and long-term behaviour on the layered graph
+only when "Answer from memory" needs it; `sleep`/`forget` exist in
+`src/naomi/mind.py` but are untested at scale.
 
 ---
 
@@ -153,7 +185,10 @@ when the next goal needs more of it" state.
 referent/sense at the point a clause is consumed, via a learned collapse over
 a candidate set (never a hand rule).
 
-**Status: working, with an open gap.** Pronoun resolution ("Track A") is
+**Status: working on archived code, with an open gap; to be re-attached.**
+(`membrane.py`, `wsd.py` and `resolver.py` are under `consciousness_transformer/archive/`.
+The live reader keeps word senses as uncommitted candidates and memory picks
+at store time, against what it already holds.) Pronoun resolution ("Track A") is
 proven at full scale. Memory-context word-sense disambiguation beat the MFS
 floor honestly on a rematch. The one piece that is built but **unmeasured**
 is the coherence-driven sense resolver's correctness vs. the MFS baseline on
@@ -171,7 +206,7 @@ slot.
 (`RESEARCH_NOTES.md` M52-M56c in the milestone map; design:
 `dev/design/MIND_INTERFACE.md`.)
 
-**Open.** The coherence `IterativeSenseResolver` (`src/nsm_ct/wsd.py`) has no
+**Open.** The coherence `IterativeSenseResolver` (`archive/src/nsm_ct/wsd.py`) has no
 correctness measurement yet. Garden-path reading collapse was deprioritized in
 favor of the memory-schema work and never revisited.
 
@@ -187,12 +222,12 @@ abstaining rather than inventing an answer when memory doesn't contain it.
 This is the thesis's central untested risk: the whole architecture is proven
 on synthetic curricula, not yet on real text at scale.
 
-**Status: in progress.** The zero-shot number exists and is honest; the
-K-12-style benchmark was found to be solvable by cheating and has been
-fixed; the first end-to-end spike (teacher-built episodes over real K-12
-passages, with a memory-severed control) landed and was **inconclusive**.
-A full-scale, un-time-boxed run is the next step, now handed to a fresh
-session for next-step planning (see Decisions log, 2026-11-14).
+**Status: in progress.** The minimal read -> remember -> recall loop
+(`consciousness_transformer/src/naomi`) runs end to end on real prose with
+no training, and abstains instead of inventing answers from unrelated text.
+It is **not yet ahead of the word-overlap cheat baseline**: it abstains on
+~80-85% of items, and ~89% of failures are abstains where the answer content
+is in memory (the loss is question-tree-to-stored-tree matching).
 
 **Proven, with numbers:**
 - Zero-shot prose number (frozen system, self-generated QA): overall 0.583 vs
@@ -207,9 +242,9 @@ session for next-step planning (see Decisions log, 2026-11-14).
   `scripts/cheat_baselines_k12.py` and `scripts/cheat_encoder_baseline.py` are
   now wired into the standard report for every future number on this
   benchmark. (`dev/reports/K12_BENCHMARK_FIX.md`, `dev/reports/AUDIT_2026-10-15.md`.)
-- **E2E QA spike (teacher-built episodes, branch `e2e-qa-spike`) — landed,
+- **SUPERSEDED — E2E QA spike (teacher-built episodes, branch `e2e-qa-spike`) — landed,
   INCONCLUSIVE, not a falsification.** Found and fixed a real gap first:
-  `clause_reactor.py`'s question-step adapter was silently dropping every
+  `archive/src/nsm_ct/clause_reactor.py`'s question-step adapter was silently dropping every
   free-form MC question (no NAME/"the NOUN" match) — fixed additively (~20
   lines), 2 new tests. Parse coverage **87-95%** and answer-in-memory
   ceiling **79-94%** both healthy on both datasets (FairytaleQA, MCTest
@@ -222,25 +257,76 @@ session for next-step planning (see Decisions log, 2026-11-14).
   build projected hours against a ~90min budget, so this ran on 6/3/4
   passages per split). `dev/reports/E2E_QA_SPIKE.md`;
   `runs/ARTIFACTS.md` for the spike's checkpoints/metrics files.
+  **Superseded 2026-11-14:** reviewing the spike showed its QA adapter never
+  encoded the question for items with no name/"the NOUN" (122/584
+  FairytaleQA, 185/400 MCTest) — the earlier "fix" above was incomplete —
+  and its memory-severed control also removed the passage from the
+  recurrent state, so it could not have tested memory recall at any scale.
+  The 0.400/0.400 result is uninformative for that reason, not just data
+  starvation. Script now at `consciousness_transformer/archive/scripts/e2e_qa_spike.py`.
 
-**Open.** The spike above did not have the scale to tell "memory isn't
-helping" apart from "not enough data to tell" — that is the live open
-question, not a closed negative. Downstream comparison of teacher-built vs.
-encoder-built episodes still hasn't run (the `encoder-vs-parser` probe
-under the Read goal shows the encoder adds real coverage beyond the
-parser, but measured that in isolation, not through this QA head).
-Abstention on mismatched-passage ("not stated")
-questions hasn't been measured directly yet — it's designed (pair a
-question with the wrong story's passage, gate on abstain-rate >=70%
-mismatched / <=15% matched) but not run.
+- **First end-to-end numbers, minimal loop (2026-11-14, no training; hybrid
+  parser+encoder reader; fresh memory per item; 4-way multiple choice):**
 
-**Next.** A full-scale, un-time-boxed run of the e2e spike (the passage cap
-was the confound) is the next step to get a power-adequate answer; the
-spike's own infra (negative parse cache, context-tuple-keyed coverage,
-known-bad-sentence prefilter) makes that affordable. Per the 2026-11-14
-owner decision, deciding how/when to run it (and the rest of the
-"Answer from memory" roadmap) is handed to a fresh session for next-step
-planning rather than fixed here.
+  | | MCTest mc160 (400 items) | FairytaleQA entity-MC (222 items, max 3/story) |
+  |---|---|---|
+  | answered | 15.0% (60) | 20.7% (46) |
+  | accuracy when answered | 55.0% (33/60) | 69.6% (32/46) |
+  | accuracy, random guess on abstain | 29.5% | 34.2% |
+  | gold answer content in memory | 89.2% | 71.6% |
+  | wrong-passage abstain | 100% | 98.6% |
+  | random baseline | 25.0% | 25.0% |
+  | word-overlap cheat | 45.0% | 56.3% |
+
+  MCTest support came from the parser 58 / encoder 2. Caveat: part of the
+  wrong-passage abstain comes from the multiple-choice rule (abstain when no
+  option overlaps the support), not only from memory refusing. Hand-read
+  failure causes (25 per dataset, MCTest/FTQA): how-many/how-much/how-long
+  6/4; copular/attribute questions ("who was X's Y", "what color") 5/5;
+  question tree or hole wrong 4/7; answer is a phrase/clause or needs
+  cross-sentence inference 5/3; wrong support clause 3/4; why 1/0; negation
+  0/1; cloze without hole 1/0; option matching/coreference 0/1. Ledger:
+  `consciousness_transformer/RESEARCH_NOTES.md`, "Answer from memory: minimal
+  read->remember->recall loop..."; artifacts in
+  `consciousness_transformer/runs/ARTIFACTS.md`.
+
+- **Second pass, question-side fixes (2026-11-14, still no training):**
+  possessors, copular complements (symmetric `be`), quantities, a
+  surface-pattern question builder, clause splitting, shallow he/she/it
+  coreference, stricter option backing.
+
+  | | MCTest (400) before -> after | FairytaleQA (222) before -> after |
+  |---|---|---|
+  | answered | 15.0% -> 30.0% | 20.7% -> 31.1% |
+  | accuracy when answered | 55.0% -> 70.8% (85/120) | 69.6% -> 87.0% (60/69) |
+  | accuracy, random guess on abstain | 29.5% -> 38.8% | 34.2% -> 44.3% |
+  | wrong-passage abstain | 100% -> 99.8% | 98.6% -> 99.5% |
+  | question-shuffled control: answered / accuracy | 12.2% / 28.6% | 10.8% / 25.0% |
+  | word-overlap cheat | 45.0% | 56.3% |
+
+  The shuffled-question control falls to chance, so answers depend on the
+  question. Still below the word-overlap cheat overall because it abstains
+  on ~70%. **Caveats:** the fixes were developed while looking at failures
+  from these same items (120/80-item subsets), so these are development
+  numbers, not held-out ones; and questions are now built by hand-written
+  surface patterns in `src/naomi/reader.py` rather than by the grammar
+  parser or the encoder — scaffolding that the learned reader should
+  replace. Remaining failures: why/inference questions, answers that are a
+  phrase or clause, appositives ("Reynard the fox"), parser garbage on
+  long/quoted sentences, wrong pronoun antecedents.
+
+**Open.** Question-side matching (see failure causes above); reader gaps
+(predicate nominals/adjectives, possessors, coreference). The wrong-passage
+abstain rate is partly the multiple-choice rule, so a cleaner abstention
+measurement (memory refusing on its own) is still open. Only one cheat
+baseline per number is run for now (owner direction, 2026-11-14).
+
+**Next.** (1) Get held-out numbers: run the unchanged loop on FairytaleQA
+stories it has not been developed on (198 of 277 stories have no question
+files in the repo yet — needs a download). (2) Raise the answer rate:
+appositives and naming, phrase/clause answers, multi-sentence support.
+(3) Move the question handling from hand patterns into the learned reader.
+(4) Bring the learned reasoning model back on top of the graph operations.
 
 ---
 
@@ -254,6 +340,8 @@ distributions/scalars. D2: the GRU's self-loop carries only control signals
 (previous op, step, register types, scalar margins), never register data — a
 strict split so the controller can't shortcut by reading the answer directly.
 
+**Code archived (2026-11-14):** the executor, op library and learned controller are under `consciousness_transformer/archive/` (`src/nsm_ct/executor.py`, `ops.py`, `mind/`); the results below stand as historical and are to be re-attached on top of the minimal loop (reasoning model learning a set of operations over the memory graph, tensors as its view; to be tested, not settled).
+
 **Status: in progress.** The op library and the deterministic executor (the
 VM the controller governs) are built; the symbolic floor (forward-chaining +
 unification) reproduces gold answers. The learned controller's navigation
@@ -266,7 +354,7 @@ with a mixed verdict.
 - Multi-hop reasoning that reads its own output cracks depth: held-out depth-3
   reaches ~0.97 with adequate hops.
 - Backward (goal-directed) chaining takes ProofWriter depth-2 from 0.48 to
-  ~1.0 (`consciousness_transformer/README.md`).
+  ~1.0 (`consciousness_transformer/archive/README_pre_refactor.md`).
 - LOFO gate #1: inconclusive as instrumented (two full-gap recoveries, four
   gap-less cells, one oracle inversion). LOFO gate #2, after an instrumentation
   repair: **GO** — 4/4 informative cells captured 100% of the oracle-floor gap,
@@ -317,6 +405,8 @@ retraining. Sense signatures are keyed to WordNet synset IDs, not English
 strings, so a correctly-perceived Spanish sentence should be invisible to the
 frozen mind; any gap localizes to perception (parser/lexicon/role-map), which
 is inspectable by construction.
+
+**Code archived (2026-11-14):** the curriculum-scale freeze test code is under `consciousness_transformer/archive/`; its results stand as historical and are to be re-attached on top of the minimal loop. The parser/grammar-swap pieces (`quantum_parser`, `encoder_model.py`) are live.
 
 **Status: working at curriculum scale, not yet at real-text scale.**
 
@@ -394,6 +484,28 @@ ledger entries should cite the topic, matching the headings below.
   "Answer from memory" (the full-scale e2e re-run) without first having to
   untangle ~95 branches. See `BRANCHES.md` and
   `consciousness_transformer/runs/ARTIFACTS.md`.
+
+- **2026-11-14 — minimum viable codebase; archive the rest.** Owner
+  direction: refactor to a minimum viable codebase, archive the rest, stop
+  building on half-working curriculum-era code. Heavy validation/gating is
+  deferred while the work is this experimental: one cheat baseline per
+  reported number is enough for now. See `consciousness_transformer/archive/README.md`.
+- **2026-11-14 — encoder is the future parser; senses are passed up.** The
+  encoder is a learned parser driven by the grammar file and will probably
+  replace the deterministic parser. Word-sense choice needs feedback from
+  memory, so the reader passes candidate senses up rather than committing.
+- **2026-11-14 — memory is one multi-layer graph.** Meaning trees in layers
+  (fact / long-term / short-term / current — working names, not law), whose
+  nodes are also tensors. The reasoning model is expected to learn a set of
+  operations over that graph, with tensors as the view it sees (to be
+  tested, not settled). Live in `consciousness_transformer/src/naomi/memory.py`.
+- **2026-11-14 — what "taught" means; canonical path.** "Taught" = teaching
+  it how to think through specific things, teaching new words, having it
+  correctly identify facts. Path: finish encoder/decoder, then teach it K-12
+  lessons to build the mind up to reasoning over its own data, then hold a
+  conversation — deliberately loose, open to discussion.
+- **2026-11-14 — decoder stays on hold** (unchanged from 2026-10-16).
+- **2026-11-14 — director may push to `master`.**
 
 ## Ops rules
 

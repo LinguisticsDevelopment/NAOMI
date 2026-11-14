@@ -20,8 +20,23 @@ cd consciousness_transformer
 pip install --index-url https://download.pytorch.org/whl/cpu torch && pip install -e '.[dev]'
 python -c "import nltk; [nltk.download(x) for x in ('wordnet','omw-1.4','omw-2.0')]"
 python scripts/build_usvs.py
-pytest -m "not slow" -q    # fast tier, <10 min — see CLAUDE.md for the full tier
+pytest -m "not slow" -q    # fast tier, ~4 min — see CLAUDE.md for the full tier
+# known pre-existing failure: tests/test_quantum_adapter.py::test_two_pps_both_survive_extraction
 ```
+
+Try it (no training needed; output from an actual run):
+
+```bash
+cd consciousness_transformer
+python scripts/naomi_run.py teach-ask --text "Mary has a red ball. Tom does not like cats." --ask "Who has a red ball?"
+# taught: {'sentences': 2, 'clauses': 2, 'parser': 2, 'encoder': 0, 'none': 0, 'negated': 1}
+# Q: Who has a red ball?
+# A: mary  (score=5.41)
+#    support: have(SUBJECT=mary DESCRIPTION=red OBJECT=ball) [parser]
+```
+
+Benchmarks: `python scripts/naomi_run.py bench --dataset mctest --wrong-passage`
+then `report --in runs/naomi_bench_mctest.jsonl` (resumable; see `--help`).
 
 ---
 
@@ -45,15 +60,21 @@ honest negatives) is `consciousness_transformer/RESEARCH_NOTES.md`.
 
 ## Repo map
 
-- **`consciousness_transformer/`** — the live project. `src/nsm_ct/` is the
-  substrate (meaning graph, TPR binding, USVS grounding, the clause reactor)
-  and `src/nsm_ct/mind/` is the learned policy + the two loops (conscious /
-  subconscious) built on top of it. `scripts/` holds every training, probe,
-  and corpus-building entry point; `tests/` is the gate suite; `dev/` is the
-  design docs and research reports — `dev/design/` (live design-of-record),
-  `dev/reports/` (current measurement evidence), `dev/archive/` (superseded);
-  see `dev/INDEX.md`.
-  See `consciousness_transformer/README.md` for the module-level map.
+- **`consciousness_transformer/`** — the live project (module map:
+  `consciousness_transformer/README.md`).
+  - `src/naomi/` — the new minimal read -> remember -> recall loop
+    (`reader.py`, `memory.py`, `recall.py`, `mind.py`, `types.py`).
+  - `src/nsm_ct/` — the slimmed reader/grounding core (encoder, clause
+    extraction, corpus, USVS grounding, meaning graph, TPR).
+  - `scripts/` — `naomi_run.py` plus encoder training/gold/eval, USVS build,
+    benchmark converters and cheat baselines. `tests/` — the test suite.
+  - `archive/` — the curriculum-era code (executor, ops, membrane, `mind/`,
+    old decoder, most scripts and tests), moved 2026-11-14 with the same
+    relative paths; see `consciousness_transformer/archive/README.md`. The
+    pre-refactor tree is also at branch `integration-2026-11`.
+  - `runs/` (checkpoints, gold, benchmark outputs; index in
+    `runs/ARTIFACTS.md`), `data/`, `dev/` (design docs and reports; see
+    `dev/INDEX.md`).
 - **`quantum_parser/`** — the deterministic, language-agnostic grammar
   parser `consciousness_transformer` reads text through (one grammar file per
   language). Actively used, not legacy, even though its own docs predate the
@@ -101,6 +122,6 @@ go through a single cloud routine at a time — see `CLAUDE.md`'s ops rules.
 
 See "Start here" at the top. One more pointer not in that list:
 **`consciousness_transformer/MIND_ARCHITECTURE.md`** — the design contract
-the `mind/` build follows. Ledger entries before 2026-10-16 are titled by
+for the mind (its `mind/` implementation is now under `consciousness_transformer/archive/`). Ledger entries before 2026-10-16 are titled by
 M-number (see `consciousness_transformer/dev/archive/MILESTONE_MAP.md` to
 place one against a goal); entries after are titled by goal.

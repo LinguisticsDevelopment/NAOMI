@@ -76,9 +76,9 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 from .clause import MODIFIER_RELATIONS, _PRONOUNS, extract_discourse, is_entity, strip_attribution
-from .clause_reactor import _TRANSFER_ROLE_MAP
+_TRANSFER_ROLE_MAP = {"SUBJECT": "AGENT", "INDIRECT_OBJECT": "RECIPIENT"}
 from .episode import Episode
-from .membrane import (NAME_GENDER, PRONOUN_MORPHOLOGY, HypothesisCandidateSet,
+from .candidates import (NAME_GENDER, PRONOUN_MORPHOLOGY, HypothesisCandidateSet,
                         hypothesis_candidate_set)
 
 # Diagnosed memory blowup (see dev/ RESEARCH_NOTES / the converter-memfix

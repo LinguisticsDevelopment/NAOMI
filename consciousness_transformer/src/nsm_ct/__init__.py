@@ -21,15 +21,6 @@ from .data_structures import (
     ParseNode,
     ParseTree,
 )
-from .episode import (
-    AbstractEpisodeSource,
-    BabiSource,
-    CurriculumGenerator,
-    Episode,
-    TextbookSource,
-    make_source,
-    split_episodes,
-)
 from .input_encoder import (
     AbstractInputEncoder,
     ParserInputEncoder,
@@ -37,25 +28,9 @@ from .input_encoder import (
 )
 from .nsm_primes import NUM_PRIMES, PRIMES, PRIME_NAMES, NSMPrime, PrimeCategory
 from .tokenizer import SimpleTokenizer
-from .wsd import (
-    GroundedWordNetSenseInventory,
-    IterativeSenseResolver,
-    MockSenseInventory,
-    Sense,
-    SenseInventory,
-    SenseResolver,
-    WordNetSenseInventory,
-    WSDModule,
-)
 
 __all__ = [
-    "Episode", "AbstractEpisodeSource", "CurriculumGenerator", "BabiSource",
-    "TextbookSource", "make_source", "split_episodes",
-    "AbstractInputEncoder", "TokenInputEncoder", "ParserInputEncoder",
-    "SimpleTokenizer",
-    "ParseTree", "ParseNode", "CausalTable", "CausalRelation", "ConsciousnessState",
-    "PRIMES", "PRIME_NAMES", "NUM_PRIMES", "NSMPrime", "PrimeCategory",
-    "Sense", "SenseInventory", "MockSenseInventory", "WordNetSenseInventory",
-    "GroundedWordNetSenseInventory",
-    "WSDModule", "SenseResolver", "IterativeSenseResolver",
+    'AbstractInputEncoder','TokenInputEncoder','ParserInputEncoder','SimpleTokenizer',
+    'ParseTree','ParseNode','CausalTable','CausalRelation','ConsciousnessState',
+    'PRIMES','PRIME_NAMES','NUM_PRIMES','NSMPrime','PrimeCategory',
 ]
