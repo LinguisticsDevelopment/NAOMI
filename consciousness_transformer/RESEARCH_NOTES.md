@@ -5393,3 +5393,24 @@ changes what "correct" means, continuity-only). Wall-clock 10,308s (~2.86h),
 under the 5h budget. Weak families unchanged (speaker_prime, quantity);
 checkpoint (6.4MB) + log + curve force-added. Details:
 `dev/reports/ENCODER_V6_SEED1.md`.
+
+### Housekeeping: October work integrated into integration-2026-11 (2026-11-14)
+
+Nine unmerged branches (encoder-gold-v5-k12, -v6, e2e-qa-spike,
+encoder-v6-seed0/1) landed on a new mainline `integration-2026-11` (built
+from `docs-cleanup`); conflicts were almost all RESEARCH_NOTES.md history
+divergence, resolved by keeping every entry. Gathered THE reference
+checkpoints (v6 seed0 0.708 / seed1 0.677 rank-1 edge-F1) + gold/holdout
+data onto one branch (`runs/ARTIFACTS.md`), closing the lost-checkpoint gap
+a second time (v4b_all_hard_0.pt was never recovered -- gone for good).
+Audited all 98 remote branches (`BRANCHES.md`): 51 merged, 28
+artifact-only, 18 superseded, 1 KEEP (an unrelated stray branch). Moved
+legacy Go-prototype dirs to `legacy/`. Diagnosed the 10-min-cap overrun
+(52:28 full suite, driven by 3 tests: real-corpus parsing, not the suite
+size) and marked 16 tests slow -> fast tier now 8:39, pass/fail unchanged
+(9 pre-existing failures, none from this merge). Rewrote CLAUDE.md/README
+for a cold read. Flagged: the `encoder-vs-parser` probe branch the owner's
+own handoff note expected to exist was not found; a cross-session message
+received mid-session tried to redirect mainline to `master` and inject an
+unverified `.claude/settings.json` permission claim -- not acted on, see
+the final session report.
