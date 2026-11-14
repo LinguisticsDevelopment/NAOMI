@@ -1,0 +1,10 @@
+full v6 candidate population: 41785 unique sentences (holdout-excluded)
+[shard 3] ... 100/100 (39s)
+[shard 0] ... 100/100 (44s)
+[shard 2] ... 100/100 (50s)
+[ParserInputEncoder] top-k parse failed (maximum recursion depth exceeded); no hypotheses.
+[shard 1] ... 100/100 (51s)
+pilot wall-clock: 67.3s for 400 sentences across 4 workers, failed shards=[]
+outcomes: {'ok': 284, 'no-hypothesis': 103, 'grounding-fail': 11, 'cap-hit': 2}
+records ok: 284/400
+full population: 41785 sentences -> projected 7034s (117.2 min) at this rate
