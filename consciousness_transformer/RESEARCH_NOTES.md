@@ -5375,3 +5375,21 @@ the number to carry forward. Hard-family extra-eval intact/improved across
 the board except speaker_prime (pre-existing weak spot). Checkpoint
 force-added (lost-checkpoint gap closed). Full writeup:
 `dev/reports/ENCODER_V6_SEED0.md`.
+
+### Read: encoder retrained on gold v6 (seed 1) -> branch encoder-v6-seed1
+
+`v6_all_hard` seed 1, same config as `v4b_all_hard_0` (12k-step cap,
+keep-best, gold swapped v4b_16k->v6+hard). `--eval-gold` had to be fixed to
+a new `runs/eval_gold_v6_combined.jsonl` (holdout_gold_v6+holdout_dev_gold_v6
+concatenated): v6 is passage-granular, so the `v4b_all_hard` pattern of
+pointing `--eval-gold` at the training gold file silently matches 0/98 and
+gives nan dev/test metrics. Checked for real leakage first: of 194 held-out
+sentences, only 1 appears as a substring in any v6 passage -- exclusion
+already happened upstream at gold-v6 build time, train pool is clean.
+Kept-best (step 11500): rank1 edge-F1 **0.677** on v6's own 94-sentence
+holdout (cheat floor 0.288 -- valid) vs 0.583 on the *old* v4b 98-sentence
+holdout (cheat 0.268; not comparable to v4b_all_hard_0's 0.622 there -- v6
+changes what "correct" means, continuity-only). Wall-clock 10,308s (~2.86h),
+under the 5h budget. Weak families unchanged (speaker_prime, quantity);
+checkpoint (6.4MB) + log + curve force-added. Details:
+`dev/reports/ENCODER_V6_SEED1.md`.
