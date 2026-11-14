@@ -83,20 +83,32 @@ gold it trains on has been fixed.
   itself slipped through `.gitignore`) — a best checkpoint was lost. Both
   v6 checkpoints are now force-added.
 
-**Open.** Whether the encoder actually helps comprehension downstream (vs.
-just the deterministic parser on what it already covers) is still
-unmeasured — that is gated on the "Answer from memory" spike below, and is
-the question the pending `encoder-vs-parser` probe is meant to answer (see
-"Next"). Code-switching / multilingual input to the encoder itself doesn't
-exist (its hard-coded POS rules and prime set are English-only).
+- **Encoder vs. parser head-to-head on unseen prose (2026-11-14, branch
+  `encoder-vs-parser`):** the complement question — does the encoder add
+  real coverage beyond the deterministic teacher, or just distill it? —
+  measured clean for the first time: 2,000 never-seen sentences (1,500
+  FairytaleQA val/test + 500 Gutenberg), teacher-OK 58.25% overall (76.3%
+  FairytaleQA, 23.7% on the complement the teacher fails). On that
+  complement, hand-judged (no LLM, 80 complement + 80 matched + 40
+  calibration): encoder any-correct **63.8%** vs. POS-cheat **37.5%**.
+  Hybrid coverage (teacher OR encoder) **84.9%**, +26.6pp over
+  teacher-only vs. the cheat-hybrid's +15.7pp — the encoder earns ~1.7x
+  the cheat floor's gain, a genuine value-add, not re-derivable from POS
+  alone. Shared failure mode: negation ("not"/"n't") dropped by both
+  encoder and cheat. OOD generalization cost: edge-F1 0.708 (in-distribution)
+  -> 0.592 (OOD, vs. teacher on teacher-OK sentences). `dev/reports/ENCODER_VS_PARSER.md`.
 
-**Next.** An `encoder-vs-parser` probe — teacher-built vs. encoder-built
-episodes through the same downstream QA head — is the natural next step to
-settle the "Open" question above, and is referenced as in-flight in the
-2026-11-14 owner handoff; it was **not found as a pushed branch** at
-integration-cleanup time (2026-11-14) — confirm with the owner whether it
-was dispatched but lost (the branch-loss pattern `BRANCHES.md` documents
-elsewhere) or not yet started before relying on it.
+**Open.** This answers "does the encoder add coverage beyond the parser"
+(yes) but not "does that extra coverage actually help downstream
+comprehension" — that's still gated on the "Answer from memory" spike
+below, which hasn't yet compared teacher-built vs. encoder-built episodes
+through the QA head. Code-switching / multilingual input to the encoder
+itself doesn't exist (its hard-coded POS rules and prime set are
+English-only).
+
+**Next.** The downstream comparison — teacher-built vs. encoder-built
+episodes through the same QA head — is still open; the encoder-vs-parser
+result above makes a stronger case that it's worth running.
 
 ---
 
@@ -214,8 +226,10 @@ session for next-step planning (see Decisions log, 2026-11-14).
 **Open.** The spike above did not have the scale to tell "memory isn't
 helping" apart from "not enough data to tell" — that is the live open
 question, not a closed negative. Downstream comparison of teacher-built vs.
-encoder-built episodes hasn't run (see the pending `encoder-vs-parser`
-probe under the Read goal). Abstention on mismatched-passage ("not stated")
+encoder-built episodes still hasn't run (the `encoder-vs-parser` probe
+under the Read goal shows the encoder adds real coverage beyond the
+parser, but measured that in isolation, not through this QA head).
+Abstention on mismatched-passage ("not stated")
 questions hasn't been measured directly yet — it's designed (pair a
 question with the wrong story's passage, gate on abstain-rate >=70%
 mismatched / <=15% matched) but not run.
@@ -367,13 +381,15 @@ ledger entries should cite the topic, matching the headings below.
   `consciousness_transformer/dev/archive/MILESTONE_MAP.md`.
 - **2026-11-14 — next-step planning handed to a fresh Fable session after
   this cleanup.** This integration (branch `integration-2026-11`: October's
-  nine unmerged branches, encoder v6 landed on two seeds, the e2e spike's
-  inconclusive result, the CLAUDE.md/README ops rewrite, the branch
-  inventory and root tidy below) was done by a Sonnet routine so a fresh
-  Fable session could read the repo cold from one branch and decide what's
-  next for "Read" (the `encoder-vs-parser` probe, if it exists) and "Answer
-  from memory" (the full-scale e2e re-run) without first having to untangle
-  ~95 branches. See `BRANCHES.md` and `consciousness_transformer/runs/ARTIFACTS.md`.
+  nine unmerged branches plus `encoder-vs-parser`, encoder v6 landed on two
+  seeds, the e2e spike's inconclusive result, the CLAUDE.md/README ops
+  rewrite, the branch inventory and root tidy below) was done by a Sonnet
+  routine so a fresh Fable session could read the repo cold from one
+  branch and decide what's next for "Read" (the downstream teacher-vs-
+  encoder-episode comparison the `encoder-vs-parser` result motivates) and
+  "Answer from memory" (the full-scale e2e re-run) without first having to
+  untangle ~95 branches. See `BRANCHES.md` and
+  `consciousness_transformer/runs/ARTIFACTS.md`.
 
 ## Ops rules
 
