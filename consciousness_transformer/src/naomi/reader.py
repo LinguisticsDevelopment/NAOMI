@@ -161,7 +161,7 @@ class Reader:
             import torch
             from nsm_ct import encoder_model as em
             from nsm_ct.ground.usvs import load_usvs
-            torch.set_num_threads(max(1, min(4, os.cpu_count() or 1)))
+            torch.set_num_threads(1)  # oversubscribed threads make beam decode ~10x slower here
             ckpt = torch.load(str(self.encoder_ckpt), map_location="cpu", weights_only=False)
             model = em.EncoderModel(ckpt["pos_vocab"], ckpt["role_vocab"], d_axes=ckpt["d_axes"],
                                     hash_buckets=ckpt["hash_buckets"], d_model=ckpt["d_model"],
@@ -257,6 +257,15 @@ class Reader:
         for p, edges in by_parent.items():
             owner = next((c for c in out if c.predicate.token_index == p), None) \
                 or next((c for c in out if p in held(c)), None)
+            if owner is None and 0 <= p < len(tokens):
+                # a modifier node pointing AT a clause predicate (parser: MODIFICATION edge)
+                tgt = [c for c in out for _e, ch in edges if c.predicate.token_index == ch]
+                if tgt and not any(e in ("SUBJECT", "OBJECT") for e, _ in edges):
+                    lab = next((n[1] for n in raw["nodes"] if n[0] == p), "MODIFIER")
+                    for c in tgt:
+                        if p not in held(c):
+                            c.args.append(make_filler(lab, tokens[p], p, pos))
+                    continue
             if owner is None:
                 if not any(e in ("SUBJECT", "OBJECT") for e, _ in edges) or not 0 <= p < len(tokens):
                     continue
@@ -347,5 +356,3 @@ class Reader:
         """Alias of :meth:`read`: questions get no special treatment here."""
         return self.read(question)
 
-    def tokens_pos(self, sentence: str) -> Tuple[List[str], List[str]]:
-        return self.tag(normalize(sentence))

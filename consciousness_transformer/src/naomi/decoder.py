@@ -288,7 +288,7 @@ def linearize(tree: dict, table: OrderTable, pos: Dict[str, str],
         for combo in itertools.islice(itertools.product(*[per[i][:6] for i in order]), max_candidates):
             toks: List[str] = []
             for j, part in enumerate(combo):
-                if j and coordinators and coordinators[j - 1]:
+                if j and coordinators and j - 1 < len(coordinators) and coordinators[j - 1]:
                     toks.append(coordinators[j - 1])
                 toks += part
             if tuple(toks) not in seen:
