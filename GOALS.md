@@ -19,12 +19,12 @@ memory, written by ordinary graph/tensor writes, never by training. See
 
 | Goal | Status |
 |---|---|
-| Read | in progress — encoder v6 beats cheat baseline; hybrid reader live in `naomi`, weak on roles/possessors/predicate nominals |
+| Read | in progress — reader is pattern-free again; trees keep only ~40% of tokens, so the tree format must be enriched before encoder+decoder paired training |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
-| Answer from memory | in progress — minimal loop answers ~30% of real-prose questions at 71-87% accuracy and abstains correctly; overall still below the word-overlap cheat |
+| Answer from memory | not started in its proper form — the rule-based answerer was removed (owner, 2026-11-14); answering will be learned by the consciousness after the encoder/decoder pair works |
 | Reason | in progress on archived code; to be re-attached on the minimal loop |
-| Speak | on hold |
+| Speak | decoder un-parked as the encoder's round-trip partner only; must be learned (grammar cannot generate) |
 | Any language | working at curriculum scale (archived code), not yet at real-text scale |
 
 **2026-11-14 refactor.** The curriculum-era code was moved to
