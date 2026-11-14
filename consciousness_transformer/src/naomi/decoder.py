@@ -233,12 +233,22 @@ def _realise(nodes, children, h, slot_fill, rel_of, cap) -> List[List[str]]:
     return outs[:cap * 8]
 
 
+def _collapsed_pp_labels() -> frozenset:
+    """Role labels that STAND FOR a set of prepositions (the tree format collapsed them).  Taken from
+    the tree builder's own table (``nsm_ct.clause._PREP_RELATION``) plus the two contract roles it
+    can also emit; no list lives here."""
+    if str(CT_DIR / "src") not in sys.path:
+        sys.path.insert(0, str(CT_DIR / "src"))
+    from nsm_ct.clause import _PREP_RELATION
+    return frozenset(_PREP_RELATION.values()) | {"AGENT", "RECIPIENT"}
+
+
 def default_slot_fill(slot: str, rel: str, tok: str) -> Optional[str]:
     """Function-word slot filler.  The grammar says a PREP is required before a PP filler but not
-    WHICH word; the only word-bearing information in a tree is the relation label itself when it
-    is an open PP role (OF, WITH, ...: the label *is* the preposition token, uppercased).  Closed
-    labels (PLACE, SOURCE...) collapse many prepositions -> None (slot left unfilled)."""
-    if slot == "PREP" and rel not in ("PLACE", "SOURCE", "AGENT", "RECIPIENT", "TIME", "REASON", "MANNER"):
+    WHICH word.  The only word-bearing information in a tree is the relation label itself when it is
+    an open PP role (OF, WITH, ...: the label *is* the preposition token, uppercased).  Collapsed
+    labels (PLACE, SOURCE...) lost the word -> None (slot left unfilled)."""
+    if slot == "PREP" and rel not in _collapsed_pp_labels():
         return rel.lower()
     return None
 

@@ -125,7 +125,7 @@ class Reader:
                 f.write(json.dumps({"k": key, "v": val}) + "\n")
 
     def save_cache(self) -> None:
-        """Rewrite the cache file compactly (the cache is already write-through)."""
+        """Rewrite the (write-through) cache file compactly."""
         if not self.cache_path:
             return
         tmp = self.cache_path.with_suffix(self.cache_path.suffix + ".tmp")
@@ -248,13 +248,13 @@ class Reader:
                     if 0 <= k < len(out):
                         out[k].negated = True
 
-        def held(c):
-            return {c.predicate.token_index} | {a.token_index for a in c.args}
+        held = lambda c: {c.predicate.token_index} | {a.token_index for a in c.args}  # noqa: E731
 
         by_parent: Dict[int, list] = {}
         for etype, p, ch in raw["edges"]:
             by_parent.setdefault(p, []).append((etype, ch))
-        for p, edges in by_parent.items():
+        for p, edges in sorted(by_parent.items(),
+                               key=lambda kv: not any(e in ("SUBJECT", "OBJECT") for e, _ in kv[1])):
             owner = next((c for c in out if c.predicate.token_index == p), None) \
                 or next((c for c in out if p in held(c)), None)
             if owner is None and 0 <= p < len(tokens):
@@ -298,9 +298,9 @@ class Reader:
         return out
 
     # ---- public ------------------------------------------------------------
-    def _finish(self, sentence, clauses, source, sentence_index, t0) -> ReadResult:
+    def _finish(self, sentence, clauses, source, t0) -> ReadResult:
         for c in clauses:
-            c.sentence, c.sentence_index, c.source = sentence, sentence_index, source
+            c.sentence, c.source = sentence, source
         return ReadResult(sentence=sentence, clauses=clauses, source=source if clauses else "none",
                           seconds=time.perf_counter() - t0)
 
@@ -321,7 +321,7 @@ class Reader:
             if raw.get("fail"):
                 return ReadResult(sentence=sentence, source="none", seconds=time.perf_counter() - t0)
             tokens, pos = self.tag(norm)
-            return self._finish(sentence, self._from_parser(raw, tokens, pos), "parser", None, t0)
+            return self._finish(sentence, self._from_parser(raw, tokens, pos), "parser", t0)
         rr = self._cached("p", sentence, sentence_index, build)
         return rr if rr.clauses else None
 
@@ -334,7 +334,7 @@ class Reader:
                 clauses = self._from_encoder(norm, tokens, pos)
             except Exception:
                 clauses = []
-            return self._finish(sentence, clauses, "encoder", None, t0)
+            return self._finish(sentence, clauses, "encoder", t0)
         return self._cached("e", sentence, sentence_index, build)
 
     def read_both(self, sentence: str, sentence_index=None) -> Tuple[Optional[ReadResult], ReadResult]:
