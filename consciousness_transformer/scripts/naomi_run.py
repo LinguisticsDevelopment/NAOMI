@@ -76,6 +76,16 @@ def cmd_bench(a):
     items = load_items(a.dataset)
     if a.split:
         items = [i for i in items if i["meta"]["split"] == a.split]
+    if a.max_items_per_story:   # cap first, so --subset samples the capped list
+        seen, kept = defaultdict(int), []
+        for it in items:
+            seen[it["meta"]["story_id"]] += 1
+            if seen[it["meta"]["story_id"]] <= a.max_items_per_story:
+                kept.append(it)
+        items = kept
+    if a.subset and a.subset < len(items):  # fixed, evenly spaced subset for quick iteration
+        step = len(items) / a.subset
+        items = [items[int(i * step)] for i in range(a.subset)]
     by_story = defaultdict(list)
     for it in items:
         by_story[it["meta"]["story_id"]].append(it)
@@ -93,6 +103,8 @@ def cmd_bench(a):
             except Exception:
                 pass
     reader = Reader(cache_path=a.cache)
+    if a.shuffle_questions:
+        shuffle_questions(by_story)
     t_start, n_new = time.time(), 0
     with open(out_path, "a") as fo:
         for s in sel:
@@ -110,6 +122,9 @@ def cmd_bench(a):
                     return
                 t0 = time.time()
                 rec = run_item(reader, it, s, ctx_hash)
+                if a.shuffle_questions:
+                    rec["shuffled"] = True
+                    rec["orig_question"] = it["_orig_question"]
                 if a.wrong_passage and nxt != s:
                     rec["wrong_abstained"] = run_wrong(reader, it, ctx_of[nxt])
                 rec["seconds"] = round(time.time() - t0, 2)
@@ -117,6 +132,17 @@ def cmd_bench(a):
                 fo.flush()
                 n_new += 1
     print(f"done; {n_new} new items written")
+
+
+def shuffle_questions(by_story):
+    """Control: give each item the question of the NEXT item of the same story (cyclic,
+    deterministic); context, options and gold index stay the original ones. Stories with
+    a single item keep their question (nothing to swap with)."""
+    for grp in by_story.values():
+        qs = [g["question"] for g in grp]
+        for j, g in enumerate(grp):
+            g["_orig_question"] = g["question"]
+            g["question"] = qs[(j + 1) % len(qs)]
 
 
 def hash_ctx(ctx):
@@ -228,11 +254,14 @@ def cmd_report(a):
     items = {(i["meta"]["story_id"], i["question"], hash_ctx(i["context"])): i for i in load_items(ds)}
     ov, k = 0, 0
     for r in recs:
-        it = items.get((r["story_id"], r["question"], r["ctx_hash"]))
+        it = items.get((r["story_id"], r.get("orig_question", r["question"]), r["ctx_hash"]))
         if it is None:
             continue
         k += 1
         ov += overlap_baseline(r, it["context"]) == r["gold"]
+    if recs and recs[0].get("shuffled"):
+        print("(question-shuffled control: chance is 25%; the word-overlap number below is NOT "
+              "meaningful here)")
     print(f"cheat baselines: random=25.0%  word-overlap={pct(ov, k)} (n={k})")
     fails, cats = [], defaultdict(int)
     for r in recs:
@@ -241,7 +270,7 @@ def cmd_report(a):
             r2["category"] = categorize(r)
             cats[r2["category"]] += 1
             fails.append(r2)
-    fp = _p(f"runs/naomi_failures_{ds}.jsonl")
+    fp = _p(a.failures or f"runs/naomi_failures_{ds}.jsonl")
     with open(fp, "w") as f:
         for r in fails:
             f.write(json.dumps(r) + "\n")
@@ -266,10 +295,15 @@ def main():
     b.add_argument("--out")
     b.add_argument("--cache", default="runs/naomi_read_cache.jsonl")
     b.add_argument("--wrong-passage", action="store_true")
+    b.add_argument("--subset", type=int, help="evenly spaced fixed subset of N items")
+    b.add_argument("--shuffle-questions", action="store_true",
+                   help="control: pair each item's context+options with another item's question "
+                        "(same story, deterministic), scored against the original gold index")
     b.add_argument("--time-limit", type=float, default=110.0, help="stop starting new items after N s")
     b.set_defaults(fn=cmd_bench)
     r = sp.add_parser("report")
     r.add_argument("--in", dest="inp", required=True)
+    r.add_argument("--failures", help="where to write the failures list")
     r.set_defaults(fn=cmd_report)
     a = ap.parse_args()
     a.fn(a)

@@ -147,3 +147,122 @@ def test_handles():
     assert np.allclose(m.clauses()[0].handle, h1)
     top = m.similar(m.handle_of(t2), k=1)
     assert top[0][1] > 0.99
+
+
+# ---- role-noise tolerance, copulas, quantities, option scoring, coreference ----------
+def FQ(role, lemma, idx=None, hole=False):
+    return Filler(role=role, token=lemma, lemma=lemma, token_index=idx, is_hole=hole)
+
+
+def test_copular_symmetric_possessive():
+    m = Memory()
+    m.store(ClauseTree(F("PREDICATE", "be", "was"),
+                       [F("SUBJECT", "father"), F("OBJECT", "greg"), F("POSSESSOR", "jim")]))
+    m.store(ClauseTree(F("PREDICATE", "be", "was"),
+                       [F("SUBJECT", "mother"), F("OBJECT", "ann"), F("POSSESSOR", "sue")]))
+    q = ClauseTree(F("PREDICATE", "be", "was"),
+                   [F("OBJECT", "father"), F("POSSESSOR", "jim"), F("SUBJECT", "who", hole=True)])
+    assert recall(m, q).text == "greg"
+    # and the other way round: who is greg? -> the clause's other side
+    q2 = ClauseTree(F("PREDICATE", "be", "is"), [F("OBJECT", "greg"), F("SUBJECT", "who", hole=True)])
+    assert recall(m, q2).text in ("father", "jim")
+    # "name of X" / colour questions need an attribute clause about X
+    q3 = ClauseTree(F("PREDICATE", "be", "was"), [F("KIND", "color"), F("SUBJECT", "ball"),
+                                                  F("ATTRIBUTE", "what", hole=True)])
+    assert recall(m, q3).text is None
+
+
+def test_attribute_questions():
+    m = Memory()
+    m.store(ClauseTree(F("PREDICATE", "be", "was"), [F("SUBJECT", "ball"), F("ATTRIBUTE", "red")]))
+    q = ClauseTree(F("PREDICATE", "be", "was"), [F("KIND", "color"), F("SUBJECT", "ball"),
+                                                 F("ATTRIBUTE", "what", hole=True)])
+    assert recall(m, q).text == "red"
+    a = recall(m, q, options=["blue", "red", "green", "gold"])
+    assert option_index(a) == 1
+
+
+def test_quantity_hole_picks_number_next_to_noun():
+    m = Memory()
+    m.store(ClauseTree(F("PREDICATE", "buy"),
+                       [F("SUBJECT", "she"), FQ("OBJECT", "apple", 3), FQ("QUANTITY", "three", 2),
+                        FQ("OBJECT", "cent", 6), FQ("QUANTITY", "fifty", 5)]))
+    q = ClauseTree(F("PREDICATE", "buy"), [F("SUBJECT", "she"), F("OBJECT", "apple"),
+                                           F("QUANTITY", "how", hole=True)])
+    a = recall(m, q)
+    assert a.text == "three apple"
+    a = recall(m, q, options=["5", "fifty", "3", "12"])
+    assert option_index(a) == 2          # "3" == "three"
+
+
+def test_role_noise_unique_leftover_fills_hole():
+    m = Memory()
+    m.store(C("sing", [("SUBJECT", "people"), ("OBJECT", "king")]))
+    q = ClauseTree(F("PREDICATE", "sing"), [F("SUBJECT", "people"), F("ABOUT", "who", hole=True)])
+    assert recall(m, q).text == "king"      # stored role OBJECT, asked role ABOUT
+
+
+def test_context_clause_is_optional():
+    m = Memory()
+    m.store(C("see", [("SUBJECT", "tom"), ("OBJECT", "bird")]))
+    q = ClauseTree(F("PREDICATE", "see"), [F("SUBJECT", "tom"), F("CONTEXT", "home"),
+                                           F("CONTEXT", "go"), F("OBJECT", "what", hole=True)])
+    assert recall(m, q).text == "bird"
+
+
+def test_predicate_hole_renders_object():
+    m = Memory()
+    m.store(C("eat", [("SUBJECT", "tom"), ("OBJECT", "cake")], ptoken="ate"))
+    q = ClauseTree(F("PREDICATE", "do", hole=True), [F("SUBJECT", "tom")])
+    a = recall(m, q)
+    assert a.text == "ate cake"
+    a = recall(m, q, options=["eats cake", "sleeps", "sits"])
+    assert option_index(a) == 0
+
+
+def test_option_echoing_question_is_penalised():
+    m = Memory()
+    m.store(C("eat", [("SUBJECT", "dog"), ("OBJECT", "bone")]))
+    q = Q("eat", [("SUBJECT", "dog")], "OBJECT")
+    # "dog" restates the question; "bone" is the stored answer
+    a = recall(m, q, options=["the dog", "a bone", "fish", "water"])
+    assert option_index(a) == 1
+    a = recall(m, q, options=["the dog", "fish", "water"])
+    assert a.text is None
+
+
+def test_options_need_structural_support_not_sentence_overlap():
+    m = Memory()
+    c = C("eat", [("SUBJECT", "dog"), ("OBJECT", "bone")])
+    c.sentence = "the dog ate the bone in the garden yesterday"
+    m.store(c)
+    q = Q("eat", [("SUBJECT", "dog")], "OBJECT")
+    # "garden" / "yesterday" occur only in the sentence text, never as a filler: abstain
+    a = recall(m, q, options=["garden", "yesterday", "river", "moon"])
+    assert a.text is None
+
+
+def test_ties_abstain_and_unrelated_questions_abstain():
+    m = Memory()
+    m.store(C("eat", [("SUBJECT", "dog"), ("OBJECT", "bone")]))
+    q = Q("eat", [("SUBJECT", "dog")], "OBJECT")
+    assert recall(m, q, options=["bone", "bone", "x", "y"]).text is None
+    q2 = Q("sing", [("SUBJECT", "owl")], "OBJECT")
+    assert recall(m, q2, options=["bone", "owl", "x", "y"]).text is None
+
+
+def test_antecedent_of_pronoun_subject():
+    m = Memory()
+    m.store(C("eat", [("SUBJECT", "he"), ("OBJECT", "cake")]),
+            provenance={"antecedent": {"lemma": "tom", "token": "tom", "sentence_index": 0}})
+    assert recall(m, Q("eat", [("OBJECT", "cake")], "SUBJECT")).text == "tom"
+    assert recall(m, Q("eat", [("SUBJECT", "tom")], "OBJECT")).text == "cake"
+    assert recall(m, Q("eat", [("SUBJECT", "mary")], "OBJECT")).text is None
+
+
+def test_negated_question_needs_negated_clause():
+    m = Memory()
+    m.store(C("come", [("SUBJECT", "tiger")]))
+    q = Q("come", [], "SUBJECT")
+    q.negated = True
+    assert recall(m, q).text is None

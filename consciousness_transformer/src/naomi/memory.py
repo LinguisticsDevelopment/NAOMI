@@ -33,13 +33,14 @@ from nsm_ct.tpr import TPRCodec
 from .types import LAYERS, ClauseTree, Filler
 
 MODIFIER_ROLES = frozenset(
-    {"DESCRIPTION", "SPECIFICATION", "COMPLEMENT", "QUANTITY", "ADDITIVE", "FOCUS"})
+    {"DESCRIPTION", "SPECIFICATION", "COMPLEMENT", "QUANTITY", "ADDITIVE", "FOCUS",
+     "CONTEXT", "KIND", "XCOMP"})
 MODIFIER_WEIGHT = 0.3
 PRONOUNS = frozenset(
     "i you he she it we they me him her us them who someone somebody".split())
 _ROLE_ORDER = ("PREDICATE", "SUBJECT", "OBJECT", "PLACE", "RECIPIENT", "AGENT",
                "TIME", "INSTRUMENT", "BENEFICIARY", "SOURCE", "GOAL", "MANNER",
-               "CAUSE", "POSSESSOR", "ATTRIBUTE")
+               "CAUSE", "POSSESSOR", "ATTRIBUTE", "QUANTITY", "CONTEXT", "KIND", "XCOMP")
 
 
 def _role_index(role: str) -> int:
