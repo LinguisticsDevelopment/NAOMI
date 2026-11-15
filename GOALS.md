@@ -544,6 +544,23 @@ ledger entries should cite the topic, matching the headings below.
   background: `dev/reports/LIT_FUNCTION_WORDS_SEMANTICS.md`,
   `USVS_DESIGN_HISTORY.md`, `USVS_FUNCTION_WORD_AUDIT.md`.
 
+- **2026-11-15 — USVS content-word placement is under review (planning
+  only; nothing changed yet).** Diagnosis and alternatives:
+  `consciousness_transformer/dev/reports/USVS_CONTENT_DIAGNOSIS.md`,
+  `USVS_ALTERNATIVES.md`. Owner rulings so far: degree and negation words
+  may act on a word's position on a dimension as well as having their own
+  operator dimensions; "minimum" means fewest dimensions overall, judged by
+  every dimension earning its place; dimensions may be derived from the
+  relation graph and named afterwards (an LLM may label them); finding the
+  space may involve training as long as it is transparent, has provenance
+  and is reproducible — not opaque random weights; a new version is
+  probably built beside the frozen 607-dimension space, replacing it only
+  if it wins. Owner idea under test: each dimension stores an importance
+  (weight) and a position (value) per word. NSM primes are judged a poor
+  basis for content words in a flattened space; they stay for closed-class
+  and operator words. Working rule: plan heavily, identify issues and
+  alternatives before implementing; use cheaper agents and fewer at once.
+
 ## Ops rules
 
 The working agreement (who writes code, agent discipline, training-run rules,

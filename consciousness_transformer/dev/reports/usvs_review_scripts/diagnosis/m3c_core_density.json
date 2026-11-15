@@ -1,0 +1,42 @@
+{
+ "n_dense_core": 6579,
+ "axes_per_dense_core_word_abs>0.01": {
+  "mean": 35.512995896032834,
+  "median": 36.0,
+  "p5": 17.0,
+  "p95": 54.0
+ },
+ "axes_with_>0.01_for_ge_50pct_of_dense_words": 19,
+ "axes_per_dense_core_word_abs>0.05": {
+  "mean": 12.551755585955313,
+  "median": 12.0,
+  "p5": 7.0,
+  "p95": 19.0
+ },
+ "axes_with_>0.05_for_ge_50pct_of_dense_words": 3,
+ "axes_per_dense_core_word_abs>0.1": {
+  "mean": 7.208542331661347,
+  "median": 7.0,
+  "p5": 4.0,
+  "p95": 12.0
+ },
+ "axes_with_>0.1_for_ge_50pct_of_dense_words": 2,
+ "axes_per_dense_core_word_abs>0.3": {
+  "mean": 3.7645538835689316,
+  "median": 4.0,
+  "p5": 2.0,
+  "p95": 7.0
+ },
+ "axes_with_>0.3_for_ge_50pct_of_dense_words": 1,
+ "dense_value_quantiles_nonzero": {
+  "10": 5.926581707171863e-06,
+  "50": 9.170236444333568e-05,
+  "90": 0.004836860578507185,
+  "99": 0.1468607306480401
+ },
+ "frac_dense_words_with_neg_entry": 1.0,
+ "mean_neg_entries_per_dense_word": 50.07295941632467,
+ "neg_mass_share_per_dense_word_mean": 0.01623631815930724,
+ "neg_axis_count_ge_50pct_dense_words": 32,
+ "frac_entries_abs_eq_1": 0.0003813012011153474
+}
