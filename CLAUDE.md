@@ -52,6 +52,13 @@
   behaviour must fall out of where the word sits. Every word goes into the
   tree as a grounded node; trees nest; names are variables with no meaning
   point; idioms are facts in memory.
+- **Dimensions must be traceable, not necessarily named** (owner,
+  2026-11-15). What matters is that every dimension and every value on it
+  can be traced back transparently to the graph edges (dictionary
+  relations) or lexicon entries that produced it. A dimension that can be
+  explained that way is acceptable even without a human name; one that
+  cannot be explained is not, however it is labelled. Fitting is acceptable
+  if transparent, logged and repeatable.
 - **No rule-based answerer.** Answering is learned by the consciousness
   model operating on memory. The encoder only turns text into trees; it is
   never trained or asked to "comprehend".
