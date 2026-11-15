@@ -3100,6 +3100,22 @@
                     "consume": ["before"],
                     "flags": {"pop_categories": ["DESCRIPTOR"]},
                     "note": "was running -> running(MODIFICATION:was). The participle loses its PARTICIPLE flag (pop DESCRIPTOR subcategory) so ger1/part1 do not re-read it as gerund/adjective."
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL", "subtypes": ["PARTICIPLE"]},
+                        "before": [{"type": "MODIFIER", "subtypes": ["ABSORBED_PREMOD"], "quantifier": "one"}, {"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "before[1]", "to": "anchor"},
+                        {"type": "MODIFICATION", "from": "before[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "flags": {"pop_categories": ["DESCRIPTOR"]},
+                    "note": "was not running -> running(MODIFICATION:was MODIFICATION:not)."
                 }
             ]
         },
