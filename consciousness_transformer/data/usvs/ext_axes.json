@@ -1,0 +1,14 @@
+{
+ "schema": "usvs-ext-1",
+ "extends": "e0daef638b640dd5",
+ "note": "Extension axes appended after the base 607 (post-fingerprint, additive; same guarantee as the pure-interjection senses). All values non-negative. Filled only by closed-class lexicon entries (quantum_parser/lexicons/<lang>.json); content words have no value on them. Owner decision 2026-11-15.",
+ "axes": [
+  {"name": "KNOWN", "meaning": "0 = not marked as identifiable / 1 = the hearer can identify the referent (the, this, he, it, my)"},
+  {"name": "UNKNOWN", "meaning": "0 = not asked / 1 = the speaker lacks this and asks for it (who, what, where, when, why, how)"},
+  {"name": "GOAL", "meaning": "1 = the end of a movement or purpose (to, into)"},
+  {"name": "SOURCE", "meaning": "1 = the start of a movement (from, out, off)"},
+  {"name": "AND", "meaning": "1 = plain conjunction, adding one thing to another (and, but)"},
+  {"name": "MALE", "meaning": "natural gender of a person: male (he, him, his)"},
+  {"name": "FEMALE", "meaning": "natural gender of a person: female (she, her)"}
+ ]
+}

@@ -19,7 +19,7 @@ memory, written by ordinary graph/tensor writes, never by training. See
 
 | Goal | Status |
 |---|---|
-| Read | in progress — reader is pattern-free again; trees keep only ~40% of tokens, so the tree format must be enriched before encoder+decoder paired training |
+| Read | in progress — function words now have meaning points (lexicon + 7 new dimensions); new tree keeps every word as a node; the English grammar file is the limiting factor (65-83% of words attached) |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
 | Answer from memory | not started in its proper form — the rule-based answerer was removed (owner, 2026-11-14); answering will be learned by the consciousness after the encoder/decoder pair works |
@@ -523,6 +523,26 @@ ledger entries should cite the topic, matching the headings below.
   direction: train encoder and decoder together (4) with the middle tree
   validated independently (1), to break the chicken-and-egg between them.
   This lifts the 2026-10-16 decoder hold for the round-trip role only.
+
+- **2026-11-15 — function words live in USVS (design approved).** Meaning
+  lives in USVS only; primes are a starting set, special dimensions may be
+  added. Function words are a closed class defined per language as data
+  (`quantum_parser/lexicons/<lang>.json`) and placed on named dimensions:
+  the 26 prime dimensions that were empty by accident (a shared stopword
+  list) are filled, and seven are added (KNOWN, UNKNOWN, GOAL, SOURCE, AND,
+  MALE, FEMALE). Negation is a graded dimension (0 not negated .. 1 fully).
+  Operator dimensions are filled only by closed-class words — content words
+  such as "unhappy" get no negation value, and the existing content-word
+  placement and antonym design are not touched. Every word is a node in a
+  nested tree: the tree gives scope, the dimensions give degree. Numbers
+  are treated as names for now (later probably a math language); idioms are
+  facts in memory. This supersedes the 2026-09-07 D3/D4 decisions
+  (quantity/additive/focus as structural labels; I/YOU outside USVS), the
+  preposition-to-role table, and "USVS is settled" for the closed class
+  only. Gold and encoder must be rebuilt on the new tree format. Design:
+  `consciousness_transformer/dev/design/FUNCTION_WORDS_IN_USVS_PROPOSAL.md`;
+  background: `dev/reports/LIT_FUNCTION_WORDS_SEMANTICS.md`,
+  `USVS_DESIGN_HISTORY.md`, `USVS_FUNCTION_WORD_AUDIT.md`.
 
 ## Ops rules
 

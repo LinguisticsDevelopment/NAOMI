@@ -44,7 +44,10 @@ def _skip_if_no_usvs():
 def usvs():
     _skip_if_no_usvs()
     from nsm_ct.ground.usvs import load_usvs
-    return load_usvs(str(_USVS_DIR))
+    # extended=False: these tests pin the morphy/function-word guard on the BASE artifact's
+    # WordNet path (the lexicon-first grounding of closed-class words is covered by
+    # tests/test_lexicon_usvs.py and deliberately changes the raw-homograph results asserted here).
+    return load_usvs(str(_USVS_DIR), extended=False)
 
 
 def _wn_pos(sense_id: str) -> str:

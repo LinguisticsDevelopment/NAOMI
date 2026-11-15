@@ -923,7 +923,7 @@
                     "result": "NOUN",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "DESCRIPTOR", "subtypes": ["QUANTIFIER"]},
+                        "anchor": {"type": "DESCRIPTOR", "subtypes": ["PROMOTABLE_BARE"]},
                         "before": [],
                         "after": []
                     },
@@ -935,7 +935,7 @@
                     "result": "NOUN",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "SPECIFIER", "subtypes": ["QUANTIFIER"]},
+                        "anchor": {"type": "SPECIFIER", "subtypes": ["PROMOTABLE_BARE"]},
                         "before": [],
                         "after": []
                     },
@@ -956,12 +956,12 @@
                     "pattern": {
                         "anchor": {
                             "type": "MODIFIER",
-                            "subtypes": ["PROGRESSIVE"]
+                            "subtypes": ["AUX_PART_NEXT"]
                         },
                         "before": [
                             {
                                 "type": "SPECIFIER",
-                                "subtypes": ["RELATIVE"],
+                                "subtypes": ["FRONT_LINKER"],
                                 "quantifier": "one"
                             }
                         ],
@@ -985,7 +985,7 @@
                         }
                     ],
                     "consume": ["before", "after"],
-                    "push_subtypes": ["QUESTION"],
+                    "push_subtypes": ["PREDICATE_FIRST"],
                     "position_constraints": {"before[0]": 0},
                     "note": "Wh-question: 'where is the ball ?' -- English fronts the wh-word, so the copula has no subject to its left. Scoped to RELATIVE-tagged wh-adverbs (where/when/why/how) only, so verb1's ordinary adverb-adjacency rules ('quickly runs') are never touched; sentence-initial position_constraints so it can never fire on a mid-sentence 'where' (e.g. a future embedded question)."
                 },
@@ -995,7 +995,7 @@
                     "pattern": {
                         "anchor": {
                             "type": "MODIFIER",
-                            "subtypes": ["PROGRESSIVE"]
+                            "subtypes": ["AUX_PART_NEXT"]
                         },
                         "before": [],
                         "after": [
@@ -1013,7 +1013,7 @@
                         }
                     ],
                     "consume": ["after"],
-                    "push_subtypes": ["QUESTION"],
+                    "push_subtypes": ["PREDICATE_FIRST"],
                     "position_constraints": {"anchor": 0},
                     "note": "Yes/no subject-aux inversion: 'is the ball in the garden ?' -- the copula is fronted with no subject before it. Scoped to sentence-initial copula only (position_constraints), so an ordinary mid-sentence copula ('mary is happy') is never touched."
                 }
@@ -1028,9 +1028,9 @@
                     "result": "CLAUSE",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"]},
                         "before": [
-                            {"type": "SPECIFIER", "subtypes": ["EXISTENTIAL"], "quantifier": "one"}
+                            {"type": "SPECIFIER", "subtypes": ["INITIAL_PLACEHOLDER"], "quantifier": "one"}
                         ],
                         "after": [
                             {"type": "NOUN", "quantifier": "one"}
@@ -1048,9 +1048,9 @@
                     "result": "CLAUSE",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"]},
                         "before": [
-                            {"type": "SPECIFIER", "subtypes": ["EXISTENTIAL"], "quantifier": "one"}
+                            {"type": "SPECIFIER", "subtypes": ["INITIAL_PLACEHOLDER"], "quantifier": "one"}
                         ],
                         "after": [
                             {"type": "SPECIFIER", "quantifier": "one"},
@@ -1070,12 +1070,12 @@
                     "result": "CLAUSE",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"]},
                         "before": [
-                            {"type": "SPECIFIER", "subtypes": ["EXISTENTIAL"], "quantifier": "one"}
+                            {"type": "SPECIFIER", "subtypes": ["INITIAL_PLACEHOLDER"], "quantifier": "one"}
                         ],
                         "after": [
-                            {"type": "MODIFIER", "subtypes": ["NEGATIVE"], "quantifier": "one"},
+                            {"type": "MODIFIER", "subtypes": ["ABSORBED_PREMOD"], "quantifier": "one"},
                             {"type": "NOUN", "quantifier": "one"}
                         ]
                     },
@@ -1784,7 +1784,7 @@
                     "result": "NOMINAL",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["INFINITIVE"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
                         "before": [],
                         "after": [{"type": "VERBAL", "quantifier": "one"}]
                     },
@@ -1851,7 +1851,7 @@
                         {"type": "MODIFICATION", "from": "after[0]", "to": "anchor"}
                     ],
                     "consume": ["after"],
-                    "pull_categories": ["POSSESSIVE"],
+                    "pull_categories": ["NOUN_CLITIC_LEFT"],
                     "note": "Possessive: John's, dog's"
                 }
             ]
@@ -1865,7 +1865,7 @@
                     "result": "NOMINAL",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "NOUN", "subtypes": ["POSSESSIVE"]},
+                        "anchor": {"type": "NOUN", "subtypes": ["NOUN_CLITIC_LEFT"]},
                         "before": [],
                         "after": [{"type": "NOMINAL", "quantifier": "one"}]
                     },
@@ -1887,14 +1887,14 @@
                     "recursive": false,
                     "pattern": {
                         "anchor": {"type": "VERBAL"},
-                        "before": [{"type": "MODIFIER", "subtypes": ["NEGATIVE"], "quantifier": "one"}],
+                        "before": [{"type": "MODIFIER", "subtypes": ["ABSORBED_PREMOD"], "quantifier": "one"}],
                         "after": []
                     },
                     "connections": [
                         {"type": "MODIFICATION", "from": "before[0]", "to": "anchor"}
                     ],
                     "consume": ["before"],
-                    "pull_categories": ["NEGATIVE"],
+                    "pull_categories": ["ABSORBED_PREMOD"],
                     "note": "Negation: not run, n't go. Scoped to NEGATIVE (round 2): without it, any MODIFIER (e.g. \"be\"/\"is\") immediately before a VERBAL was wrongly consumed as if it were a negation particle, pre-empting aux1 for modal+passive chains like \"can be found\"."
                 }
             ]
@@ -1909,7 +1909,7 @@
                     "recursive": false,
                     "pattern": {
                         "anchor": {"type": "NOMINAL"},
-                        "before": [{"type": "DESCRIPTOR", "subtypes": ["NEGATIVE"], "quantifier": "one"}],
+                        "before": [{"type": "DESCRIPTOR", "subtypes": ["ABSORBED_PREMOD"], "quantifier": "one"}],
                         "after": []
                     },
                     "connections": [
@@ -1932,7 +1932,7 @@
                         "anchor": {"type": "NOMINAL"},
                         "before": [],
                         "after": [
-                            {"type": "NOMINAL", "subtypes": ["RELATIVE"], "quantifier": "one"},
+                            {"type": "NOMINAL", "subtypes": ["FRONT_LINKER"], "quantifier": "one"},
                             {"type": "PREDICATE", "quantifier": "one"}
                         ]
                     },
@@ -1950,7 +1950,7 @@
                         "anchor": {"type": "NOMINAL"},
                         "before": [],
                         "after": [
-                            {"type": "NOMINAL", "subtypes": ["RELATIVE"], "quantifier": "one"},
+                            {"type": "NOMINAL", "subtypes": ["FRONT_LINKER"], "quantifier": "one"},
                             {"type": "NOMINAL", "quantifier": "one"},
                             {"type": "PREDICATE", "quantifier": "one"}
                         ]
@@ -1977,7 +1977,7 @@
                         "anchor": {"type": "NOMINAL"},
                         "before": [],
                         "after": [
-                            {"type": "SPECIFIER", "subtypes": ["RELATIVE"], "quantifier": "one"},
+                            {"type": "SPECIFIER", "subtypes": ["FRONT_LINKER"], "quantifier": "one"},
                             {"type": "PREDICATE", "quantifier": "one"}
                         ]
                     },
@@ -2200,7 +2200,7 @@
                     "recursive": true,
                     "pattern": {
                         "anchor": {"type": "VERBAL", "subtypes": ["PAST_PARTICIPLE"]},
-                        "before": [{"type": "MODIFIER", "subtypes": ["PROGRESSIVE"], "quantifier": "one"}],
+                        "before": [{"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"], "quantifier": "one"}],
                         "after": []
                     },
                     "connections": [
@@ -2214,7 +2214,7 @@
                     "result": "VERBAL",
                     "recursive": true,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["MODAL"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_BARE_NEXT"]},
                         "before": [],
                         "after": [{"type": "VERBAL", "quantifier": "one"}]
                     },
@@ -2222,14 +2222,14 @@
                         {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
                     ],
                     "consume": ["anchor"],
-                    "pull_categories": ["MODAL"],
+                    "pull_categories": ["AUX_BARE_NEXT"],
                     "note": "Modal + verb: can run, should go"
                 },
                 {
                     "result": "VERBAL",
                     "recursive": true,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["PERFECT"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PP_NEXT"]},
                         "before": [],
                         "after": [{"type": "VERBAL", "quantifier": "one"}]
                     },
@@ -2237,14 +2237,14 @@
                         {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
                     ],
                     "consume": ["anchor"],
-                    "pull_categories": ["PERFECT"],
+                    "pull_categories": ["AUX_PP_NEXT"],
                     "note": "Perfect auxiliary + verb: has run, had eaten"
                 },
                 {
                     "result": "VERBAL",
                     "recursive": true,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"]},
                         "before": [],
                         "after": [{"type": "VERBAL", "quantifier": "one"}]
                     },
@@ -2252,14 +2252,14 @@
                         {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
                     ],
                     "consume": ["anchor"],
-                    "pull_categories": ["PROGRESSIVE"],
+                    "pull_categories": ["AUX_PART_NEXT"],
                     "note": "Progressive auxiliary + verb: is running, was walking"
                 },
                 {
                     "result": "VERBAL",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["PROGRESSIVE"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"]},
                         "before": [],
                         "after": []
                     },
@@ -2271,7 +2271,7 @@
                     "result": "VERBAL",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["PERFECT"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PP_NEXT"]},
                         "before": [],
                         "after": []
                     },
@@ -2283,7 +2283,7 @@
                     "result": "VERBAL",
                     "recursive": false,
                     "pattern": {
-                        "anchor": {"type": "MODIFIER", "subtypes": ["MODAL"]},
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_BARE_NEXT"]},
                         "before": [],
                         "after": []
                     },
@@ -2302,9 +2302,9 @@
                     "result": "VERBAL",
                     "recursive": true,
                     "pattern": {
-                        "anchor": {"type": "VERBAL", "subtypes": ["PERFECT"]},
+                        "anchor": {"type": "VERBAL", "subtypes": ["AUX_PP_NEXT"]},
                         "before": [],
-                        "after": [{"type": "VERBAL", "subtypes": ["PROGRESSIVE"], "quantifier": "one"}]
+                        "after": [{"type": "VERBAL", "subtypes": ["AUX_PART_NEXT"], "quantifier": "one"}]
                     },
                     "connections": [
                         {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
@@ -2316,9 +2316,9 @@
                     "result": "VERBAL",
                     "recursive": true,
                     "pattern": {
-                        "anchor": {"type": "VERBAL", "subtypes": ["MODAL"]},
+                        "anchor": {"type": "VERBAL", "subtypes": ["AUX_BARE_NEXT"]},
                         "before": [],
-                        "after": [{"type": "VERBAL", "subtypes": ["PERFECT"], "quantifier": "one"}]
+                        "after": [{"type": "VERBAL", "subtypes": ["AUX_PP_NEXT"], "quantifier": "one"}]
                     },
                     "connections": [
                         {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}

@@ -147,18 +147,18 @@ class SubType(Enum):
 
     # Verb forms
     NOMINAL = auto()
-    MODAL = auto()
-    PERFECT = auto()       # Perfect aspect (have + past participle)
-    PROGRESSIVE = auto()   # Progressive aspect (be + present participle)
+    AUX_BARE_NEXT = auto()     # auxiliary taking a bare verb next (was MODAL)
+    AUX_PP_NEXT = auto()       # auxiliary taking a past participle next (was PERFECT)
+    AUX_PART_NEXT = auto()     # auxiliary/copula taking a participle or complement (was PROGRESSIVE)
     PASSIVE = auto()       # Passive voice (be + past participle)
 
     # Descriptor/Specifier forms
     COMPARATIVE = auto()
     SUPERLATIVE = auto()
-    POSSESSIVE = auto()    # Possessive marking
-    RELATIVE = auto()      # Relative pronouns/adverbs
-    NEGATIVE = auto()      # Negation marking
-    INFINITIVE = auto()    # Infinitive marker
+    NOUN_CLITIC_LEFT = auto()   # clitic attached to the noun on its left (was POSSESSIVE)
+    FRONT_LINKER = auto()        # clause-initial linker opening a gap clause (was RELATIVE)
+    ABSORBED_PREMOD = auto()     # pre-head modifier absorbed into the head (was NEGATIVE)
+    PRE_VERB_PARTICLE = auto()   # particle immediately before a bare verb (was INFINITIVE)
     PARTICIPLE = auto()    # Present/past participle
     PAST_PARTICIPLE = auto()  # Past participle specifically (be + PAST_PARTICIPLE = passive).
                               # Deliberately distinct from PARTICIPLE: ger1/part1 unconditionally
@@ -192,8 +192,8 @@ class SubType(Enum):
     SECOND_PERSON = auto()  # you (tú/vosotros/usted)
     THIRD_PERSON = auto()   # he/she/it/they (él/ella/ellos)
 
-    # Questions
-    QUESTION = auto()
+    # Predicate-first flag (stamped by grammar rules; was QUESTION)
+    PREDICATE_FIRST = auto()  # predicate with no subject to its left
 
     # Logical operators
     L_AND = auto()
@@ -221,7 +221,7 @@ class SubType(Enum):
     # bit of trouble") -- distinguishes the expletive-subject word from
     # ordinary locative "there" ("he went there") so a rule can require it
     # (plus sentence-initial position) without touching the locative reading.
-    EXISTENTIAL = auto()
+    INITIAL_PLACEHOLDER = auto()
 
     # Bare-quantifier identity (M50: this/both/each/all/most/bare numerals,
     # tagged regardless of which POS branch they land on -- DET/ADJ->
@@ -230,7 +230,7 @@ class SubType(Enum):
     # to a standalone NOMINAL, without adding a new tag-lattice branch that
     # would multiply combinatorially with every OTHER ambiguous word in the
     # sentence and risk being pruned out before it can prove itself).
-    QUANTIFIER = auto()
+    PROMOTABLE_BARE = auto()
 
 
 # SubType → SubCat mapping (what category does each subtype belong to?)
@@ -241,19 +241,19 @@ SUBTYPE_TO_SUBCAT = {
 
     # Verb
     SubType.NOMINAL: SubCat.VERB,
-    SubType.MODAL: SubCat.VERB,
-    SubType.PERFECT: SubCat.VERB,
-    SubType.PROGRESSIVE: SubCat.VERB,
+    SubType.AUX_BARE_NEXT: SubCat.VERB,
+    SubType.AUX_PP_NEXT: SubCat.VERB,
+    SubType.AUX_PART_NEXT: SubCat.VERB,
     SubType.PASSIVE: SubCat.VERB,
     SubType.PAST_PARTICIPLE: SubCat.VERB,
 
     # Descriptor
     SubType.COMPARATIVE: SubCat.DESCRIPTOR,
     SubType.SUPERLATIVE: SubCat.DESCRIPTOR,
-    SubType.POSSESSIVE: SubCat.DESCRIPTOR,
-    SubType.NEGATIVE: SubCat.DESCRIPTOR,
-    SubType.RELATIVE: SubCat.DESCRIPTOR,
-    SubType.INFINITIVE: SubCat.DESCRIPTOR,
+    SubType.NOUN_CLITIC_LEFT: SubCat.DESCRIPTOR,
+    SubType.ABSORBED_PREMOD: SubCat.DESCRIPTOR,
+    SubType.FRONT_LINKER: SubCat.DESCRIPTOR,
+    SubType.PRE_VERB_PARTICLE: SubCat.DESCRIPTOR,
     SubType.PARTICIPLE: SubCat.DESCRIPTOR,
 
     # Preposition
@@ -273,7 +273,7 @@ SUBTYPE_TO_SUBCAT = {
     SubType.PLURAL: SubCat.NUMBER,
 
     # Questions
-    SubType.QUESTION: SubCat.QUESTIONS,
+    SubType.PREDICATE_FIRST: SubCat.QUESTIONS,
 
     # Logic
     SubType.L_AND: SubCat.LOGIC,
@@ -295,10 +295,10 @@ SUBTYPE_TO_SUBCAT = {
     SubType.QUOTE_CLOSE: SubCat.PUNCTUATION,
 
     # Bare-quantifier identity
-    SubType.QUANTIFIER: SubCat.QUANTIFIER,
+    SubType.PROMOTABLE_BARE: SubCat.QUANTIFIER,
 
     # Existential "there"
-    SubType.EXISTENTIAL: SubCat.QUANTIFIER,
+    SubType.INITIAL_PLACEHOLDER: SubCat.QUANTIFIER,
 }
 
 

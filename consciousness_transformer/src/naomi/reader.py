@@ -1,17 +1,18 @@
-"""Reader: sentence -> ReadResult (ClauseTrees with uncommitted sense candidates).
+"""Reader: sentence -> ReadResult (a Tree: every non-punctuation token a node, uncommitted senses).
 
-Pattern-free by owner decision: no English word lists, regexes or heuristics live here.
-Language knowledge comes only from (a) the deterministic grammar parser
-(``quantum_parser`` + ``grammars/english.json``) and (b) what the learned encoder has
-learned. This file only (1) normalises text exactly like the corpus pipeline, (2) runs the
-parser under a wall-clock cap and converts ITS output faithfully (every edge keeps the
-parser's own label), (3) falls back to the encoder's rank-1 tree when the parser fails,
-(4) fills lemma / candidate senses from WordNet (lexicon access), (5) caches.
+Pattern-free by owner decision: no word lists, regexes or heuristics that encode a language live
+here. Language knowledge comes only from (a) the deterministic grammar parser
+(``quantum_parser`` + ``grammars/<lang>.json``) and (b) the lexicon. This file (1) normalises text
+exactly like the corpus pipeline, (2) runs the parser under a wall-clock cap, (3) builds the tree
+from ALL of its hypothesis-graph edges (``naomi.tree.attach_graph``: language-neutral traversal,
+the grammar's edge types become the relation labels, anything unattached is marked UNATTACHED and
+diagnosed, never repaired), (4) fills lemma / candidate senses (single seam: ``sense_candidates``),
+(5) falls back to the frozen v6 encoder's old-style clauses, converted as far as they go and marked
+``encoder_v6_legacy``, (6) caches.
 """
 
 from __future__ import annotations
 
-import dataclasses
 import json
 import os
 import signal
@@ -21,14 +22,18 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from .types import ClauseTree, Filler, ReadResult
+from .tree import ROOT_TOKEN, attach_graph, tree_from_dict, tree_to_dict, walk
+from .types import (KIND_NAME, KIND_WORD, REL_ROOT, REL_UNATTACHED, SOURCE_LEGACY, SOURCE_NONE,
+                    SOURCE_PARSER, ClauseTree, Filler, Node, ReadResult, Tree)
 
 CT_DIR = Path(__file__).resolve().parents[2]  # .../consciousness_transformer
 
 PARSER_MAX_HYPOTHESES = 4000
-# structural UPOS categories (tagger labels, not words)
-_FUNCTION_POS = {"AUX", "DET", "ADP", "PART", "PRON", "CCONJ", "SCONJ", "PUNCT", "NUM", "SYM", "INTJ"}
+# tagger categories (the pipeline's own UPOS names) -> WordNet part-of-speech letters (lexicon access)
 _WN_POS = {"NOUN": "n", "VERB": "v", "ADJ": "a", "ADV": "r"}
+# tagger categories whose tokens are names: variables with no meaning point (owner: numerals too, for now)
+_NAME_POS = ("PROPN", "NUM")
+_PUNCT_POS = "PUNCT"
 
 
 class _ParserTimeout(Exception):
@@ -70,20 +75,27 @@ def _wn_senses(lemma: str, pos: Optional[str]) -> Tuple[str, ...]:
         return ()
 
 
-def make_filler(role: str, token: str, idx: Optional[int], pos: List[str]) -> Filler:
+def sense_candidates(token: str, lemma: str, wn_pos: Optional[str]) -> List[str]:
+    """THE single seam for candidate senses (best-first, uncommitted). Called for every non-name
+    token, function words included; empty list if the lexicon knows nothing."""
+    return list(_wn_senses(lemma, wn_pos))
+
+
+def make_node(rel: str, token: str, idx: Optional[int], pos: str, label: Optional[str] = None,
+              subtypes: Optional[List[str]] = None) -> Node:
     token = (token or "").lower()
-    p = pos[idx] if idx is not None and 0 <= idx < len(pos) else None
-    if p == "AUX":
-        lemma, wn_pos = _wn_lemma(token, "v"), None
-    elif p in _FUNCTION_POS or p == "PROPN":
-        lemma, wn_pos = token, None
-    else:
-        wn_pos = _WN_POS.get(p) or ("v" if role == "PREDICATE" else None)
-        lemma = _wn_lemma(token, wn_pos)
-    senses: List[str] = []
-    if p not in _FUNCTION_POS and p != "PROPN" and token.isalpha():
-        senses = list(_wn_senses(lemma, wn_pos))
-    return Filler(role=role.upper(), token=token, lemma=lemma, token_index=idx, senses=senses)
+    if pos in _NAME_POS:
+        return Node(rel=rel, token=token, token_index=idx, lemma=token, pos=pos, kind=KIND_NAME,
+                    label=label, subtypes=list(subtypes or []))
+    lemma_pos = _WN_POS.get(pos) or ("v" if pos == "AUX" else None)
+    lemma = _wn_lemma(token, lemma_pos) if lemma_pos else token
+    return Node(rel=rel, token=token, token_index=idx, lemma=lemma, pos=pos, kind=KIND_WORD,
+                senses=sense_candidates(token, lemma, _WN_POS.get(pos)), label=label,
+                subtypes=list(subtypes or []))
+
+
+def synthetic_root() -> Node:
+    return Node(rel=REL_ROOT, token=ROOT_TOKEN, token_index=None, lemma=ROOT_TOKEN, pos=ROOT_TOKEN)
 
 
 class Reader:
@@ -134,17 +146,6 @@ class Reader:
                 f.write(json.dumps({"k": k, "v": v}) + "\n")
         os.replace(tmp, self.cache_path)
 
-    @staticmethod
-    def _clause_from_dict(c: dict) -> ClauseTree:
-        return ClauseTree(predicate=Filler(**c["predicate"]), args=[Filler(**a) for a in c["args"]],
-                          negated=c["negated"], source=c["source"], sentence=c["sentence"],
-                          sentence_index=c["sentence_index"])
-
-    @classmethod
-    def _result_from_dict(cls, d: dict) -> ReadResult:
-        return ReadResult(sentence=d["sentence"], clauses=[cls._clause_from_dict(c) for c in d["clauses"]],
-                          source=d["source"], seconds=d["seconds"])
-
     # ---- lazy resources ----------------------------------------------------
     def _get_parser(self):
         if self._parser is None:
@@ -168,24 +169,29 @@ class Reader:
                                     controller_hidden=ckpt["d_model"])
             model.load_state_dict(ckpt["model_state"])
             model.eval()
-            self._usvs = load_usvs(str(CT_DIR / "data" / "usvs"))
+            self._usvs = load_usvs(str(CT_DIR / "data" / "usvs"), extended=False)  # v6 encoder was trained on the 607 base axes
             self._enc = (model, ckpt, em)
         return self._enc
 
+    def tag_full(self, norm: str) -> Tuple[List[str], List[str], List[List[str]]]:
+        """(tokens, UPOS tags, tagger subtype names) of a normalised sentence."""
+        words = self._get_parser()._tag(norm)
+        return ([w.text.lower() for w in words], [w.pos.name for w in words],
+                [[getattr(st, "name", str(st)) for st in (w.subtypes or [])] for w in words])
+
     def tag(self, norm: str) -> Tuple[List[str], List[str]]:
         """(tokens, UPOS tags) of a normalised sentence, from the pipeline's own tagger."""
-        words = self._get_parser()._tag(norm)
-        return [w.text.lower() for w in words], [w.pos.name for w in words]
+        t, p, _ = self.tag_full(norm)
+        return t, p
 
     # ---- parser path -------------------------------------------------------
-    def _raw_parse(self, norm: str) -> dict:
-        """The parser's own output, JSON-able and cached: its discourse clauses
-        (predicate, [(relation, token)]), discourse links, and the flat hypothesis graph.
-        ``{"fail": True}`` when the parser raised, hit the cap, or produced no clause."""
-        key = "raw|" + norm
+    def _raw_graph(self, norm: str) -> dict:
+        """The parser's own hypothesis graph, JSON-able and cached: nodes (index, label, token),
+        typed edges (type, parent, child) in the parser's order, and its unconsumed roots.
+        ``{"fail": True}`` when the parser raised, hit the cap, or produced no hypothesis."""
+        key = "g|" + norm
         if key in self._cache:
             return self._cache[key]
-        from nsm_ct.clause import extract_discourse
         parser = self._get_parser()
         out: dict = {"fail": True}
         use_alarm = threading.current_thread() is threading.main_thread() and hasattr(signal, "setitimer")
@@ -198,14 +204,9 @@ class Reader:
         try:
             graph = parser._parse_graph(norm, max_hypotheses=PARSER_MAX_HYPOTHESES,
                                         max_seconds=self.parser_seconds)
-            clauses, links = extract_discourse(graph)
-            if clauses:
-                out = {"fail": False,
-                       "clauses": [[c.predicate if isinstance(c.predicate, str) else c.predicate.token,
-                                    [[r, n.token] for r, n in c.args]] for c in clauses],
-                       "links": [[l.coordinator, l.i, l.j] for l in links],
-                       "nodes": [list(n) for n in graph.nodes],
-                       "edges": [list(e) for e in graph.edges]}
+            if graph is not None:
+                out = {"fail": False, "nodes": [list(n) for n in graph.nodes],
+                       "edges": [list(e) for e in graph.edges], "roots": list(graph.roots)}
         except BaseException as exc:  # noqa: BLE001 -- cap hit, no hypothesis, anything
             if isinstance(exc, (KeyboardInterrupt, SystemExit)):
                 raise
@@ -216,71 +217,30 @@ class Reader:
         self._cache_put(key, out)
         return out
 
-    def _from_parser(self, raw: dict, tokens: List[str], pos: List[str]) -> List[ClauseTree]:
-        """Carry the parser's output through under its own labels: its clauses and args, the
-        NOT link as ``negated``, and every hypothesis-graph edge the clause extractor did
-        not already surface (attached to the clause holding the edge's parent node; a
-        parent with SUBJECT/OBJECT edges but no clause becomes its own clause)."""
-        gtok = {n[0]: (n[2] or "").lower() for n in raw["nodes"]}
-        used: set = set()
+    def _from_parser(self, norm: str, sentence: str) -> Optional[Tree]:
+        raw = self._raw_graph(norm)
+        if raw.get("fail"):
+            return None
+        tokens, pos, subs = self.tag_full(norm)
+        labels = {n[0]: n[1] for n in raw["nodes"]}
+        diags: List[dict] = []
+        for idx, _lab, tok in raw["nodes"]:
+            if not (0 <= idx < len(tokens)) or (tok or "").lower() != tokens[idx]:
+                diags.append({"kind": "graph_token_mismatch", "index": idx, "token": tok})
 
-        def locate(tok):
-            tok = (tok or "").lower()
-            cands = [i for i, t in gtok.items() if t == tok and i not in used and 0 <= i < len(tokens)]
-            cands = cands or [i for i, t in enumerate(tokens) if t == tok and i not in used]
-            cands = cands or [i for i, t in enumerate(tokens) if t == tok]
-            if not cands:
-                return None
-            used.add(cands[0])
-            return cands[0]
+        def mk(i: int) -> Node:
+            return make_node(REL_UNATTACHED, tokens[i], i, pos[i], labels.get(i), subs[i])
 
-        out: List[ClauseTree] = []
-        for pred, args in raw["clauses"]:
-            pf = make_filler("PREDICATE", pred, locate(pred), pos)
-            c = ClauseTree(predicate=pf, source="parser")
-            for rel, tok in args:
-                if tok:
-                    c.args.append(make_filler(rel, tok, locate(tok), pos))
-            out.append(c)
-        for coord, i, j in raw["links"]:
-            if coord == "NOT":
-                for k in {i, j}:
-                    if 0 <= k < len(out):
-                        out[k].negated = True
+        root, d = attach_graph(tokens, pos, [tuple(e) for e in raw["edges"]], raw["roots"], mk,
+                               lambda i: pos[i] == _PUNCT_POS)
+        return Tree(sentence=sentence, root=root, source=SOURCE_PARSER, diagnostics=diags + d)
 
-        held = lambda c: {c.predicate.token_index} | {a.token_index for a in c.args}  # noqa: E731
-
-        by_parent: Dict[int, list] = {}
-        for etype, p, ch in raw["edges"]:
-            by_parent.setdefault(p, []).append((etype, ch))
-        for p, edges in sorted(by_parent.items(),
-                               key=lambda kv: not any(e in ("SUBJECT", "OBJECT") for e, _ in kv[1])):
-            owner = next((c for c in out if c.predicate.token_index == p), None) \
-                or next((c for c in out if p in held(c)), None)
-            if owner is None and 0 <= p < len(tokens):
-                # a modifier node pointing AT a clause predicate (parser: MODIFICATION edge)
-                tgt = [c for c in out for _e, ch in edges if c.predicate.token_index == ch]
-                if tgt and not any(e in ("SUBJECT", "OBJECT") for e, _ in edges):
-                    lab = next((n[1] for n in raw["nodes"] if n[0] == p), "MODIFIER")
-                    for c in tgt:
-                        if p not in held(c):
-                            c.args.append(make_filler(lab, tokens[p], p, pos))
-                    continue
-            if owner is None:
-                if not any(e in ("SUBJECT", "OBJECT") for e, _ in edges) or not 0 <= p < len(tokens):
-                    continue
-                owner = ClauseTree(predicate=make_filler("PREDICATE", tokens[p], p, pos), source="parser")
-                out.append(owner)
-            for etype, ch in edges:
-                if 0 <= ch < len(tokens) and ch not in held(owner) and pos[ch] != "PUNCT":
-                    owner.args.append(make_filler(etype, tokens[ch], ch, pos))
-        return out
-
-    # ---- encoder path ------------------------------------------------------
-    def _from_encoder(self, norm: str, tokens: List[str], pos: List[str]) -> List[ClauseTree]:
+    # ---- encoder path (legacy format) --------------------------------------
+    def _legacy_clauses(self, norm: str, tokens: List[str]) -> List[ClauseTree]:
         model, ckpt, em = self._get_encoder()
         sc = [{"index": i, "token": t, "sense_candidates": list(c)}
               for i, t in enumerate(tokens) for c in [self._usvs.senses_of(t)] if c]
+        pos = self.tag(norm)[1]
         rec = {"text": norm, "tokens": tokens, "pos": pos, "token_sense_candidates": sc}
         feats = em.build_features(rec, self._usvs, ckpt["pos_vocab"], ckpt["hash_buckets"])
         forest = em.beam_decode(model, feats, beam_width=8, k=8, policy="model")
@@ -289,70 +249,105 @@ class Reader:
             pi = cl.get("predicate", {}).get("token_index")
             if pi is None or not (0 <= pi < len(tokens)):
                 continue
-            c = ClauseTree(predicate=make_filler("PREDICATE", tokens[pi], pi, pos), source="encoder")
+            c = ClauseTree(predicate=Filler("PREDICATE", tokens[pi], tokens[pi], pi))
             for r in cl.get("roles", []):
                 ai = r.get("token_index")
                 if ai is not None and 0 <= ai < len(tokens):
-                    c.args.append(make_filler(r.get("relation", "ARG"), tokens[ai], ai, pos))
+                    c.args.append(Filler(str(r.get("relation", "ARG")).upper(), tokens[ai], tokens[ai], ai))
             out.append(c)
         return out
 
-    # ---- public ------------------------------------------------------------
-    def _finish(self, sentence, clauses, source, t0) -> ReadResult:
-        for c in clauses:
-            c.sentence, c.source = sentence, source
-        return ReadResult(sentence=sentence, clauses=clauses, source=source if clauses else "none",
-                          seconds=time.perf_counter() - t0)
+    @staticmethod
+    def legacy_to_tree(sentence: str, clauses: List[ClauseTree], tokens: List[str], pos: List[str],
+                       subs: List[List[str]]) -> Optional[Tree]:
+        """Old clauses -> Tree as far as they go: tokens the encoder placed become nodes (first
+        clause predicate = root, later predicates and every token it did not place hang from the
+        root as UNATTACHED; args keep their OLD role labels, which is why source is legacy)."""
+        if not clauses:
+            return None
+        placed: Dict[int, Node] = {}
+        diags: List[dict] = []
 
-    def _cached(self, kind: str, sentence: str, sentence_index, build) -> ReadResult:
+        def node(rel: str, i: int) -> Node:
+            return make_node(rel, tokens[i], i, pos[i], None, subs[i])
+
+        root = None
+        for ci, c in enumerate(clauses):
+            pi = c.predicate.token_index
+            if pos[pi] == _PUNCT_POS:
+                continue
+            if pi in placed:
+                diags.append({"kind": "extra_edge", "type": REL_UNATTACHED, "index": pi, "token": tokens[pi]})
+                continue
+            pn = node(REL_ROOT if root is None else REL_UNATTACHED, pi)
+            placed[pi] = pn
+            if root is None:
+                root = pn
+            else:
+                root.children.append(pn)
+            for a in c.args:
+                if pos[a.token_index] == _PUNCT_POS:
+                    continue
+                if a.token_index in placed:
+                    diags.append({"kind": "extra_edge", "type": a.role, "index": a.token_index,
+                                  "token": a.token})
+                    continue
+                an = node(a.role, a.token_index)
+                placed[a.token_index] = an
+                pn.children.append(an)
+        for i in range(len(tokens)):
+            if i not in placed and pos[i] != _PUNCT_POS:
+                root.children.append(node(REL_UNATTACHED, i))
+                diags.append({"kind": "unattached_token", "index": i, "token": tokens[i], "pos": pos[i]})
+        for n, _d, _p in walk(root):
+            n.children.sort(key=lambda x: x.token_index)
+        return Tree(sentence=sentence, root=root, source=SOURCE_LEGACY, diagnostics=diags)
+
+    # ---- public ------------------------------------------------------------
+    def _cached_tree(self, kind: str, sentence: str, build) -> Optional[Tree]:
         key = f"{kind}|{sentence}"
         if key not in self._cache:
-            self._cache_put(key, dataclasses.asdict(build()))
-        rr = self._result_from_dict(self._cache[key])
-        for c in rr.clauses:
-            c.sentence_index = sentence_index
-        return rr
+            t = build()
+            self._cache_put(key, {"tree": tree_to_dict(t) if t is not None else None})
+        d = self._cache[key]["tree"]
+        return tree_from_dict(d) if d is not None else None
 
     def read_parser(self, sentence: str, sentence_index=None) -> Optional[ReadResult]:
-        """Parser-only reading, or None if the parser failed (error, cap, no clause)."""
-        def build():
-            t0, norm = time.perf_counter(), normalize(sentence)
-            raw = self._raw_parse(norm)
-            if raw.get("fail"):
-                return ReadResult(sentence=sentence, source="none", seconds=time.perf_counter() - t0)
-            tokens, pos = self.tag(norm)
-            return self._finish(sentence, self._from_parser(raw, tokens, pos), "parser", t0)
-        rr = self._cached("p", sentence, sentence_index, build)
-        return rr if rr.clauses else None
+        """Parser-only reading, or None if the parser failed (error, cap, no hypothesis)."""
+        t0 = time.perf_counter()
+        t = self._cached_tree("tp", sentence, lambda: self._from_parser(normalize(sentence), sentence))
+        if t is None:
+            return None
+        return ReadResult(sentence=sentence, tree=t, source=SOURCE_PARSER, seconds=time.perf_counter() - t0)
 
     def read_encoder(self, sentence: str, sentence_index=None) -> ReadResult:
-        """Encoder-only reading (rank-1 beam tree)."""
+        """Legacy encoder-only reading (v6 old-format clauses converted to a Tree)."""
         def build():
-            t0, norm = time.perf_counter(), normalize(sentence)
-            tokens, pos = self.tag(norm)
+            norm = normalize(sentence)
+            tokens, pos, subs = self.tag_full(norm)
             try:
-                clauses = self._from_encoder(norm, tokens, pos)
+                cl = self._legacy_clauses(norm, tokens)
             except Exception:
-                clauses = []
-            return self._finish(sentence, clauses, "encoder", t0)
-        return self._cached("e", sentence, sentence_index, build)
-
-    def read_both(self, sentence: str, sentence_index=None) -> Tuple[Optional[ReadResult], ReadResult]:
-        return self.read_parser(sentence, sentence_index), self.read_encoder(sentence, sentence_index)
+                cl = []
+            return self.legacy_to_tree(sentence, cl, tokens, pos, subs)
+        t0 = time.perf_counter()
+        t = self._cached_tree("tl", sentence, build)
+        if t is None:
+            return ReadResult(sentence=sentence, source=SOURCE_NONE, seconds=time.perf_counter() - t0)
+        return ReadResult(sentence=sentence, tree=t, source=SOURCE_LEGACY, seconds=time.perf_counter() - t0)
 
     def read(self, sentence: str, sentence_index=None) -> ReadResult:
-        """Parser tree; the encoder's rank-1 tree if the parser fails."""
+        """Parser tree; the legacy encoder's converted tree if the parser fails."""
         if self.use_parser:
             rr = self.read_parser(sentence, sentence_index)
             if rr is not None:
                 return rr
         if self.use_encoder:
             rr = self.read_encoder(sentence, sentence_index)
-            if rr.clauses:
+            if rr.tree is not None:
                 return rr
-        return ReadResult(sentence=sentence, source="none")
+        return ReadResult(sentence=sentence, source=SOURCE_NONE)
 
     def read_question(self, question: str) -> ReadResult:
         """Alias of :meth:`read`: questions get no special treatment here."""
         return self.read(question)
-

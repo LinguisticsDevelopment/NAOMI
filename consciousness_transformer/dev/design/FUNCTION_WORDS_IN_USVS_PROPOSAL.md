@@ -1,5 +1,19 @@
 # Function words in USVS: design proposal (for owner approval, 2026-11-15)
 
+> **OWNER DECISIONS (2026-11-15) — these override anything below that disagrees.**
+> 1. The seven new dimensions are approved (KNOWN, UNKNOWN, GOAL, SOURCE, AND, MALE, FEMALE).
+> 2. One lexicon file per language at `quantum_parser/lexicons/<lang>.json`, serving both the parser and USVS.
+> 3. **No negation value on content words.** "unhappy", "impossible" etc. get NO value on NOT: that would conflate
+>    operator dimensions with meaning dimensions. Operator dimensions (NOT, VERY, MORE, KNOWN, UNKNOWN, tense...)
+>    are filled only by closed-class words. Plan step 2 (the NOT overlay) is dropped.
+> 4. Tree comparison: node by node or composed should come out near-equivalent once the tree is flattened; either
+>    is acceptable. Start node by node.
+> 5. Grammar category names that carry meaning (NEGATIVE, QUESTION...) are renamed to purely structural classes.
+> 6. **Numbers are treated as names for now** (no building from ONE and TWO, no memory facts). Eventually numbers
+>    will probably be their own math language.
+> Direction confirmed earlier: option C — the tree gives scope, graded dimensions give degree.
+
+
 Status: PROPOSAL ONLY. Nothing is built. Everything marked **J** (judgment call) is a number or placement I chose
 and the owner should review; weights of 1.0 for "the word simply is this concept" are low-risk, every fraction is J.
 Evidence base: `USVS_FUNCTION_WORD_AUDIT.md`, `USVS_DESIGN_HISTORY.md` (cited "history s8" = its section 8),
