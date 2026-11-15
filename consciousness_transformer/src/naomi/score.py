@@ -2,7 +2,8 @@
 
 Nothing here encodes a language: no word lists, no literals. Meaning is read from USVS (the
 sense vectors over the named axes); names (kind == "name", numerals included) have no meaning point
-and match by identity of the token.
+and match by identity of the token (each distinct name is its own orthogonal unit dimension; a word
+with no sense is a unit dimension keyed by its lemma).
 
 (1) :func:`score_coverage` -- reference-free. How much of the tree's own sentence is accounted for.
     percent = 100 * (0.6 * attached + 0.2 * grounded + 0.2 * structure)
@@ -11,36 +12,51 @@ and match by identity of the token.
       grounded  share of ``word`` nodes with at least one candidate (or a committed) sense; 1.0 if none
       structure 1.0 when there is exactly one ROOT node and every token index occurs once, else 0.0
 
-(2) :func:`score_pair` -- reference vs candidate, node by node, by closeness in USVS (a synonym or a
-    reordering still counts; token positions are never used; no composition of attached nodes).
+(2) :func:`score_pair` -- reference vs candidate. Two numbers and their combination (owner, 2026-11-15):
+    scoring only the flattened meaning would let bad tree-building go unnoticed; raw shape alone is
+    unfair to "not happy" vs "unhappy" (an operator plus a descriptor vs one word).
+
+    OPERATOR FOLDING (applied to both trees first). A node is a foldable operator when (a) its chosen
+    sense is a closed-class lexicon sense (id prefix ``fn.``), (b) it is a leaf, and (c) it hangs on a
+    real head by one of FOLD_RELATIONS (the grammar's own modifier edge types; argument and linking
+    relations are excluded). Folding removes it from the skeleton and adds its USVS vector to its
+    head's vector. Function words WITH dependents (a preposition and its object, a connector and its
+    clause) stay as nodes: they are structure. FOLD_ONTO_ROOT decides whether the head may be the
+    tree's ROOT node (an operator on the main verb).
+
+    ALIGNMENT (one-to-one, deterministic, on the folded skeletons). The two ROOT nodes are matched.
+    The reference is then taken level by level (shallowest first). At each level every (reference
+    node, unmatched candidate node) pair gets  0.6*meaning + 0.2*[same relation to head]
+    + 0.2*[heads already matched to each other]; pairs are taken greedily by descending score (ties:
+    higher meaning, then pre-order position in reference, then in candidate) and only if the score is
+    at least MATCH_MIN. Sibling order and repeated relations therefore do not matter. Token positions
+    are never used.
+
+    MEANING % = flattened similarity. A tree flattens to  sum over nodes of (role vector of the node's
+    relation path from the root) (x) (the node's USVS vector, folded operators included); two trees
+    compare by the cosine of the flattened forms. With orthogonal role vectors per path this is
+        sum over aligned pairs on the SAME path (heads aligned and equal relation) of dot(v_ref, v_cand)
+        / ( sqrt(sum |v_ref|^2) * sqrt(sum |v_cand|^2) )
+    over all skeleton nodes (nodes with no partner count only in the norms). A recorded antonym pair
+    (word-level store, tiers ``antonym_tiers``) has its dot set to 0 and gives reason opposite_meaning.
+    SHAPE % = attachment F1 of the folded skeletons: 2C / (N_ref + N_cand), C = aligned nodes whose
+    heads are aligned to each other AND whose relation label is equal.
+    OVERALL = W_MEANING * meaning + W_SHAPE * shape (simple mean).
+
     Node meaning: a ``word`` node is the vector of its committed ``sense`` if set, else of its FIRST
-    candidate sense (``best_candidate=True`` instead takes the best-matching candidate pair). Cosine
-    over all named axes. A name is 1 if the same token, else 0; word vs name is 0. A word with no
-    sense at all falls back to token identity.
-    Alignment (one-to-one, deterministic, five lines): the two ROOT nodes are matched. The reference
-    tree is then taken level by level (shallowest first). At each level every (reference node,
-    unmatched candidate node) pair gets  0.6*meaning + 0.2*[same relation to head]
-    + 0.2*[heads already matched to each other]; pairs are taken greedily by descending score
-    (ties: higher meaning, then pre-order position in reference, then in candidate) and only if the
-    score is at least MATCH_MIN (so a to->from swap in place still matches, with meaning 0).
-    A matched pair's credit is its meaning similarity (structure is graded separately).
-    Scores, in percent:
-      node_recall     sum of credits / reference nodes;  node_precision  sum of credits / candidate nodes
-      node_f1         harmonic mean of the two
-      attachment_f1   2 * C / (N_ref + N_cand), C = matched nodes whose heads are matched to each
-                      other AND whose relation label is equal (a dropped/extra node counts against it)
-      overall         0.5 * node_f1 + 0.5 * attachment_f1
-    The same figures are given for function-word nodes (chosen sense id has the lexicon prefix) and
-    content-word nodes separately (None when neither tree has any node of that class).
+    candidate sense (``best_candidate=True`` instead takes the best-matching candidate pair).
+    Node-level figures (recall / precision / F1 / attachment) are kept for the skeleton, overall and
+    for function-word and content-word nodes separately (None when neither tree has such a node).
     Reasons (``PairScore.reasons``, a list of dicts): node_dropped (function_node_dropped=True and the
     named dimensions when the node is a lexicon-sense node), node_extra, meaning_shift (top differing
-    dimensions, signed candidate minus reference), name_mismatch, relation_changed, head_changed,
-    subtree_moved.
+    dimensions of the base senses, signed candidate minus reference), opposite_meaning (with tier),
+    operator_folded_differs (differing folded-operator dimensions), name_mismatch, relation_changed,
+    head_changed, subtree_moved.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -49,9 +65,20 @@ from .reader import _PUNCT_POS, FN_PREFIX
 from .tree import walk
 from .types import KIND_NAME, REL_ROOT, REL_UNATTACHED, Node, Tree
 
+try:
+    from nsm_ct.ground.usvs import ANTONYM_TIERS, DEFAULT_ANTONYM_TIERS
+except Exception:  # pragma: no cover
+    ANTONYM_TIERS = DEFAULT_ANTONYM_TIERS = ()
+
 W_COV_ATTACHED, W_COV_GROUNDED, W_COV_STRUCTURE = 0.6, 0.2, 0.2
 W_ALIGN_MEANING, W_ALIGN_RELATION, W_ALIGN_HEAD = 0.6, 0.2, 0.2
 W_OVERALL_NODE_F1, W_OVERALL_ATTACHMENT = 0.5, 0.5
+W_MEANING, W_SHAPE = 0.5, 0.5                      # overall = W_MEANING * meaning% + W_SHAPE * shape%
+# The grammar's own modifier edge types: a leaf function word hanging on a head by one of these folds
+# into the head. Argument relations (SUBJECT, OBJECT, INDIRECT_OBJECT, COMPLEMENT) and linking relations
+# (PREPOSITION, SUBORDINATION, COORDINATION) never fold.
+FOLD_RELATIONS = ("SPECIFICATION", "MODIFICATION", "DESCRIPTION")
+FOLD_ONTO_ROOT = True                              # an operator on the ROOT node (main verb) folds too
 MATCH_MIN = 0.3
 TOP_DIMS = 5
 _EPS = 1e-6
@@ -126,19 +153,53 @@ class Figures:
 
 @dataclass
 class PairScore:
-    overall: float
-    figures: Figures
+    overall: float                 # W_MEANING * meaning + W_SHAPE * shape
+    meaning: float                 # flattened, antonym-aware, operators folded (percent)
+    shape: float                   # folded-skeleton attachment F1 (percent)
+    figures: Figures               # node-by-node figures on the folded skeleton
     function_words: Optional[Figures]
     content_words: Optional[Figures]
     matches: List[Tuple[Node, Node, float]] = field(default_factory=list)   # (reference, candidate, meaning)
     reasons: List[dict] = field(default_factory=list)
 
 
-class _Space:
-    """Sense vectors over the named axes, cached; the meaning of a node."""
+@dataclass
+class _M:
+    """Meaning of an aligned pair of nodes."""
+    sim: float = 0.0               # cosine of the (folded) node vectors, 0 for an antonym pair
+    sa: Optional[str] = None
+    sb: Optional[str] = None
+    tier: Optional[str] = None     # antonym tier when the pair is a recorded opposite
+    base: float = 0.0              # similarity of the base senses without folded operators
+    dot: float = 0.0               # contribution to the flattened dot product
 
-    def __init__(self, usvs, best_candidate: bool):
-        self.u, self.best, self._v = usvs, best_candidate, {}
+
+_ANT_CACHE: Dict = {}
+
+
+def _antonym_pairs(usvs, tiers) -> Dict:
+    """frozenset({word, word}) -> strongest allowed tier, from the USVS word-level antonym store."""
+    key = (id(usvs), tuple(tiers))
+    if key not in _ANT_CACHE:
+        rank = {t: i for i, t in enumerate(ANTONYM_TIERS)}
+        out: Dict = {}
+        for a, b, t in usvs.antonyms:
+            if t in tiers:
+                k = frozenset((a, b))
+                if k not in out or rank.get(t, 99) < rank.get(out[k], 99):
+                    out[k] = t
+        _ANT_CACHE[key] = out
+    return _ANT_CACHE[key]
+
+
+class _Space:
+    """Sense vectors over the named axes (plus a unit dimension per name / unsensed lemma), the folded
+    operators of each skeleton node, and the antonym store."""
+
+    def __init__(self, usvs, best_candidate: bool, tiers=None):
+        self.u, self.best, self._v, self._r = usvs, best_candidate, {}, {}
+        self.ops: Dict[int, List[Node]] = {}
+        self.ant = _antonym_pairs(usvs, DEFAULT_ANTONYM_TIERS if tiers is None else tuple(tiers))
 
     def vec(self, sid: str) -> Optional[np.ndarray]:
         if sid not in self._v:
@@ -157,36 +218,97 @@ class _Space:
         s = self.chosen(n)
         return bool(s) and s.startswith(FN_PREFIX)
 
-    def meaning(self, a: Node, b: Node) -> Tuple[float, Optional[str], Optional[str]]:
-        """(similarity in [0, 1], reference sense used, candidate sense used)."""
+    def rep(self, n: Node, sid: Optional[str], fold: bool = True):
+        """(dense vector or None, {unit key: weight}) of a node with the given sense."""
+        k = (id(n), sid, fold)
+        if k not in self._r:
+            base = None if (n.kind == KIND_NAME or not sid) else self.vec(sid)
+            if base is None:
+                self._r[k] = (None, {(n.kind[:1], n.token if n.kind == KIND_NAME else n.lemma): 1.0})
+            else:
+                v = base.astype(np.float64)
+                for o in (self.ops.get(id(n), []) if fold else []):
+                    ov = self.vec(self.chosen(o))
+                    if ov is not None:
+                        v = v + ov
+                self._r[k] = (v, {})
+        return self._r[k]
+
+    @staticmethod
+    def dot(ra, rb) -> float:
+        d = float(np.dot(ra[0], rb[0])) if ra[0] is not None and rb[0] is not None else 0.0
+        return d + sum(w * rb[1].get(key, 0.0) for key, w in ra[1].items())
+
+    def norm2(self, n: Node, sid: Optional[str]) -> float:
+        r = self.rep(n, sid)
+        return (float(np.dot(r[0], r[0])) if r[0] is not None else 0.0) + sum(w * w for w in r[1].values())
+
+    def _cos(self, ra, rb) -> float:
+        na, nb = self.dot(ra, ra), self.dot(rb, rb)
+        return min(1.0, self.dot(ra, rb) / (na * nb) ** 0.5) if na > 0 and nb > 0 else 0.0
+
+    def opposite(self, a: Node, b: Node) -> Optional[str]:
         if a.kind == KIND_NAME or b.kind == KIND_NAME:
-            return (1.0 if (a.kind == b.kind and a.token == b.token) else 0.0), None, None
+            return None
+        for x in {a.lemma, a.token}:
+            for y in {b.lemma, b.token}:
+                t = self.ant.get(frozenset((x, y)))
+                if t:
+                    return t
+        return None
+
+    def meaning(self, a: Node, b: Node) -> _M:
         oa, ob = self.options(a), self.options(b)
-        if not oa or not ob:
-            return (1.0 if a.token == b.token else 0.0), None, None
-        best = (-1.0, None, None)
+        if a.kind == KIND_NAME or b.kind == KIND_NAME or not oa or not ob:
+            oa, ob = [None], [None]
+        best = None
         for sa in oa:
             for sb in ob:
-                s = 1.0 if sa == sb else self._cos(sa, sb)
-                if s > best[0] + _EPS:
-                    best = (s, sa, sb)
+                ra, rb = self.rep(a, sa), self.rep(b, sb)
+                s = self._cos(ra, rb)
+                if best is None or s > best.sim + _EPS:
+                    ba, bb = self.rep(a, sa, False), self.rep(b, sb, False)
+                    best = _M(sim=s, sa=sa, sb=sb, base=1.0 if sa == sb else self._cos(ba, bb), dot=self.dot(ra, rb))
+        best.tier = self.opposite(a, b)
+        if best.tier:
+            best.sim = best.dot = 0.0
         return best
-
-    def _cos(self, sa: str, sb: str) -> float:
-        va, vb = self.vec(sa), self.vec(sb)
-        if va is None or vb is None:
-            return 0.0
-        na, nb = float(np.linalg.norm(va)), float(np.linalg.norm(vb))
-        return float(np.dot(va, vb) / (na * nb)) if na > 0 and nb > 0 else 0.0
 
     def dims(self, sid: Optional[str]) -> Dict[str, float]:
         return {k: round(v, 4) for k, v in self.u.sense_signature(sid).items()} if sid else {}
 
     def diff(self, sa: Optional[str], sb: Optional[str]) -> List[Tuple[str, float]]:
-        da, db = self.u.sense_signature(sa) if sa else {}, self.u.sense_signature(sb) if sb else {}
+        return self._top(self.u.sense_signature(sa) if sa else {}, self.u.sense_signature(sb) if sb else {})
+
+    def op_signature(self, n: Node) -> Dict[str, float]:
+        out: Dict[str, float] = {}
+        for o in self.ops.get(id(n), []):
+            for k, v in self.u.sense_signature(self.chosen(o)).items():
+                out[k] = out.get(k, 0.0) + v
+        return out
+
+    @staticmethod
+    def _top(da, db) -> List[Tuple[str, float]]:
         out = [(k, round(db.get(k, 0.0) - da.get(k, 0.0), 4)) for k in set(da) | set(db)]
         out = [x for x in out if abs(x[1]) > _EPS]
         return sorted(out, key=lambda x: (-abs(x[1]), x[0]))[:TOP_DIMS]
+
+
+def fold_operators(tree: Tree, sp: _Space) -> Tree:
+    """Copy of the tree without its foldable operators (see the module docstring); the operators of
+    each remaining node are recorded in ``sp.ops`` under the id of the copied node."""
+
+    def rec(n: Node) -> Node:
+        new = replace(n, children=[])
+        for c in n.children:
+            if (c.rel in FOLD_RELATIONS and not c.children and sp.is_function(c) and n.token_index is not None
+                    and (FOLD_ONTO_ROOT or n.rel != REL_ROOT)):
+                sp.ops.setdefault(id(new), []).append(c)
+            else:
+                new.children.append(rec(c))
+        return new
+
+    return replace(tree, root=rec(tree.root))
 
 
 def _index(tree: Tree):
@@ -221,7 +343,7 @@ def _align(ref: Tree, cand: Tree, sp: _Space):
     cpos = {id(n): i for i, n in enumerate(co)}
     match: Dict[int, Node] = {}                              # ref id -> cand node
     taken: set = set()
-    meaning: Dict[int, Tuple[float, Optional[str], Optional[str]]] = {}
+    meaning: Dict[int, _M] = {}
     levels: Dict[int, List[Node]] = {}
     for n in ro:
         if not _virtual(n):
@@ -233,10 +355,10 @@ def _align(ref: Tree, cand: Tree, sp: _Space):
                 if id(c) in taken or _virtual(c):
                     continue
                 m = sp.meaning(r, c)
-                s = (W_ALIGN_MEANING * m[0] + W_ALIGN_RELATION * (r.rel == c.rel)
+                s = (W_ALIGN_MEANING * m.sim + W_ALIGN_RELATION * (r.rel == c.rel)
                      + W_ALIGN_HEAD * _heads_aligned(r, c, rp, cp, match))
                 if s >= MATCH_MIN - _EPS:
-                    scored.append((-s, -m[0], rpos[id(r)], cpos[id(c)], r, c, m))
+                    scored.append((-s, -m.sim, rpos[id(r)], cpos[id(c)], r, c, m))
         for _s, _m, _i, _j, r, c, m in sorted(scored, key=lambda t: t[:4]):
             if id(r) in match or id(c) in taken:
                 continue
@@ -262,27 +384,41 @@ def _figures(refs: List[Node], cands: List[Node], credit: Dict, good: set) -> Op
     return Figures(100 * rec, 100 * prec, 100 * f1, 100 * att, 100 * (W_OVERALL_NODE_F1 * f1 + W_OVERALL_ATTACHMENT * att))
 
 
-def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = False) -> PairScore:
-    sp = _Space(usvs, best_candidate)
+def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = False, antonym_tiers=None) -> PairScore:
+    sp = _Space(usvs, best_candidate, antonym_tiers)
+    reference, candidate = fold_operators(reference, sp), fold_operators(candidate, sp)
     ro, rp, co, cp, match, meaning = _align(reference, candidate, sp)
     rn = [n for n in ro if not _virtual(n)]
     cn = [n for n in co if not _virtual(n)]
     cmatch = {id(c): r for r in rn if id(r) in match for c in [match[id(r)]]}
     credit: Dict = {}
     good: set = set()
+    dot = n2r = n2c = 0.0
     for r in rn:
         c = match.get(id(r))
         if c is None:
+            n2r += sp.norm2(r, sp.chosen(r))
             continue
-        credit[id(r)] = credit[("c", id(c))] = meaning[id(r)][0]
-        heads_ok = _heads_aligned(r, c, rp, cp, match)
-        if heads_ok and r.rel == c.rel:
+        m = meaning[id(r)]
+        n2r += sp.norm2(r, m.sa)
+        credit[id(r)] = credit[("c", id(c))] = m.sim
+        if _heads_aligned(r, c, rp, cp, match) and r.rel == c.rel:
             good.add(id(r))
             good.add(("c", id(c)))
+            dot += m.dot
+    for c in cn:
+        r = cmatch.get(id(c))
+        n2c += sp.norm2(c, meaning[id(r)].sb if r is not None else sp.chosen(c))
+    if not rn and not cn:
+        meaning_pct = shape_pct = 100.0
+    else:
+        meaning_pct = 100.0 * max(0.0, min(1.0, dot / (n2r * n2c) ** 0.5)) if n2r > 0 and n2c > 0 else 0.0
+        shape_pct = 100.0 * (len(good)) / (len(rn) + len(cn))
     reasons: List[dict] = []
 
     def who(n: Node, side: str) -> dict:
-        return dict(side=side, token=n.token, lemma=n.lemma, pos=n.pos, rel=n.rel)
+        return dict(side=side, token=n.token, lemma=n.lemma, pos=n.pos, rel=n.rel,
+                    folded_operators=[o.token for o in sp.ops.get(id(n), [])])
 
     for r in rn:
         c = match.get(id(r))
@@ -292,21 +428,29 @@ def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = Fa
             rs.update(kind="node_dropped", function_node_dropped=sp.is_function(r), dimensions=sp.dims(s) if sp.is_function(r) else {})
             reasons.append(rs)
             continue
-        sim, sa, sb = meaning[id(r)]
-        if r.kind == KIND_NAME or c.kind == KIND_NAME:
-            if sim < 1 - _EPS:
+        m = meaning[id(r)]
+        if m.tier:
+            reasons.append(dict(who(r, "reference"), kind="opposite_meaning", candidate_token=c.token, tier=m.tier))
+        elif r.kind == KIND_NAME or c.kind == KIND_NAME:
+            if m.sim < 1 - _EPS:
                 reasons.append(dict(who(r, "reference"), kind="name_mismatch", reference_token=r.token, candidate_token=c.token))
-        elif sim < 1 - _EPS:
-            reasons.append(dict(who(r, "reference"), kind="meaning_shift", candidate_token=c.token, similarity=round(sim, 4),
-                                reference_sense=sa, candidate_sense=sb,
-                                dimensions=[dict(dimension=k, difference=v) for k, v in sp.diff(sa, sb)]))
+        elif m.base < 1 - _EPS:
+            reasons.append(dict(who(r, "reference"), kind="meaning_shift", candidate_token=c.token, similarity=round(m.base, 4),
+                                reference_sense=m.sa, candidate_sense=m.sb,
+                                dimensions=[dict(dimension=k, difference=v) for k, v in sp.diff(m.sa, m.sb)]))
+        od = sp._top(sp.op_signature(r), sp.op_signature(c))
+        if od:
+            reasons.append(dict(who(r, "reference"), kind="operator_folded_differs", candidate_token=c.token,
+                                reference_operators=[o.token for o in sp.ops.get(id(r), [])],
+                                candidate_operators=[o.token for o in sp.ops.get(id(c), [])],
+                                dimensions=[dict(dimension=k, difference=v) for k, v in od]))
         if _heads_aligned(r, c, rp, cp, match):
             if r.rel != c.rel:
                 reasons.append(dict(who(r, "reference"), kind="relation_changed", reference_rel=r.rel, candidate_rel=c.rel))
         else:
             sub_r = _subtree(r)
-            sub_c = {id(m) for m in _subtree(c)}
-            whole = all(id(m) in match and id(match[id(m)]) in sub_c for m in sub_r) and len(sub_r) == len(sub_c)
+            sub_c = {id(x) for x in _subtree(c)}
+            whole = all(id(x) in match and id(match[id(x)]) in sub_c for x in sub_r) and len(sub_r) == len(sub_c)
             ph, ch = rp[id(r)], cp[id(c)]
             reasons.append(dict(who(r, "reference"), kind="subtree_moved" if whole else "head_changed",
                                 reference_head=None if _virtual(ph) else ph.token, candidate_head=None if _virtual(ch) else ch.token,
@@ -325,11 +469,13 @@ def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = Fa
     cc = [n for n in cn if not sp.is_function(n)]
     if allf is None:
         allf = Figures(100.0, 100.0, 100.0, 100.0, 100.0)
-    matches = [(r, match[id(r)], meaning[id(r)][0]) for r in rn if id(r) in match]
-    return PairScore(overall=allf.overall, figures=allf, function_words=_figures(fr, fc, credit, good),
+    matches = [(r, match[id(r)], meaning[id(r)].sim) for r in rn if id(r) in match]
+    return PairScore(overall=W_MEANING * meaning_pct + W_SHAPE * shape_pct, meaning=meaning_pct, shape=shape_pct,
+                     figures=allf, function_words=_figures(fr, fc, credit, good),
                      content_words=_figures(cr, cc, credit, good), matches=matches, reasons=reasons)
 
 
-def tree_similarity(a: Tree, b: Tree, usvs, best_candidate: bool = False) -> float:
+def tree_similarity(a: Tree, b: Tree, usvs, best_candidate: bool = False, antonym_tiers=None) -> float:
     """Symmetric: the overall percentage with a as reference averaged with b as reference."""
-    return 0.5 * (score_pair(a, b, usvs, best_candidate).overall + score_pair(b, a, usvs, best_candidate).overall)
+    return 0.5 * (score_pair(a, b, usvs, best_candidate, antonym_tiers).overall
+                  + score_pair(b, a, usvs, best_candidate, antonym_tiers).overall)

@@ -122,8 +122,9 @@ def _print_pair(ta, tb, usvs, label_a="A", label_b="B"):
     fmt = lambda f: "n/a" if f is None else (  # noqa: E731
         f"recall {f.node_recall:.1f}  precision {f.node_precision:.1f}  F1 {f.node_f1:.1f}  "
         f"attachment {f.attachment_f1:.1f}  overall {f.overall:.1f}")
-    print(f"pair (A as reference): overall {ps.overall:.1f}%   symmetric similarity {tree_similarity(ta, tb, usvs):.1f}%")
-    print("  all     :", fmt(ps.figures))
+    print(f"pair (A as reference): MEANING {ps.meaning:.1f}%   SHAPE {ps.shape:.1f}%   overall {ps.overall:.1f}%   "
+          f"symmetric overall {tree_similarity(ta, tb, usvs):.1f}%")
+    print("  skeleton (operators folded):", fmt(ps.figures))
     print("  function:", fmt(ps.function_words))
     print("  content :", fmt(ps.content_words))
     for r in ps.reasons:

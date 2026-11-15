@@ -96,7 +96,7 @@
 "there": {"tag": "ADV", "subtype": ["INITIAL_PLACEHOLDER"], "readings": [{"pos": ["ADV"], "dims": {"WHERE": 1.0, "FAR": 0.5}, "j": true, "j_dims": ["FAR"], "note": "locative; existential 'there' has the same tag and is not separated"}]},
 "now": {"tag": "ADV", "readings": [{"pos": ["ADV"], "dims": {"NOW": 1.0}}]},
 "where": {"tag": "ADV", "subtype": ["FRONT_LINKER"], "readings": [{"pos": ["ADV"], "dims": {"WHERE": 1.0, "UNKNOWN": 1.0}}]},
-"when": {"tag": "ADV", "subtype": ["FRONT_LINKER"], "readings": [{"pos": ["ADV"], "dims": {"WHEN": 1.0, "UNKNOWN": 1.0}, "note": "wh reading (default)"}, {"pos": ["SCONJ"], "dims": {"WHEN": 1.0}, "note": "connector reading, no UNKNOWN"}]},
+"when": {"tag": "ADV", "ambiguous": ["ADV", "SCONJ"], "subtype": ["FRONT_LINKER"], "readings": [{"pos": ["ADV"], "dims": {"WHEN": 1.0, "UNKNOWN": 1.0}, "note": "wh reading (default)"}, {"pos": ["SCONJ"], "dims": {"WHEN": 1.0}, "note": "connector reading, no UNKNOWN"}]},
 "why": {"tag": "ADV", "subtype": ["FRONT_LINKER"], "readings": [{"pos": ["ADV"], "dims": {"BECAUSE": 1.0, "UNKNOWN": 1.0}}]},
 "how": {"tag": "ADV", "subtype": ["FRONT_LINKER"], "readings": [{"pos": ["ADV"], "dims": {"LIKE": 1.0, "UNKNOWN": 1.0}, "j": true, "j_dims": ["LIKE"], "note": "manner; LIKE~AS~WAY"}]},
 "who": {"tag": "PRON", "subtype": ["FRONT_LINKER", "THIRD_PERSON"], "readings": [{"pos": ["PRON"], "dims": {"SOMEONE": 1.0, "UNKNOWN": 1.0}}]},
@@ -361,6 +361,7 @@
 "few": {"readings": [{"pos": ["DET", "PRON", "ADJ"], "dims": {"LITTLE_FEW": 1.0}, "note": "quantifier, not a numeral; not in the parser table; tagless"}]},
 "some": {"readings": [{"pos": ["DET", "PRON", "ADV"], "dims": {"SOME": 1.0}, "note": "not in the parser table; tagless"}]},
 "every": {"readings": [{"pos": ["DET"], "dims": {"ALL": 1.0, "ONE": 0.5}, "j": true, "j_dims": ["ONE"], "note": "distributive; not in the parser table; tagless"}]},
-"you": {"readings": [{"pos": ["PRON"], "dims": {"YOU": 1.0}, "note": "not in the parser table; tagless"}]}
+"you": {"readings": [{"pos": ["PRON"], "dims": {"YOU": 1.0}, "note": "not in the parser table; tagless"}]},
+"as": {"tag": "ADV", "ambiguous": ["ADV", "SCONJ"]}
 }
 }

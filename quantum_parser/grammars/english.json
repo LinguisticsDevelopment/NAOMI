@@ -7,7 +7,6 @@
     },
 
     "order": [
-        "coordPunct",
         "adv1", "adv2", "advPrep1", "advPrep2",
         "adj1", "adj2", "adjPrep1", "adjPrep2",
         "mixPrep",
@@ -19,22 +18,24 @@
         "normPP2", "adjPP2", "advPP2", "verbPP2", "mixPP2",
         "noun3",
         "nominal1", "nominal2",
-        "inf1", "auxProg1", "ger1", "part1",
+        "inf2", "inf1", "auxProg1", "ger1", "part1",
         "poss1", "poss2", "cliticCop1", "poss3",
         "neg1", "neg2", "negComp1",
-        "auxInv1",
+        "auxInv1", "auxChain1",
         "aux1", "aux2",
         "verb1", "verb2",
         "quote1",
-        "predicate1", "predicate2",
+        "predicate1", "predicate2", "adjunct1",
         "rel1", "rel2",
         "noun4",
         "appositive1",
-        "clause1", "clause2",
+        "linkPunct1",
+        "clause1", "adjunct2", "clause2",
+        "subord2",
         "suboord1",
-        "verb1b",
+        "verb1b", "subord3",
         "predicate1b",
-        "clause1b", "clause2b"
+        "clause1b", "clause2b", "coord3"
     ],
 
     "rulesets": {
@@ -2952,8 +2953,8 @@
             ]
         },
 
-        "coordPunct": {
-            "description": "Absorb a comma that directly precedes a coordinator (', and', ', but'): punctuation, no edge, so the coordinator's left neighbour is the conjunct",
+        "linkPunct1": {
+            "description": "Absorb a comma that directly precedes a coordinator or subordinator (', and', ', because'): punctuation, no edge, so the linking word's left neighbour is the real constituent",
             "result": "COORD",
             "rules": [
                 {
@@ -2967,6 +2968,18 @@
                     "connections": [],
                     "consume": ["before"],
                     "note": "A comma immediately left of a coordinator is consumed without an edge; the coordination rules then see the real left conjunct: 'she was ill , and he worried'."
+                },
+                {
+                    "result": "SUBOORD",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "SUBOORD"},
+                        "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": ["before"],
+                    "note": "A comma immediately left of a subordinator is consumed without an edge: 'he left , because it rained'."
                 }
             ]
         },
@@ -3002,6 +3015,34 @@
                     ],
                     "consume": ["before"],
                     "note": "Pre-head absorbed modifier + specifier: 'is not here' -> here(SPECIFICATION:not)."
+                },
+                {
+                    "result": "MODIFIER",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"]},
+                        "before": [{"type": "MODIFIER", "subtypes": ["ABSORBED_PREMOD"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "before[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Pre-head absorbed modifier + copula/progressive auxiliary: 'could not be opened' -> be(MODIFICATION:not)."
+                },
+                {
+                    "result": "MODIFIER",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PP_NEXT"]},
+                        "before": [{"type": "MODIFIER", "subtypes": ["ABSORBED_PREMOD"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "before[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Pre-head absorbed modifier + perfect auxiliary: 'could not have gone' -> have(MODIFICATION:not)."
                 }
             ]
         },
@@ -3100,6 +3141,329 @@
                     ],
                     "consume": ["before", "anchor"],
                     "note": "Possession: jim 's father -> father(MODIFICATION:'s(PREPOSITION:jim))."
+                }
+            ]
+        },
+
+        "subord2": {
+            "description": "Subordinator + clause attaches to the nearest clause on its left, nested clause-to-clause",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [],
+                        "after": [{"type": "SUBOORD", "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "SUBORDINATION", "from": "anchor", "to": "after[0]"},
+                        {"type": "MODIFICATION", "from": "after[0]", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Clause + subordinator + clause: 'she said that he left because it rained' -> said(that(left(because(rained)))): each subordinator hangs from the nearest clause to its left, so 'because' attaches to 'left', not 'said'."
+                }
+            ]
+        },
+
+        "subord3": {
+            "description": "Subordinate clause fronted before the clause it modifies attaches to that clause",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "SUBORDINATION", "from": "anchor", "to": "before[1]"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Fronted subordinate clause + comma + clause: 'when he came , she left' -> left(SUBORDINATION:when(came))."
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [{"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "SUBORDINATION", "from": "anchor", "to": "before[0]"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Fronted subordinate clause directly before a clause."
+                }
+            ]
+        },
+
+        "adjunct1": {
+            "description": "A prepositional phrase, adverb or fronted noun phrase left unconsumed next to a built predicate attaches to it",
+            "result": "PREDICATE",
+            "rules": [
+                {
+                    "result": "PREDICATE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "PREDICATE"},
+                        "before": [],
+                        "after": [{"type": "SPECIFIER", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "SPECIFICATION", "from": "after[0]", "to": "anchor"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Sentence-final adverb after a built predicate: 'saw it again', 'saw it too'."
+                },
+                {
+                    "result": "PREDICATE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "PREDICATE"},
+                        "before": [],
+                        "after": [{"type": "PP_NOUN", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Prepositional phrase left over after a built predicate attaches to it (nearest head)."
+                }
+            ]
+        },
+
+        "adjunct2": {
+            "description": "Fronted or trailing adjunct next to a built clause attaches to the clause head",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PP_NOUN", "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "before[1]"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Fronted prepositional phrase + comma + clause: 'after school , lisa rushes' -> rushes(MODIFICATION:after)."
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "before[1]"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Fronted noun phrase + comma + clause: 'one day , james was teased' -> teased(MODIFICATION:day)."
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "SPECIFIER", "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "SPECIFICATION", "from": "before[1]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Fronted adverb + comma + clause: 'then , he left'."
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [{"type": "PP_NOUN", "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "before[0]"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Fronted prepositional phrase directly before a clause."
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [],
+                        "after": [{"type": "PP_NOUN", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Trailing prepositional phrase after a built clause."
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "CLAUSE"},
+                        "before": [],
+                        "after": [{"type": "SPECIFIER", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "SPECIFICATION", "from": "after[0]", "to": "anchor"}
+                    ],
+                    "consume": ["after"],
+                    "note": "Trailing adverb after a built clause."
+                }
+            ]
+        },
+
+        "inf2": {
+            "description": "Infinitive marker + verb + its object(s): the object belongs to the infinitive verb",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"},
+                        {"type": "INDIRECT_OBJECT", "from": "after[0]", "to": "after[1]"},
+                        {"type": "OBJECT", "from": "after[0]", "to": "after[2]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "to give whiskers a ball -> to(give(INDIRECT_OBJECT OBJECT))."
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"},
+                        {"type": "OBJECT", "from": "after[0]", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "to fix the door -> to(fix(OBJECT:door))."
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "quantifier": "one"}, {"type": "SPECIFIER", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"},
+                        {"type": "SPECIFICATION", "from": "after[1]", "to": "after[0]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "to go home / to run away -> the adverb belongs to the infinitive verb."
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
+                        "before": [],
+                        "after": [{"type": "VERBAL", "quantifier": "one"}, {"type": "PP_NOUN", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"},
+                        {"type": "MODIFICATION", "from": "after[0]", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "to play in the park -> the prepositional phrase belongs to the infinitive verb."
+                }
+            ]
+        },
+
+        "coord3": {
+            "description": "Second-pass coordination of mixed constituents and sentence-initial coordinators",
+            "result": "CLAUSE",
+            "rules": [
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "COORD"},
+                        "before": [{"type": "CLAUSE", "quantifier": "one"}],
+                        "after": [{"type": "PREDICATE", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "COORDINATION", "from": "before[0]", "to": "anchor"},
+                        {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before", "after"],
+                    "note": "Clause + coordinator + subject-less predicate: 'he opened the door and walked in'."
+                },
+                {
+                    "result": "CLAUSE",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "COORD"},
+                        "before": [],
+                        "after": [{"type": "CLAUSE", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}
+                    ],
+                    "consume": ["anchor"],
+                    "position_constraints": {"anchor": 0},
+                    "note": "Sentence-initial coordinator joins the clause that follows: 'but he left'."
+                }
+            ]
+        },
+
+        "auxChain1": {
+            "description": "Modal before another auxiliary: the modal attaches to the next auxiliary (be/have), which then takes the main verb or complement",
+            "result": "VERBAL",
+            "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_BARE_NEXT"]},
+                        "before": [],
+                        "after": [{"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"], "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["anchor"],
+                    "note": "Modal + copula/progressive auxiliary: 'should be ready', 'will be here'."
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_BARE_NEXT"]},
+                        "before": [],
+                        "after": [{"type": "MODIFIER", "subtypes": ["AUX_PP_NEXT"], "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["anchor"],
+                    "note": "Modal + perfect auxiliary: 'will have gone'."
                 }
             ]
         }
