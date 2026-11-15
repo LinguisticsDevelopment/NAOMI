@@ -159,3 +159,18 @@ earlier (v2/v3/v4b/arms1-4) scaling and ablation runs, which were already
 on `integration-2026-11` via earlier merges and are historical record, not
 artifacts a new agent needs to load. See `RESEARCH_NOTES.md` for what each
 of those runs found.
+
+## Gold v7 (new tree format)
+
+The grammar parser's trees (`naomi.types.Tree`: every non-punctuation token one node, nested clauses, function words as
+grounded nodes, unattached tokens recorded as UNATTACHED) over the gold-v6 population, for encoder/decoder design and
+training. Built by `scripts/build_gold_v7.py` (recipe and statistics: `dev/reports/GOLD_V7_STATS.md`).
+
+- **`runs/gold_v7.jsonl.gz`** (18.3MB, 29,421 records), **`runs/gold_v7_failures.jsonl.gz`** (616 failures with kind, no tree),
+  **`runs/holdout_gold_v7.jsonl`** (94) + `.failures` (4), **`runs/holdout_dev_gold_v7.jsonl`** (98) + `.failures` (empty),
+  **`runs/build_gold_v7.log`**.
+- Load: `for l in gzip.open(p,"rt"): r = json.loads(l); t = naomi.tree.tree_from_dict(r["tree"])`.
+  Record: id, text, source, tokens (token, pos incl. punctuation), tree, coverage (score_coverage), diagnostics (counts), n_tokens, n_attached, parse_seconds.
+- In them: candidate sense ids per node (`sense` is None everywhere), parser edge types as relations, UNATTACHED pieces (only ~30% of tokens
+  hang from the main root). Not in them: committed senses, encoder output, any answer/QA signal; holdout sentences are excluded from the main file.
+- **v6 gold (`encoder_gold_v6.jsonl.gz`) remains the gold the v6 encoder checkpoint was trained on**; v7 does not replace it.
