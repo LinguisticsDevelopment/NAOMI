@@ -65,7 +65,7 @@ def test_interrogative_donde_tagged_adv_relative():
     from parser.enums import SubType
 
     assert simple_tag_spanish("dónde") == Tag.ADV
-    assert SubType.RELATIVE in SPANISH_WORD_SUBTYPES["dónde"]
+    assert SubType.FRONT_LINKER in SPANISH_WORD_SUBTYPES["dónde"]
 
 
 def test_tag_spanish_sentence_produces_verb_for_conjugated_forms():

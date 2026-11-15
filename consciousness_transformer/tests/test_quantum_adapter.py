@@ -97,7 +97,7 @@ def test_passive_flag_reaches_the_parse_tree(parser):
 def test_question_flag_reaches_the_hypgraph(parser):
     graph = parser._parse_graph("where is the ball ?")
     clause_idx = next(idx for idx, label, tok in graph.nodes if tok == "is")
-    assert "QUESTION" in graph.flags_of(clause_idx)
+    assert "PREDICATE_FIRST" in graph.flags_of(clause_idx)
 
 
 def test_non_passive_predicate_has_no_passive_flag(parser):

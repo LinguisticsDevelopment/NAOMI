@@ -60,7 +60,7 @@ def test_mary_is_in_the_kitchen_single_root(parser):
     """'mary is in the kitchen' must parse to a single root."""
     words = [
         Word("mary", Tag.PROPN),
-        Word("is", Tag.AUX, [SubType.PROGRESSIVE]),
+        Word("is", Tag.AUX, [SubType.AUX_PART_NEXT]),
         Word("in", Tag.ADP),
         Word("the", Tag.DET),
         Word("kitchen", Tag.NOUN),
@@ -76,7 +76,7 @@ def test_mary_is_in_the_kitchen_pp_reachable(parser):
     """'in' and 'kitchen' must be reachable from root in 'mary is in the kitchen'."""
     words = [
         Word("mary", Tag.PROPN),
-        Word("is", Tag.AUX, [SubType.PROGRESSIVE]),
+        Word("is", Tag.AUX, [SubType.AUX_PART_NEXT]),
         Word("in", Tag.ADP),
         Word("the", Tag.DET),
         Word("kitchen", Tag.NOUN),
@@ -126,7 +126,7 @@ def test_she_is_in_the_kitchen_reachable(parser):
     """With 'she' tagged as PRON, 'she' and 'in' must be reachable."""
     words = [
         Word("she", Tag.PRON),
-        Word("is", Tag.AUX, [SubType.PROGRESSIVE]),
+        Word("is", Tag.AUX, [SubType.AUX_PART_NEXT]),
         Word("in", Tag.ADP),
         Word("the", Tag.DET),
         Word("kitchen", Tag.NOUN),

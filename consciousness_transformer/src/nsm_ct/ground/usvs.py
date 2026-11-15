@@ -93,9 +93,45 @@ _FUNCTION_POS_TAGS = frozenset({
 
 def _wn_pos_of_sense_id(sense_id: str) -> Optional[str]:
     """`"can.v.01"` -> `"v"`; `None` if *sense_id* isn't in that shape (the
-    `interj.<word>.01` / `<lemma>.<pos>.<NN>` synset-name convention)."""
+    `interj.<word>.01` / `<lemma>.<pos>.<NN>` synset-name convention, or a
+    lexicon function sense `fn.<lang>.<word>.<k>`)."""
+    if sense_id.startswith("fn."):
+        return None
     parts = sense_id.rsplit(".", 2)
     return parts[1] if len(parts) == 3 else None
+
+
+# ---------------------------------------------------------------------------
+# Extension axes + per-language closed-class lexicon (owner decision 2026-11-15;
+# dev/design/FUNCTION_WORDS_IN_USVS_PROPOSAL.md). Both are DATA, applied at load
+# time AFTER the base artifact is read, exactly like the pure-interjection rows are
+# added after the fingerprint: the base 607 axes, the base arrays and the
+# fingerprint are untouched; `load_usvs(..., extended=False)` returns the bare base.
+# ---------------------------------------------------------------------------
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+LEXICON_DIR = _REPO_ROOT / "quantum_parser" / "lexicons"
+EXT_AXES_FILE = "ext_axes.json"
+DEFAULT_LEXICON_LANGS: Tuple[str, ...] = ("en", "es")
+_LEXICON_CACHE: Dict[str, Dict] = {}
+
+
+def load_ext_axes(in_dir) -> List[Dict[str, str]]:
+    """The extension-axis definitions (`[{name, meaning}, ...]`) stored beside the
+    artifact; `[]` when the file is absent."""
+    f = Path(in_dir) / EXT_AXES_FILE
+    if not f.exists():
+        return []
+    return json.loads(f.read_text(encoding="utf-8"))["axes"]
+
+
+def load_lexicon(lang: str) -> Dict:
+    """The parsed closed-class lexicon `quantum_parser/lexicons/<lang>.json`
+    (`{}` if the language has none). Cached per process."""
+    if lang not in _LEXICON_CACHE:
+        f = LEXICON_DIR / f"{lang}.json"
+        _LEXICON_CACHE[lang] = (json.loads(f.read_text(encoding="utf-8"))
+                                if f.exists() else {})
+    return _LEXICON_CACHE[lang]
 
 
 def _pos_priority_sort(sense_ids: List[str], wn_pos: Optional[frozenset]
@@ -335,6 +371,8 @@ class USVS:
     antonyms: List[Tuple[str, str, str]]       # (a, b, tier)
     genus: List[Tuple[str, str]]               # directed: word -> genus
     meta: Dict
+    n_base_axes: int = -1                      # axes of the fingerprinted artifact (set in __post_init__)
+    extended: bool = False                     # True after `extend()` (axes/lexicon senses appended)
 
     # -- queries -----------------------------------------------------------
     def word_coord(self, word: str) -> Optional[np.ndarray]:
@@ -361,8 +399,8 @@ class USVS:
     def senses_of(self, word: str) -> List[str]:
         return self._lemma_index.get(word.lower(), [])
 
-    def senses_of_surface(self, word: str, pos_hint: Optional[str] = None
-                          ) -> Tuple[List[str], str]:
+    def senses_of_surface(self, word: str, pos_hint: Optional[str] = None,
+                          lang: str = "en") -> Tuple[List[str], str]:
         """`senses_of`, but for an INFLECTED surface form that is not itself
         a WordNet lemma (`senses_of("dogs") == []`, `senses_of("walked") ==
         []` -- D5, `dev/archive/HAND_GOLD_DRAFT.md`). Tries the raw surface first;
@@ -404,6 +442,18 @@ class USVS:
         both from this SAME function, not a second `senses_of` call."""
         from .. import wordnet as _wn_mod
         w = word.lower()
+        # Closed-class lexicon FIRST (`lang`, default "en"): a word the lexicon
+        # defines with dims (for this POS, or its first reading when no hint)
+        # grounds to its `fn.<lang>.<word>.<k>` sense and never reaches WordNet
+        # ("i" is not iodine, "a" not angstrom). Other POS readings of the same
+        # spelling (the noun "can", "will") fall through to WordNet unchanged.
+        fn = self._fn_index.get((lang, w))
+        if fn:
+            if pos_hint is None:
+                return [fn[0][1]], w
+            hit = [sid for pos_set, sid in fn if pos_hint in pos_set]
+            if hit:
+                return hit, w
         wn_pos = _UPOS_TO_WN.get(pos_hint) if pos_hint else None
         wn_pos_set = frozenset(wn_pos) if wn_pos else None
         is_function = pos_hint in _FUNCTION_POS_TAGS
@@ -472,7 +522,68 @@ class USVS:
         w = word.lower()
         return sorted({g for a, g in self.genus if a == w})
 
+    def extend(self, ext_axes: Sequence[Dict[str, str]],
+               langs: Sequence[str] = DEFAULT_LEXICON_LANGS) -> "USVS":
+        """Append the extension axes and the closed-class lexicon senses IN PLACE.
+
+        - axes: `ext_axes` names are appended after the base axes; `core_coords` gets
+          zero columns for them (content words have no value on operator axes).
+        - senses: one `fn.<lang>.<word>.<k>` sense per lexicon reading with dims, a
+          sparse vector over the (now extended) named axes. They are indexed for
+          `sense_dense`/`sense_signature`/`senses_of_surface(lang=...)` only -- NOT in
+          the lemma index, so `senses_of` and every content-word path are unchanged.
+        The fingerprint, `meta` and the base arrays' first `n_base_axes` columns are not
+        touched (post-fingerprint, additive, like `interj.*`)."""
+        if self.extended:
+            return self
+        base = len(self.axes)
+        names = [a["name"] for a in ext_axes]
+        dup = set(names) & set(self.axes)
+        if dup or len(set(names)) != len(names):
+            raise ValueError(f"extension axes clash with base axes or each other: {sorted(dup)}")
+        if names:
+            self.core_coords = np.concatenate(
+                [self.core_coords,
+                 np.zeros((self.core_coords.shape[0], len(names)), dtype=self.core_coords.dtype)], axis=1)
+            self.axes = list(self.axes) + names
+        axis_index = {a: i for i, a in enumerate(self.axes)}
+        idxs: List[int] = []
+        vals: List[float] = []
+        indptr: List[int] = []
+        new_ids: List[str] = []
+        new_lemmas: List[List[str]] = []
+        fn_index: Dict[Tuple[str, str], List[Tuple[frozenset, str]]] = {}
+        for lang in langs:
+            for word, entry in load_lexicon(lang).get("entries", {}).items():
+                for k, r in enumerate(entry.get("readings", ()), 1):
+                    row = {axis_index[a]: float(w) for a, w in r["dims"].items()}  # KeyError = unknown axis
+                    if not row:
+                        continue
+                    sid = f"fn.{lang}.{word}.{k}"
+                    new_ids.append(sid)
+                    new_lemmas.append([word])
+                    for j in sorted(row):
+                        idxs.append(j)
+                        vals.append(row[j])
+                    indptr.append(len(idxs))
+                    fn_index.setdefault((lang, word.lower()), []).append((frozenset(r["pos"]), sid))
+        n0, nnz0 = len(self.sense_ids), int(self.sense_indptr[-1])
+        self.sense_ids = list(self.sense_ids) + new_ids
+        self.sense_lemmas = list(self.sense_lemmas) + new_lemmas
+        self.sense_indptr = np.concatenate(
+            [self.sense_indptr, nnz0 + np.asarray(indptr, dtype=np.int64)])
+        self.sense_axis_idx = np.concatenate([self.sense_axis_idx, np.asarray(idxs, dtype=np.int32)])
+        self.sense_axis_val = np.concatenate([self.sense_axis_val, np.asarray(vals, dtype=np.float32)])
+        for i, sid in enumerate(new_ids):
+            self._sense_index[sid] = n0 + i
+        self._fn_index = fn_index
+        self.extended = True
+        return self
+
     def __post_init__(self) -> None:
+        if self.n_base_axes < 0:
+            self.n_base_axes = len(self.axes)
+        self._fn_index: Dict[Tuple[str, str], List[Tuple[frozenset, str]]] = {}
         self._word_index = {w: i for i, w in enumerate(self.core_words)}
         self._sense_index = {s: i for i, s in enumerate(self.sense_ids)}
         self._lemma_index: Dict[str, List[str]] = {}
@@ -632,6 +743,9 @@ def build_usvs(*, n_core: int = 10_000, max_senses: Optional[int] = None,
 # Persistence (deterministic; three files under a directory)
 # ---------------------------------------------------------------------------
 def save_usvs(u: USVS, out_dir) -> Path:
+    if u.extended:
+        raise ValueError("refusing to save an extended USVS: the artifact on disk is the "
+                         "fingerprinted base; extension axes/lexicon senses are applied at load")
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
@@ -652,7 +766,20 @@ def save_usvs(u: USVS, out_dir) -> Path:
     return out
 
 
-def load_usvs(in_dir) -> USVS:
+def load_usvs(in_dir, extended: bool = True,
+              langs: Sequence[str] = DEFAULT_LEXICON_LANGS) -> USVS:
+    """Load the artifact. `extended=True` (default) appends the extension axes
+    (`ext_axes.json`, 7 axes -> 614) and the closed-class lexicon senses; the
+    fingerprint and the first `n_base_axes` (607) columns are the base artifact's,
+    unchanged. `extended=False` returns the bare 607-axis base (needed by consumers
+    trained at d=607, e.g. the v6 encoder checkpoints)."""
+    u = _load_base(in_dir)
+    if extended:
+        u.extend(load_ext_axes(in_dir), langs)
+    return u
+
+
+def _load_base(in_dir) -> USVS:
     p = Path(in_dir)
     z = np.load(p / "usvs.npz", allow_pickle=False)
     m = json.loads((p / "usvs_meta.json").read_text())

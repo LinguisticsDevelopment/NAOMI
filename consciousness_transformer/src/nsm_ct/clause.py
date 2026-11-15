@@ -112,10 +112,10 @@ def _prep_relation(graph, predicate_idx: Optional[int], prep_token: Optional[str
 
 
 def _is_question(graph, idx: Optional[int]) -> bool:
-    """True if graph node ``idx`` carries quantum_parser's QUESTION subtype
+    """True if graph node ``idx`` carries quantum_parser's PREDICATE_FIRST subtype (formerly QUESTION)
     (stamped by ``question1``, M49) -- reachable via M50's flags passthrough.
     """
-    return idx is not None and "QUESTION" in graph.flags_of(idx)
+    return idx is not None and "PREDICATE_FIRST" in graph.flags_of(idx)
 
 
 # Verbs whose bare direct object is a location ("entered the garden", no PP at
@@ -207,7 +207,7 @@ class Clause:
     predicate: str
     args: List[Tuple[str, ParseNode]]   # (relation, arg_node)
     head: ParseNode
-    is_question: bool = False           # predicate carries quantum_parser's QUESTION subtype (M49/M50)
+    is_question: bool = False           # predicate carries quantum_parser's PREDICATE_FIRST subtype (formerly QUESTION) (M49/M50)
 
 
 def _clause_from_node(node: ParseNode) -> Clause:
@@ -240,7 +240,7 @@ def _clause_from_node(node: ParseNode) -> Clause:
                 else:
                     rel = _PREP_RELATION.get(prep_tok, (ch.token or "PREP").upper())
                 args.append((rel, obj))
-    return Clause(predicate=node.token, args=args, head=node, is_question="QUESTION" in node.flags)
+    return Clause(predicate=node.token, args=args, head=node, is_question="PREDICATE_FIRST" in node.flags)
 
 
 def extract_clauses(tree: ParseTree) -> List[Clause]:

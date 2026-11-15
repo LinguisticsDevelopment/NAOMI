@@ -127,6 +127,21 @@ def _build_prime_exponent_map() -> Dict[str, str]:
 
 _PRIME_EXPONENT_MAP: Dict[str, str] = _build_prime_exponent_map()
 
+_PRIME_NAME_SET: FrozenSet[str] = frozenset(p.name for p in PRIMES)
+
+
+def _lexicon_prime_leaf(word: str) -> Optional[str]:
+    """First NSM-prime dimension of *word*'s first closed-class lexicon reading
+    (English), or None when the lexicon does not define it / defines it on no prime."""
+    from .ground.usvs import load_lexicon  # local import: ground imports this module
+    entry = load_lexicon("en").get("entries", {}).get(word)
+    if not entry or not entry.get("readings"):
+        return None
+    for dim in entry["readings"][0]["dims"]:
+        if dim in _PRIME_NAME_SET:
+            return dim
+    return None
+
 
 # ---------------------------------------------------------------------------
 # Resolver
@@ -234,6 +249,14 @@ class NSMMeaningResolver(AbstractMeaningResolver):
         prime_name = _PRIME_EXPONENT_MAP.get(word)
         if prime_name is not None:
             return ParseTree(root=ParseNode(label=prime_name))
+
+        # 1b. Closed-class lexicon (data: quantum_parser/lexicons/en.json). A word it
+        # defines on named USVS axes resolves to the leaf of its first NSM-prime
+        # dimension (the entry's own dimension order is the head order), never to a
+        # same-spelled WordNet homograph ("he" is not helium, "who" not the WHO).
+        leaf = _lexicon_prime_leaf(word)
+        if leaf is not None:
+            return ParseTree(root=ParseNode(label=leaf))
 
         # 2. Molecule exponent?
         molecule = MOLECULES_BY_EXPONENT.get(word)

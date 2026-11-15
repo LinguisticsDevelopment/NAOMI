@@ -42,7 +42,7 @@ def main() -> None:
 
     # load-back sanity + timing
     t1 = time.time()
-    u2 = load_usvs(out)
+    u2 = load_usvs(out, extended=False)
     assert u2.fingerprint == u.fingerprint
     print(f"load-back ok in {time.time()-t1:.1f}s")
 

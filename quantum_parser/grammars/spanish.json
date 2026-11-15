@@ -1010,7 +1010,7 @@
             "anchor": {
               "type": "DESCRIPTOR",
               "subtypes": [
-                "QUANTIFIER"
+                "PROMOTABLE_BARE"
               ]
             },
             "before": [],
@@ -1027,7 +1027,7 @@
             "anchor": {
               "type": "SPECIFIER",
               "subtypes": [
-                "QUANTIFIER"
+                "PROMOTABLE_BARE"
               ]
             },
             "before": [],
@@ -1050,14 +1050,14 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "PROGRESSIVE"
+                "AUX_PART_NEXT"
               ]
             },
             "before": [
               {
                 "type": "SPECIFIER",
                 "subtypes": [
-                  "RELATIVE"
+                  "FRONT_LINKER"
                 ],
                 "quantifier": "one"
               }
@@ -1086,7 +1086,7 @@
             "after"
           ],
           "push_subtypes": [
-            "QUESTION"
+            "PREDICATE_FIRST"
           ],
           "position_constraints": {
             "before[0]": 0
@@ -1100,7 +1100,7 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "PROGRESSIVE"
+                "AUX_PART_NEXT"
               ]
             },
             "before": [],
@@ -1122,7 +1122,7 @@
             "after"
           ],
           "push_subtypes": [
-            "QUESTION"
+            "PREDICATE_FIRST"
           ],
           "position_constraints": {
             "anchor": 0
@@ -1142,14 +1142,14 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "PROGRESSIVE"
+                "AUX_PART_NEXT"
               ]
             },
             "before": [
               {
                 "type": "SPECIFIER",
                 "subtypes": [
-                  "EXISTENTIAL"
+                  "INITIAL_PLACEHOLDER"
                 ],
                 "quantifier": "one"
               }
@@ -1189,14 +1189,14 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "PROGRESSIVE"
+                "AUX_PART_NEXT"
               ]
             },
             "before": [
               {
                 "type": "SPECIFIER",
                 "subtypes": [
-                  "EXISTENTIAL"
+                  "INITIAL_PLACEHOLDER"
                 ],
                 "quantifier": "one"
               }
@@ -1245,14 +1245,14 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "PROGRESSIVE"
+                "AUX_PART_NEXT"
               ]
             },
             "before": [
               {
                 "type": "SPECIFIER",
                 "subtypes": [
-                  "EXISTENTIAL"
+                  "INITIAL_PLACEHOLDER"
                 ],
                 "quantifier": "one"
               }
@@ -1261,7 +1261,7 @@
               {
                 "type": "MODIFIER",
                 "subtypes": [
-                  "NEGATIVE"
+                  "ABSORBED_PREMOD"
                 ],
                 "quantifier": "one"
               },
@@ -2032,7 +2032,7 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "INFINITIVE"
+                "PRE_VERB_PARTICLE"
               ]
             },
             "before": [],
@@ -2133,7 +2133,7 @@
             "after"
           ],
           "pull_categories": [
-            "POSSESSIVE"
+            "NOUN_CLITIC_LEFT"
           ],
           "note": "Possessive: John's, dog's"
         }
@@ -2150,7 +2150,7 @@
             "anchor": {
               "type": "NOUN",
               "subtypes": [
-                "POSSESSIVE"
+                "NOUN_CLITIC_LEFT"
               ]
             },
             "before": [],
@@ -2190,7 +2190,7 @@
               {
                 "type": "MODIFIER",
                 "subtypes": [
-                  "NEGATIVE"
+                  "ABSORBED_PREMOD"
                 ],
                 "quantifier": "one"
               }
@@ -2208,7 +2208,7 @@
             "before"
           ],
           "pull_categories": [
-            "NEGATIVE"
+            "ABSORBED_PREMOD"
           ],
           "note": "Negation: not run, n't go. Scoped to NEGATIVE (round 2): without it, any MODIFIER (e.g. \"be\"/\"is\") immediately before a VERBAL was wrongly consumed as if it were a negation particle, pre-empting aux1 for modal+passive chains like \"can be found\"."
         }
@@ -2229,7 +2229,7 @@
               {
                 "type": "DESCRIPTOR",
                 "subtypes": [
-                  "NEGATIVE"
+                  "ABSORBED_PREMOD"
                 ],
                 "quantifier": "one"
               }
@@ -2266,7 +2266,7 @@
               {
                 "type": "NOMINAL",
                 "subtypes": [
-                  "RELATIVE"
+                  "FRONT_LINKER"
                 ],
                 "quantifier": "one"
               },
@@ -2305,7 +2305,7 @@
               {
                 "type": "NOMINAL",
                 "subtypes": [
-                  "RELATIVE"
+                  "FRONT_LINKER"
                 ],
                 "quantifier": "one"
               },
@@ -2359,7 +2359,7 @@
               {
                 "type": "SPECIFIER",
                 "subtypes": [
-                  "RELATIVE"
+                  "FRONT_LINKER"
                 ],
                 "quantifier": "one"
               },
@@ -2777,7 +2777,7 @@
               {
                 "type": "MODIFIER",
                 "subtypes": [
-                  "PROGRESSIVE"
+                  "AUX_PART_NEXT"
                 ],
                 "quantifier": "one"
               }
@@ -2806,7 +2806,7 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "MODAL"
+                "AUX_BARE_NEXT"
               ]
             },
             "before": [],
@@ -2828,7 +2828,7 @@
             "anchor"
           ],
           "pull_categories": [
-            "MODAL"
+            "AUX_BARE_NEXT"
           ],
           "note": "Modal + verb: can run, should go"
         },
@@ -2839,7 +2839,7 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "PERFECT"
+                "AUX_PP_NEXT"
               ]
             },
             "before": [],
@@ -2861,7 +2861,7 @@
             "anchor"
           ],
           "pull_categories": [
-            "PERFECT"
+            "AUX_PP_NEXT"
           ],
           "note": "Perfect auxiliary + verb: has run, had eaten"
         },
@@ -2872,7 +2872,7 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "PROGRESSIVE"
+                "AUX_PART_NEXT"
               ]
             },
             "before": [],
@@ -2894,7 +2894,7 @@
             "anchor"
           ],
           "pull_categories": [
-            "PROGRESSIVE"
+            "AUX_PART_NEXT"
           ],
           "note": "Progressive auxiliary + verb: is running, was walking"
         },
@@ -2905,7 +2905,7 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "PROGRESSIVE"
+                "AUX_PART_NEXT"
               ]
             },
             "before": [],
@@ -2922,7 +2922,7 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "PERFECT"
+                "AUX_PP_NEXT"
               ]
             },
             "before": [],
@@ -2939,7 +2939,7 @@
             "anchor": {
               "type": "MODIFIER",
               "subtypes": [
-                "MODAL"
+                "AUX_BARE_NEXT"
               ]
             },
             "before": [],
@@ -2962,7 +2962,7 @@
             "anchor": {
               "type": "VERBAL",
               "subtypes": [
-                "PERFECT"
+                "AUX_PP_NEXT"
               ]
             },
             "before": [],
@@ -2970,7 +2970,7 @@
               {
                 "type": "VERBAL",
                 "subtypes": [
-                  "PROGRESSIVE"
+                  "AUX_PART_NEXT"
                 ],
                 "quantifier": "one"
               }
@@ -2993,7 +2993,7 @@
             "anchor": {
               "type": "VERBAL",
               "subtypes": [
-                "MODAL"
+                "AUX_BARE_NEXT"
               ]
             },
             "before": [],
@@ -3001,7 +3001,7 @@
               {
                 "type": "VERBAL",
                 "subtypes": [
-                  "PERFECT"
+                  "AUX_PP_NEXT"
                 ],
                 "quantifier": "one"
               }
