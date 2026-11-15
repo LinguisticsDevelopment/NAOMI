@@ -241,7 +241,8 @@ class _Space:
     """Sense vectors over the named axes (plus a unit dimension per name / unsensed lemma), the folded
     operators of each skeleton node, and the antonym store."""
 
-    def __init__(self, usvs, best_candidate: bool, tiers=None, word_tiers=(), idf: bool = True):
+    def __init__(self, usvs, best_candidate: bool, tiers=None, word_tiers=(), idf: bool = True, separate_ops: bool = False):
+        self.sep = separate_ops
         self.u, self.best, self._v, self._r = usvs, best_candidate, {}, {}
         self.ops: Dict[int, List[Node]] = {}
         self.tiers = DEFAULT_ANTONYM_TIERS if tiers is None else tuple(tiers)
@@ -330,10 +331,25 @@ class _Space:
                 if best is None or s > best.sim + _EPS:
                     ba, bb = self.rep(a, sa, False), self.rep(b, sb, False)
                     best = _M(sim=s, sa=sa, sb=sb, base=1.0 if sa == sb else self._cos(ba, bb), dot=self.dot(ra, rb))
+        if self.sep and (self.ops.get(id(a)) or self.ops.get(id(b))):
+            best.sim = 0.5 * (best.base + self._op_cos(a, b))
         best.tier = None if a.kind == KIND_NAME or b.kind == KIND_NAME else self.opposite_senses(a, b, best.sa, best.sb)
         if best.tier:
             best.sim = best.dot = 0.0
         return best
+
+    def _opvec(self, n: Node) -> Optional[np.ndarray]:
+        vs = [self.vec(self.chosen(o)) for o in self.ops.get(id(n), [])]
+        vs = [v for v in vs if v is not None]
+        return sum(vs) if vs else None
+
+    def _op_cos(self, a: Node, b: Node) -> float:
+        va, vb = self._opvec(a), self._opvec(b)
+        if va is None and vb is None:
+            return 1.0
+        if va is None or vb is None:
+            return 0.0
+        return float(np.dot(va, vb) / (np.linalg.norm(va) * np.linalg.norm(vb)))
 
     def dims(self, sid: Optional[str]) -> Dict[str, float]:
         return {k: round(v, 4) for k, v in self.u.sense_signature(sid).items()} if sid else {}
@@ -449,11 +465,12 @@ def _figures(refs: List[Node], cands: List[Node], credit: Dict, good: set) -> Op
 
 
 def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = False, antonym_tiers=None,
-               word_store_tiers=(), idf: bool = True) -> PairScore:
+               word_store_tiers=(), idf: bool = True, normalise_nodes: bool = True,
+               separate_ops: bool = False) -> PairScore:
     """``antonym_tiers``: sense-level (WordNet pointer) tiers, default direct + satellite_head.
     ``word_store_tiers``: optional extra tiers from the word-level USVS store (default off: conflated).
     ``idf``: weight the axes by IDF in every vector comparison (default on)."""
-    sp = _Space(usvs, best_candidate, antonym_tiers, word_store_tiers, idf)
+    sp = _Space(usvs, best_candidate, antonym_tiers, word_store_tiers, idf, separate_ops)
     reference, candidate = fold_operators(reference, sp), fold_operators(candidate, sp)
     ro, rp, co, cp, match, meaning = _align(reference, candidate, sp)
     rn = [n for n in ro if not _virtual(n)]
@@ -461,7 +478,7 @@ def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = Fa
     cmatch = {id(c): r for r in rn if id(r) in match for c in [match[id(r)]]}
     credit: Dict = {}
     good: set = set()
-    dot = n2r = n2c = 0.0
+    dot = n2r = n2c = simsum = 0.0
     for r in rn:
         c = match.get(id(r))
         if c is None:
@@ -474,13 +491,17 @@ def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = Fa
             good.add(id(r))
             good.add(("c", id(c)))
             dot += m.dot
+            simsum += m.sim
     for c in cn:
         r = cmatch.get(id(c))
         n2c += sp.norm2(c, meaning[id(r)].sb if r is not None else sp.chosen(c))
     if not rn and not cn:
         meaning_pct = shape_pct = 100.0
     else:
-        meaning_pct = 100.0 * max(0.0, min(1.0, dot / (n2r * n2c) ** 0.5)) if n2r > 0 and n2c > 0 else 0.0
+        if normalise_nodes:       # every node weighs the same: flattening of unit-normalised node vectors
+            meaning_pct = 100.0 * max(0.0, min(1.0, simsum / (len(rn) * len(cn)) ** 0.5)) if rn and cn else 0.0
+        else:
+            meaning_pct = 100.0 * max(0.0, min(1.0, dot / (n2r * n2c) ** 0.5)) if n2r > 0 and n2c > 0 else 0.0
         shape_pct = 100.0 * (len(good)) / (len(rn) + len(cn))
     reasons: List[dict] = []
 
@@ -544,7 +565,7 @@ def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = Fa
 
 
 def tree_similarity(a: Tree, b: Tree, usvs, best_candidate: bool = False, antonym_tiers=None,
-                    word_store_tiers=(), idf: bool = True) -> float:
+                    word_store_tiers=(), idf: bool = True, **kw) -> float:
     """Symmetric: the overall percentage with a as reference averaged with b as reference."""
-    return 0.5 * (score_pair(a, b, usvs, best_candidate, antonym_tiers, word_store_tiers, idf).overall
-                  + score_pair(b, a, usvs, best_candidate, antonym_tiers, word_store_tiers, idf).overall)
+    return 0.5 * (score_pair(a, b, usvs, best_candidate, antonym_tiers, word_store_tiers, idf, **kw).overall
+                  + score_pair(b, a, usvs, best_candidate, antonym_tiers, word_store_tiers, idf, **kw).overall)
