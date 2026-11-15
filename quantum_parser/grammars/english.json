@@ -35,7 +35,8 @@
         "suboord1",
         "verb1b", "subord3",
         "predicate1b",
-        "clause1b", "clause2b", "coord3"
+        "clause1b", "clause2b", "coord3",
+        "sub4", "ppc", "auxfix1", "adjunct3", "subord4", "subord5", "pp3", "inf3", "partic1", "prep4", "inf4", "coord4", "quote4a", "quote4", "quote3", "quote5", "quote6", "coord5", "join1", "splice1", "join2", "join3", "subord4b", "coord6", "coord5b", "splice3", "join4", "join5", "inf4"
     ],
 
     "rulesets": {
@@ -2590,7 +2591,7 @@
                     "connections": [
                         {"type": "SUBJECT", "from": "anchor", "to": "after[0]"}
                     ],
-                    "consume": ["before", "after"],
+                    "consume": ["after"],
                     "note": "Quote-close directly adjacent to the reporting verb, no intervening punctuation: quote-close said ratcliff"
                 }
             ]
@@ -2980,7 +2981,12 @@
                     "connections": [],
                     "consume": ["before"],
                     "note": "A comma immediately left of a subordinator is consumed without an edge: 'he left , because it rained'."
-                }
+                },
+                {"result": "COORD", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "NIL", "subtypes": ["SEMICOLON"], "quantifier": "one"}], "after": []}, "connections": [], "consume": ["before"], "note": "A semicolon immediately left of a coordinator is consumed without an edge: 'he boasted ; and the others laughed'."},
+                {"result": "COORD", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}], "after": []}, "connections": [], "consume": ["before"], "note": "A colon immediately left of a coordinator is consumed without an edge."},
+                {"result": "COORD", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}], "after": []}, "connections": [], "consume": ["before"], "note": "A closing quotation mark (and the comma before it) left of a coordinator are consumed without an edge: '\" go , \" and he went'."},
+                {"result": "COORD", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}], "after": []}, "connections": [], "consume": ["before"], "note": "A closing quotation mark left of a coordinator is consumed without an edge."},
+                {"result": "SUBOORD", "recursive": false, "pattern": {"anchor": {"type": "SUBOORD"}, "before": [{"type": "NIL", "subtypes": ["SEMICOLON"], "quantifier": "one"}], "after": []}, "connections": [], "consume": ["before"], "note": "A semicolon immediately left of a subordinator is consumed without an edge."}
             ]
         },
 
@@ -3554,6 +3560,325 @@
                     "consume": ["anchor"],
                     "note": "Modal + perfect auxiliary: 'will have gone'."
                 }
+            ]
+        },
+
+        "sub4": {
+            "description": "Relative-adverb or subordinator + clause or participle phrase forms a subordinate clause that later rules attach",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "SPECIFIER", "subtypes": ["FRONT_LINKER"]}, "before": [], "after": [{"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "push_subtypes": ["SUBORDINATE"], "note": "Clause-opening adverb + clause: 'when he came' -> when(MODIFICATION:came), marked SUBORDINATE for the attachment rules."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "SUBOORD"}, "before": [], "after": [{"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "push_subtypes": ["SUBORDINATE"], "note": "Subordinator + subject-less predicate: 'while walking home', 'when asked'."}
+            ]
+        },
+
+        "ppc": {
+            "description": "Preposition + subordinate clause: 'of how she had promised'",
+            "result": "PP_NOUN",
+            "rules": [
+                {"result": "PP_NOUN", "recursive": false, "pattern": {"anchor": {"type": "PREP"}, "before": [], "after": [{"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}]}, "connections": [{"type": "PREPOSITION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Preposition whose object is a subordinate clause."}
+            ]
+        },
+
+        "auxfix1": {
+            "description": "An auxiliary left heading its own clause attaches the verb phrase that follows it",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE", "subtypes": ["AUX_PART_NEXT"]}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PARTICIPLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Auxiliary that headed its own clause/predicate takes the participle / bare verb that follows it: 'it might have been worse', 'was told'."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE", "subtypes": ["AUX_PART_NEXT"]}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PAST_PARTICIPLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Auxiliary that headed its own clause/predicate takes the participle / bare verb that follows it: 'it might have been worse', 'was told'."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE", "subtypes": ["AUX_PP_NEXT"]}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PAST_PARTICIPLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Auxiliary that headed its own clause/predicate takes the participle / bare verb that follows it: 'it might have been worse', 'was told'."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "PREDICATE", "subtypes": ["AUX_BARE_NEXT"]}, "before": [], "after": [{"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Auxiliary that headed its own clause/predicate takes the participle / bare verb that follows it: 'it might have been worse', 'was told'."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "PREDICATE", "subtypes": ["AUX_PART_NEXT"]}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PARTICIPLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Auxiliary that headed its own clause/predicate takes the participle / bare verb that follows it: 'it might have been worse', 'was told'."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "PREDICATE", "subtypes": ["AUX_PART_NEXT"]}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PAST_PARTICIPLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Auxiliary that headed its own clause/predicate takes the participle / bare verb that follows it: 'it might have been worse', 'was told'."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "PREDICATE", "subtypes": ["AUX_PP_NEXT"]}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PAST_PARTICIPLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Auxiliary that headed its own clause/predicate takes the participle / bare verb that follows it: 'it might have been worse', 'was told'."}
+            ]
+        },
+
+        "adjunct3": {
+            "description": "Adverb or prepositional phrase directly before a built clause or predicate attaches to it",
+            "result": "CLAUSE",
+            "rules": [
+
+            ]
+        },
+
+        "subord4": {
+            "description": "Subordinate clause after a built clause or predicate attaches to it (nearest head on the left)",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}]}, "connections": [{"type": "SUBORDINATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Clause + subordinate clause."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}]}, "connections": [{"type": "SUBORDINATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause , subordinate clause."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "PREDICATE"}, "before": [], "after": [{"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}]}, "connections": [{"type": "SUBORDINATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Predicate + subordinate clause."}
+            ]
+        },
+
+        "subord5": {
+            "description": "Fronted subordinate clause attaches to the clause that follows",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}], "after": []}, "connections": [{"type": "SUBORDINATION", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "Subordinate clause , clause."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}], "after": []}, "connections": [{"type": "SUBORDINATION", "from": "anchor", "to": "before[0]"}], "consume": ["before"], "note": "Subordinate clause directly before a clause."}
+            ]
+        },
+
+        "pp3": {
+            "description": "Prepositional phrase left over after a built clause or predicate attaches to it (nearest head)",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PP_NOUN", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause , prepositional phrase."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "PP_NOUN", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Clause + further prepositional phrase."},
+                {"result": "PREDICATE", "recursive": true, "pattern": {"anchor": {"type": "PREDICATE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PP_NOUN", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Predicate , prepositional phrase."}
+            ]
+        },
+
+        "inf3": {
+            "description": "Infinitive marker left apart from its verb phrase takes it",
+            "result": "PREDICATE",
+            "rules": [
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "PREP", "subtypes": ["PRE_VERB_PARTICLE"]}, "before": [], "after": [{"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Infinitive marker + subject-less predicate: 'to fetch water' -> to(MODIFICATION:fetch)."}
+            ]
+        },
+
+        "partic1": {
+            "description": "Participle phrase: -ing word takes its object, then modifies the nearest clause",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "NOMINAL", "recursive": false, "pattern": {"anchor": {"type": "NOMINAL", "subtypes": ["PARTICIPLE"]}, "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}], "after": [{"type": "NOMINAL", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Comma + -ing word + noun phrase: ', saying this' -> saying(OBJECT:this)."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NOMINAL", "subtypes": ["PARTICIPLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause , -ing phrase: participle adjunct of the clause."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NOMINAL", "subtypes": ["PARTICIPLE"], "quantifier": "one"}], "after": []}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "-ing phrase , clause: fronted participle adjunct."}
+            ]
+        },
+
+        "prep4": {
+            "description": "A stranded preposition (no object found) is a particle of the nearest predicate or clause on its left",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "PREP", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Stranded preposition after a clause: 'whatever they were aimed at'."},
+                {"result": "PREDICATE", "recursive": true, "pattern": {"anchor": {"type": "PREDICATE"}, "before": [], "after": [{"type": "PREP", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Stranded preposition after a predicate."}
+            ]
+        },
+
+        "inf4": {
+            "description": "Infinitive phrase (to + verb) left apart attaches to the nearest clause or predicate on its left (purpose / complement), or to the clause that follows when fronted",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PRE_VERB_PARTICLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Clause + infinitive phrase: purpose or complement, nearest clause on the left."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PREDICATE", "subtypes": ["PRE_VERB_PARTICLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause , infinitive phrase."},
+                {"result": "PREDICATE", "recursive": true, "pattern": {"anchor": {"type": "PREDICATE"}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PRE_VERB_PARTICLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Predicate + infinitive phrase."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PREDICATE", "subtypes": ["PRE_VERB_PARTICLE"], "quantifier": "one"}], "after": []}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "Fronted infinitive phrase , clause: 'to make a long story short , i left'."}
+            ]
+        },
+
+        "coord4": {
+            "description": "Coordinator between built clauses or predicates (second pass, after adjuncts attached)",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "CLAUSE", "quantifier": "one"}], "after": [{"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "before[0]", "to": "anchor"}, {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["before", "after"], "note": "Clause + coordinator + clause."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "CLAUSE", "quantifier": "one"}], "after": [{"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "before[0]", "to": "anchor"}, {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["before", "after"], "note": "Clause + coordinator + subject-less predicate."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "PREDICATE", "quantifier": "one"}], "after": [{"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "before[0]", "to": "anchor"}, {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["before", "after"], "note": "Predicate + coordinator + clause."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "PREDICATE", "quantifier": "one"}], "after": [{"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "before[0]", "to": "anchor"}, {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["before", "after"], "note": "Predicate + coordinator + predicate."}
+            ]
+        },
+
+        "quote4a": {
+            "description": "Reporting clause followed by a complete quotation takes it as object clause and absorbs its marks",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, comma, opening mark, quoted clause, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, comma, opening mark, quoted clause, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, comma, opening mark, quoted clause, nothing, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, colon, opening mark, quoted clause, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, colon, opening mark, quoted clause, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, colon, opening mark, quoted clause, nothing, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, nothing, opening mark, quoted clause, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, nothing, opening mark, quoted clause, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, nothing, opening mark, quoted clause, nothing, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, comma, opening mark, quoted predicate, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, comma, opening mark, quoted predicate, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, comma, opening mark, quoted predicate, nothing, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, colon, opening mark, quoted predicate, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, colon, opening mark, quoted predicate, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, colon, opening mark, quoted predicate, nothing, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, nothing, opening mark, quoted predicate, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, nothing, opening mark, quoted predicate, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, nothing, opening mark, quoted predicate, nothing, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, comma, opening mark, quoted nominal, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, comma, opening mark, quoted nominal, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, comma, opening mark, quoted nominal, nothing, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, colon, opening mark, quoted nominal, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, colon, opening mark, quoted nominal, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, colon, opening mark, quoted nominal, nothing, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, nothing, opening mark, quoted nominal, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, nothing, opening mark, quoted nominal, end mark, closing mark."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then a complete quotation (marks included): reporter, nothing, opening mark, quoted nominal, nothing, closing mark."}
+            ]
+        },
+
+        "quote4": {
+            "description": "Reporting clause followed by an opened quotation takes it as object clause",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then quotation: reporter, comma, opening mark, quoted clause -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then quotation: reporter, colon, opening mark, quoted clause -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then quotation: reporter, nothing, opening mark, quoted clause -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then quotation: reporter, comma, opening mark, quoted predicate -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then quotation: reporter, colon, opening mark, quoted predicate -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then quotation: reporter, nothing, opening mark, quoted predicate -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then quotation: reporter, comma, opening mark, quoted nominal -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[2]"}], "consume": ["after"], "note": "Reporting clause then quotation: reporter, colon, opening mark, quoted nominal -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}]}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Reporting clause then quotation: reporter, nothing, opening mark, quoted nominal -> reporter(OBJECT:quoted)."}
+            ]
+        },
+
+        "quote3": {
+            "description": "Quotation (opened and closed by its marks) directly before its reporting clause becomes the reporter's object clause",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation then reporting clause: opening mark, quoted clause, comma, closing mark, reporter -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation then reporting clause: opening mark, quoted clause, sentence mark, closing mark, reporter -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "Quotation then reporting clause: opening mark, quoted clause, nothing, closing mark, reporter -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation then reporting clause: opening mark, quoted predicate, comma, closing mark, reporter -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation then reporting clause: opening mark, quoted predicate, sentence mark, closing mark, reporter -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "Quotation then reporting clause: opening mark, quoted predicate, nothing, closing mark, reporter -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation then reporting clause: opening mark, quoted nominal, comma, closing mark, reporter -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation then reporting clause: opening mark, quoted nominal, sentence mark, closing mark, reporter -> reporter(OBJECT:quoted)."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "Quotation then reporting clause: opening mark, quoted nominal, nothing, closing mark, reporter -> reporter(OBJECT:quoted)."}
+            ]
+        },
+
+        "quote5": {
+            "description": "Quotation without its opening mark in this sentence, directly before its reporting clause",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation whose opening mark lies in an earlier sentence (or was a further sentence of the same quotation): quoted clause, comma, closing mark, reporter."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation whose opening mark lies in an earlier sentence (or was a further sentence of the same quotation): quoted clause, sentence mark, closing mark, reporter."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation whose opening mark lies in an earlier sentence (or was a further sentence of the same quotation): quoted predicate, comma, closing mark, reporter."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation whose opening mark lies in an earlier sentence (or was a further sentence of the same quotation): quoted predicate, sentence mark, closing mark, reporter."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation whose opening mark lies in an earlier sentence (or was a further sentence of the same quotation): quoted nominal, comma, closing mark, reporter."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["QUOTE_CLOSE"], "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[2]"}], "consume": ["before"], "note": "Quotation whose opening mark lies in an earlier sentence (or was a further sentence of the same quotation): quoted nominal, sentence mark, closing mark, reporter."}
+            ]
+        },
+
+        "quote6": {
+            "description": "An earlier sentence or clause of a multi-part quotation attaches to the same reporting clause",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "First of several sentences inside one quotation: opening mark, quoted clause, sentence mark, reporter."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "First of several sentences inside one quotation: opening mark, quoted predicate, sentence mark, reporter."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "First of several sentences inside one quotation: opening mark, quoted nominal, sentence mark, reporter."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "Earlier clause of a multi-clause quotation: opening mark, quoted clause, comma, reporter."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PREDICATE", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "Earlier clause of a multi-clause quotation: opening mark, quoted predicate, comma, reporter."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["QUOTE_OPEN"], "quantifier": "one"}], "after": []}, "connections": [{"type": "OBJECT", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "Earlier clause of a multi-clause quotation: opening mark, quoted nominal, comma, reporter."}
+            ]
+        },
+
+        "coord5": {
+            "description": "A coordinator still unplaced leads the clause or predicate that follows it",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [], "after": [{"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["anchor"], "note": "Leftover coordinator joins the clause that follows."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [], "after": [{"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["anchor"], "note": "Leftover coordinator joins the predicate that follows."}
+            ]
+        },
+
+        "join1": {
+            "description": "Vocative / sentence-final noun phrase and adverb after a clause attach to it",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause , noun phrase . : vocative or apposed phrase at the end: 'come here , jack'."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "PREDICATE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}, {"type": "NIL", "subtypes": ["TERMINAL"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Predicate , noun phrase . : vocative at the end."}
+            ]
+        },
+
+        "splice1": {
+            "description": "Clauses side by side: comma splice and semicolon series are coordinated, a clause after a clause is its complement",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["SEMICOLON"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause ; clause."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause : clause."}
+            ]
+        },
+
+        "join2": {
+            "description": "Pieces still floating after a built clause or predicate attach to it (nearest head on the left)",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "PP_NOUN", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Prepositional phrase after a clause."},
+                {"result": "PREDICATE", "recursive": true, "pattern": {"anchor": {"type": "PREDICATE"}, "before": [], "after": [{"type": "PP_NOUN", "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Prepositional phrase after a predicate."}
+            ]
+        },
+
+        "join3": {
+            "description": "Pieces still floating before a built clause attach to it (fronted adjuncts)",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "PP_NOUN", "quantifier": "one"}], "after": []}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "before[0]"}], "consume": ["before"], "note": "Prepositional phrase directly before a clause."}
+            ]
+        },
+
+        "subord4b": {
+            "description": "Subordinate clause after a clause (second pass)",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}]}, "connections": [{"type": "SUBORDINATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Clause + subordinate clause."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}]}, "connections": [{"type": "SUBORDINATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause , subordinate clause."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "PREDICATE"}, "before": [], "after": [{"type": "CLAUSE", "subtypes": ["SUBORDINATE"], "quantifier": "one"}]}, "connections": [{"type": "SUBORDINATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Predicate + subordinate clause."}
+            ]
+        },
+
+        "coord6": {
+            "description": "Coordinator between built clauses or predicates (third pass)",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "CLAUSE", "quantifier": "one"}], "after": [{"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "before[0]", "to": "anchor"}, {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["before", "after"], "note": "Clause + coordinator + clause."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "CLAUSE", "quantifier": "one"}], "after": [{"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "before[0]", "to": "anchor"}, {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["before", "after"], "note": "Clause + coordinator + subject-less predicate."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "PREDICATE", "quantifier": "one"}], "after": [{"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "before[0]", "to": "anchor"}, {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["before", "after"], "note": "Predicate + coordinator + clause."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [{"type": "PREDICATE", "quantifier": "one"}], "after": [{"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "before[0]", "to": "anchor"}, {"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["before", "after"], "note": "Predicate + coordinator + predicate."}
+            ]
+        },
+
+        "coord5b": {
+            "description": "Leftover coordinator joins what follows (second pass)",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [], "after": [{"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["anchor"], "note": "Leftover coordinator joins the clause that follows."},
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "COORD"}, "before": [], "after": [{"type": "PREDICATE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "after[0]", "to": "anchor"}], "consume": ["anchor"], "note": "Leftover coordinator joins the predicate that follows."}
+            ]
+        },
+
+        "splice3": {
+            "description": "Clauses side by side (second pass)",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["SEMICOLON"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause ; clause."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COLON"], "quantifier": "one"}, {"type": "CLAUSE", "quantifier": "one"}]}, "connections": [{"type": "COORDINATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause : clause."}
+            ]
+        },
+
+        "join4": {
+            "description": "Fronted adverb + comma before a subject-less predicate",
+            "result": "PREDICATE",
+            "rules": [
+                {"result": "PREDICATE", "recursive": false, "pattern": {"anchor": {"type": "PREDICATE"}, "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "SPECIFIER", "quantifier": "one"}], "after": []}, "connections": [{"type": "SPECIFICATION", "from": "before[1]", "to": "anchor"}], "consume": ["before"], "note": "Adverb , predicate: 'then , lifted his head'."}
+            ]
+        },
+
+        "join5": {
+            "description": "Sentence-initial adverb before a clause",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "SPECIFIER", "quantifier": "one"}], "after": []}, "connections": [{"type": "SPECIFICATION", "from": "before[0]", "to": "anchor"}], "consume": ["before"], "position_constraints": {"before[0]": 0}, "note": "Adverb opening the sentence, directly before its clause: 'now he fell in love'."}
+            ]
+        },
+
+        "inf4": {
+            "description": "Infinitive phrase (to + verb) left apart attaches to the nearest clause or predicate on its left (purpose / complement), or to the clause that follows when fronted",
+            "result": "CLAUSE",
+            "rules": [
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PRE_VERB_PARTICLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Clause + infinitive phrase: purpose or complement, nearest clause on the left."},
+                {"result": "CLAUSE", "recursive": true, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [], "after": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PREDICATE", "subtypes": ["PRE_VERB_PARTICLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}], "consume": ["after"], "note": "Clause , infinitive phrase."},
+                {"result": "PREDICATE", "recursive": true, "pattern": {"anchor": {"type": "PREDICATE"}, "before": [], "after": [{"type": "PREDICATE", "subtypes": ["PRE_VERB_PARTICLE"], "quantifier": "one"}]}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}], "consume": ["after"], "note": "Predicate + infinitive phrase."},
+                {"result": "CLAUSE", "recursive": false, "pattern": {"anchor": {"type": "CLAUSE"}, "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}, {"type": "PREDICATE", "subtypes": ["PRE_VERB_PARTICLE"], "quantifier": "one"}], "after": []}, "connections": [{"type": "MODIFICATION", "from": "anchor", "to": "before[1]"}], "consume": ["before"], "note": "Fronted infinitive phrase , clause: 'to make a long story short , i left'."}
             ]
         }
     }

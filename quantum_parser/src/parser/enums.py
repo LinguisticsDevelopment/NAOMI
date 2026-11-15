@@ -216,6 +216,12 @@ class SubType(Enum):
     PAREN_CLOSE = auto()   # )
     QUOTE_OPEN = auto()    # ``
     QUOTE_CLOSE = auto()   # ''
+    # Punctuation identity, additive (grammar pass 2026-11-15): lets a rule see a bare quotation
+    # mark (direction unknown), a clause-separating ; or :, and a sentence-final mark (. ? !).
+    QUOTE_MARK = auto()    # "  '  (open/close not distinguished)
+    SEMICOLON = auto()     # ;
+    COLON = auto()         # :
+    TERMINAL = auto()      # .  ?  !
 
     # Existential "there" (M50 bonus: "there is a problem", "there was n't a
     # bit of trouble") -- distinguishes the expletive-subject word from
@@ -293,6 +299,10 @@ SUBTYPE_TO_SUBCAT = {
     SubType.PAREN_CLOSE: SubCat.PUNCTUATION,
     SubType.QUOTE_OPEN: SubCat.PUNCTUATION,
     SubType.QUOTE_CLOSE: SubCat.PUNCTUATION,
+    SubType.QUOTE_MARK: SubCat.PUNCTUATION,
+    SubType.SEMICOLON: SubCat.PUNCTUATION,
+    SubType.COLON: SubCat.PUNCTUATION,
+    SubType.TERMINAL: SubCat.PUNCTUATION,
 
     # Bare-quantifier identity
     SubType.PROMOTABLE_BARE: SubCat.QUANTIFIER,

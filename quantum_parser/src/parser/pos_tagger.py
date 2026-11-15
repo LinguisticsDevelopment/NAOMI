@@ -442,6 +442,29 @@ def simple_tag(text: str) -> Tag:
     return Tag.NOUN
 
 
+def resolve_quote_direction(words: List[Word]) -> None:
+    """Give each bare quotation mark (lexicon subtype QUOTE_MARK) a direction, in place.
+
+    Language-neutral: no character is named here; a token is a quotation mark because its lexicon
+    entry says so. Per mark string, marks alternate open / close in sentence order. With an odd
+    count the sentence is a fragment of a longer quotation: if the first mark opens the sentence it
+    is an opener, otherwise if the last mark is followed only by sentence-final marks it is a
+    closer (so the run starts with a closer); otherwise the run starts with an opener."""
+    by_mark: Dict[str, List[int]] = {}
+    for i, w in enumerate(words):
+        if SubType.QUOTE_MARK in w.subtypes:
+            by_mark.setdefault(w.text, []).append(i)
+    for idxs in by_mark.values():
+        opens = True
+        if len(idxs) % 2 == 1 and idxs[0] != 0:
+            tail = words[idxs[-1] + 1:]
+            if all(SubType.TERMINAL in t.subtypes for t in tail):
+                opens = False
+        for i in idxs:
+            words[i].subtypes.append(SubType.QUOTE_OPEN if opens else SubType.QUOTE_CLOSE)
+            opens = not opens
+
+
 def tag_sentence(sentence: str) -> List[Word]:
     """
     Tag an entire sentence.
@@ -478,6 +501,7 @@ def tag_sentence(sentence: str) -> List[Word]:
 
             words.append(Word(token, tag, subtypes))
 
+    resolve_quote_direction(words)
     return words
 
 
