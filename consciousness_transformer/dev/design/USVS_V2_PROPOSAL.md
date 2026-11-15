@@ -1,5 +1,26 @@
 # USVS v2 proposal — named dimensions + a graph-derived block with importance and sliding values
 
+> **STATUS 2026-11-15: NOT RECOMMENDED AS WRITTEN.** An independent critique found the central
+> mechanism unsupported by the held-out evidence in `dev/reports/USVS_PROBES.md`:
+> - On the full graph, held-out opposites are NOT on opposite sides (mean cosine about +0.12 to -0.03).
+>   The 0.71-0.75 "synonym closer than opposite" figure comes mostly from synonyms getting closer and
+>   from relatives of recorded pairs. Only the adjective sub-graph gives clear opposition (-0.85), and it
+>   reaches 8.8% of held-out opposite pairs. So "not = reflect the position" would not land near the
+>   opposite in general.
+> - The very / slightly / not ordering in the probe was arithmetic on hand-set numbers, not evidence.
+> - "Importance" as defined is a function of the value, not independent information; the graph block
+>   has no meaningful neutral middle to reflect through or measure distance from; the comparison
+>   formula was not specified (the first version tried was degenerate).
+> - Section 2's table was selective: at the tested setting, positions-from-recorded-opposites did
+>   worse than clean-up alone, and the only held-out everyday opposite pair (buy/sell) did not improve.
+> - Operators acting on the block are a code path for negation/degree, and unnamed dimensions cannot
+>   give reasons — both conflict with the design rules in CLAUDE.md.
+> - Simpler baselines (opposition kept as a relation, used at comparison time; one dimension per
+>   recorded scale) were not ruled out first.
+> The text below is kept as the record of what was proposed. Scripts and results behind the probes
+> and the diagnosis are preserved in `dev/reports/usvs_review_scripts/`.
+
+
 Status: PROPOSAL for owner decision (2026-11-15). Nothing is built. The current
 607-dimension space stays frozen; v2 is built beside it and replaces it only if it wins.
 

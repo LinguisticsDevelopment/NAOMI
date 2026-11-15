@@ -1,0 +1,102 @@
+{
+ "simto|raw": {
+  "n": 10693,
+  "mean": 0.7545140848492625,
+  "median": 0.7758418920149676,
+  "AUC_vs_rand_adj": 0.774006078743103,
+  "AUC_simto_vs_ant(P simto>ant)": 0.2545726981764786,
+  "rand_adj_mean": 0.5812747424820411,
+  "ant_mean": 0.859444270237552
+ },
+ "simto|idf": {
+  "n": 10693,
+  "mean": 0.45888757852378836,
+  "median": 0.43793523567875864,
+  "AUC_vs_rand_adj": 0.7805779715701862,
+  "AUC_simto_vs_ant(P simto>ant)": 0.20663748497761822,
+  "rand_adj_mean": 0.25779647298103775,
+  "ant_mean": 0.711715816848768
+ },
+ "hyp_cohyp_by_pos|core|raw": {
+  "hyp_n_mean": 0.45483076046401644,
+  "hyp_n_n": 10490,
+  "hyp_v_mean": 0.4634212096075253,
+  "hyp_v_n": 5164,
+  "cohyp_n_mean": 0.43442675685246424,
+  "cohyp_n_n": 1654,
+  "cohyp_v_mean": 0.42730601642212407,
+  "cohyp_v_n": 899
+ },
+ "hyp_cohyp_by_pos|core|idf": {
+  "hyp_n_mean": 0.2502050431239842,
+  "hyp_n_n": 10490,
+  "hyp_v_mean": 0.1921099423637153,
+  "hyp_v_n": 5164,
+  "cohyp_n_mean": 0.22964405491699652,
+  "cohyp_n_n": 1654,
+  "cohyp_v_mean": 0.17278584697650037,
+  "cohyp_v_n": 899
+ },
+ "hyp_cohyp_by_pos|sense|raw": {
+  "hyp_n_mean": 0.7401312803773481,
+  "hyp_n_n": 17297,
+  "hyp_v_mean": 0.7485360272468968,
+  "hyp_v_n": 2703,
+  "cohyp_n_mean": 0.8651036650086693,
+  "cohyp_n_n": 17064,
+  "cohyp_v_mean": 0.8309579329883017,
+  "cohyp_v_n": 2936
+ },
+ "hyp_cohyp_by_pos|sense|idf": {
+  "hyp_n_mean": 0.6089046800916257,
+  "hyp_n_n": 17297,
+  "hyp_v_mean": 0.6624572833577539,
+  "hyp_v_n": 2703,
+  "cohyp_n_mean": 0.7844040907650601,
+  "cohyp_n_n": 17064,
+  "cohyp_v_mean": 0.7640812999517687,
+  "cohyp_v_n": 2936
+ },
+ "sparse_core_by_pos": {
+  "?": {
+   "n": 1886,
+   "frac_le10_axes": 0.25609756097560976
+  },
+  "n": {
+   "n": 5687,
+   "frac_le10_axes": 0.40742043256550026
+  },
+  "a": {
+   "n": 1759,
+   "frac_le10_axes": 0.15065378055713474
+  },
+  "v": {
+   "n": 331,
+   "frac_le10_axes": 0.05740181268882175
+  },
+  "r": {
+   "n": 283,
+   "frac_le10_axes": 0.7137809187279152
+  }
+ },
+ "core_sparse_vs_dense_random_pair_mean_cos": {
+  "both_dense": {
+   "n": 8932,
+   "mean": 0.4000626519834445
+  },
+  "both_sparse": {
+   "n": 2232,
+   "mean": 0.12039330476487403
+  },
+  "mixed": {
+   "n": 8836,
+   "mean": 0.2001900529247073
+  }
+ },
+ "ant737_sparse_flags": {
+  "(False, False)": 611,
+  "(True, True)": 42,
+  "(True, False)": 24,
+  "(False, True)": 60
+ }
+}

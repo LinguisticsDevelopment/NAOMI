@@ -1,0 +1,150 @@
+{
+ "core|raw": {
+  "syn_n": 7480,
+  "ant_n": 737,
+  "syn_mean": 0.7150500537123986,
+  "ant_mean": 0.5012222502196635,
+  "rand_mean": 0.2806919172769377,
+  "AUC_syn_vs_rand": 0.9562261864973262,
+  "P_ant_less_similar_than_rand": 0.23596923337856174,
+  "P_ant_closer_than_random_synonym": 0.23625461656230273
+ },
+ "core|idf": {
+  "syn_n": 7480,
+  "ant_n": 737,
+  "syn_mean": 0.5677421946247768,
+  "ant_mean": 0.2308450367874302,
+  "rand_mean": 0.07471232446764367,
+  "AUC_syn_vs_rand": 0.9788670220588235,
+  "P_ant_less_similar_than_rand": 0.26971580732700134,
+  "P_ant_closer_than_random_synonym": 0.2503877368142273
+ },
+ "sense|raw": {
+  "syn_n": 6871,
+  "ant_n": 737,
+  "syn_mean": 0.5140387069031472,
+  "ant_mean": 0.859444270237552,
+  "rand_mean": 0.396424091686115,
+  "AUC_syn_vs_rand": 0.6904691566002038,
+  "P_ant_less_similar_than_rand": 0.01736285617367707,
+  "P_ant_closer_than_random_synonym": 0.9323324566092679
+ },
+ "sense|idf": {
+  "syn_n": 6871,
+  "ant_n": 737,
+  "syn_mean": 0.2163665971187956,
+  "ant_mean": 0.711715816848768,
+  "rand_mean": 0.1115402907271236,
+  "AUC_syn_vs_rand": 0.6702933306651142,
+  "P_ant_less_similar_than_rand": 0.020099559023066486,
+  "P_ant_closer_than_random_synonym": 0.9264044485633383
+ },
+ "sign": {
+  "core_ant_strongly_opposed": 0.16824966078697423,
+  "core_ant_any_opposed": 0.7327001356852103,
+  "core_rand_strongly_opposed": 0.00465,
+  "sense_min_value": 0.0,
+  "sense_ant_opposed": 0.0
+ },
+ "axes": {
+  "SOMETHING": 0.9837269181417245,
+  "ONE": 0.9737336313190968,
+  "PART": 0.9718811342720451,
+  "WHEN": 0.8243696836308942,
+  "n_empty_sense_axes": 47,
+  "prime_share_sqnorm_raw": 0.5163406868874632,
+  "prime_share_sqnorm_idf": 0.16410799649088026,
+  "lex_share_sqnorm_idf": 0.6164854374728272,
+  "mean_axes_per_sense": 23.667884669312283
+ },
+ "spectra": {
+  "core|uncentered": {
+   "PR": 8.235386396932093,
+   "n90": 64,
+   "n99": 246
+  },
+  "core|centered": {
+   "PR": 32.32130448245514,
+   "n90": 80,
+   "n99": 270
+  },
+  "sense|uncentered": {
+   "PR": 5.42250699622563,
+   "n90": 43,
+   "n99": 162
+  },
+  "sense|centered": {
+   "PR": 38.63895171183636,
+   "n90": 59,
+   "n99": 203
+  }
+ },
+ "spectra_idf_sense_centered": {
+  "PR": 59.39522411724058,
+  "n90": 124,
+  "n99": 316
+ },
+ "pair happy/unhappy sense raw|idf": [
+  0.8873622972261073,
+  0.9000301045351973
+ ],
+ "pair happy/sad sense raw|idf": [
+  0.8474377765926581,
+  0.8831726013517707
+ ],
+ "pair dog/cat sense raw|idf": [
+  0.8393196040715981,
+  0.8270566373403374
+ ],
+ "pair eat/chew sense raw|idf": [
+  0.7729393280599941,
+  0.8263612821782341
+ ],
+ "pair bone/stone sense raw|idf": [
+  0.47057867227027583,
+  0.03211828609734262
+ ],
+ "pair dog/bone sense raw|idf": [
+  0.6436031289497922,
+  0.3954964160923084
+ ],
+ "pair hot/cold sense raw|idf": [
+  0.9224925156313668,
+  0.7494871668683453
+ ],
+ "tree dog->cat": {
+  "meaning": 94.23591026749766,
+  "overall": 97.11795513374884,
+  "reasons": [
+   "meaning_shift"
+  ]
+ },
+ "tree ate->chewed": {
+  "meaning": 94.20982557937982,
+  "overall": 97.1049127896899,
+  "reasons": [
+   "meaning_shift"
+  ]
+ },
+ "tree bone->stone": {
+  "meaning": 67.76867032532758,
+  "overall": 83.88433516266379,
+  "reasons": [
+   "meaning_shift"
+  ]
+ },
+ "tree happy->sad": {
+  "meaning": 96.10379821547112,
+  "overall": 98.05189910773555,
+  "reasons": [
+   "meaning_shift"
+  ]
+ },
+ "tree happy->unhappy": {
+  "meaning": 66.66666666666666,
+  "overall": 83.33333333333333,
+  "reasons": [
+   "opposite_meaning"
+  ]
+ }
+}
