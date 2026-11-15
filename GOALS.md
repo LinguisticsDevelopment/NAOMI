@@ -19,7 +19,7 @@ memory, written by ordinary graph/tensor writes, never by training. See
 
 | Goal | Status |
 |---|---|
-| Read | in progress — reader is pattern-free again; trees keep only ~40% of tokens, so the tree format must be enriched before encoder+decoder paired training |
+| Read | in progress — function words now have meaning points (lexicon + 7 new dimensions); new tree keeps every word as a node; the English grammar file is the limiting factor (65-83% of words attached) |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
 | Answer from memory | not started in its proper form — the rule-based answerer was removed (owner, 2026-11-14); answering will be learned by the consciousness after the encoder/decoder pair works |

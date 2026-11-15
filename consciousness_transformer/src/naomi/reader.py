@@ -169,7 +169,7 @@ class Reader:
                                     controller_hidden=ckpt["d_model"])
             model.load_state_dict(ckpt["model_state"])
             model.eval()
-            self._usvs = load_usvs(str(CT_DIR / "data" / "usvs"))
+            self._usvs = load_usvs(str(CT_DIR / "data" / "usvs"), extended=False)  # v6 encoder was trained on the 607 base axes
             self._enc = (model, ckpt, em)
         return self._enc
 

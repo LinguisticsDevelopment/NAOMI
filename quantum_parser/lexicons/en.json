@@ -356,6 +356,9 @@
 "slightly": {"readings": [{"pos": ["ADV"], "dims": {"LITTLE_FEW": 0.7}, "j": true, "j_dims": ["LITTLE_FEW"], "note": "not in the parser table (open-class tag by WordNet); tagless"}]},
 "more": {"readings": [{"pos": ["ADV", "ADJ", "DET"], "dims": {"MORE": 1.0}, "note": "the prime itself; not in the parser table; tagless"}]},
 "again": {"readings": [{"pos": ["ADV"], "dims": {"MORE": 1.0, "THE_SAME": 0.5}, "j": true, "j_dims": ["THE_SAME"], "note": "not in the parser table; tagless"}]},
+"many": {"readings": [{"pos": ["DET", "PRON", "ADJ"], "dims": {"MUCH_MANY": 1.0}, "note": "quantifier, not a numeral; not in the parser table; tagless"}]},
+"much": {"readings": [{"pos": ["DET", "PRON", "ADV"], "dims": {"MUCH_MANY": 1.0}, "note": "not in the parser table; tagless"}]},
+"few": {"readings": [{"pos": ["DET", "PRON", "ADJ"], "dims": {"LITTLE_FEW": 1.0}, "note": "quantifier, not a numeral; not in the parser table; tagless"}]},
 "some": {"readings": [{"pos": ["DET", "PRON", "ADV"], "dims": {"SOME": 1.0}, "note": "not in the parser table; tagless"}]},
 "every": {"readings": [{"pos": ["DET"], "dims": {"ALL": 1.0, "ONE": 0.5}, "j": true, "j_dims": ["ONE"], "note": "distributive; not in the parser table; tagless"}]},
 "you": {"readings": [{"pos": ["PRON"], "dims": {"YOU": 1.0}, "note": "not in the parser table; tagless"}]}
