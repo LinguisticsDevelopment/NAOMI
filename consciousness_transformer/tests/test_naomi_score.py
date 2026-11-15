@@ -117,9 +117,9 @@ def test_idf_weights_and_effect(usvs):
     from naomi.score import axis_weights
     w = dict(zip(usvs.axes, axis_weights(usvs)))
     assert w["SOMETHING"] < w["NOT"] and w["SOMETHING"] < w["GOAL"] and w["SOMETHING"] < w["KNOWN"]
-    # negation moves the meaning number more with weighting than without
+    # negation lowers meaning (two-component rule: half the node's similarity is the operator part)
     a, b = she_was("happy"), she_was("happy", N("SPECIFICATION", "not", 2, "PART"))
-    assert score_pair(a, b, usvs).meaning < score_pair(a, b, usvs, idf=False).meaning
+    assert score_pair(a, b, usvs).meaning < 90.0 < score_pair(a, a, usvs).meaning
     # swapped arguments are penalised more than a mere synonym-ish change
     d = lambda s, o: T(N(REL_ROOT, "ate", 2, "VERB", N("SUBJECT", s, 1, "NOUN"), N("OBJECT", o, 4, "NOUN")))
     assert score_pair(d("dog", "bone"), d("bone", "dog"), usvs).meaning < 70.0

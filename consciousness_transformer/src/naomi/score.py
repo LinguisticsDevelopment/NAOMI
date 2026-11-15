@@ -32,7 +32,11 @@ with no sense is a unit dimension keyed by its lemma).
     at least MATCH_MIN (meaning here is the base-sense similarity, without folded operators). Sibling order and repeated relations therefore do not matter. Token positions
     are never used.
 
-    MEANING % = flattened similarity. A tree flattens to  sum over nodes of (role vector of the node's
+    MEANING % = flattened similarity, by default with every node unit-normalised (``normalise_nodes``):
+        sum over aligned same-path pairs of the per-node similarity / sqrt(N_ref * N_cand);
+        a node with folded operators is two unit components (``separate_ops``): similarity =
+        mean(base-sense cosine, operator-part cosine; both empty = 1). Without ``normalise_nodes``:
+        the norm-based flattening below. A tree flattens to  sum over nodes of (role vector of the node's
     relation path from the root) (x) (the node's USVS vector, folded operators included); two trees
     compare by the cosine of the flattened forms. With orthogonal role vectors per path this is
         sum over aligned pairs on the SAME path (heads aligned and equal relation) of dot(v_ref, v_cand)
@@ -241,7 +245,7 @@ class _Space:
     """Sense vectors over the named axes (plus a unit dimension per name / unsensed lemma), the folded
     operators of each skeleton node, and the antonym store."""
 
-    def __init__(self, usvs, best_candidate: bool, tiers=None, word_tiers=(), idf: bool = True, separate_ops: bool = False):
+    def __init__(self, usvs, best_candidate: bool, tiers=None, word_tiers=(), idf: bool = True, separate_ops: bool = True):
         self.sep = separate_ops
         self.u, self.best, self._v, self._r = usvs, best_candidate, {}, {}
         self.ops: Dict[int, List[Node]] = {}
@@ -466,7 +470,7 @@ def _figures(refs: List[Node], cands: List[Node], credit: Dict, good: set) -> Op
 
 def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = False, antonym_tiers=None,
                word_store_tiers=(), idf: bool = True, normalise_nodes: bool = True,
-               separate_ops: bool = False) -> PairScore:
+               separate_ops: bool = True) -> PairScore:
     """``antonym_tiers``: sense-level (WordNet pointer) tiers, default direct + satellite_head.
     ``word_store_tiers``: optional extra tiers from the word-level USVS store (default off: conflated).
     ``idf``: weight the axes by IDF in every vector comparison (default on)."""

@@ -3408,6 +3408,79 @@
                     ],
                     "consume": ["after"],
                     "note": "to play in the park -> the prepositional phrase belongs to the infinitive verb."
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
+                        "before": [],
+                        "after": [{"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"], "quantifier": "one"}, {"type": "NOMINAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"},
+                        {"type": "OBJECT", "from": "after[0]", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "to be a saint -> to(be(OBJECT:saint)): the copula is a MODIFIER here (not a verbal), so it is matched as itself."
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
+                        "before": [],
+                        "after": [{"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"], "quantifier": "one"}, {"type": "DESCRIPTOR", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"},
+                        {"type": "COMPLEMENT", "from": "after[0]", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "to be happy -> to(be(COMPLEMENT:happy))."
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
+                        "before": [],
+                        "after": [{"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"], "quantifier": "one"}, {"type": "VERBAL", "subtypes": ["PAST_PARTICIPLE"], "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"},
+                        {"type": "MODIFICATION", "from": "after[0]", "to": "after[1]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "to be invited -> to(be(invited))."
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
+                        "before": [],
+                        "after": [{"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"], "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "to be -> to(be)."
+                },
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["PRE_VERB_PARTICLE"]},
+                        "before": [],
+                        "after": [{"type": "MODIFIER", "subtypes": ["AUX_PP_NEXT"], "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[0]"}
+                    ],
+                    "consume": ["after"],
+                    "note": "to have -> to(have)."
                 }
             ]
         },
