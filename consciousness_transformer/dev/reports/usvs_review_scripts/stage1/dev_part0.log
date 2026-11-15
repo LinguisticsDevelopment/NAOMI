@@ -1,0 +1,8 @@
+0 ('sim',) False None False 3
+0 ('sim',) True None False 5
+0 ('sim', 'deriv') False None False 10
+0 ('sim', 'deriv') True None False 18
+0 ('sim', 'deriv', 'pert') False None False 23
+0 ('sim', 'deriv', 'pert') True None False 31
+0 ('sim', 'deriv', 'pert', 'also') False None False 41
+0 ('sim', 'deriv', 'pert', 'also') True None False 56

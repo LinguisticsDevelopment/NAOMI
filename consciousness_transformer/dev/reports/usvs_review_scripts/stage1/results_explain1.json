@@ -1,0 +1,674 @@
+{
+ "coverage": {
+  "build_only(60%)|frozen_edges(sim+hyp)|steps=0": {
+   "senses": 4455,
+   "share": 0.0379,
+   "by_pos": {
+    "n": 0.014,
+    "v": 0.0415,
+    "a": 0.1283,
+    "r": 0.1116
+   },
+   "gold_tokens": 0.1871,
+   "gold_by_upos": {
+    "NOUN": 0.0601,
+    "VERB": 0.2059,
+    "ADJ": 0.346,
+    "ADV": 0.254
+   }
+  },
+  "build_only(60%)|wide_edges(sim+deriv+pert+also+hyp)|steps=0": {
+   "senses": 4455,
+   "share": 0.0379,
+   "by_pos": {
+    "n": 0.014,
+    "v": 0.0415,
+    "a": 0.1283,
+    "r": 0.1116
+   },
+   "gold_tokens": 0.1871,
+   "gold_by_upos": {
+    "NOUN": 0.0601,
+    "VERB": 0.2059,
+    "ADJ": 0.346,
+    "ADV": 0.254
+   }
+  },
+  "build_only(60%)|frozen_edges(sim+hyp)|steps=1": {
+   "senses": 15805,
+   "share": 0.1343,
+   "by_pos": {
+    "n": 0.0465,
+    "v": 0.1852,
+    "a": 0.4975,
+    "r": 0.1116
+   },
+   "gold_tokens": 0.332,
+   "gold_by_upos": {
+    "NOUN": 0.1877,
+    "VERB": 0.3722,
+    "ADJ": 0.6029,
+    "ADV": 0.2541
+   }
+  },
+  "build_only(60%)|wide_edges(sim+deriv+pert+also+hyp)|steps=1": {
+   "senses": 17788,
+   "share": 0.1512,
+   "by_pos": {
+    "n": 0.0568,
+    "v": 0.2,
+    "a": 0.5337,
+    "r": 0.1889
+   },
+   "gold_tokens": 0.397,
+   "gold_by_upos": {
+    "NOUN": 0.2281,
+    "VERB": 0.3988,
+    "ADJ": 0.7236,
+    "ADV": 0.3967
+   }
+  },
+  "build_only(60%)|frozen_edges(sim+hyp)|steps=2": {
+   "senses": 15805,
+   "share": 0.1343,
+   "by_pos": {
+    "n": 0.0465,
+    "v": 0.1852,
+    "a": 0.4975,
+    "r": 0.1116
+   },
+   "gold_tokens": 0.332,
+   "gold_by_upos": {
+    "NOUN": 0.1877,
+    "VERB": 0.3722,
+    "ADJ": 0.6029,
+    "ADV": 0.2541
+   }
+  },
+  "build_only(60%)|wide_edges(sim+deriv+pert+also+hyp)|steps=2": {
+   "senses": 30215,
+   "share": 0.2568,
+   "by_pos": {
+    "n": 0.1431,
+    "v": 0.3551,
+    "a": 0.6524,
+    "r": 0.478
+   },
+   "gold_tokens": 0.5651,
+   "gold_by_upos": {
+    "NOUN": 0.3821,
+    "VERB": 0.622,
+    "ADJ": 0.8803,
+    "ADV": 0.4881
+   }
+  },
+  "build_only(60%)|frozen_edges(sim+hyp)|steps=3": {
+   "senses": 15805,
+   "share": 0.1343,
+   "by_pos": {
+    "n": 0.0465,
+    "v": 0.1852,
+    "a": 0.4975,
+    "r": 0.1116
+   },
+   "gold_tokens": 0.332,
+   "gold_by_upos": {
+    "NOUN": 0.1877,
+    "VERB": 0.3722,
+    "ADJ": 0.6029,
+    "ADV": 0.2541
+   }
+  },
+  "build_only(60%)|wide_edges(sim+deriv+pert+also+hyp)|steps=3": {
+   "senses": 41659,
+   "share": 0.3541,
+   "by_pos": {
+    "n": 0.2364,
+    "v": 0.5407,
+    "a": 0.7027,
+    "r": 0.5656
+   },
+   "gold_tokens": 0.6863,
+   "gold_by_upos": {
+    "NOUN": 0.5191,
+    "VERB": 0.8226,
+    "ADJ": 0.9124,
+    "ADV": 0.5004
+   }
+  },
+  "build_only(60%)|frozen_edges(sim+hyp)|steps=4": {
+   "senses": 15805,
+   "share": 0.1343,
+   "by_pos": {
+    "n": 0.0465,
+    "v": 0.1852,
+    "a": 0.4975,
+    "r": 0.1116
+   },
+   "gold_tokens": 0.332,
+   "gold_by_upos": {
+    "NOUN": 0.1877,
+    "VERB": 0.3722,
+    "ADJ": 0.6029,
+    "ADV": 0.2541
+   }
+  },
+  "build_only(60%)|wide_edges(sim+deriv+pert+also+hyp)|steps=4": {
+   "senses": 48735,
+   "share": 0.4142,
+   "by_pos": {
+    "n": 0.2968,
+    "v": 0.6445,
+    "a": 0.7302,
+    "r": 0.6156
+   },
+   "gold_tokens": 0.7455,
+   "gold_by_upos": {
+    "NOUN": 0.62,
+    "VERB": 0.8831,
+    "ADJ": 0.9297,
+    "ADV": 0.5088
+   }
+  },
+  "all_3802_recorded|frozen_edges(sim+hyp)|steps=0": {
+   "senses": 7394,
+   "share": 0.0628,
+   "by_pos": {
+    "n": 0.0234,
+    "v": 0.0723,
+    "a": 0.2118,
+    "r": 0.174
+   },
+   "gold_tokens": 0.2779,
+   "gold_by_upos": {
+    "NOUN": 0.1177,
+    "VERB": 0.2533,
+    "ADJ": 0.6152,
+    "ADV": 0.3039
+   }
+  },
+  "all_3802_recorded|wide_edges(sim+deriv+pert+also+hyp)|steps=0": {
+   "senses": 7394,
+   "share": 0.0628,
+   "by_pos": {
+    "n": 0.0234,
+    "v": 0.0723,
+    "a": 0.2118,
+    "r": 0.174
+   },
+   "gold_tokens": 0.2779,
+   "gold_by_upos": {
+    "NOUN": 0.1177,
+    "VERB": 0.2533,
+    "ADJ": 0.6152,
+    "ADV": 0.3039
+   }
+  },
+  "all_3802_recorded|frozen_edges(sim+hyp)|steps=1": {
+   "senses": 25100,
+   "share": 0.2133,
+   "by_pos": {
+    "n": 0.074,
+    "v": 0.2807,
+    "a": 0.8004,
+    "r": 0.174
+   },
+   "gold_tokens": 0.4732,
+   "gold_by_upos": {
+    "NOUN": 0.2586,
+    "VERB": 0.4941,
+    "ADJ": 0.9916,
+    "ADV": 0.3044
+   }
+  },
+  "all_3802_recorded|wide_edges(sim+deriv+pert+also+hyp)|steps=1": {
+   "senses": 27317,
+   "share": 0.2322,
+   "by_pos": {
+    "n": 0.0908,
+    "v": 0.2994,
+    "a": 0.8069,
+    "r": 0.3019
+   },
+   "gold_tokens": 0.5316,
+   "gold_by_upos": {
+    "NOUN": 0.3255,
+    "VERB": 0.5284,
+    "ADJ": 0.992,
+    "ADV": 0.4679
+   }
+  },
+  "all_3802_recorded|frozen_edges(sim+hyp)|steps=2": {
+   "senses": 25100,
+   "share": 0.2133,
+   "by_pos": {
+    "n": 0.074,
+    "v": 0.2807,
+    "a": 0.8004,
+    "r": 0.174
+   },
+   "gold_tokens": 0.4732,
+   "gold_by_upos": {
+    "NOUN": 0.2586,
+    "VERB": 0.4941,
+    "ADJ": 0.9916,
+    "ADV": 0.3044
+   }
+  },
+  "all_3802_recorded|wide_edges(sim+deriv+pert+also+hyp)|steps=2": {
+   "senses": 40634,
+   "share": 0.3454,
+   "by_pos": {
+    "n": 0.2039,
+    "v": 0.4861,
+    "a": 0.8163,
+    "r": 0.6564
+   },
+   "gold_tokens": 0.6905,
+   "gold_by_upos": {
+    "NOUN": 0.5192,
+    "VERB": 0.7681,
+    "ADJ": 0.9944,
+    "ADV": 0.5521
+   }
+  },
+  "all_3802_recorded|frozen_edges(sim+hyp)|steps=3": {
+   "senses": 25100,
+   "share": 0.2133,
+   "by_pos": {
+    "n": 0.074,
+    "v": 0.2807,
+    "a": 0.8004,
+    "r": 0.174
+   },
+   "gold_tokens": 0.4732,
+   "gold_by_upos": {
+    "NOUN": 0.2586,
+    "VERB": 0.4941,
+    "ADJ": 0.9916,
+    "ADV": 0.3044
+   }
+  },
+  "all_3802_recorded|wide_edges(sim+deriv+pert+also+hyp)|steps=3": {
+   "senses": 52327,
+   "share": 0.4447,
+   "by_pos": {
+    "n": 0.3091,
+    "v": 0.686,
+    "a": 0.8323,
+    "r": 0.6606
+   },
+   "gold_tokens": 0.7797,
+   "gold_by_upos": {
+    "NOUN": 0.6303,
+    "VERB": 0.9183,
+    "ADJ": 0.9964,
+    "ADV": 0.5579
+   }
+  },
+  "all_3802_recorded|frozen_edges(sim+hyp)|steps=4": {
+   "senses": 25100,
+   "share": 0.2133,
+   "by_pos": {
+    "n": 0.074,
+    "v": 0.2807,
+    "a": 0.8004,
+    "r": 0.174
+   },
+   "gold_tokens": 0.4732,
+   "gold_by_upos": {
+    "NOUN": 0.2586,
+    "VERB": 0.4941,
+    "ADJ": 0.9916,
+    "ADV": 0.3044
+   }
+  },
+  "all_3802_recorded|wide_edges(sim+deriv+pert+also+hyp)|steps=4": {
+   "senses": 57832,
+   "share": 0.4915,
+   "by_pos": {
+    "n": 0.3611,
+    "v": 0.7652,
+    "a": 0.8381,
+    "r": 0.67
+   },
+   "gold_tokens": 0.8111,
+   "gold_by_upos": {
+    "NOUN": 0.7002,
+    "VERB": 0.9398,
+    "ADJ": 0.9964,
+    "ADV": 0.558
+   }
+  }
+ },
+ "scales": {
+  "frozen_a": {
+   "n_scales": 2280,
+   "placed_senses": 15805,
+   "scale_size_placed_nodes": {
+    "min": 2,
+    "median": 5.0,
+    "p90": 14.0,
+    "max": 228,
+    "share_size_2": 0.2175
+   },
+   "senses_on_multiple_scales": 955,
+   "max_scales_one_sense": 32,
+   "reached_from_both_ends(non-members)": 406,
+   "examples_both_ends": [
+    "gradient.n.02 on scale abruptness.n.02|gradualness.n.01 pos=0.00",
+    "evaluate.v.02 on scale accept.v.01|reject.v.01 pos=0.00",
+    "react.v.01 on scale accept.v.03|refuse.v.01 pos=0.00",
+    "accounting.n.04 on scale accrual_basis.n.01|cash_basis.n.01 pos=0.00",
+    "color.n.01 on scale achromatic_color.n.01|chromatic_color.n.01 pos=0.00",
+    "change_state.v.01 on scale acidify.v.02|alkalize.v.01 pos=0.00"
+   ],
+   "placements_with_|pos|<0.2": 406
+  },
+  "frozen_b": {
+   "n_scales": 2280,
+   "placed_senses": 15805,
+   "scale_size_placed_nodes": {
+    "min": 2,
+    "median": 5.0,
+    "p90": 14.0,
+    "max": 228,
+    "share_size_2": 0.2175
+   },
+   "senses_on_multiple_scales": 955,
+   "max_scales_one_sense": 32,
+   "reached_from_both_ends(non-members)": 406,
+   "examples_both_ends": [
+    "gradient.n.02 on scale abruptness.n.02|gradualness.n.01 pos=0.00",
+    "evaluate.v.02 on scale accept.v.01|reject.v.01 pos=0.00",
+    "react.v.01 on scale accept.v.03|refuse.v.01 pos=0.00",
+    "accounting.n.04 on scale accrual_basis.n.01|cash_basis.n.01 pos=0.00",
+    "color.n.01 on scale achromatic_color.n.01|chromatic_color.n.01 pos=0.00",
+    "change_state.v.01 on scale acidify.v.02|alkalize.v.01 pos=0.00"
+   ],
+   "placements_with_|pos|<0.2": 406
+  },
+  "wide_a": {
+   "n_scales": 2280,
+   "placed_senses": 41659,
+   "scale_size_placed_nodes": {
+    "min": 2,
+    "median": 39.0,
+    "p90": 179.0,
+    "max": 702,
+    "share_size_2": 0.0772
+   },
+   "senses_on_multiple_scales": 25437,
+   "max_scales_one_sense": 254,
+   "reached_from_both_ends(non-members)": 1987,
+   "examples_both_ends": [
+    "reasonable.a.01 on scale a_posteriori.a.01|a_priori.a.01 pos=0.00",
+    "deduce.v.01 on scale a_posteriori.a.01|a_priori.a.01 pos=-0.15",
+    "deduce.v.02 on scale a_posteriori.a.01|a_priori.a.01 pos=-0.15",
+    "coherent.a.01 on scale a_posteriori.a.01|a_priori.a.01 pos=0.00",
+    "deduction.n.04 on scale a_posteriori.a.01|a_priori.a.01 pos=0.15",
+    "deductive.a.01 on scale a_posteriori.a.01|a_priori.a.01 pos=0.00"
+   ],
+   "placements_with_|pos|<0.2": 1735
+  },
+  "wide_b": {
+   "n_scales": 2280,
+   "placed_senses": 41659,
+   "scale_size_placed_nodes": {
+    "min": 2,
+    "median": 39.0,
+    "p90": 179.0,
+    "max": 702,
+    "share_size_2": 0.0772
+   },
+   "senses_on_multiple_scales": 25437,
+   "max_scales_one_sense": 254,
+   "reached_from_both_ends(non-members)": 1987,
+   "examples_both_ends": [
+    "reasonable.a.01 on scale a_posteriori.a.01|a_priori.a.01 pos=0.00",
+    "deduce.v.01 on scale a_posteriori.a.01|a_priori.a.01 pos=-0.15",
+    "deduce.v.02 on scale a_posteriori.a.01|a_priori.a.01 pos=-0.15",
+    "coherent.a.01 on scale a_posteriori.a.01|a_priori.a.01 pos=0.00",
+    "deduction.n.04 on scale a_posteriori.a.01|a_priori.a.01 pos=0.15",
+    "deductive.a.01 on scale a_posteriori.a.01|a_priori.a.01 pos=0.00"
+   ],
+   "placements_with_|pos|<0.2": 1735
+  }
+ },
+ "test_pairs_by_config": {
+  "frozen_a": {
+   "share_pairs_sharing_a_scale": 0.0803,
+   "n_sharing": 61,
+   "poles_of_sharing_pairs": {
+    "opposite": 52,
+    "same": 9
+   },
+   "ant<rand_all": 0.0793,
+   "ant_mean_all": 0.618,
+   "hyp": 0.937,
+   "sim_v_rand": 0.8919,
+   "simlex": 0.3162
+  },
+  "frozen_b": {
+   "share_pairs_sharing_a_scale": 0.0803,
+   "n_sharing": 61,
+   "poles_of_sharing_pairs": {
+    "opposite": 52,
+    "same": 9
+   },
+   "ant<rand_all": 0.0761,
+   "ant_mean_all": 0.6426,
+   "hyp": 0.9365,
+   "sim_v_rand": 0.8795,
+   "simlex": 0.2915
+  },
+  "wide_a": {
+   "share_pairs_sharing_a_scale": 0.3605,
+   "n_sharing": 274,
+   "poles_of_sharing_pairs": {
+    "same": 51,
+    "opposite": 223
+   },
+   "ant<rand_all": 0.0565,
+   "ant_mean_all": 0.6418,
+   "hyp": 0.9475,
+   "sim_v_rand": 0.938,
+   "simlex": 0.3291
+  },
+  "wide_b": {
+   "share_pairs_sharing_a_scale": 0.3605,
+   "n_sharing": 274,
+   "poles_of_sharing_pairs": {
+    "same": 52,
+    "opposite": 222
+   },
+   "ant<rand_all": 0.0569,
+   "ant_mean_all": 0.6384,
+   "hyp": 0.9468,
+   "sim_v_rand": 0.9614,
+   "simlex": 0.3239
+  }
+ },
+ "trace": [
+  {
+   "pos": "adjective",
+   "config": "wide_a",
+   "sense": "reactive.a.01",
+   "gloss": "participating readily in reactions",
+   "scale": "instability.n.04 (the quality or attribute of being unstable and irresolute) <-> stability.n.01 (the quality or attribute of being firm and steadfast)",
+   "position": 0.49,
+   "imp_a": 0.49,
+   "imp_b": 1.0,
+   "n_scales": 2,
+   "chain": "instability.n.04 -[derivational]-> unstable.s.01 -[similar_to]-> reactive.a.01   [instability.n.04 is the recorded opposite of stability.n.01]"
+  },
+  {
+   "pos": "adjective",
+   "config": "wide_a",
+   "sense": "reassuring.a.01",
+   "gloss": "restoring confidence and relieving anxiety",
+   "scale": "discouraging.a.01 (depriving of confidence or hope or enthusiasm and hence often deterrin) <-> encouraging.a.01 (giving courage or confidence or hope)",
+   "position": -0.7,
+   "imp_a": 0.7,
+   "imp_b": 0.8333,
+   "n_scales": 10,
+   "chain": "encouraging.a.01 -[also_see]-> reassuring.a.01   [encouraging.a.01 is the recorded opposite of discouraging.a.01]"
+  },
+  {
+   "pos": "adjective",
+   "config": "wide_a",
+   "sense": "far.a.01",
+   "gloss": "located at a great distance in time or space or degree",
+   "scale": "accessible.a.01 (capable of being reached) <-> inaccessible.a.01 (capable of being reached only with great difficulty or not at all)",
+   "position": -0.343,
+   "imp_a": 0.343,
+   "imp_b": 0.3333,
+   "n_scales": 2,
+   "chain": "inaccessible.a.01 -[similar_to]-> outback.s.01 -[derivational]-> farness.n.01 -[derivational]-> far.a.01   [inaccessible.a.01 is the recorded opposite of accessible.a.01]"
+  },
+  {
+   "pos": "adjective",
+   "config": "wide_a",
+   "sense": "white.a.01",
+   "gloss": "being of the achromatic color of maximum lightness; having little or n",
+   "scale": "dark.a.02 ((used of color) having a dark hue) <-> light.a.02 ((used of color) having a relatively small amount of coloring agent)",
+   "position": -0.7,
+   "imp_a": 0.7,
+   "imp_b": 1.0,
+   "n_scales": 2,
+   "chain": "light.a.02 -[also_see]-> white.a.01   [light.a.02 is the recorded opposite of dark.a.02]"
+  },
+  {
+   "pos": "adjective",
+   "config": "wide_a",
+   "sense": "paranormal.a.02",
+   "gloss": "not in accordance with scientific laws",
+   "scale": "extrasensory.a.01 (seemingly outside normal sensory channels) <-> sensory.a.02 (involving or derived from the senses)",
+   "position": 0.7,
+   "imp_a": 0.7,
+   "imp_b": 1.0,
+   "n_scales": 4,
+   "chain": "extrasensory.a.01 -[also_see]-> paranormal.a.02   [extrasensory.a.01 is the recorded opposite of sensory.a.02]"
+  },
+  {
+   "pos": "noun",
+   "config": "frozen_a",
+   "sense": "mental_illness.n.01",
+   "gloss": "any disease of the mind; the psychological state of someone who has em",
+   "scale": "insanity.n.01 (relatively permanent disorder of the mind) <-> sanity.n.01 (normal or sound powers of mind)",
+   "position": 0.85,
+   "imp_a": 0.85,
+   "imp_b": 0.2,
+   "n_scales": 1,
+   "chain": "insanity.n.01 -[has-hypernym]-> mental_illness.n.01   [insanity.n.01 is the recorded opposite of sanity.n.01]"
+  },
+  {
+   "pos": "noun",
+   "config": "frozen_a",
+   "sense": "decrease.n.04",
+   "gloss": "the act of decreasing or reducing something",
+   "scale": "appreciation.n.05 (an increase in price or value) <-> depreciation.n.01 (a decrease in price or value)",
+   "position": -0.85,
+   "imp_a": 0.85,
+   "imp_b": 0.0323,
+   "n_scales": 4,
+   "chain": "depreciation.n.01 -[has-hypernym]-> decrease.n.04   [depreciation.n.01 is the recorded opposite of appreciation.n.05]"
+  },
+  {
+   "pos": "noun",
+   "config": "frozen_a",
+   "sense": "impotence.n.02",
+   "gloss": "an inability (usually of the male animal) to copulate",
+   "scale": "fertility.n.02 (the state of being fertile; capable of producing offspring) <-> sterility.n.02 (the state of being unable to produce offspring; in a woman it is an in)",
+   "position": -0.85,
+   "imp_a": 0.85,
+   "imp_b": 0.3333,
+   "n_scales": 1,
+   "chain": "sterility.n.02 -[has-hyponym]-> impotence.n.02   [sterility.n.02 is the recorded opposite of fertility.n.02]"
+  },
+  {
+   "pos": "noun",
+   "config": "frozen_a",
+   "sense": "increase.n.02",
+   "gloss": "a change resulting in an increase",
+   "scale": "waning.n.01 (a gradual decrease in magnitude or extent) <-> waxing.n.02 (a gradual increase in magnitude or extent)",
+   "position": -0.85,
+   "imp_a": 0.85,
+   "imp_b": 0.1111,
+   "n_scales": 1,
+   "chain": "waxing.n.02 -[has-hypernym]-> increase.n.02   [waxing.n.02 is the recorded opposite of waning.n.01]"
+  },
+  {
+   "pos": "noun",
+   "config": "frozen_a",
+   "sense": "conformist.n.01",
+   "gloss": "someone who conforms to established standards of conduct (especially i",
+   "scale": "conservative.n.01 (a person who is reluctant to accept changes and new ideas) <-> liberal.n.01 (a person who favors a political philosophy of progress and reform and )",
+   "position": 0.85,
+   "imp_a": 0.85,
+   "imp_b": 0.3333,
+   "n_scales": 1,
+   "chain": "conservative.n.01 -[has-hyponym]-> conformist.n.01   [conservative.n.01 is the recorded opposite of liberal.n.01]"
+  },
+  {
+   "pos": "verb",
+   "config": "frozen_a",
+   "sense": "unscrew.v.02",
+   "gloss": "loosen by turning",
+   "scale": "loosen.v.01 (make loose or looser) <-> stiffen.v.02 (make stiff or stiffer)",
+   "position": 0.85,
+   "imp_a": 0.85,
+   "imp_b": 1.0,
+   "n_scales": 1,
+   "chain": "loosen.v.01 -[has-hyponym]-> unscrew.v.02   [loosen.v.01 is the recorded opposite of stiffen.v.02]"
+  },
+  {
+   "pos": "verb",
+   "config": "frozen_a",
+   "sense": "assimilate.v.05",
+   "gloss": "become similar in sound",
+   "scale": "change.v.02 (undergo a change; become different in essence; losing one's or its ori) <-> stay.v.01 (stay the same; remain in a certain state)",
+   "position": 0.85,
+   "imp_a": 0.85,
+   "imp_b": 0.5,
+   "n_scales": 1,
+   "chain": "change.v.02 -[has-hyponym]-> assimilate.v.05   [change.v.02 is the recorded opposite of stay.v.01]"
+  },
+  {
+   "pos": "verb",
+   "config": "frozen_a",
+   "sense": "decrease.v.02",
+   "gloss": "make smaller",
+   "scale": "maximize.v.01 (make as big or large as possible) <-> minimize.v.01 (make small or insignificant)",
+   "position": -0.85,
+   "imp_a": 0.85,
+   "imp_b": 0.0588,
+   "n_scales": 1,
+   "chain": "minimize.v.01 -[has-hypernym]-> decrease.v.02   [minimize.v.01 is the recorded opposite of maximize.v.01]"
+  },
+  {
+   "pos": "verb",
+   "config": "frozen_a",
+   "sense": "contract_in.v.01",
+   "gloss": "consent in writing to pay money to a trade union for political use",
+   "scale": "accept.v.03 (give an affirmative reply to; respond favorably to) <-> refuse.v.01 (show unwillingness towards)",
+   "position": 0.85,
+   "imp_a": 0.85,
+   "imp_b": 1.0,
+   "n_scales": 1,
+   "chain": "accept.v.03 -[has-hyponym]-> contract_in.v.01   [accept.v.03 is the recorded opposite of refuse.v.01]"
+  },
+  {
+   "pos": "verb",
+   "config": "frozen_a",
+   "sense": "miss.v.07",
+   "gloss": "fail to reach",
+   "scale": "overshoot.v.01 (shoot beyond or over (a target)) <-> undershoot.v.02 (shoot short of or below (a target))",
+   "position": 0.0,
+   "imp_a": 0.85,
+   "imp_b": 0.6667,
+   "n_scales": 1,
+   "chain": "overshoot.v.01 -[has-hypernym]-> miss.v.07   [overshoot.v.01 is the recorded opposite of undershoot.v.02]"
+  }
+ ]
+}

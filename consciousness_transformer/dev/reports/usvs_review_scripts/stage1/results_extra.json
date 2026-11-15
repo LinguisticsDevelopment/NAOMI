@@ -1,0 +1,118 @@
+{
+ "dev_best_by_edges": {
+  "a|sim|hyp=False": [
+   0.069,
+   0.0,
+   1
+  ],
+  "a|sim|hyp=True": [
+   0.0737,
+   0.076,
+   1
+  ],
+  "a|sim+deriv|hyp=False": [
+   0.069,
+   0.0,
+   1
+  ],
+  "a|sim+deriv|hyp=True": [
+   0.0729,
+   0.063,
+   1
+  ],
+  "a|sim+deriv+pert|hyp=False": [
+   0.069,
+   0.0,
+   1
+  ],
+  "a|sim+deriv+pert|hyp=True": [
+   0.0728,
+   0.062,
+   1
+  ],
+  "a|sim+deriv+pert+also|hyp=False": [
+   0.0658,
+   0.104,
+   1
+  ],
+  "a|sim+deriv+pert+also|hyp=True": [
+   0.0687,
+   0.152,
+   1
+  ],
+  "b|sim|hyp=False": [
+   0.069,
+   0.0,
+   1
+  ],
+  "b|sim|hyp=True": [
+   0.0696,
+   0.076,
+   1
+  ],
+  "b|sim+deriv|hyp=False": [
+   0.069,
+   0.0,
+   1
+  ],
+  "b|sim+deriv|hyp=True": [
+   0.0696,
+   0.063,
+   1
+  ],
+  "b|sim+deriv+pert|hyp=False": [
+   0.069,
+   0.0,
+   1
+  ],
+  "b|sim+deriv+pert|hyp=True": [
+   0.0696,
+   0.062,
+   1
+  ],
+  "b|sim+deriv+pert+also|hyp=False": [
+   0.0663,
+   0.104,
+   1
+  ],
+  "b|sim+deriv+pert+also|hyp=True": [
+   0.0667,
+   0.152,
+   1
+  ]
+ },
+ "dev_ant<rand_range_over_all_768": [
+  0.0491,
+  0.0737,
+  0.0689
+ ],
+ "dev_simv_hyp_simlex_range": {
+  "hyp": [
+   0.937,
+   0.956,
+   0.937
+  ],
+  "sim_v_rand": [
+   0.867,
+   0.969,
+   0.725
+  ],
+  "simlex": [
+   0.281,
+   0.382,
+   0.274
+  ]
+ },
+ "frozen_test_sharing_pairs_reach_types": {
+  "has-hypernym+has-hypernym": 26,
+  "has-hyponym+has-hyponym": 35
+ },
+ "examples_separated_test_pairs": [
+  "activator.n.01 / inhibitor.n.01: catalyst.n.01 -[has-hypernym]-> activator.n.01   [catalyst.n.01 is the recorded opposite of anticatalyst.n.01]  ||  anticatalyst.n.01 -[has-hypernym]-> inhibitor.n.01   [anticatalyst.n.01 is the recorded opposite of catalyst.n.01]",
+  "ambiguity.n.02 / unambiguity.n.01: unclearness.n.01 -[has-hyponym]-> ambiguity.n.02   [unclearness.n.01 is the recorded opposite of clarity.n.01]  ||  clarity.n.01 -[has-hyponym]-> unambiguity.n.01   [clarity.n.01 is the recorded opposite of unclearness.n.01]",
+  "ambiversion.n.01 / introversion.n.03: sociability.n.01 -[has-hyponym]-> ambiversion.n.01   [sociability.n.01 is the recorded opposite of unsociability.n.01]  ||  unsociability.n.01 -[has-hyponym]-> introversion.n.03   [unsociability.n.01 is the recorded opposite of sociability.n.01]",
+  "appropriateness.n.01 / inappropriateness.n.01: propriety.n.01 -[has-hyponym]-> appropriateness.n.01   [propriety.n.01 is the recorded opposite of impropriety.n.01]  ||  impropriety.n.01 -[has-hyponym]-> inappropriateness.n.01   [impropriety.n.01 is the recorded opposite of propriety.n.01]",
+  "appropriateness.n.02 / inappropriateness.n.02: felicity.n.01 -[has-hypernym]-> appropriateness.n.02   [felicity.n.01 is the recorded opposite of infelicity.n.01]  ||  infelicity.n.01 -[has-hypernym]-> inappropriateness.n.02   [infelicity.n.01 is the recorded opposite of felicity.n.01]",
+  "asset.n.01 / liability.n.03: forte.n.01 -[has-hypernym]-> asset.n.01   [forte.n.01 is the recorded opposite of weak_point.n.01]  ||  weak_point.n.01 -[has-hypernym]-> liability.n.03   [weak_point.n.01 is the recorded opposite of forte.n.01]"
+ ]
+}

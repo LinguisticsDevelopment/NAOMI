@@ -1,0 +1,8 @@
+3 ('sim',) False 30 True 4
+3 ('sim',) True 30 True 7
+3 ('sim', 'deriv') False 30 True 11
+3 ('sim', 'deriv') True 30 True 19
+3 ('sim', 'deriv', 'pert') False 30 True 24
+3 ('sim', 'deriv', 'pert') True 30 True 32
+3 ('sim', 'deriv', 'pert', 'also') False 30 True 41
+3 ('sim', 'deriv', 'pert', 'also') True 30 True 54
