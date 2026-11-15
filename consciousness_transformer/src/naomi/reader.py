@@ -34,6 +34,7 @@ _WN_POS = {"NOUN": "n", "VERB": "v", "ADJ": "a", "ADV": "r"}
 # tagger categories whose tokens are names: variables with no meaning point (owner: numerals too, for now)
 _NAME_POS = ("PROPN", "NUM")
 _PUNCT_POS = "PUNCT"
+FN_PREFIX = "fn."  # id prefix of closed-class lexicon senses (see nsm_ct.ground.usvs)
 
 
 class _ParserTimeout(Exception):
@@ -75,14 +76,36 @@ def _wn_senses(lemma: str, pos: Optional[str]) -> Tuple[str, ...]:
         return ()
 
 
-def sense_candidates(token: str, lemma: str, wn_pos: Optional[str]) -> List[str]:
+_SENSE_SPACE = None  # the extended (614-axis) USVS the seam consults, loaded once
+
+
+def _sense_space():
+    global _SENSE_SPACE
+    if _SENSE_SPACE is None:
+        from nsm_ct.ground.usvs import load_usvs
+        _SENSE_SPACE = load_usvs(str(CT_DIR / "data" / "usvs"))
+    return _SENSE_SPACE
+
+
+def sense_candidates(token: str, lemma: str, wn_pos: Optional[str], pos: Optional[str] = None,
+                     lang: str = "en") -> List[str]:
     """THE single seam for candidate senses (best-first, uncommitted). Called for every non-name
-    token, function words included; empty list if the lexicon knows nothing."""
+    token, function words included; empty list if the lexicon knows nothing.
+
+    The per-language closed-class lexicon is consulted first through USVS (``senses_of_surface``
+    with the node's part of speech as the hint): a word it defines gets its lexicon sense(s)
+    (ids carry the lexicon prefix). Every other word keeps its WordNet candidates, best-first."""
+    try:
+        cands, _ = _sense_space().senses_of_surface(token, pos, lang)
+        if cands and all(c.startswith(FN_PREFIX) for c in cands):
+            return list(cands)
+    except Exception:
+        pass
     return list(_wn_senses(lemma, wn_pos))
 
 
 def make_node(rel: str, token: str, idx: Optional[int], pos: str, label: Optional[str] = None,
-              subtypes: Optional[List[str]] = None) -> Node:
+              subtypes: Optional[List[str]] = None, lang: str = "en") -> Node:
     token = (token or "").lower()
     if pos in _NAME_POS:
         return Node(rel=rel, token=token, token_index=idx, lemma=token, pos=pos, kind=KIND_NAME,
@@ -90,7 +113,7 @@ def make_node(rel: str, token: str, idx: Optional[int], pos: str, label: Optiona
     lemma_pos = _WN_POS.get(pos) or ("v" if pos == "AUX" else None)
     lemma = _wn_lemma(token, lemma_pos) if lemma_pos else token
     return Node(rel=rel, token=token, token_index=idx, lemma=lemma, pos=pos, kind=KIND_WORD,
-                senses=sense_candidates(token, lemma, _WN_POS.get(pos)), label=label,
+                senses=sense_candidates(token, lemma, _WN_POS.get(pos), pos, lang), label=label,
                 subtypes=list(subtypes or []))
 
 
@@ -229,7 +252,7 @@ class Reader:
                 diags.append({"kind": "graph_token_mismatch", "index": idx, "token": tok})
 
         def mk(i: int) -> Node:
-            return make_node(REL_UNATTACHED, tokens[i], i, pos[i], labels.get(i), subs[i])
+            return make_node(REL_UNATTACHED, tokens[i], i, pos[i], labels.get(i), subs[i], self.lang)
 
         root, d = attach_graph(tokens, pos, [tuple(e) for e in raw["edges"]], raw["roots"], mk,
                                lambda i: pos[i] == _PUNCT_POS)
@@ -259,7 +282,7 @@ class Reader:
 
     @staticmethod
     def legacy_to_tree(sentence: str, clauses: List[ClauseTree], tokens: List[str], pos: List[str],
-                       subs: List[List[str]]) -> Optional[Tree]:
+                       subs: List[List[str]], lang: str = "en") -> Optional[Tree]:
         """Old clauses -> Tree as far as they go: tokens the encoder placed become nodes (first
         clause predicate = root, later predicates and every token it did not place hang from the
         root as UNATTACHED; args keep their OLD role labels, which is why source is legacy)."""
@@ -269,7 +292,7 @@ class Reader:
         diags: List[dict] = []
 
         def node(rel: str, i: int) -> Node:
-            return make_node(rel, tokens[i], i, pos[i], None, subs[i])
+            return make_node(rel, tokens[i], i, pos[i], None, subs[i], lang)
 
         root = None
         for ci, c in enumerate(clauses):
@@ -315,7 +338,7 @@ class Reader:
     def read_parser(self, sentence: str, sentence_index=None) -> Optional[ReadResult]:
         """Parser-only reading, or None if the parser failed (error, cap, no hypothesis)."""
         t0 = time.perf_counter()
-        t = self._cached_tree("tp", sentence, lambda: self._from_parser(normalize(sentence), sentence))
+        t = self._cached_tree("tp2", sentence, lambda: self._from_parser(normalize(sentence), sentence))
         if t is None:
             return None
         return ReadResult(sentence=sentence, tree=t, source=SOURCE_PARSER, seconds=time.perf_counter() - t0)
@@ -329,9 +352,9 @@ class Reader:
                 cl = self._legacy_clauses(norm, tokens)
             except Exception:
                 cl = []
-            return self.legacy_to_tree(sentence, cl, tokens, pos, subs)
+            return self.legacy_to_tree(sentence, cl, tokens, pos, subs, self.lang)
         t0 = time.perf_counter()
-        t = self._cached_tree("tl", sentence, build)
+        t = self._cached_tree("tl2", sentence, build)
         if t is None:
             return ReadResult(sentence=sentence, source=SOURCE_NONE, seconds=time.perf_counter() - t0)
         return ReadResult(sentence=sentence, tree=t, source=SOURCE_LEGACY, seconds=time.perf_counter() - t0)

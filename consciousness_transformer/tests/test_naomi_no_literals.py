@@ -6,8 +6,8 @@ import re
 from pathlib import Path
 
 PKG = Path(__file__).resolve().parents[1] / "src" / "naomi"
-# decoder.py and score.py are being replaced by later jobs and are not part of this contract.
-SKIP_FILES = {"decoder.py", "score.py"}
+# decoder.py is being replaced by a later job and is not part of this contract.
+SKIP_FILES = {"decoder.py"}
 ALLOWED = {
     # internal structure tags / dict keys / dataclass field names
     "word", "name", "parser", "none", "fail", "nodes", "edges", "roots", "tree", "sentence", "source",
@@ -18,6 +18,9 @@ ALLOWED = {
     # diagnostic kinds
     "reversed_edge", "extra_edge", "multiple_components", "unattached_component", "unattached_token",
     "graph_token_mismatch",
+    # scorer reason kinds / side tags (internal vocabulary of naomi.score)
+    "node_dropped", "node_extra", "meaning_shift", "relation_changed", "head_changed", "name_mismatch",
+    "subtree_moved", "ungrounded_word", "reference", "candidate",
     # memory sense-choice rule names (internal)
     "no_candidates", "reuse_lemma_sense", "same_synset_in_layer", "hypernym_hyponym_neighbour",
     "first_candidate",
