@@ -29,7 +29,7 @@ with no sense is a unit dimension keyed by its lemma).
     node, unmatched candidate node) pair gets  0.6*meaning + 0.2*[same relation to head]
     + 0.2*[heads already matched to each other]; pairs are taken greedily by descending score (ties:
     higher meaning, then pre-order position in reference, then in candidate) and only if the score is
-    at least MATCH_MIN. Sibling order and repeated relations therefore do not matter. Token positions
+    at least MATCH_MIN (meaning here is the base-sense similarity, without folded operators). Sibling order and repeated relations therefore do not matter. Token positions
     are never used.
 
     MEANING % = flattened similarity. A tree flattens to  sum over nodes of (role vector of the node's
@@ -38,7 +38,7 @@ with no sense is a unit dimension keyed by its lemma).
         sum over aligned pairs on the SAME path (heads aligned and equal relation) of dot(v_ref, v_cand)
         / ( sqrt(sum |v_ref|^2) * sqrt(sum |v_cand|^2) )
     over all skeleton nodes (nodes with no partner count only in the norms). A recorded antonym pair
-    (word-level store, tiers ``antonym_tiers``) has its dot set to 0 and gives reason opposite_meaning.
+    (sense-level WordNet pointers, tiers ``antonym_tiers``; word store optional) has its dot set to 0 and gives reason opposite_meaning.
     SHAPE % = attachment F1 of the folded skeletons: 2C / (N_ref + N_cand), C = aligned nodes whose
     heads are aligned to each other AND whose relation label is equal.
     OVERALL = W_MEANING * meaning + W_SHAPE * shape (simple mean).
@@ -175,6 +175,51 @@ class _M:
 
 
 _ANT_CACHE: Dict = {}
+_IDF_CACHE: Dict = {}
+
+
+def axis_weights(usvs) -> np.ndarray:
+    """Per-axis IDF weight from the sense table (closed-class lexicon senses included, so operator axes
+    carried by few senses weigh a lot):  w = log((N_senses + 1) / (df + 1)), df = senses with a
+    non-zero value on the axis. (No importable implementation exists: the earlier ones are archived.)"""
+    k = id(usvs)
+    if k not in _IDF_CACHE:
+        n = len(usvs.sense_indptr) - 1
+        df = np.bincount(usvs.sense_axis_idx[usvs.sense_axis_val != 0], minlength=len(usvs.axes))
+        _IDF_CACHE[k] = np.log((n + 1.0) / (df + 1.0))
+    return _IDF_CACHE[k]
+
+
+def _wn_synset(sid: str):
+    try:
+        from nltk.corpus import wordnet as wn
+        return wn.synset(sid)
+    except Exception:
+        return None
+
+
+def _heads(syn):
+    """WordNet's own head relation: a satellite adjective's heads are its similar-to synsets."""
+    return list(syn.similar_tos()) if syn.pos() == "s" else [syn]
+
+
+def sense_opposite(sa: Optional[str], sb: Optional[str], tiers) -> Optional[str]:
+    """Sense-level antonymy from WordNet's own pointers. ``direct``: a lemma of one synset has an antonym
+    lemma in the other. ``satellite_head``: one is an adjective satellite and the heads of the two are
+    direct antonyms."""
+    if not sa or not sb or sa == sb:
+        return None
+    a, b = _wn_synset(sa), _wn_synset(sb)
+    if a is None or b is None:
+        return None
+    def direct(x, y):
+        return any(an.synset() == y for lem in x.lemmas() for an in lem.antonyms())
+    if tiers and ANTONYM_TIERS[0] in tiers and (direct(a, b) or direct(b, a)):
+        return ANTONYM_TIERS[0]
+    if tiers and ANTONYM_TIERS[1] in tiers and "s" in (a.pos(), b.pos()):
+        if any(direct(x, y) or direct(y, x) for x in _heads(a) for y in _heads(b)):
+            return ANTONYM_TIERS[1]
+    return None
 
 
 def _antonym_pairs(usvs, tiers) -> Dict:
@@ -196,14 +241,21 @@ class _Space:
     """Sense vectors over the named axes (plus a unit dimension per name / unsensed lemma), the folded
     operators of each skeleton node, and the antonym store."""
 
-    def __init__(self, usvs, best_candidate: bool, tiers=None):
+    def __init__(self, usvs, best_candidate: bool, tiers=None, word_tiers=(), idf: bool = True):
         self.u, self.best, self._v, self._r = usvs, best_candidate, {}, {}
         self.ops: Dict[int, List[Node]] = {}
-        self.ant = _antonym_pairs(usvs, DEFAULT_ANTONYM_TIERS if tiers is None else tuple(tiers))
+        self.tiers = DEFAULT_ANTONYM_TIERS if tiers is None else tuple(tiers)
+        self.ant = _antonym_pairs(usvs, tuple(word_tiers)) if word_tiers else {}
+        # IDF weighting enters the dot product as w * x * y (vectors are scaled by sqrt(w));
+        # a unit dimension (name / unsensed lemma) is as specific as it gets: the largest weight.
+        self.w = axis_weights(usvs) if idf else np.ones(len(usvs.axes))
+        self.sw = np.sqrt(self.w)
+        self.unit = float(self.w.max()) ** 0.5
 
     def vec(self, sid: str) -> Optional[np.ndarray]:
         if sid not in self._v:
-            self._v[sid] = self.u.sense_dense(sid)
+            v = self.u.sense_dense(sid)
+            self._v[sid] = None if v is None else v.astype(np.float64) * self.sw
         return self._v[sid]
 
     def options(self, n: Node) -> List[str]:
@@ -224,9 +276,9 @@ class _Space:
         if k not in self._r:
             base = None if (n.kind == KIND_NAME or not sid) else self.vec(sid)
             if base is None:
-                self._r[k] = (None, {(n.kind[:1], n.token if n.kind == KIND_NAME else n.lemma): 1.0})
+                self._r[k] = (None, {(n.kind[:1], n.token if n.kind == KIND_NAME else n.lemma): self.unit})
             else:
-                v = base.astype(np.float64)
+                v = base
                 for o in (self.ops.get(id(n), []) if fold else []):
                     ov = self.vec(self.chosen(o))
                     if ov is not None:
@@ -250,6 +302,15 @@ class _Space:
     def opposite(self, a: Node, b: Node) -> Optional[str]:
         if a.kind == KIND_NAME or b.kind == KIND_NAME:
             return None
+        return self.opposite_senses(a, b)
+
+    def opposite_senses(self, a: Node, b: Node, sa=None, sb=None) -> Optional[str]:
+        sa, sb = sa or self.chosen(a), sb or self.chosen(b)
+        if not (sa or sb) or a.kind == KIND_NAME or b.kind == KIND_NAME:
+            return None
+        t = sense_opposite(sa, sb, self.tiers)
+        if t:
+            return t
         for x in {a.lemma, a.token}:
             for y in {b.lemma, b.token}:
                 t = self.ant.get(frozenset((x, y)))
@@ -269,7 +330,7 @@ class _Space:
                 if best is None or s > best.sim + _EPS:
                     ba, bb = self.rep(a, sa, False), self.rep(b, sb, False)
                     best = _M(sim=s, sa=sa, sb=sb, base=1.0 if sa == sb else self._cos(ba, bb), dot=self.dot(ra, rb))
-        best.tier = self.opposite(a, b)
+        best.tier = None if a.kind == KIND_NAME or b.kind == KIND_NAME else self.opposite_senses(a, b, best.sa, best.sb)
         if best.tier:
             best.sim = best.dot = 0.0
         return best
@@ -287,11 +348,13 @@ class _Space:
                 out[k] = out.get(k, 0.0) + v
         return out
 
-    @staticmethod
-    def _top(da, db) -> List[Tuple[str, float]]:
+    def _top(self, da, db) -> List[Tuple[str, float]]:
+        """Top differing dimensions, ranked by IDF-weighted absolute difference; the raw signed
+        difference (candidate minus reference) is reported."""
+        wt = {a: float(w) for a, w in zip(self.u.axes, self.w)}
         out = [(k, round(db.get(k, 0.0) - da.get(k, 0.0), 4)) for k in set(da) | set(db)]
         out = [x for x in out if abs(x[1]) > _EPS]
-        return sorted(out, key=lambda x: (-abs(x[1]), x[0]))[:TOP_DIMS]
+        return sorted(out, key=lambda x: (-abs(x[1]) * wt.get(x[0], 1.0), x[0]))[:TOP_DIMS]
 
 
 def fold_operators(tree: Tree, sp: _Space) -> Tree:
@@ -355,10 +418,11 @@ def _align(ref: Tree, cand: Tree, sp: _Space):
                 if id(c) in taken or _virtual(c):
                     continue
                 m = sp.meaning(r, c)
-                s = (W_ALIGN_MEANING * m.sim + W_ALIGN_RELATION * (r.rel == c.rel)
+                am = 0.0 if m.tier else m.base      # align on the base senses: folded operators must not steer it
+                s = (W_ALIGN_MEANING * am + W_ALIGN_RELATION * (r.rel == c.rel)
                      + W_ALIGN_HEAD * _heads_aligned(r, c, rp, cp, match))
                 if s >= MATCH_MIN - _EPS:
-                    scored.append((-s, -m.sim, rpos[id(r)], cpos[id(c)], r, c, m))
+                    scored.append((-s, -am, rpos[id(r)], cpos[id(c)], r, c, m))
         for _s, _m, _i, _j, r, c, m in sorted(scored, key=lambda t: t[:4]):
             if id(r) in match or id(c) in taken:
                 continue
@@ -384,8 +448,12 @@ def _figures(refs: List[Node], cands: List[Node], credit: Dict, good: set) -> Op
     return Figures(100 * rec, 100 * prec, 100 * f1, 100 * att, 100 * (W_OVERALL_NODE_F1 * f1 + W_OVERALL_ATTACHMENT * att))
 
 
-def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = False, antonym_tiers=None) -> PairScore:
-    sp = _Space(usvs, best_candidate, antonym_tiers)
+def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = False, antonym_tiers=None,
+               word_store_tiers=(), idf: bool = True) -> PairScore:
+    """``antonym_tiers``: sense-level (WordNet pointer) tiers, default direct + satellite_head.
+    ``word_store_tiers``: optional extra tiers from the word-level USVS store (default off: conflated).
+    ``idf``: weight the axes by IDF in every vector comparison (default on)."""
+    sp = _Space(usvs, best_candidate, antonym_tiers, word_store_tiers, idf)
     reference, candidate = fold_operators(reference, sp), fold_operators(candidate, sp)
     ro, rp, co, cp, match, meaning = _align(reference, candidate, sp)
     rn = [n for n in ro if not _virtual(n)]
@@ -475,7 +543,8 @@ def score_pair(reference: Tree, candidate: Tree, usvs, best_candidate: bool = Fa
                      content_words=_figures(cr, cc, credit, good), matches=matches, reasons=reasons)
 
 
-def tree_similarity(a: Tree, b: Tree, usvs, best_candidate: bool = False, antonym_tiers=None) -> float:
+def tree_similarity(a: Tree, b: Tree, usvs, best_candidate: bool = False, antonym_tiers=None,
+                    word_store_tiers=(), idf: bool = True) -> float:
     """Symmetric: the overall percentage with a as reference averaged with b as reference."""
-    return 0.5 * (score_pair(a, b, usvs, best_candidate, antonym_tiers).overall
-                  + score_pair(b, a, usvs, best_candidate, antonym_tiers).overall)
+    return 0.5 * (score_pair(a, b, usvs, best_candidate, antonym_tiers, word_store_tiers, idf).overall
+                  + score_pair(b, a, usvs, best_candidate, antonym_tiers, word_store_tiers, idf).overall)

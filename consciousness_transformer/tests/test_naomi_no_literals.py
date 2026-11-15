@@ -20,7 +20,7 @@ ALLOWED = {
     "graph_token_mismatch",
     # scorer reason kinds / side tags (internal vocabulary of naomi.score)
     "node_dropped", "node_extra", "meaning_shift", "relation_changed", "head_changed", "name_mismatch",
-    "subtree_moved", "ungrounded_word", "opposite_meaning", "operator_folded_differs", "reference", "candidate",
+    "subtree_moved", "ungrounded_word", "opposite_meaning", "direct", "satellite_head", "operator_folded_differs", "reference", "candidate",
     # memory sense-choice rule names (internal)
     "no_candidates", "reuse_lemma_sense", "same_synset_in_layer", "hypernym_hyponym_neighbour",
     "first_candidate",

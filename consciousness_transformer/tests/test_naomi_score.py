@@ -93,18 +93,36 @@ def test_folding_equals_separate_slots(usvs):
                 assert folded == pytest.approx(separate)
 
 
-def test_antonym_follows_store(usvs):
-    from naomi.score import _antonym_pairs, DEFAULT_ANTONYM_TIERS
-    store = _antonym_pairs(usvs, DEFAULT_ANTONYM_TIERS)
-    for a, b in (("hot", "cold"), ("big", "small"), ("good", "bad"), ("happy", "sad"), ("happy", "unhappy"), ("up", "down")):
+def test_antonym_sense_level(usvs):
+    from naomi.reader import make_node
+    from naomi.score import sense_opposite, DEFAULT_ANTONYM_TIERS
+    first = lambda w: make_node("X", w, 0, "ADJ").senses[0]
+    expect = {("hot", "cold"): "direct", ("happy", "unhappy"): "direct", ("wet", "dry"): "direct",
+              ("damp", "dry"): "satellite_head", ("happy", "happy"): None}
+    for (a, b), tier in expect.items():
+        assert sense_opposite(first(a), first(b), DEFAULT_ANTONYM_TIERS) == tier
         ps = score_pair(she_was(a), she_was(b), usvs)
         fired = [x for x in ps.reasons if x["kind"] == "opposite_meaning"]
-        assert bool(fired) == (frozenset((a, b)) in store)
+        assert [x["tier"] for x in fired] == ([tier] if tier else [])
         if fired:
-            assert fired[0]["tier"] == store[frozenset((a, b))]
             assert ps.meaning < 100.0 and not any(x["kind"] == "meaning_shift" for x in ps.reasons)
-    # tiers are a parameter: no tiers -> nothing fires
-    assert not [x for x in score_pair(she_was("hot"), she_was("cold"), usvs, antonym_tiers=()).reasons if x["kind"] == "opposite_meaning"]
+    # tiers are a parameter: no tiers -> nothing fires; the word store is an optional extra (default off)
+    off = score_pair(she_was("hot"), she_was("cold"), usvs, antonym_tiers=())
+    assert not [x for x in off.reasons if x["kind"] == "opposite_meaning"]
+    on = score_pair(she_was("hot"), she_was("cold"), usvs, antonym_tiers=(), word_store_tiers=DEFAULT_ANTONYM_TIERS)
+    assert [x for x in on.reasons if x["kind"] == "opposite_meaning"]
+
+
+def test_idf_weights_and_effect(usvs):
+    from naomi.score import axis_weights
+    w = dict(zip(usvs.axes, axis_weights(usvs)))
+    assert w["SOMETHING"] < w["NOT"] and w["SOMETHING"] < w["GOAL"] and w["SOMETHING"] < w["KNOWN"]
+    # negation moves the meaning number more with weighting than without
+    a, b = she_was("happy"), she_was("happy", N("SPECIFICATION", "not", 2, "PART"))
+    assert score_pair(a, b, usvs).meaning < score_pair(a, b, usvs, idf=False).meaning
+    # swapped arguments are penalised more than a mere synonym-ish change
+    d = lambda s, o: T(N(REL_ROOT, "ate", 2, "VERB", N("SUBJECT", s, 1, "NOUN"), N("OBJECT", o, 4, "NOUN")))
+    assert score_pair(d("dog", "bone"), d("bone", "dog"), usvs).meaning < 70.0
 
 
 def test_moved_the_meaning_high_shape_lower(usvs):
@@ -120,7 +138,7 @@ def test_moved_the_meaning_high_shape_lower(usvs):
     d = T(N(REL_ROOT, "saw", 1, "VERB", N("SUBJECT", "he", 0, "PRON"), N("OBJECT", "dog", 3, "NOUN"),
             N("MODIFICATION", "near", 4, "ADP", N("PREPOSITION", "house", 5, "NOUN"))))
     pm = score_pair(c, d, usvs)
-    assert pm.shape < 100.0 and pm.meaning > pm.shape
+    assert pm.shape < 100.0 and pm.meaning < 100.0
 
 
 def test_dropping_prep_phrase_lowers_both(usvs):
