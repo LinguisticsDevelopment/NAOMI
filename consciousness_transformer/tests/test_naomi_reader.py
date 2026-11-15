@@ -32,12 +32,12 @@ EIGHT = {
     "he was not happy": {("was", "SUBJECT", "he")},
     "nobody came to the house": {("came", "SUBJECT", "nobody"), ("came", "MODIFICATION", "to"),
                                  ("to", "PREPOSITION", "house"), ("house", "DESCRIPTION", "the")},
-    "the dog did not eat the bone": {("did", "SUBJECT", "dog"), ("dog", "DESCRIPTION", "the"),
+    "the dog did not eat the bone": {("eat", "SUBJECT", "dog"), ("dog", "DESCRIPTION", "the"),
                                      ("eat", "OBJECT", "bone"), ("bone", "DESCRIPTION", "the")},
     "jim's father gave her three apples": {("gave", "SUBJECT", "father"), ("gave", "OBJECT", "apples")},
     "she said that he left because it rained": {("said", "SUBJECT", "she"), ("left", "SUBJECT", "he"),
                                                 ("rained", "SUBJECT", "it"), ("said", "SUBORDINATION", "that"),
-                                                ("said", "SUBORDINATION", "because")},
+                                                ("left", "SUBORDINATION", "because")},
     "who ate the bone?": {("ate", "SUBJECT", "who"), ("ate", "OBJECT", "bone"), ("bone", "DESCRIPTION", "the")},
     "the king never saw the princess again": {("saw", "SUBJECT", "king"), ("king", "DESCRIPTION", "the"),
                                               ("saw", "SPECIFICATION", "never"), ("saw", "OBJECT", "princess"),
@@ -78,9 +78,9 @@ def test_unattached_is_recorded_not_repaired(reader):
     un = {n.token for n in T.token_nodes(t) if n.rel == REL_UNATTACHED}
     diag = {d["token"] for d in t.diagnostics if d["kind"] == "unattached_token"}
     assert un == diag                              # every UNATTACHED node has its diagnostic
-    t = reader.read("the dog did not eat the bone").tree
-    assert any(d["kind"] == "multiple_components" for d in t.diagnostics)
-    assert t.root.token_index is None              # synthetic ROOT
+    t = reader.read("the dog did not eat the bone").tree   # the grammar now links auxiliary and main verb
+    assert not any(d["kind"] == "multiple_components" for d in t.diagnostics)
+    assert t.root.token == "eat"
 
 
 def test_names_and_senses(reader):
