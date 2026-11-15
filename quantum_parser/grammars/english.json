@@ -7,6 +7,7 @@
     },
 
     "order": [
+        "coordPunct",
         "adv1", "adv2", "advPrep1", "advPrep2",
         "adj1", "adj2", "adjPrep1", "adjPrep2",
         "mixPrep",
@@ -18,9 +19,10 @@
         "normPP2", "adjPP2", "advPP2", "verbPP2", "mixPP2",
         "noun3",
         "nominal1", "nominal2",
-        "inf1", "ger1", "part1",
-        "poss1", "poss2",
-        "neg1", "neg2",
+        "inf1", "auxProg1", "ger1", "part1",
+        "poss1", "poss2", "cliticCop1", "poss3",
+        "neg1", "neg2", "negComp1",
+        "auxInv1",
         "aux1", "aux2",
         "verb1", "verb2",
         "quote1",
@@ -2946,6 +2948,158 @@
                     ],
                     "consume": ["before", "after"],
                     "note": "Coordinate outer clauses"
+                }
+            ]
+        },
+
+        "coordPunct": {
+            "description": "Absorb a comma that directly precedes a coordinator (', and', ', but'): punctuation, no edge, so the coordinator's left neighbour is the conjunct",
+            "result": "COORD",
+            "rules": [
+                {
+                    "result": "COORD",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "COORD"},
+                        "before": [{"type": "NIL", "subtypes": ["COMMA"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": ["before"],
+                    "note": "A comma immediately left of a coordinator is consumed without an edge; the coordination rules then see the real left conjunct: 'she was ill , and he worried'."
+                }
+            ]
+        },
+
+        "negComp1": {
+            "description": "Pre-head modifier that precedes a descriptor or specifier attaches to it",
+            "result": "DESCRIPTOR",
+            "rules": [
+                {
+                    "result": "DESCRIPTOR",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "DESCRIPTOR"},
+                        "before": [{"type": "MODIFIER", "subtypes": ["ABSORBED_PREMOD"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "SPECIFICATION", "from": "before[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Pre-head absorbed modifier + descriptor: 'was not happy' -> happy(SPECIFICATION:not), so predicate1 can take happy as the COMPLEMENT."
+                },
+                {
+                    "result": "SPECIFIER",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "SPECIFIER"},
+                        "before": [{"type": "MODIFIER", "subtypes": ["ABSORBED_PREMOD"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "SPECIFICATION", "from": "before[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "note": "Pre-head absorbed modifier + specifier: 'is not here' -> here(SPECIFICATION:not)."
+                }
+            ]
+        },
+
+        "auxInv1": {
+            "description": "Auxiliary fronted before its subject: attach the auxiliary to the verb after the subject",
+            "result": "VERBAL",
+            "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_BARE_NEXT"]},
+                        "before": [],
+                        "after": [{"type": "NOMINAL", "quantifier": "one"}, {"type": "VERBAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}
+                    ],
+                    "consume": ["anchor"],
+                    "note": "Subject-auxiliary inversion with a bare-verb auxiliary: 'did he eat the cake' -> eat(MODIFICATION:did), the subject stays free for clause1."
+                },
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["AUX_PP_NEXT"]},
+                        "before": [],
+                        "after": [{"type": "NOMINAL", "quantifier": "one"}, {"type": "VERBAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "anchor", "to": "after[1]"}
+                    ],
+                    "consume": ["anchor"],
+                    "note": "Subject-auxiliary inversion with a perfect auxiliary: 'had he eaten' -> eaten(MODIFICATION:had)."
+                }
+            ]
+        },
+
+        "auxProg1": {
+            "description": "Copula/progressive auxiliary directly before a participle attaches to it, before gerund/adjective readings of the participle are tried",
+            "result": "VERBAL",
+            "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "VERBAL", "subtypes": ["PARTICIPLE"]},
+                        "before": [{"type": "MODIFIER", "subtypes": ["AUX_PART_NEXT"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "before[0]", "to": "anchor"}
+                    ],
+                    "consume": ["before"],
+                    "flags": {"pop_categories": ["DESCRIPTOR"]},
+                    "note": "was running -> running(MODIFICATION:was). The participle loses its PARTICIPLE flag (pop DESCRIPTOR subcategory) so ger1/part1 do not re-read it as gerund/adjective."
+                }
+            ]
+        },
+
+        "cliticCop1": {
+            "description": "Noun clitic after a third-person pronoun is the copula: it becomes a verbal",
+            "result": "VERBAL",
+            "rules": [
+                {
+                    "result": "VERBAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["NOUN_CLITIC_LEFT"]},
+                        "before": [{"type": "NOMINAL", "subtypes": ["THIRD_PERSON"], "quantifier": "one"}],
+                        "after": []
+                    },
+                    "connections": [],
+                    "consume": [],
+                    "note": "Clitic after a third-person pronoun is the copula, not possession: 'he 's happy', 'it 's a dog' -> the clitic becomes a verbal (predicate1/clause1 then give it its subject and complement)."
+                }
+            ]
+        },
+
+        "poss3": {
+            "description": "Noun clitic: possessor nests under the clitic, the clitic modifies the possessed noun",
+            "result": "NOMINAL",
+            "rules": [
+                {
+                    "result": "NOMINAL",
+                    "recursive": false,
+                    "pattern": {
+                        "anchor": {"type": "MODIFIER", "subtypes": ["NOUN_CLITIC_LEFT"]},
+                        "before": [{"type": "NOMINAL", "quantifier": "one"}],
+                        "after": [{"type": "NOMINAL", "quantifier": "one"}]
+                    },
+                    "connections": [
+                        {"type": "MODIFICATION", "from": "after[0]", "to": "anchor"},
+                        {"type": "PREPOSITION", "from": "anchor", "to": "before[0]"}
+                    ],
+                    "consume": ["before", "anchor"],
+                    "note": "Possession: jim 's father -> father(MODIFICATION:'s(PREPOSITION:jim))."
                 }
             ]
         }
