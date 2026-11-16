@@ -19,7 +19,7 @@ memory, written by ordinary graph/tensor writes, never by training. See
 
 | Goal | Status |
 |---|---|
-| Read | in progress — gold v7 exists in the new tree format (29,421 sentences), but only 30% of words are connected to the sentence's main root and 18-21% of sentences are one connected tree: the English grammar must learn to link clauses before encoder-decoder training |
+| Read | in progress — new encoder (head + relation per word) agrees with the parser 93% where the parser commits; the links it adds beyond the parser are about a third wrong, to be filtered by the stage-B referees; decoder next |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
 | Answer from memory | not started in its proper form — the rule-based answerer was removed (owner, 2026-11-14); answering will be learned by the consciousness after the encoder/decoder pair works |
@@ -560,6 +560,12 @@ ledger entries should cite the topic, matching the headings below.
   basis for content words in a flattened space; they stay for closed-class
   and operator words. Working rule: plan heavily, identify issues and
   alternatives before implementing; use cheaper agents and fewer at once.
+
+- **2026-11-16 — encoder-decoder pair method approved.** Encoder outputs
+  each word's head and relation; decoder v1 produces word order from a
+  tree; stage B is self-training with the grammar, the parser and the round
+  trip as referees; the parser's unconnected pieces are treated as unknown,
+  never as targets. `consciousness_transformer/dev/design/ENCODER_DECODER_PAIR_PROPOSAL.md`.
 
 ## Ops rules
 

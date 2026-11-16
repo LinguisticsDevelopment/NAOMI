@@ -1,0 +1,590 @@
+{
+ "ckpt": "runs/naomi_encoder/hash_best.pt",
+ "meta": {
+  "epoch": 28,
+  "dev": {
+   "loss": 0.4834209882961011,
+   "uas": 0.9341412711751957,
+   "las": 0.9215799018090141,
+   "n": 22609
+  },
+  "args": {
+   "tag": "hash",
+   "gold": "/home/user/NAOMI/consciousness_transformer/runs/gold_v7.jsonl.gz",
+   "max_minutes": 60.0,
+   "epochs": 60,
+   "patience": 5,
+   "hidden": 192,
+   "layers": 3,
+   "hash_buckets": 4096,
+   "lr": 0.002,
+   "batch_tokens": 1800,
+   "seed": 0,
+   "limit": 0,
+   "threads": 4
+  },
+  "n_params": 2774765,
+  "train_sentences": 26447
+ },
+ "test_split": {
+  "connected_sentences": {
+   "model": {
+    "11-20": {
+     "sentences": 83,
+     "tokens": 1164,
+     "uas": 0.9433,
+     "las": 0.9373,
+     "exact_unlabelled": 0.6867,
+     "exact_labelled": 0.6627,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 20,
+     "tokens": 480,
+     "uas": 0.8979,
+     "las": 0.8812,
+     "exact_unlabelled": 0.25,
+     "exact_labelled": 0.1,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 310,
+     "tokens": 1771,
+     "uas": 0.9577,
+     "las": 0.9486,
+     "exact_unlabelled": 0.8968,
+     "exact_labelled": 0.8839,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "all": {
+     "sentences": 413,
+     "tokens": 3415,
+     "uas": 0.9444,
+     "las": 0.9353,
+     "exact_unlabelled": 0.8232,
+     "exact_labelled": 0.8015,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   },
+   "baseline_nearest_verb": {
+    "11-20": {
+     "sentences": 83,
+     "tokens": 1164,
+     "uas": 0.3067,
+     "las": 0.256,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 20,
+     "tokens": 480,
+     "uas": 0.2833,
+     "las": 0.2417,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 310,
+     "tokens": 1771,
+     "uas": 0.3834,
+     "las": 0.3292,
+     "exact_unlabelled": 0.1484,
+     "exact_labelled": 0.1161,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "all": {
+     "sentences": 413,
+     "tokens": 3415,
+     "uas": 0.3432,
+     "las": 0.2919,
+     "exact_unlabelled": 0.1114,
+     "exact_labelled": 0.0872,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   }
+  },
+  "fragmented_sentences": {
+   "sentences": 1098,
+   "supervised_agreement": {
+    "sentences": 1098,
+    "tokens": 18923,
+    "uas": 0.925,
+    "las": 0.9134,
+    "exact_unlabelled": 0.4381,
+    "exact_labelled": 0.4153,
+    "scorer_meaning": null,
+    "scorer_shape": null,
+    "scorer_overall": null
+   },
+   "by_band": {
+    "11-20": {
+     "sentences": 333,
+     "tokens": 4200,
+     "uas": 0.9121,
+     "las": 0.8969,
+     "exact_unlabelled": 0.4805,
+     "exact_labelled": 0.4505,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 353,
+     "tokens": 7766,
+     "uas": 0.9208,
+     "las": 0.909,
+     "exact_unlabelled": 0.3003,
+     "exact_labelled": 0.2748,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "36+": {
+     "sentences": 162,
+     "tokens": 5759,
+     "uas": 0.9427,
+     "las": 0.9333,
+     "exact_unlabelled": 0.1914,
+     "exact_labelled": 0.1728,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 250,
+     "tokens": 1198,
+     "uas": 0.9124,
+     "las": 0.904,
+     "exact_unlabelled": 0.736,
+     "exact_labelled": 0.724,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   },
+   "unknown_tokens": 4500,
+   "supervised_tokens": 18923,
+   "unknown_placement_share": {
+    "inside another piece": 0.9262,
+    "own piece": 0.0371,
+    "ROOT": 0.0367
+   },
+   "output_single_rooted_connected_share": 1.0,
+   "main_root_agreement": 0.8151,
+   "margin_added_links": {
+    "mean": 4.426,
+    "median": 3.168
+   },
+   "margin_supervised_links": {
+    "mean": 15.575,
+    "median": 14.721
+   },
+   "top1_prob_added": {
+    "mean": 0.639,
+    "median": 0.822
+   },
+   "top1_prob_supervised": {
+    "mean": 0.959,
+    "median": 1.0
+   },
+   "relations_used_for_added_links": {
+    "MODIFICATION": 0.2911,
+    "COORDINATION": 0.2333,
+    "OBJECT": 0.124,
+    "SPECIFICATION": 0.0867,
+    "DESCRIPTION": 0.0676,
+    "COMPLEMENT": 0.0422,
+    "SUBJECT": 0.0413,
+    "ROOT": 0.0367,
+    "PREPOSITION": 0.0364,
+    "SUBORDINATION": 0.0296,
+    "INDIRECT_OBJECT": 0.0089,
+    "APPOSITION": 0.0022
+   }
+  }
+ },
+ "frozen_holdout": {
+  "connected_sentences": {
+   "model": {
+    "11-20": {
+     "sentences": 14,
+     "tokens": 196,
+     "uas": 0.9439,
+     "las": 0.9286,
+     "exact_unlabelled": 0.7143,
+     "exact_labelled": 0.7143,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 16,
+     "tokens": 120,
+     "uas": 0.9667,
+     "las": 0.95,
+     "exact_unlabelled": 0.8125,
+     "exact_labelled": 0.6875,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "all": {
+     "sentences": 30,
+     "tokens": 316,
+     "uas": 0.9525,
+     "las": 0.9367,
+     "exact_unlabelled": 0.7667,
+     "exact_labelled": 0.7,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   },
+   "baseline_nearest_verb": {
+    "11-20": {
+     "sentences": 14,
+     "tokens": 196,
+     "uas": 0.2551,
+     "las": 0.2245,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 16,
+     "tokens": 120,
+     "uas": 0.4,
+     "las": 0.3167,
+     "exact_unlabelled": 0.0625,
+     "exact_labelled": 0.0625,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "all": {
+     "sentences": 30,
+     "tokens": 316,
+     "uas": 0.3101,
+     "las": 0.2595,
+     "exact_unlabelled": 0.0333,
+     "exact_labelled": 0.0333,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   }
+  },
+  "fragmented_sentences": {
+   "sentences": 64,
+   "supervised_agreement": {
+    "sentences": 64,
+    "tokens": 1223,
+    "uas": 0.9346,
+    "las": 0.9191,
+    "exact_unlabelled": 0.3281,
+    "exact_labelled": 0.2969,
+    "scorer_meaning": null,
+    "scorer_shape": null,
+    "scorer_overall": null
+   },
+   "by_band": {
+    "11-20": {
+     "sentences": 27,
+     "tokens": 346,
+     "uas": 0.9422,
+     "las": 0.9162,
+     "exact_unlabelled": 0.4444,
+     "exact_labelled": 0.4074,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 23,
+     "tokens": 481,
+     "uas": 0.9252,
+     "las": 0.9106,
+     "exact_unlabelled": 0.2174,
+     "exact_labelled": 0.2174,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "36+": {
+     "sentences": 12,
+     "tokens": 384,
+     "uas": 0.9401,
+     "las": 0.9323,
+     "exact_unlabelled": 0.25,
+     "exact_labelled": 0.1667,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 2,
+     "tokens": 12,
+     "uas": 0.9167,
+     "las": 0.9167,
+     "exact_unlabelled": 0.5,
+     "exact_labelled": 0.5,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   },
+   "unknown_tokens": 349,
+   "supervised_tokens": 1223,
+   "unknown_placement_share": {
+    "inside another piece": 0.9427,
+    "own piece": 0.0315,
+    "ROOT": 0.0258
+   },
+   "output_single_rooted_connected_share": 1.0,
+   "main_root_agreement": 0.8125,
+   "margin_added_links": {
+    "mean": 4.329,
+    "median": 2.909
+   },
+   "margin_supervised_links": {
+    "mean": 15.726,
+    "median": 14.822
+   },
+   "top1_prob_added": {
+    "mean": 0.675,
+    "median": 0.852
+   },
+   "top1_prob_supervised": {
+    "mean": 0.97,
+    "median": 1.0
+   },
+   "relations_used_for_added_links": {
+    "MODIFICATION": 0.3467,
+    "COORDINATION": 0.2235,
+    "DESCRIPTION": 0.0974,
+    "OBJECT": 0.0688,
+    "SPECIFICATION": 0.0659,
+    "COMPLEMENT": 0.0544,
+    "PREPOSITION": 0.0516,
+    "SUBJECT": 0.0401,
+    "ROOT": 0.0258,
+    "SUBORDINATION": 0.0229,
+    "INDIRECT_OBJECT": 0.0029
+   }
+  }
+ },
+ "frozen_holdout_dev": {
+  "connected_sentences": {
+   "model": {
+    "11-20": {
+     "sentences": 8,
+     "tokens": 116,
+     "uas": 0.9224,
+     "las": 0.9052,
+     "exact_unlabelled": 0.625,
+     "exact_labelled": 0.5,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 2,
+     "tokens": 45,
+     "uas": 0.9111,
+     "las": 0.8667,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 5,
+     "tokens": 25,
+     "uas": 0.96,
+     "las": 0.96,
+     "exact_unlabelled": 0.8,
+     "exact_labelled": 0.8,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "all": {
+     "sentences": 15,
+     "tokens": 186,
+     "uas": 0.9247,
+     "las": 0.9032,
+     "exact_unlabelled": 0.6,
+     "exact_labelled": 0.5333,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   },
+   "baseline_nearest_verb": {
+    "11-20": {
+     "sentences": 8,
+     "tokens": 116,
+     "uas": 0.1983,
+     "las": 0.1897,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 2,
+     "tokens": 45,
+     "uas": 0.2444,
+     "las": 0.2,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 5,
+     "tokens": 25,
+     "uas": 0.4,
+     "las": 0.28,
+     "exact_unlabelled": 0.2,
+     "exact_labelled": 0.0,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "all": {
+     "sentences": 15,
+     "tokens": 186,
+     "uas": 0.2366,
+     "las": 0.2043,
+     "exact_unlabelled": 0.0667,
+     "exact_labelled": 0.0,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   }
+  },
+  "fragmented_sentences": {
+   "sentences": 83,
+   "supervised_agreement": {
+    "sentences": 83,
+    "tokens": 1596,
+    "uas": 0.9279,
+    "las": 0.9167,
+    "exact_unlabelled": 0.4217,
+    "exact_labelled": 0.4096,
+    "scorer_meaning": null,
+    "scorer_shape": null,
+    "scorer_overall": null
+   },
+   "by_band": {
+    "11-20": {
+     "sentences": 23,
+     "tokens": 308,
+     "uas": 0.9058,
+     "las": 0.8929,
+     "exact_unlabelled": 0.3913,
+     "exact_labelled": 0.3913,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 38,
+     "tokens": 826,
+     "uas": 0.9225,
+     "las": 0.9116,
+     "exact_unlabelled": 0.3158,
+     "exact_labelled": 0.2895,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "36+": {
+     "sentences": 11,
+     "tokens": 394,
+     "uas": 0.9467,
+     "las": 0.934,
+     "exact_unlabelled": 0.3636,
+     "exact_labelled": 0.3636,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 11,
+     "tokens": 68,
+     "uas": 0.9853,
+     "las": 0.9853,
+     "exact_unlabelled": 0.9091,
+     "exact_labelled": 0.9091,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   },
+   "unknown_tokens": 334,
+   "supervised_tokens": 1596,
+   "unknown_placement_share": {
+    "inside another piece": 0.9281,
+    "own piece": 0.0359,
+    "ROOT": 0.0359
+   },
+   "output_single_rooted_connected_share": 1.0,
+   "main_root_agreement": 0.8434,
+   "margin_added_links": {
+    "mean": 3.767,
+    "median": 2.887
+   },
+   "margin_supervised_links": {
+    "mean": 15.385,
+    "median": 14.522
+   },
+   "top1_prob_added": {
+    "mean": 0.627,
+    "median": 0.798
+   },
+   "top1_prob_supervised": {
+    "mean": 0.966,
+    "median": 1.0
+   },
+   "relations_used_for_added_links": {
+    "COORDINATION": 0.3054,
+    "MODIFICATION": 0.2934,
+    "OBJECT": 0.0898,
+    "DESCRIPTION": 0.0749,
+    "SPECIFICATION": 0.0539,
+    "COMPLEMENT": 0.0509,
+    "PREPOSITION": 0.0479,
+    "ROOT": 0.0359,
+    "SUBORDINATION": 0.024,
+    "SUBJECT": 0.021,
+    "INDIRECT_OBJECT": 0.003
+   }
+  }
+ }
+}

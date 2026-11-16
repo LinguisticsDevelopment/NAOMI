@@ -62,3 +62,19 @@ runs/holdout_dev_gold_v7.jsonl 0.75 MB (98) + empty `.failures`; runs/build_gold
 3. `then the peasant went his way , well content with his bargain .` 4/11: `ROOT(ROOT:went(SUBJECT:peasant(...)) UNATTACHED:content(MODIFICATION:way(DESCRIPTION:his) SUBJECT:well MODIFICATION:with(...)))` (trailing adjective phrase detached, "way" attached to it instead of "went")
 4. `that is the way the tailor killed the third giant .` 3/10: relative clause detached; `killed` gets INDIRECT_OBJECT:third.
 5. `said her master , and lamented the fine chickens .` 3/8: `and` unattached; second verb a separate component.
+
+## Rebuild with grammar pass 2 (2026-11-16)
+
+Same script and population, rebuilt after the second grammar pass (clause linking). The
+tables above describe the first build; these are the current files' figures, computed by
+the director over the whole of `runs/gold_v7.jsonl.gz`.
+
+| | first build | rebuild |
+|---|---:|---:|
+| sentences parsed | 29,421 | 29,458 (579 failed) |
+| tokens connected to the sentence's main root (strict) | 30.0% | 39.6% |
+| sentences that are one fully connected tree | 17.8% | 27.9% |
+| sentences with several unconnected pieces | 73% | 63.4% |
+
+Fully connected by length (non-punctuation tokens): <=10: 59.6% of 8,420; 11-20: 26.8% of
+9,744; 21-35: 6.9% of 8,261; 36+: 0.5% of 3,033. Holdouts: test 94/98, dev 98/98.

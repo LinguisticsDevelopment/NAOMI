@@ -1,0 +1,231 @@
+loaded prep cache prep_cache.pkl: 29458 items
+sentences train/dev/test: 26447/1500/1511
+  train: node tokens 505685, supervised 423965 (83.8%), unknown 81720
+  dev: node tokens 26723, supervised 22609 (84.6%), unknown 4114
+  test: node tokens 26838, supervised 22338 (83.2%), unknown 4500
+pos 15, subtypes 23, relations ['APPOSITION', 'COMPLEMENT', 'COORDINATION', 'DESCRIPTION', 'INDIRECT_OBJECT', 'MODIFICATION', 'OBJECT', 'PREPOSITION', 'ROOT', 'SPECIFICATION', 'SUBJECT', 'SUBORDINATION']
+meaning table (9808, 614)
+model params 2774765
+/home/user/NAOMI/consciousness_transformer/scripts/train_naomi_encoder.py:270: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tl, th, tlc, tn = tl + float(loss) * n, th + ch, tlc + cl, tn + n
+  ep 1 batch 0/468 loss 4.778 3s
+  ep 1 batch 100/468 loss 2.335 18s
+  ep 1 batch 200/468 loss 1.048 33s
+  ep 1 batch 300/468 loss 0.977 48s
+  ep 1 batch 400/468 loss 1.125 63s
+epoch 1 74s (total 1.2 min) train loss 1.678 uas 0.632 | dev uas 0.8305 las 0.7970 loss 0.666
+  new best dev LAS 0.7970 -> hash_best.pt
+  ep 2 batch 0/468 loss 0.238 0s
+  ep 2 batch 100/468 loss 0.683 16s
+  ep 2 batch 200/468 loss 0.306 32s
+  ep 2 batch 300/468 loss 0.662 47s
+  ep 2 batch 400/468 loss 0.520 62s
+epoch 2 73s (total 2.5 min) train loss 0.689 uas 0.818 | dev uas 0.8643 las 0.8399 loss 0.503
+  new best dev LAS 0.8399 -> hash_best.pt
+  ep 3 batch 0/468 loss 0.659 0s
+  ep 3 batch 100/468 loss 0.496 14s
+  ep 3 batch 200/468 loss 0.498 29s
+  ep 3 batch 300/468 loss 0.333 45s
+  ep 3 batch 400/468 loss 0.483 62s
+epoch 3 73s (total 3.7 min) train loss 0.529 uas 0.856 | dev uas 0.8841 las 0.8632 loss 0.434
+  new best dev LAS 0.8632 -> hash_best.pt
+  ep 4 batch 0/468 loss 0.390 0s
+  ep 4 batch 100/468 loss 0.495 15s
+  ep 4 batch 200/468 loss 0.557 31s
+  ep 4 batch 300/468 loss 0.511 49s
+  ep 4 batch 400/468 loss 0.447 65s
+epoch 4 77s (total 5.0 min) train loss 0.449 uas 0.876 | dev uas 0.8938 las 0.8754 loss 0.397
+  new best dev LAS 0.8754 -> hash_best.pt
+  ep 5 batch 0/468 loss 0.384 0s
+  ep 5 batch 100/468 loss 0.423 15s
+  ep 5 batch 200/468 loss 0.395 30s
+  ep 5 batch 300/468 loss 0.324 46s
+  ep 5 batch 400/468 loss 0.413 63s
+epoch 5 75s (total 6.2 min) train loss 0.400 uas 0.888 | dev uas 0.9054 las 0.8873 loss 0.356
+  new best dev LAS 0.8873 -> hash_best.pt
+  ep 6 batch 0/468 loss 0.419 0s
+  ep 6 batch 100/468 loss 0.330 17s
+  ep 6 batch 200/468 loss 0.250 31s
+  ep 6 batch 300/468 loss 0.386 47s
+  ep 6 batch 400/468 loss 0.235 64s
+epoch 6 76s (total 7.5 min) train loss 0.354 uas 0.901 | dev uas 0.9054 las 0.8873 loss 0.353
+  new best dev LAS 0.8873 -> hash_best.pt
+  ep 7 batch 0/468 loss 0.342 0s
+  ep 7 batch 100/468 loss 0.331 16s
+  ep 7 batch 200/468 loss 0.236 31s
+  ep 7 batch 300/468 loss 0.312 46s
+  ep 7 batch 400/468 loss 0.279 61s
+epoch 7 73s (total 8.7 min) train loss 0.326 uas 0.908 | dev uas 0.9147 las 0.8981 loss 0.341
+  new best dev LAS 0.8981 -> hash_best.pt
+  ep 8 batch 0/468 loss 0.341 0s
+  ep 8 batch 100/468 loss 0.322 15s
+  ep 8 batch 200/468 loss 0.257 30s
+  ep 8 batch 300/468 loss 0.131 45s
+  ep 8 batch 400/468 loss 0.118 61s
+epoch 8 72s (total 9.9 min) train loss 0.300 uas 0.915 | dev uas 0.9169 las 0.8997 loss 0.330
+  new best dev LAS 0.8997 -> hash_best.pt
+  ep 9 batch 0/468 loss 0.264 0s
+  ep 9 batch 100/468 loss 0.322 14s
+  ep 9 batch 200/468 loss 0.254 28s
+  ep 9 batch 300/468 loss 0.287 43s
+  ep 9 batch 400/468 loss 0.246 59s
+epoch 9 70s (total 11.0 min) train loss 0.279 uas 0.921 | dev uas 0.9166 las 0.9007 loss 0.335
+  new best dev LAS 0.9007 -> hash_best.pt
+  ep 10 batch 0/468 loss 0.228 0s
+  ep 10 batch 100/468 loss 0.306 13s
+  ep 10 batch 200/468 loss 0.317 28s
+  ep 10 batch 300/468 loss 0.062 43s
+  ep 10 batch 400/468 loss 0.185 58s
+epoch 10 69s (total 12.2 min) train loss 0.264 uas 0.925 | dev uas 0.9190 las 0.9026 loss 0.327
+  new best dev LAS 0.9026 -> hash_best.pt
+  ep 11 batch 0/468 loss 0.244 0s
+  ep 11 batch 100/468 loss 0.226 17s
+  ep 11 batch 200/468 loss 0.206 32s
+  ep 11 batch 300/468 loss 0.276 46s
+  ep 11 batch 400/468 loss 0.365 61s
+epoch 11 72s (total 13.4 min) train loss 0.246 uas 0.929 | dev uas 0.9226 las 0.9072 loss 0.324
+  new best dev LAS 0.9072 -> hash_best.pt
+  ep 12 batch 0/468 loss 0.208 0s
+  ep 12 batch 100/468 loss 0.198 15s
+  ep 12 batch 200/468 loss 0.160 31s
+  ep 12 batch 300/468 loss 0.231 47s
+  ep 12 batch 400/468 loss 0.299 64s
+epoch 12 74s (total 14.6 min) train loss 0.235 uas 0.933 | dev uas 0.9232 las 0.9082 loss 0.325
+  new best dev LAS 0.9082 -> hash_best.pt
+  ep 13 batch 0/468 loss 0.109 0s
+  ep 13 batch 100/468 loss 0.307 16s
+  ep 13 batch 200/468 loss 0.058 31s
+  ep 13 batch 300/468 loss 0.129 45s
+  ep 13 batch 400/468 loss 0.116 60s
+epoch 13 72s (total 15.8 min) train loss 0.227 uas 0.935 | dev uas 0.9210 las 0.9057 loss 0.363
+  ep 14 batch 0/468 loss 0.268 0s
+  ep 14 batch 100/468 loss 0.227 14s
+  ep 14 batch 200/468 loss 0.239 30s
+  ep 14 batch 300/468 loss 0.257 44s
+  ep 14 batch 400/468 loss 0.074 59s
+epoch 14 71s (total 17.0 min) train loss 0.218 uas 0.937 | dev uas 0.9245 las 0.9101 loss 0.349
+  new best dev LAS 0.9101 -> hash_best.pt
+  ep 15 batch 0/468 loss 0.166 0s
+  ep 15 batch 100/468 loss 0.226 15s
+  ep 15 batch 200/468 loss 0.253 30s
+  ep 15 batch 300/468 loss 0.238 45s
+  ep 15 batch 400/468 loss 0.151 60s
+epoch 15 71s (total 18.2 min) train loss 0.211 uas 0.940 | dev uas 0.9255 las 0.9102 loss 0.346
+  new best dev LAS 0.9102 -> hash_best.pt
+  ep 16 batch 0/468 loss 0.185 0s
+  ep 16 batch 100/468 loss 0.163 15s
+  ep 16 batch 200/468 loss 0.262 30s
+  ep 16 batch 300/468 loss 0.182 45s
+  ep 16 batch 400/468 loss 0.175 59s
+epoch 16 71s (total 19.4 min) train loss 0.199 uas 0.942 | dev uas 0.9263 las 0.9122 loss 0.344
+  new best dev LAS 0.9122 -> hash_best.pt
+  ep 17 batch 0/468 loss 0.185 0s
+  ep 17 batch 100/468 loss 0.209 14s
+  ep 17 batch 200/468 loss 0.085 30s
+  ep 17 batch 300/468 loss 0.159 45s
+  ep 17 batch 400/468 loss 0.118 61s
+epoch 17 74s (total 20.6 min) train loss 0.192 uas 0.945 | dev uas 0.9255 las 0.9101 loss 0.377
+  ep 18 batch 0/468 loss 0.048 0s
+  ep 18 batch 100/468 loss 0.241 16s
+  ep 18 batch 200/468 loss 0.199 29s
+  ep 18 batch 300/468 loss 0.173 44s
+  ep 18 batch 400/468 loss 0.202 59s
+epoch 18 70s (total 21.8 min) train loss 0.190 uas 0.946 | dev uas 0.9275 las 0.9138 loss 0.378
+  new best dev LAS 0.9138 -> hash_best.pt
+  ep 19 batch 0/468 loss 0.132 0s
+  ep 19 batch 100/468 loss 0.237 14s
+  ep 19 batch 200/468 loss 0.101 29s
+  ep 19 batch 300/468 loss 0.033 45s
+  ep 19 batch 400/468 loss 0.072 60s
+epoch 19 71s (total 22.9 min) train loss 0.184 uas 0.948 | dev uas 0.9252 las 0.9107 loss 0.360
+  ep 20 batch 0/468 loss 0.217 0s
+  ep 20 batch 100/468 loss 0.127 16s
+  ep 20 batch 200/468 loss 0.113 30s
+  ep 20 batch 300/468 loss 0.186 44s
+  ep 20 batch 400/468 loss 0.203 59s
+epoch 20 71s (total 24.1 min) train loss 0.182 uas 0.948 | dev uas 0.9299 las 0.9159 loss 0.367
+  new best dev LAS 0.9159 -> hash_best.pt
+  ep 21 batch 0/468 loss 0.197 0s
+  ep 21 batch 100/468 loss 0.143 15s
+  ep 21 batch 200/468 loss 0.162 30s
+  ep 21 batch 300/468 loss 0.197 44s
+  ep 21 batch 400/468 loss 0.198 59s
+epoch 21 71s (total 25.3 min) train loss 0.172 uas 0.951 | dev uas 0.9275 las 0.9130 loss 0.364
+  ep 22 batch 0/468 loss 0.158 0s
+  ep 22 batch 100/468 loss 0.160 14s
+  ep 22 batch 200/468 loss 0.171 30s
+  ep 22 batch 300/468 loss 0.109 45s
+  ep 22 batch 400/468 loss 0.182 60s
+epoch 22 72s (total 26.5 min) train loss 0.167 uas 0.952 | dev uas 0.9277 las 0.9131 loss 0.384
+  ep 23 batch 0/468 loss 0.151 0s
+  ep 23 batch 100/468 loss 0.163 16s
+  ep 23 batch 200/468 loss 0.149 32s
+  ep 23 batch 300/468 loss 0.095 47s
+  ep 23 batch 400/468 loss 0.142 63s
+epoch 23 75s (total 27.7 min) train loss 0.136 uas 0.961 | dev uas 0.9322 las 0.9187 loss 0.411
+  new best dev LAS 0.9187 -> hash_best.pt
+  ep 24 batch 0/468 loss 0.151 0s
+  ep 24 batch 100/468 loss 0.110 18s
+  ep 24 batch 200/468 loss 0.170 32s
+  ep 24 batch 300/468 loss 0.116 48s
+  ep 24 batch 400/468 loss 0.146 64s
+epoch 24 74s (total 29.0 min) train loss 0.123 uas 0.964 | dev uas 0.9322 las 0.9180 loss 0.416
+  ep 25 batch 0/468 loss 0.020 0s
+  ep 25 batch 100/468 loss 0.000 15s
+  ep 25 batch 200/468 loss 0.130 31s
+  ep 25 batch 300/468 loss 0.113 47s
+  ep 25 batch 400/468 loss 0.120 62s
+epoch 25 73s (total 30.2 min) train loss 0.116 uas 0.966 | dev uas 0.9332 las 0.9198 loss 0.425
+  new best dev LAS 0.9198 -> hash_best.pt
+  ep 26 batch 0/468 loss 0.083 0s
+  ep 26 batch 100/468 loss 0.106 14s
+  ep 26 batch 200/468 loss 0.110 30s
+  ep 26 batch 300/468 loss 0.051 46s
+  ep 26 batch 400/468 loss 0.035 62s
+epoch 26 74s (total 31.4 min) train loss 0.112 uas 0.967 | dev uas 0.9326 las 0.9193 loss 0.443
+  ep 27 batch 0/468 loss 0.074 0s
+  ep 27 batch 100/468 loss 0.116 15s
+  ep 27 batch 200/468 loss 0.056 31s
+  ep 27 batch 300/468 loss 0.025 46s
+  ep 27 batch 400/468 loss 0.142 63s
+epoch 27 75s (total 32.7 min) train loss 0.106 uas 0.969 | dev uas 0.9328 las 0.9191 loss 0.452
+  ep 28 batch 0/468 loss 0.045 0s
+  ep 28 batch 100/468 loss 0.102 16s
+  ep 28 batch 200/468 loss 0.111 30s
+  ep 28 batch 300/468 loss 0.053 44s
+  ep 28 batch 400/468 loss 0.104 60s
+epoch 28 71s (total 33.9 min) train loss 0.094 uas 0.972 | dev uas 0.9341 las 0.9216 loss 0.483
+  new best dev LAS 0.9216 -> hash_best.pt
+  ep 29 batch 0/468 loss 0.109 0s
+  ep 29 batch 100/468 loss 0.099 17s
+  ep 29 batch 200/468 loss 0.108 32s
+  ep 29 batch 300/468 loss 0.163 46s
+  ep 29 batch 400/468 loss 0.000 61s
+epoch 29 72s (total 35.0 min) train loss 0.087 uas 0.974 | dev uas 0.9330 las 0.9203 loss 0.483
+  ep 30 batch 0/468 loss 0.091 0s
+  ep 30 batch 100/468 loss 0.086 17s
+  ep 30 batch 200/468 loss 0.046 33s
+  ep 30 batch 300/468 loss 0.100 47s
+  ep 30 batch 400/468 loss 0.002 61s
+epoch 30 71s (total 36.2 min) train loss 0.083 uas 0.976 | dev uas 0.9333 las 0.9206 loss 0.497
+  ep 31 batch 0/468 loss 0.031 0s
+  ep 31 batch 100/468 loss 0.095 16s
+  ep 31 batch 200/468 loss 0.085 31s
+  ep 31 batch 300/468 loss 0.089 46s
+  ep 31 batch 400/468 loss 0.040 61s
+epoch 31 72s (total 37.4 min) train loss 0.077 uas 0.977 | dev uas 0.9341 las 0.9213 loss 0.500
+  ep 32 batch 0/468 loss 0.003 0s
+  ep 32 batch 100/468 loss 0.086 15s
+  ep 32 batch 200/468 loss 0.028 29s
+  ep 32 batch 300/468 loss 0.002 44s
+  ep 32 batch 400/468 loss 0.058 59s
+epoch 32 71s (total 38.6 min) train loss 0.074 uas 0.978 | dev uas 0.9340 las 0.9208 loss 0.513
+  ep 33 batch 0/468 loss 0.068 0s
+  ep 33 batch 100/468 loss 0.082 15s
+  ep 33 batch 200/468 loss 0.085 31s
+  ep 33 batch 300/468 loss 0.017 47s
+  ep 33 batch 400/468 loss 0.086 60s
+epoch 33 72s (total 39.8 min) train loss 0.070 uas 0.979 | dev uas 0.9337 las 0.9203 loss 0.540
+early stop
+done in 40.4 min; best dev LAS 0.9216
