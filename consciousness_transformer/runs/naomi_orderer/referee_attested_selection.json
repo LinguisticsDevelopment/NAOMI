@@ -1,0 +1,113 @@
+{
+ "min_count_chosen_on_dev": 40,
+ "n_train_links": 397519,
+ "n_distinct_configs": 2596,
+ "classes": [
+  "ABSORBED_PREMOD",
+  "AUX_BARE_NEXT",
+  "AUX_PART_NEXT",
+  "AUX_PP_NEXT",
+  "COLON",
+  "COMMA",
+  "FRONT_LINKER",
+  "INITIAL_PLACEHOLDER",
+  "NOUN_CLITIC_LEFT",
+  "PAREN_CLOSE",
+  "PAREN_OPEN",
+  "PARTICIPLE",
+  "PAST_PARTICIPLE",
+  "PLURAL",
+  "PRE_VERB_PARTICLE",
+  "PROMOTABLE_BARE",
+  "QUOTE_CLOSE",
+  "QUOTE_MARK",
+  "QUOTE_OPEN",
+  "SEMICOLON",
+  "SINGULAR",
+  "TERMINAL",
+  "THIRD_PERSON"
+ ],
+ "sweep": [
+  {
+   "N": 1,
+   "dev_true_links_pass": 0.9987,
+   "dev_corrupted_links_pass": 0.3165,
+   "youden_j": 0.6823
+  },
+  {
+   "N": 2,
+   "dev_true_links_pass": 0.998,
+   "dev_corrupted_links_pass": 0.2853,
+   "youden_j": 0.7127
+  },
+  {
+   "N": 3,
+   "dev_true_links_pass": 0.9971,
+   "dev_corrupted_links_pass": 0.2698,
+   "youden_j": 0.7273
+  },
+  {
+   "N": 5,
+   "dev_true_links_pass": 0.9938,
+   "dev_corrupted_links_pass": 0.2499,
+   "youden_j": 0.7439
+  },
+  {
+   "N": 10,
+   "dev_true_links_pass": 0.9888,
+   "dev_corrupted_links_pass": 0.225,
+   "youden_j": 0.7638
+  },
+  {
+   "N": 20,
+   "dev_true_links_pass": 0.978,
+   "dev_corrupted_links_pass": 0.2017,
+   "youden_j": 0.7764
+  },
+  {
+   "N": 30,
+   "dev_true_links_pass": 0.9676,
+   "dev_corrupted_links_pass": 0.1812,
+   "youden_j": 0.7863
+  },
+  {
+   "N": 40,
+   "dev_true_links_pass": 0.9576,
+   "dev_corrupted_links_pass": 0.1685,
+   "youden_j": 0.7892
+  },
+  {
+   "N": 50,
+   "dev_true_links_pass": 0.9482,
+   "dev_corrupted_links_pass": 0.1585,
+   "youden_j": 0.7898
+  },
+  {
+   "N": 100,
+   "dev_true_links_pass": 0.9131,
+   "dev_corrupted_links_pass": 0.1292,
+   "youden_j": 0.7838
+  }
+ ],
+ "agreement_a_vs_b": {
+  "dev_true_links": {
+   "n": 21109,
+   "licensed_by_a": 0.5825,
+   "licensed_by_b": 0.9576,
+   "both": 0.5759,
+   "a_only": 0.0066,
+   "b_only": 0.3818,
+   "neither": 0.0357
+  },
+  "dev_corrupted_links": {
+   "n": 21109,
+   "licensed_by_a": 0.0638,
+   "licensed_by_b": 0.1685,
+   "both": 0.0491,
+   "a_only": 0.0147,
+   "b_only": 0.1194,
+   "neither": 0.8168
+  }
+ },
+ "grammar_entries": 187
+}

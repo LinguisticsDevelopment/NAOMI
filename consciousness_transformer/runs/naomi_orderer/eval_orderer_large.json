@@ -1,0 +1,703 @@
+{
+ "ckpt": "runs/naomi_orderer/large_best.pt",
+ "meta": {
+  "epoch": 27,
+  "dev": {
+   "sentences": 3543,
+   "exact_order": 0.7878,
+   "heads": 12675,
+   "heads_fully_right": 0.9318,
+   "pairwise_acc": 0.9456,
+   "kendall_distance": 0.0566
+  },
+  "n_params": 580417,
+  "args": {
+   "tag": "large",
+   "eval": null,
+   "out": "/home/user/NAOMI/consciousness_transformer/runs/naomi_orderer/eval_orderer.json",
+   "max_minutes": 30.0,
+   "epochs": 40,
+   "patience": 5,
+   "d": 192,
+   "rounds": 3,
+   "lr": 0.002,
+   "batch_nodes": 3000,
+   "seed": 0,
+   "limit": 0,
+   "threads": 4
+  }
+ },
+ "test_split_connected": {
+  "n_trees": 393,
+  "ceiling_contiguous": {
+   "all": {
+    "trees": 393,
+    "contiguous_share": 1.0
+   },
+   "<=10": {
+    "trees": 290,
+    "contiguous_share": 1.0
+   },
+   "11-20": {
+    "trees": 83,
+    "contiguous_share": 1.0
+   },
+   "21-35": {
+    "trees": 20,
+    "contiguous_share": 1.0
+   }
+  },
+  "decoder": {
+   "all": {
+    "sentences": 393,
+    "exact_order": 0.7176,
+    "heads": 1730,
+    "heads_fully_right": 0.9225,
+    "pairwise_acc": 0.9378,
+    "kendall_distance": 0.0761
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 290,
+     "exact_order": 0.8138,
+     "heads": 839,
+     "heads_fully_right": 0.9333,
+     "pairwise_acc": 0.948,
+     "kendall_distance": 0.0563
+    },
+    "11-20": {
+     "sentences": 83,
+     "exact_order": 0.506,
+     "heads": 632,
+     "heads_fully_right": 0.9241,
+     "pairwise_acc": 0.9352,
+     "kendall_distance": 0.1311
+    },
+    "21-35": {
+     "sentences": 20,
+     "exact_order": 0.2,
+     "heads": 259,
+     "heads_fully_right": 0.8842,
+     "pairwise_acc": 0.9128,
+     "kendall_distance": 0.135
+    }
+   }
+  },
+  "cheat_lookup_baseline": {
+   "all": {
+    "sentences": 393,
+    "exact_order": 0.43,
+    "heads": 1730,
+    "heads_fully_right": 0.8277,
+    "pairwise_acc": 0.8746,
+    "kendall_distance": 0.1667
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 290,
+     "exact_order": 0.5483,
+     "heads": 839,
+     "heads_fully_right": 0.8308,
+     "pairwise_acc": 0.883,
+     "kendall_distance": 0.1405
+    },
+    "11-20": {
+     "sentences": 83,
+     "exact_order": 0.1084,
+     "heads": 632,
+     "heads_fully_right": 0.8228,
+     "pairwise_acc": 0.8687,
+     "kendall_distance": 0.2428
+    },
+    "21-35": {
+     "sentences": 20,
+     "exact_order": 0.05,
+     "heads": 259,
+     "heads_fully_right": 0.8301,
+     "pairwise_acc": 0.8624,
+     "kendall_distance": 0.2308
+    }
+   }
+  },
+  "truth_blocks_ceiling_check": {
+   "all": {
+    "sentences": 393,
+    "exact_order": 1.0,
+    "heads": 1730,
+    "heads_fully_right": 1.0,
+    "pairwise_acc": 1.0,
+    "kendall_distance": 0.0
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 290,
+     "exact_order": 1.0,
+     "heads": 839,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "11-20": {
+     "sentences": 83,
+     "exact_order": 1.0,
+     "heads": 632,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "21-35": {
+     "sentences": 20,
+     "exact_order": 1.0,
+     "heads": 259,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    }
+   }
+  }
+ },
+ "test_split_pieces": {
+  "n_trees": 3709,
+  "ceiling_contiguous": {
+   "all": {
+    "trees": 3709,
+    "contiguous_share": 1.0
+   },
+   "<=10": {
+    "trees": 3069,
+    "contiguous_share": 1.0
+   },
+   "11-20": {
+    "trees": 560,
+    "contiguous_share": 1.0
+   },
+   "21-35": {
+    "trees": 79,
+    "contiguous_share": 1.0
+   },
+   "36+": {
+    "trees": 1,
+    "contiguous_share": 1.0
+   }
+  },
+  "decoder": {
+   "all": {
+    "sentences": 3709,
+    "exact_order": 0.8008,
+    "heads": 12578,
+    "heads_fully_right": 0.9327,
+    "pairwise_acc": 0.9452,
+    "kendall_distance": 0.0551
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 3069,
+     "exact_order": 0.8703,
+     "heads": 7312,
+     "heads_fully_right": 0.9432,
+     "pairwise_acc": 0.9549,
+     "kendall_distance": 0.0428
+    },
+    "11-20": {
+     "sentences": 560,
+     "exact_order": 0.4982,
+     "heads": 4193,
+     "heads_fully_right": 0.9211,
+     "pairwise_acc": 0.936,
+     "kendall_distance": 0.1111
+    },
+    "21-35": {
+     "sentences": 79,
+     "exact_order": 0.2532,
+     "heads": 1052,
+     "heads_fully_right": 0.9059,
+     "pairwise_acc": 0.9237,
+     "kendall_distance": 0.1339
+    },
+    "36+": {
+     "sentences": 1,
+     "exact_order": 0.0,
+     "heads": 21,
+     "heads_fully_right": 0.9524,
+     "pairwise_acc": 0.9818,
+     "kendall_distance": 0.1397
+    }
+   }
+  },
+  "cheat_lookup_baseline": {
+   "all": {
+    "sentences": 3709,
+    "exact_order": 0.5826,
+    "heads": 12578,
+    "heads_fully_right": 0.8359,
+    "pairwise_acc": 0.8737,
+    "kendall_distance": 0.1342
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 3069,
+     "exact_order": 0.6804,
+     "heads": 7312,
+     "heads_fully_right": 0.8533,
+     "pairwise_acc": 0.8893,
+     "kendall_distance": 0.1083
+    },
+    "11-20": {
+     "sentences": 560,
+     "exact_order": 0.1286,
+     "heads": 4193,
+     "heads_fully_right": 0.8149,
+     "pairwise_acc": 0.859,
+     "kendall_distance": 0.2501
+    },
+    "21-35": {
+     "sentences": 79,
+     "exact_order": 0.0127,
+     "heads": 1052,
+     "heads_fully_right": 0.8004,
+     "pairwise_acc": 0.8411,
+     "kendall_distance": 0.3167
+    },
+    "36+": {
+     "sentences": 1,
+     "exact_order": 0.0,
+     "heads": 21,
+     "heads_fully_right": 0.7619,
+     "pairwise_acc": 0.8364,
+     "kendall_distance": 0.3952
+    }
+   }
+  },
+  "truth_blocks_ceiling_check": {
+   "all": {
+    "sentences": 3709,
+    "exact_order": 1.0,
+    "heads": 12578,
+    "heads_fully_right": 1.0,
+    "pairwise_acc": 1.0,
+    "kendall_distance": 0.0
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 3069,
+     "exact_order": 1.0,
+     "heads": 7312,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "11-20": {
+     "sentences": 560,
+     "exact_order": 1.0,
+     "heads": 4193,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "21-35": {
+     "sentences": 79,
+     "exact_order": 1.0,
+     "heads": 1052,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "36+": {
+     "sentences": 1,
+     "exact_order": 1.0,
+     "heads": 21,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    }
+   }
+  }
+ },
+ "train_pieces_sample": {
+  "n_trees": 2000,
+  "ceiling_contiguous": {
+   "all": {
+    "trees": 2000,
+    "contiguous_share": 1.0
+   },
+   "<=10": {
+    "trees": 1606,
+    "contiguous_share": 1.0
+   },
+   "11-20": {
+    "trees": 354,
+    "contiguous_share": 1.0
+   },
+   "21-35": {
+    "trees": 39,
+    "contiguous_share": 1.0
+   },
+   "36+": {
+    "trees": 1,
+    "contiguous_share": 1.0
+   }
+  },
+  "decoder": {
+   "all": {
+    "sentences": 2000,
+    "exact_order": 0.862,
+    "heads": 7251,
+    "heads_fully_right": 0.9593,
+    "pairwise_acc": 0.9749,
+    "kendall_distance": 0.0266
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 1606,
+     "exact_order": 0.9078,
+     "heads": 3999,
+     "heads_fully_right": 0.9625,
+     "pairwise_acc": 0.9756,
+     "kendall_distance": 0.022
+    },
+    "11-20": {
+     "sentences": 354,
+     "exact_order": 0.6949,
+     "heads": 2678,
+     "heads_fully_right": 0.9548,
+     "pairwise_acc": 0.9739,
+     "kendall_distance": 0.0453
+    },
+    "21-35": {
+     "sentences": 39,
+     "exact_order": 0.5128,
+     "heads": 555,
+     "heads_fully_right": 0.9604,
+     "pairwise_acc": 0.9751,
+     "kendall_distance": 0.0484
+    },
+    "36+": {
+     "sentences": 1,
+     "exact_order": 0.0,
+     "heads": 19,
+     "heads_fully_right": 0.8947,
+     "pairwise_acc": 0.9697,
+     "kendall_distance": 0.0028
+    }
+   }
+  },
+  "cheat_lookup_baseline": {
+   "all": {
+    "sentences": 2000,
+    "exact_order": 0.5805,
+    "heads": 7251,
+    "heads_fully_right": 0.8453,
+    "pairwise_acc": 0.8798,
+    "kendall_distance": 0.1256
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 1606,
+     "exact_order": 0.693,
+     "heads": 3999,
+     "heads_fully_right": 0.865,
+     "pairwise_acc": 0.898,
+     "kendall_distance": 0.0959
+    },
+    "11-20": {
+     "sentences": 354,
+     "exact_order": 0.1328,
+     "heads": 2678,
+     "heads_fully_right": 0.8219,
+     "pairwise_acc": 0.8624,
+     "kendall_distance": 0.2381
+    },
+    "21-35": {
+     "sentences": 39,
+     "exact_order": 0.0256,
+     "heads": 555,
+     "heads_fully_right": 0.8216,
+     "pairwise_acc": 0.8546,
+     "kendall_distance": 0.3214
+    },
+    "36+": {
+     "sentences": 1,
+     "exact_order": 0.0,
+     "heads": 19,
+     "heads_fully_right": 0.6842,
+     "pairwise_acc": 0.7576,
+     "kendall_distance": 0.3314
+    }
+   }
+  },
+  "truth_blocks_ceiling_check": {
+   "all": {
+    "sentences": 2000,
+    "exact_order": 1.0,
+    "heads": 7251,
+    "heads_fully_right": 1.0,
+    "pairwise_acc": 1.0,
+    "kendall_distance": 0.0
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 1606,
+     "exact_order": 1.0,
+     "heads": 3999,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "11-20": {
+     "sentences": 354,
+     "exact_order": 1.0,
+     "heads": 2678,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "21-35": {
+     "sentences": 39,
+     "exact_order": 1.0,
+     "heads": 555,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "36+": {
+     "sentences": 1,
+     "exact_order": 1.0,
+     "heads": 19,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    }
+   }
+  }
+ },
+ "frozen_holdout_connected": {
+  "n_trees": 30,
+  "ceiling_contiguous": {
+   "all": {
+    "trees": 30,
+    "contiguous_share": 1.0
+   },
+   "<=10": {
+    "trees": 16,
+    "contiguous_share": 1.0
+   },
+   "11-20": {
+    "trees": 14,
+    "contiguous_share": 1.0
+   }
+  },
+  "decoder": {
+   "all": {
+    "sentences": 30,
+    "exact_order": 0.5,
+    "heads": 159,
+    "heads_fully_right": 0.8868,
+    "pairwise_acc": 0.9276,
+    "kendall_distance": 0.1246
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 16,
+     "exact_order": 0.5,
+     "heads": 56,
+     "heads_fully_right": 0.8393,
+     "pairwise_acc": 0.9006,
+     "kendall_distance": 0.1403
+    },
+    "11-20": {
+     "sentences": 14,
+     "exact_order": 0.5,
+     "heads": 103,
+     "heads_fully_right": 0.9126,
+     "pairwise_acc": 0.943,
+     "kendall_distance": 0.1066
+    }
+   }
+  },
+  "cheat_lookup_baseline": {
+   "all": {
+    "sentences": 30,
+    "exact_order": 0.2,
+    "heads": 159,
+    "heads_fully_right": 0.8239,
+    "pairwise_acc": 0.8793,
+    "kendall_distance": 0.2066
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 16,
+     "exact_order": 0.25,
+     "heads": 56,
+     "heads_fully_right": 0.7679,
+     "pairwise_acc": 0.8453,
+     "kendall_distance": 0.1964
+    },
+    "11-20": {
+     "sentences": 14,
+     "exact_order": 0.1429,
+     "heads": 103,
+     "heads_fully_right": 0.8544,
+     "pairwise_acc": 0.8987,
+     "kendall_distance": 0.2183
+    }
+   }
+  },
+  "truth_blocks_ceiling_check": {
+   "all": {
+    "sentences": 30,
+    "exact_order": 1.0,
+    "heads": 159,
+    "heads_fully_right": 1.0,
+    "pairwise_acc": 1.0,
+    "kendall_distance": 0.0
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 16,
+     "exact_order": 1.0,
+     "heads": 56,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "11-20": {
+     "sentences": 14,
+     "exact_order": 1.0,
+     "heads": 103,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    }
+   }
+  }
+ },
+ "frozen_holdout_dev_connected": {
+  "n_trees": 15,
+  "ceiling_contiguous": {
+   "all": {
+    "trees": 15,
+    "contiguous_share": 1.0
+   },
+   "<=10": {
+    "trees": 5,
+    "contiguous_share": 1.0
+   },
+   "11-20": {
+    "trees": 8,
+    "contiguous_share": 1.0
+   },
+   "21-35": {
+    "trees": 2,
+    "contiguous_share": 1.0
+   }
+  },
+  "decoder": {
+   "all": {
+    "sentences": 15,
+    "exact_order": 0.6,
+    "heads": 100,
+    "heads_fully_right": 0.94,
+    "pairwise_acc": 0.9416,
+    "kendall_distance": 0.1518
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 5,
+     "exact_order": 1.0,
+     "heads": 12,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "11-20": {
+     "sentences": 8,
+     "exact_order": 0.375,
+     "heads": 64,
+     "heads_fully_right": 0.9219,
+     "pairwise_acc": 0.913,
+     "kendall_distance": 0.2669
+    },
+    "21-35": {
+     "sentences": 2,
+     "exact_order": 0.5,
+     "heads": 24,
+     "heads_fully_right": 0.9583,
+     "pairwise_acc": 0.987,
+     "kendall_distance": 0.0711
+    }
+   }
+  },
+  "cheat_lookup_baseline": {
+   "all": {
+    "sentences": 15,
+    "exact_order": 0.4,
+    "heads": 100,
+    "heads_fully_right": 0.89,
+    "pairwise_acc": 0.9038,
+    "kendall_distance": 0.1735
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 5,
+     "exact_order": 0.8,
+     "heads": 12,
+     "heads_fully_right": 0.9167,
+     "pairwise_acc": 0.9667,
+     "kendall_distance": 0.0311
+    },
+    "11-20": {
+     "sentences": 8,
+     "exact_order": 0.25,
+     "heads": 64,
+     "heads_fully_right": 0.9062,
+     "pairwise_acc": 0.8859,
+     "kendall_distance": 0.2778
+    },
+    "21-35": {
+     "sentences": 2,
+     "exact_order": 0.0,
+     "heads": 24,
+     "heads_fully_right": 0.8333,
+     "pairwise_acc": 0.9221,
+     "kendall_distance": 0.1122
+    }
+   }
+  },
+  "truth_blocks_ceiling_check": {
+   "all": {
+    "sentences": 15,
+    "exact_order": 1.0,
+    "heads": 100,
+    "heads_fully_right": 1.0,
+    "pairwise_acc": 1.0,
+    "kendall_distance": 0.0
+   },
+   "by_band": {
+    "<=10": {
+     "sentences": 5,
+     "exact_order": 1.0,
+     "heads": 12,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "11-20": {
+     "sentences": 8,
+     "exact_order": 1.0,
+     "heads": 64,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    },
+    "21-35": {
+     "sentences": 2,
+     "exact_order": 1.0,
+     "heads": 24,
+     "heads_fully_right": 1.0,
+     "pairwise_acc": 1.0,
+     "kendall_distance": 0.0
+    }
+   }
+  }
+ }
+}

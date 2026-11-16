@@ -1,0 +1,110 @@
+context ready in 29s
+  0/1511 1s
+  100/1511 7s
+  200/1511 13s
+  300/1511 18s
+  400/1511 24s
+  500/1511 29s
+  600/1511 35s
+  700/1511 40s
+  800/1511 47s
+  900/1511 52s
+  1000/1511 58s
+  1100/1511 66s
+  1200/1511 72s
+  1300/1511 77s
+  1400/1511 81s
+  1500/1511 86s
+{
+ "parser_connected": {
+  "sentences": 413,
+  "start_tree_subtrees_all_contiguous": 1.0,
+  "exact_word_order_recovery": 0.6901,
+  "kendall_distance_mean": 0.0803,
+  "decoded_text_no_punctuation": {
+   "n": 413,
+   "meaning": 71.69,
+   "shape": 73.95,
+   "overall": 72.82
+  },
+  "decoded_text_final_punctuation_restored": {
+   "n": 413,
+   "meaning": 77.54,
+   "shape": 79.44,
+   "overall": 78.49
+  },
+  "control_true_order_no_punctuation": {
+   "n": 413,
+   "meaning": 73.38,
+   "shape": 75.72,
+   "overall": 74.55
+  },
+  "control_true_order_final_punctuation_restored": {
+   "n": 413,
+   "meaning": 79.66,
+   "shape": 81.34,
+   "overall": 80.5
+  }
+ },
+ "encoder_on_connected": {
+  "sentences": 413,
+  "start_tree_subtrees_all_contiguous": 0.9831,
+  "exact_word_order_recovery": 0.6586,
+  "kendall_distance_mean": 0.0902,
+  "decoded_text_no_punctuation": {
+   "n": 413,
+   "meaning": 72.6,
+   "shape": 74.69,
+   "overall": 73.64
+  },
+  "decoded_text_final_punctuation_restored": {
+   "n": 413,
+   "meaning": 80.99,
+   "shape": 82.64,
+   "overall": 81.82
+  },
+  "control_true_order_no_punctuation": {
+   "n": 413,
+   "meaning": 74.25,
+   "shape": 76.49,
+   "overall": 75.37
+  },
+  "control_true_order_final_punctuation_restored": {
+   "n": 413,
+   "meaning": 84.75,
+   "shape": 86.15,
+   "overall": 85.45
+  }
+ },
+ "encoder_on_fragmented": {
+  "sentences": 1098,
+  "start_tree_subtrees_all_contiguous": 0.8251,
+  "exact_word_order_recovery": 0.1357,
+  "kendall_distance_mean": 0.1894,
+  "decoded_text_no_punctuation": {
+   "n": 1098,
+   "meaning": 45.96,
+   "shape": 49.74,
+   "overall": 47.85
+  },
+  "decoded_text_final_punctuation_restored": {
+   "n": 1098,
+   "meaning": 49.78,
+   "shape": 52.91,
+   "overall": 51.35
+  },
+  "control_true_order_no_punctuation": {
+   "n": 1098,
+   "meaning": 55.0,
+   "shape": 58.11,
+   "overall": 56.56
+  },
+  "control_true_order_final_punctuation_restored": {
+   "n": 1098,
+   "meaning": 62.36,
+   "shape": 64.47,
+   "overall": 63.42
+  }
+ }
+}
+done 86s
