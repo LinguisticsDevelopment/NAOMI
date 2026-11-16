@@ -147,3 +147,16 @@ population: 30037 sentences
 [shard 3/4] 7000 new (7000/7509) 5491s
 [shard 1/4] 7400 new (7400/7509) 5497s
 [shard 0/4] 7400 new (7400/7510) 5516s
+[shard 2/4] 7200 new (7200/7509) 5572s
+[shard 1/4] done: 7509 new records in 5593s
+[shard 0/4] done: 7510 new records in 5603s
+[shard 3/4] 7200 new (7200/7509) 5620s
+[shard 2/4] 7400 new (7400/7509) 5688s
+[shard 3/4] 7400 new (7400/7509) 5710s
+[shard 3/4] done: 7509 new records in 5756s
+[shard 2/4] done: 7509 new records in 5760s
+exit codes: [0, 0, 0, 0]
+population: 30037 sentences
+merged: 29458 ok, 579 failed
+runs/holdout_sentences.txt: 94 ok, 4 failed -> runs/holdout_gold_v7.jsonl
+runs/holdout_dev_sentences.txt: 98 ok, 0 failed -> runs/holdout_dev_gold_v7.jsonl

@@ -30,6 +30,8 @@ ALLOWED = {
     "sense_candidates", "token_sense_candidates", "tokens", "sentence_index", "policy", "en", "utf",
     # cache-key prefixes and the signal module's timer name
     "tp", "tl", "setitimer",
+    # naomi.encoder: tree source tag and checkpoint dict keys (non-linguistic identifiers)
+    "encoder", "config", "state", "sub_vocab", "rel_labels", "subs", "meaning", "hashed", "lengths", "node", "stable",
 }
 _WORDISH = re.compile(r"^[a-z][a-z_]+$")
 
