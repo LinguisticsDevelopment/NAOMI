@@ -189,3 +189,20 @@ Report: `dev/reports/NAOMI_ENCODER_STAGE_A.md`. Code: `src/naomi/encoder.py`, `s
   `enc.propose(sentence, k)` -> up to k distinct single-root `Proposal(tree, score, heads, rels)`.
 - Headline (held-out sources, parser fully connected, 413 sentences): head acc 0.936, labelled 0.926, exact tree 0.79; nearest-verb baseline 0.343 / 0.292 / 0.11.
   Links the encoder ADDED on fragmented sentences (hand-check, 173 links): 32% right, 34% debatable, 34% wrong.
+
+## NAOMI decoder v1 (word order) + referee, stage A
+
+Learned ordering decoder over gold v7 TRAIN sources (same split as the encoder), the referee's attested-configuration table, and the first
+round-trip numbers. Report: `dev/reports/NAOMI_DECODER_REFEREE_STAGE_A.md`. Code: `src/naomi/orderer.py`, `src/naomi/referee.py`,
+`scripts/train_naomi_orderer.py`, `scripts/eval_naomi_roundtrip.py`.
+
+- **`runs/naomi_orderer/large_best.pt`** (2.3 MB; 0.58M params; d=192, 3 passing rounds; dev heads-right 0.932) -- THE decoder checkpoint.
+  `runs/naomi_orderer/main_best.pt` (1.2 MB, d=128, 2 rounds) is the smaller comparison run. Not artifacts: `*_last.pt`.
+- **`runs/naomi_orderer/attested_configs.json`** (183 KB): 2,596 configurations (head tag + classes, relation, dep tag + classes, side) with TRAIN-gold counts; `min_count` 40 (chosen on dev).
+- `main_curve.tsv`, `large_curve.tsv`, `eval_orderer_main.json`, `eval_orderer_large.json`, `referee_attested_selection.json` (N sweep, (a)/(b) agreement),
+  `part3_referee_signals.json` (referee signals per hand-judged link), `eval_roundtrip.json`, `roundtrip_per_sentence.jsonl`; logs `runs/naomi_orderer_main.log`, `runs/naomi_orderer_large.log`, `runs/naomi_orderer_part3.log`, `runs/naomi_orderer_roundtrip.log`.
+- Load: `orr = naomi.orderer.Orderer.load("runs/naomi_orderer/large_best.pt")`; `orr.order_tree(tree)` -> the tree's real `Node`s in predicted word order.
+  Referee: `naomi.referee.referee(tree, sentence, parser_tree)` (loads the attested table, decoder and encoder from the paths above).
+- Headline (test-source sentences the parser fully connects, 393): exact word order 0.72 (cheat lookup baseline 0.43), per-head order 0.92; round trip tree -> text -> tree
+  scores 78.5 (parser tree) / 81.8 (encoder tree) overall with final punctuation restored (true-order control 80.5 / 85.5); fragmented sentences 51.4 (control 63.4).
+  No referee signal separates good from bad added links to <= 15% wrong at >= 25% acceptance (best: encoder confidence >= q75, 18.9% wrong at 22%).

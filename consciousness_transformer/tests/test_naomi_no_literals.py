@@ -32,6 +32,8 @@ ALLOWED = {
     "tp", "tl", "setitimer",
     # naomi.encoder: tree source tag and checkpoint dict keys (non-linguistic identifiers)
     "encoder", "config", "state", "sub_vocab", "rel_labels", "subs", "meaning", "hashed", "lengths", "node", "stable",
+    # naomi.orderer / naomi.referee: result-dict keys, batch keys, side tags read from the grammar table, artifact paths
+    'accept', 'after', 'all', 'attested_count', 'attested_count_pos_only', 'attested_reason', 'before', 'by_band', 'changed', 'classes', 'columns', 'decoded_equals_original_order', 'decoded_text', 'dep', 'dep_classes', 'dep_pos', 'dep_token', 'exact_order', 'grammar_reason', 'head', 'head_classes', 'head_pos', 'head_token', 'heads', 'heads_fully_right', 'infos', 'kendall_distance', 'kept_same_head', 'kept_same_head_and_relation', 'licensed_attested', 'licensed_grammar', 'links', 'min_count', 'n_links', 'n_unattested', 'n_unlicensed_grammar', 'naomi_encoder', 'naomi_orderer', 'no_punctuation', 'order_kendall_distance', 'overall', 'pa', 'pairwise_acc', 'parser_agreement', 'parser_head', 'parser_links', 'parser_rel', 'pb', 'ph', 'proposal_head', 'proposal_rel', 'proposal_root', 'reason', 'reasons', 'roundtrip', 'row', 'rows', 'shape', 'share_kept', 'share_kept_head_only', 'side', 'sv', 'with_final_punctuation',
 }
 _WORDISH = re.compile(r"^[a-z][a-z_]+$")
 

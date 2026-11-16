@@ -1,0 +1,16 @@
+context ready in 28s
+thresholds {'p_q50': 0.8863586187362671, 'p_q75': 0.9968995302915573, 'm_q50': 3.5950052738189697, 'm_q75': 6.86752462387085, 'n_added_links': 4500}
+links 168 of 173 judged (rest are roots)
+a                  pass {'n': 45, 'r': 14, 'd': 12, 'w': 19, 'wrong_rate': 0.422, 'wrong_or_debatable_rate': 0.689} | fail 123 (w 0.317) | share 0.268 | sent acc 5/40 wrong-in-acc 0.4 (n 5)
+b                  pass {'n': 113, 'r': 43, 'd': 36, 'w': 34, 'wrong_rate': 0.301, 'wrong_or_debatable_rate': 0.619} | fail 55 (w 0.436) | share 0.673 | sent acc 10/40 wrong-in-acc 0.25 (n 20)
+a&b                pass {'n': 41, 'r': 13, 'd': 10, 'w': 18, 'wrong_rate': 0.439, 'wrong_or_debatable_rate': 0.683} | fail 127 (w 0.315) | share 0.244 | sent acc 3/40 wrong-in-acc 0.667 (n 3)
+b&p>=q50           pass {'n': 59, 'r': 29, 'd': 17, 'w': 13, 'wrong_rate': 0.22, 'wrong_or_debatable_rate': 0.508} | fail 109 (w 0.413) | share 0.351 | sent acc 4/40 wrong-in-acc 0.2 (n 5)
+b&p>=q75           pass {'n': 30, 'r': 16, 'd': 8, 'w': 6, 'wrong_rate': 0.2, 'wrong_or_debatable_rate': 0.467} | fail 138 (w 0.377) | share 0.179 | sent acc 3/40 wrong-in-acc 0.0 (n 4)
+b&margin>=q50      pass {'n': 64, 'r': 27, 'd': 19, 'w': 18, 'wrong_rate': 0.281, 'wrong_or_debatable_rate': 0.578} | fail 104 (w 0.385) | share 0.381 | sent acc 5/40 wrong-in-acc 0.333 (n 6)
+a&b&p>=q50         pass {'n': 29, 'r': 11, 'd': 7, 'w': 11, 'wrong_rate': 0.379, 'wrong_or_debatable_rate': 0.621} | fail 139 (w 0.338) | share 0.173 | sent acc 2/40 wrong-in-acc 0.5 (n 2)
+p>=q75             pass {'n': 37, 'r': 20, 'd': 10, 'w': 7, 'wrong_rate': 0.189, 'wrong_or_debatable_rate': 0.459} | fail 131 (w 0.389) | share 0.22 | sent acc 5/40 wrong-in-acc 0.0 (n 6)
+p>=q50             pass {'n': 78, 'r': 38, 'd': 22, 'w': 18, 'wrong_rate': 0.231, 'wrong_or_debatable_rate': 0.513} | fail 90 (w 0.444) | share 0.464 | sent acc 7/40 wrong-in-acc 0.1 (n 10)
+b&rt>=80           pass {'n': 2, 'r': 1, 'd': 0, 'w': 1, 'wrong_rate': 0.5, 'wrong_or_debatable_rate': 0.5} | fail 166 (w 0.343) | share 0.012 | sent acc 2/40 wrong-in-acc 0.5 (n 2)
+b&p>=q50&rt>=80    pass {'n': 2, 'r': 1, 'd': 0, 'w': 1, 'wrong_rate': 0.5, 'wrong_or_debatable_rate': 0.5} | fail 166 (w 0.343) | share 0.012 | sent acc 2/40 wrong-in-acc 0.5 (n 2)
+rt>=80             pass {'n': 4, 'r': 1, 'd': 2, 'w': 1, 'wrong_rate': 0.25, 'wrong_or_debatable_rate': 0.75} | fail 164 (w 0.348) | share 0.024 | sent acc 4/40 wrong-in-acc 0.25 (n 4)
+all {'n': 168, 'r': 54, 'd': 56, 'w': 58, 'wrong_rate': 0.345, 'wrong_or_debatable_rate': 0.679}

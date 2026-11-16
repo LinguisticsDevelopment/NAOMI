@@ -1,0 +1,123 @@
+pieces train 65914 (463433 nodes, 639893 pairs), dev 3543 in 28s
+params 580417
+/home/user/NAOMI/consciousness_transformer/scripts/train_naomi_orderer.py:173: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tl, tn = tl + float(loss), tn + 1
+  ep 1 batch 0/155 loss 0.693 3s
+  ep 1 batch 100/155 loss 0.204 19s
+epoch 1 61s (total 1.0 min) loss 0.2198 | dev pair 0.9194 heads-right 0.8868 exact 0.6799
+  new best 0.8868 -> large_best.pt
+  ep 2 batch 0/155 loss 0.164 0s
+  ep 2 batch 100/155 loss 0.164 59s
+epoch 2 67s (total 2.1 min) loss 0.1700 | dev pair 0.9233 heads-right 0.8964 exact 0.7019
+  new best 0.8964 -> large_best.pt
+  ep 3 batch 0/155 loss 0.159 0s
+  ep 3 batch 100/155 loss 0.141 50s
+epoch 3 58s (total 3.1 min) loss 0.1592 | dev pair 0.9297 heads-right 0.9078 exact 0.7302
+  new best 0.9078 -> large_best.pt
+  ep 4 batch 0/155 loss 0.145 0s
+  ep 4 batch 100/155 loss 0.166 13s
+epoch 4 20s (total 3.4 min) loss 0.1515 | dev pair 0.9314 heads-right 0.9127 exact 0.7434
+  new best 0.9127 -> large_best.pt
+  ep 5 batch 0/155 loss 0.150 0s
+  ep 5 batch 100/155 loss 0.154 13s
+epoch 5 20s (total 3.8 min) loss 0.1459 | dev pair 0.9352 heads-right 0.9151 exact 0.7443
+  new best 0.9151 -> large_best.pt
+  ep 6 batch 0/155 loss 0.120 0s
+  ep 6 batch 100/155 loss 0.128 13s
+epoch 6 20s (total 4.1 min) loss 0.1413 | dev pair 0.9349 heads-right 0.9155 exact 0.7423
+  new best 0.9155 -> large_best.pt
+  ep 7 batch 0/155 loss 0.142 0s
+  ep 7 batch 100/155 loss 0.152 12s
+epoch 7 20s (total 4.4 min) loss 0.1366 | dev pair 0.9365 heads-right 0.919 exact 0.7542
+  new best 0.919 -> large_best.pt
+  ep 8 batch 0/155 loss 0.122 0s
+  ep 8 batch 100/155 loss 0.138 13s
+epoch 8 22s (total 4.8 min) loss 0.1335 | dev pair 0.9381 heads-right 0.9213 exact 0.7609
+  new best 0.9213 -> large_best.pt
+  ep 9 batch 0/155 loss 0.115 0s
+  ep 9 batch 100/155 loss 0.140 16s
+epoch 9 24s (total 5.2 min) loss 0.1298 | dev pair 0.9381 heads-right 0.9218 exact 0.7626
+  new best 0.9218 -> large_best.pt
+  ep 10 batch 0/155 loss 0.123 0s
+  ep 10 batch 100/155 loss 0.117 14s
+epoch 10 23s (total 5.6 min) loss 0.1273 | dev pair 0.9411 heads-right 0.9235 exact 0.7697
+  new best 0.9235 -> large_best.pt
+  ep 11 batch 0/155 loss 0.121 0s
+  ep 11 batch 100/155 loss 0.119 15s
+epoch 11 23s (total 6.0 min) loss 0.1242 | dev pair 0.9403 heads-right 0.9248 exact 0.7728
+  new best 0.9248 -> large_best.pt
+  ep 12 batch 0/155 loss 0.127 0s
+  ep 12 batch 100/155 loss 0.120 14s
+epoch 12 22s (total 6.3 min) loss 0.1215 | dev pair 0.9383 heads-right 0.9226 exact 0.7632
+  ep 13 batch 0/155 loss 0.129 0s
+  ep 13 batch 100/155 loss 0.122 14s
+epoch 13 23s (total 6.7 min) loss 0.1188 | dev pair 0.9401 heads-right 0.925 exact 0.7691
+  new best 0.925 -> large_best.pt
+  ep 14 batch 0/155 loss 0.112 0s
+  ep 14 batch 100/155 loss 0.112 13s
+epoch 14 21s (total 7.1 min) loss 0.1169 | dev pair 0.9398 heads-right 0.925 exact 0.7722
+  ep 15 batch 0/155 loss 0.111 0s
+  ep 15 batch 100/155 loss 0.115 13s
+epoch 15 21s (total 7.4 min) loss 0.1147 | dev pair 0.941 heads-right 0.9254 exact 0.7731
+  new best 0.9254 -> large_best.pt
+  ep 16 batch 0/155 loss 0.104 0s
+  ep 16 batch 100/155 loss 0.120 13s
+epoch 16 20s (total 7.8 min) loss 0.1129 | dev pair 0.9413 heads-right 0.9258 exact 0.7731
+  new best 0.9258 -> large_best.pt
+  ep 17 batch 0/155 loss 0.101 0s
+  ep 17 batch 100/155 loss 0.110 13s
+epoch 17 21s (total 8.1 min) loss 0.1112 | dev pair 0.9427 heads-right 0.9275 exact 0.779
+  new best 0.9275 -> large_best.pt
+  ep 18 batch 0/155 loss 0.095 0s
+  ep 18 batch 100/155 loss 0.105 14s
+epoch 18 22s (total 8.5 min) loss 0.1090 | dev pair 0.9429 heads-right 0.9281 exact 0.7793
+  new best 0.9281 -> large_best.pt
+  ep 19 batch 0/155 loss 0.095 0s
+  ep 19 batch 100/155 loss 0.106 13s
+epoch 19 21s (total 8.8 min) loss 0.1078 | dev pair 0.943 heads-right 0.9284 exact 0.7824
+  new best 0.9284 -> large_best.pt
+  ep 20 batch 0/155 loss 0.116 0s
+  ep 20 batch 100/155 loss 0.128 12s
+epoch 20 20s (total 9.1 min) loss 0.1056 | dev pair 0.9431 heads-right 0.9265 exact 0.7759
+  ep 21 batch 0/155 loss 0.108 0s
+  ep 21 batch 100/155 loss 0.115 13s
+epoch 21 21s (total 9.5 min) loss 0.1038 | dev pair 0.9434 heads-right 0.9267 exact 0.775
+  ep 22 batch 0/155 loss 0.092 0s
+  ep 22 batch 100/155 loss 0.115 12s
+epoch 22 19s (total 9.8 min) loss 0.0964 | dev pair 0.9449 heads-right 0.9306 exact 0.7846
+  new best 0.9306 -> large_best.pt
+  ep 23 batch 0/155 loss 0.098 0s
+  ep 23 batch 100/155 loss 0.088 13s
+epoch 23 21s (total 10.2 min) loss 0.0930 | dev pair 0.9442 heads-right 0.93 exact 0.7844
+  ep 24 batch 0/155 loss 0.084 0s
+  ep 24 batch 100/155 loss 0.099 14s
+epoch 24 21s (total 10.5 min) loss 0.0915 | dev pair 0.9443 heads-right 0.9297 exact 0.7827
+  ep 25 batch 0/155 loss 0.087 0s
+  ep 25 batch 100/155 loss 0.089 13s
+epoch 25 21s (total 10.9 min) loss 0.0867 | dev pair 0.9455 heads-right 0.9314 exact 0.7869
+  new best 0.9314 -> large_best.pt
+  ep 26 batch 0/155 loss 0.096 0s
+  ep 26 batch 100/155 loss 0.088 14s
+epoch 26 22s (total 11.2 min) loss 0.0857 | dev pair 0.9449 heads-right 0.9307 exact 0.7858
+  ep 27 batch 0/155 loss 0.090 0s
+  ep 27 batch 100/155 loss 0.083 13s
+epoch 27 21s (total 11.6 min) loss 0.0837 | dev pair 0.9456 heads-right 0.9318 exact 0.7878
+  new best 0.9318 -> large_best.pt
+  ep 28 batch 0/155 loss 0.083 0s
+  ep 28 batch 100/155 loss 0.081 13s
+epoch 28 21s (total 11.9 min) loss 0.0824 | dev pair 0.944 heads-right 0.9313 exact 0.7894
+  ep 29 batch 0/155 loss 0.082 0s
+  ep 29 batch 100/155 loss 0.083 13s
+epoch 29 21s (total 12.3 min) loss 0.0819 | dev pair 0.9443 heads-right 0.93 exact 0.7835
+  ep 30 batch 0/155 loss 0.070 0s
+  ep 30 batch 100/155 loss 0.082 13s
+epoch 30 21s (total 12.6 min) loss 0.0794 | dev pair 0.9445 heads-right 0.9314 exact 0.7866
+  ep 31 batch 0/155 loss 0.079 0s
+  ep 31 batch 100/155 loss 0.071 13s
+epoch 31 21s (total 13.0 min) loss 0.0777 | dev pair 0.9437 heads-right 0.9302 exact 0.7835
+  ep 32 batch 0/155 loss 0.080 0s
+  ep 32 batch 100/155 loss 0.077 12s
+epoch 32 19s (total 13.3 min) loss 0.0772 | dev pair 0.9441 heads-right 0.9306 exact 0.7858
+early stop
+done in 13.8 min; best dev heads-right 0.9318

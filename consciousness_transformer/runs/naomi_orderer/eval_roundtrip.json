@@ -1,0 +1,404 @@
+{
+ "parser_connected": {
+  "all": {
+   "sentences": 413,
+   "start_tree_subtrees_all_contiguous": 1.0,
+   "exact_word_order_recovery": 0.6901,
+   "kendall_distance_mean": 0.0803,
+   "decoded_text_no_punctuation": {
+    "n": 413,
+    "meaning": 71.69,
+    "shape": 73.95,
+    "overall": 72.82
+   },
+   "decoded_text_final_punctuation_restored": {
+    "n": 413,
+    "meaning": 77.54,
+    "shape": 79.44,
+    "overall": 78.49
+   },
+   "control_true_order_no_punctuation": {
+    "n": 413,
+    "meaning": 73.38,
+    "shape": 75.72,
+    "overall": 74.55
+   },
+   "control_true_order_final_punctuation_restored": {
+    "n": 413,
+    "meaning": 79.66,
+    "shape": 81.34,
+    "overall": 80.5
+   }
+  },
+  "by_band": {
+   "<=10": {
+    "sentences": 310,
+    "start_tree_subtrees_all_contiguous": 1.0,
+    "exact_word_order_recovery": 0.7871,
+    "kendall_distance_mean": 0.0588,
+    "decoded_text_no_punctuation": {
+     "n": 310,
+     "meaning": 75.77,
+     "shape": 78.06,
+     "overall": 76.91
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 310,
+     "meaning": 82.61,
+     "shape": 84.49,
+     "overall": 83.55
+    },
+    "control_true_order_no_punctuation": {
+     "n": 310,
+     "meaning": 76.88,
+     "shape": 79.34,
+     "overall": 78.11
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 310,
+     "meaning": 83.76,
+     "shape": 85.56,
+     "overall": 84.66
+    }
+   },
+   "11-20": {
+    "sentences": 83,
+    "start_tree_subtrees_all_contiguous": 1.0,
+    "exact_word_order_recovery": 0.4578,
+    "kendall_distance_mean": 0.1447,
+    "decoded_text_no_punctuation": {
+     "n": 83,
+     "meaning": 62.21,
+     "shape": 64.43,
+     "overall": 63.32
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 83,
+     "meaning": 65.6,
+     "shape": 67.52,
+     "overall": 66.56
+    },
+    "control_true_order_no_punctuation": {
+     "n": 83,
+     "meaning": 64.75,
+     "shape": 66.73,
+     "overall": 65.74
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 83,
+     "meaning": 69.06,
+     "shape": 70.37,
+     "overall": 69.72
+    }
+   },
+   "21-35": {
+    "sentences": 20,
+    "start_tree_subtrees_all_contiguous": 1.0,
+    "exact_word_order_recovery": 0.15,
+    "kendall_distance_mean": 0.1465,
+    "decoded_text_no_punctuation": {
+     "n": 20,
+     "meaning": 47.69,
+     "shape": 49.93,
+     "overall": 48.81
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 20,
+     "meaning": 48.51,
+     "shape": 50.6,
+     "overall": 49.55
+    },
+    "control_true_order_no_punctuation": {
+     "n": 20,
+     "meaning": 54.96,
+     "shape": 56.94,
+     "overall": 55.95
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 20,
+     "meaning": 60.06,
+     "shape": 61.38,
+     "overall": 60.72
+    }
+   }
+  }
+ },
+ "encoder_on_connected": {
+  "all": {
+   "sentences": 413,
+   "start_tree_subtrees_all_contiguous": 0.9831,
+   "exact_word_order_recovery": 0.6586,
+   "kendall_distance_mean": 0.0902,
+   "decoded_text_no_punctuation": {
+    "n": 413,
+    "meaning": 72.6,
+    "shape": 74.69,
+    "overall": 73.64
+   },
+   "decoded_text_final_punctuation_restored": {
+    "n": 413,
+    "meaning": 80.99,
+    "shape": 82.64,
+    "overall": 81.82
+   },
+   "control_true_order_no_punctuation": {
+    "n": 413,
+    "meaning": 74.25,
+    "shape": 76.49,
+    "overall": 75.37
+   },
+   "control_true_order_final_punctuation_restored": {
+    "n": 413,
+    "meaning": 84.75,
+    "shape": 86.15,
+    "overall": 85.45
+   }
+  },
+  "by_band": {
+   "<=10": {
+    "sentences": 310,
+    "start_tree_subtrees_all_contiguous": 0.9903,
+    "exact_word_order_recovery": 0.7484,
+    "kendall_distance_mean": 0.0652,
+    "decoded_text_no_punctuation": {
+     "n": 310,
+     "meaning": 76.24,
+     "shape": 78.21,
+     "overall": 77.22
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 310,
+     "meaning": 86.32,
+     "shape": 87.88,
+     "overall": 87.1
+    },
+    "control_true_order_no_punctuation": {
+     "n": 310,
+     "meaning": 76.85,
+     "shape": 79.09,
+     "overall": 77.97
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 310,
+     "meaning": 88.42,
+     "shape": 89.9,
+     "overall": 89.16
+    }
+   },
+   "11-20": {
+    "sentences": 83,
+    "start_tree_subtrees_all_contiguous": 0.9759,
+    "exact_word_order_recovery": 0.4458,
+    "kendall_distance_mean": 0.1589,
+    "decoded_text_no_punctuation": {
+     "n": 83,
+     "meaning": 64.37,
+     "shape": 66.54,
+     "overall": 65.45
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 83,
+     "meaning": 68.09,
+     "shape": 69.62,
+     "overall": 68.86
+    },
+    "control_true_order_no_punctuation": {
+     "n": 83,
+     "meaning": 68.45,
+     "shape": 70.64,
+     "overall": 69.54
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 83,
+     "meaning": 75.62,
+     "shape": 76.57,
+     "overall": 76.09
+    }
+   },
+   "21-35": {
+    "sentences": 20,
+    "start_tree_subtrees_all_contiguous": 0.9,
+    "exact_word_order_recovery": 0.15,
+    "kendall_distance_mean": 0.1932,
+    "decoded_text_no_punctuation": {
+     "n": 20,
+     "meaning": 50.32,
+     "shape": 53.83,
+     "overall": 52.08
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 20,
+     "meaning": 51.89,
+     "shape": 55.43,
+     "overall": 53.66
+    },
+    "control_true_order_no_punctuation": {
+     "n": 20,
+     "meaning": 58.01,
+     "shape": 60.51,
+     "overall": 59.26
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 20,
+     "meaning": 65.7,
+     "shape": 67.7,
+     "overall": 66.7
+    }
+   }
+  }
+ },
+ "encoder_on_fragmented": {
+  "all": {
+   "sentences": 1098,
+   "start_tree_subtrees_all_contiguous": 0.8251,
+   "exact_word_order_recovery": 0.1357,
+   "kendall_distance_mean": 0.1894,
+   "decoded_text_no_punctuation": {
+    "n": 1098,
+    "meaning": 45.96,
+    "shape": 49.74,
+    "overall": 47.85
+   },
+   "decoded_text_final_punctuation_restored": {
+    "n": 1098,
+    "meaning": 49.78,
+    "shape": 52.91,
+    "overall": 51.35
+   },
+   "control_true_order_no_punctuation": {
+    "n": 1098,
+    "meaning": 55.0,
+    "shape": 58.11,
+    "overall": 56.56
+   },
+   "control_true_order_final_punctuation_restored": {
+    "n": 1098,
+    "meaning": 62.36,
+    "shape": 64.47,
+    "overall": 63.42
+   }
+  },
+  "by_band": {
+   "<=10": {
+    "sentences": 250,
+    "start_tree_subtrees_all_contiguous": 0.972,
+    "exact_word_order_recovery": 0.388,
+    "kendall_distance_mean": 0.1828,
+    "decoded_text_no_punctuation": {
+     "n": 250,
+     "meaning": 46.2,
+     "shape": 53.18,
+     "overall": 49.69
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 250,
+     "meaning": 53.97,
+     "shape": 59.42,
+     "overall": 56.7
+    },
+    "control_true_order_no_punctuation": {
+     "n": 250,
+     "meaning": 55.42,
+     "shape": 60.67,
+     "overall": 58.05
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 250,
+     "meaning": 68.17,
+     "shape": 70.87,
+     "overall": 69.52
+    }
+   },
+   "11-20": {
+    "sentences": 333,
+    "start_tree_subtrees_all_contiguous": 0.8799,
+    "exact_word_order_recovery": 0.1411,
+    "kendall_distance_mean": 0.1727,
+    "decoded_text_no_punctuation": {
+     "n": 333,
+     "meaning": 46.8,
+     "shape": 50.22,
+     "overall": 48.51
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 333,
+     "meaning": 51.41,
+     "shape": 54.18,
+     "overall": 52.79
+    },
+    "control_true_order_no_punctuation": {
+     "n": 333,
+     "meaning": 53.55,
+     "shape": 56.76,
+     "overall": 55.16
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 333,
+     "meaning": 61.52,
+     "shape": 63.94,
+     "overall": 62.73
+    }
+   },
+   "21-35": {
+    "sentences": 353,
+    "start_tree_subtrees_all_contiguous": 0.779,
+    "exact_word_order_recovery": 0.0142,
+    "kendall_distance_mean": 0.1952,
+    "decoded_text_no_punctuation": {
+     "n": 353,
+     "meaning": 46.21,
+     "shape": 48.91,
+     "overall": 47.56
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 353,
+     "meaning": 48.09,
+     "shape": 50.53,
+     "overall": 49.31
+    },
+    "control_true_order_no_punctuation": {
+     "n": 353,
+     "meaning": 55.97,
+     "shape": 58.09,
+     "overall": 57.03
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 353,
+     "meaning": 61.02,
+     "shape": 62.66,
+     "overall": 61.84
+    }
+   },
+   "36+": {
+    "sentences": 162,
+    "start_tree_subtrees_all_contiguous": 0.5864,
+    "exact_word_order_recovery": 0.0,
+    "kendall_distance_mean": 0.2212,
+    "decoded_text_no_punctuation": {
+     "n": 162,
+     "meaning": 43.32,
+     "shape": 45.28,
+     "overall": 44.3
+    },
+    "decoded_text_final_punctuation_restored": {
+     "n": 162,
+     "meaning": 43.64,
+     "shape": 45.47,
+     "overall": 44.55
+    },
+    "control_true_order_no_punctuation": {
+     "n": 162,
+     "meaning": 55.23,
+     "shape": 57.0,
+     "overall": 56.11
+    },
+    "control_true_order_final_punctuation_restored": {
+     "n": 162,
+     "meaning": 58.08,
+     "shape": 59.61,
+     "overall": 58.84
+    }
+   }
+  }
+ }
+}

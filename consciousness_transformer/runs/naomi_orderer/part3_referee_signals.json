@@ -1,0 +1,2836 @@
+{
+ "thresholds": {
+  "p_q50": 0.8863586187362671,
+  "p_q75": 0.9968995302915573,
+  "m_q50": 3.5950052738189697,
+  "m_q75": 6.86752462387085,
+  "n_added_links": 4500
+ },
+ "min_count_N": 40,
+ "declared_rt_threshold": 80.0,
+ "n_links": 168,
+ "all_links": {
+  "n": 168,
+  "r": 54,
+  "d": 56,
+  "w": 58,
+  "wrong_rate": 0.345,
+  "wrong_or_debatable_rate": 0.679
+ },
+ "settings": {
+  "a": {
+   "pass": {
+    "n": 45,
+    "r": 14,
+    "d": 12,
+    "w": 19,
+    "wrong_rate": 0.422,
+    "wrong_or_debatable_rate": 0.689
+   },
+   "fail": {
+    "n": 123,
+    "r": 40,
+    "d": 44,
+    "w": 39,
+    "wrong_rate": 0.317,
+    "wrong_or_debatable_rate": 0.675
+   },
+   "share_links_passing": 0.268,
+   "sentences_accepted_all_links_pass": 5,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 5,
+    "r": 1,
+    "d": 2,
+    "w": 2,
+    "wrong_rate": 0.4,
+    "wrong_or_debatable_rate": 0.8
+   }
+  },
+  "b": {
+   "pass": {
+    "n": 113,
+    "r": 43,
+    "d": 36,
+    "w": 34,
+    "wrong_rate": 0.301,
+    "wrong_or_debatable_rate": 0.619
+   },
+   "fail": {
+    "n": 55,
+    "r": 11,
+    "d": 20,
+    "w": 24,
+    "wrong_rate": 0.436,
+    "wrong_or_debatable_rate": 0.8
+   },
+   "share_links_passing": 0.673,
+   "sentences_accepted_all_links_pass": 10,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 20,
+    "r": 9,
+    "d": 6,
+    "w": 5,
+    "wrong_rate": 0.25,
+    "wrong_or_debatable_rate": 0.55
+   }
+  },
+  "a&b": {
+   "pass": {
+    "n": 41,
+    "r": 13,
+    "d": 10,
+    "w": 18,
+    "wrong_rate": 0.439,
+    "wrong_or_debatable_rate": 0.683
+   },
+   "fail": {
+    "n": 127,
+    "r": 41,
+    "d": 46,
+    "w": 40,
+    "wrong_rate": 0.315,
+    "wrong_or_debatable_rate": 0.677
+   },
+   "share_links_passing": 0.244,
+   "sentences_accepted_all_links_pass": 3,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 3,
+    "r": 0,
+    "d": 1,
+    "w": 2,
+    "wrong_rate": 0.667,
+    "wrong_or_debatable_rate": 1.0
+   }
+  },
+  "b&p>=q50": {
+   "pass": {
+    "n": 59,
+    "r": 29,
+    "d": 17,
+    "w": 13,
+    "wrong_rate": 0.22,
+    "wrong_or_debatable_rate": 0.508
+   },
+   "fail": {
+    "n": 109,
+    "r": 25,
+    "d": 39,
+    "w": 45,
+    "wrong_rate": 0.413,
+    "wrong_or_debatable_rate": 0.771
+   },
+   "share_links_passing": 0.351,
+   "sentences_accepted_all_links_pass": 4,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 5,
+    "r": 3,
+    "d": 1,
+    "w": 1,
+    "wrong_rate": 0.2,
+    "wrong_or_debatable_rate": 0.4
+   }
+  },
+  "b&p>=q75": {
+   "pass": {
+    "n": 30,
+    "r": 16,
+    "d": 8,
+    "w": 6,
+    "wrong_rate": 0.2,
+    "wrong_or_debatable_rate": 0.467
+   },
+   "fail": {
+    "n": 138,
+    "r": 38,
+    "d": 48,
+    "w": 52,
+    "wrong_rate": 0.377,
+    "wrong_or_debatable_rate": 0.725
+   },
+   "share_links_passing": 0.179,
+   "sentences_accepted_all_links_pass": 3,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 4,
+    "r": 3,
+    "d": 1,
+    "w": 0,
+    "wrong_rate": 0.0,
+    "wrong_or_debatable_rate": 0.25
+   }
+  },
+  "b&margin>=q50": {
+   "pass": {
+    "n": 64,
+    "r": 27,
+    "d": 19,
+    "w": 18,
+    "wrong_rate": 0.281,
+    "wrong_or_debatable_rate": 0.578
+   },
+   "fail": {
+    "n": 104,
+    "r": 27,
+    "d": 37,
+    "w": 40,
+    "wrong_rate": 0.385,
+    "wrong_or_debatable_rate": 0.74
+   },
+   "share_links_passing": 0.381,
+   "sentences_accepted_all_links_pass": 5,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 6,
+    "r": 3,
+    "d": 1,
+    "w": 2,
+    "wrong_rate": 0.333,
+    "wrong_or_debatable_rate": 0.5
+   }
+  },
+  "a&b&p>=q50": {
+   "pass": {
+    "n": 29,
+    "r": 11,
+    "d": 7,
+    "w": 11,
+    "wrong_rate": 0.379,
+    "wrong_or_debatable_rate": 0.621
+   },
+   "fail": {
+    "n": 139,
+    "r": 43,
+    "d": 49,
+    "w": 47,
+    "wrong_rate": 0.338,
+    "wrong_or_debatable_rate": 0.691
+   },
+   "share_links_passing": 0.173,
+   "sentences_accepted_all_links_pass": 2,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 2,
+    "r": 0,
+    "d": 1,
+    "w": 1,
+    "wrong_rate": 0.5,
+    "wrong_or_debatable_rate": 1.0
+   }
+  },
+  "p>=q75": {
+   "pass": {
+    "n": 37,
+    "r": 20,
+    "d": 10,
+    "w": 7,
+    "wrong_rate": 0.189,
+    "wrong_or_debatable_rate": 0.459
+   },
+   "fail": {
+    "n": 131,
+    "r": 34,
+    "d": 46,
+    "w": 51,
+    "wrong_rate": 0.389,
+    "wrong_or_debatable_rate": 0.74
+   },
+   "share_links_passing": 0.22,
+   "sentences_accepted_all_links_pass": 5,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 6,
+    "r": 5,
+    "d": 1,
+    "w": 0,
+    "wrong_rate": 0.0,
+    "wrong_or_debatable_rate": 0.167
+   }
+  },
+  "p>=q50": {
+   "pass": {
+    "n": 78,
+    "r": 38,
+    "d": 22,
+    "w": 18,
+    "wrong_rate": 0.231,
+    "wrong_or_debatable_rate": 0.513
+   },
+   "fail": {
+    "n": 90,
+    "r": 16,
+    "d": 34,
+    "w": 40,
+    "wrong_rate": 0.444,
+    "wrong_or_debatable_rate": 0.822
+   },
+   "share_links_passing": 0.464,
+   "sentences_accepted_all_links_pass": 7,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 10,
+    "r": 8,
+    "d": 1,
+    "w": 1,
+    "wrong_rate": 0.1,
+    "wrong_or_debatable_rate": 0.2
+   }
+  },
+  "b&rt>=80": {
+   "pass": {
+    "n": 2,
+    "r": 1,
+    "d": 0,
+    "w": 1,
+    "wrong_rate": 0.5,
+    "wrong_or_debatable_rate": 0.5
+   },
+   "fail": {
+    "n": 166,
+    "r": 53,
+    "d": 56,
+    "w": 57,
+    "wrong_rate": 0.343,
+    "wrong_or_debatable_rate": 0.681
+   },
+   "share_links_passing": 0.012,
+   "sentences_accepted_all_links_pass": 2,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 2,
+    "r": 1,
+    "d": 0,
+    "w": 1,
+    "wrong_rate": 0.5,
+    "wrong_or_debatable_rate": 0.5
+   }
+  },
+  "b&p>=q50&rt>=80": {
+   "pass": {
+    "n": 2,
+    "r": 1,
+    "d": 0,
+    "w": 1,
+    "wrong_rate": 0.5,
+    "wrong_or_debatable_rate": 0.5
+   },
+   "fail": {
+    "n": 166,
+    "r": 53,
+    "d": 56,
+    "w": 57,
+    "wrong_rate": 0.343,
+    "wrong_or_debatable_rate": 0.681
+   },
+   "share_links_passing": 0.012,
+   "sentences_accepted_all_links_pass": 2,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 2,
+    "r": 1,
+    "d": 0,
+    "w": 1,
+    "wrong_rate": 0.5,
+    "wrong_or_debatable_rate": 0.5
+   }
+  },
+  "rt>=80": {
+   "pass": {
+    "n": 4,
+    "r": 1,
+    "d": 2,
+    "w": 1,
+    "wrong_rate": 0.25,
+    "wrong_or_debatable_rate": 0.75
+   },
+   "fail": {
+    "n": 164,
+    "r": 53,
+    "d": 54,
+    "w": 57,
+    "wrong_rate": 0.348,
+    "wrong_or_debatable_rate": 0.677
+   },
+   "share_links_passing": 0.024,
+   "sentences_accepted_all_links_pass": 4,
+   "sentences_total": 40,
+   "links_in_accepted_sentences": {
+    "n": 4,
+    "r": 1,
+    "d": 2,
+    "w": 1,
+    "wrong_rate": 0.25,
+    "wrong_or_debatable_rate": 0.75
+   }
+  }
+ },
+ "sentences": {
+  "v7-000003": {
+   "band": "<=10",
+   "rt_overall": 75.0,
+   "rt_exact": true,
+   "rt_kendall": 0.0
+  },
+  "v7-012975": {
+   "band": "<=10",
+   "rt_overall": 65.86542478990694,
+   "rt_exact": false,
+   "rt_kendall": 0.23809523809523808
+  },
+  "v7-000252": {
+   "band": "<=10",
+   "rt_overall": 100.0,
+   "rt_exact": true,
+   "rt_kendall": 0.0
+  },
+  "v7-000380": {
+   "band": "<=10",
+   "rt_overall": 25.0,
+   "rt_exact": false,
+   "rt_kendall": 0.3888888888888889
+  },
+  "v7-027722": {
+   "band": "<=10",
+   "rt_overall": 100.0,
+   "rt_exact": true,
+   "rt_kendall": 0.0
+  },
+  "v7-000279": {
+   "band": "<=10",
+   "rt_overall": 71.42857142857143,
+   "rt_exact": false,
+   "rt_kendall": 0.08333333333333333
+  },
+  "v7-019886": {
+   "band": "<=10",
+   "rt_overall": 66.66666666666666,
+   "rt_exact": true,
+   "rt_kendall": 0.0
+  },
+  "v7-013066": {
+   "band": "<=10",
+   "rt_overall": 35.3247283531931,
+   "rt_exact": true,
+   "rt_kendall": 0.0
+  },
+  "v7-000234": {
+   "band": "<=10",
+   "rt_overall": 43.75,
+   "rt_exact": false,
+   "rt_kendall": 0.047619047619047616
+  },
+  "v7-000269": {
+   "band": "<=10",
+   "rt_overall": 0.0,
+   "rt_exact": true,
+   "rt_kendall": 0.0
+  },
+  "v7-008332": {
+   "band": "11-20",
+   "rt_overall": 100.0,
+   "rt_exact": true,
+   "rt_kendall": 0.0
+  },
+  "v7-013030": {
+   "band": "11-20",
+   "rt_overall": 55.18882927024589,
+   "rt_exact": false,
+   "rt_kendall": 0.013071895424836602
+  },
+  "v7-008409": {
+   "band": "11-20",
+   "rt_overall": 72.72727272727273,
+   "rt_exact": false,
+   "rt_kendall": 0.25833333333333336
+  },
+  "v7-012934": {
+   "band": "11-20",
+   "rt_overall": 84.61538461538461,
+   "rt_exact": false,
+   "rt_kendall": 0.04411764705882353
+  },
+  "v7-008461": {
+   "band": "11-20",
+   "rt_overall": 60.362269030670745,
+   "rt_exact": false,
+   "rt_kendall": 0.07017543859649122
+  },
+  "v7-000207": {
+   "band": "11-20",
+   "rt_overall": 52.668103308420704,
+   "rt_exact": false,
+   "rt_kendall": 0.5641025641025641
+  },
+  "v7-008380": {
+   "band": "11-20",
+   "rt_overall": 40.0,
+   "rt_exact": false,
+   "rt_kendall": 0.25833333333333336
+  },
+  "v7-008506": {
+   "band": "11-20",
+   "rt_overall": 37.5,
+   "rt_exact": false,
+   "rt_kendall": 0.18947368421052632
+  },
+  "v7-000031": {
+   "band": "11-20",
+   "rt_overall": 51.92307692307692,
+   "rt_exact": false,
+   "rt_kendall": 0.01904761904761905
+  },
+  "v7-012893": {
+   "band": "11-20",
+   "rt_overall": 57.14285714285714,
+   "rt_exact": false,
+   "rt_kendall": 0.08823529411764706
+  },
+  "v7-008628": {
+   "band": "21-35",
+   "rt_overall": 40.928887751071265,
+   "rt_exact": false,
+   "rt_kendall": 0.2620689655172414
+  },
+  "v7-000108": {
+   "band": "21-35",
+   "rt_overall": 32.518785229652764,
+   "rt_exact": false,
+   "rt_kendall": 0.1857707509881423
+  },
+  "v7-017847": {
+   "band": "21-35",
+   "rt_overall": 57.02162595460845,
+   "rt_exact": false,
+   "rt_kendall": 0.31827956989247314
+  },
+  "v7-012799": {
+   "band": "21-35",
+   "rt_overall": 62.96296296296296,
+   "rt_exact": false,
+   "rt_kendall": 0.04946236559139785
+  },
+  "v7-012993": {
+   "band": "21-35",
+   "rt_overall": 40.48489464003637,
+   "rt_exact": false,
+   "rt_kendall": 0.17943548387096775
+  },
+  "v7-012909": {
+   "band": "21-35",
+   "rt_overall": 25.0,
+   "rt_exact": false,
+   "rt_kendall": 0.36666666666666664
+  },
+  "v7-000024": {
+   "band": "21-35",
+   "rt_overall": 52.44664520758192,
+   "rt_exact": false,
+   "rt_kendall": 0.12648221343873517
+  },
+  "v7-027558": {
+   "band": "21-35",
+   "rt_overall": 55.82150305614017,
+   "rt_exact": false,
+   "rt_kendall": 0.043333333333333335
+  },
+  "v7-012932": {
+   "band": "21-35",
+   "rt_overall": 66.66666666666666,
+   "rt_exact": false,
+   "rt_kendall": 0.16883116883116883
+  },
+  "v7-008465": {
+   "band": "21-35",
+   "rt_overall": 19.365602850337602,
+   "rt_exact": false,
+   "rt_kendall": 0.21008403361344538
+  },
+  "v7-012921": {
+   "band": "36+",
+   "rt_overall": 42.255616931593195,
+   "rt_exact": false,
+   "rt_kendall": 0.07195121951219512
+  },
+  "v7-027660": {
+   "band": "36+",
+   "rt_overall": 73.71794871794872,
+   "rt_exact": false,
+   "rt_kendall": 0.07716701902748414
+  },
+  "v7-000378": {
+   "band": "36+",
+   "rt_overall": 48.57142857142857,
+   "rt_exact": false,
+   "rt_kendall": 0.2358974358974359
+  },
+  "v7-012781": {
+   "band": "36+",
+   "rt_overall": 56.97674418604651,
+   "rt_exact": false,
+   "rt_kendall": 0.14675052410901468
+  },
+  "v7-000080": {
+   "band": "36+",
+   "rt_overall": 5.714285714285714,
+   "rt_exact": false,
+   "rt_kendall": 0.5647840531561462
+  },
+  "v7-008609": {
+   "band": "36+",
+   "rt_overall": 57.161096167103096,
+   "rt_exact": false,
+   "rt_kendall": 0.1523809523809524
+  },
+  "v7-000013": {
+   "band": "36+",
+   "rt_overall": 61.54031952770083,
+   "rt_exact": false,
+   "rt_kendall": 0.033936651583710405
+  },
+  "v7-012782": {
+   "band": "36+",
+   "rt_overall": 19.719287901410155,
+   "rt_exact": false,
+   "rt_kendall": 0.021040974529346623
+  },
+  "v7-012814": {
+   "band": "36+",
+   "rt_overall": 31.602823969527655,
+   "rt_exact": false,
+   "rt_kendall": 0.29591836734693877
+  },
+  "v7-017857": {
+   "band": "36+",
+   "rt_overall": 59.45945945945946,
+   "rt_exact": false,
+   "rt_kendall": 0.06553911205073996
+  }
+ },
+ "quartiles": {
+  "p": {
+   "Q1": {
+    "n": 42,
+    "r": 5,
+    "d": 16,
+    "w": 21,
+    "wrong_rate": 0.5,
+    "wrong_or_debatable_rate": 0.881,
+    "range_upper": 0.208
+   },
+   "Q2": {
+    "n": 42,
+    "r": 10,
+    "d": 16,
+    "w": 16,
+    "wrong_rate": 0.381,
+    "wrong_or_debatable_rate": 0.762,
+    "range_upper": 0.848
+   },
+   "Q3": {
+    "n": 42,
+    "r": 18,
+    "d": 12,
+    "w": 12,
+    "wrong_rate": 0.286,
+    "wrong_or_debatable_rate": 0.571,
+    "range_upper": 0.994
+   },
+   "Q4": {
+    "n": 42,
+    "r": 21,
+    "d": 12,
+    "w": 9,
+    "wrong_rate": 0.214,
+    "wrong_or_debatable_rate": 0.5,
+    "range_upper": 1.0
+   }
+  },
+  "margin": {
+   "Q1": {
+    "n": 42,
+    "r": 10,
+    "d": 16,
+    "w": 16,
+    "wrong_rate": 0.381,
+    "wrong_or_debatable_rate": 0.762,
+    "range_upper": 1.412
+   },
+   "Q2": {
+    "n": 42,
+    "r": 11,
+    "d": 15,
+    "w": 16,
+    "wrong_rate": 0.381,
+    "wrong_or_debatable_rate": 0.738,
+    "range_upper": 4.2
+   },
+   "Q3": {
+    "n": 42,
+    "r": 16,
+    "d": 13,
+    "w": 13,
+    "wrong_rate": 0.31,
+    "wrong_or_debatable_rate": 0.619,
+    "range_upper": 6.974
+   },
+   "Q4": {
+    "n": 42,
+    "r": 17,
+    "d": 12,
+    "w": 13,
+    "wrong_rate": 0.31,
+    "wrong_or_debatable_rate": 0.595,
+    "range_upper": 22.368
+   }
+  },
+  "rt": {
+   "Q1": {
+    "n": 42,
+    "r": 7,
+    "d": 15,
+    "w": 20,
+    "wrong_rate": 0.476,
+    "wrong_or_debatable_rate": 0.833,
+    "range_upper": 34.623
+   },
+   "Q2": {
+    "n": 47,
+    "r": 13,
+    "d": 20,
+    "w": 14,
+    "wrong_rate": 0.298,
+    "wrong_or_debatable_rate": 0.723,
+    "range_upper": 52.447
+   },
+   "Q3": {
+    "n": 41,
+    "r": 19,
+    "d": 10,
+    "w": 12,
+    "wrong_rate": 0.293,
+    "wrong_or_debatable_rate": 0.537,
+    "range_upper": 59.459
+   },
+   "Q4": {
+    "n": 38,
+    "r": 15,
+    "d": 11,
+    "w": 12,
+    "wrong_rate": 0.316,
+    "wrong_or_debatable_rate": 0.605,
+    "range_upper": 100.0
+   }
+  },
+  "count_b": {
+   "Q1": {
+    "n": 42,
+    "r": 7,
+    "d": 15,
+    "w": 20,
+    "wrong_rate": 0.476,
+    "wrong_or_debatable_rate": 0.833,
+    "range_upper": 20.75
+   },
+   "Q2": {
+    "n": 42,
+    "r": 14,
+    "d": 14,
+    "w": 14,
+    "wrong_rate": 0.333,
+    "wrong_or_debatable_rate": 0.667,
+    "range_upper": 137.5
+   },
+   "Q3": {
+    "n": 42,
+    "r": 18,
+    "d": 14,
+    "w": 10,
+    "wrong_rate": 0.238,
+    "wrong_or_debatable_rate": 0.571,
+    "range_upper": 956.75
+   },
+   "Q4": {
+    "n": 42,
+    "r": 15,
+    "d": 13,
+    "w": 14,
+    "wrong_rate": 0.333,
+    "wrong_or_debatable_rate": 0.643,
+    "range_upper": 10874.0
+   }
+  }
+ },
+ "by_relation_a_b": {
+  "COMPLEMENT": {
+   "n": 6,
+   "a_pass": 0,
+   "b_pass": 3
+  },
+  "COORDINATION": {
+   "n": 50,
+   "a_pass": 16,
+   "b_pass": 42
+  },
+  "DESCRIPTION": {
+   "n": 13,
+   "a_pass": 2,
+   "b_pass": 10
+  },
+  "INDIRECT_OBJECT": {
+   "n": 1,
+   "a_pass": 1,
+   "b_pass": 1
+  },
+  "MODIFICATION": {
+   "n": 41,
+   "a_pass": 5,
+   "b_pass": 20
+  },
+  "OBJECT": {
+   "n": 19,
+   "a_pass": 6,
+   "b_pass": 13
+  },
+  "PREPOSITION": {
+   "n": 6,
+   "a_pass": 1,
+   "b_pass": 5
+  },
+  "SPECIFICATION": {
+   "n": 14,
+   "a_pass": 7,
+   "b_pass": 10
+  },
+  "SUBJECT": {
+   "n": 10,
+   "a_pass": 5,
+   "b_pass": 7
+  },
+  "SUBORDINATION": {
+   "n": 8,
+   "a_pass": 2,
+   "b_pass": 2
+  }
+ },
+ "links": [
+  {
+   "id": "v7-000003",
+   "dep": 0,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": true,
+   "why_a": "licensed by rule noun1",
+   "count_b": 18,
+   "p": 1.0,
+   "margin": 21.60414695739746,
+   "rt": 75.0
+  },
+  {
+   "id": "v7-012975",
+   "dep": 4,
+   "judgment": "r",
+   "rel": "SPECIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SPECIFICATION from head category VERBAL and dependent category COORD",
+   "count_b": 22,
+   "p": 0.4037705063819885,
+   "margin": 0.1361675262451172,
+   "rt": 65.86542478990694
+  },
+  {
+   "id": "v7-012975",
+   "dep": 7,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category VERBAL",
+   "count_b": 31,
+   "p": 0.317144513130188,
+   "margin": 0.7656784057617188,
+   "rt": 65.86542478990694
+  },
+  {
+   "id": "v7-000252",
+   "dep": 5,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule poss1",
+   "count_b": 0,
+   "p": 1.8977774743689224e-05,
+   "margin": 10.872198104858398,
+   "rt": 100.0
+  },
+  {
+   "id": "v7-000380",
+   "dep": 0,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category VERBAL",
+   "count_b": 0,
+   "p": 4.382114184409147e-06,
+   "margin": 12.337974548339844,
+   "rt": 25.0
+  },
+  {
+   "id": "v7-000380",
+   "dep": 5,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category MODIFIER",
+   "count_b": 37,
+   "p": 0.9867044687271118,
+   "margin": 4.307062149047852,
+   "rt": 25.0
+  },
+  {
+   "id": "v7-027722",
+   "dep": 0,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category NOUN and dependent category COORD",
+   "count_b": 85,
+   "p": 0.9998903870582581,
+   "margin": 9.1179838180542,
+   "rt": 100.0
+  },
+  {
+   "id": "v7-000279",
+   "dep": 8,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 1651,
+   "p": 1.0,
+   "margin": 22.367801666259766,
+   "rt": 71.42857142857143
+  },
+  {
+   "id": "v7-000279",
+   "dep": 9,
+   "judgment": "r",
+   "rel": "PREPOSITION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds PREPOSITION from head category PREP and dependent category VERBAL",
+   "count_b": 804,
+   "p": 1.0,
+   "margin": 20.8476619720459,
+   "rt": 71.42857142857143
+  },
+  {
+   "id": "v7-019886",
+   "dep": 4,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule appositive1",
+   "count_b": 46,
+   "p": 0.9999735355377197,
+   "margin": 10.586084365844727,
+   "rt": 66.66666666666666
+  },
+  {
+   "id": "v7-013066",
+   "dep": 7,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category VERBAL",
+   "count_b": 49,
+   "p": 1.3908443179388996e-06,
+   "margin": 1.361083984375,
+   "rt": 35.3247283531931
+  },
+  {
+   "id": "v7-000234",
+   "dep": 0,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category NOUN and dependent category NOUN",
+   "count_b": 138,
+   "p": 0.009211166761815548,
+   "margin": 4.678084850311279,
+   "rt": 43.75
+  },
+  {
+   "id": "v7-000234",
+   "dep": 6,
+   "judgment": "d",
+   "rel": "SUBORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule rel1",
+   "count_b": 32,
+   "p": 7.805125790127931e-08,
+   "margin": 1.8454017639160156,
+   "rt": 43.75
+  },
+  {
+   "id": "v7-000269",
+   "dep": 2,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category DESCRIPTOR and dependent category SPECIFIER",
+   "count_b": 10,
+   "p": 0.9999989867210388,
+   "margin": 13.747511863708496,
+   "rt": 0.0
+  },
+  {
+   "id": "v7-008332",
+   "dep": 5,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule poss1",
+   "count_b": 316,
+   "p": 0.9948551654815674,
+   "margin": 5.290323257446289,
+   "rt": 100.0
+  },
+  {
+   "id": "v7-013030",
+   "dep": 6,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category VERBAL",
+   "count_b": 87,
+   "p": 4.9785947339842096e-05,
+   "margin": 2.279874801635742,
+   "rt": 55.18882927024589
+  },
+  {
+   "id": "v7-013030",
+   "dep": 7,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category VERBAL and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.9925346970558167,
+   "margin": 4.889983177185059,
+   "rt": 55.18882927024589
+  },
+  {
+   "id": "v7-013030",
+   "dep": 8,
+   "judgment": "d",
+   "rel": "OBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule predicate1",
+   "count_b": 250,
+   "p": 0.9999904632568359,
+   "margin": 11.57575511932373,
+   "rt": 55.18882927024589
+  },
+  {
+   "id": "v7-008409",
+   "dep": 4,
+   "judgment": "w",
+   "rel": "PREPOSITION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds PREPOSITION from head category PREP and dependent category VERBAL",
+   "count_b": 0,
+   "p": 0.5475448369979858,
+   "margin": 0.4936951994895935,
+   "rt": 72.72727272727273
+  },
+  {
+   "id": "v7-008409",
+   "dep": 15,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord3",
+   "count_b": 2531,
+   "p": 0.9989648461341858,
+   "margin": 6.922077178955078,
+   "rt": 72.72727272727273
+  },
+  {
+   "id": "v7-012934",
+   "dep": 16,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category VERBAL",
+   "count_b": 0,
+   "p": 8.867359429132193e-05,
+   "margin": 1.4304676055908203,
+   "rt": 84.61538461538461
+  },
+  {
+   "id": "v7-008461",
+   "dep": 5,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 69,
+   "p": 0.9804896116256714,
+   "margin": 4.363471508026123,
+   "rt": 60.362269030670745
+  },
+  {
+   "id": "v7-008461",
+   "dep": 6,
+   "judgment": "r",
+   "rel": "PREPOSITION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds PREPOSITION from head category PREP and dependent category VERBAL",
+   "count_b": 84,
+   "p": 0.3877566158771515,
+   "margin": 0.30012035369873047,
+   "rt": 60.362269030670745
+  },
+  {
+   "id": "v7-008461",
+   "dep": 15,
+   "judgment": "w",
+   "rel": "COMPLEMENT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COMPLEMENT from head category NOUN and dependent category VERBAL",
+   "count_b": 0,
+   "p": 0.99432373046875,
+   "margin": 5.488015651702881,
+   "rt": 60.362269030670745
+  },
+  {
+   "id": "v7-000207",
+   "dep": 4,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord4",
+   "count_b": 5868,
+   "p": 2.5134215775324265e-06,
+   "margin": 12.893861770629883,
+   "rt": 52.668103308420704
+  },
+  {
+   "id": "v7-008380",
+   "dep": 9,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category COORD and dependent category MODIFIER",
+   "count_b": 1209,
+   "p": 0.04421905428171158,
+   "margin": 1.0649404525756836,
+   "rt": 40.0
+  },
+  {
+   "id": "v7-008380",
+   "dep": 14,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.004238740541040897,
+   "margin": 5.4567341804504395,
+   "rt": 40.0
+  },
+  {
+   "id": "v7-008506",
+   "dep": 9,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category SPECIFIER and dependent category MODIFIER",
+   "count_b": 107,
+   "p": 9.536415177535673e-07,
+   "margin": 8.362849235534668,
+   "rt": 37.5
+  },
+  {
+   "id": "v7-008506",
+   "dep": 19,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category MODIFIER",
+   "count_b": 31,
+   "p": 3.622676331360708e-06,
+   "margin": 12.52829360961914,
+   "rt": 37.5
+  },
+  {
+   "id": "v7-000031",
+   "dep": 0,
+   "judgment": "d",
+   "rel": "COMPLEMENT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COMPLEMENT from head category MODIFIER and dependent category DESCRIPTOR",
+   "count_b": 0,
+   "p": 1.0,
+   "margin": 20.62201690673828,
+   "rt": 51.92307692307692
+  },
+  {
+   "id": "v7-000031",
+   "dep": 9,
+   "judgment": "r",
+   "rel": "SPECIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule join4",
+   "count_b": 734,
+   "p": 0.9984233379364014,
+   "margin": 6.516127586364746,
+   "rt": 51.92307692307692
+  },
+  {
+   "id": "v7-000031",
+   "dep": 12,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category MODIFIER and dependent category VERBAL",
+   "count_b": 3,
+   "p": 0.6660049557685852,
+   "margin": 0.7407073378562927,
+   "rt": 51.92307692307692
+  },
+  {
+   "id": "v7-000031",
+   "dep": 14,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category VERBAL and dependent category VERBAL",
+   "count_b": 2,
+   "p": 0.9780034422874451,
+   "margin": 3.8091282844543457,
+   "rt": 51.92307692307692
+  },
+  {
+   "id": "v7-012893",
+   "dep": 14,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category COORD",
+   "count_b": 272,
+   "p": 0.718805193901062,
+   "margin": 0.9768972992897034,
+   "rt": 57.14285714285714
+  },
+  {
+   "id": "v7-008628",
+   "dep": 17,
+   "judgment": "d",
+   "rel": "SUBORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBORDINATION from head category SPECIFIER and dependent category NOUN",
+   "count_b": 8,
+   "p": 0.7202276587486267,
+   "margin": 1.3817729949951172,
+   "rt": 40.928887751071265
+  },
+  {
+   "id": "v7-008628",
+   "dep": 18,
+   "judgment": "w",
+   "rel": "SUBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule clause1",
+   "count_b": 1063,
+   "p": 0.9971963167190552,
+   "margin": 6.972142219543457,
+   "rt": 40.928887751071265
+  },
+  {
+   "id": "v7-008628",
+   "dep": 20,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category SPECIFIER and dependent category VERBAL",
+   "count_b": 1070,
+   "p": 0.9869937896728516,
+   "margin": 4.680716037750244,
+   "rt": 40.928887751071265
+  },
+  {
+   "id": "v7-008628",
+   "dep": 31,
+   "judgment": "r",
+   "rel": "SPECIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule adjunct1",
+   "count_b": 3076,
+   "p": 0.9990450143814087,
+   "margin": 6.982243537902832,
+   "rt": 40.928887751071265
+  },
+  {
+   "id": "v7-000108",
+   "dep": 15,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category COORD and dependent category COORD",
+   "count_b": 654,
+   "p": 0.0005443458212539554,
+   "margin": 7.515378952026367,
+   "rt": 32.518785229652764
+  },
+  {
+   "id": "v7-000108",
+   "dep": 16,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule nominal2",
+   "count_b": 1820,
+   "p": 0.9942119121551514,
+   "margin": 5.302741050720215,
+   "rt": 32.518785229652764
+  },
+  {
+   "id": "v7-000108",
+   "dep": 18,
+   "judgment": "d",
+   "rel": "COMPLEMENT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COMPLEMENT from head category MODIFIER and dependent category DESCRIPTOR",
+   "count_b": 0,
+   "p": 0.8087520599365234,
+   "margin": 1.4427642822265625,
+   "rt": 32.518785229652764
+  },
+  {
+   "id": "v7-000108",
+   "dep": 21,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category COORD and dependent category MODIFIER",
+   "count_b": 20,
+   "p": 0.0011704012285917997,
+   "margin": 4.578608512878418,
+   "rt": 32.518785229652764
+  },
+  {
+   "id": "v7-000108",
+   "dep": 26,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category MODIFIER and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.7614046931266785,
+   "margin": 1.5265183448791504,
+   "rt": 32.518785229652764
+  },
+  {
+   "id": "v7-017847",
+   "dep": 13,
+   "judgment": "d",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category VERBAL and dependent category COORD",
+   "count_b": 348,
+   "p": 0.8575165271759033,
+   "margin": 1.834444522857666,
+   "rt": 57.02162595460845
+  },
+  {
+   "id": "v7-017847",
+   "dep": 20,
+   "judgment": "r",
+   "rel": "SPECIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule join4",
+   "count_b": 734,
+   "p": 0.9685507416725159,
+   "margin": 3.4982261657714844,
+   "rt": 57.02162595460845
+  },
+  {
+   "id": "v7-017847",
+   "dep": 22,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "grammar licenses MODIFICATION VERBAL/NOUN only on the after side",
+   "count_b": 29,
+   "p": 0.9999921321868896,
+   "margin": 12.397411346435547,
+   "rt": 57.02162595460845
+  },
+  {
+   "id": "v7-017847",
+   "dep": 24,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord3",
+   "count_b": 2531,
+   "p": 0.9975093007087708,
+   "margin": 5.994359970092773,
+   "rt": 57.02162595460845
+  },
+  {
+   "id": "v7-012799",
+   "dep": 7,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category VERBAL and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.9290897250175476,
+   "margin": 2.6862688064575195,
+   "rt": 62.96296296296296
+  },
+  {
+   "id": "v7-012799",
+   "dep": 8,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category COORD and dependent category PREP",
+   "count_b": 295,
+   "p": 0.7857398390769958,
+   "margin": 1.4219131469726562,
+   "rt": 62.96296296296296
+  },
+  {
+   "id": "v7-012799",
+   "dep": 10,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule prep4",
+   "count_b": 3562,
+   "p": 0.7339678406715393,
+   "margin": 1.1691761016845703,
+   "rt": 62.96296296296296
+  },
+  {
+   "id": "v7-012799",
+   "dep": 14,
+   "judgment": "d",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category VERBAL and dependent category COORD",
+   "count_b": 348,
+   "p": 0.8258546590805054,
+   "margin": 1.7078304290771484,
+   "rt": 62.96296296296296
+  },
+  {
+   "id": "v7-012799",
+   "dep": 27,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category COORD",
+   "count_b": 272,
+   "p": 2.174810470023658e-05,
+   "margin": 5.298300743103027,
+   "rt": 62.96296296296296
+  },
+  {
+   "id": "v7-012993",
+   "dep": 6,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category VERBAL and dependent category VERBAL",
+   "count_b": 14,
+   "p": 5.438875814434141e-05,
+   "margin": 5.080538272857666,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012993",
+   "dep": 9,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 1651,
+   "p": 0.7256259918212891,
+   "margin": 0.9731874465942383,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012993",
+   "dep": 10,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 512,
+   "p": 0.6034266948699951,
+   "margin": 0.4197845458984375,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012993",
+   "dep": 11,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category VERBAL and dependent category VERBAL",
+   "count_b": 596,
+   "p": 0.8555347323417664,
+   "margin": 1.7787303924560547,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012993",
+   "dep": 13,
+   "judgment": "w",
+   "rel": "SUBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule quote1",
+   "count_b": 84,
+   "p": 0.9210277795791626,
+   "margin": 2.823946952819824,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012993",
+   "dep": 16,
+   "judgment": "d",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category NOUN and dependent category COORD",
+   "count_b": 10,
+   "p": 0.8297858238220215,
+   "margin": 1.5913009643554688,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012993",
+   "dep": 23,
+   "judgment": "d",
+   "rel": "SPECIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SPECIFICATION from head category COORD and dependent category SPECIFIER",
+   "count_b": 76,
+   "p": 0.8908138275146484,
+   "margin": 2.944112777709961,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012993",
+   "dep": 25,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category NOUN and dependent category COORD",
+   "count_b": 96,
+   "p": 0.7472149133682251,
+   "margin": 1.175994873046875,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012993",
+   "dep": 26,
+   "judgment": "d",
+   "rel": "SPECIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SPECIFICATION from head category NOUN and dependent category SPECIFIER",
+   "count_b": 2,
+   "p": 0.987852931022644,
+   "margin": 4.940171241760254,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012993",
+   "dep": 27,
+   "judgment": "w",
+   "rel": "SUBORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBORDINATION from head category SPECIFIER and dependent category NOUN",
+   "count_b": 0,
+   "p": 1.6136384601850295e-06,
+   "margin": 1.988165259361267,
+   "rt": 40.48489464003637
+  },
+  {
+   "id": "v7-012909",
+   "dep": 17,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category NOUN",
+   "count_b": 93,
+   "p": 0.8702205419540405,
+   "margin": 2.362743377685547,
+   "rt": 25.0
+  },
+  {
+   "id": "v7-012909",
+   "dep": 23,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category COORD and dependent category MODIFIER",
+   "count_b": 357,
+   "p": 0.9992079138755798,
+   "margin": 7.2242112159729,
+   "rt": 25.0
+  },
+  {
+   "id": "v7-000024",
+   "dep": 7,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category MODIFIER",
+   "count_b": 405,
+   "p": 0.024211402982473373,
+   "margin": 1.1385955810546875,
+   "rt": 52.44664520758192
+  },
+  {
+   "id": "v7-000024",
+   "dep": 9,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category MODIFIER and dependent category COORD",
+   "count_b": 123,
+   "p": 0.9929447174072266,
+   "margin": 6.26377534866333,
+   "rt": 52.44664520758192
+  },
+  {
+   "id": "v7-000024",
+   "dep": 10,
+   "judgment": "w",
+   "rel": "SUBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBJECT from head category DESCRIPTOR and dependent category NOUN",
+   "count_b": 0,
+   "p": 0.29914960265159607,
+   "margin": 0.21535491943359375,
+   "rt": 52.44664520758192
+  },
+  {
+   "id": "v7-000024",
+   "dep": 11,
+   "judgment": "w",
+   "rel": "SPECIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SPECIFICATION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 0,
+   "p": 0.5049346685409546,
+   "margin": 0.2259521484375,
+   "rt": 52.44664520758192
+  },
+  {
+   "id": "v7-000024",
+   "dep": 14,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord3",
+   "count_b": 6821,
+   "p": 0.0010257605463266373,
+   "margin": 0.6175985336303711,
+   "rt": 52.44664520758192
+  },
+  {
+   "id": "v7-000024",
+   "dep": 16,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category VERBAL and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.3058042526245117,
+   "margin": 0.641838014125824,
+   "rt": 52.44664520758192
+  },
+  {
+   "id": "v7-000024",
+   "dep": 24,
+   "judgment": "r",
+   "rel": "SPECIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule join4",
+   "count_b": 1996,
+   "p": 0.8767639398574829,
+   "margin": 1.9664887189865112,
+   "rt": 52.44664520758192
+  },
+  {
+   "id": "v7-000024",
+   "dep": 26,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category MODIFIER and dependent category VERBAL",
+   "count_b": 154,
+   "p": 0.0007528613787144423,
+   "margin": 7.19080924987793,
+   "rt": 52.44664520758192
+  },
+  {
+   "id": "v7-027558",
+   "dep": 10,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category VERBAL",
+   "count_b": 87,
+   "p": 0.0006298859370872378,
+   "margin": 4.104954719543457,
+   "rt": 55.82150305614017
+  },
+  {
+   "id": "v7-027558",
+   "dep": 12,
+   "judgment": "r",
+   "rel": "PREPOSITION",
+   "licensed_a": true,
+   "why_a": "licensed by rule normPP1",
+   "count_b": 3394,
+   "p": 0.9999852776527405,
+   "margin": 11.222650527954102,
+   "rt": 55.82150305614017
+  },
+  {
+   "id": "v7-027558",
+   "dep": 14,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category DESCRIPTOR and dependent category COORD",
+   "count_b": 43,
+   "p": 0.998842179775238,
+   "margin": 6.801103115081787,
+   "rt": 55.82150305614017
+  },
+  {
+   "id": "v7-027558",
+   "dep": 16,
+   "judgment": "r",
+   "rel": "SUBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBJECT from head category DESCRIPTOR and dependent category NOUN",
+   "count_b": 70,
+   "p": 0.9999200105667114,
+   "margin": 9.433919906616211,
+   "rt": 55.82150305614017
+  },
+  {
+   "id": "v7-027558",
+   "dep": 18,
+   "judgment": "r",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category DESCRIPTOR and dependent category NOUN",
+   "count_b": 22,
+   "p": 0.9939590096473694,
+   "margin": 5.1248908042907715,
+   "rt": 55.82150305614017
+  },
+  {
+   "id": "v7-027558",
+   "dep": 19,
+   "judgment": "d",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category DESCRIPTOR and dependent category DESCRIPTOR",
+   "count_b": 2,
+   "p": 0.9975219964981079,
+   "margin": 5.997852802276611,
+   "rt": 55.82150305614017
+  },
+  {
+   "id": "v7-027558",
+   "dep": 20,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category DESCRIPTOR and dependent category PREP",
+   "count_b": 512,
+   "p": 0.9486662745475769,
+   "margin": 2.9202115535736084,
+   "rt": 55.82150305614017
+  },
+  {
+   "id": "v7-012932",
+   "dep": 0,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 278,
+   "p": 0.8948591351509094,
+   "margin": 2.5482425689697266,
+   "rt": 66.66666666666666
+  },
+  {
+   "id": "v7-012932",
+   "dep": 1,
+   "judgment": "r",
+   "rel": "SUBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBJECT from head category MODIFIER and dependent category VERBAL",
+   "count_b": 32,
+   "p": 0.9938584566116333,
+   "margin": 5.171802997589111,
+   "rt": 66.66666666666666
+  },
+  {
+   "id": "v7-012932",
+   "dep": 16,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category MODIFIER and dependent category COORD",
+   "count_b": 123,
+   "p": 0.9880020618438721,
+   "margin": 4.547153949737549,
+   "rt": 66.66666666666666
+  },
+  {
+   "id": "v7-008465",
+   "dep": 9,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category COORD",
+   "count_b": 141,
+   "p": 0.9944174885749817,
+   "margin": 5.517679214477539,
+   "rt": 19.365602850337602
+  },
+  {
+   "id": "v7-008465",
+   "dep": 11,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule nominal2",
+   "count_b": 192,
+   "p": 0.9680985808372498,
+   "margin": 3.8094325065612793,
+   "rt": 19.365602850337602
+  },
+  {
+   "id": "v7-008465",
+   "dep": 16,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category VERBAL",
+   "count_b": 872,
+   "p": 0.9917387366294861,
+   "margin": 5.389658451080322,
+   "rt": 19.365602850337602
+  },
+  {
+   "id": "v7-008465",
+   "dep": 26,
+   "judgment": "w",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category NOUN and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.6318979263305664,
+   "margin": 1.36053466796875,
+   "rt": 19.365602850337602
+  },
+  {
+   "id": "v7-012921",
+   "dep": 10,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord4",
+   "count_b": 5868,
+   "p": 0.9999727606773376,
+   "margin": 10.512843132019043,
+   "rt": 42.255616931593195
+  },
+  {
+   "id": "v7-012921",
+   "dep": 21,
+   "judgment": "w",
+   "rel": "SUBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule quote1",
+   "count_b": 1035,
+   "p": 0.6458797454833984,
+   "margin": 0.8694839477539062,
+   "rt": 42.255616931593195
+  },
+  {
+   "id": "v7-012921",
+   "dep": 23,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category COORD and dependent category MODIFIER",
+   "count_b": 1209,
+   "p": 0.7036661505699158,
+   "margin": 1.1156129837036133,
+   "rt": 42.255616931593195
+  },
+  {
+   "id": "v7-012921",
+   "dep": 34,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category COORD and dependent category COORD",
+   "count_b": 1715,
+   "p": 0.999991774559021,
+   "margin": 11.887092590332031,
+   "rt": 42.255616931593195
+  },
+  {
+   "id": "v7-012921",
+   "dep": 46,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord3",
+   "count_b": 2531,
+   "p": 0.9959653615951538,
+   "margin": 5.508794784545898,
+   "rt": 42.255616931593195
+  },
+  {
+   "id": "v7-027660",
+   "dep": 4,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category VERBAL and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.6732503175735474,
+   "margin": 0.7270603775978088,
+   "rt": 73.71794871794872
+  },
+  {
+   "id": "v7-027660",
+   "dep": 5,
+   "judgment": "w",
+   "rel": "INDIRECT_OBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule predicate1",
+   "count_b": 1065,
+   "p": 0.16031908988952637,
+   "margin": 1.655756950378418,
+   "rt": 73.71794871794872
+  },
+  {
+   "id": "v7-027660",
+   "dep": 9,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "grammar licenses OBJECT VERBAL/NOUN only on the after side",
+   "count_b": 424,
+   "p": 0.7375561594963074,
+   "margin": 1.1487274169921875,
+   "rt": 73.71794871794872
+  },
+  {
+   "id": "v7-027660",
+   "dep": 13,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord4",
+   "count_b": 5868,
+   "p": 0.9972701072692871,
+   "margin": 5.901537895202637,
+   "rt": 73.71794871794872
+  },
+  {
+   "id": "v7-027660",
+   "dep": 17,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category NOUN and dependent category COORD",
+   "count_b": 7,
+   "p": 1.9130567352476646e-08,
+   "margin": 2.4831995964050293,
+   "rt": 73.71794871794872
+  },
+  {
+   "id": "v7-027660",
+   "dep": 23,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category COORD",
+   "count_b": 272,
+   "p": 0.9654576778411865,
+   "margin": 4.201117515563965,
+   "rt": 73.71794871794872
+  },
+  {
+   "id": "v7-027660",
+   "dep": 24,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category COORD and dependent category PREP",
+   "count_b": 295,
+   "p": 0.7830743789672852,
+   "margin": 1.3592863082885742,
+   "rt": 73.71794871794872
+  },
+  {
+   "id": "v7-027660",
+   "dep": 34,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category COORD and dependent category COORD",
+   "count_b": 1715,
+   "p": 0.9744840264320374,
+   "margin": 3.781571388244629,
+   "rt": 73.71794871794872
+  },
+  {
+   "id": "v7-000378",
+   "dep": 3,
+   "judgment": "d",
+   "rel": "SPECIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule adjunct1",
+   "count_b": 3076,
+   "p": 0.9967102408409119,
+   "margin": 5.840516567230225,
+   "rt": 48.57142857142857
+  },
+  {
+   "id": "v7-000378",
+   "dep": 13,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category SPECIFIER and dependent category COORD",
+   "count_b": 23,
+   "p": 5.8441419241717085e-06,
+   "margin": 12.050065040588379,
+   "rt": 48.57142857142857
+  },
+  {
+   "id": "v7-000378",
+   "dep": 19,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 284,
+   "p": 0.9651744961738586,
+   "margin": 3.3334121704101562,
+   "rt": 48.57142857142857
+  },
+  {
+   "id": "v7-000378",
+   "dep": 20,
+   "judgment": "r",
+   "rel": "PREPOSITION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds PREPOSITION from head category PREP and dependent category VERBAL",
+   "count_b": 222,
+   "p": 0.8413012623786926,
+   "margin": 1.6947345733642578,
+   "rt": 48.57142857142857
+  },
+  {
+   "id": "v7-000378",
+   "dep": 25,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord3",
+   "count_b": 6821,
+   "p": 0.6830419898033142,
+   "margin": 0.8232182860374451,
+   "rt": 48.57142857142857
+  },
+  {
+   "id": "v7-000378",
+   "dep": 28,
+   "judgment": "r",
+   "rel": "OBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule predicate1",
+   "count_b": 1197,
+   "p": 0.42585229873657227,
+   "margin": 0.17322731018066406,
+   "rt": 48.57142857142857
+  },
+  {
+   "id": "v7-000378",
+   "dep": 30,
+   "judgment": "w",
+   "rel": "SPECIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SPECIFICATION from head category NOUN and dependent category SPECIFIER",
+   "count_b": 28,
+   "p": 0.7079451680183411,
+   "margin": 0.8870420455932617,
+   "rt": 48.57142857142857
+  },
+  {
+   "id": "v7-000378",
+   "dep": 32,
+   "judgment": "r",
+   "rel": "SUBORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBORDINATION from head category VERBAL and dependent category SUBOORD",
+   "count_b": 333,
+   "p": 0.42303118109703064,
+   "margin": 0.004341602325439453,
+   "rt": 48.57142857142857
+  },
+  {
+   "id": "v7-000378",
+   "dep": 34,
+   "judgment": "d",
+   "rel": "SUBORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBORDINATION from head category VERBAL and dependent category SUBOORD",
+   "count_b": 333,
+   "p": 0.562591016292572,
+   "margin": 0.9417657852172852,
+   "rt": 48.57142857142857
+  },
+  {
+   "id": "v7-012781",
+   "dep": 2,
+   "judgment": "r",
+   "rel": "SUBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBJECT from head category VERBAL and dependent category VERBAL",
+   "count_b": 21,
+   "p": 0.18336814641952515,
+   "margin": 1.4936919212341309,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-012781",
+   "dep": 3,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category VERBAL",
+   "count_b": 3,
+   "p": 0.00016436878649983555,
+   "margin": 8.713197708129883,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-012781",
+   "dep": 7,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category COORD and dependent category MODIFIER",
+   "count_b": 1358,
+   "p": 0.9800488352775574,
+   "margin": 3.926603317260742,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-012781",
+   "dep": 14,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category MODIFIER and dependent category NOUN",
+   "count_b": 2512,
+   "p": 0.450765997171402,
+   "margin": 0.019838333129882812,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-012781",
+   "dep": 18,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord4",
+   "count_b": 5868,
+   "p": 0.9997478127479553,
+   "margin": 8.94223403930664,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-012781",
+   "dep": 21,
+   "judgment": "r",
+   "rel": "COMPLEMENT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COMPLEMENT from head category VERBAL and dependent category COORD",
+   "count_b": 88,
+   "p": 0.9637261033058167,
+   "margin": 3.2816457748413086,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-012781",
+   "dep": 25,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord3",
+   "count_b": 6821,
+   "p": 0.9994524717330933,
+   "margin": 7.5096964836120605,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-012781",
+   "dep": 40,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category VERBAL",
+   "count_b": 880,
+   "p": 0.6485437154769897,
+   "margin": 1.2176766395568848,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-012781",
+   "dep": 48,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.00015425533638335764,
+   "margin": 8.695751190185547,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-012781",
+   "dep": 55,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category MODIFIER and dependent category COORD",
+   "count_b": 123,
+   "p": 0.21146538853645325,
+   "margin": 1.3161044120788574,
+   "rt": 56.97674418604651
+  },
+  {
+   "id": "v7-000080",
+   "dep": 4,
+   "judgment": "r",
+   "rel": "COMPLEMENT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COMPLEMENT from head category MODIFIER and dependent category DESCRIPTOR",
+   "count_b": 2129,
+   "p": 0.7898555994033813,
+   "margin": 1.3240556716918945,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-000080",
+   "dep": 5,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category VERBAL",
+   "count_b": 2,
+   "p": 0.00017739328905008733,
+   "margin": 8.636950492858887,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-000080",
+   "dep": 11,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule predicate1",
+   "count_b": 1781,
+   "p": 0.9988375902175903,
+   "margin": 7.435895919799805,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-000080",
+   "dep": 17,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category VERBAL",
+   "count_b": 40,
+   "p": 0.09955821186304092,
+   "margin": 2.201984405517578,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-000080",
+   "dep": 22,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category VERBAL and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.9889562129974365,
+   "margin": 4.499423027038574,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-000080",
+   "dep": 34,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category MODIFIER and dependent category VERBAL",
+   "count_b": 5,
+   "p": 0.10740283876657486,
+   "margin": 0.813484251499176,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-000080",
+   "dep": 37,
+   "judgment": "w",
+   "rel": "SUBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule quote1",
+   "count_b": 1035,
+   "p": 0.9954575300216675,
+   "margin": 5.407107353210449,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-000080",
+   "dep": 38,
+   "judgment": "d",
+   "rel": "SPECIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule adjunct1",
+   "count_b": 3076,
+   "p": 0.9804527163505554,
+   "margin": 3.9191102981567383,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-000080",
+   "dep": 39,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule predicate1",
+   "count_b": 1840,
+   "p": 0.9993321299552917,
+   "margin": 7.313073635101318,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-000080",
+   "dep": 46,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category VERBAL and dependent category VERBAL",
+   "count_b": 20,
+   "p": 0.789960503578186,
+   "margin": 1.3307428359985352,
+   "rt": 5.714285714285714
+  },
+  {
+   "id": "v7-008609",
+   "dep": 5,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule predicate1",
+   "count_b": 51,
+   "p": 0.9999881982803345,
+   "margin": 11.636615753173828,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-008609",
+   "dep": 7,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category VERBAL and dependent category SPECIFIER",
+   "count_b": 39,
+   "p": 0.19882285594940186,
+   "margin": 1.3410634994506836,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-008609",
+   "dep": 11,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule prep4",
+   "count_b": 10874,
+   "p": 0.03713148087263107,
+   "margin": 2.4728622436523438,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-008609",
+   "dep": 16,
+   "judgment": "w",
+   "rel": "PREPOSITION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds PREPOSITION from head category PREP and dependent category VERBAL",
+   "count_b": 137,
+   "p": 1.4565800654509076e-07,
+   "margin": 5.702907562255859,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-008609",
+   "dep": 19,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 278,
+   "p": 0.9879111647605896,
+   "margin": 5.393856048583984,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-008609",
+   "dep": 20,
+   "judgment": "r",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 87,
+   "p": 0.999994695186615,
+   "margin": 13.159832000732422,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-008609",
+   "dep": 25,
+   "judgment": "w",
+   "rel": "SUBORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBORDINATION from head category VERBAL and dependent category SUBOORD",
+   "count_b": 6,
+   "p": 0.23359109461307526,
+   "margin": 1.1388192176818848,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-008609",
+   "dep": 33,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category SUBOORD and dependent category MODIFIER",
+   "count_b": 535,
+   "p": 0.999983549118042,
+   "margin": 11.41370964050293,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-008609",
+   "dep": 34,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category MODIFIER and dependent category MODIFIER",
+   "count_b": 3,
+   "p": 0.9996904134750366,
+   "margin": 8.082637786865234,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-008609",
+   "dep": 35,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "grammar licenses MODIFICATION VERBAL/PREP only on the after side",
+   "count_b": 1165,
+   "p": 0.9878203272819519,
+   "margin": 4.3981404304504395,
+   "rt": 57.161096167103096
+  },
+  {
+   "id": "v7-000013",
+   "dep": 0,
+   "judgment": "r",
+   "rel": "SPECIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SPECIFICATION from head category VERBAL and dependent category DESCRIPTOR",
+   "count_b": 40,
+   "p": 0.9996007084846497,
+   "margin": 8.099932670593262,
+   "rt": 61.54031952770083
+  },
+  {
+   "id": "v7-000013",
+   "dep": 16,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category COORD",
+   "count_b": 141,
+   "p": 0.510722815990448,
+   "margin": 0.04512643814086914,
+   "rt": 61.54031952770083
+  },
+  {
+   "id": "v7-000013",
+   "dep": 25,
+   "judgment": "r",
+   "rel": "SPECIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SPECIFICATION from head category COORD and dependent category SPECIFIER",
+   "count_b": 259,
+   "p": 0.9705116748809814,
+   "margin": 4.198261260986328,
+   "rt": 61.54031952770083
+  },
+  {
+   "id": "v7-000013",
+   "dep": 35,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category COORD and dependent category COORD",
+   "count_b": 654,
+   "p": 0.9691792726516724,
+   "margin": 4.002732753753662,
+   "rt": 61.54031952770083
+  },
+  {
+   "id": "v7-000013",
+   "dep": 47,
+   "judgment": "w",
+   "rel": "DESCRIPTION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds DESCRIPTION from head category NOUN and dependent category COORD",
+   "count_b": 12,
+   "p": 0.9741129875183105,
+   "margin": 4.042811870574951,
+   "rt": 61.54031952770083
+  },
+  {
+   "id": "v7-000013",
+   "dep": 50,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category NOUN and dependent category VERBAL",
+   "count_b": 1013,
+   "p": 0.722661018371582,
+   "margin": 1.711228370666504,
+   "rt": 61.54031952770083
+  },
+  {
+   "id": "v7-000013",
+   "dep": 54,
+   "judgment": "d",
+   "rel": "COMPLEMENT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COMPLEMENT from head category VERBAL and dependent category VERBAL",
+   "count_b": 45,
+   "p": 0.8753193020820618,
+   "margin": 2.0028343200683594,
+   "rt": 61.54031952770083
+  },
+  {
+   "id": "v7-012782",
+   "dep": 3,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "grammar licenses MODIFICATION NOUN/MODIFIER only on the after side",
+   "count_b": 0,
+   "p": 0.0029025531839579344,
+   "margin": 5.839200973510742,
+   "rt": 19.719287901410155
+  },
+  {
+   "id": "v7-012782",
+   "dep": 4,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category NOUN and dependent category COORD",
+   "count_b": 96,
+   "p": 0.07515271753072739,
+   "margin": 2.489126205444336,
+   "rt": 19.719287901410155
+  },
+  {
+   "id": "v7-012782",
+   "dep": 5,
+   "judgment": "w",
+   "rel": "DESCRIPTION",
+   "licensed_a": true,
+   "why_a": "licensed by rule noun1",
+   "count_b": 132,
+   "p": 0.9880577921867371,
+   "margin": 4.644810676574707,
+   "rt": 19.719287901410155
+  },
+  {
+   "id": "v7-012782",
+   "dep": 6,
+   "judgment": "d",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule nominal2",
+   "count_b": 126,
+   "p": 0.9988184571266174,
+   "margin": 7.53318452835083,
+   "rt": 19.719287901410155
+  },
+  {
+   "id": "v7-012782",
+   "dep": 24,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category VERBAL and dependent category MODIFIER",
+   "count_b": 0,
+   "p": 0.9993146657943726,
+   "margin": 7.321105003356934,
+   "rt": 19.719287901410155
+  },
+  {
+   "id": "v7-012782",
+   "dep": 25,
+   "judgment": "r",
+   "rel": "OBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule predicate1",
+   "count_b": 250,
+   "p": 0.9990394711494446,
+   "margin": 7.753207206726074,
+   "rt": 19.719287901410155
+  },
+  {
+   "id": "v7-012782",
+   "dep": 29,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category NOUN and dependent category PREP",
+   "count_b": 91,
+   "p": 0.3003593981266022,
+   "margin": 0.07813358306884766,
+   "rt": 19.719287901410155
+  },
+  {
+   "id": "v7-012782",
+   "dep": 34,
+   "judgment": "w",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category PREP and dependent category NOUN",
+   "count_b": 1,
+   "p": 0.9115798473358154,
+   "margin": 2.9349498748779297,
+   "rt": 19.719287901410155
+  },
+  {
+   "id": "v7-012782",
+   "dep": 35,
+   "judgment": "w",
+   "rel": "SUBORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBORDINATION from head category PREP and dependent category SUBOORD",
+   "count_b": 2,
+   "p": 0.9704284071922302,
+   "margin": 3.6347389221191406,
+   "rt": 19.719287901410155
+  },
+  {
+   "id": "v7-012814",
+   "dep": 3,
+   "judgment": "w",
+   "rel": "SUBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds SUBJECT from head category VERBAL and dependent category VERBAL",
+   "count_b": 49,
+   "p": 8.564675954403356e-05,
+   "margin": 9.365193367004395,
+   "rt": 31.602823969527655
+  },
+  {
+   "id": "v7-012814",
+   "dep": 6,
+   "judgment": "w",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category VERBAL and dependent category SUBOORD",
+   "count_b": 0,
+   "p": 0.0010699154809117317,
+   "margin": 6.838770866394043,
+   "rt": 31.602823969527655
+  },
+  {
+   "id": "v7-012814",
+   "dep": 8,
+   "judgment": "d",
+   "rel": "SPECIFICATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule join4",
+   "count_b": 734,
+   "p": 0.012181312777101994,
+   "margin": 4.393043041229248,
+   "rt": 31.602823969527655
+  },
+  {
+   "id": "v7-012814",
+   "dep": 15,
+   "judgment": "w",
+   "rel": "SUBORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule rel1",
+   "count_b": 32,
+   "p": 3.795589123001264e-07,
+   "margin": 4.648434638977051,
+   "rt": 31.602823969527655
+  },
+  {
+   "id": "v7-012814",
+   "dep": 35,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord3",
+   "count_b": 2531,
+   "p": 0.9998610019683838,
+   "margin": 9.057323455810547,
+   "rt": 31.602823969527655
+  },
+  {
+   "id": "v7-012814",
+   "dep": 41,
+   "judgment": "w",
+   "rel": "SUBJECT",
+   "licensed_a": true,
+   "why_a": "licensed by rule clause1",
+   "count_b": 5584,
+   "p": 0.8691226243972778,
+   "margin": 2.9483585357666016,
+   "rt": 31.602823969527655
+  },
+  {
+   "id": "v7-012814",
+   "dep": 44,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule coord3",
+   "count_b": 6821,
+   "p": 2.7279495498078177e-06,
+   "margin": 6.980926990509033,
+   "rt": 31.602823969527655
+  },
+  {
+   "id": "v7-012814",
+   "dep": 50,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category NOUN and dependent category COORD",
+   "count_b": 223,
+   "p": 0.7195155024528503,
+   "margin": 0.9539964199066162,
+   "rt": 31.602823969527655
+  },
+  {
+   "id": "v7-012814",
+   "dep": 51,
+   "judgment": "w",
+   "rel": "COORDINATION",
+   "licensed_a": true,
+   "why_a": "licensed by rule adj2",
+   "count_b": 938,
+   "p": 0.9998613595962524,
+   "margin": 8.883893966674805,
+   "rt": 31.602823969527655
+  },
+  {
+   "id": "v7-017857",
+   "dep": 13,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category COORD",
+   "count_b": 272,
+   "p": 3.821074123777635e-09,
+   "margin": 0.49367809295654297,
+   "rt": 59.45945945945946
+  },
+  {
+   "id": "v7-017857",
+   "dep": 26,
+   "judgment": "r",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "grammar licenses MODIFICATION NOUN/MODIFIER only on the after side",
+   "count_b": 1111,
+   "p": 0.9904255270957947,
+   "margin": 5.452686786651611,
+   "rt": 59.45945945945946
+  },
+  {
+   "id": "v7-017857",
+   "dep": 31,
+   "judgment": "d",
+   "rel": "MODIFICATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds MODIFICATION from head category SPECIFIER and dependent category VERBAL",
+   "count_b": 1070,
+   "p": 0.9986349940299988,
+   "margin": 6.613415241241455,
+   "rt": 59.45945945945946
+  },
+  {
+   "id": "v7-017857",
+   "dep": 37,
+   "judgment": "d",
+   "rel": "OBJECT",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds OBJECT from head category VERBAL and dependent category VERBAL",
+   "count_b": 596,
+   "p": 0.010945787653326988,
+   "margin": 4.503790855407715,
+   "rt": 59.45945945945946
+  },
+  {
+   "id": "v7-017857",
+   "dep": 45,
+   "judgment": "r",
+   "rel": "COORDINATION",
+   "licensed_a": false,
+   "why_a": "no grammar rule builds COORDINATION from head category VERBAL and dependent category COORD",
+   "count_b": 141,
+   "p": 0.46746131777763367,
+   "margin": 0.06769943237304688,
+   "rt": 59.45945945945946
+  }
+ ]
+}
