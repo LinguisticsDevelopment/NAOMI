@@ -1,0 +1,1786 @@
+[
+ {
+  "id": "v7-000003",
+  "band": "<=10",
+  "n_added_total": 1,
+  "tokens": "0:1220 1:sentences 2:, 3:60 4:passages 5:.",
+  "parser": "sentences(UNATTACHED:1220 MODIFICATION:passages(DESCRIPTION:60))",
+  "encoder": "sentences(DESCRIPTION:1220 MODIFICATION:passages(DESCRIPTION:60))",
+  "links": [
+   {
+    "dep": 0,
+    "dep_tok": "1220",
+    "head": 1,
+    "head_tok": "sentences",
+    "rel": "DESCRIPTION",
+    "p": 1.0
+   }
+  ]
+ },
+ {
+  "id": "v7-012975",
+  "band": "<=10",
+  "n_added_total": 2,
+  "tokens": "0:'i 1:do 2:not 3:know 4:yet 5:, 6:' 7:said 8:he 9:.",
+  "parser": "ROOT(ROOT:know(SUBJECT:'i MODIFICATION:do MODIFICATION:not) UNATTACHED:yet UNATTACHED:said(SUBJECT:he))",
+  "encoder": "know(SUBJECT:'i MODIFICATION:do MODIFICATION:not SPECIFICATION:yet COORDINATION:said(SUBJECT:he))",
+  "links": [
+   {
+    "dep": 4,
+    "dep_tok": "yet",
+    "head": 3,
+    "head_tok": "know",
+    "rel": "SPECIFICATION",
+    "p": 0.404
+   },
+   {
+    "dep": 7,
+    "dep_tok": "said",
+    "head": 3,
+    "head_tok": "know",
+    "rel": "COORDINATION",
+    "p": 0.317
+   }
+  ]
+ },
+ {
+  "id": "v7-000252",
+  "band": "<=10",
+  "n_added_total": 1,
+  "tokens": "0:it 1:'s 2:high 3:time 4:you 5:were 6:all 7:in 8:bed 9:! 10:'",
+  "parser": "ROOT(ROOT:'s(SUBJECT:it OBJECT:time(DESCRIPTION:high)) UNATTACHED:were(SUBJECT:you OBJECT:all(MODIFICATION:in(PREPOSITION:bed))))",
+  "encoder": "'s(SUBJECT:it OBJECT:time(DESCRIPTION:high MODIFICATION:were(SUBJECT:you OBJECT:all(MODIFICATION:in(PREPOSITION:bed)))))",
+  "links": [
+   {
+    "dep": 5,
+    "dep_tok": "were",
+    "head": 3,
+    "head_tok": "time",
+    "rel": "MODIFICATION",
+    "p": 0.0
+   }
+  ]
+ },
+ {
+  "id": "v7-000380",
+  "band": "<=10",
+  "n_added_total": 2,
+  "tokens": "0:let 1:me 2:see 3:-- 4:how 5:is 6:it 7:to 8:be 9:managed 10:?",
+  "parser": "ROOT(UNATTACHED:let ROOT:see(SUBJECT:me) UNATTACHED:is(SPECIFICATION:how INDIRECT_OBJECT:it OBJECT:to(MODIFICATION:be(MODIFICATION:managed))))",
+  "encoder": "see(COORDINATION:let SUBJECT:me COORDINATION:is(SPECIFICATION:how INDIRECT_OBJECT:it OBJECT:to(MODIFICATION:be(MODIFICATION:managed))))",
+  "links": [
+   {
+    "dep": 0,
+    "dep_tok": "let",
+    "head": 2,
+    "head_tok": "see",
+    "rel": "COORDINATION",
+    "p": 0.0
+   },
+   {
+    "dep": 5,
+    "dep_tok": "is",
+    "head": 2,
+    "head_tok": "see",
+    "rel": "COORDINATION",
+    "p": 0.987
+   }
+  ]
+ },
+ {
+  "id": "v7-027722",
+  "band": "<=10",
+  "n_added_total": 1,
+  "tokens": "0:but 1:the 2:jewel 3:in 4:the 5:head 6:of 7:the 8:toad 9:?",
+  "parser": "jewel(UNATTACHED:but DESCRIPTION:the MODIFICATION:in(PREPOSITION:head(DESCRIPTION:the)) MODIFICATION:of(PREPOSITION:toad(DESCRIPTION:the)))",
+  "encoder": "jewel(COORDINATION:but DESCRIPTION:the MODIFICATION:in(PREPOSITION:head(DESCRIPTION:the)) MODIFICATION:of(PREPOSITION:toad(DESCRIPTION:the)))",
+  "links": [
+   {
+    "dep": 0,
+    "dep_tok": "but",
+    "head": 2,
+    "head_tok": "jewel",
+    "rel": "COORDINATION",
+    "p": 1.0
+   }
+  ]
+ },
+ {
+  "id": "v7-000279",
+  "band": "<=10",
+  "n_added_total": 2,
+  "tokens": "0:come 1:here 2:directly 3:, 4:and 5:get 6:ready 7:for 8:your 9:walk 10:! 11:\"",
+  "parser": "and(COORDINATION:come(SPECIFICATION:directly(SPECIFICATION:here)) COORDINATION:get(OBJECT:ready MODIFICATION:for) UNATTACHED:your UNATTACHED:walk)",
+  "encoder": "and(COORDINATION:come(SPECIFICATION:directly(SPECIFICATION:here)) COORDINATION:get(OBJECT:ready MODIFICATION:for(PREPOSITION:walk(DESCRIPTION:your))))",
+  "links": [
+   {
+    "dep": 8,
+    "dep_tok": "your",
+    "head": 9,
+    "head_tok": "walk",
+    "rel": "DESCRIPTION",
+    "p": 1.0
+   },
+   {
+    "dep": 9,
+    "dep_tok": "walk",
+    "head": 7,
+    "head_tok": "for",
+    "rel": "PREPOSITION",
+    "p": 1.0
+   }
+  ]
+ },
+ {
+  "id": "v7-019886",
+  "band": "<=10",
+  "n_added_total": 1,
+  "tokens": "0:\" 1:good 2:morning 3:, 4:hans 5:.",
+  "parser": "morning(DESCRIPTION:good UNATTACHED:hans)",
+  "encoder": "morning(DESCRIPTION:good MODIFICATION:hans)",
+  "links": [
+   {
+    "dep": 4,
+    "dep_tok": "hans",
+    "head": 2,
+    "head_tok": "morning",
+    "rel": "MODIFICATION",
+    "p": 1.0
+   }
+  ]
+ },
+ {
+  "id": "v7-013066",
+  "band": "<=10",
+  "n_added_total": 1,
+  "tokens": "0:then 1:the 2:night-wind 3:said 4:, 5:'i 6:will 7:give 8:thee 9:counsel 10:.",
+  "parser": "ROOT(ROOT:said(SUBJECT:night-wind(DESCRIPTION:the(SPECIFICATION:then))) UNATTACHED:give(SUBJECT:'i MODIFICATION:will INDIRECT_OBJECT:thee OBJECT:counsel))",
+  "encoder": "said(SUBJECT:night-wind(DESCRIPTION:the(SPECIFICATION:then)) COORDINATION:give(SUBJECT:'i MODIFICATION:will INDIRECT_OBJECT:thee OBJECT:counsel))",
+  "links": [
+   {
+    "dep": 7,
+    "dep_tok": "give",
+    "head": 3,
+    "head_tok": "said",
+    "rel": "COORDINATION",
+    "p": 0.0
+   }
+  ]
+ },
+ {
+  "id": "v7-000234",
+  "band": "<=10",
+  "n_added_total": 2,
+  "tokens": "0:'what 1:a 2:pity 3:it 4:would 5:n't 6:stay 7:! 8:'",
+  "parser": "ROOT(UNATTACHED:'what ROOT:pity(DESCRIPTION:a) UNATTACHED:stay(SUBJECT:it MODIFICATION:would MODIFICATION:n't))",
+  "encoder": "pity(DESCRIPTION:'what DESCRIPTION:a SUBORDINATION:stay(SUBJECT:it MODIFICATION:would MODIFICATION:n't))",
+  "links": [
+   {
+    "dep": 0,
+    "dep_tok": "'what",
+    "head": 2,
+    "head_tok": "pity",
+    "rel": "DESCRIPTION",
+    "p": 0.009
+   },
+   {
+    "dep": 6,
+    "dep_tok": "stay",
+    "head": 2,
+    "head_tok": "pity",
+    "rel": "SUBORDINATION",
+    "p": 0.0
+   }
+  ]
+ },
+ {
+  "id": "v7-000269",
+  "band": "<=10",
+  "n_added_total": 1,
+  "tokens": "0:quick 1:, 2:now 3:! 4:'",
+  "parser": "quick(UNATTACHED:now)",
+  "encoder": "quick(MODIFICATION:now)",
+  "links": [
+   {
+    "dep": 2,
+    "dep_tok": "now",
+    "head": 0,
+    "head_tok": "quick",
+    "rel": "MODIFICATION",
+    "p": 1.0
+   }
+  ]
+ },
+ {
+  "id": "v7-008332",
+  "band": "11-20",
+  "n_added_total": 1,
+  "tokens": "0:this 1:is 2:the 3:money 4:that 5:has 6:been 7:given 8:to 9:us 10:in 11:the 12:village 13:this 14:may 15:morning 16:.",
+  "parser": "ROOT(ROOT:is(SUBJECT:this OBJECT:money(DESCRIPTION:the)) UNATTACHED:has(SUBJECT:that MODIFICATION:given(MODIFICATION:been MODIFICATION:to(PREPOSITION:us) MODIFICATION:in(PREPOSITION:village(DESCRIPTION:the)) INDIRECT_OBJECT:may(DESCRIPTION:this) OBJECT:morning)))",
+  "encoder": "is(SUBJECT:this OBJECT:money(DESCRIPTION:the) SUBORDINATION:that(MODIFICATION:has(MODIFICATION:given(MODIFICATION:been MODIFICATION:to(PREPOSITION:us) MODIFICATION:in(PREPOSITION:village(DESCRIPTION:the)) INDIRECT_OBJECT:may(DESCRIPTION:this) OBJECT:morning))))",
+  "links": [
+   {
+    "dep": 5,
+    "dep_tok": "has",
+    "head": 4,
+    "head_tok": "that",
+    "rel": "MODIFICATION",
+    "p": 0.995
+   }
+  ]
+ },
+ {
+  "id": "v7-013030",
+  "band": "11-20",
+  "n_added_total": 3,
+  "tokens": "0:then 1:the 2:man 3:said 4:, 5:'i 6:knew 7:not 8:that 9:the 10:garden 11:belonged 12:to 13:you 14:; 15:can 16:nothing 17:save 18:my 19:life 20:? 21:'",
+  "parser": "ROOT(ROOT:said(SUBJECT:man(DESCRIPTION:the(SPECIFICATION:then))) UNATTACHED:knew(SUBJECT:'i) UNATTACHED:not UNATTACHED:that(MODIFICATION:belonged(SUBJECT:garden(DESCRIPTION:the) MODIFICATION:to(PREPOSITION:you)) COORDINATION:save(MODIFICATION:can SUBJECT:nothing OBJECT:life(DESCRIPTION:my))))",
+  "encoder": "said(SUBJECT:man(DESCRIPTION:the(SPECIFICATION:then)) COORDINATION:knew(SUBJECT:'i MODIFICATION:not OBJECT:that(MODIFICATION:belonged(SUBJECT:garden(DESCRIPTION:the) MODIFICATION:to(PREPOSITION:you)) COORDINATION:save(MODIFICATION:can SUBJECT:nothing OBJECT:life(DESCRIPTION:my)))))",
+  "links": [
+   {
+    "dep": 6,
+    "dep_tok": "knew",
+    "head": 3,
+    "head_tok": "said",
+    "rel": "COORDINATION",
+    "p": 0.0
+   },
+   {
+    "dep": 7,
+    "dep_tok": "not",
+    "head": 6,
+    "head_tok": "knew",
+    "rel": "MODIFICATION",
+    "p": 0.993
+   },
+   {
+    "dep": 8,
+    "dep_tok": "that",
+    "head": 6,
+    "head_tok": "knew",
+    "rel": "OBJECT",
+    "p": 1.0
+   }
+  ]
+ },
+ {
+  "id": "v7-008409",
+  "band": "11-20",
+  "n_added_total": 2,
+  "tokens": "0:susan 1:was 2:desirous 3:of 4:returning 5:to 6:her 7:mother 8:, 9:and 10:the 11:ladies 12:therefore 13:would 14:not 15:detain 16:her 17:.",
+  "parser": "ROOT(ROOT:was(SUBJECT:susan COMPLEMENT:desirous MODIFICATION:of) UNATTACHED:returning UNATTACHED:detain(MODIFICATION:to(PREPOSITION:mother(DESCRIPTION:her)) COORDINATION:and SUBJECT:ladies(DESCRIPTION:the) SPECIFICATION:therefore MODIFICATION:would MODIFICATION:not OBJECT:her))",
+  "encoder": "was(SUBJECT:susan COMPLEMENT:desirous MODIFICATION:of COORDINATION:and(COORDINATION:detain(MODIFICATION:to(PREPOSITION:returning PREPOSITION:mother(DESCRIPTION:her)) SUBJECT:ladies(DESCRIPTION:the) SPECIFICATION:therefore MODIFICATION:would MODIFICATION:not OBJECT:her)))",
+  "links": [
+   {
+    "dep": 4,
+    "dep_tok": "returning",
+    "head": 5,
+    "head_tok": "to",
+    "rel": "PREPOSITION",
+    "p": 0.548
+   },
+   {
+    "dep": 15,
+    "dep_tok": "detain",
+    "head": 9,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.999
+   }
+  ]
+ },
+ {
+  "id": "v7-012934",
+  "band": "11-20",
+  "n_added_total": 1,
+  "tokens": "0:on 1:the 2:way 3:he 4:passed 5:by 6:a 7:marsh 8:, 9:in 10:which 11:a 12:number 13:of 14:frogs 15:were 16:sitting 17:croaking 18:.",
+  "parser": "ROOT(ROOT:passed(MODIFICATION:on(PREPOSITION:way(DESCRIPTION:the)) SUBJECT:he MODIFICATION:by(PREPOSITION:marsh(DESCRIPTION:a))) UNATTACHED:sitting(MODIFICATION:in(PREPOSITION:which) SUBJECT:number(DESCRIPTION:a MODIFICATION:of(PREPOSITION:frogs)) MODIFICATION:were OBJECT:croaking))",
+  "encoder": "passed(MODIFICATION:on(PREPOSITION:way(DESCRIPTION:the)) SUBJECT:he MODIFICATION:by(PREPOSITION:marsh(DESCRIPTION:a)) COORDINATION:sitting(MODIFICATION:in(PREPOSITION:which) SUBJECT:number(DESCRIPTION:a MODIFICATION:of(PREPOSITION:frogs)) MODIFICATION:were OBJECT:croaking))",
+  "links": [
+   {
+    "dep": 16,
+    "dep_tok": "sitting",
+    "head": 4,
+    "head_tok": "passed",
+    "rel": "COORDINATION",
+    "p": 0.0
+   }
+  ]
+ },
+ {
+  "id": "v7-008461",
+  "band": "11-20",
+  "n_added_total": 3,
+  "tokens": "0:susan 1:stood 2:in 3:amazement 4:at 5:the 6:beginning 7:of 8:this 9:speech 10:; 11:but 12:the 13:concluding 14:words 15:explained 16:to 17:her 18:the 19:mystery 20:.",
+  "parser": "ROOT(ROOT:stood(SUBJECT:susan MODIFICATION:in(PREPOSITION:amazement) MODIFICATION:at) UNATTACHED:the UNATTACHED:beginning UNATTACHED:explained(MODIFICATION:of(PREPOSITION:speech(DESCRIPTION:this)) COORDINATION:but SUBJECT:words(DESCRIPTION:the DESCRIPTION:concluding) MODIFICATION:to(PREPOSITION:her) OBJECT:mystery(DESCRIPTION:the)))",
+  "encoder": "stood(SUBJECT:susan MODIFICATION:in(PREPOSITION:amazement) MODIFICATION:at(PREPOSITION:beginning(DESCRIPTION:the MODIFICATION:words(MODIFICATION:of(PREPOSITION:speech(DESCRIPTION:this)) COORDINATION:but SUBJECT:concluding(DESCRIPTION:the) COMPLEMENT:explained(MODIFICATION:to(PREPOSITION:her) OBJECT:mystery(DESCRIPTION:the))))))",
+  "links": [
+   {
+    "dep": 5,
+    "dep_tok": "the",
+    "head": 6,
+    "head_tok": "beginning",
+    "rel": "DESCRIPTION",
+    "p": 0.98
+   },
+   {
+    "dep": 6,
+    "dep_tok": "beginning",
+    "head": 4,
+    "head_tok": "at",
+    "rel": "PREPOSITION",
+    "p": 0.388
+   },
+   {
+    "dep": 15,
+    "dep_tok": "explained",
+    "head": 14,
+    "head_tok": "words",
+    "rel": "COMPLEMENT",
+    "p": 0.994
+   }
+  ]
+ },
+ {
+  "id": "v7-000207",
+  "band": "11-20",
+  "n_added_total": 2,
+  "tokens": "0:at 1:last 2:the 3:dodo 4:said 5:, 6:'everybody 7:has 8:won 9:, 10:and 11:all 12:must 13:have 14:prizes 15:. 16:'",
+  "parser": "ROOT(ROOT:at(PREPOSITION:dodo(DESCRIPTION:last DESCRIPTION:the)) UNATTACHED:said UNATTACHED:and(COORDINATION:has(SUBJECT:'everybody OBJECT:won) COORDINATION:have(SUBJECT:all MODIFICATION:must OBJECT:prizes)))",
+  "encoder": "and(COORDINATION:said(MODIFICATION:at(PREPOSITION:dodo(DESCRIPTION:last DESCRIPTION:the))) COORDINATION:won(SUBJECT:'everybody MODIFICATION:has) COORDINATION:have(SUBJECT:all MODIFICATION:must OBJECT:prizes))",
+  "links": [
+   {
+    "dep": 4,
+    "dep_tok": "said",
+    "head": 10,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.0
+   },
+   {
+    "dep": 10,
+    "dep_tok": "and",
+    "head": "ROOT",
+    "head_tok": "ROOT",
+    "rel": "ROOT",
+    "p": 1.0
+   }
+  ]
+ },
+ {
+  "id": "v7-008380",
+  "band": "11-20",
+  "n_added_total": 2,
+  "tokens": "0:\" 1:this 2:is 3:so 4:like 5:you 6:-- 7:but 8:i 9:'m 10:sorry 11:that 12:miss 13:bab 14:must 15:keep 16:your 17:guinea-hen 18:.",
+  "parser": "ROOT(ROOT:so(SUBJECT:this COORDINATION:is COORDINATION:like OBJECT:you) UNATTACHED:'m(COORDINATION:but SUBJECT:i COMPLEMENT:sorry SUBORDINATION:that(MODIFICATION:miss(OBJECT:bab))) UNATTACHED:must(INDIRECT_OBJECT:keep OBJECT:guinea-hen(DESCRIPTION:your)))",
+  "encoder": "so(SUBJECT:this COORDINATION:is COORDINATION:like OBJECT:you COORDINATION:'m(COORDINATION:but SUBJECT:i INDIRECT_OBJECT:that(DESCRIPTION:sorry) OBJECT:miss MODIFICATION:must(SUBJECT:bab INDIRECT_OBJECT:keep OBJECT:guinea-hen(DESCRIPTION:your))))",
+  "links": [
+   {
+    "dep": 9,
+    "dep_tok": "'m",
+    "head": 3,
+    "head_tok": "so",
+    "rel": "COORDINATION",
+    "p": 0.044
+   },
+   {
+    "dep": 14,
+    "dep_tok": "must",
+    "head": 9,
+    "head_tok": "'m",
+    "rel": "MODIFICATION",
+    "p": 0.004
+   }
+  ]
+ },
+ {
+  "id": "v7-008506",
+  "band": "11-20",
+  "n_added_total": 2,
+  "tokens": "0:as 1:i 2:told 3:you 4:before 5:, 6:sir 7:, 8:i 9:'d 10:pledge 11:my 12:whole 13:credit 14:upon 15:the 16:thing 17:-- 18:i 19:'d 20:stake 21:my 22:existence 23:. 24:\"",
+  "parser": "ROOT(ROOT:told(SPECIFICATION:as SUBJECT:i OBJECT:you MODIFICATION:before) UNATTACHED:'d(MODIFICATION:sir SUBJECT:i INDIRECT_OBJECT:pledge OBJECT:credit(DESCRIPTION:my DESCRIPTION:whole MODIFICATION:upon(PREPOSITION:thing(DESCRIPTION:the)))) UNATTACHED:'d(SUBJECT:i INDIRECT_OBJECT:stake OBJECT:existence(DESCRIPTION:my)))",
+  "encoder": "as(MODIFICATION:told(SUBJECT:i OBJECT:you MODIFICATION:before) MODIFICATION:'d(MODIFICATION:sir SUBJECT:i INDIRECT_OBJECT:pledge OBJECT:credit(DESCRIPTION:my DESCRIPTION:whole MODIFICATION:upon(PREPOSITION:thing(DESCRIPTION:the))) MODIFICATION:'d(INDIRECT_OBJECT:stake(SUBJECT:i OBJECT:existence(DESCRIPTION:my)))))",
+  "links": [
+   {
+    "dep": 9,
+    "dep_tok": "'d",
+    "head": 0,
+    "head_tok": "as",
+    "rel": "MODIFICATION",
+    "p": 0.0
+   },
+   {
+    "dep": 19,
+    "dep_tok": "'d",
+    "head": 9,
+    "head_tok": "'d",
+    "rel": "MODIFICATION",
+    "p": 0.0
+   }
+  ]
+ },
+ {
+  "id": "v7-000031",
+  "band": "11-20",
+  "n_added_total": 4,
+  "tokens": "0:no 1:, 2:it 3:'ll 4:never 5:do 6:to 7:ask 8:: 9:perhaps 10:i 11:shall 12:see 13:it 14:written 15:up 16:somewhere 17:. 18:'",
+  "parser": "ROOT(UNATTACHED:no ROOT:'ll(SUBJECT:it SPECIFICATION:never(SPECIFICATION:do(OBJECT:to(MODIFICATION:ask)))) UNATTACHED:perhaps UNATTACHED:see(SUBJECT:i MODIFICATION:shall) UNATTACHED:written(SUBJECT:it SPECIFICATION:up OBJECT:somewhere))",
+  "encoder": "'ll(COMPLEMENT:no SUBJECT:it SPECIFICATION:never(SPECIFICATION:do(OBJECT:to(MODIFICATION:ask) COORDINATION:see(SPECIFICATION:perhaps SUBJECT:i MODIFICATION:shall INDIRECT_OBJECT:it MODIFICATION:written(SPECIFICATION:somewhere(SPECIFICATION:up))))))",
+  "links": [
+   {
+    "dep": 0,
+    "dep_tok": "no",
+    "head": 3,
+    "head_tok": "'ll",
+    "rel": "COMPLEMENT",
+    "p": 1.0
+   },
+   {
+    "dep": 9,
+    "dep_tok": "perhaps",
+    "head": 12,
+    "head_tok": "see",
+    "rel": "SPECIFICATION",
+    "p": 0.998
+   },
+   {
+    "dep": 12,
+    "dep_tok": "see",
+    "head": 5,
+    "head_tok": "do",
+    "rel": "COORDINATION",
+    "p": 0.666
+   },
+   {
+    "dep": 14,
+    "dep_tok": "written",
+    "head": 12,
+    "head_tok": "see",
+    "rel": "MODIFICATION",
+    "p": 0.978
+   }
+  ]
+ },
+ {
+  "id": "v7-012893",
+  "band": "11-20",
+  "n_added_total": 1,
+  "tokens": "0:'that 1:was 2:ill 3:done 4:, 5:hans 6:, 7:you 8:should 9:have 10:led 11:the 12:calf 13:, 14:and 15:put 16:it 17:in 18:the 19:stall 20:. 21:'",
+  "parser": "ROOT(ROOT:was(SUBJECT:'that COMPLEMENT:ill MODIFICATION:done) UNATTACHED:and(COORDINATION:have(MODIFICATION:hans SUBJECT:you MODIFICATION:should INDIRECT_OBJECT:led OBJECT:calf(DESCRIPTION:the)) COORDINATION:put(OBJECT:it(MODIFICATION:in(PREPOSITION:stall(DESCRIPTION:the))))))",
+  "encoder": "was(SUBJECT:'that SPECIFICATION:ill MODIFICATION:done(MODIFICATION:led(OBJECT:calf(DESCRIPTION:the) COORDINATION:and(COORDINATION:have(MODIFICATION:hans SUBJECT:you MODIFICATION:should) COORDINATION:put(OBJECT:it(MODIFICATION:in(PREPOSITION:stall(DESCRIPTION:the))))))))",
+  "links": [
+   {
+    "dep": 14,
+    "dep_tok": "and",
+    "head": 10,
+    "head_tok": "led",
+    "rel": "COORDINATION",
+    "p": 0.719
+   }
+  ]
+ },
+ {
+  "id": "v7-008628",
+  "band": "21-35",
+  "n_added_total": 4,
+  "tokens": "0:he 1:turned 2:his 3:face 4:eagerly 5:to 6:the 7:place 8:where 9:she 10:stood 11:; 12:and 13:it 14:was 15:observed 16:, 17:that 18:whenever 19:she 20:said 21:that 22:she 23:liked 24:any 25:tune 26:particularly 27:he 28:played 29:it 30:over 31:again 32:.",
+  "parser": "ROOT(ROOT:turned(SUBJECT:he OBJECT:face(DESCRIPTION:his) SPECIFICATION:eagerly MODIFICATION:to(PREPOSITION:place(DESCRIPTION:the)) SUBORDINATION:where(MODIFICATION:and(COORDINATION:stood(SUBJECT:she) COORDINATION:observed(SUBJECT:it MODIFICATION:was)))) UNATTACHED:that UNATTACHED:whenever UNATTACHED:said(SUBJECT:she SUBORDINATION:that(MODIFICATION:liked(SUBJECT:she SPECIFICATION:any(SPECIFICATION:tune(SPECIFICATION:particularly INDIRECT_OBJECT:he OBJECT:it(DESCRIPTION:played) MODIFICATION:over))))) UNATTACHED:again)",
+  "encoder": "turned(SUBJECT:he OBJECT:face(DESCRIPTION:his) SPECIFICATION:eagerly MODIFICATION:to(PREPOSITION:place(DESCRIPTION:the)) SUBORDINATION:where(MODIFICATION:and(COORDINATION:stood(SUBJECT:she) COORDINATION:observed(SUBJECT:it MODIFICATION:was)) SUBORDINATION:that MODIFICATION:said(SUBJECT:whenever SUBJECT:she OBJECT:that(MODIFICATION:liked(SUBJECT:she OBJECT:tune(DESCRIPTION:any) SPECIFICATION:particularly MODIFICATION:played(SUBJECT:he OBJECT:it MODIFICATION:over SPECIFICATION:again))))))",
+  "links": [
+   {
+    "dep": 17,
+    "dep_tok": "that",
+    "head": 8,
+    "head_tok": "where",
+    "rel": "SUBORDINATION",
+    "p": 0.72
+   },
+   {
+    "dep": 18,
+    "dep_tok": "whenever",
+    "head": 20,
+    "head_tok": "said",
+    "rel": "SUBJECT",
+    "p": 0.997
+   },
+   {
+    "dep": 20,
+    "dep_tok": "said",
+    "head": 8,
+    "head_tok": "where",
+    "rel": "MODIFICATION",
+    "p": 0.987
+   },
+   {
+    "dep": 31,
+    "dep_tok": "again",
+    "head": 28,
+    "head_tok": "played",
+    "rel": "SPECIFICATION",
+    "p": 0.999
+   }
+  ]
+ },
+ {
+  "id": "v7-000108",
+  "band": "21-35",
+  "n_added_total": 5,
+  "tokens": "0:london 1:is 2:the 3:capital 4:of 5:paris 6:, 7:and 8:paris 9:is 10:the 11:capital 12:of 13:rome 14:, 15:and 16:rome 17:-- 18:no 19:, 20:that 21:'s 22:all 23:wrong 24:, 25:i 26:'m 27:certain 28:!",
+  "parser": "ROOT(ROOT:and(COORDINATION:is(SUBJECT:london OBJECT:capital(DESCRIPTION:the MODIFICATION:of(PREPOSITION:paris))) COORDINATION:is(SUBJECT:paris OBJECT:capital(DESCRIPTION:the MODIFICATION:of(PREPOSITION:rome)))) UNATTACHED:and UNATTACHED:rome UNATTACHED:no UNATTACHED:'s(SUBJECT:that OBJECT:all) UNATTACHED:'m(MODIFICATION:wrong SUBJECT:i COMPLEMENT:certain))",
+  "encoder": "and(COORDINATION:is(SUBJECT:london OBJECT:capital(DESCRIPTION:the MODIFICATION:of(PREPOSITION:paris))) COORDINATION:is(SUBJECT:paris OBJECT:capital(DESCRIPTION:the MODIFICATION:of(PREPOSITION:rome))) COORDINATION:and(COORDINATION:rome) COORDINATION:'s(COMPLEMENT:no SUBJECT:that OBJECT:all COORDINATION:'m(MODIFICATION:wrong SUBJECT:i COMPLEMENT:certain)))",
+  "links": [
+   {
+    "dep": 15,
+    "dep_tok": "and",
+    "head": 7,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.001
+   },
+   {
+    "dep": 16,
+    "dep_tok": "rome",
+    "head": 15,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.994
+   },
+   {
+    "dep": 18,
+    "dep_tok": "no",
+    "head": 21,
+    "head_tok": "'s",
+    "rel": "COMPLEMENT",
+    "p": 0.809
+   },
+   {
+    "dep": 21,
+    "dep_tok": "'s",
+    "head": 7,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.001
+   },
+   {
+    "dep": 26,
+    "dep_tok": "'m",
+    "head": 21,
+    "head_tok": "'s",
+    "rel": "COORDINATION",
+    "p": 0.761
+   }
+  ]
+ },
+ {
+  "id": "v7-017847",
+  "band": "21-35",
+  "n_added_total": 5,
+  "tokens": "0:at 1:last 2:she 3:said 4:to 5:her 6:mistress 7:, 8:\" 9:i 10:am 11:home-sick 12:, 13:and 14:although 15:i 16:am 17:very 18:well 19:off 20:here 21:, 22:i 23:cannot 24:stay 25:any 26:longer 27:; 28:i 29:must 30:go 31:back 32:to 33:my 34:own 35:home 36:. 37:\"",
+  "parser": "ROOT(ROOT:at(PREPOSITION:she(DESCRIPTION:last)) UNATTACHED:said(MODIFICATION:to(PREPOSITION:mistress(DESCRIPTION:her))) UNATTACHED:and(COORDINATION:am(SUBJECT:i COMPLEMENT:home-sick) COORDINATION:although(MODIFICATION:am(SUBJECT:i SPECIFICATION:very OBJECT:well)) MODIFICATION:off) UNATTACHED:here UNATTACHED:i UNATTACHED:stay(SUBJECT:cannot SPECIFICATION:longer(SPECIFICATION:any) COORDINATION:go(SUBJECT:i MODIFICATION:must OBJECT:back(MODIFICATION:to(PREPOSITION:home(DESCRIPTION:my DESCRIPTION:own))))))",
+  "encoder": "said(MODIFICATION:at(PREPOSITION:she(DESCRIPTION:last)) MODIFICATION:to(PREPOSITION:mistress(DESCRIPTION:her)) OBJECT:and(COORDINATION:am(SUBJECT:i COMPLEMENT:home-sick) COORDINATION:although(MODIFICATION:am(SUBJECT:i SPECIFICATION:very OBJECT:well)) MODIFICATION:off COORDINATION:stay(SPECIFICATION:here MODIFICATION:i SUBJECT:cannot SPECIFICATION:longer(SPECIFICATION:any) COORDINATION:go(SUBJECT:i MODIFICATION:must OBJECT:back(MODIFICATION:to(PREPOSITION:home(DESCRIPTION:my DESCRIPTION:own)))))))",
+  "links": [
+   {
+    "dep": 3,
+    "dep_tok": "said",
+    "head": "ROOT",
+    "head_tok": "ROOT",
+    "rel": "ROOT",
+    "p": 0.998
+   },
+   {
+    "dep": 13,
+    "dep_tok": "and",
+    "head": 3,
+    "head_tok": "said",
+    "rel": "OBJECT",
+    "p": 0.858
+   },
+   {
+    "dep": 20,
+    "dep_tok": "here",
+    "head": 24,
+    "head_tok": "stay",
+    "rel": "SPECIFICATION",
+    "p": 0.969
+   },
+   {
+    "dep": 22,
+    "dep_tok": "i",
+    "head": 24,
+    "head_tok": "stay",
+    "rel": "MODIFICATION",
+    "p": 1.0
+   },
+   {
+    "dep": 24,
+    "dep_tok": "stay",
+    "head": 13,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.998
+   }
+  ]
+ },
+ {
+  "id": "v7-012799",
+  "band": "21-35",
+  "n_added_total": 5,
+  "tokens": "0:when 1:he 2:reached 3:home 4:, 5:he 6:knew 7:not 8:upon 9:whom 10:to 11:vent 12:his 13:rage 14:and 15:spite 16:; 17:and 18:at 19:length 20:wicked 21:thoughts 22:came 23:into 24:his 25:head 26:, 27:and 28:he 29:resolved 30:to 31:kill 32:his 33:brother 34:.",
+  "parser": "ROOT(ROOT:knew(SUBORDINATION:when(MODIFICATION:reached(SUBJECT:he OBJECT:home)) SUBJECT:he) UNATTACHED:not UNATTACHED:upon(PREPOSITION:whom) UNATTACHED:to(PREPOSITION:vent) UNATTACHED:and(COORDINATION:rage(DESCRIPTION:his) COORDINATION:spite) UNATTACHED:and(COORDINATION:and COORDINATION:came(MODIFICATION:at(PREPOSITION:length) SUBJECT:thoughts(DESCRIPTION:wicked) MODIFICATION:into(PREPOSITION:head(DESCRIPTION:his))) COORDINATION:resolved(SUBJECT:he) MODIFICATION:to(MODIFICATION:kill(OBJECT:brother(DESCRIPTION:his)))))",
+  "encoder": "knew(SUBORDINATION:when(MODIFICATION:reached(SUBJECT:he OBJECT:home)) SUBJECT:he MODIFICATION:not MODIFICATION:to(PREPOSITION:vent) OBJECT:and(COORDINATION:rage(DESCRIPTION:his) COORDINATION:spite) COORDINATION:and(MODIFICATION:upon(PREPOSITION:whom) COORDINATION:and COORDINATION:came(MODIFICATION:at(PREPOSITION:length) SUBJECT:thoughts(DESCRIPTION:wicked) MODIFICATION:into(PREPOSITION:head(DESCRIPTION:his))) COORDINATION:resolved(SUBJECT:he OBJECT:to(MODIFICATION:kill(OBJECT:brother(DESCRIPTION:his))))))",
+  "links": [
+   {
+    "dep": 7,
+    "dep_tok": "not",
+    "head": 6,
+    "head_tok": "knew",
+    "rel": "MODIFICATION",
+    "p": 0.929
+   },
+   {
+    "dep": 8,
+    "dep_tok": "upon",
+    "head": 27,
+    "head_tok": "and",
+    "rel": "MODIFICATION",
+    "p": 0.786
+   },
+   {
+    "dep": 10,
+    "dep_tok": "to",
+    "head": 6,
+    "head_tok": "knew",
+    "rel": "MODIFICATION",
+    "p": 0.734
+   },
+   {
+    "dep": 14,
+    "dep_tok": "and",
+    "head": 6,
+    "head_tok": "knew",
+    "rel": "OBJECT",
+    "p": 0.826
+   },
+   {
+    "dep": 27,
+    "dep_tok": "and",
+    "head": 6,
+    "head_tok": "knew",
+    "rel": "COORDINATION",
+    "p": 0.0
+   }
+  ]
+ },
+ {
+  "id": "v7-012993",
+  "band": "21-35",
+  "n_added_total": 10,
+  "tokens": "0:'now 1:comes 2:your 3:turn 4:, 5:' 6:said 7:he 8:to 9:the 10:young 11:tailor 12:; 13:'sew 14:the 15:eggs 16:and 17:the 18:young 19:birds 20:in 21:them 22:together 23:again 24:, 25:so 26:neatly 27:that 28:the 29:shot 30:shall 31:have 32:done 33:them 34:no 35:harm 36:. 37:'",
+  "parser": "ROOT(ROOT:comes(SUBJECT:'now COMPLEMENT:your) UNATTACHED:said(OBJECT:turn SUBJECT:he MODIFICATION:to) UNATTACHED:the UNATTACHED:young UNATTACHED:tailor UNATTACHED:'sew UNATTACHED:and(COORDINATION:eggs(DESCRIPTION:the) COORDINATION:birds(DESCRIPTION:the DESCRIPTION:young) MODIFICATION:in(PREPOSITION:them)) UNATTACHED:again(SPECIFICATION:together) UNATTACHED:so UNATTACHED:neatly UNATTACHED:that(MODIFICATION:have(SUBJECT:shot(DESCRIPTION:the) MODIFICATION:shall INDIRECT_OBJECT:them(DESCRIPTION:done) OBJECT:harm(DESCRIPTION:no))))",
+  "encoder": "comes(SUBJECT:'now COMPLEMENT:your OBJECT:said(OBJECT:turn SUBJECT:he MODIFICATION:to OBJECT:tailor(DESCRIPTION:the DESCRIPTION:young SUBJECT:'sew(OBJECT:and(COORDINATION:eggs(DESCRIPTION:the) COORDINATION:birds(DESCRIPTION:the DESCRIPTION:young) MODIFICATION:in(PREPOSITION:them) SPECIFICATION:again(SPECIFICATION:together(SUBORDINATION:that(COORDINATION:so SPECIFICATION:neatly MODIFICATION:have(SUBJECT:shot(DESCRIPTION:the) MODIFICATION:shall INDIRECT_OBJECT:them(DESCRIPTION:done) OBJECT:harm(DESCRIPTION:no))))))))))",
+  "links": [
+   {
+    "dep": 6,
+    "dep_tok": "said",
+    "head": 1,
+    "head_tok": "comes",
+    "rel": "OBJECT",
+    "p": 0.0
+   },
+   {
+    "dep": 9,
+    "dep_tok": "the",
+    "head": 11,
+    "head_tok": "tailor",
+    "rel": "DESCRIPTION",
+    "p": 0.726
+   },
+   {
+    "dep": 10,
+    "dep_tok": "young",
+    "head": 11,
+    "head_tok": "tailor",
+    "rel": "DESCRIPTION",
+    "p": 0.603
+   },
+   {
+    "dep": 11,
+    "dep_tok": "tailor",
+    "head": 6,
+    "head_tok": "said",
+    "rel": "OBJECT",
+    "p": 0.856
+   },
+   {
+    "dep": 13,
+    "dep_tok": "'sew",
+    "head": 11,
+    "head_tok": "tailor",
+    "rel": "SUBJECT",
+    "p": 0.921
+   },
+   {
+    "dep": 16,
+    "dep_tok": "and",
+    "head": 13,
+    "head_tok": "'sew",
+    "rel": "OBJECT",
+    "p": 0.83
+   },
+   {
+    "dep": 23,
+    "dep_tok": "again",
+    "head": 16,
+    "head_tok": "and",
+    "rel": "SPECIFICATION",
+    "p": 0.891
+   },
+   {
+    "dep": 25,
+    "dep_tok": "so",
+    "head": 27,
+    "head_tok": "that",
+    "rel": "COORDINATION",
+    "p": 0.747
+   },
+   {
+    "dep": 26,
+    "dep_tok": "neatly",
+    "head": 27,
+    "head_tok": "that",
+    "rel": "SPECIFICATION",
+    "p": 0.988
+   },
+   {
+    "dep": 27,
+    "dep_tok": "that",
+    "head": 22,
+    "head_tok": "together",
+    "rel": "SUBORDINATION",
+    "p": 0.0
+   }
+  ]
+ },
+ {
+  "id": "v7-012909",
+  "band": "21-35",
+  "n_added_total": 2,
+  "tokens": "0:at 1:the 2:end 3:of 4:this 5:time 6:, 7:he 8:came 9:home 10:again 11:, 12:and 13:his 14:father 15:asked 16:: 17:'now 18:, 19:my 20:son 21:, 22:what 23:have 24:you 25:learnt 26:? 27:'",
+  "parser": "ROOT(ROOT:and(MODIFICATION:at(PREPOSITION:end(DESCRIPTION:the)) COORDINATION:came(MODIFICATION:of(PREPOSITION:time(DESCRIPTION:this)) SUBJECT:he SPECIFICATION:again(SPECIFICATION:home)) COORDINATION:asked(SUBJECT:father(DESCRIPTION:his))) UNATTACHED:'now(MODIFICATION:son(DESCRIPTION:my)) UNATTACHED:have(SUBJECT:what OBJECT:you MODIFICATION:learnt))",
+  "encoder": "and(MODIFICATION:at(PREPOSITION:end(DESCRIPTION:the)) COORDINATION:came(MODIFICATION:of(PREPOSITION:time(DESCRIPTION:this)) SUBJECT:he OBJECT:home SPECIFICATION:again) COORDINATION:asked(SUBJECT:father(DESCRIPTION:his)) COORDINATION:have(MODIFICATION:'now(MODIFICATION:son(DESCRIPTION:my)) SUBJECT:what OBJECT:you MODIFICATION:learnt))",
+  "links": [
+   {
+    "dep": 17,
+    "dep_tok": "'now",
+    "head": 23,
+    "head_tok": "have",
+    "rel": "MODIFICATION",
+    "p": 0.87
+   },
+   {
+    "dep": 23,
+    "dep_tok": "have",
+    "head": 12,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.999
+   }
+  ]
+ },
+ {
+  "id": "v7-000024",
+  "band": "21-35",
+  "n_added_total": 8,
+  "tokens": "0:( 1:alice 2:had 3:no 4:idea 5:what 6:latitude 7:was 8:, 9:or 10:longitude 11:either 12:, 13:but 14:thought 15:they 16:were 17:nice 18:grand 19:words 20:to 21:say 22:. 23:) 24:presently 25:she 26:began 27:again 28:.",
+  "parser": "ROOT(ROOT:had(SUBJECT:alice INDIRECT_OBJECT:idea(DESCRIPTION:no) OBJECT:what) UNATTACHED:was(SUBJECT:latitude) UNATTACHED:or UNATTACHED:longitude UNATTACHED:either UNATTACHED:thought(COORDINATION:but) UNATTACHED:were(SUBJECT:they INDIRECT_OBJECT:grand(DESCRIPTION:nice) OBJECT:words(MODIFICATION:to(PREPOSITION:say))) UNATTACHED:presently UNATTACHED:began(SUBJECT:she SPECIFICATION:again))",
+  "encoder": "had(SUBJECT:alice INDIRECT_OBJECT:idea(DESCRIPTION:no) OBJECT:what MODIFICATION:was(SUBJECT:latitude COORDINATION:or(COORDINATION:thought(SPECIFICATION:either(SUBJECT:longitude) COORDINATION:but MODIFICATION:were(SUBJECT:they OBJECT:words(DESCRIPTION:grand(DESCRIPTION:nice)) OBJECT:to(PREPOSITION:say) OBJECT:began(SPECIFICATION:presently SUBJECT:she SPECIFICATION:again))))))",
+  "links": [
+   {
+    "dep": 7,
+    "dep_tok": "was",
+    "head": 2,
+    "head_tok": "had",
+    "rel": "MODIFICATION",
+    "p": 0.024
+   },
+   {
+    "dep": 9,
+    "dep_tok": "or",
+    "head": 7,
+    "head_tok": "was",
+    "rel": "COORDINATION",
+    "p": 0.993
+   },
+   {
+    "dep": 10,
+    "dep_tok": "longitude",
+    "head": 11,
+    "head_tok": "either",
+    "rel": "SUBJECT",
+    "p": 0.299
+   },
+   {
+    "dep": 11,
+    "dep_tok": "either",
+    "head": 14,
+    "head_tok": "thought",
+    "rel": "SPECIFICATION",
+    "p": 0.505
+   },
+   {
+    "dep": 14,
+    "dep_tok": "thought",
+    "head": 9,
+    "head_tok": "or",
+    "rel": "COORDINATION",
+    "p": 0.001
+   },
+   {
+    "dep": 16,
+    "dep_tok": "were",
+    "head": 14,
+    "head_tok": "thought",
+    "rel": "MODIFICATION",
+    "p": 0.306
+   },
+   {
+    "dep": 24,
+    "dep_tok": "presently",
+    "head": 26,
+    "head_tok": "began",
+    "rel": "SPECIFICATION",
+    "p": 0.877
+   },
+   {
+    "dep": 26,
+    "dep_tok": "began",
+    "head": 16,
+    "head_tok": "were",
+    "rel": "OBJECT",
+    "p": 0.001
+   }
+  ]
+ },
+ {
+  "id": "v7-027558",
+  "band": "21-35",
+  "n_added_total": 7,
+  "tokens": "0:she 1:got 2:out 3:upon 4:the 5:highway 6:, 7:where 8:the 9:sun 10:shone 11:upon 12:her 13:, 14:and 15:the 16:dust 17:powdered 18:her 19:all 20:over 21:as 22:she 23:marched 24:across 25:the 26:way 27:.",
+  "parser": "ROOT(ROOT:got(SUBJECT:she MODIFICATION:out) UNATTACHED:shone(MODIFICATION:upon(PREPOSITION:highway(DESCRIPTION:the)) SUBJECT:sun(DESCRIPTION:the(SPECIFICATION:where)) MODIFICATION:upon) UNATTACHED:her UNATTACHED:and UNATTACHED:dust(DESCRIPTION:the) UNATTACHED:her(DESCRIPTION:powdered) UNATTACHED:all UNATTACHED:over(PREPOSITION:as(MODIFICATION:marched(SUBJECT:she MODIFICATION:across(PREPOSITION:way(DESCRIPTION:the))))))",
+  "encoder": "got(SUBJECT:she MODIFICATION:out COORDINATION:shone(MODIFICATION:upon(PREPOSITION:highway(DESCRIPTION:the)) SUBJECT:sun(DESCRIPTION:the(SPECIFICATION:where)) MODIFICATION:upon(PREPOSITION:her) COMPLEMENT:powdered(COORDINATION:and SUBJECT:dust(DESCRIPTION:the) OBJECT:her OBJECT:all MODIFICATION:over(PREPOSITION:as(MODIFICATION:marched(SUBJECT:she MODIFICATION:across(PREPOSITION:way(DESCRIPTION:the))))))))",
+  "links": [
+   {
+    "dep": 10,
+    "dep_tok": "shone",
+    "head": 1,
+    "head_tok": "got",
+    "rel": "COORDINATION",
+    "p": 0.001
+   },
+   {
+    "dep": 12,
+    "dep_tok": "her",
+    "head": 11,
+    "head_tok": "upon",
+    "rel": "PREPOSITION",
+    "p": 1.0
+   },
+   {
+    "dep": 14,
+    "dep_tok": "and",
+    "head": 17,
+    "head_tok": "powdered",
+    "rel": "COORDINATION",
+    "p": 0.999
+   },
+   {
+    "dep": 16,
+    "dep_tok": "dust",
+    "head": 17,
+    "head_tok": "powdered",
+    "rel": "SUBJECT",
+    "p": 1.0
+   },
+   {
+    "dep": 18,
+    "dep_tok": "her",
+    "head": 17,
+    "head_tok": "powdered",
+    "rel": "OBJECT",
+    "p": 0.994
+   },
+   {
+    "dep": 19,
+    "dep_tok": "all",
+    "head": 17,
+    "head_tok": "powdered",
+    "rel": "OBJECT",
+    "p": 0.998
+   },
+   {
+    "dep": 20,
+    "dep_tok": "over",
+    "head": 17,
+    "head_tok": "powdered",
+    "rel": "MODIFICATION",
+    "p": 0.949
+   }
+  ]
+ },
+ {
+  "id": "v7-012932",
+  "band": "21-35",
+  "n_added_total": 4,
+  "tokens": "0:the 1:howling 2:of 3:the 4:wild 5:dogs 6:was 7:henceforth 8:heard 9:no 10:more 11:; 12:they 13:had 14:disappeared 15:, 16:and 17:the 18:country 19:was 20:freed 21:from 22:the 23:trouble 24:.",
+  "parser": "ROOT(UNATTACHED:the UNATTACHED:howling ROOT:of(PREPOSITION:dogs(DESCRIPTION:the DESCRIPTION:wild)) UNATTACHED:was(SPECIFICATION:henceforth MODIFICATION:heard(OBJECT:more(DESCRIPTION:no))) UNATTACHED:and(COORDINATION:disappeared(SUBJECT:they MODIFICATION:had) COORDINATION:freed(SUBJECT:country(DESCRIPTION:the) MODIFICATION:was MODIFICATION:from(PREPOSITION:trouble(DESCRIPTION:the)))))",
+  "encoder": "was(SUBJECT:howling(DESCRIPTION:the) MODIFICATION:of(PREPOSITION:dogs(DESCRIPTION:the DESCRIPTION:wild)) SPECIFICATION:henceforth MODIFICATION:heard(OBJECT:more(DESCRIPTION:no)) COORDINATION:and(COORDINATION:disappeared(SUBJECT:they MODIFICATION:had) COORDINATION:freed(SUBJECT:country(DESCRIPTION:the) MODIFICATION:was MODIFICATION:from(PREPOSITION:trouble(DESCRIPTION:the)))))",
+  "links": [
+   {
+    "dep": 0,
+    "dep_tok": "the",
+    "head": 1,
+    "head_tok": "howling",
+    "rel": "DESCRIPTION",
+    "p": 0.895
+   },
+   {
+    "dep": 1,
+    "dep_tok": "howling",
+    "head": 6,
+    "head_tok": "was",
+    "rel": "SUBJECT",
+    "p": 0.994
+   },
+   {
+    "dep": 6,
+    "dep_tok": "was",
+    "head": "ROOT",
+    "head_tok": "ROOT",
+    "rel": "ROOT",
+    "p": 0.999
+   },
+   {
+    "dep": 16,
+    "dep_tok": "and",
+    "head": 6,
+    "head_tok": "was",
+    "rel": "COORDINATION",
+    "p": 0.988
+   }
+  ]
+ },
+ {
+  "id": "v7-008465",
+  "band": "21-35",
+  "n_added_total": 4,
+  "tokens": "0:barbara 1:, 2:who 3:was 4:then 5:not 6:miss 7:barbara 8:, 9:but 10:plain 11:bab 12:, 13:and 14:who 15:had 16:played 17:with 18:all 19:the 20:poor 21:children 22:in 23:the 24:neighbourhood 25:, 26:was 27:often 28:reproved 29:in 30:her 31:unjust 32:methods 33:of 34:division 35:by 36:susan 37:'s 38:proverb 39:.",
+  "parser": "ROOT(ROOT:was(MODIFICATION:barbara SUBJECT:who SPECIFICATION:then(SPECIFICATION:miss(MODIFICATION:not OBJECT:barbara))) UNATTACHED:but UNATTACHED:bab(DESCRIPTION:plain) UNATTACHED:played(COORDINATION:and SUBJECT:who MODIFICATION:had MODIFICATION:with(PREPOSITION:poor(DESCRIPTION:the(SPECIFICATION:all))) OBJECT:children(MODIFICATION:in(PREPOSITION:neighbourhood(DESCRIPTION:the)))) UNATTACHED:was(SPECIFICATION:often MODIFICATION:reproved(MODIFICATION:in(PREPOSITION:her) OBJECT:proverb(MODIFICATION:'s(PREPOSITION:methods(DESCRIPTION:unjust MODIFICATION:of(PREPOSITION:division) MODIFICATION:by(PREPOSITION:susan)))))))",
+  "encoder": "was(MODIFICATION:barbara SUBJECT:who SPECIFICATION:then MODIFICATION:miss(MODIFICATION:not OBJECT:barbara COORDINATION:but(COORDINATION:had(COORDINATION:and(COORDINATION:bab(DESCRIPTION:plain)) SUBJECT:who MODIFICATION:played(MODIFICATION:with(PREPOSITION:poor(DESCRIPTION:all DESCRIPTION:the)) OBJECT:children(MODIFICATION:in(PREPOSITION:neighbourhood(DESCRIPTION:the)) DESCRIPTION:was(SPECIFICATION:often MODIFICATION:reproved(MODIFICATION:in(PREPOSITION:her) OBJECT:proverb(MODIFICATION:'s(PREPOSITION:methods(DESCRIPTION:unjust MODIFICATION:of(PREPOSITION:division) MODIFICATION:by(PREPOSITION:susan))))))))))))",
+  "links": [
+   {
+    "dep": 9,
+    "dep_tok": "but",
+    "head": 6,
+    "head_tok": "miss",
+    "rel": "COORDINATION",
+    "p": 0.994
+   },
+   {
+    "dep": 11,
+    "dep_tok": "bab",
+    "head": 13,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.968
+   },
+   {
+    "dep": 16,
+    "dep_tok": "played",
+    "head": 15,
+    "head_tok": "had",
+    "rel": "MODIFICATION",
+    "p": 0.992
+   },
+   {
+    "dep": 26,
+    "dep_tok": "was",
+    "head": 21,
+    "head_tok": "children",
+    "rel": "DESCRIPTION",
+    "p": 0.632
+   }
+  ]
+ },
+ {
+  "id": "v7-012921",
+  "band": "36+",
+  "n_added_total": 6,
+  "tokens": "0:then 1:the 2:father 3:fell 4:into 5:the 6:most 7:furious 8:anger 9:, 10:sprang 11:up 12:, 13:called 14:his 15:people 16:thither 17:, 18:and 19:said 20:: 21:'this 22:man 23:is 24:no 25:longer 26:my 27:son 28:, 29:i 30:drive 31:him 32:forth 33:, 34:and 35:command 36:you 37:to 38:take 39:him 40:out 41:into 42:the 43:forest 44:, 45:and 46:kill 47:him 48:. 49:'",
+  "parser": "ROOT(ROOT:fell(SUBJECT:father(DESCRIPTION:the(SPECIFICATION:then)) MODIFICATION:into(PREPOSITION:anger(DESCRIPTION:the DESCRIPTION:furious(SPECIFICATION:most)))) UNATTACHED:sprang(MODIFICATION:up) UNATTACHED:and(COORDINATION:called(OBJECT:people(DESCRIPTION:his) SPECIFICATION:thither) COORDINATION:said) UNATTACHED:'this UNATTACHED:is(SUBJECT:man) UNATTACHED:and(COORDINATION:drive(MODIFICATION:son(DESCRIPTION:no DESCRIPTION:my(SPECIFICATION:longer)) SUBJECT:i OBJECT:him SPECIFICATION:forth) COORDINATION:command(OBJECT:you) MODIFICATION:to(MODIFICATION:take(OBJECT:him) MODIFICATION:out) MODIFICATION:into(PREPOSITION:forest(DESCRIPTION:the))) UNATTACHED:kill(COORDINATION:and OBJECT:him))",
+  "encoder": "and(COORDINATION:sprang(COORDINATION:fell(SUBJECT:father(DESCRIPTION:the(SPECIFICATION:then)) MODIFICATION:into(PREPOSITION:anger(DESCRIPTION:the DESCRIPTION:furious(SPECIFICATION:most)))) MODIFICATION:up) COORDINATION:called(OBJECT:people(DESCRIPTION:his) SPECIFICATION:thither) COORDINATION:said(SUBJECT:'this) COORDINATION:is(SUBJECT:man COORDINATION:and(COORDINATION:and(COORDINATION:drive(MODIFICATION:son(DESCRIPTION:no DESCRIPTION:my(SPECIFICATION:longer)) SUBJECT:i INDIRECT_OBJECT:him OBJECT:forth) COORDINATION:command(INDIRECT_OBJECT:you OBJECT:to(MODIFICATION:take(OBJECT:him)) SPECIFICATION:out) MODIFICATION:into(PREPOSITION:forest(DESCRIPTION:the))) COORDINATION:kill(OBJECT:him))))",
+  "links": [
+   {
+    "dep": 10,
+    "dep_tok": "sprang",
+    "head": 18,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 1.0
+   },
+   {
+    "dep": 18,
+    "dep_tok": "and",
+    "head": "ROOT",
+    "head_tok": "ROOT",
+    "rel": "ROOT",
+    "p": 0.001
+   },
+   {
+    "dep": 21,
+    "dep_tok": "'this",
+    "head": 19,
+    "head_tok": "said",
+    "rel": "SUBJECT",
+    "p": 0.646
+   },
+   {
+    "dep": 23,
+    "dep_tok": "is",
+    "head": 18,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.704
+   },
+   {
+    "dep": 34,
+    "dep_tok": "and",
+    "head": 45,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 1.0
+   },
+   {
+    "dep": 46,
+    "dep_tok": "kill",
+    "head": 45,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.996
+   }
+  ]
+ },
+ {
+  "id": "v7-027660",
+  "band": "36+",
+  "n_added_total": 8,
+  "tokens": "0:he 1:looked 2:upon 3:god 4:'s 5:creation 6:as 7:a 8:great 9:sum 10:in 11:arithmetic 12:-- 13:subtracted 14:, 15:multiplied 16:, 17:and 18:tried 19:to 20:know 21:it 22:within 23:and 24:without 25:, 26:and 27:to 28:talk 29:with 30:understanding 31:concerning 32:it 33:; 34:and 35:that 36:was 37:a 38:very 39:sensible 40:thing 41:; 42:and 43:he 44:spoke 45:joyously 46:and 47:cleverly 48:of 49:it 50:.",
+  "parser": "ROOT(ROOT:looked(SUBJECT:he MODIFICATION:upon(PREPOSITION:god)) UNATTACHED:'s UNATTACHED:creation UNATTACHED:sum(DESCRIPTION:a(SPECIFICATION:as) DESCRIPTION:great MODIFICATION:in(PREPOSITION:arithmetic)) UNATTACHED:subtracted UNATTACHED:and(COORDINATION:multiplied COORDINATION:tried(MODIFICATION:to(MODIFICATION:know(OBJECT:it) MODIFICATION:within))) UNATTACHED:and UNATTACHED:without UNATTACHED:and(COORDINATION:and COORDINATION:to(MODIFICATION:talk(MODIFICATION:with(PREPOSITION:understanding) INDIRECT_OBJECT:concerning OBJECT:it)) COORDINATION:and(COORDINATION:was(SUBJECT:that OBJECT:thing(DESCRIPTION:a DESCRIPTION:sensible(SPECIFICATION:very))) COORDINATION:spoke(SUBJECT:he SPECIFICATION:and(COORDINATION:joyously COORDINATION:cleverly) MODIFICATION:of(PREPOSITION:it)))))",
+  "encoder": "looked(SUBJECT:he MODIFICATION:upon(PREPOSITION:god) MODIFICATION:'s INDIRECT_OBJECT:creation(COORDINATION:and(COORDINATION:subtracted(OBJECT:sum(DESCRIPTION:a(SPECIFICATION:as) DESCRIPTION:great MODIFICATION:in(PREPOSITION:arithmetic))) COORDINATION:multiplied COORDINATION:tried(MODIFICATION:to(MODIFICATION:know(OBJECT:it) MODIFICATION:within) COORDINATION:and(COORDINATION:to(MODIFICATION:talk(MODIFICATION:with(PREPOSITION:understanding) INDIRECT_OBJECT:concerning OBJECT:it) MODIFICATION:and(COORDINATION:and(MODIFICATION:without COORDINATION:and) COORDINATION:was(SUBJECT:that OBJECT:thing(DESCRIPTION:a DESCRIPTION:sensible(SPECIFICATION:very))) COORDINATION:spoke(SUBJECT:he SPECIFICATION:and(COORDINATION:joyously COORDINATION:cleverly) MODIFICATION:of(PREPOSITION:it)))))))))",
+  "links": [
+   {
+    "dep": 4,
+    "dep_tok": "'s",
+    "head": 1,
+    "head_tok": "looked",
+    "rel": "MODIFICATION",
+    "p": 0.673
+   },
+   {
+    "dep": 5,
+    "dep_tok": "creation",
+    "head": 1,
+    "head_tok": "looked",
+    "rel": "INDIRECT_OBJECT",
+    "p": 0.16
+   },
+   {
+    "dep": 9,
+    "dep_tok": "sum",
+    "head": 13,
+    "head_tok": "subtracted",
+    "rel": "OBJECT",
+    "p": 0.738
+   },
+   {
+    "dep": 13,
+    "dep_tok": "subtracted",
+    "head": 17,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.997
+   },
+   {
+    "dep": 17,
+    "dep_tok": "and",
+    "head": 5,
+    "head_tok": "creation",
+    "rel": "COORDINATION",
+    "p": 0.0
+   },
+   {
+    "dep": 23,
+    "dep_tok": "and",
+    "head": 18,
+    "head_tok": "tried",
+    "rel": "COORDINATION",
+    "p": 0.965
+   },
+   {
+    "dep": 24,
+    "dep_tok": "without",
+    "head": 34,
+    "head_tok": "and",
+    "rel": "MODIFICATION",
+    "p": 0.783
+   },
+   {
+    "dep": 34,
+    "dep_tok": "and",
+    "head": 42,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.974
+   }
+  ]
+ },
+ {
+  "id": "v7-000378",
+  "band": "36+",
+  "n_added_total": 9,
+  "tokens": "0:said 1:alice 2:, 3:as 4:she 5:leant 6:against 7:a 8:buttercup 9:to 10:rest 11:herself 12:, 13:and 14:fanned 15:herself 16:with 17:one 18:of 19:the 20:leaves 21:: 22:'i 23:should 24:have 25:liked 26:teaching 27:it 28:tricks 29:very 30:much 31:, 32:if 33:-- 34:if 35:i 36:'d 37:only 38:been 39:the 40:right 41:size 42:to 43:do 44:it 45:!",
+  "parser": "ROOT(ROOT:said(OBJECT:alice) UNATTACHED:as UNATTACHED:and(COORDINATION:leant(SUBJECT:she MODIFICATION:against(PREPOSITION:buttercup(DESCRIPTION:a)) MODIFICATION:to(PREPOSITION:rest) OBJECT:herself) COORDINATION:fanned(OBJECT:herself(MODIFICATION:with(PREPOSITION:one))) MODIFICATION:of) UNATTACHED:the UNATTACHED:leaves UNATTACHED:liked(SUBJECT:'i MODIFICATION:have(MODIFICATION:should) INDIRECT_OBJECT:teaching OBJECT:it) UNATTACHED:tricks UNATTACHED:much(SPECIFICATION:very) UNATTACHED:if UNATTACHED:if(MODIFICATION:'d(SUBJECT:i SPECIFICATION:only(SPECIFICATION:been(INDIRECT_OBJECT:size(DESCRIPTION:the DESCRIPTION:right) OBJECT:to(MODIFICATION:do(OBJECT:it)))))))",
+  "encoder": "said(OBJECT:alice SPECIFICATION:as(MODIFICATION:and(COORDINATION:leant(SUBJECT:she MODIFICATION:against(PREPOSITION:buttercup(DESCRIPTION:a)) MODIFICATION:to(PREPOSITION:rest) OBJECT:herself) COORDINATION:fanned(OBJECT:herself(MODIFICATION:with(PREPOSITION:one))) MODIFICATION:of(PREPOSITION:leaves(DESCRIPTION:the)) COORDINATION:liked(SUBJECT:'i MODIFICATION:have(MODIFICATION:should) INDIRECT_OBJECT:teaching OBJECT:it OBJECT:tricks(SPECIFICATION:much(SPECIFICATION:very)) SUBORDINATION:if SUBORDINATION:if(MODIFICATION:'d(SUBJECT:i SPECIFICATION:only(SPECIFICATION:been(INDIRECT_OBJECT:size(DESCRIPTION:the DESCRIPTION:right) OBJECT:to(MODIFICATION:do(OBJECT:it))))))))))",
+  "links": [
+   {
+    "dep": 3,
+    "dep_tok": "as",
+    "head": 0,
+    "head_tok": "said",
+    "rel": "SPECIFICATION",
+    "p": 0.997
+   },
+   {
+    "dep": 13,
+    "dep_tok": "and",
+    "head": 3,
+    "head_tok": "as",
+    "rel": "MODIFICATION",
+    "p": 0.0
+   },
+   {
+    "dep": 19,
+    "dep_tok": "the",
+    "head": 20,
+    "head_tok": "leaves",
+    "rel": "DESCRIPTION",
+    "p": 0.965
+   },
+   {
+    "dep": 20,
+    "dep_tok": "leaves",
+    "head": 18,
+    "head_tok": "of",
+    "rel": "PREPOSITION",
+    "p": 0.841
+   },
+   {
+    "dep": 25,
+    "dep_tok": "liked",
+    "head": 13,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.683
+   },
+   {
+    "dep": 28,
+    "dep_tok": "tricks",
+    "head": 25,
+    "head_tok": "liked",
+    "rel": "OBJECT",
+    "p": 0.426
+   },
+   {
+    "dep": 30,
+    "dep_tok": "much",
+    "head": 28,
+    "head_tok": "tricks",
+    "rel": "SPECIFICATION",
+    "p": 0.708
+   },
+   {
+    "dep": 32,
+    "dep_tok": "if",
+    "head": 25,
+    "head_tok": "liked",
+    "rel": "SUBORDINATION",
+    "p": 0.423
+   },
+   {
+    "dep": 34,
+    "dep_tok": "if",
+    "head": 25,
+    "head_tok": "liked",
+    "rel": "SUBORDINATION",
+    "p": 0.563
+   }
+  ]
+ },
+ {
+  "id": "v7-012781",
+  "band": "36+",
+  "n_added_total": 10,
+  "tokens": "0:when 1:the 2:seed 3:came 4:up 5:, 6:there 7:was 8:one 9:plant 10:bigger 11:than 12:all 13:the 14:rest 15:; 16:and 17:it 18:kept 19:getting 20:larger 21:and 22:larger 23:, 24:and 25:seemed 26:as 27:if 28:it 29:would 30:never 31:cease 32:growing 33:; 34:so 35:that 36:it 37:might 38:have 39:been 40:called 41:the 42:prince 43:of 44:turnips 45:for 46:there 47:never 48:was 49:such 50:a 51:one 52:seen 53:before 54:, 55:and 56:never 57:will 58:again 59:.",
+  "parser": "ROOT(ROOT:the(SPECIFICATION:when) UNATTACHED:seed UNATTACHED:came(MODIFICATION:up) UNATTACHED:was(SPECIFICATION:there INDIRECT_OBJECT:plant(DESCRIPTION:one) OBJECT:than(DESCRIPTION:bigger)) UNATTACHED:rest(DESCRIPTION:all DESCRIPTION:the) UNATTACHED:kept(COORDINATION:and SUBJECT:it OBJECT:getting) UNATTACHED:and(COORDINATION:larger COORDINATION:larger) UNATTACHED:seemed(COORDINATION:and SPECIFICATION:as SUBORDINATION:if(MODIFICATION:would(SUBJECT:it SPECIFICATION:never(SPECIFICATION:cease(OBJECT:growing COORDINATION:so(COORDINATION:that(MODIFICATION:have(SUBJECT:it MODIFICATION:might)))))))) UNATTACHED:called(MODIFICATION:been OBJECT:prince(DESCRIPTION:the MODIFICATION:of(PREPOSITION:turnips)) MODIFICATION:for) UNATTACHED:was(SPECIFICATION:never(SPECIFICATION:there) COMPLEMENT:a(SPECIFICATION:such)) UNATTACHED:and(COORDINATION:seen(SUBJECT:one MODIFICATION:before) COORDINATION:will(SPECIFICATION:never SPECIFICATION:again)))",
+  "encoder": "and(COORDINATION:and(COORDINATION:was(MODIFICATION:came(SUBJECT:seed(DESCRIPTION:the(SPECIFICATION:when)) MODIFICATION:up) SPECIFICATION:there INDIRECT_OBJECT:plant(DESCRIPTION:one) OBJECT:than(DESCRIPTION:bigger) OBJECT:rest(DESCRIPTION:all DESCRIPTION:the))) COORDINATION:kept(SUBJECT:it OBJECT:getting COMPLEMENT:and(COORDINATION:larger COORDINATION:larger)) COORDINATION:seemed(SPECIFICATION:as SUBORDINATION:if(MODIFICATION:would(SUBJECT:it SPECIFICATION:never(SPECIFICATION:cease(OBJECT:growing COORDINATION:so(COORDINATION:that(MODIFICATION:have(SUBJECT:it MODIFICATION:might MODIFICATION:been(MODIFICATION:called(OBJECT:prince(DESCRIPTION:the MODIFICATION:of(PREPOSITION:turnips))) MODIFICATION:was(MODIFICATION:for SPECIFICATION:never(SPECIFICATION:there) COMPLEMENT:a(SPECIFICATION:such) OBJECT:one MODIFICATION:seen MODIFICATION:before COORDINATION:and(COORDINATION:will(SPECIFICATION:never SPECIFICATION:again)))))))))))))",
+  "links": [
+   {
+    "dep": 2,
+    "dep_tok": "seed",
+    "head": 3,
+    "head_tok": "came",
+    "rel": "SUBJECT",
+    "p": 0.183
+   },
+   {
+    "dep": 3,
+    "dep_tok": "came",
+    "head": 7,
+    "head_tok": "was",
+    "rel": "MODIFICATION",
+    "p": 0.0
+   },
+   {
+    "dep": 7,
+    "dep_tok": "was",
+    "head": 16,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.98
+   },
+   {
+    "dep": 14,
+    "dep_tok": "rest",
+    "head": 7,
+    "head_tok": "was",
+    "rel": "OBJECT",
+    "p": 0.451
+   },
+   {
+    "dep": 18,
+    "dep_tok": "kept",
+    "head": 24,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 1.0
+   },
+   {
+    "dep": 21,
+    "dep_tok": "and",
+    "head": 18,
+    "head_tok": "kept",
+    "rel": "COMPLEMENT",
+    "p": 0.964
+   },
+   {
+    "dep": 25,
+    "dep_tok": "seemed",
+    "head": 24,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.999
+   },
+   {
+    "dep": 40,
+    "dep_tok": "called",
+    "head": 39,
+    "head_tok": "been",
+    "rel": "MODIFICATION",
+    "p": 0.649
+   },
+   {
+    "dep": 48,
+    "dep_tok": "was",
+    "head": 39,
+    "head_tok": "been",
+    "rel": "MODIFICATION",
+    "p": 0.0
+   },
+   {
+    "dep": 55,
+    "dep_tok": "and",
+    "head": 48,
+    "head_tok": "was",
+    "rel": "COORDINATION",
+    "p": 0.211
+   }
+  ]
+ },
+ {
+  "id": "v7-000080",
+  "band": "36+",
+  "n_added_total": 11,
+  "tokens": "0:i 1:shall 2:be 3:a 4:great 5:deal 6:too 7:far 8:off 9:to 10:trouble 11:myself 12:about 13:you 14:: 15:you 16:must 17:manage 18:the 19:best 20:way 21:you 22:can 23:; 24:-- 25:but 26:i 27:must 28:be 29:kind 30:to 31:them 32:, 33:' 34:thought 35:alice 36:, 37:'or 38:perhaps 39:they 40:wo 41:n't 42:walk 43:the 44:way 45:i 46:want 47:to 48:go 49:!",
+  "parser": "ROOT(ROOT:be(SUBJECT:i MODIFICATION:shall COMPLEMENT:a) UNATTACHED:great UNATTACHED:deal(SPECIFICATION:far(SPECIFICATION:too) MODIFICATION:off MODIFICATION:to(PREPOSITION:trouble)) UNATTACHED:myself(MODIFICATION:about(PREPOSITION:you)) UNATTACHED:manage(SUBJECT:you MODIFICATION:must INDIRECT_OBJECT:way(DESCRIPTION:the DESCRIPTION:best) OBJECT:you) UNATTACHED:can UNATTACHED:thought(COORDINATION:but OBJECT:be(SUBJECT:i MODIFICATION:must OBJECT:kind(MODIFICATION:to(PREPOSITION:them))) SUBJECT:alice) UNATTACHED:'or UNATTACHED:perhaps UNATTACHED:they UNATTACHED:walk(SUBJECT:wo MODIFICATION:n't OBJECT:way(DESCRIPTION:the)) UNATTACHED:want(SUBJECT:i OBJECT:to(MODIFICATION:go)))",
+  "encoder": "be(SUBJECT:i MODIFICATION:shall COMPLEMENT:a COMPLEMENT:great MODIFICATION:deal(SPECIFICATION:far(SPECIFICATION:too) MODIFICATION:off MODIFICATION:to(PREPOSITION:trouble) OBJECT:myself(MODIFICATION:about(PREPOSITION:you)) COORDINATION:manage(SUBJECT:you MODIFICATION:must OBJECT:way(DESCRIPTION:the DESCRIPTION:best) MODIFICATION:can(SUBJECT:you OBJECT:thought(COORDINATION:but OBJECT:be(SUBJECT:i MODIFICATION:must OBJECT:kind(MODIFICATION:to(PREPOSITION:them))) SUBJECT:alice SUBJECT:'or SPECIFICATION:perhaps OBJECT:they OBJECT:walk(SUBJECT:wo MODIFICATION:n't OBJECT:way(DESCRIPTION:the) MODIFICATION:want(SUBJECT:i OBJECT:to(MODIFICATION:go))))))))",
+  "links": [
+   {
+    "dep": 4,
+    "dep_tok": "great",
+    "head": 2,
+    "head_tok": "be",
+    "rel": "COMPLEMENT",
+    "p": 0.79
+   },
+   {
+    "dep": 5,
+    "dep_tok": "deal",
+    "head": 2,
+    "head_tok": "be",
+    "rel": "MODIFICATION",
+    "p": 0.0
+   },
+   {
+    "dep": 11,
+    "dep_tok": "myself",
+    "head": 5,
+    "head_tok": "deal",
+    "rel": "OBJECT",
+    "p": 0.999
+   },
+   {
+    "dep": 17,
+    "dep_tok": "manage",
+    "head": 5,
+    "head_tok": "deal",
+    "rel": "COORDINATION",
+    "p": 0.1
+   },
+   {
+    "dep": 22,
+    "dep_tok": "can",
+    "head": 17,
+    "head_tok": "manage",
+    "rel": "MODIFICATION",
+    "p": 0.989
+   },
+   {
+    "dep": 34,
+    "dep_tok": "thought",
+    "head": 22,
+    "head_tok": "can",
+    "rel": "OBJECT",
+    "p": 0.107
+   },
+   {
+    "dep": 37,
+    "dep_tok": "'or",
+    "head": 34,
+    "head_tok": "thought",
+    "rel": "SUBJECT",
+    "p": 0.995
+   },
+   {
+    "dep": 38,
+    "dep_tok": "perhaps",
+    "head": 34,
+    "head_tok": "thought",
+    "rel": "SPECIFICATION",
+    "p": 0.98
+   },
+   {
+    "dep": 39,
+    "dep_tok": "they",
+    "head": 34,
+    "head_tok": "thought",
+    "rel": "OBJECT",
+    "p": 0.999
+   },
+   {
+    "dep": 46,
+    "dep_tok": "want",
+    "head": 42,
+    "head_tok": "walk",
+    "rel": "MODIFICATION",
+    "p": 0.79
+   }
+  ]
+ },
+ {
+  "id": "v7-008609",
+  "band": "36+",
+  "n_added_total": 16,
+  "tokens": "0:the 1:close 2:shaven 3:green 4:, 5:which 6:sloped 7:down 8:from 9:the 10:hatch-door 11:of 12:the 13:schoolroom 14:, 15:was 16:paled 17:round 18:with 19:a 20:rude 21:paling 22:, 23:which 24:, 25:though 26:decayed 27:in 28:some 29:parts 30:by 31:time 32:, 33:was 34:not 35:in 36:any 37:place 38:broken 39:by 40:violence 41:.",
+  "parser": "ROOT(UNATTACHED:the UNATTACHED:close ROOT:shaven(COMPLEMENT:green) UNATTACHED:which UNATTACHED:sloped UNATTACHED:down UNATTACHED:from(PREPOSITION:hatch-door(DESCRIPTION:the)) UNATTACHED:of(PREPOSITION:schoolroom(DESCRIPTION:the)) UNATTACHED:paled(MODIFICATION:was COMPLEMENT:round MODIFICATION:with) UNATTACHED:a UNATTACHED:rude UNATTACHED:paling(MODIFICATION:which) UNATTACHED:though(MODIFICATION:decayed(MODIFICATION:in(PREPOSITION:parts(DESCRIPTION:some)) MODIFICATION:by(PREPOSITION:time))) UNATTACHED:was UNATTACHED:not UNATTACHED:in(PREPOSITION:place(DESCRIPTION:any)) UNATTACHED:broken(MODIFICATION:by(PREPOSITION:violence)))",
+  "encoder": "shaven(SUBJECT:close(DESCRIPTION:the) COMPLEMENT:green OBJECT:which COMPLEMENT:sloped MODIFICATION:from(PREPOSITION:hatch-door(DESCRIPTION:the)) MODIFICATION:of(PREPOSITION:schoolroom(DESCRIPTION:the) PREPOSITION:paled(MODIFICATION:down MODIFICATION:was COMPLEMENT:round MODIFICATION:with(PREPOSITION:paling(DESCRIPTION:a DESCRIPTION:rude MODIFICATION:which SUBORDINATION:though(MODIFICATION:decayed(MODIFICATION:in(PREPOSITION:parts(DESCRIPTION:some)) MODIFICATION:by(PREPOSITION:time)) MODIFICATION:was(MODIFICATION:not MODIFICATION:broken(MODIFICATION:in SUBJECT:place(DESCRIPTION:any) MODIFICATION:by(PREPOSITION:violence)))))))))",
+  "links": [
+   {
+    "dep": 5,
+    "dep_tok": "which",
+    "head": 2,
+    "head_tok": "shaven",
+    "rel": "OBJECT",
+    "p": 1.0
+   },
+   {
+    "dep": 7,
+    "dep_tok": "down",
+    "head": 16,
+    "head_tok": "paled",
+    "rel": "MODIFICATION",
+    "p": 0.199
+   },
+   {
+    "dep": 11,
+    "dep_tok": "of",
+    "head": 2,
+    "head_tok": "shaven",
+    "rel": "MODIFICATION",
+    "p": 0.037
+   },
+   {
+    "dep": 16,
+    "dep_tok": "paled",
+    "head": 11,
+    "head_tok": "of",
+    "rel": "PREPOSITION",
+    "p": 0.0
+   },
+   {
+    "dep": 19,
+    "dep_tok": "a",
+    "head": 21,
+    "head_tok": "paling",
+    "rel": "DESCRIPTION",
+    "p": 0.988
+   },
+   {
+    "dep": 20,
+    "dep_tok": "rude",
+    "head": 21,
+    "head_tok": "paling",
+    "rel": "DESCRIPTION",
+    "p": 1.0
+   },
+   {
+    "dep": 25,
+    "dep_tok": "though",
+    "head": 21,
+    "head_tok": "paling",
+    "rel": "SUBORDINATION",
+    "p": 0.234
+   },
+   {
+    "dep": 33,
+    "dep_tok": "was",
+    "head": 25,
+    "head_tok": "though",
+    "rel": "MODIFICATION",
+    "p": 1.0
+   },
+   {
+    "dep": 34,
+    "dep_tok": "not",
+    "head": 33,
+    "head_tok": "was",
+    "rel": "MODIFICATION",
+    "p": 1.0
+   },
+   {
+    "dep": 35,
+    "dep_tok": "in",
+    "head": 38,
+    "head_tok": "broken",
+    "rel": "MODIFICATION",
+    "p": 0.988
+   }
+  ]
+ },
+ {
+  "id": "v7-000013",
+  "band": "36+",
+  "n_added_total": 7,
+  "tokens": "0:first 1:, 2:she 3:tried 4:to 5:look 6:down 7:and 8:make 9:out 10:what 11:she 12:was 13:coming 14:to 15:, 16:but 17:it 18:was 19:too 20:dark 21:to 22:see 23:anything 24:; 25:then 26:she 27:looked 28:at 29:the 30:sides 31:of 32:the 33:well 34:, 35:and 36:noticed 37:that 38:they 39:were 40:filled 41:with 42:cupboards 43:and 44:book-shelves 45:; 46:here 47:and 48:there 49:she 50:saw 51:maps 52:and 53:pictures 54:hung 55:upon 56:pegs 57:.",
+  "parser": "ROOT(UNATTACHED:first ROOT:and(COORDINATION:tried(SUBJECT:she MODIFICATION:to(MODIFICATION:look MODIFICATION:down)) COORDINATION:make(MODIFICATION:out(PREPOSITION:what))) UNATTACHED:but(COORDINATION:coming(SUBJECT:she MODIFICATION:was MODIFICATION:to) COORDINATION:was(SUBJECT:it COMPLEMENT:dark(SPECIFICATION:too) MODIFICATION:to(MODIFICATION:see(OBJECT:anything)))) UNATTACHED:then UNATTACHED:and(COORDINATION:looked(SUBJECT:she MODIFICATION:at(PREPOSITION:sides(DESCRIPTION:the)) MODIFICATION:of(PREPOSITION:well(DESCRIPTION:the))) COORDINATION:noticed SUBORDINATION:that(MODIFICATION:filled(SUBJECT:they MODIFICATION:were MODIFICATION:with(PREPOSITION:and(COORDINATION:cupboards COORDINATION:book-shelves))))) UNATTACHED:and(COORDINATION:here COORDINATION:there) UNATTACHED:saw(SUBJECT:she OBJECT:and(COORDINATION:maps COORDINATION:pictures)) UNATTACHED:hung(MODIFICATION:upon(PREPOSITION:pegs)))",
+  "encoder": "and(COORDINATION:tried(SPECIFICATION:first SUBJECT:she MODIFICATION:to(MODIFICATION:look MODIFICATION:down)) COORDINATION:make(MODIFICATION:out(PREPOSITION:what) COORDINATION:but(COORDINATION:coming(SUBJECT:she MODIFICATION:was MODIFICATION:to) COORDINATION:was(SUBJECT:it COMPLEMENT:dark(SPECIFICATION:too) MODIFICATION:to(MODIFICATION:see(OBJECT:anything))) COORDINATION:and(SPECIFICATION:then COORDINATION:looked(SUBJECT:she MODIFICATION:at(PREPOSITION:sides(DESCRIPTION:the)) MODIFICATION:of(PREPOSITION:well(DESCRIPTION:the))) COORDINATION:noticed SUBORDINATION:that(MODIFICATION:filled(SUBJECT:they MODIFICATION:were MODIFICATION:with(PREPOSITION:and(COORDINATION:cupboards COORDINATION:book-shelves))) MODIFICATION:saw(SUBJECT:she(DESCRIPTION:and(COORDINATION:here COORDINATION:there)) OBJECT:and(COORDINATION:maps COORDINATION:pictures) COMPLEMENT:hung(MODIFICATION:upon(PREPOSITION:pegs))))))))",
+  "links": [
+   {
+    "dep": 0,
+    "dep_tok": "first",
+    "head": 3,
+    "head_tok": "tried",
+    "rel": "SPECIFICATION",
+    "p": 1.0
+   },
+   {
+    "dep": 16,
+    "dep_tok": "but",
+    "head": 8,
+    "head_tok": "make",
+    "rel": "COORDINATION",
+    "p": 0.511
+   },
+   {
+    "dep": 25,
+    "dep_tok": "then",
+    "head": 35,
+    "head_tok": "and",
+    "rel": "SPECIFICATION",
+    "p": 0.971
+   },
+   {
+    "dep": 35,
+    "dep_tok": "and",
+    "head": 16,
+    "head_tok": "but",
+    "rel": "COORDINATION",
+    "p": 0.969
+   },
+   {
+    "dep": 47,
+    "dep_tok": "and",
+    "head": 49,
+    "head_tok": "she",
+    "rel": "DESCRIPTION",
+    "p": 0.974
+   },
+   {
+    "dep": 50,
+    "dep_tok": "saw",
+    "head": 37,
+    "head_tok": "that",
+    "rel": "MODIFICATION",
+    "p": 0.723
+   },
+   {
+    "dep": 54,
+    "dep_tok": "hung",
+    "head": 50,
+    "head_tok": "saw",
+    "rel": "COMPLEMENT",
+    "p": 0.875
+   }
+  ]
+ },
+ {
+  "id": "v7-012782",
+  "band": "36+",
+  "n_added_total": 9,
+  "tokens": "0:at 1:last 2:it 3:was 4:so 5:big 6:that 7:it 8:filled 9:a 10:cart 11:, 12:and 13:two 14:oxen 15:could 16:hardly 17:draw 18:it 19:; 20:and 21:the 22:gardener 23:knew 24:not 25:what 26:in 27:the 28:world 29:to 30:do 31:with 32:it 33:, 34:nor 35:whether 36:it 37:would 38:be 39:a 40:blessing 41:or 42:a 43:curse 44:to 45:him 46:.",
+  "parser": "ROOT(ROOT:at(PREPOSITION:it(DESCRIPTION:last)) UNATTACHED:was UNATTACHED:so UNATTACHED:big UNATTACHED:that(MODIFICATION:and(COORDINATION:filled(SUBJECT:it OBJECT:cart(DESCRIPTION:a)) COORDINATION:could(SUBJECT:oxen(DESCRIPTION:two) SPECIFICATION:hardly(SPECIFICATION:draw(OBJECT:it COORDINATION:and(COORDINATION:knew(SUBJECT:gardener(DESCRIPTION:the)))))))) UNATTACHED:not UNATTACHED:what(MODIFICATION:in(PREPOSITION:world(DESCRIPTION:the))) UNATTACHED:to(MODIFICATION:do(MODIFICATION:with(PREPOSITION:it))) UNATTACHED:nor UNATTACHED:whether(MODIFICATION:be(SUBJECT:it MODIFICATION:would OBJECT:or(COORDINATION:blessing(DESCRIPTION:a) COORDINATION:curse(DESCRIPTION:a) MODIFICATION:to(PREPOSITION:him)))))",
+  "encoder": "and(COORDINATION:that(MODIFICATION:at(PREPOSITION:it(DESCRIPTION:last)) MODIFICATION:was COORDINATION:so DESCRIPTION:big MODIFICATION:and(COORDINATION:filled(SUBJECT:it OBJECT:cart(DESCRIPTION:a)) COORDINATION:could(SUBJECT:oxen(DESCRIPTION:two) SPECIFICATION:hardly(SPECIFICATION:draw(OBJECT:it))))) COORDINATION:knew(SUBJECT:gardener(DESCRIPTION:the) MODIFICATION:not OBJECT:what(MODIFICATION:in(PREPOSITION:world(DESCRIPTION:the)) MODIFICATION:to(MODIFICATION:do(MODIFICATION:with(PREPOSITION:it)) MODIFICATION:nor SUBORDINATION:whether(MODIFICATION:be(SUBJECT:it MODIFICATION:would OBJECT:or(COORDINATION:blessing(DESCRIPTION:a) COORDINATION:a) OBJECT:curse(MODIFICATION:to(PREPOSITION:him))))))))",
+  "links": [
+   {
+    "dep": 3,
+    "dep_tok": "was",
+    "head": 6,
+    "head_tok": "that",
+    "rel": "MODIFICATION",
+    "p": 0.003
+   },
+   {
+    "dep": 4,
+    "dep_tok": "so",
+    "head": 6,
+    "head_tok": "that",
+    "rel": "COORDINATION",
+    "p": 0.075
+   },
+   {
+    "dep": 5,
+    "dep_tok": "big",
+    "head": 6,
+    "head_tok": "that",
+    "rel": "DESCRIPTION",
+    "p": 0.988
+   },
+   {
+    "dep": 6,
+    "dep_tok": "that",
+    "head": 20,
+    "head_tok": "and",
+    "rel": "COORDINATION",
+    "p": 0.999
+   },
+   {
+    "dep": 24,
+    "dep_tok": "not",
+    "head": 23,
+    "head_tok": "knew",
+    "rel": "MODIFICATION",
+    "p": 0.999
+   },
+   {
+    "dep": 25,
+    "dep_tok": "what",
+    "head": 23,
+    "head_tok": "knew",
+    "rel": "OBJECT",
+    "p": 0.999
+   },
+   {
+    "dep": 29,
+    "dep_tok": "to",
+    "head": 25,
+    "head_tok": "what",
+    "rel": "MODIFICATION",
+    "p": 0.3
+   },
+   {
+    "dep": 34,
+    "dep_tok": "nor",
+    "head": 29,
+    "head_tok": "to",
+    "rel": "MODIFICATION",
+    "p": 0.912
+   },
+   {
+    "dep": 35,
+    "dep_tok": "whether",
+    "head": 29,
+    "head_tok": "to",
+    "rel": "SUBORDINATION",
+    "p": 0.97
+   }
+  ]
+ },
+ {
+  "id": "v7-012814",
+  "band": "36+",
+  "n_added_total": 19,
+  "tokens": "0:then 1:the 2:other 3:answered 4:, 5:as 6:if 7:very 8:unwillingly 9:, 10:'a 11:little 12:space 13:i 14:may 15:allow 16:thee 17:to 18:sit 19:here 20:, 21:if 22:thou 23:wilt 24:reward 25:me 26:well 27:and 28:entreat 29:me 30:kindly 31:; 32:but 33:thou 34:must 35:tarry 36:yet 37:an 38:hour 39:below 40:, 41:till 42:i 43:have 44:learnt 45:some 46:little 47:matters 48:that 49:are 50:yet 51:unknown 52:to 53:me 54:. 55:'",
+  "parser": "ROOT(ROOT:the(SPECIFICATION:then) UNATTACHED:other UNATTACHED:answered UNATTACHED:as UNATTACHED:if UNATTACHED:unwillingly(SPECIFICATION:very) UNATTACHED:'a UNATTACHED:space(DESCRIPTION:little) UNATTACHED:allow(SUBJECT:i MODIFICATION:may OBJECT:thee MODIFICATION:to(MODIFICATION:sit(SPECIFICATION:here SUBORDINATION:if(MODIFICATION:wilt(SUBJECT:thou INDIRECT_OBJECT:reward OBJECT:me))))) UNATTACHED:well UNATTACHED:entreat(COORDINATION:and OBJECT:me) UNATTACHED:kindly UNATTACHED:tarry(COORDINATION:but SUBJECT:thou MODIFICATION:must) UNATTACHED:yet UNATTACHED:hour(DESCRIPTION:an) UNATTACHED:below UNATTACHED:till UNATTACHED:learnt(SUBJECT:i MODIFICATION:have OBJECT:matters(DESCRIPTION:some DESCRIPTION:little) SUBORDINATION:that(MODIFICATION:are)) UNATTACHED:yet UNATTACHED:unknown(MODIFICATION:to(PREPOSITION:me)))",
+  "encoder": "space(DESCRIPTION:the(SPECIFICATION:then) DESCRIPTION:little SUBORDINATION:allow(SUBJECT:answered(DESCRIPTION:other SUBJECT:'a) SPECIFICATION:as OBJECT:if SPECIFICATION:unwillingly(SPECIFICATION:very) SUBJECT:i MODIFICATION:may OBJECT:thee MODIFICATION:to(MODIFICATION:sit(SPECIFICATION:here SUBORDINATION:if(MODIFICATION:and(SUBJECT:thou COORDINATION:wilt(INDIRECT_OBJECT:reward OBJECT:me OBJECT:well) COORDINATION:entreat(OBJECT:me SPECIFICATION:kindly) COORDINATION:but(COORDINATION:tarry(SUBJECT:thou MODIFICATION:must MODIFICATION:below) COORDINATION:yet(COORDINATION:hour(DESCRIPTION:an) COORDINATION:learnt(SUBJECT:till MODIFICATION:have(SUBJECT:i) OBJECT:matters(DESCRIPTION:some DESCRIPTION:little) SUBORDINATION:that(MODIFICATION:are MODIFICATION:yet(COORDINATION:unknown(MODIFICATION:to(PREPOSITION:me)))))))))))))",
+  "links": [
+   {
+    "dep": 3,
+    "dep_tok": "answered",
+    "head": 15,
+    "head_tok": "allow",
+    "rel": "SUBJECT",
+    "p": 0.0
+   },
+   {
+    "dep": 6,
+    "dep_tok": "if",
+    "head": 15,
+    "head_tok": "allow",
+    "rel": "OBJECT",
+    "p": 0.001
+   },
+   {
+    "dep": 8,
+    "dep_tok": "unwillingly",
+    "head": 15,
+    "head_tok": "allow",
+    "rel": "SPECIFICATION",
+    "p": 0.012
+   },
+   {
+    "dep": 12,
+    "dep_tok": "space",
+    "head": "ROOT",
+    "head_tok": "ROOT",
+    "rel": "ROOT",
+    "p": 1.0
+   },
+   {
+    "dep": 15,
+    "dep_tok": "allow",
+    "head": 12,
+    "head_tok": "space",
+    "rel": "SUBORDINATION",
+    "p": 0.0
+   },
+   {
+    "dep": 35,
+    "dep_tok": "tarry",
+    "head": 32,
+    "head_tok": "but",
+    "rel": "COORDINATION",
+    "p": 1.0
+   },
+   {
+    "dep": 41,
+    "dep_tok": "till",
+    "head": 44,
+    "head_tok": "learnt",
+    "rel": "SUBJECT",
+    "p": 0.869
+   },
+   {
+    "dep": 44,
+    "dep_tok": "learnt",
+    "head": 36,
+    "head_tok": "yet",
+    "rel": "COORDINATION",
+    "p": 0.0
+   },
+   {
+    "dep": 50,
+    "dep_tok": "yet",
+    "head": 48,
+    "head_tok": "that",
+    "rel": "MODIFICATION",
+    "p": 0.72
+   },
+   {
+    "dep": 51,
+    "dep_tok": "unknown",
+    "head": 50,
+    "head_tok": "yet",
+    "rel": "COORDINATION",
+    "p": 1.0
+   }
+  ]
+ },
+ {
+  "id": "v7-017857",
+  "band": "36+",
+  "n_added_total": 5,
+  "tokens": "0:she 1:found 2:herself 3:, 4:like 5:her 6:sister 7:, 8:in 9:the 10:beautiful 11:meadow 12:, 13:and 14:followed 15:the 16:same 17:path 18:, 19:and 20:when 21:she 22:came 23:to 24:the 25:baker 26:'s 27:oven 28:, 29:the 30:bread 31:cried 32:out 33:, 34:\" 35:oh 36:, 37:take 38:me 39:out 40:, 41:take 42:me 43:out 44:, 45:or 46:i 47:shall 48:burn 49:; 50:i 51:am 52:quite 53:done 54:already 55:! 56:\"",
+  "parser": "ROOT(ROOT:found(SUBJECT:she OBJECT:herself) UNATTACHED:and(COORDINATION:like(OBJECT:sister(DESCRIPTION:her) MODIFICATION:in(PREPOSITION:meadow(DESCRIPTION:the DESCRIPTION:beautiful))) COORDINATION:followed(OBJECT:path(DESCRIPTION:the DESCRIPTION:same) COORDINATION:and(COORDINATION:when(MODIFICATION:came(SUBJECT:she MODIFICATION:to(PREPOSITION:baker(DESCRIPTION:the))))))) UNATTACHED:'s UNATTACHED:cried(MODIFICATION:oven SUBJECT:bread(DESCRIPTION:the) MODIFICATION:out OBJECT:oh) UNATTACHED:take(OBJECT:me SPECIFICATION:out) UNATTACHED:or(COORDINATION:take(OBJECT:me SPECIFICATION:out) COORDINATION:burn(SUBJECT:i MODIFICATION:shall) COORDINATION:am(SUBJECT:i SPECIFICATION:quite MODIFICATION:done(SPECIFICATION:already))))",
+  "encoder": "found(SUBJECT:she OBJECT:herself COORDINATION:and(COORDINATION:like(OBJECT:sister(DESCRIPTION:her) MODIFICATION:in(PREPOSITION:meadow(DESCRIPTION:the DESCRIPTION:beautiful))) COORDINATION:followed(OBJECT:path(DESCRIPTION:the DESCRIPTION:same) COORDINATION:and(COORDINATION:when(MODIFICATION:came(SUBJECT:she MODIFICATION:to(PREPOSITION:baker(DESCRIPTION:the))) MODIFICATION:cried(MODIFICATION:oven(MODIFICATION:'s) SUBJECT:bread(DESCRIPTION:the) MODIFICATION:out OBJECT:take(OBJECT:me SPECIFICATION:out COORDINATION:or(COORDINATION:take(OBJECT:me SPECIFICATION:out) COORDINATION:shall(SUBJECT:i OBJECT:burn) COORDINATION:am(SUBJECT:i SPECIFICATION:quite MODIFICATION:done(SPECIFICATION:already)))))) OBJECT:oh))))",
+  "links": [
+   {
+    "dep": 13,
+    "dep_tok": "and",
+    "head": 1,
+    "head_tok": "found",
+    "rel": "COORDINATION",
+    "p": 0.0
+   },
+   {
+    "dep": 26,
+    "dep_tok": "'s",
+    "head": 27,
+    "head_tok": "oven",
+    "rel": "MODIFICATION",
+    "p": 0.99
+   },
+   {
+    "dep": 31,
+    "dep_tok": "cried",
+    "head": 20,
+    "head_tok": "when",
+    "rel": "MODIFICATION",
+    "p": 0.999
+   },
+   {
+    "dep": 37,
+    "dep_tok": "take",
+    "head": 31,
+    "head_tok": "cried",
+    "rel": "OBJECT",
+    "p": 0.011
+   },
+   {
+    "dep": 45,
+    "dep_tok": "or",
+    "head": 37,
+    "head_tok": "take",
+    "rel": "COORDINATION",
+    "p": 0.467
+   }
+  ]
+ }
+]
