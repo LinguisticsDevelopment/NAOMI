@@ -1,0 +1,534 @@
+{
+ "settings": {
+  "S1": "A and A2 both propose",
+  "S2": "A, A2, control all choose this head",
+  "S3": "S2 and min p>=0.8",
+  "S4": "S2 and min p>=0.9",
+  "S5": "S3 and attested (count>=40)"
+ },
+ "results": {
+  "S1": {
+   "pass": {
+    "n": 76,
+    "r": 38,
+    "d": 23,
+    "w": 15,
+    "wrong_pct": 19.7
+   },
+   "fail": {
+    "n": 194,
+    "r": 49,
+    "d": 53,
+    "w": 92,
+    "wrong_pct": 47.4
+   },
+   "share_pass_pct": 28.1,
+   "by_band": {
+    "<=10": {
+     "pass": {
+      "n": 8,
+      "r": 5,
+      "d": 3,
+      "w": 0,
+      "wrong_pct": 0.0
+     },
+     "all": {
+      "n": 20,
+      "r": 9,
+      "d": 9,
+      "w": 2,
+      "wrong_pct": 10.0
+     }
+    },
+    "11-20": {
+     "pass": {
+      "n": 7,
+      "r": 3,
+      "d": 4,
+      "w": 0,
+      "wrong_pct": 0.0
+     },
+     "all": {
+      "n": 35,
+      "r": 11,
+      "d": 15,
+      "w": 9,
+      "wrong_pct": 25.7
+     }
+    },
+    "21-35": {
+     "pass": {
+      "n": 30,
+      "r": 16,
+      "d": 7,
+      "w": 7,
+      "wrong_pct": 23.3
+     },
+     "all": {
+      "n": 78,
+      "r": 28,
+      "d": 20,
+      "w": 30,
+      "wrong_pct": 38.5
+     }
+    },
+    "36+": {
+     "pass": {
+      "n": 31,
+      "r": 14,
+      "d": 9,
+      "w": 8,
+      "wrong_pct": 25.8
+     },
+     "all": {
+      "n": 137,
+      "r": 39,
+      "d": 32,
+      "w": 66,
+      "wrong_pct": 48.2
+     }
+    }
+   },
+   "sentence_accept": {
+    "sentences_with_A2_links": 40,
+    "accepted": 8,
+    "links_in_accepted": {
+     "n": 12,
+     "r": 8,
+     "d": 4,
+     "w": 0,
+     "wrong_pct": 0.0
+    },
+    "accepted_by_band": {
+     "<=10": 5,
+     "11-20": 2,
+     "21-35": 1,
+     "36+": 0
+    }
+   }
+  },
+  "S2": {
+   "pass": {
+    "n": 106,
+    "r": 43,
+    "d": 34,
+    "w": 29,
+    "wrong_pct": 27.4
+   },
+   "fail": {
+    "n": 164,
+    "r": 44,
+    "d": 42,
+    "w": 78,
+    "wrong_pct": 47.6
+   },
+   "share_pass_pct": 39.3,
+   "by_band": {
+    "<=10": {
+     "pass": {
+      "n": 12,
+      "r": 7,
+      "d": 5,
+      "w": 0,
+      "wrong_pct": 0.0
+     },
+     "all": {
+      "n": 20,
+      "r": 9,
+      "d": 9,
+      "w": 2,
+      "wrong_pct": 10.0
+     }
+    },
+    "11-20": {
+     "pass": {
+      "n": 12,
+      "r": 6,
+      "d": 5,
+      "w": 1,
+      "wrong_pct": 8.3
+     },
+     "all": {
+      "n": 35,
+      "r": 11,
+      "d": 15,
+      "w": 9,
+      "wrong_pct": 25.7
+     }
+    },
+    "21-35": {
+     "pass": {
+      "n": 36,
+      "r": 17,
+      "d": 8,
+      "w": 11,
+      "wrong_pct": 30.6
+     },
+     "all": {
+      "n": 78,
+      "r": 28,
+      "d": 20,
+      "w": 30,
+      "wrong_pct": 38.5
+     }
+    },
+    "36+": {
+     "pass": {
+      "n": 46,
+      "r": 13,
+      "d": 16,
+      "w": 17,
+      "wrong_pct": 37.0
+     },
+     "all": {
+      "n": 137,
+      "r": 39,
+      "d": 32,
+      "w": 66,
+      "wrong_pct": 48.2
+     }
+    }
+   },
+   "sentence_accept": {
+    "sentences_with_A2_links": 40,
+    "accepted": 11,
+    "links_in_accepted": {
+     "n": 19,
+     "r": 12,
+     "d": 6,
+     "w": 1,
+     "wrong_pct": 5.3
+    },
+    "accepted_by_band": {
+     "<=10": 6,
+     "11-20": 3,
+     "21-35": 2,
+     "36+": 0
+    }
+   }
+  },
+  "S3": {
+   "pass": {
+    "n": 40,
+    "r": 22,
+    "d": 12,
+    "w": 6,
+    "wrong_pct": 15.0
+   },
+   "fail": {
+    "n": 230,
+    "r": 65,
+    "d": 64,
+    "w": 101,
+    "wrong_pct": 43.9
+   },
+   "share_pass_pct": 14.8,
+   "by_band": {
+    "<=10": {
+     "pass": {
+      "n": 9,
+      "r": 6,
+      "d": 3,
+      "w": 0,
+      "wrong_pct": 0.0
+     },
+     "all": {
+      "n": 20,
+      "r": 9,
+      "d": 9,
+      "w": 2,
+      "wrong_pct": 10.0
+     }
+    },
+    "11-20": {
+     "pass": {
+      "n": 4,
+      "r": 2,
+      "d": 1,
+      "w": 1,
+      "wrong_pct": 25.0
+     },
+     "all": {
+      "n": 35,
+      "r": 11,
+      "d": 15,
+      "w": 9,
+      "wrong_pct": 25.7
+     }
+    },
+    "21-35": {
+     "pass": {
+      "n": 14,
+      "r": 8,
+      "d": 3,
+      "w": 3,
+      "wrong_pct": 21.4
+     },
+     "all": {
+      "n": 78,
+      "r": 28,
+      "d": 20,
+      "w": 30,
+      "wrong_pct": 38.5
+     }
+    },
+    "36+": {
+     "pass": {
+      "n": 13,
+      "r": 6,
+      "d": 5,
+      "w": 2,
+      "wrong_pct": 15.4
+     },
+     "all": {
+      "n": 137,
+      "r": 39,
+      "d": 32,
+      "w": 66,
+      "wrong_pct": 48.2
+     }
+    }
+   },
+   "sentence_accept": {
+    "sentences_with_A2_links": 40,
+    "accepted": 7,
+    "links_in_accepted": {
+     "n": 9,
+     "r": 5,
+     "d": 3,
+     "w": 1,
+     "wrong_pct": 11.1
+    },
+    "accepted_by_band": {
+     "<=10": 5,
+     "11-20": 1,
+     "21-35": 1,
+     "36+": 0
+    }
+   }
+  },
+  "S4": {
+   "pass": {
+    "n": 29,
+    "r": 18,
+    "d": 8,
+    "w": 3,
+    "wrong_pct": 10.3
+   },
+   "fail": {
+    "n": 241,
+    "r": 69,
+    "d": 68,
+    "w": 104,
+    "wrong_pct": 43.2
+   },
+   "share_pass_pct": 10.7,
+   "by_band": {
+    "<=10": {
+     "pass": {
+      "n": 7,
+      "r": 5,
+      "d": 2,
+      "w": 0,
+      "wrong_pct": 0.0
+     },
+     "all": {
+      "n": 20,
+      "r": 9,
+      "d": 9,
+      "w": 2,
+      "wrong_pct": 10.0
+     }
+    },
+    "11-20": {
+     "pass": {
+      "n": 4,
+      "r": 2,
+      "d": 1,
+      "w": 1,
+      "wrong_pct": 25.0
+     },
+     "all": {
+      "n": 35,
+      "r": 11,
+      "d": 15,
+      "w": 9,
+      "wrong_pct": 25.7
+     }
+    },
+    "21-35": {
+     "pass": {
+      "n": 6,
+      "r": 5,
+      "d": 1,
+      "w": 0,
+      "wrong_pct": 0.0
+     },
+     "all": {
+      "n": 78,
+      "r": 28,
+      "d": 20,
+      "w": 30,
+      "wrong_pct": 38.5
+     }
+    },
+    "36+": {
+     "pass": {
+      "n": 12,
+      "r": 6,
+      "d": 4,
+      "w": 2,
+      "wrong_pct": 16.7
+     },
+     "all": {
+      "n": 137,
+      "r": 39,
+      "d": 32,
+      "w": 66,
+      "wrong_pct": 48.2
+     }
+    }
+   },
+   "sentence_accept": {
+    "sentences_with_A2_links": 40,
+    "accepted": 6,
+    "links_in_accepted": {
+     "n": 7,
+     "r": 5,
+     "d": 2,
+     "w": 0,
+     "wrong_pct": 0.0
+    },
+    "accepted_by_band": {
+     "<=10": 5,
+     "11-20": 1,
+     "21-35": 0,
+     "36+": 0
+    }
+   }
+  },
+  "S5": {
+   "pass": {
+    "n": 28,
+    "r": 16,
+    "d": 9,
+    "w": 3,
+    "wrong_pct": 10.7
+   },
+   "fail": {
+    "n": 242,
+    "r": 71,
+    "d": 67,
+    "w": 104,
+    "wrong_pct": 43.0
+   },
+   "share_pass_pct": 10.4,
+   "by_band": {
+    "<=10": {
+     "pass": {
+      "n": 4,
+      "r": 3,
+      "d": 1,
+      "w": 0,
+      "wrong_pct": 0.0
+     },
+     "all": {
+      "n": 20,
+      "r": 9,
+      "d": 9,
+      "w": 2,
+      "wrong_pct": 10.0
+     }
+    },
+    "11-20": {
+     "pass": {
+      "n": 2,
+      "r": 1,
+      "d": 1,
+      "w": 0,
+      "wrong_pct": 0.0
+     },
+     "all": {
+      "n": 35,
+      "r": 11,
+      "d": 15,
+      "w": 9,
+      "wrong_pct": 25.7
+     }
+    },
+    "21-35": {
+     "pass": {
+      "n": 9,
+      "r": 6,
+      "d": 2,
+      "w": 1,
+      "wrong_pct": 11.1
+     },
+     "all": {
+      "n": 78,
+      "r": 28,
+      "d": 20,
+      "w": 30,
+      "wrong_pct": 38.5
+     }
+    },
+    "36+": {
+     "pass": {
+      "n": 13,
+      "r": 6,
+      "d": 5,
+      "w": 2,
+      "wrong_pct": 15.4
+     },
+     "all": {
+      "n": 137,
+      "r": 39,
+      "d": 32,
+      "w": 66,
+      "wrong_pct": 48.2
+     }
+    }
+   },
+   "sentence_accept": {
+    "sentences_with_A2_links": 40,
+    "accepted": 5,
+    "links_in_accepted": {
+     "n": 7,
+     "r": 3,
+     "d": 3,
+     "w": 1,
+     "wrong_pct": 14.3
+    },
+    "accepted_by_band": {
+     "<=10": 3,
+     "11-20": 1,
+     "21-35": 1,
+     "36+": 0
+    }
+   }
+  }
+ },
+ "context": {
+  "attested_only": {
+   "n": 174,
+   "r": 66,
+   "d": 45,
+   "w": 63,
+   "wrong_pct": 36.2
+  },
+  "none": {
+   "n": 270,
+   "r": 87,
+   "d": 76,
+   "w": 107,
+   "wrong_pct": 39.6
+  },
+  "A2_p>=0.8_any": {
+   "n": 81,
+   "r": 46,
+   "d": 21,
+   "w": 14,
+   "wrong_pct": 17.3
+  }
+ }
+}
