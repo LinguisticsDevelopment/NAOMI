@@ -22,7 +22,7 @@ memory, written by ordinary graph/tensor writes, never by training. See
 | Read | usable on short simple text (5-8% of links wrong at <=10 words; ~20% beyond); the parser itself is ~15% wrong on children's stories; joining pieces of long literary sentences remains unsolved |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
-| Answer from memory | first learned version built (2026-11-17, `dev/reports/MIND_V1.md`): one-step policy picks a memory node or abstains; controls behave (empty memory -> always abstains; wrong story -> abstains 92%), but accuracy 0.25 is below the word-overlap cheat 0.47 — fails its own bar, rethink before multi-step |
+| Answer from memory | full chain built (2026-11-17, `dev/reports/MIND_V2.md`): encoder -> learned thinker (answer tree from memory) -> decoder, answer scored as text; held-out FairytaleQA ROUGE-L 0.326 vs overlap cheat 0.243 (oracle 0.767); controls pass; span choice is the bottleneck; round-trip check needs reformulating (fails on fragments even without the decoder). v1 (pick a node, map to option) failed and was retired as a test |
 | Reason | in progress on archived code; to be re-attached on the minimal loop |
 | Speak | decoder un-parked as the encoder's round-trip partner only; must be learned (grammar cannot generate) |
 | Any language | working at curriculum scale (archived code), not yet at real-text scale |
@@ -589,6 +589,7 @@ ledger entries should cite the topic, matching the headings below.
   So short sentences are where training starts, not a limit: every result
   is reported by sentence length, and generalisation from short to long
   (train on short, test on long) is an explicit test.
+- 2026-11-17 — consciousness v2 approved (`dev/design/CONSCIOUSNESS_V2_PROPOSAL.md`): v1's pick-a-node-then-map-to-option test judged broken by the owner. Full chain encoder -> thinker -> decoder, answer scored as TEXT (ROUGE-L + tree score % with reasons); thinker trained toward the reference answer tree, then on the final text score; answer words from story/question only for now; decoder also chooses words from meaning (reported beside order-only); short sentences first as a widening weighting, all lengths always reported.
 
 ## Ops rules
 

@@ -1,0 +1,1076 @@
+[
+ {
+  "group": "high",
+  "id": "ft1104",
+  "question": "How did the princess feel in her new home?",
+  "reference": [
+   "happy",
+   "too happy"
+  ],
+  "answer_a": "happy",
+  "answer_b": "happy",
+  "rouge_a": 1.0,
+  "tree_a": 100.0,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "the princess was too happy in her new home to remember all that she had suffered in the old one , and she welcomed them both gladly , and gave them quantities of beautiful things to take back with them .",
+  "cheat": "the princess was too happy in her new home to remember all that she had suffered in the old one , and she welcomed them both gladly , and gave them quantities of beautiful things to take back with them .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "right",
+  "note": "reasons: none, matches"
+ },
+ {
+  "group": "high",
+  "id": "ft1424",
+  "question": "Why did the boy keep the four-shilling piece?",
+  "reference": [
+   "It was honest.",
+   "because it was honest"
+  ],
+  "answer_a": "it was honest",
+  "answer_b": "it was honest",
+  "rouge_a": 1.0,
+  "tree_a": 100.0,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "\" but a four-shilling piece floated , and that i took along , because it was honest , \" said the boy .",
+  "cheat": "\" but a four-shilling piece floated , and that i took along , because it was honest , \" said the boy .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "11-20",
+  "judgment": "right",
+  "note": "matches"
+ },
+ {
+  "group": "high",
+  "id": "ft2033",
+  "question": "Why did the demons not see him?",
+  "reference": [
+   "The tree was in the background."
+  ],
+  "answer_a": "the tree was in the background",
+  "answer_b": "the tree was in the background",
+  "rouge_a": 1.0,
+  "tree_a": 100.0,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "fortunately for him the demons did not see him , as the tree was in the background .",
+  "cheat": "fortunately for him the demons did not see him , as the tree was in the background .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "11-20",
+  "judgment": "right",
+  "note": "matches"
+ },
+ {
+  "group": "high",
+  "id": "ft1618",
+  "question": "Who was the youngest son?",
+  "reference": [
+   "Dullhead"
+  ],
+  "answer_a": "dullhead",
+  "answer_b": "dullhead",
+  "rouge_a": 1.0,
+  "tree_a": 100.0,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "the youngest of them was called dullhead , and was sneered and jeered at and snubbed on every possible opportunity .",
+  "cheat": "the youngest of them was called dullhead , and was sneered and jeered at and snubbed on every possible opportunity .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "11-20",
+  "judgment": "right",
+  "note": "matches"
+ },
+ {
+  "group": "high",
+  "id": "ft258",
+  "question": "Who did the wood belong to?",
+  "reference": [
+   "the king",
+   "the King"
+  ],
+  "answer_a": "the king to",
+  "answer_b": "the king to",
+  "rouge_a": 0.8,
+  "tree_a": 92.00643793983849,
+  "tree_reasons": [
+   "operator_folded_differs"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "king",
+    "kind": "operator_folded_differs",
+    "candidate_token": "king"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "now , it happened that the king to whom this wood belonged was hunting in it .",
+  "cheat": "then she was sent into the kitchen , where she carried wood and water , poked the fire , washed vegetables , plucked fowls , swept up the ashes , and did all the dirty work .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "11-20",
+  "judgment": "right",
+  "note": "extra function word 'to'; operator_folded_differs is a fair, minor reason"
+ },
+ {
+  "group": "high",
+  "id": "ft256",
+  "question": "Where did the princess fall asleep?",
+  "reference": [
+   "inside a hollow tree"
+  ],
+  "answer_a": "inside a hollow",
+  "answer_b": "in a hollow",
+  "rouge_a": 0.857,
+  "tree_a": 70.7208211911865,
+  "tree_reasons": [
+   "meaning_shift",
+   "node_dropped"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "tree",
+    "kind": "meaning_shift",
+    "candidate_token": "hollow"
+   },
+   {
+    "side": "reference",
+    "token": "hollow",
+    "kind": "node_dropped"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "and as she was very much tired she sat down inside a hollow tree and fell asleep .",
+  "cheat": "at last , when all was ready , the king commanded the cloak to be brought to him , and he spread it out before the princess , and said , 'tomorrow shall be your wedding-day . '",
+  "reachable": true,
+  "needs_new": false,
+  "band": "11-20",
+  "judgment": "partly",
+  "note": "dropped 'tree'; node_dropped/meaning_shift match"
+ },
+ {
+  "group": "high",
+  "id": "ft2384",
+  "question": "Why did Rin Jin not enjoy reigning alone?",
+  "reference": [
+   "He was lonely.",
+   "He wished for a companion.",
+   "He wanted a wife.",
+   "he thought that if he married he wound not only be happier but also more powerful"
+  ],
+  "answer_a": "he decided to take a wife",
+  "answer_b": "he decided to take a wife",
+  "rouge_a": 0.6,
+  "tree_a": 37.909944487358054,
+  "tree_reasons": [
+   "meaning_shift",
+   "node_dropped",
+   "node_extra"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "was",
+    "kind": "meaning_shift",
+    "candidate_token": "decided"
+   },
+   {
+    "side": "reference",
+    "token": "lonely",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "candidate",
+    "token": "to",
+    "kind": "node_extra"
+   },
+   {
+    "side": "candidate",
+    "token": "take",
+    "kind": "node_extra"
+   },
+   {
+    "side": "candidate",
+    "token": "wife",
+    "kind": "node_extra"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "at last he thought that if he married he would not only be happier , but also more powerful .",
+  "cheat": "the palace of rin jin was at the bottom of the sea , and was so beautiful that no one has ever seen anything like it even in dreams .",
+  "reachable": true,
+  "needs_new": true,
+  "band": "21+",
+  "judgment": "partly",
+  "note": "implicit answer; a plausible paraphrase of 'wished for a companion' (took a wife); ROUGE 0.6 comes from function words; reasons match"
+ },
+ {
+  "group": "high",
+  "id": "ft289",
+  "question": "What did the king see when he saw the Many-furred Creature?",
+  "reference": [
+   "the white finger",
+   "the ring which he had put on her hand in the dance",
+   "he saw the white finger"
+  ],
+  "answer_a": "the ring which he had put on her hand in the dance",
+  "answer_b": "the ring which he had put on her hand in the dance",
+  "rouge_a": 1.0,
+  "tree_a": 0.0,
+  "tree_reasons": [
+   "head_changed",
+   "meaning_shift",
+   "node_extra"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "finger",
+    "kind": "meaning_shift",
+    "candidate_token": "hand"
+   },
+   {
+    "side": "reference",
+    "token": "finger",
+    "kind": "head_changed"
+   },
+   {
+    "side": "reference",
+    "token": "white",
+    "kind": "meaning_shift",
+    "candidate_token": "ring"
+   },
+   {
+    "side": "reference",
+    "token": "white",
+    "kind": "head_changed"
+   },
+   {
+    "side": "candidate",
+    "token": "put",
+    "kind": "node_extra"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "when the king found the reel at the bottom , he had the many-furred creature brought to him , and then he saw the white finger , and the ring which he had put on her hand in the dance .",
+  "cheat": "when the king found the reel at the bottom , he had the many-furred creature brought to him , and then he saw the white finger , and the ring which he had put on her hand in the dance .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "right",
+  "note": "matches gold 2; tree score 0 is because the tree score uses only the FIRST gold ('the white finger'): reasons do not describe the real state"
+ },
+ {
+  "group": "high",
+  "id": "ft2396",
+  "question": "What happened because the Dragon Queen fell ill?",
+  "reference": [
+   "was obliged to stay in bed",
+   "she was obliged to stay in bed"
+  ],
+  "answer_a": "the dragon queen and was obliged to stay in bed",
+  "answer_b": "the dragon queen and was obliged to stay in bed",
+  "rouge_a": 0.75,
+  "tree_a": 15.59800184272864,
+  "tree_reasons": [
+   "head_changed",
+   "node_extra",
+   "relation_changed",
+   "subtree_moved"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "obliged",
+    "kind": "head_changed"
+   },
+   {
+    "side": "reference",
+    "token": "to",
+    "kind": "head_changed"
+   },
+   {
+    "side": "reference",
+    "token": "stay",
+    "kind": "relation_changed"
+   },
+   {
+    "side": "reference",
+    "token": "in",
+    "kind": "subtree_moved"
+   },
+   {
+    "side": "candidate",
+    "token": "and",
+    "kind": "node_extra"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "two months passed in this happy way , and then the dragon queen fell ill and was obliged to stay in bed .",
+  "cheat": "two months passed in this happy way , and then the dragon queen fell ill and was obliged to stay in bed .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "partly",
+  "note": "right content plus extra subject 'the dragon queen and'; reasons (node_extra, head_changed) match"
+ },
+ {
+  "group": "high",
+  "id": "ft1622",
+  "question": "Who went into the forest next?",
+  "reference": [
+   "the second son"
+  ],
+  "answer_a": "the second son",
+  "answer_b": "the second son",
+  "rouge_a": 1.0,
+  "tree_a": 100.0,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "but the second son spoke most sensibly too , and said : 'whatever i give to you i deprive myself of .",
+  "cheat": "but this clever son replied : 'if i give you my cake and wine i shall have none left for myself ; you just go your own way ; ' and he left the little man standing there and went further on into the forest .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "right",
+  "note": "matches"
+ },
+ {
+  "group": "low",
+  "id": "ft2412",
+  "question": "What did the jelly fish see on one of the branches?",
+  "reference": [
+   "a live monkey"
+  ],
+  "answer_a": "see the dragon king 's palace",
+  "answer_b": "saw the dragon king 's palace",
+  "rouge_a": 0.0,
+  "tree_a": 29.577711046577186,
+  "tree_reasons": [
+   "meaning_shift",
+   "node_extra",
+   "operator_folded_differs"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "live",
+    "kind": "meaning_shift",
+    "candidate_token": "see"
+   },
+   {
+    "side": "reference",
+    "token": "monkey",
+    "kind": "meaning_shift",
+    "candidate_token": "palace"
+   },
+   {
+    "side": "reference",
+    "token": "monkey",
+    "kind": "operator_folded_differs",
+    "candidate_token": "palace"
+   },
+   {
+    "side": "candidate",
+    "token": "dragon",
+    "kind": "node_extra"
+   },
+   {
+    "side": "candidate",
+    "token": "'s",
+    "kind": "node_extra"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "\" how can i play a trick on a monkey ?",
+  "cheat": "on looking round he saw not far away a big pine-tree with drooping branches and on one of those branches was just what he was looking for-a live monkey .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "wrong",
+  "note": "answer sentence is a different one (monkey sentence not chosen); reasons match"
+ },
+ {
+  "group": "low",
+  "id": "ft261",
+  "question": "What did the huntsmen say lived in the tree?",
+  "reference": [
+   "a wonderful animal that they didn't know",
+   "a wonderful animal that we don't know"
+  ],
+  "answer_a": "the hollow",
+  "answer_b": "the hollow",
+  "rouge_a": 0.0,
+  "tree_a": 17.088251308385804,
+  "tree_reasons": [
+   "meaning_shift",
+   "node_dropped",
+   "operator_folded_differs"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "know",
+    "kind": "meaning_shift",
+    "candidate_token": "hollow"
+   },
+   {
+    "side": "reference",
+    "token": "know",
+    "kind": "operator_folded_differs",
+    "candidate_token": "hollow"
+   },
+   {
+    "side": "reference",
+    "token": "animal",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "wonderful",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "did",
+    "kind": "node_dropped"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "the huntsmen went in , and then came back and said , 'in the hollow tree there lies a wonderful animal that we do n't know , and we have never seen one like it ; its skin is made of a thousand pieces of fur ; but it is lying down asleep . '",
+  "cheat": "the king said to the huntsmen , 'see what sort of a wild beast is in there . '",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "wrong",
+  "note": "'the hollow' is where it lived, not what; reasons match"
+ },
+ {
+  "group": "low",
+  "id": "ft2026",
+  "question": "How did the man feel about the rain falling even more heavily?",
+  "reference": [
+   "disappointment",
+   "disappointed"
+  ],
+  "answer_a": "aglow",
+  "answer_b": "aglow",
+  "rouge_a": 0.0,
+  "tree_a": 50.94502265504874,
+  "tree_reasons": [
+   "meaning_shift"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "disappointment",
+    "kind": "meaning_shift",
+    "candidate_token": "aglow"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "but much to the old man 's disappointment , instead of clearing the rain fell more and more heavily , and finally a heavy thunderstorm broke over the mountain .",
+  "cheat": "but much to the old man 's disappointment , instead of clearing the rain fell more and more heavily , and finally a heavy thunderstorm broke over the mountain .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "wrong",
+  "note": "'aglow' is not 'disappointment' although the story sentence is the best-overlap one; tree score 51 is generous: meaning_shift is listed but the score is too high"
+ },
+ {
+  "group": "low",
+  "id": "ft1440",
+  "question": "What happened because there were great, ugly rats by the thousands?",
+  "reference": [
+   "Only with toil and trouble could one manage to shove a bite of something into one's mouth once in a while.",
+   "only with toil and trouble could one manage to shove a bite of something into one's mouth once in a while"
+  ],
+  "answer_a": "the people told him that they knew of nothing more disagreeable than to sit down to eat for",
+  "answer_b": "the people told him that they knew of nothing also disagreeable than to sit down to eat for",
+  "rouge_a": 0.05,
+  "tree_a": 14.33700545461223,
+  "tree_reasons": [
+   "head_changed",
+   "meaning_shift",
+   "name_mismatch",
+   "node_dropped",
+   "node_extra",
+   "operator_folded_differs",
+   "subtree_moved"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "and",
+    "kind": "name_mismatch",
+    "reference_token": "and",
+    "candidate_token": "than"
+   },
+   {
+    "side": "reference",
+    "token": "and",
+    "kind": "operator_folded_differs",
+    "candidate_token": "than"
+   },
+   {
+    "side": "reference",
+    "token": "and",
+    "kind": "head_changed"
+   },
+   {
+    "side": "reference",
+    "token": "only",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "toil",
+    "kind": "node_dropped"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "only with toil and trouble could one manage to shove a bite of something into one 's mouth once in a while , so hard was it to defend oneself against the rats .",
+  "cheat": "again he turned in at a tavern , and there the table was also covered with switches ; but every switch was a yard and a half long , and as thick as a small broom , and the people told him that they knew of nothing more disagreeable than to sit down to eat , for there were great , ugly rats by the thousand .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "wrong",
+  "note": "correct sentence exists in the story but another sentence was chosen; reasons match"
+ },
+ {
+  "group": "low",
+  "id": "ft2062",
+  "question": "How will the demons feel about the disagreeable old man's dancing?",
+  "reference": [
+   "dissatisfied",
+   "disappointed",
+   "let down",
+   "unhappy"
+  ],
+  "answer_a": "please the demons",
+  "answer_b": "please the demons",
+  "rouge_a": 0.0,
+  "tree_a": 34.37334767140424,
+  "tree_reasons": [
+   "meaning_shift",
+   "node_extra"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "dissatisfied",
+    "kind": "meaning_shift",
+    "candidate_token": "please"
+   },
+   {
+    "side": "candidate",
+    "token": "demons",
+    "kind": "node_extra"
+   }
+  ],
+  "p_abstain": 0.011,
+  "best_sentence_in_story": "the old man now stood up and opened his fan and began to dance .",
+  "cheat": "he thought that anything would please the demons , so he just hopped about , waving his arms and stamping his feet , imitating as well as he could any dancing he had ever seen .",
+  "reachable": false,
+  "needs_new": true,
+  "band": "none",
+  "judgment": "wrong",
+  "note": "reasons match"
+ },
+ {
+  "group": "low",
+  "id": "ft2399",
+  "question": "How will the King feel when the Queen does not get better?",
+  "reference": [
+   "worried",
+   "upset",
+   "anxious",
+   "Sad",
+   "Desperate",
+   "Angry"
+  ],
+  "answer_a": "troubled",
+  "answer_b": "troubled",
+  "rouge_a": 0.0,
+  "tree_a": 90.84498129190936,
+  "tree_reasons": [
+   "meaning_shift"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "worried",
+    "kind": "meaning_shift",
+    "candidate_token": "troubled"
+   }
+  ],
+  "p_abstain": 0.015,
+  "best_sentence_in_story": "now for a time the dragon king and his bride lived very happily .",
+  "cheat": "the king was sorely troubled when he saw his precious bride so ill , and at once sent for the fish doctor to come and give her some medicine .",
+  "reachable": false,
+  "needs_new": true,
+  "band": "none",
+  "judgment": "right",
+  "note": "'troubled' = 'worried/upset' in meaning; ROUGE 0 is wrong here, tree score 91 is right"
+ },
+ {
+  "group": "low",
+  "id": "ft2408",
+  "question": "What was the jelly fish able to do?",
+  "reference": [
+   "walk on land with his four legs like a tortoise",
+   "Walk on land with his four legs like a tortoise"
+  ],
+  "answer_a": "the island",
+  "answer_b": "the island",
+  "rouge_a": 0.0,
+  "tree_a": 11.327300342911341,
+  "tree_reasons": [
+   "meaning_shift",
+   "node_dropped",
+   "operator_folded_differs"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "walk",
+    "kind": "meaning_shift",
+    "candidate_token": "island"
+   },
+   {
+    "side": "reference",
+    "token": "walk",
+    "kind": "operator_folded_differs",
+    "candidate_token": "island"
+   },
+   {
+    "side": "reference",
+    "token": "on",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "land",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "with",
+    "kind": "node_dropped"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "he is certainly ugly to look at , but he is proud of being able to walk on land with his four legs like a tortoise .",
+  "cheat": "the jelly fish was then summoned to the king 's presence , and was told by his majesty what was required of him .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "wrong",
+  "note": "reasons match"
+ },
+ {
+  "group": "low",
+  "id": "ft2065",
+  "question": "How did the disagreeable old man end up with two wens?",
+  "reference": [
+   "He was a poor dancer.",
+   "The demons did not like his dancing.",
+   "The demons gave him the other man's wen.",
+   "He danced poorly.",
+   "The demon gave him the old man's wen."
+  ],
+  "answer_a": "pitiful",
+  "answer_b": "pitiful",
+  "rouge_a": 0.0,
+  "tree_a": 20.0,
+  "tree_reasons": [
+   "meaning_shift",
+   "node_dropped"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "was",
+    "kind": "meaning_shift",
+    "candidate_token": "pitiful"
+   },
+   {
+    "side": "reference",
+    "token": "he",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "poor",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "dancer",
+    "kind": "node_dropped"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "the demons had all disappeared , and there was nothing for him to do but to return home .",
+  "cheat": "then to the old man the demon chief said : \" your performance to-day is quite different from the dance of yesterday .",
+  "reachable": true,
+  "needs_new": true,
+  "band": "21+",
+  "judgment": "wrong",
+  "note": "reasons match"
+ },
+ {
+  "group": "low",
+  "id": "ft2159",
+  "question": "How will Molo save Rose-Red?",
+  "reference": [
+   "take his master and Rose-Red upon his back, and fly away with them over the steep walls",
+   "He took his master and Rose-Red upon his back, and flew away with them over the steep walls."
+  ],
+  "answer_a": "in distress",
+  "answer_b": "in distress",
+  "rouge_a": 0.0,
+  "tree_a": 6.25,
+  "tree_reasons": [
+   "meaning_shift",
+   "node_dropped",
+   "node_extra"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "take",
+    "kind": "meaning_shift",
+    "candidate_token": "in"
+   },
+   {
+    "side": "reference",
+    "token": "master",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "and",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "rose-red",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "upon",
+    "kind": "node_dropped"
+   }
+  ],
+  "p_abstain": 0.0,
+  "best_sentence_in_story": "then he took his master and rose-red upon his back , and flew away with them over the steep walls .",
+  "cheat": "first he asked permission to carry away rose-red 's gear and jewels in sacks and bags .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "11-20",
+  "judgment": "wrong",
+  "note": "reasons match"
+ },
+ {
+  "group": "low",
+  "id": "ft2164",
+  "question": "What will Molo do when the prince wants to capture him?",
+  "reference": [
+   "draw his dagger and fly up the high wall",
+   "he will run away"
+  ],
+  "answer_a": "not reproach you",
+  "answer_b": "not reproach molo",
+  "rouge_a": 0.0,
+  "tree_a": 0.0,
+  "tree_reasons": [
+   "head_changed",
+   "name_mismatch",
+   "node_dropped",
+   "node_extra"
+  ],
+  "reason_detail": [
+   {
+    "side": "reference",
+    "token": "draw",
+    "kind": "name_mismatch",
+    "reference_token": "draw",
+    "candidate_token": "you"
+   },
+   {
+    "side": "reference",
+    "token": "draw",
+    "kind": "head_changed"
+   },
+   {
+    "side": "reference",
+    "token": "and",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "dagger",
+    "kind": "node_dropped"
+   },
+   {
+    "side": "reference",
+    "token": "fly",
+    "kind": "node_dropped"
+   }
+  ],
+  "p_abstain": 0.009,
+  "best_sentence_in_story": "but molo drew his dagger and flew up the high wall .",
+  "cheat": "but molo will have to suffer for it ! \"",
+  "reachable": true,
+  "needs_new": false,
+  "band": "11-20",
+  "judgment": "wrong",
+  "note": "reasons match (head_changed, node_dropped)"
+ },
+ {
+  "group": "abstain",
+  "id": "ft1624",
+  "question": "Who will Dullhead meet in the forest?",
+  "reference": [
+   "the little grey old man",
+   "the old grey man"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.956,
+  "best_sentence_in_story": "his mother only gave him a very plain cake made with water and baked in the cinders , and a bottle of sour beer .",
+  "cheat": "his mother only gave him a very plain cake made with water and baked in the cinders , and a bottle of sour beer .",
+  "reachable": false,
+  "needs_new": true,
+  "band": "21+",
+  "judgment": "abstain-unclear",
+  "note": "answer is in a later sentence not shown here; cannot tell"
+ },
+ {
+  "group": "abstain",
+  "id": "ft1636",
+  "question": "How did the little grey man feel when Dullhead saw him?",
+  "reference": [
+   "thirsty",
+   "sad",
+   "unhappy"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.746,
+  "best_sentence_in_story": "dullhead asked him what he was taking so much to heart , and the man answered : 'i do n't know how i am ever to quench this terrible thirst i am suffering from .",
+  "cheat": "dullhead asked him what he was taking so much to heart , and the man answered : 'i do n't know how i am ever to quench this terrible thirst i am suffering from .",
+  "reachable": false,
+  "needs_new": true,
+  "band": "none",
+  "judgment": "abstain-answer-implicit",
+  "note": "'thirst' is stated, 'thirsty' is the paraphrase: story supports it"
+ },
+ {
+  "group": "abstain",
+  "id": "ft1103",
+  "question": "Who did the wife plan to ask for help?",
+  "reference": [
+   "an old witch"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.896,
+  "best_sentence_in_story": "in the town where she had lived before she was married there was an old witch , who had more skill in magic that any other witch she knew .",
+  "cheat": "in the town where she had lived before she was married there was an old witch , who had more skill in magic that any other witch she knew .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "abstain-answer-stated",
+  "note": "an old witch is in the sentence"
+ },
+ {
+  "group": "abstain",
+  "id": "ft1893",
+  "question": "Why did the cottager's wife feel shocked when he returned?",
+  "reference": [
+   "She could hear him but she could not see him.",
+   "she could not see him but could hear him"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 1.0,
+  "best_sentence_in_story": "i can hear you , but i cannot see you ! \"",
+  "cheat": "\" yes , there was no one there who paid any attention to me , or even so much as looked at me , \" said the man , \" and when people show me so little consideration , it seems as though i have nothing to look for there . \"",
+  "reachable": false,
+  "needs_new": false,
+  "band": "<=10",
+  "judgment": "abstain-answer-stated",
+  "note": "'I can hear you, but I cannot see you' is in the story"
+ },
+ {
+  "group": "abstain",
+  "id": "ft1819",
+  "question": "Why did the women not say anything?",
+  "reference": [
+   "They could not find a word to say to him.",
+   "Their tounges were still withw onder and could not find a word to say to him"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 1.0,
+  "best_sentence_in_story": "they gazed at him face to face , but their tongues were still with wonder and could not find a word to say to him .",
+  "cheat": "they gazed at him face to face , but their tongues were still with wonder and could not find a word to say to him .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "abstain-answer-stated",
+  "note": "sentence contains the answer verbatim"
+ },
+ {
+  "group": "abstain",
+  "id": "ft2022",
+  "question": "How did the man feel about being outside?",
+  "reference": [
+   "happy",
+   "content",
+   "comfortable",
+   "joyful",
+   "peaceful"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.99,
+  "best_sentence_in_story": "one day the firewood gave out in his kitchen , so , as his wife wanted some at once , the old man took his ax and set out for the woods up among the hills not very far from his home .",
+  "cheat": "one day the firewood gave out in his kitchen , so , as his wife wanted some at once , the old man took his ax and set out for the woods up among the hills not very far from his home .",
+  "reachable": false,
+  "needs_new": true,
+  "band": "none",
+  "judgment": "abstain-not-stated",
+  "note": "emotion not stated (implicit)"
+ },
+ {
+  "group": "abstain",
+  "id": "ft2152",
+  "question": "How did Tsui feel after meeting Rose-Red?",
+  "reference": [
+   "confused",
+   "puzzled",
+   "Sad"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 1.0,
+  "best_sentence_in_story": "\" why are you so sad ?",
+  "cheat": "when the young man reached home his thoughts were all in confusion .",
+  "reachable": false,
+  "needs_new": true,
+  "band": "none",
+  "judgment": "abstain-not-stated",
+  "note": "emotion not stated here"
+ },
+ {
+  "group": "abstain",
+  "id": "ft1895",
+  "question": "What made the cottager invisible?",
+  "reference": [
+   "He had found a huldre hat.",
+   "he had found a huldre hat"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.999,
+  "best_sentence_in_story": "the man was invisible , for what he had found was a huldre hat .",
+  "cheat": "the man was invisible , for what he had found was a huldre hat .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "11-20",
+  "judgment": "abstain-answer-stated",
+  "note": "'a huldre hat' verbatim, p_abstain 0.999"
+ },
+ {
+  "group": "abstain",
+  "id": "ft1095",
+  "question": "What did the man's daughter give the little doves?",
+  "reference": [
+   "bread"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 0.885,
+  "best_sentence_in_story": "she then crumbled the bread on the ground , and was pleased to see the doves flutter quite cheerfully towards it .",
+  "cheat": "'you poor little things , ' said the girl , stroking them .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "21+",
+  "judgment": "abstain-answer-stated",
+  "note": "'crumbled the bread' present, p_abstain 0.885"
+ },
+ {
+  "group": "abstain",
+  "id": "ft1813",
+  "question": "What were the women holding?",
+  "reference": [
+   "golden buckets",
+   "Golden Buckets"
+  ],
+  "answer_a": null,
+  "answer_b": null,
+  "rouge_a": 0.0,
+  "tree_a": null,
+  "tree_reasons": [],
+  "reason_detail": [],
+  "p_abstain": 1.0,
+  "best_sentence_in_story": "he saw that in their hands they carried golden buckets .",
+  "cheat": "he said not a word , however , but silently gazed at them through the foliage of the trees , waiting to see what they would do .",
+  "reachable": true,
+  "needs_new": false,
+  "band": "<=10",
+  "judgment": "abstain-answer-stated",
+  "note": "'golden buckets' verbatim, p_abstain 1.0"
+ }
+]

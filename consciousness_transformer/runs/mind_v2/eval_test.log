@@ -1,0 +1,163 @@
+reading back 544 decoded strings
+{"split": "test", "n_items": 406, "n_reachable": 363, "n_needs_new": 70, "band_counts": {"<=10": 15, "11-20": 83, "21+": 280, "none": 28}}
+cheat: best-overlap sentence                            {'n': 406, 'rouge_abstain0': 0.2429147849235668}
+baseline: question echo                                 {'n': 406, 'rouge_abstain0': 0.12225263543144407}
+baseline: random story sentence                         {'n': 406, 'rouge_abstain0': 0.1412569787154656}
+baseline: random-anchor full subtree                    {'n': 406, 'rouge_abstain0': 0.08304622443253575}
+oracle: best full subtree (by ROUGE, true order)        {'n': 406, 'rouge_abstain0': 0.7668330305446784}
+oracle: lemma-F1 pruned subtree (true order)            {'n': 406, 'rouge_abstain0': 0.7671484712726306}
+s1_all: (a) order-only decoder                          {'n': 406, 'rouge_abstain0': 0.30780688191089245, 'answer_rate': 0.9679802955665024, 'rouge_answered_only': 0.31798878894611277}
+s1_all: (b) meaning-only decoder                        {'n': 406, 'rouge_abstain0': 0.2997647231683126, 'answer_rate': 0.9679802955665024, 'rouge_answered_only': 0.3096806045962721}
+s1_all: true word order (no decoder)                    {'n': 406, 'rouge_abstain0': 0.32662874559614236, 'answer_rate': 0.9679802955665024, 'rouge_answered_only': 0.3374332588092463}
+s2_all: (a) order-only decoder                          {'n': 406, 'rouge_abstain0': 0.32256078575411035, 'answer_rate': 0.9458128078817734, 'rouge_answered_only': 0.34104083077127284}
+s2_all: (b) meaning-only decoder                        {'n': 406, 'rouge_abstain0': 0.315473204609356, 'answer_rate': 0.9458128078817734, 'rouge_answered_only': 0.3335471902901004}
+s2_all: true word order (no decoder)                    {'n': 406, 'rouge_abstain0': 0.3428606877025645, 'answer_rate': 0.9458128078817734, 'rouge_answered_only': 0.3625037479355238}
+s2b_all: (a) order-only decoder                         {'n': 406, 'rouge_abstain0': 0.32614693846619136, 'answer_rate': 0.9556650246305419, 'rouge_answered_only': 0.3412774665393652}
+s2b_all: (b) meaning-only decoder                       {'n': 406, 'rouge_abstain0': 0.3216883457620218, 'answer_rate': 0.9556650246305419, 'rouge_answered_only': 0.33661203190562067}
+s2b_all: true word order (no decoder)                   {'n': 406, 'rouge_abstain0': 0.34401462978909436, 'answer_rate': 0.9556650246305419, 'rouge_answered_only': 0.35997407137724824}
+s1_short: (a) order-only decoder                        {'n': 406, 'rouge_abstain0': 0.10874255066395247, 'answer_rate': 0.8399014778325123, 'rouge_answered_only': 0.12947060284329825}
+s1_short: (b) meaning-only decoder                      {'n': 406, 'rouge_abstain0': 0.10895838774229319, 'answer_rate': 0.8399014778325123, 'rouge_answered_only': 0.12972758188671857}
+s1_short: true word order (no decoder)                  {'n': 406, 'rouge_abstain0': 0.11301930160761157, 'answer_rate': 0.8399014778325123, 'rouge_answered_only': 0.13456257024249355}
+{
+ "s1_all": {
+  "wrong_abstain": 0.9261083743842364,
+  "n_wrong": 406,
+  "shuf_answer_rate": 0.4876847290640394,
+  "shuf_rouge": 0.052460274365088724,
+  "n_shuf": 406,
+  "severed_abstain": 0.05665024630541872,
+  "empty_abstain": 1.0,
+  "n_severed": 406,
+  "n_empty": 406
+ },
+ "s2_all": {
+  "wrong_abstain": 0.9605911330049262,
+  "n_wrong": 406,
+  "shuf_answer_rate": 0.4039408866995074,
+  "shuf_rouge": 0.04418177020539132,
+  "n_shuf": 406,
+  "severed_abstain": 0.5344827586206896,
+  "empty_abstain": 1.0,
+  "n_severed": 406,
+  "n_empty": 406
+ },
+ "s2b_all": {
+  "wrong_abstain": 0.9458128078817734,
+  "n_wrong": 406,
+  "shuf_answer_rate": 0.43842364532019706,
+  "shuf_rouge": 0.053948380369187754,
+  "n_shuf": 406,
+  "severed_abstain": 0.6748768472906403,
+  "empty_abstain": 1.0,
+  "n_severed": 406,
+  "n_empty": 406
+ },
+ "s1_short": {
+  "wrong_abstain": 0.9014778325123153,
+  "n_wrong": 406,
+  "shuf_answer_rate": 0.3817733990147783,
+  "shuf_rouge": 0.03446119078028216,
+  "n_shuf": 406,
+  "severed_abstain": 0.03694581280788178,
+  "empty_abstain": 1.0,
+  "n_severed": 406,
+  "n_empty": 406
+ }
+}
+{
+ "a": {
+  "tree_score_answered_mean": 30.66053698577361,
+  "tree_score_abstain0_mean": 29.30120283369498,
+  "n_scored": 388,
+  "roundtrip_share_lt50": 0.16237113402061856,
+  "roundtrip_mean": 77.72596559526376,
+  "roundtrip_fail_share_lt80": 0.4484536082474227,
+  "n_roundtrip": 388,
+  "reason_counts": {
+   "node_extra": 1743,
+   "node_dropped": 775,
+   "meaning_shift": 489,
+   "operator_folded_differs": 310,
+   "head_changed": 284,
+   "subtree_moved": 215,
+   "name_mismatch": 89,
+   "relation_changed": 66
+  }
+ },
+ "b": {
+  "tree_score_answered_mean": 30.677080134557347,
+  "tree_score_abstain0_mean": 29.317012542384855,
+  "n_scored": 388,
+  "roundtrip_share_lt50": 0.15721649484536082,
+  "roundtrip_mean": 77.24000427900238,
+  "roundtrip_fail_share_lt80": 0.4639175257731959,
+  "n_roundtrip": 388,
+  "reason_counts": {
+   "node_extra": 1742,
+   "node_dropped": 772,
+   "meaning_shift": 492,
+   "operator_folded_differs": 311,
+   "head_changed": 281,
+   "subtree_moved": 217,
+   "name_mismatch": 91,
+   "relation_changed": 67
+  }
+ },
+ "true": {
+  "roundtrip_share_lt50": 0.1056701030927835,
+  "roundtrip_mean": 81.89482580326218,
+  "roundtrip_fail_share_lt80": 0.35309278350515466,
+  "n_roundtrip": 388
+ },
+ "cheat_tree_score_mean": 10.656873401567555
+}
+{
+ "s1_all": {
+  "nodes": 3002,
+  "accuracy": 0.9800133244503664,
+  "with_meaning_point": {
+   "n": 2910,
+   "acc": 0.98659793814433
+  },
+  "no_point_names_or_unlexiconed": {
+   "n": 92,
+   "acc": 0.7717391304347826
+  }
+ },
+ "s2_all": {
+  "nodes": 3861,
+  "accuracy": 0.98005698005698,
+  "with_meaning_point": {
+   "n": 3755,
+   "acc": 0.9861517976031957
+  },
+  "no_point_names_or_unlexiconed": {
+   "n": 106,
+   "acc": 0.7641509433962265
+  }
+ },
+ "s2b_all": {
+  "nodes": 3765,
+  "accuracy": 0.9800796812749004,
+  "with_meaning_point": {
+   "n": 3651,
+   "acc": 0.9860312243221035
+  },
+  "no_point_names_or_unlexiconed": {
+   "n": 114,
+   "acc": 0.7894736842105263
+  }
+ },
+ "s1_short": {
+  "nodes": 2511,
+  "accuracy": 0.973715651135006,
+  "with_meaning_point": {
+   "n": 2399,
+   "acc": 0.9808253438932889
+  },
+  "no_point_names_or_unlexiconed": {
+   "n": 112,
+   "acc": 0.8214285714285714
+  }
+ }
+}

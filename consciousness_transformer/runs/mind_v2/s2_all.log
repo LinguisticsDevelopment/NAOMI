@@ -1,0 +1,7 @@
+stage2 start: val_rouge(decoded) 0.2892 answer_rate 0.973 wrong_abstain 0.932
+ep 0 train_reward 0.4737 val_rouge 0.2930 answer_rate 0.946 wrong_abstain 0.951 17s
+ep 1 train_reward 0.5030 val_rouge 0.2923 answer_rate 0.951 wrong_abstain 0.949 33s
+ep 2 train_reward 0.5075 val_rouge 0.2931 answer_rate 0.946 wrong_abstain 0.954 48s
+ep 3 train_reward 0.5195 val_rouge 0.2892 answer_rate 0.954 wrong_abstain 0.954 65s
+ep 4 train_reward 0.5206 val_rouge 0.2873 answer_rate 0.951 wrong_abstain 0.959 82s
+ep 5 train_reward 0.5234 val_rouge 0.2858 answer_rate 0.946 wrong_abstain 0.957 97s

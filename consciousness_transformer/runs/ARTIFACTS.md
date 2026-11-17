@@ -226,3 +226,9 @@ Report: `dev/reports/MIND_V1.md`. Code: `src/naomi/mind_v1.py`, `src/naomi/mind.
 - Evaluation: `eval_summary.json` (all tables), `eval_rows.json` (per item), `eval_traces_all.jsonl` (every test answer with its trace), `eval_traces_30.json` + `eval_traces_30_judgments.json` (the hand-read).
 - NOT committed (regenerable): `runs/mind_v1/read_cache/` (26 MB reading cache, ~13 min), `items_{train,val,test}.pkl` (208 MB features/labels, ~13 min), `*_last.pt`.
 - Headline (held-out test, abstain counted wrong): MCTest 0.208, FairytaleQA 0.317 vs word-overlap cheat 0.410 / 0.564; answer-in-candidates ceiling 0.583 / 0.756; memory-severed answers 0%; wrong-passage abstain 89% / 95%. Does not beat the cheat.
+
+## Mind v2 (full chain, text answers) — 2026-11-17
+
+Report: `dev/reports/MIND_V2.md`. Code: `src/naomi/mind_v2.py`, `scripts/{build_mind_v2_data,train_mind_v2,eval_mind_v2}.py`, `tests/test_mind_v2.py`.
+- **`runs/mind_v2/thinker_s2b_all_best.pt`** -- THE thinker (stage 2, all lengths; test ROUGE-L 0.326). Also `thinker_s1_all_best.pt` (stage 1), `thinker_s2_all_best.pt`, `thinker_s1_short_best.pt` (short-to-long comparison). `vocab.json`; curves, logs, `eval_{val,test}.json`, `eval_rows_*.jsonl`, hand-read files.
+- NOT committed (regenerable): `stories.pkl` (72 MB), `pairs_*.pkl`, `read_cache/`.
