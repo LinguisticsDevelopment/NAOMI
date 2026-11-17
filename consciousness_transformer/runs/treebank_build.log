@@ -1,0 +1,63 @@
+dev: 1987 sentences
+already parsed 1259, to parse 728
+parsed in 1.6 min
+{
+ "sentences": 1987,
+ "align_ok": 1667,
+ "parser_pieces": 1183,
+ "links_root_conflict": 303,
+ "unknown_tops_before": 3750,
+ "node_tokens": 21754,
+ [ParserInputEncoder] graph parse failed (maximum recursion depth exceeded); no discourse structure.
+parsed in 3.1 min
+{
+ "sentences": 2046,
+ "align_ok": 1726,
+ "parser_pieces": 1194,
+ "links_root_conflict": 307,
+ "unknown_tops_before": 3806,
+ "node_tokens": 21581,
+ "tok_unknown": 1317,
+ "tok_parser[ParserInputEncoder] graph parse failed (maximum recursion depth exceeded); no discourse structure.
+parsed in 1.8 min
+{
+ "sentences": 2046,
+ "align_ok": 1726,
+ "parser_pieces": 1194,
+ "links_root_conflict": 307,
+ "unknown_tops_before": 3806,
+ "node_tokens": 21581,
+ "tok_unknown": 1317,
+ "tok_parser": 17775,
+ "links_cycle_dropped": 395,
+ "links_accepted": 2489,
+ "tok_treebank": 2489,
+ "parser_connected": 842,
+ "align_ok_masked": 310,
+ "links_no_link": 594,
+ "parser_failed": 10,
+ "links_head_not_node": 21
+}
+train: 6000 sentences
+already parsed 586, to parse 5414
+[ParserInputEncoder] graph parse failed (maximum recursion depth exceeded); no discourse structure.
+[ParserInputEncoder] graph parse failed (maximum recursion depth exceeded); no discourse structure.
+parsed in 6.8 min
+{
+ "sentences": 6000,
+ "align_ok": 5132,
+ "parser_pieces": 4086,
+ "links_accepted": 10683,
+ "links_cycle_dropped": 1787,
+ "unknown_tops_before": 14988,
+ "node_tokens": 83817,
+ "tok_treebank": 10683,
+ "tok_parser": 68829,
+ "tok_unknown": 4305,
+ "links_root_conflict": 1319,
+ "align_ok_masked": 827,
+ "links_no_link": 1120,
+ "parser_connected": 1873,
+ "links_head_not_node": 79,
+ "parser_failed": 41
+}

@@ -1,0 +1,1862 @@
+{
+ "sentences": {
+  "S01": {
+   "id": "v7-000003",
+   "band": "<=10"
+  },
+  "S02": {
+   "id": "v7-012921",
+   "band": "36+"
+  },
+  "S03": {
+   "id": "v7-000380",
+   "band": "<=10"
+  },
+  "S04": {
+   "id": "v7-012781",
+   "band": "36+"
+  },
+  "S05": {
+   "id": "v7-012934",
+   "band": "11-20"
+  },
+  "S06": {
+   "id": "v7-008409",
+   "band": "11-20"
+  },
+  "S07": {
+   "id": "v7-027660",
+   "band": "36+"
+  },
+  "S08": {
+   "id": "v7-017847",
+   "band": "21-35"
+  },
+  "S09": {
+   "id": "v7-000013",
+   "band": "36+"
+  },
+  "S10": {
+   "id": "v7-008628",
+   "band": "21-35"
+  },
+  "S11": {
+   "id": "v7-000234",
+   "band": "<=10"
+  },
+  "S12": {
+   "id": "v7-000108",
+   "band": "21-35"
+  },
+  "S13": {
+   "id": "v7-000279",
+   "band": "<=10"
+  },
+  "S14": {
+   "id": "v7-008332",
+   "band": "11-20"
+  },
+  "S15": {
+   "id": "v7-008380",
+   "band": "11-20"
+  },
+  "S16": {
+   "id": "v7-027558",
+   "band": "21-35"
+  },
+  "S17": {
+   "id": "v7-012782",
+   "band": "36+"
+  },
+  "S18": {
+   "id": "v7-027722",
+   "band": "<=10"
+  },
+  "S19": {
+   "id": "v7-012799",
+   "band": "21-35"
+  },
+  "S20": {
+   "id": "v7-008465",
+   "band": "21-35"
+  },
+  "S21": {
+   "id": "v7-000252",
+   "band": "<=10"
+  },
+  "S22": {
+   "id": "v7-017857",
+   "band": "36+"
+  },
+  "S23": {
+   "id": "v7-000031",
+   "band": "11-20"
+  },
+  "S24": {
+   "id": "v7-013066",
+   "band": "<=10"
+  },
+  "S25": {
+   "id": "v7-000269",
+   "band": "<=10"
+  },
+  "S26": {
+   "id": "v7-000080",
+   "band": "36+"
+  },
+  "S27": {
+   "id": "v7-019886",
+   "band": "<=10"
+  },
+  "S28": {
+   "id": "v7-000207",
+   "band": "11-20"
+  },
+  "S29": {
+   "id": "v7-012932",
+   "band": "21-35"
+  },
+  "S30": {
+   "id": "v7-008506",
+   "band": "11-20"
+  },
+  "S31": {
+   "id": "v7-000378",
+   "band": "36+"
+  },
+  "S32": {
+   "id": "v7-012975",
+   "band": "<=10"
+  },
+  "S33": {
+   "id": "v7-008609",
+   "band": "36+"
+  },
+  "S34": {
+   "id": "v7-012893",
+   "band": "11-20"
+  },
+  "S35": {
+   "id": "v7-012993",
+   "band": "21-35"
+  },
+  "S36": {
+   "id": "v7-013030",
+   "band": "11-20"
+  },
+  "S37": {
+   "id": "v7-008461",
+   "band": "11-20"
+  },
+  "S38": {
+   "id": "v7-000024",
+   "band": "21-35"
+  },
+  "S39": {
+   "id": "v7-012909",
+   "band": "21-35"
+  },
+  "S40": {
+   "id": "v7-012814",
+   "band": "36+"
+  }
+ },
+ "links": {
+  "L001": {
+   "key": "v7-000003|0|2|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L002": {
+   "key": "v7-012921|18|11|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L003": {
+   "key": "v7-012921|10|4|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L004": {
+   "key": "v7-012921|18|0|ROOT",
+   "models": [
+    "A"
+   ]
+  },
+  "L005": {
+   "key": "v7-012921|21|23|DESCRIPTION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L006": {
+   "key": "v7-012921|46|46|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L007": {
+   "key": "v7-012921|34|46|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L008": {
+   "key": "v7-012921|23|19|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L009": {
+   "key": "v7-012921|10|19|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L010": {
+   "key": "v7-012921|21|20|SUBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L011": {
+   "key": "v7-012921|34|24|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L012": {
+   "key": "v7-012921|23|19|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L013": {
+   "key": "v7-000380|5|3|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L014": {
+   "key": "v7-000380|0|3|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L015": {
+   "key": "v7-000380|5|3|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L016": {
+   "key": "v7-000380|0|2|DESCRIPTION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L017": {
+   "key": "v7-012781|55|41|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L018": {
+   "key": "v7-012781|21|19|COMPLEMENT",
+   "models": [
+    "A"
+   ]
+  },
+  "L019": {
+   "key": "v7-012781|14|8|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L020": {
+   "key": "v7-012781|7|17|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L021": {
+   "key": "v7-012781|25|25|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L022": {
+   "key": "v7-012781|48|56|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L023": {
+   "key": "v7-012781|2|4|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L024": {
+   "key": "v7-012781|3|8|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L025": {
+   "key": "v7-012781|7|4|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L026": {
+   "key": "v7-012781|40|39|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L027": {
+   "key": "v7-012781|21|19|SPECIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L028": {
+   "key": "v7-012781|18|25|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L029": {
+   "key": "v7-012781|55|49|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L030": {
+   "key": "v7-012781|25|35|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L031": {
+   "key": "v7-012781|48|40|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L032": {
+   "key": "v7-012781|3|2|SPECIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L033": {
+   "key": "v7-012781|40|40|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L034": {
+   "key": "v7-012934|16|5|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L035": {
+   "key": "v7-008409|15|10|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L036": {
+   "key": "v7-008409|15|2|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L037": {
+   "key": "v7-008409|4|6|PREPOSITION",
+   "models": [
+    "A"
+   ]
+  },
+  "L038": {
+   "key": "v7-008409|4|4|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L039": {
+   "key": "v7-027660|23|19|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L040": {
+   "key": "v7-027660|13|18|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L041": {
+   "key": "v7-027660|34|43|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L042": {
+   "key": "v7-027660|17|6|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L043": {
+   "key": "v7-027660|4|6|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L044": {
+   "key": "v7-027660|5|2|INDIRECT_OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L045": {
+   "key": "v7-027660|24|35|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L046": {
+   "key": "v7-027660|24|35|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L047": {
+   "key": "v7-027660|5|3|PREPOSITION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L048": {
+   "key": "v7-027660|9|6|APPOSITION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L049": {
+   "key": "v7-027660|9|14|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L050": {
+   "key": "v7-027660|4|2|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L051": {
+   "key": "v7-027660|23|6|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L052": {
+   "key": "v7-027660|17|35|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L053": {
+   "key": "v7-017847|3|1|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L054": {
+   "key": "v7-017847|13|4|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L055": {
+   "key": "v7-017847|3|0|ROOT",
+   "models": [
+    "A"
+   ]
+  },
+  "L056": {
+   "key": "v7-017847|20|25|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L057": {
+   "key": "v7-017847|22|25|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L058": {
+   "key": "v7-017847|22|25|SUBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L059": {
+   "key": "v7-017847|24|14|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L060": {
+   "key": "v7-000013|16|9|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L061": {
+   "key": "v7-000013|47|51|SPECIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L062": {
+   "key": "v7-000013|50|38|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L063": {
+   "key": "v7-000013|54|51|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L064": {
+   "key": "v7-000013|54|51|COMPLEMENT",
+   "models": [
+    "A"
+   ]
+  },
+  "L065": {
+   "key": "v7-000013|47|50|DESCRIPTION",
+   "models": [
+    "A"
+   ]
+  },
+  "L066": {
+   "key": "v7-000013|0|4|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L067": {
+   "key": "v7-000013|25|36|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L068": {
+   "key": "v7-000013|35|17|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L069": {
+   "key": "v7-008628|20|18|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L070": {
+   "key": "v7-008628|18|21|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L071": {
+   "key": "v7-008628|17|13|SUBORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L072": {
+   "key": "v7-008628|20|9|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L073": {
+   "key": "v7-008628|17|9|SUBORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L074": {
+   "key": "v7-008628|31|29|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L075": {
+   "key": "v7-000234|0|3|DESCRIPTION",
+   "models": [
+    "A"
+   ]
+  },
+  "L076": {
+   "key": "v7-000234|0|7|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L077": {
+   "key": "v7-000234|6|3|SUBORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L078": {
+   "key": "v7-000108|15|8|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L079": {
+   "key": "v7-000108|15|22|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L080": {
+   "key": "v7-000108|18|22|COMPLEMENT",
+   "models": [
+    "A"
+   ]
+  },
+  "L081": {
+   "key": "v7-000108|16|16|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L082": {
+   "key": "v7-000108|18|22|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L083": {
+   "key": "v7-000108|21|8|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L084": {
+   "key": "v7-000108|26|22|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L085": {
+   "key": "v7-000279|9|8|PREPOSITION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L086": {
+   "key": "v7-000279|8|10|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L087": {
+   "key": "v7-008332|5|5|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L088": {
+   "key": "v7-008380|14|10|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L089": {
+   "key": "v7-008380|14|13|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L090": {
+   "key": "v7-008380|9|4|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L091": {
+   "key": "v7-008380|9|8|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L092": {
+   "key": "v7-027558|18|18|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L093": {
+   "key": "v7-027558|16|18|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L094": {
+   "key": "v7-027558|12|12|PREPOSITION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L095": {
+   "key": "v7-027558|10|2|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L096": {
+   "key": "v7-027558|14|18|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L097": {
+   "key": "v7-027558|19|11|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L098": {
+   "key": "v7-027558|18|20|DESCRIPTION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L099": {
+   "key": "v7-027558|20|18|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L100": {
+   "key": "v7-027558|19|18|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L101": {
+   "key": "v7-012782|35|30|SUBORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L102": {
+   "key": "v7-012782|29|26|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L103": {
+   "key": "v7-012782|3|7|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L104": {
+   "key": "v7-012782|24|26|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L105": {
+   "key": "v7-012782|6|4|SUBORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L106": {
+   "key": "v7-012782|25|21|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L107": {
+   "key": "v7-012782|5|7|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L108": {
+   "key": "v7-012782|24|24|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L109": {
+   "key": "v7-012782|6|21|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L110": {
+   "key": "v7-012782|25|24|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L111": {
+   "key": "v7-012782|34|30|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L112": {
+   "key": "v7-012782|4|7|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L113": {
+   "key": "v7-012782|4|6|SPECIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L114": {
+   "key": "v7-012782|3|1|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L115": {
+   "key": "v7-027722|0|3|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L116": {
+   "key": "v7-012799|8|28|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L117": {
+   "key": "v7-012799|7|10|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L118": {
+   "key": "v7-012799|14|7|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L119": {
+   "key": "v7-012799|14|12|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L120": {
+   "key": "v7-012799|8|7|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L121": {
+   "key": "v7-012799|10|7|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L122": {
+   "key": "v7-012799|27|7|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L123": {
+   "key": "v7-012799|7|7|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L124": {
+   "key": "v7-008465|16|10|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L125": {
+   "key": "v7-008465|16|16|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L126": {
+   "key": "v7-008465|26|14|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L127": {
+   "key": "v7-008465|9|7|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L128": {
+   "key": "v7-008465|26|22|DESCRIPTION",
+   "models": [
+    "A"
+   ]
+  },
+  "L129": {
+   "key": "v7-008465|11|14|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L130": {
+   "key": "v7-000252|5|4|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L131": {
+   "key": "v7-000252|5|2|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L132": {
+   "key": "v7-017857|31|20|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L133": {
+   "key": "v7-017857|31|21|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L134": {
+   "key": "v7-017857|26|28|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L135": {
+   "key": "v7-017857|13|2|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L136": {
+   "key": "v7-017857|45|38|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L137": {
+   "key": "v7-017857|37|32|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L138": {
+   "key": "v7-000031|0|4|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L139": {
+   "key": "v7-000031|14|13|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L140": {
+   "key": "v7-000031|9|13|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L141": {
+   "key": "v7-000031|14|13|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L142": {
+   "key": "v7-000031|0|4|COMPLEMENT",
+   "models": [
+    "A"
+   ]
+  },
+  "L143": {
+   "key": "v7-000031|12|6|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L144": {
+   "key": "v7-013066|7|4|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L145": {
+   "key": "v7-000269|2|1|SPECIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L146": {
+   "key": "v7-000269|2|1|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L147": {
+   "key": "v7-000080|17|6|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L148": {
+   "key": "v7-000080|38|35|SPECIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L149": {
+   "key": "v7-000080|4|3|COMPLEMENT",
+   "models": [
+    "A"
+   ]
+  },
+  "L150": {
+   "key": "v7-000080|5|3|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L151": {
+   "key": "v7-000080|22|18|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L152": {
+   "key": "v7-000080|39|35|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L153": {
+   "key": "v7-000080|34|18|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L154": {
+   "key": "v7-000080|37|35|SUBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L155": {
+   "key": "v7-000080|38|43|SPECIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L156": {
+   "key": "v7-000080|46|43|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L157": {
+   "key": "v7-000080|39|43|SUBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L158": {
+   "key": "v7-000080|11|6|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L159": {
+   "key": "v7-000080|46|43|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L160": {
+   "key": "v7-000080|42|35|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L161": {
+   "key": "v7-000080|5|3|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L162": {
+   "key": "v7-000080|4|6|SUBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L163": {
+   "key": "v7-000080|22|18|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L164": {
+   "key": "v7-000080|34|23|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L165": {
+   "key": "v7-019886|4|3|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L166": {
+   "key": "v7-000207|10|0|ROOT",
+   "models": [
+    "A"
+   ]
+  },
+  "L167": {
+   "key": "v7-000207|4|1|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L168": {
+   "key": "v7-000207|10|1|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L169": {
+   "key": "v7-000207|4|11|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L170": {
+   "key": "v7-012932|1|7|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L171": {
+   "key": "v7-012932|6|0|ROOT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L172": {
+   "key": "v7-012932|0|2|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L173": {
+   "key": "v7-012932|16|7|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L174": {
+   "key": "v7-008506|19|11|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L175": {
+   "key": "v7-008506|9|1|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L176": {
+   "key": "v7-008506|9|11|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L177": {
+   "key": "v7-008506|19|10|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L178": {
+   "key": "v7-000378|3|1|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L179": {
+   "key": "v7-000378|13|4|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L180": {
+   "key": "v7-000378|20|19|PREPOSITION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L181": {
+   "key": "v7-000378|19|21|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L182": {
+   "key": "v7-000378|34|26|SUBORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L183": {
+   "key": "v7-000378|34|33|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L184": {
+   "key": "v7-000378|32|26|SUBORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L185": {
+   "key": "v7-000378|30|26|SPECIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L186": {
+   "key": "v7-000378|28|26|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L187": {
+   "key": "v7-000378|25|14|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L188": {
+   "key": "v7-000378|30|29|SPECIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L189": {
+   "key": "v7-012975|4|4|SPECIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L190": {
+   "key": "v7-012975|7|4|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L191": {
+   "key": "v7-012975|4|4|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L192": {
+   "key": "v7-008609|35|39|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L193": {
+   "key": "v7-008609|16|12|PREPOSITION",
+   "models": [
+    "A"
+   ]
+  },
+  "L194": {
+   "key": "v7-008609|5|3|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L195": {
+   "key": "v7-008609|8|3|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L196": {
+   "key": "v7-008609|34|34|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L197": {
+   "key": "v7-008609|7|17|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L198": {
+   "key": "v7-008609|16|7|SUBORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L199": {
+   "key": "v7-008609|20|22|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L200": {
+   "key": "v7-008609|34|38|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L201": {
+   "key": "v7-008609|0|2|DESCRIPTION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L202": {
+   "key": "v7-008609|11|7|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L203": {
+   "key": "v7-008609|7|7|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L204": {
+   "key": "v7-008609|21|26|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L205": {
+   "key": "v7-008609|25|22|SUBORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L206": {
+   "key": "v7-008609|11|3|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L207": {
+   "key": "v7-008609|25|17|SUBORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L208": {
+   "key": "v7-008609|33|26|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L209": {
+   "key": "v7-008609|19|22|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L210": {
+   "key": "v7-012893|14|2|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L211": {
+   "key": "v7-012893|14|11|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L212": {
+   "key": "v7-012993|27|23|SUBORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L213": {
+   "key": "v7-012993|9|12|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L214": {
+   "key": "v7-012993|13|12|SUBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L215": {
+   "key": "v7-012993|16|7|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L216": {
+   "key": "v7-012993|26|28|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L217": {
+   "key": "v7-012993|11|9|PREPOSITION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L218": {
+   "key": "v7-012993|13|7|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L219": {
+   "key": "v7-012993|6|2|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L220": {
+   "key": "v7-012993|16|14|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L221": {
+   "key": "v7-012993|11|7|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L222": {
+   "key": "v7-012993|23|17|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L223": {
+   "key": "v7-012993|10|12|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L224": {
+   "key": "v7-012993|27|24|SUBORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L225": {
+   "key": "v7-012993|25|28|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L226": {
+   "key": "v7-013030|6|4|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L227": {
+   "key": "v7-013030|7|7|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L228": {
+   "key": "v7-013030|8|7|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L229": {
+   "key": "v7-013030|7|9|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L230": {
+   "key": "v7-013030|8|7|SUBORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L231": {
+   "key": "v7-008461|15|15|COMPLEMENT",
+   "models": [
+    "A"
+   ]
+  },
+  "L232": {
+   "key": "v7-008461|6|5|PREPOSITION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L233": {
+   "key": "v7-008461|5|7|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L234": {
+   "key": "v7-008461|15|2|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L235": {
+   "key": "v7-000024|9|8|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L236": {
+   "key": "v7-000024|24|27|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L237": {
+   "key": "v7-000024|26|17|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L238": {
+   "key": "v7-000024|14|10|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L239": {
+   "key": "v7-000024|26|17|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L240": {
+   "key": "v7-000024|11|10|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L241": {
+   "key": "v7-000024|16|15|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L242": {
+   "key": "v7-000024|11|15|SPECIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L243": {
+   "key": "v7-000024|10|12|SPECIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L244": {
+   "key": "v7-000024|10|12|SUBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L245": {
+   "key": "v7-000024|7|3|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L246": {
+   "key": "v7-000024|9|8|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L247": {
+   "key": "v7-000024|7|5|SUBORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L248": {
+   "key": "v7-000024|16|15|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L249": {
+   "key": "v7-012909|17|24|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L250": {
+   "key": "v7-012909|23|13|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L251": {
+   "key": "v7-012909|17|24|SUBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L252": {
+   "key": "v7-012814|15|13|SUBORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L253": {
+   "key": "v7-012814|3|16|SUBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L254": {
+   "key": "v7-012814|6|16|OBJECT",
+   "models": [
+    "A"
+   ]
+  },
+  "L255": {
+   "key": "v7-012814|2|4|DESCRIPTION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L256": {
+   "key": "v7-012814|10|7|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L257": {
+   "key": "v7-012814|35|28|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L258": {
+   "key": "v7-012814|3|7|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L259": {
+   "key": "v7-012814|39|36|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L260": {
+   "key": "v7-012814|38|37|COORDINATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L261": {
+   "key": "v7-012814|51|51|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L262": {
+   "key": "v7-012814|50|49|MODIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L263": {
+   "key": "v7-012814|26|24|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L264": {
+   "key": "v7-012814|50|50|OBJECT",
+   "models": [
+    "A2"
+   ]
+  },
+  "L265": {
+   "key": "v7-012814|35|33|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L266": {
+   "key": "v7-012814|12|7|MODIFICATION",
+   "models": [
+    "A2"
+   ]
+  },
+  "L267": {
+   "key": "v7-012814|8|16|SPECIFICATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L268": {
+   "key": "v7-012814|44|37|COORDINATION",
+   "models": [
+    "A"
+   ]
+  },
+  "L269": {
+   "key": "v7-012814|41|45|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ]
+  },
+  "L270": {
+   "key": "v7-012814|12|0|ROOT",
+   "models": [
+    "A"
+   ]
+  }
+ }
+}

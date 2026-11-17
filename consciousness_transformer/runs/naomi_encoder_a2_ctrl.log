@@ -1,0 +1,314 @@
+loaded prep cache prep_cache.pkl: 29458 items
+sentences train/dev/test: 26447/1500/1511
+  train: node tokens 505685, supervised 423965 (83.8%), unknown 81720
+  dev: node tokens 26723, supervised 22609 (84.6%), unknown 4114
+  test: node tokens 26838, supervised 22338 (83.2%), unknown 4500
+pos 15, subtypes 23, relations ['APPOSITION', 'COMPLEMENT', 'COORDINATION', 'DESCRIPTION', 'INDIRECT_OBJECT', 'MODIFICATION', 'OBJECT', 'PREPOSITION', 'ROOT', 'SPECIFICATION', 'SUBJECT', 'SUBORDINATION']
+extra train: 5959 sentences (skipped 0); tokens by source: {'treebank': 10683, 'parser': 68829, 'unknown': 4305}; supervised 68829
+treebank dev measure: 911 sentences, 2508 tokens
+meaning table (13259, 614)
+model params 2637549
+/home/user/NAOMI/consciousness_transformer/scripts/train_naomi_encoder.py:321: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tl, th, tlc, tn = tl + float(loss) * n, th + ch, tlc + cl, tn + n
+  ep 1 batch 0/565 loss 5.942 0s
+  ep 1 batch 100/565 loss 2.045 16s
+  ep 1 batch 200/565 loss 1.728 31s
+  ep 1 batch 300/565 loss 1.125 48s
+  ep 1 batch 400/565 loss 0.951 63s
+  ep 1 batch 500/565 loss 0.810 78s
+epoch 1 89s (total 1.5 min) train loss 1.585 uas 0.655 | dev uas 0.8317 las 0.7991 loss 0.676 | tb-dev las 0.1802 | score 0.7991
+  new best score 0.7991 -> a2ctrl_best.pt
+  ep 2 batch 0/565 loss 0.901 0s
+  ep 2 batch 100/565 loss 0.880 16s
+  ep 2 batch 200/565 loss 0.675 30s
+  ep 2 batch 300/565 loss 0.744 46s
+  ep 2 batch 400/565 loss 0.670 60s
+  ep 2 batch 500/565 loss 0.502 73s
+epoch 2 84s (total 2.9 min) train loss 0.701 uas 0.818 | dev uas 0.8586 las 0.8313 loss 0.536 | tb-dev las 0.1858 | score 0.8313
+  new best score 0.8313 -> a2ctrl_best.pt
+  ep 3 batch 0/565 loss 0.322 0s
+  ep 3 batch 100/565 loss 0.348 14s
+  ep 3 batch 200/565 loss 0.651 29s
+  ep 3 batch 300/565 loss 0.592 44s
+  ep 3 batch 400/565 loss 0.409 58s
+  ep 3 batch 500/565 loss 0.622 74s
+epoch 3 88s (total 4.3 min) train loss 0.565 uas 0.850 | dev uas 0.8767 las 0.8528 loss 0.443 | tb-dev las 0.1810 | score 0.8528
+  new best score 0.8528 -> a2ctrl_best.pt
+  ep 4 batch 0/565 loss 0.476 0s
+  ep 4 batch 100/565 loss 0.509 14s
+  ep 4 batch 200/565 loss 0.391 30s
+  ep 4 batch 300/565 loss 0.393 47s
+  ep 4 batch 400/565 loss 0.457 62s
+  ep 4 batch 500/565 loss 0.046 78s
+epoch 4 90s (total 5.8 min) train loss 0.490 uas 0.867 | dev uas 0.8908 las 0.8691 loss 0.399 | tb-dev las 0.1794 | score 0.8691
+  new best score 0.8691 -> a2ctrl_best.pt
+  ep 5 batch 0/565 loss 0.433 0s
+  ep 5 batch 100/565 loss 0.332 17s
+  ep 5 batch 200/565 loss 0.426 34s
+  ep 5 batch 300/565 loss 0.666 49s
+  ep 5 batch 400/565 loss 0.437 63s
+  ep 5 batch 500/565 loss 0.550 79s
+epoch 5 91s (total 7.4 min) train loss 0.441 uas 0.878 | dev uas 0.8963 las 0.8763 loss 0.385 | tb-dev las 0.1902 | score 0.8763
+  new best score 0.8763 -> a2ctrl_best.pt
+  ep 6 batch 0/565 loss 0.391 0s
+  ep 6 batch 100/565 loss 0.518 14s
+  ep 6 batch 200/565 loss 0.413 30s
+  ep 6 batch 300/565 loss 0.466 45s
+  ep 6 batch 400/565 loss 0.654 60s
+  ep 6 batch 500/565 loss 0.162 75s
+epoch 6 85s (total 8.8 min) train loss 0.403 uas 0.888 | dev uas 0.8988 las 0.8802 loss 0.365 | tb-dev las 0.1762 | score 0.8802
+  new best score 0.8802 -> a2ctrl_best.pt
+  ep 7 batch 0/565 loss 0.403 0s
+  ep 7 batch 100/565 loss 0.330 14s
+  ep 7 batch 200/565 loss 0.444 30s
+  ep 7 batch 300/565 loss 0.476 43s
+  ep 7 batch 400/565 loss 0.318 58s
+  ep 7 batch 500/565 loss 0.329 72s
+epoch 7 82s (total 10.1 min) train loss 0.377 uas 0.894 | dev uas 0.9043 las 0.8852 loss 0.348 | tb-dev las 0.1874 | score 0.8852
+  new best score 0.8852 -> a2ctrl_best.pt
+  ep 8 batch 0/565 loss 0.285 0s
+  ep 8 batch 100/565 loss 0.357 13s
+  ep 8 batch 200/565 loss 0.394 28s
+  ep 8 batch 300/565 loss 0.319 41s
+  ep 8 batch 400/565 loss 0.298 55s
+  ep 8 batch 500/565 loss 0.395 70s
+epoch 8 82s (total 11.5 min) train loss 0.351 uas 0.901 | dev uas 0.9043 las 0.8863 loss 0.353 | tb-dev las 0.1695 | score 0.8863
+  new best score 0.8863 -> a2ctrl_best.pt
+  ep 9 batch 0/565 loss 0.106 0s
+  ep 9 batch 100/565 loss 0.267 14s
+  ep 9 batch 200/565 loss 0.277 29s
+  ep 9 batch 300/565 loss 0.102 44s
+  ep 9 batch 400/565 loss 0.414 58s
+  ep 9 batch 500/565 loss 0.345 73s
+epoch 9 84s (total 12.9 min) train loss 0.334 uas 0.905 | dev uas 0.9068 las 0.8878 loss 0.353 | tb-dev las 0.1695 | score 0.8878
+  new best score 0.8878 -> a2ctrl_best.pt
+  ep 10 batch 0/565 loss 0.232 0s
+  ep 10 batch 100/565 loss 0.315 13s
+  ep 10 batch 200/565 loss 0.335 26s
+  ep 10 batch 300/565 loss 0.267 42s
+  ep 10 batch 400/565 loss 0.172 57s
+  ep 10 batch 500/565 loss 0.351 75s
+epoch 10 87s (total 14.4 min) train loss 0.321 uas 0.909 | dev uas 0.9107 las 0.8925 loss 0.358 | tb-dev las 0.1695 | score 0.8925
+  new best score 0.8925 -> a2ctrl_best.pt
+  ep 11 batch 0/565 loss 0.240 0s
+  ep 11 batch 100/565 loss 0.329 16s
+  ep 11 batch 200/565 loss 0.383 31s
+  ep 11 batch 300/565 loss 0.233 46s
+  ep 11 batch 400/565 loss 0.252 61s
+  ep 11 batch 500/565 loss 0.306 77s
+epoch 11 89s (total 15.8 min) train loss 0.306 uas 0.913 | dev uas 0.9128 las 0.8948 loss 0.340 | tb-dev las 0.1595 | score 0.8948
+  new best score 0.8948 -> a2ctrl_best.pt
+  ep 12 batch 0/565 loss 0.353 0s
+  ep 12 batch 100/565 loss 0.285 14s
+  ep 12 batch 200/565 loss 0.343 30s
+  ep 12 batch 300/565 loss 0.103 47s
+  ep 12 batch 400/565 loss 0.317 61s
+  ep 12 batch 500/565 loss 0.297 76s
+epoch 12 88s (total 17.3 min) train loss 0.288 uas 0.918 | dev uas 0.9117 las 0.8940 loss 0.349 | tb-dev las 0.1639 | score 0.8940
+  ep 13 batch 0/565 loss 0.297 0s
+  ep 13 batch 100/565 loss 0.159 15s
+  ep 13 batch 200/565 loss 0.136 29s
+  ep 13 batch 300/565 loss 0.253 43s
+  ep 13 batch 400/565 loss 0.136 58s
+  ep 13 batch 500/565 loss 0.401 73s
+epoch 13 85s (total 18.7 min) train loss 0.284 uas 0.919 | dev uas 0.9178 las 0.9002 loss 0.328 | tb-dev las 0.1643 | score 0.9002
+  new best score 0.9002 -> a2ctrl_best.pt
+  ep 14 batch 0/565 loss 0.230 0s
+  ep 14 batch 100/565 loss 0.275 15s
+  ep 14 batch 200/565 loss 0.053 29s
+  ep 14 batch 300/565 loss 0.124 44s
+  ep 14 batch 400/565 loss 0.151 58s
+  ep 14 batch 500/565 loss 0.270 73s
+epoch 14 84s (total 20.1 min) train loss 0.275 uas 0.921 | dev uas 0.9161 las 0.8992 loss 0.324 | tb-dev las 0.1806 | score 0.8992
+  ep 15 batch 0/565 loss 0.243 0s
+  ep 15 batch 100/565 loss 0.262 15s
+  ep 15 batch 200/565 loss 0.309 28s
+  ep 15 batch 300/565 loss 0.140 44s
+  ep 15 batch 400/565 loss 0.173 60s
+  ep 15 batch 500/565 loss 0.000 73s
+epoch 15 86s (total 21.6 min) train loss 0.261 uas 0.926 | dev uas 0.9200 las 0.9030 loss 0.336 | tb-dev las 0.1503 | score 0.9030
+  new best score 0.9030 -> a2ctrl_best.pt
+  ep 16 batch 0/565 loss 0.195 0s
+  ep 16 batch 100/565 loss 0.245 16s
+  ep 16 batch 200/565 loss 0.089 31s
+  ep 16 batch 300/565 loss 0.397 47s
+  ep 16 batch 400/565 loss 0.277 61s
+  ep 16 batch 500/565 loss 0.273 76s
+epoch 16 87s (total 23.0 min) train loss 0.254 uas 0.927 | dev uas 0.9200 las 0.9035 loss 0.339 | tb-dev las 0.1575 | score 0.9035
+  new best score 0.9035 -> a2ctrl_best.pt
+  ep 17 batch 0/565 loss 0.192 0s
+  ep 17 batch 100/565 loss 0.248 16s
+  ep 17 batch 200/565 loss 0.245 31s
+  ep 17 batch 300/565 loss 0.292 45s
+  ep 17 batch 400/565 loss 0.228 60s
+  ep 17 batch 500/565 loss 0.292 74s
+epoch 17 86s (total 24.5 min) train loss 0.248 uas 0.929 | dev uas 0.9192 las 0.9027 loss 0.339 | tb-dev las 0.1750 | score 0.9027
+  ep 18 batch 0/565 loss 0.158 0s
+  ep 18 batch 100/565 loss 0.220 16s
+  ep 18 batch 200/565 loss 0.173 33s
+  ep 18 batch 300/565 loss 0.257 49s
+  ep 18 batch 400/565 loss 0.055 63s
+  ep 18 batch 500/565 loss 0.276 79s
+epoch 18 91s (total 26.0 min) train loss 0.236 uas 0.932 | dev uas 0.9149 las 0.8987 loss 0.352 | tb-dev las 0.1635 | score 0.8987
+  ep 19 batch 0/565 loss 0.263 0s
+  ep 19 batch 100/565 loss 0.198 14s
+  ep 19 batch 200/565 loss 0.188 31s
+  ep 19 batch 300/565 loss 0.241 46s
+  ep 19 batch 400/565 loss 0.260 64s
+  ep 19 batch 500/565 loss 0.312 81s
+epoch 19 92s (total 27.5 min) train loss 0.201 uas 0.942 | dev uas 0.9230 las 0.9069 loss 0.348 | tb-dev las 0.1695 | score 0.9069
+  new best score 0.9069 -> a2ctrl_best.pt
+  ep 20 batch 0/565 loss 0.175 0s
+  ep 20 batch 100/565 loss 0.130 17s
+  ep 20 batch 200/565 loss 0.220 33s
+  ep 20 batch 300/565 loss 0.000 48s
+  ep 20 batch 400/565 loss 0.011 64s
+  ep 20 batch 500/565 loss 0.224 80s
+epoch 20 91s (total 29.0 min) train loss 0.181 uas 0.947 | dev uas 0.9228 las 0.9069 loss 0.381 | tb-dev las 0.1619 | score 0.9069
+  ep 21 batch 0/565 loss 0.151 0s
+  ep 21 batch 100/565 loss 0.041 15s
+  ep 21 batch 200/565 loss 0.067 30s
+  ep 21 batch 300/565 loss 0.001 47s
+  ep 21 batch 400/565 loss 0.091 63s
+  ep 21 batch 500/565 loss 0.149 78s
+epoch 21 90s (total 30.5 min) train loss 0.173 uas 0.949 | dev uas 0.9248 las 0.9090 loss 0.367 | tb-dev las 0.1675 | score 0.9090
+  new best score 0.9090 -> a2ctrl_best.pt
+  ep 22 batch 0/565 loss 0.175 0s
+  ep 22 batch 100/565 loss 0.253 16s
+  ep 22 batch 200/565 loss 0.202 32s
+  ep 22 batch 300/565 loss 0.166 47s
+  ep 22 batch 400/565 loss 0.146 63s
+  ep 22 batch 500/565 loss 0.071 78s
+epoch 22 91s (total 32.0 min) train loss 0.167 uas 0.951 | dev uas 0.9248 las 0.9088 loss 0.381 | tb-dev las 0.1615 | score 0.9088
+  ep 23 batch 0/565 loss 0.205 0s
+  ep 23 batch 100/565 loss 0.212 14s
+  ep 23 batch 200/565 loss 0.177 30s
+  ep 23 batch 300/565 loss 0.216 46s
+  ep 23 batch 400/565 loss 0.145 62s
+  ep 23 batch 500/565 loss 0.059 78s
+epoch 23 91s (total 33.5 min) train loss 0.160 uas 0.953 | dev uas 0.9260 las 0.9109 loss 0.399 | tb-dev las 0.1647 | score 0.9109
+  new best score 0.9109 -> a2ctrl_best.pt
+  ep 24 batch 0/565 loss 0.150 0s
+  ep 24 batch 100/565 loss 0.024 15s
+  ep 24 batch 200/565 loss 0.160 32s
+  ep 24 batch 300/565 loss 0.127 49s
+  ep 24 batch 400/565 loss 0.156 66s
+  ep 24 batch 500/565 loss 0.015 82s
+epoch 24 94s (total 35.1 min) train loss 0.157 uas 0.954 | dev uas 0.9247 las 0.9092 loss 0.406 | tb-dev las 0.1623 | score 0.9092
+  ep 25 batch 0/565 loss 0.232 0s
+  ep 25 batch 100/565 loss 0.195 17s
+  ep 25 batch 200/565 loss 0.119 34s
+  ep 25 batch 300/565 loss 0.158 51s
+  ep 25 batch 400/565 loss 0.120 67s
+  ep 25 batch 500/565 loss 0.000 82s
+epoch 25 94s (total 36.7 min) train loss 0.152 uas 0.956 | dev uas 0.9242 las 0.9079 loss 0.397 | tb-dev las 0.1563 | score 0.9079
+  ep 26 batch 0/565 loss 0.008 0s
+  ep 26 batch 100/565 loss 0.152 17s
+  ep 26 batch 200/565 loss 0.019 31s
+  ep 26 batch 300/565 loss 0.003 46s
+  ep 26 batch 400/565 loss 0.119 64s
+  ep 26 batch 500/565 loss 0.116 79s
+epoch 26 91s (total 38.2 min) train loss 0.133 uas 0.961 | dev uas 0.9244 las 0.9085 loss 0.421 | tb-dev las 0.1587 | score 0.9085
+  ep 27 batch 0/565 loss 0.097 0s
+  ep 27 batch 100/565 loss 0.143 15s
+  ep 27 batch 200/565 loss 0.132 32s
+  ep 27 batch 300/565 loss 0.000 49s
+  ep 27 batch 400/565 loss 0.134 67s
+  ep 27 batch 500/565 loss 0.129 83s
+epoch 27 95s (total 39.8 min) train loss 0.126 uas 0.963 | dev uas 0.9258 las 0.9098 loss 0.423 | tb-dev las 0.1563 | score 0.9098
+  ep 28 batch 0/565 loss 0.056 0s
+  ep 28 batch 100/565 loss 0.112 18s
+  ep 28 batch 200/565 loss 0.073 33s
+  ep 28 batch 300/565 loss 0.126 51s
+  ep 28 batch 400/565 loss 0.001 67s
+  ep 28 batch 500/565 loss 0.060 82s
+epoch 28 97s (total 41.4 min) train loss 0.117 uas 0.965 | dev uas 0.9269 las 0.9115 loss 0.444 | tb-dev las 0.1635 | score 0.9115
+  new best score 0.9115 -> a2ctrl_best.pt
+  ep 29 batch 0/565 loss 0.127 0s
+  ep 29 batch 100/565 loss 0.065 18s
+  ep 29 batch 200/565 loss 0.007 33s
+  ep 29 batch 300/565 loss 0.096 49s
+  ep 29 batch 400/565 loss 0.177 63s
+  ep 29 batch 500/565 loss 0.016 78s
+epoch 29 92s (total 42.9 min) train loss 0.112 uas 0.966 | dev uas 0.9266 las 0.9115 loss 0.457 | tb-dev las 0.1611 | score 0.9115
+  new best score 0.9115 -> a2ctrl_best.pt
+  ep 30 batch 0/565 loss 0.042 0s
+  ep 30 batch 100/565 loss 0.105 15s
+  ep 30 batch 200/565 loss 0.080 31s
+  ep 30 batch 300/565 loss 0.119 47s
+  ep 30 batch 400/565 loss 0.069 64s
+  ep 30 batch 500/565 loss 0.137 80s
+epoch 30 95s (total 44.5 min) train loss 0.109 uas 0.968 | dev uas 0.9271 las 0.9116 loss 0.459 | tb-dev las 0.1643 | score 0.9116
+  new best score 0.9116 -> a2ctrl_best.pt
+  ep 31 batch 0/565 loss 0.152 0s
+  ep 31 batch 100/565 loss 0.075 16s
+  ep 31 batch 200/565 loss 0.106 32s
+  ep 31 batch 300/565 loss 0.069 50s
+  ep 31 batch 400/565 loss 0.122 65s
+  ep 31 batch 500/565 loss 0.000 80s
+epoch 31 92s (total 46.0 min) train loss 0.107 uas 0.968 | dev uas 0.9269 las 0.9122 loss 0.461 | tb-dev las 0.1607 | score 0.9122
+  new best score 0.9122 -> a2ctrl_best.pt
+  ep 32 batch 0/565 loss 0.116 0s
+  ep 32 batch 100/565 loss 0.076 15s
+  ep 32 batch 200/565 loss 0.146 29s
+  ep 32 batch 300/565 loss 0.147 43s
+  ep 32 batch 400/565 loss 0.087 58s
+  ep 32 batch 500/565 loss 0.100 72s
+epoch 32 85s (total 47.4 min) train loss 0.104 uas 0.969 | dev uas 0.9277 las 0.9124 loss 0.465 | tb-dev las 0.1571 | score 0.9124
+  new best score 0.9124 -> a2ctrl_best.pt
+  ep 33 batch 0/565 loss 0.078 0s
+  ep 33 batch 100/565 loss 0.145 18s
+  ep 33 batch 200/565 loss 0.080 33s
+  ep 33 batch 300/565 loss 0.009 47s
+  ep 33 batch 400/565 loss 0.074 62s
+  ep 33 batch 500/565 loss 0.036 79s
+epoch 33 93s (total 49.0 min) train loss 0.103 uas 0.969 | dev uas 0.9266 las 0.9113 loss 0.472 | tb-dev las 0.1603 | score 0.9113
+  ep 34 batch 0/565 loss 0.150 0s
+  ep 34 batch 100/565 loss 0.001 16s
+  ep 34 batch 200/565 loss 0.164 33s
+  ep 34 batch 300/565 loss 0.120 48s
+  ep 34 batch 400/565 loss 0.110 62s
+  ep 34 batch 500/565 loss 0.086 77s
+epoch 34 89s (total 50.5 min) train loss 0.101 uas 0.970 | dev uas 0.9266 las 0.9115 loss 0.483 | tb-dev las 0.1591 | score 0.9115
+  ep 35 batch 0/565 loss 0.094 0s
+  ep 35 batch 100/565 loss 0.048 16s
+  ep 35 batch 200/565 loss 0.030 33s
+  ep 35 batch 300/565 loss 0.049 47s
+  ep 35 batch 400/565 loss 0.008 61s
+  ep 35 batch 500/565 loss 0.121 75s
+epoch 35 85s (total 51.9 min) train loss 0.096 uas 0.971 | dev uas 0.9269 las 0.9118 loss 0.486 | tb-dev las 0.1643 | score 0.9118
+  ep 36 batch 0/565 loss 0.032 0s
+  ep 36 batch 100/565 loss 0.025 15s
+  ep 36 batch 200/565 loss 0.126 31s
+  ep 36 batch 300/565 loss 0.100 46s
+  ep 36 batch 400/565 loss 0.039 65s
+  ep 36 batch 500/565 loss 0.012 78s
+epoch 36 90s (total 53.4 min) train loss 0.094 uas 0.972 | dev uas 0.9270 las 0.9118 loss 0.491 | tb-dev las 0.1603 | score 0.9118
+  ep 37 batch 0/565 loss 0.082 0s
+  ep 37 batch 100/565 loss 0.100 16s
+  ep 37 batch 200/565 loss 0.085 31s
+  ep 37 batch 300/565 loss 0.100 47s
+  ep 37 batch 400/565 loss 0.002 63s
+  ep 37 batch 500/565 loss 0.095 79s
+epoch 37 91s (total 54.9 min) train loss 0.094 uas 0.972 | dev uas 0.9278 las 0.9126 loss 0.491 | tb-dev las 0.1591 | score 0.9126
+  new best score 0.9126 -> a2ctrl_best.pt
+  ep 38 batch 0/565 loss 0.103 0s
+  ep 38 batch 100/565 loss 0.173 16s
+  ep 38 batch 200/565 loss 0.098 34s
+  ep 38 batch 300/565 loss 0.061 49s
+  ep 38 batch 400/565 loss 0.051 66s
+  ep 38 batch 500/565 loss 0.094 80s
+epoch 38 91s (total 56.4 min) train loss 0.091 uas 0.973 | dev uas 0.9281 las 0.9132 loss 0.497 | tb-dev las 0.1579 | score 0.9132
+  new best score 0.9132 -> a2ctrl_best.pt
+  ep 39 batch 0/565 loss 0.001 0s
+  ep 39 batch 100/565 loss 0.133 16s
+  ep 39 batch 200/565 loss 0.108 32s
+  ep 39 batch 300/565 loss 0.024 47s
+  ep 39 batch 400/565 loss 0.100 63s
+  ep 39 batch 500/565 loss 0.064 78s
+epoch 39 91s (total 58.0 min) train loss 0.090 uas 0.973 | dev uas 0.9273 las 0.9121 loss 0.495 | tb-dev las 0.1607 | score 0.9121
+  ep 40 batch 0/565 loss 0.101 0s
+epoch 40 5s (total 58.0 min) train loss 0.081 uas 0.976 | dev uas 0.9275 las 0.9123 loss 0.496 | tb-dev las 0.1611 | score 0.9123
+time budget reached
+done in 58.6 min; best score 0.9132

@@ -1,0 +1,116 @@
+loaded in 38s; test 1511
+test_split: done 50s
+frozen_holdout: done 50s
+frozen_holdout_dev: done 51s
+ewt_dev: done 68s
+ewt_test: done 77s
+{
+ "sentences": 413,
+ "tokens": 3415,
+ "uas": 0.9291,
+ "las": 0.9186,
+ "exact_unlabelled": 0.7724,
+ "exact_labelled": 0.7458,
+ "scorer_meaning": 91.42,
+ "scorer_shape": 92.41,
+ "scorer_overall": 91.92
+}
+{
+ "sentences": 1098,
+ "supervised_agreement": {
+  "sentences": 1098,
+  "tokens": 18923,
+  "uas": 0.9209,
+  "las": 0.9067,
+  "exact_unlabelled": 0.4554,
+  "exact_labelled": 0.4126,
+  "scorer_meaning": null,
+  "scorer_shape": null,
+  "scorer_overall": null
+ },
+ "by_band": {
+  "11-20": {
+   "sentences": 333,
+   "tokens": 4200,
+   "uas": 0.9007,
+   "las": 0.8824,
+   "exact_unlabelled": 0.4775,
+   "exact_labelled": 0.4444,
+   "scorer_meaning": null,
+   "scorer_shape": null,
+   "scorer_overall": null
+  },
+  "21-35": {
+   "sentences": 353,
+   "tokens": 7766,
+   "uas": 0.9196,
+   "las": 0.9051,
+   "exact_unlabelled": 0.3201,
+   "exact_labelled": 0.2635,
+   "scorer_meaning": null,
+   "scorer_shape": null,
+   "scorer_overall": null
+  },
+  "36+": {
+   "sentences": 162,
+   "tokens": 5759,
+   "uas": 0.9418,
+   "las": 0.9309,
+   "exact_unlabelled": 0.2531,
+   "exact_labelled": 0.216,
+   "scorer_meaning": null,
+   "scorer_shape": null,
+   "scorer_overall": null
+  },
+  "<=10": {
+   "sentences": 250,
+   "tokens": 1198,
+   "uas": 0.8998,
+   "las": 0.8856,
+   "exact_unlabelled": 0.748,
+   "exact_labelled": 0.708,
+   "scorer_meaning": null,
+   "scorer_shape": null,
+   "scorer_overall": null
+  }
+ },
+ "unknown_tokens": 4500,
+ "supervised_tokens": 18923,
+ "unknown_placement_share": {
+  "inside another piece": 0.9413,
+  "own piece": 0.0351,
+  "ROOT": 0.0236
+ },
+ "output_single_rooted_connected_share": 1.0,
+ "main_root_agreement": 0.8616,
+ "margin_added_links": {
+  "mean": 2.984,
+  "median": 1.857
+ },
+ "margin_supervised_links": {
+  "mean": 11.804,
+  "median": 10.932
+ },
+ "top1_prob_added": {
+  "mean": 0.66,
+  "median": 0.731
+ },
+ "top1_prob_supervised": {
+  "mean": 0.953,
+  "median": 1.0
+ },
+ "relations_used_for_added_links": {
+  "COORDINATION": 0.2662,
+  "MODIFICATION": 0.2078,
+  "OBJECT": 0.142,
+  "SPECIFICATION": 0.0876,
+  "DESCRIPTION": 0.0829,
+  "SUBJECT": 0.0578,
+  "PREPOSITION": 0.0533,
+  "SUBORDINATION": 0.0478,
+  "ROOT": 0.0236,
+  "COMPLEMENT": 0.0184,
+  "APPOSITION": 0.0078,
+  "INDIRECT_OBJECT": 0.0049
+ }
+}

@@ -1,0 +1,1902 @@
+[
+ {
+  "sentence": "S01",
+  "tokens": "0:1220 1:sentences 2:, 3:60 4:passages 5:.",
+  "parser_pieces": "sentences(UNATTACHED:1220 MODIFICATION:passages(DESCRIPTION:60))",
+  "links": [
+   {
+    "link": "L001",
+    "dependent": "0:1220",
+    "head": "1:sentences",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "S02",
+  "tokens": "0:then 1:the 2:father 3:fell 4:into 5:the 6:most 7:furious 8:anger 9:, 10:sprang 11:up 12:, 13:called 14:his 15:people 16:thither 17:, 18:and 19:said 20:: 21:'this 22:man 23:is 24:no 25:longer 26:my 27:son 28:, 29:i 30:drive 31:him 32:forth 33:, 34:and 35:command 36:you 37:to 38:take 39:him 40:out 41:into 42:the 43:forest 44:, 45:and 46:kill 47:him 48:. 49:'",
+  "parser_pieces": "ROOT(ROOT:fell(SUBJECT:father(DESCRIPTION:the(SPECIFICATION:then)) MODIFICATION:into(PREPOSITION:anger(DESCRIPTION:the DESCRIPTION:furious(SPECIFICATION:most)))) UNATTACHED:sprang(MODIFICATION:up) UNATTACHED:and(COORDINATION:called(OBJECT:people(DESCRIPTION:his) SPECIFICATION:thither) COORDINATION:said) UNATTACHED:'this UNATTACHED:is(SUBJECT:man) UNATTACHED:and(COORDINATION:drive(MODIFICATION:son(DESCRIPTION:no DESCRIPTION:my(SPECIFICATION:longer)) SUBJECT:i OBJECT:him SPECIFICATION:forth) COORDINATION:command(OBJECT:you) MODIFICATION:to(MODIFICATION:take(OBJECT:him) MODIFICATION:out) MODIFICATION:into(PREPOSITION:forest(DESCRIPTION:the))) UNATTACHED:kill(COORDINATION:and OBJECT:him))",
+  "links": [
+   {
+    "link": "L002",
+    "dependent": "18:and",
+    "head": "10:sprang",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L003",
+    "dependent": "10:sprang",
+    "head": "3:fell",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L004",
+    "dependent": "18:and",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "L005",
+    "dependent": "21:'this",
+    "head": "22:man",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L006",
+    "dependent": "46:kill",
+    "head": "45:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L007",
+    "dependent": "34:and",
+    "head": "45:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L008",
+    "dependent": "23:is",
+    "head": "18:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L009",
+    "dependent": "10:sprang",
+    "head": "18:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L010",
+    "dependent": "21:'this",
+    "head": "19:said",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L011",
+    "dependent": "34:and",
+    "head": "23:is",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L012",
+    "dependent": "23:is",
+    "head": "18:and",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "S03",
+  "tokens": "0:let 1:me 2:see 3:-- 4:how 5:is 6:it 7:to 8:be 9:managed 10:?",
+  "parser_pieces": "ROOT(UNATTACHED:let ROOT:see(SUBJECT:me) UNATTACHED:is(SPECIFICATION:how INDIRECT_OBJECT:it OBJECT:to(MODIFICATION:be(MODIFICATION:managed))))",
+  "links": [
+   {
+    "link": "L013",
+    "dependent": "5:is",
+    "head": "2:see",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L014",
+    "dependent": "0:let",
+    "head": "2:see",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L015",
+    "dependent": "5:is",
+    "head": "2:see",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L016",
+    "dependent": "0:let",
+    "head": "1:me",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "S04",
+  "tokens": "0:when 1:the 2:seed 3:came 4:up 5:, 6:there 7:was 8:one 9:plant 10:bigger 11:than 12:all 13:the 14:rest 15:; 16:and 17:it 18:kept 19:getting 20:larger 21:and 22:larger 23:, 24:and 25:seemed 26:as 27:if 28:it 29:would 30:never 31:cease 32:growing 33:; 34:so 35:that 36:it 37:might 38:have 39:been 40:called 41:the 42:prince 43:of 44:turnips 45:for 46:there 47:never 48:was 49:such 50:a 51:one 52:seen 53:before 54:, 55:and 56:never 57:will 58:again 59:.",
+  "parser_pieces": "ROOT(ROOT:the(SPECIFICATION:when) UNATTACHED:seed UNATTACHED:came(MODIFICATION:up) UNATTACHED:was(SPECIFICATION:there INDIRECT_OBJECT:plant(DESCRIPTION:one) OBJECT:than(DESCRIPTION:bigger)) UNATTACHED:rest(DESCRIPTION:all DESCRIPTION:the) UNATTACHED:kept(COORDINATION:and SUBJECT:it OBJECT:getting) UNATTACHED:and(COORDINATION:larger COORDINATION:larger) UNATTACHED:seemed(COORDINATION:and SPECIFICATION:as SUBORDINATION:if(MODIFICATION:would(SUBJECT:it SPECIFICATION:never(SPECIFICATION:cease(OBJECT:growing COORDINATION:so(COORDINATION:that(MODIFICATION:have(SUBJECT:it MODIFICATION:might)))))))) UNATTACHED:called(MODIFICATION:been OBJECT:prince(DESCRIPTION:the MODIFICATION:of(PREPOSITION:turnips)) MODIFICATION:for) UNATTACHED:was(SPECIFICATION:never(SPECIFICATION:there) COMPLEMENT:a(SPECIFICATION:such)) UNATTACHED:and(COORDINATION:seen(SUBJECT:one MODIFICATION:before) COORDINATION:will(SPECIFICATION:never SPECIFICATION:again)))",
+  "links": [
+   {
+    "link": "L017",
+    "dependent": "55:and",
+    "head": "40:called",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L018",
+    "dependent": "21:and",
+    "head": "18:kept",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "L019",
+    "dependent": "14:rest",
+    "head": "7:was",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L020",
+    "dependent": "7:was",
+    "head": "16:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L021",
+    "dependent": "25:seemed",
+    "head": "24:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L022",
+    "dependent": "48:was",
+    "head": "55:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L023",
+    "dependent": "2:seed",
+    "head": "3:came",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L024",
+    "dependent": "3:came",
+    "head": "7:was",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L025",
+    "dependent": "7:was",
+    "head": "3:came",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L026",
+    "dependent": "40:called",
+    "head": "38:have",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L027",
+    "dependent": "21:and",
+    "head": "18:kept",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L028",
+    "dependent": "18:kept",
+    "head": "24:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L029",
+    "dependent": "55:and",
+    "head": "48:was",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L030",
+    "dependent": "25:seemed",
+    "head": "34:so",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L031",
+    "dependent": "48:was",
+    "head": "39:been",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L032",
+    "dependent": "3:came",
+    "head": "1:the",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L033",
+    "dependent": "40:called",
+    "head": "39:been",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S05",
+  "tokens": "0:on 1:the 2:way 3:he 4:passed 5:by 6:a 7:marsh 8:, 9:in 10:which 11:a 12:number 13:of 14:frogs 15:were 16:sitting 17:croaking 18:.",
+  "parser_pieces": "ROOT(ROOT:passed(MODIFICATION:on(PREPOSITION:way(DESCRIPTION:the)) SUBJECT:he MODIFICATION:by(PREPOSITION:marsh(DESCRIPTION:a))) UNATTACHED:sitting(MODIFICATION:in(PREPOSITION:which) SUBJECT:number(DESCRIPTION:a MODIFICATION:of(PREPOSITION:frogs)) MODIFICATION:were OBJECT:croaking))",
+  "links": [
+   {
+    "link": "L034",
+    "dependent": "16:sitting",
+    "head": "4:passed",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S06",
+  "tokens": "0:susan 1:was 2:desirous 3:of 4:returning 5:to 6:her 7:mother 8:, 9:and 10:the 11:ladies 12:therefore 13:would 14:not 15:detain 16:her 17:.",
+  "parser_pieces": "ROOT(ROOT:was(SUBJECT:susan COMPLEMENT:desirous MODIFICATION:of) UNATTACHED:returning UNATTACHED:detain(MODIFICATION:to(PREPOSITION:mother(DESCRIPTION:her)) COORDINATION:and SUBJECT:ladies(DESCRIPTION:the) SPECIFICATION:therefore MODIFICATION:would MODIFICATION:not OBJECT:her))",
+  "links": [
+   {
+    "link": "L035",
+    "dependent": "15:detain",
+    "head": "9:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L036",
+    "dependent": "15:detain",
+    "head": "1:was",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L037",
+    "dependent": "4:returning",
+    "head": "5:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "L038",
+    "dependent": "4:returning",
+    "head": "3:of",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S07",
+  "tokens": "0:he 1:looked 2:upon 3:god 4:'s 5:creation 6:as 7:a 8:great 9:sum 10:in 11:arithmetic 12:-- 13:subtracted 14:, 15:multiplied 16:, 17:and 18:tried 19:to 20:know 21:it 22:within 23:and 24:without 25:, 26:and 27:to 28:talk 29:with 30:understanding 31:concerning 32:it 33:; 34:and 35:that 36:was 37:a 38:very 39:sensible 40:thing 41:; 42:and 43:he 44:spoke 45:joyously 46:and 47:cleverly 48:of 49:it 50:.",
+  "parser_pieces": "ROOT(ROOT:looked(SUBJECT:he MODIFICATION:upon(PREPOSITION:god)) UNATTACHED:'s UNATTACHED:creation UNATTACHED:sum(DESCRIPTION:a(SPECIFICATION:as) DESCRIPTION:great MODIFICATION:in(PREPOSITION:arithmetic)) UNATTACHED:subtracted UNATTACHED:and(COORDINATION:multiplied COORDINATION:tried(MODIFICATION:to(MODIFICATION:know(OBJECT:it) MODIFICATION:within))) UNATTACHED:and UNATTACHED:without UNATTACHED:and(COORDINATION:and COORDINATION:to(MODIFICATION:talk(MODIFICATION:with(PREPOSITION:understanding) INDIRECT_OBJECT:concerning OBJECT:it)) COORDINATION:and(COORDINATION:was(SUBJECT:that OBJECT:thing(DESCRIPTION:a DESCRIPTION:sensible(SPECIFICATION:very))) COORDINATION:spoke(SUBJECT:he SPECIFICATION:and(COORDINATION:joyously COORDINATION:cleverly) MODIFICATION:of(PREPOSITION:it)))))",
+  "links": [
+   {
+    "link": "L039",
+    "dependent": "23:and",
+    "head": "18:tried",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L040",
+    "dependent": "13:subtracted",
+    "head": "17:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L041",
+    "dependent": "34:and",
+    "head": "42:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L042",
+    "dependent": "17:and",
+    "head": "5:creation",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L043",
+    "dependent": "4:'s",
+    "head": "5:creation",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L044",
+    "dependent": "5:creation",
+    "head": "1:looked",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "L045",
+    "dependent": "24:without",
+    "head": "34:and",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L046",
+    "dependent": "24:without",
+    "head": "34:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L047",
+    "dependent": "5:creation",
+    "head": "2:upon",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "L048",
+    "dependent": "9:sum",
+    "head": "5:creation",
+    "relation": "APPOSITION"
+   },
+   {
+    "link": "L049",
+    "dependent": "9:sum",
+    "head": "13:subtracted",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L050",
+    "dependent": "4:'s",
+    "head": "1:looked",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L051",
+    "dependent": "23:and",
+    "head": "5:creation",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L052",
+    "dependent": "17:and",
+    "head": "34:and",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S08",
+  "tokens": "0:at 1:last 2:she 3:said 4:to 5:her 6:mistress 7:, 8:\" 9:i 10:am 11:home-sick 12:, 13:and 14:although 15:i 16:am 17:very 18:well 19:off 20:here 21:, 22:i 23:cannot 24:stay 25:any 26:longer 27:; 28:i 29:must 30:go 31:back 32:to 33:my 34:own 35:home 36:. 37:\"",
+  "parser_pieces": "ROOT(ROOT:at(PREPOSITION:she(DESCRIPTION:last)) UNATTACHED:said(MODIFICATION:to(PREPOSITION:mistress(DESCRIPTION:her))) UNATTACHED:and(COORDINATION:am(SUBJECT:i COMPLEMENT:home-sick) COORDINATION:although(MODIFICATION:am(SUBJECT:i SPECIFICATION:very OBJECT:well)) MODIFICATION:off) UNATTACHED:here UNATTACHED:i UNATTACHED:stay(SUBJECT:cannot SPECIFICATION:longer(SPECIFICATION:any) COORDINATION:go(SUBJECT:i MODIFICATION:must OBJECT:back(MODIFICATION:to(PREPOSITION:home(DESCRIPTION:my DESCRIPTION:own))))))",
+  "links": [
+   {
+    "link": "L053",
+    "dependent": "3:said",
+    "head": "0:at",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L054",
+    "dependent": "13:and",
+    "head": "3:said",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L055",
+    "dependent": "3:said",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "L056",
+    "dependent": "20:here",
+    "head": "24:stay",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L057",
+    "dependent": "22:i",
+    "head": "24:stay",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L058",
+    "dependent": "22:i",
+    "head": "24:stay",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L059",
+    "dependent": "24:stay",
+    "head": "13:and",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S09",
+  "tokens": "0:first 1:, 2:she 3:tried 4:to 5:look 6:down 7:and 8:make 9:out 10:what 11:she 12:was 13:coming 14:to 15:, 16:but 17:it 18:was 19:too 20:dark 21:to 22:see 23:anything 24:; 25:then 26:she 27:looked 28:at 29:the 30:sides 31:of 32:the 33:well 34:, 35:and 36:noticed 37:that 38:they 39:were 40:filled 41:with 42:cupboards 43:and 44:book-shelves 45:; 46:here 47:and 48:there 49:she 50:saw 51:maps 52:and 53:pictures 54:hung 55:upon 56:pegs 57:.",
+  "parser_pieces": "ROOT(UNATTACHED:first ROOT:and(COORDINATION:tried(SUBJECT:she MODIFICATION:to(MODIFICATION:look MODIFICATION:down)) COORDINATION:make(MODIFICATION:out(PREPOSITION:what))) UNATTACHED:but(COORDINATION:coming(SUBJECT:she MODIFICATION:was MODIFICATION:to) COORDINATION:was(SUBJECT:it COMPLEMENT:dark(SPECIFICATION:too) MODIFICATION:to(MODIFICATION:see(OBJECT:anything)))) UNATTACHED:then UNATTACHED:and(COORDINATION:looked(SUBJECT:she MODIFICATION:at(PREPOSITION:sides(DESCRIPTION:the)) MODIFICATION:of(PREPOSITION:well(DESCRIPTION:the))) COORDINATION:noticed SUBORDINATION:that(MODIFICATION:filled(SUBJECT:they MODIFICATION:were MODIFICATION:with(PREPOSITION:and(COORDINATION:cupboards COORDINATION:book-shelves))))) UNATTACHED:and(COORDINATION:here COORDINATION:there) UNATTACHED:saw(SUBJECT:she OBJECT:and(COORDINATION:maps COORDINATION:pictures)) UNATTACHED:hung(MODIFICATION:upon(PREPOSITION:pegs)))",
+  "links": [
+   {
+    "link": "L060",
+    "dependent": "16:but",
+    "head": "8:make",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L061",
+    "dependent": "47:and",
+    "head": "50:saw",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L062",
+    "dependent": "50:saw",
+    "head": "37:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L063",
+    "dependent": "54:hung",
+    "head": "50:saw",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L064",
+    "dependent": "54:hung",
+    "head": "50:saw",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "L065",
+    "dependent": "47:and",
+    "head": "49:she",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L066",
+    "dependent": "0:first",
+    "head": "3:tried",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L067",
+    "dependent": "25:then",
+    "head": "35:and",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L068",
+    "dependent": "35:and",
+    "head": "16:but",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S10",
+  "tokens": "0:he 1:turned 2:his 3:face 4:eagerly 5:to 6:the 7:place 8:where 9:she 10:stood 11:; 12:and 13:it 14:was 15:observed 16:, 17:that 18:whenever 19:she 20:said 21:that 22:she 23:liked 24:any 25:tune 26:particularly 27:he 28:played 29:it 30:over 31:again 32:.",
+  "parser_pieces": "ROOT(ROOT:turned(SUBJECT:he OBJECT:face(DESCRIPTION:his) SPECIFICATION:eagerly MODIFICATION:to(PREPOSITION:place(DESCRIPTION:the)) SUBORDINATION:where(MODIFICATION:and(COORDINATION:stood(SUBJECT:she) COORDINATION:observed(SUBJECT:it MODIFICATION:was)))) UNATTACHED:that UNATTACHED:whenever UNATTACHED:said(SUBJECT:she SUBORDINATION:that(MODIFICATION:liked(SUBJECT:she SPECIFICATION:any(SPECIFICATION:tune(SPECIFICATION:particularly INDIRECT_OBJECT:he OBJECT:it(DESCRIPTION:played) MODIFICATION:over))))) UNATTACHED:again)",
+  "links": [
+   {
+    "link": "L069",
+    "dependent": "20:said",
+    "head": "17:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L070",
+    "dependent": "18:whenever",
+    "head": "20:said",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L071",
+    "dependent": "17:that",
+    "head": "12:and",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L072",
+    "dependent": "20:said",
+    "head": "8:where",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L073",
+    "dependent": "17:that",
+    "head": "8:where",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L074",
+    "dependent": "31:again",
+    "head": "28:played",
+    "relation": "SPECIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S11",
+  "tokens": "0:'what 1:a 2:pity 3:it 4:would 5:n't 6:stay 7:! 8:'",
+  "parser_pieces": "ROOT(UNATTACHED:'what ROOT:pity(DESCRIPTION:a) UNATTACHED:stay(SUBJECT:it MODIFICATION:would MODIFICATION:n't))",
+  "links": [
+   {
+    "link": "L075",
+    "dependent": "0:'what",
+    "head": "2:pity",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L076",
+    "dependent": "0:'what",
+    "head": "6:stay",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L077",
+    "dependent": "6:stay",
+    "head": "2:pity",
+    "relation": "SUBORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S12",
+  "tokens": "0:london 1:is 2:the 3:capital 4:of 5:paris 6:, 7:and 8:paris 9:is 10:the 11:capital 12:of 13:rome 14:, 15:and 16:rome 17:-- 18:no 19:, 20:that 21:'s 22:all 23:wrong 24:, 25:i 26:'m 27:certain 28:!",
+  "parser_pieces": "ROOT(ROOT:and(COORDINATION:is(SUBJECT:london OBJECT:capital(DESCRIPTION:the MODIFICATION:of(PREPOSITION:paris))) COORDINATION:is(SUBJECT:paris OBJECT:capital(DESCRIPTION:the MODIFICATION:of(PREPOSITION:rome)))) UNATTACHED:and UNATTACHED:rome UNATTACHED:no UNATTACHED:'s(SUBJECT:that OBJECT:all) UNATTACHED:'m(MODIFICATION:wrong SUBJECT:i COMPLEMENT:certain))",
+  "links": [
+   {
+    "link": "L078",
+    "dependent": "15:and",
+    "head": "7:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L079",
+    "dependent": "15:and",
+    "head": "21:'s",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L080",
+    "dependent": "18:no",
+    "head": "21:'s",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "L081",
+    "dependent": "16:rome",
+    "head": "15:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L082",
+    "dependent": "18:no",
+    "head": "21:'s",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L083",
+    "dependent": "21:'s",
+    "head": "7:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L084",
+    "dependent": "26:'m",
+    "head": "21:'s",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S13",
+  "tokens": "0:come 1:here 2:directly 3:, 4:and 5:get 6:ready 7:for 8:your 9:walk 10:! 11:\"",
+  "parser_pieces": "and(COORDINATION:come(SPECIFICATION:directly(SPECIFICATION:here)) COORDINATION:get(OBJECT:ready MODIFICATION:for) UNATTACHED:your UNATTACHED:walk)",
+  "links": [
+   {
+    "link": "L085",
+    "dependent": "9:walk",
+    "head": "7:for",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "L086",
+    "dependent": "8:your",
+    "head": "9:walk",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "S14",
+  "tokens": "0:this 1:is 2:the 3:money 4:that 5:has 6:been 7:given 8:to 9:us 10:in 11:the 12:village 13:this 14:may 15:morning 16:.",
+  "parser_pieces": "ROOT(ROOT:is(SUBJECT:this OBJECT:money(DESCRIPTION:the)) UNATTACHED:has(SUBJECT:that MODIFICATION:given(MODIFICATION:been MODIFICATION:to(PREPOSITION:us) MODIFICATION:in(PREPOSITION:village(DESCRIPTION:the)) INDIRECT_OBJECT:may(DESCRIPTION:this) OBJECT:morning)))",
+  "links": [
+   {
+    "link": "L087",
+    "dependent": "5:has",
+    "head": "4:that",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S15",
+  "tokens": "0:\" 1:this 2:is 3:so 4:like 5:you 6:-- 7:but 8:i 9:'m 10:sorry 11:that 12:miss 13:bab 14:must 15:keep 16:your 17:guinea-hen 18:.",
+  "parser_pieces": "ROOT(ROOT:so(SUBJECT:this COORDINATION:is COORDINATION:like OBJECT:you) UNATTACHED:'m(COORDINATION:but SUBJECT:i COMPLEMENT:sorry SUBORDINATION:that(MODIFICATION:miss(OBJECT:bab))) UNATTACHED:must(INDIRECT_OBJECT:keep OBJECT:guinea-hen(DESCRIPTION:your)))",
+  "links": [
+   {
+    "link": "L088",
+    "dependent": "14:must",
+    "head": "9:'m",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L089",
+    "dependent": "14:must",
+    "head": "12:miss",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L090",
+    "dependent": "9:'m",
+    "head": "3:so",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L091",
+    "dependent": "9:'m",
+    "head": "7:but",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S16",
+  "tokens": "0:she 1:got 2:out 3:upon 4:the 5:highway 6:, 7:where 8:the 9:sun 10:shone 11:upon 12:her 13:, 14:and 15:the 16:dust 17:powdered 18:her 19:all 20:over 21:as 22:she 23:marched 24:across 25:the 26:way 27:.",
+  "parser_pieces": "ROOT(ROOT:got(SUBJECT:she MODIFICATION:out) UNATTACHED:shone(MODIFICATION:upon(PREPOSITION:highway(DESCRIPTION:the)) SUBJECT:sun(DESCRIPTION:the(SPECIFICATION:where)) MODIFICATION:upon) UNATTACHED:her UNATTACHED:and UNATTACHED:dust(DESCRIPTION:the) UNATTACHED:her(DESCRIPTION:powdered) UNATTACHED:all UNATTACHED:over(PREPOSITION:as(MODIFICATION:marched(SUBJECT:she MODIFICATION:across(PREPOSITION:way(DESCRIPTION:the))))))",
+  "links": [
+   {
+    "link": "L092",
+    "dependent": "18:her",
+    "head": "17:powdered",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L093",
+    "dependent": "16:dust",
+    "head": "17:powdered",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L094",
+    "dependent": "12:her",
+    "head": "11:upon",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "L095",
+    "dependent": "10:shone",
+    "head": "1:got",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L096",
+    "dependent": "14:and",
+    "head": "17:powdered",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L097",
+    "dependent": "19:all",
+    "head": "10:shone",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L098",
+    "dependent": "18:her",
+    "head": "19:all",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L099",
+    "dependent": "20:over",
+    "head": "17:powdered",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L100",
+    "dependent": "19:all",
+    "head": "17:powdered",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "S17",
+  "tokens": "0:at 1:last 2:it 3:was 4:so 5:big 6:that 7:it 8:filled 9:a 10:cart 11:, 12:and 13:two 14:oxen 15:could 16:hardly 17:draw 18:it 19:; 20:and 21:the 22:gardener 23:knew 24:not 25:what 26:in 27:the 28:world 29:to 30:do 31:with 32:it 33:, 34:nor 35:whether 36:it 37:would 38:be 39:a 40:blessing 41:or 42:a 43:curse 44:to 45:him 46:.",
+  "parser_pieces": "ROOT(ROOT:at(PREPOSITION:it(DESCRIPTION:last)) UNATTACHED:was UNATTACHED:so UNATTACHED:big UNATTACHED:that(MODIFICATION:and(COORDINATION:filled(SUBJECT:it OBJECT:cart(DESCRIPTION:a)) COORDINATION:could(SUBJECT:oxen(DESCRIPTION:two) SPECIFICATION:hardly(SPECIFICATION:draw(OBJECT:it COORDINATION:and(COORDINATION:knew(SUBJECT:gardener(DESCRIPTION:the)))))))) UNATTACHED:not UNATTACHED:what(MODIFICATION:in(PREPOSITION:world(DESCRIPTION:the))) UNATTACHED:to(MODIFICATION:do(MODIFICATION:with(PREPOSITION:it))) UNATTACHED:nor UNATTACHED:whether(MODIFICATION:be(SUBJECT:it MODIFICATION:would OBJECT:or(COORDINATION:blessing(DESCRIPTION:a) COORDINATION:curse(DESCRIPTION:a) MODIFICATION:to(PREPOSITION:him)))))",
+  "links": [
+   {
+    "link": "L101",
+    "dependent": "35:whether",
+    "head": "29:to",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L102",
+    "dependent": "29:to",
+    "head": "25:what",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L103",
+    "dependent": "3:was",
+    "head": "6:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L104",
+    "dependent": "24:not",
+    "head": "25:what",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L105",
+    "dependent": "6:that",
+    "head": "3:was",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L106",
+    "dependent": "25:what",
+    "head": "20:and",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L107",
+    "dependent": "5:big",
+    "head": "6:that",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L108",
+    "dependent": "24:not",
+    "head": "23:knew",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L109",
+    "dependent": "6:that",
+    "head": "20:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L110",
+    "dependent": "25:what",
+    "head": "23:knew",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L111",
+    "dependent": "34:nor",
+    "head": "29:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L112",
+    "dependent": "4:so",
+    "head": "6:that",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L113",
+    "dependent": "4:so",
+    "head": "5:big",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L114",
+    "dependent": "3:was",
+    "head": "0:at",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S18",
+  "tokens": "0:but 1:the 2:jewel 3:in 4:the 5:head 6:of 7:the 8:toad 9:?",
+  "parser_pieces": "jewel(UNATTACHED:but DESCRIPTION:the MODIFICATION:in(PREPOSITION:head(DESCRIPTION:the)) MODIFICATION:of(PREPOSITION:toad(DESCRIPTION:the)))",
+  "links": [
+   {
+    "link": "L115",
+    "dependent": "0:but",
+    "head": "2:jewel",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S19",
+  "tokens": "0:when 1:he 2:reached 3:home 4:, 5:he 6:knew 7:not 8:upon 9:whom 10:to 11:vent 12:his 13:rage 14:and 15:spite 16:; 17:and 18:at 19:length 20:wicked 21:thoughts 22:came 23:into 24:his 25:head 26:, 27:and 28:he 29:resolved 30:to 31:kill 32:his 33:brother 34:.",
+  "parser_pieces": "ROOT(ROOT:knew(SUBORDINATION:when(MODIFICATION:reached(SUBJECT:he OBJECT:home)) SUBJECT:he) UNATTACHED:not UNATTACHED:upon(PREPOSITION:whom) UNATTACHED:to(PREPOSITION:vent) UNATTACHED:and(COORDINATION:rage(DESCRIPTION:his) COORDINATION:spite) UNATTACHED:and(COORDINATION:and COORDINATION:came(MODIFICATION:at(PREPOSITION:length) SUBJECT:thoughts(DESCRIPTION:wicked) MODIFICATION:into(PREPOSITION:head(DESCRIPTION:his))) COORDINATION:resolved(SUBJECT:he) MODIFICATION:to(MODIFICATION:kill(OBJECT:brother(DESCRIPTION:his)))))",
+  "links": [
+   {
+    "link": "L116",
+    "dependent": "8:upon",
+    "head": "27:and",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L117",
+    "dependent": "7:not",
+    "head": "9:whom",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L118",
+    "dependent": "14:and",
+    "head": "6:knew",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L119",
+    "dependent": "14:and",
+    "head": "11:vent",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L120",
+    "dependent": "8:upon",
+    "head": "6:knew",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L121",
+    "dependent": "10:to",
+    "head": "6:knew",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L122",
+    "dependent": "27:and",
+    "head": "6:knew",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L123",
+    "dependent": "7:not",
+    "head": "6:knew",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S20",
+  "tokens": "0:barbara 1:, 2:who 3:was 4:then 5:not 6:miss 7:barbara 8:, 9:but 10:plain 11:bab 12:, 13:and 14:who 15:had 16:played 17:with 18:all 19:the 20:poor 21:children 22:in 23:the 24:neighbourhood 25:, 26:was 27:often 28:reproved 29:in 30:her 31:unjust 32:methods 33:of 34:division 35:by 36:susan 37:'s 38:proverb 39:.",
+  "parser_pieces": "ROOT(ROOT:was(MODIFICATION:barbara SUBJECT:who SPECIFICATION:then(SPECIFICATION:miss(MODIFICATION:not OBJECT:barbara))) UNATTACHED:but UNATTACHED:bab(DESCRIPTION:plain) UNATTACHED:played(COORDINATION:and SUBJECT:who MODIFICATION:had MODIFICATION:with(PREPOSITION:poor(DESCRIPTION:the(SPECIFICATION:all))) OBJECT:children(MODIFICATION:in(PREPOSITION:neighbourhood(DESCRIPTION:the)))) UNATTACHED:was(SPECIFICATION:often MODIFICATION:reproved(MODIFICATION:in(PREPOSITION:her) OBJECT:proverb(MODIFICATION:'s(PREPOSITION:methods(DESCRIPTION:unjust MODIFICATION:of(PREPOSITION:division) MODIFICATION:by(PREPOSITION:susan)))))))",
+  "links": [
+   {
+    "link": "L124",
+    "dependent": "16:played",
+    "head": "9:but",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L125",
+    "dependent": "16:played",
+    "head": "15:had",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L126",
+    "dependent": "26:was",
+    "head": "13:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L127",
+    "dependent": "9:but",
+    "head": "6:miss",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L128",
+    "dependent": "26:was",
+    "head": "21:children",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L129",
+    "dependent": "11:bab",
+    "head": "13:and",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S21",
+  "tokens": "0:it 1:'s 2:high 3:time 4:you 5:were 6:all 7:in 8:bed 9:! 10:'",
+  "parser_pieces": "ROOT(ROOT:'s(SUBJECT:it OBJECT:time(DESCRIPTION:high)) UNATTACHED:were(SUBJECT:you OBJECT:all(MODIFICATION:in(PREPOSITION:bed))))",
+  "links": [
+   {
+    "link": "L130",
+    "dependent": "5:were",
+    "head": "3:time",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L131",
+    "dependent": "5:were",
+    "head": "1:'s",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "S22",
+  "tokens": "0:she 1:found 2:herself 3:, 4:like 5:her 6:sister 7:, 8:in 9:the 10:beautiful 11:meadow 12:, 13:and 14:followed 15:the 16:same 17:path 18:, 19:and 20:when 21:she 22:came 23:to 24:the 25:baker 26:'s 27:oven 28:, 29:the 30:bread 31:cried 32:out 33:, 34:\" 35:oh 36:, 37:take 38:me 39:out 40:, 41:take 42:me 43:out 44:, 45:or 46:i 47:shall 48:burn 49:; 50:i 51:am 52:quite 53:done 54:already 55:! 56:\"",
+  "parser_pieces": "ROOT(ROOT:found(SUBJECT:she OBJECT:herself) UNATTACHED:and(COORDINATION:like(OBJECT:sister(DESCRIPTION:her) MODIFICATION:in(PREPOSITION:meadow(DESCRIPTION:the DESCRIPTION:beautiful))) COORDINATION:followed(OBJECT:path(DESCRIPTION:the DESCRIPTION:same) COORDINATION:and(COORDINATION:when(MODIFICATION:came(SUBJECT:she MODIFICATION:to(PREPOSITION:baker(DESCRIPTION:the))))))) UNATTACHED:'s UNATTACHED:cried(MODIFICATION:oven SUBJECT:bread(DESCRIPTION:the) MODIFICATION:out OBJECT:oh) UNATTACHED:take(OBJECT:me SPECIFICATION:out) UNATTACHED:or(COORDINATION:take(OBJECT:me SPECIFICATION:out) COORDINATION:burn(SUBJECT:i MODIFICATION:shall) COORDINATION:am(SUBJECT:i SPECIFICATION:quite MODIFICATION:done(SPECIFICATION:already))))",
+  "links": [
+   {
+    "link": "L132",
+    "dependent": "31:cried",
+    "head": "19:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L133",
+    "dependent": "31:cried",
+    "head": "20:when",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L134",
+    "dependent": "26:'s",
+    "head": "27:oven",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L135",
+    "dependent": "13:and",
+    "head": "1:found",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L136",
+    "dependent": "45:or",
+    "head": "37:take",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L137",
+    "dependent": "37:take",
+    "head": "31:cried",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "S23",
+  "tokens": "0:no 1:, 2:it 3:'ll 4:never 5:do 6:to 7:ask 8:: 9:perhaps 10:i 11:shall 12:see 13:it 14:written 15:up 16:somewhere 17:. 18:'",
+  "parser_pieces": "ROOT(UNATTACHED:no ROOT:'ll(SUBJECT:it SPECIFICATION:never(SPECIFICATION:do(OBJECT:to(MODIFICATION:ask)))) UNATTACHED:perhaps UNATTACHED:see(SUBJECT:i MODIFICATION:shall) UNATTACHED:written(SUBJECT:it SPECIFICATION:up OBJECT:somewhere))",
+  "links": [
+   {
+    "link": "L138",
+    "dependent": "0:no",
+    "head": "3:'ll",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L139",
+    "dependent": "14:written",
+    "head": "12:see",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L140",
+    "dependent": "9:perhaps",
+    "head": "12:see",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L141",
+    "dependent": "14:written",
+    "head": "12:see",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L142",
+    "dependent": "0:no",
+    "head": "3:'ll",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "L143",
+    "dependent": "12:see",
+    "head": "5:do",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S24",
+  "tokens": "0:then 1:the 2:night-wind 3:said 4:, 5:'i 6:will 7:give 8:thee 9:counsel 10:.",
+  "parser_pieces": "ROOT(ROOT:said(SUBJECT:night-wind(DESCRIPTION:the(SPECIFICATION:then))) UNATTACHED:give(SUBJECT:'i MODIFICATION:will INDIRECT_OBJECT:thee OBJECT:counsel))",
+  "links": [
+   {
+    "link": "L144",
+    "dependent": "7:give",
+    "head": "3:said",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S25",
+  "tokens": "0:quick 1:, 2:now 3:! 4:'",
+  "parser_pieces": "quick(UNATTACHED:now)",
+  "links": [
+   {
+    "link": "L145",
+    "dependent": "2:now",
+    "head": "0:quick",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L146",
+    "dependent": "2:now",
+    "head": "0:quick",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S26",
+  "tokens": "0:i 1:shall 2:be 3:a 4:great 5:deal 6:too 7:far 8:off 9:to 10:trouble 11:myself 12:about 13:you 14:: 15:you 16:must 17:manage 18:the 19:best 20:way 21:you 22:can 23:; 24:-- 25:but 26:i 27:must 28:be 29:kind 30:to 31:them 32:, 33:' 34:thought 35:alice 36:, 37:'or 38:perhaps 39:they 40:wo 41:n't 42:walk 43:the 44:way 45:i 46:want 47:to 48:go 49:!",
+  "parser_pieces": "ROOT(ROOT:be(SUBJECT:i MODIFICATION:shall COMPLEMENT:a) UNATTACHED:great UNATTACHED:deal(SPECIFICATION:far(SPECIFICATION:too) MODIFICATION:off MODIFICATION:to(PREPOSITION:trouble)) UNATTACHED:myself(MODIFICATION:about(PREPOSITION:you)) UNATTACHED:manage(SUBJECT:you MODIFICATION:must INDIRECT_OBJECT:way(DESCRIPTION:the DESCRIPTION:best) OBJECT:you) UNATTACHED:can UNATTACHED:thought(COORDINATION:but OBJECT:be(SUBJECT:i MODIFICATION:must OBJECT:kind(MODIFICATION:to(PREPOSITION:them))) SUBJECT:alice) UNATTACHED:'or UNATTACHED:perhaps UNATTACHED:they UNATTACHED:walk(SUBJECT:wo MODIFICATION:n't OBJECT:way(DESCRIPTION:the)) UNATTACHED:want(SUBJECT:i OBJECT:to(MODIFICATION:go)))",
+  "links": [
+   {
+    "link": "L147",
+    "dependent": "17:manage",
+    "head": "5:deal",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L148",
+    "dependent": "38:perhaps",
+    "head": "34:thought",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L149",
+    "dependent": "4:great",
+    "head": "2:be",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "L150",
+    "dependent": "5:deal",
+    "head": "2:be",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L151",
+    "dependent": "22:can",
+    "head": "17:manage",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L152",
+    "dependent": "39:they",
+    "head": "34:thought",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L153",
+    "dependent": "34:thought",
+    "head": "17:manage",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L154",
+    "dependent": "37:'or",
+    "head": "34:thought",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L155",
+    "dependent": "38:perhaps",
+    "head": "42:walk",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L156",
+    "dependent": "46:want",
+    "head": "42:walk",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L157",
+    "dependent": "39:they",
+    "head": "42:walk",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L158",
+    "dependent": "11:myself",
+    "head": "5:deal",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L159",
+    "dependent": "46:want",
+    "head": "42:walk",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L160",
+    "dependent": "42:walk",
+    "head": "34:thought",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L161",
+    "dependent": "5:deal",
+    "head": "2:be",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L162",
+    "dependent": "4:great",
+    "head": "5:deal",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L163",
+    "dependent": "22:can",
+    "head": "17:manage",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L164",
+    "dependent": "34:thought",
+    "head": "22:can",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "S27",
+  "tokens": "0:\" 1:good 2:morning 3:, 4:hans 5:.",
+  "parser_pieces": "morning(DESCRIPTION:good UNATTACHED:hans)",
+  "links": [
+   {
+    "link": "L165",
+    "dependent": "4:hans",
+    "head": "2:morning",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S28",
+  "tokens": "0:at 1:last 2:the 3:dodo 4:said 5:, 6:'everybody 7:has 8:won 9:, 10:and 11:all 12:must 13:have 14:prizes 15:. 16:'",
+  "parser_pieces": "ROOT(ROOT:at(PREPOSITION:dodo(DESCRIPTION:last DESCRIPTION:the)) UNATTACHED:said UNATTACHED:and(COORDINATION:has(SUBJECT:'everybody OBJECT:won) COORDINATION:have(SUBJECT:all MODIFICATION:must OBJECT:prizes)))",
+  "links": [
+   {
+    "link": "L166",
+    "dependent": "10:and",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "L167",
+    "dependent": "4:said",
+    "head": "0:at",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L168",
+    "dependent": "10:and",
+    "head": "0:at",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L169",
+    "dependent": "4:said",
+    "head": "10:and",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S29",
+  "tokens": "0:the 1:howling 2:of 3:the 4:wild 5:dogs 6:was 7:henceforth 8:heard 9:no 10:more 11:; 12:they 13:had 14:disappeared 15:, 16:and 17:the 18:country 19:was 20:freed 21:from 22:the 23:trouble 24:.",
+  "parser_pieces": "ROOT(UNATTACHED:the UNATTACHED:howling ROOT:of(PREPOSITION:dogs(DESCRIPTION:the DESCRIPTION:wild)) UNATTACHED:was(SPECIFICATION:henceforth MODIFICATION:heard(OBJECT:more(DESCRIPTION:no))) UNATTACHED:and(COORDINATION:disappeared(SUBJECT:they MODIFICATION:had) COORDINATION:freed(SUBJECT:country(DESCRIPTION:the) MODIFICATION:was MODIFICATION:from(PREPOSITION:trouble(DESCRIPTION:the)))))",
+  "links": [
+   {
+    "link": "L170",
+    "dependent": "1:howling",
+    "head": "6:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L171",
+    "dependent": "6:was",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "L172",
+    "dependent": "0:the",
+    "head": "1:howling",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L173",
+    "dependent": "16:and",
+    "head": "6:was",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S30",
+  "tokens": "0:as 1:i 2:told 3:you 4:before 5:, 6:sir 7:, 8:i 9:'d 10:pledge 11:my 12:whole 13:credit 14:upon 15:the 16:thing 17:-- 18:i 19:'d 20:stake 21:my 22:existence 23:. 24:\"",
+  "parser_pieces": "ROOT(ROOT:told(SPECIFICATION:as SUBJECT:i OBJECT:you MODIFICATION:before) UNATTACHED:'d(MODIFICATION:sir SUBJECT:i INDIRECT_OBJECT:pledge OBJECT:credit(DESCRIPTION:my DESCRIPTION:whole MODIFICATION:upon(PREPOSITION:thing(DESCRIPTION:the)))) UNATTACHED:'d(SUBJECT:i INDIRECT_OBJECT:stake OBJECT:existence(DESCRIPTION:my)))",
+  "links": [
+   {
+    "link": "L174",
+    "dependent": "19:'d",
+    "head": "10:pledge",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L175",
+    "dependent": "9:'d",
+    "head": "0:as",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L176",
+    "dependent": "9:'d",
+    "head": "10:pledge",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L177",
+    "dependent": "19:'d",
+    "head": "9:'d",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S31",
+  "tokens": "0:said 1:alice 2:, 3:as 4:she 5:leant 6:against 7:a 8:buttercup 9:to 10:rest 11:herself 12:, 13:and 14:fanned 15:herself 16:with 17:one 18:of 19:the 20:leaves 21:: 22:'i 23:should 24:have 25:liked 26:teaching 27:it 28:tricks 29:very 30:much 31:, 32:if 33:-- 34:if 35:i 36:'d 37:only 38:been 39:the 40:right 41:size 42:to 43:do 44:it 45:!",
+  "parser_pieces": "ROOT(ROOT:said(OBJECT:alice) UNATTACHED:as UNATTACHED:and(COORDINATION:leant(SUBJECT:she MODIFICATION:against(PREPOSITION:buttercup(DESCRIPTION:a)) MODIFICATION:to(PREPOSITION:rest) OBJECT:herself) COORDINATION:fanned(OBJECT:herself(MODIFICATION:with(PREPOSITION:one))) MODIFICATION:of) UNATTACHED:the UNATTACHED:leaves UNATTACHED:liked(SUBJECT:'i MODIFICATION:have(MODIFICATION:should) INDIRECT_OBJECT:teaching OBJECT:it) UNATTACHED:tricks UNATTACHED:much(SPECIFICATION:very) UNATTACHED:if UNATTACHED:if(MODIFICATION:'d(SUBJECT:i SPECIFICATION:only(SPECIFICATION:been(INDIRECT_OBJECT:size(DESCRIPTION:the DESCRIPTION:right) OBJECT:to(MODIFICATION:do(OBJECT:it)))))))",
+  "links": [
+   {
+    "link": "L178",
+    "dependent": "3:as",
+    "head": "0:said",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L179",
+    "dependent": "13:and",
+    "head": "3:as",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L180",
+    "dependent": "20:leaves",
+    "head": "18:of",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "L181",
+    "dependent": "19:the",
+    "head": "20:leaves",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L182",
+    "dependent": "34:if",
+    "head": "25:liked",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L183",
+    "dependent": "34:if",
+    "head": "32:if",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L184",
+    "dependent": "32:if",
+    "head": "25:liked",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L185",
+    "dependent": "30:much",
+    "head": "25:liked",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L186",
+    "dependent": "28:tricks",
+    "head": "25:liked",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L187",
+    "dependent": "25:liked",
+    "head": "13:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L188",
+    "dependent": "30:much",
+    "head": "28:tricks",
+    "relation": "SPECIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S32",
+  "tokens": "0:'i 1:do 2:not 3:know 4:yet 5:, 6:' 7:said 8:he 9:.",
+  "parser_pieces": "ROOT(ROOT:know(SUBJECT:'i MODIFICATION:do MODIFICATION:not) UNATTACHED:yet UNATTACHED:said(SUBJECT:he))",
+  "links": [
+   {
+    "link": "L189",
+    "dependent": "4:yet",
+    "head": "3:know",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L190",
+    "dependent": "7:said",
+    "head": "3:know",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L191",
+    "dependent": "4:yet",
+    "head": "3:know",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "S33",
+  "tokens": "0:the 1:close 2:shaven 3:green 4:, 5:which 6:sloped 7:down 8:from 9:the 10:hatch-door 11:of 12:the 13:schoolroom 14:, 15:was 16:paled 17:round 18:with 19:a 20:rude 21:paling 22:, 23:which 24:, 25:though 26:decayed 27:in 28:some 29:parts 30:by 31:time 32:, 33:was 34:not 35:in 36:any 37:place 38:broken 39:by 40:violence 41:.",
+  "parser_pieces": "ROOT(UNATTACHED:the UNATTACHED:close ROOT:shaven(COMPLEMENT:green) UNATTACHED:which UNATTACHED:sloped UNATTACHED:down UNATTACHED:from(PREPOSITION:hatch-door(DESCRIPTION:the)) UNATTACHED:of(PREPOSITION:schoolroom(DESCRIPTION:the)) UNATTACHED:paled(MODIFICATION:was COMPLEMENT:round MODIFICATION:with) UNATTACHED:a UNATTACHED:rude UNATTACHED:paling(MODIFICATION:which) UNATTACHED:though(MODIFICATION:decayed(MODIFICATION:in(PREPOSITION:parts(DESCRIPTION:some)) MODIFICATION:by(PREPOSITION:time))) UNATTACHED:was UNATTACHED:not UNATTACHED:in(PREPOSITION:place(DESCRIPTION:any)) UNATTACHED:broken(MODIFICATION:by(PREPOSITION:violence)))",
+  "links": [
+   {
+    "link": "L192",
+    "dependent": "35:in",
+    "head": "38:broken",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L193",
+    "dependent": "16:paled",
+    "head": "11:of",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "L194",
+    "dependent": "5:which",
+    "head": "2:shaven",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L195",
+    "dependent": "8:from",
+    "head": "2:shaven",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L196",
+    "dependent": "34:not",
+    "head": "33:was",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L197",
+    "dependent": "7:down",
+    "head": "16:paled",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L198",
+    "dependent": "16:paled",
+    "head": "6:sloped",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L199",
+    "dependent": "20:rude",
+    "head": "21:paling",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L200",
+    "dependent": "34:not",
+    "head": "37:place",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L201",
+    "dependent": "0:the",
+    "head": "1:close",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L202",
+    "dependent": "11:of",
+    "head": "6:sloped",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L203",
+    "dependent": "7:down",
+    "head": "6:sloped",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L204",
+    "dependent": "21:paling",
+    "head": "25:though",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L205",
+    "dependent": "25:though",
+    "head": "21:paling",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L206",
+    "dependent": "11:of",
+    "head": "2:shaven",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L207",
+    "dependent": "25:though",
+    "head": "16:paled",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L208",
+    "dependent": "33:was",
+    "head": "25:though",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L209",
+    "dependent": "19:a",
+    "head": "21:paling",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "S34",
+  "tokens": "0:'that 1:was 2:ill 3:done 4:, 5:hans 6:, 7:you 8:should 9:have 10:led 11:the 12:calf 13:, 14:and 15:put 16:it 17:in 18:the 19:stall 20:. 21:'",
+  "parser_pieces": "ROOT(ROOT:was(SUBJECT:'that COMPLEMENT:ill MODIFICATION:done) UNATTACHED:and(COORDINATION:have(MODIFICATION:hans SUBJECT:you MODIFICATION:should INDIRECT_OBJECT:led OBJECT:calf(DESCRIPTION:the)) COORDINATION:put(OBJECT:it(MODIFICATION:in(PREPOSITION:stall(DESCRIPTION:the))))))",
+  "links": [
+   {
+    "link": "L210",
+    "dependent": "14:and",
+    "head": "1:was",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L211",
+    "dependent": "14:and",
+    "head": "10:led",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S35",
+  "tokens": "0:'now 1:comes 2:your 3:turn 4:, 5:' 6:said 7:he 8:to 9:the 10:young 11:tailor 12:; 13:'sew 14:the 15:eggs 16:and 17:the 18:young 19:birds 20:in 21:them 22:together 23:again 24:, 25:so 26:neatly 27:that 28:the 29:shot 30:shall 31:have 32:done 33:them 34:no 35:harm 36:. 37:'",
+  "parser_pieces": "ROOT(ROOT:comes(SUBJECT:'now COMPLEMENT:your) UNATTACHED:said(OBJECT:turn SUBJECT:he MODIFICATION:to) UNATTACHED:the UNATTACHED:young UNATTACHED:tailor UNATTACHED:'sew UNATTACHED:and(COORDINATION:eggs(DESCRIPTION:the) COORDINATION:birds(DESCRIPTION:the DESCRIPTION:young) MODIFICATION:in(PREPOSITION:them)) UNATTACHED:again(SPECIFICATION:together) UNATTACHED:so UNATTACHED:neatly UNATTACHED:that(MODIFICATION:have(SUBJECT:shot(DESCRIPTION:the) MODIFICATION:shall INDIRECT_OBJECT:them(DESCRIPTION:done) OBJECT:harm(DESCRIPTION:no))))",
+  "links": [
+   {
+    "link": "L212",
+    "dependent": "27:that",
+    "head": "22:together",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L213",
+    "dependent": "9:the",
+    "head": "11:tailor",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L214",
+    "dependent": "13:'sew",
+    "head": "11:tailor",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L215",
+    "dependent": "16:and",
+    "head": "6:said",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L216",
+    "dependent": "26:neatly",
+    "head": "27:that",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L217",
+    "dependent": "11:tailor",
+    "head": "8:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "L218",
+    "dependent": "13:'sew",
+    "head": "6:said",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L219",
+    "dependent": "6:said",
+    "head": "1:comes",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L220",
+    "dependent": "16:and",
+    "head": "13:'sew",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L221",
+    "dependent": "11:tailor",
+    "head": "6:said",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L222",
+    "dependent": "23:again",
+    "head": "16:and",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L223",
+    "dependent": "10:young",
+    "head": "11:tailor",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L224",
+    "dependent": "27:that",
+    "head": "23:again",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L225",
+    "dependent": "25:so",
+    "head": "27:that",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S36",
+  "tokens": "0:then 1:the 2:man 3:said 4:, 5:'i 6:knew 7:not 8:that 9:the 10:garden 11:belonged 12:to 13:you 14:; 15:can 16:nothing 17:save 18:my 19:life 20:? 21:'",
+  "parser_pieces": "ROOT(ROOT:said(SUBJECT:man(DESCRIPTION:the(SPECIFICATION:then))) UNATTACHED:knew(SUBJECT:'i) UNATTACHED:not UNATTACHED:that(MODIFICATION:belonged(SUBJECT:garden(DESCRIPTION:the) MODIFICATION:to(PREPOSITION:you)) COORDINATION:save(MODIFICATION:can SUBJECT:nothing OBJECT:life(DESCRIPTION:my))))",
+  "links": [
+   {
+    "link": "L226",
+    "dependent": "6:knew",
+    "head": "3:said",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L227",
+    "dependent": "7:not",
+    "head": "6:knew",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L228",
+    "dependent": "8:that",
+    "head": "6:knew",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L229",
+    "dependent": "7:not",
+    "head": "8:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L230",
+    "dependent": "8:that",
+    "head": "6:knew",
+    "relation": "SUBORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S37",
+  "tokens": "0:susan 1:stood 2:in 3:amazement 4:at 5:the 6:beginning 7:of 8:this 9:speech 10:; 11:but 12:the 13:concluding 14:words 15:explained 16:to 17:her 18:the 19:mystery 20:.",
+  "parser_pieces": "ROOT(ROOT:stood(SUBJECT:susan MODIFICATION:in(PREPOSITION:amazement) MODIFICATION:at) UNATTACHED:the UNATTACHED:beginning UNATTACHED:explained(MODIFICATION:of(PREPOSITION:speech(DESCRIPTION:this)) COORDINATION:but SUBJECT:words(DESCRIPTION:the DESCRIPTION:concluding) MODIFICATION:to(PREPOSITION:her) OBJECT:mystery(DESCRIPTION:the)))",
+  "links": [
+   {
+    "link": "L231",
+    "dependent": "15:explained",
+    "head": "14:words",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "L232",
+    "dependent": "6:beginning",
+    "head": "4:at",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "L233",
+    "dependent": "5:the",
+    "head": "6:beginning",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L234",
+    "dependent": "15:explained",
+    "head": "1:stood",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "S38",
+  "tokens": "0:( 1:alice 2:had 3:no 4:idea 5:what 6:latitude 7:was 8:, 9:or 10:longitude 11:either 12:, 13:but 14:thought 15:they 16:were 17:nice 18:grand 19:words 20:to 21:say 22:. 23:) 24:presently 25:she 26:began 27:again 28:.",
+  "parser_pieces": "ROOT(ROOT:had(SUBJECT:alice INDIRECT_OBJECT:idea(DESCRIPTION:no) OBJECT:what) UNATTACHED:was(SUBJECT:latitude) UNATTACHED:or UNATTACHED:longitude UNATTACHED:either UNATTACHED:thought(COORDINATION:but) UNATTACHED:were(SUBJECT:they INDIRECT_OBJECT:grand(DESCRIPTION:nice) OBJECT:words(MODIFICATION:to(PREPOSITION:say))) UNATTACHED:presently UNATTACHED:began(SUBJECT:she SPECIFICATION:again))",
+  "links": [
+   {
+    "link": "L235",
+    "dependent": "9:or",
+    "head": "7:was",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L236",
+    "dependent": "24:presently",
+    "head": "26:began",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L237",
+    "dependent": "26:began",
+    "head": "16:were",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L238",
+    "dependent": "14:thought",
+    "head": "9:or",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L239",
+    "dependent": "26:began",
+    "head": "16:were",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L240",
+    "dependent": "11:either",
+    "head": "9:or",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L241",
+    "dependent": "16:were",
+    "head": "14:thought",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L242",
+    "dependent": "11:either",
+    "head": "14:thought",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L243",
+    "dependent": "10:longitude",
+    "head": "11:either",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L244",
+    "dependent": "10:longitude",
+    "head": "11:either",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L245",
+    "dependent": "7:was",
+    "head": "2:had",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L246",
+    "dependent": "9:or",
+    "head": "7:was",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L247",
+    "dependent": "7:was",
+    "head": "4:idea",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L248",
+    "dependent": "16:were",
+    "head": "14:thought",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "S39",
+  "tokens": "0:at 1:the 2:end 3:of 4:this 5:time 6:, 7:he 8:came 9:home 10:again 11:, 12:and 13:his 14:father 15:asked 16:: 17:'now 18:, 19:my 20:son 21:, 22:what 23:have 24:you 25:learnt 26:? 27:'",
+  "parser_pieces": "ROOT(ROOT:and(MODIFICATION:at(PREPOSITION:end(DESCRIPTION:the)) COORDINATION:came(MODIFICATION:of(PREPOSITION:time(DESCRIPTION:this)) SUBJECT:he SPECIFICATION:again(SPECIFICATION:home)) COORDINATION:asked(SUBJECT:father(DESCRIPTION:his))) UNATTACHED:'now(MODIFICATION:son(DESCRIPTION:my)) UNATTACHED:have(SUBJECT:what OBJECT:you MODIFICATION:learnt))",
+  "links": [
+   {
+    "link": "L249",
+    "dependent": "17:'now",
+    "head": "23:have",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L250",
+    "dependent": "23:have",
+    "head": "12:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L251",
+    "dependent": "17:'now",
+    "head": "23:have",
+    "relation": "SUBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "S40",
+  "tokens": "0:then 1:the 2:other 3:answered 4:, 5:as 6:if 7:very 8:unwillingly 9:, 10:'a 11:little 12:space 13:i 14:may 15:allow 16:thee 17:to 18:sit 19:here 20:, 21:if 22:thou 23:wilt 24:reward 25:me 26:well 27:and 28:entreat 29:me 30:kindly 31:; 32:but 33:thou 34:must 35:tarry 36:yet 37:an 38:hour 39:below 40:, 41:till 42:i 43:have 44:learnt 45:some 46:little 47:matters 48:that 49:are 50:yet 51:unknown 52:to 53:me 54:. 55:'",
+  "parser_pieces": "ROOT(ROOT:the(SPECIFICATION:then) UNATTACHED:other UNATTACHED:answered UNATTACHED:as UNATTACHED:if UNATTACHED:unwillingly(SPECIFICATION:very) UNATTACHED:'a UNATTACHED:space(DESCRIPTION:little) UNATTACHED:allow(SUBJECT:i MODIFICATION:may OBJECT:thee MODIFICATION:to(MODIFICATION:sit(SPECIFICATION:here SUBORDINATION:if(MODIFICATION:wilt(SUBJECT:thou INDIRECT_OBJECT:reward OBJECT:me))))) UNATTACHED:well UNATTACHED:entreat(COORDINATION:and OBJECT:me) UNATTACHED:kindly UNATTACHED:tarry(COORDINATION:but SUBJECT:thou MODIFICATION:must) UNATTACHED:yet UNATTACHED:hour(DESCRIPTION:an) UNATTACHED:below UNATTACHED:till UNATTACHED:learnt(SUBJECT:i MODIFICATION:have OBJECT:matters(DESCRIPTION:some DESCRIPTION:little) SUBORDINATION:that(MODIFICATION:are)) UNATTACHED:yet UNATTACHED:unknown(MODIFICATION:to(PREPOSITION:me)))",
+  "links": [
+   {
+    "link": "L252",
+    "dependent": "15:allow",
+    "head": "12:space",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "L253",
+    "dependent": "3:answered",
+    "head": "15:allow",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L254",
+    "dependent": "6:if",
+    "head": "15:allow",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L255",
+    "dependent": "2:other",
+    "head": "3:answered",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "L256",
+    "dependent": "10:'a",
+    "head": "6:if",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L257",
+    "dependent": "35:tarry",
+    "head": "27:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L258",
+    "dependent": "3:answered",
+    "head": "6:if",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L259",
+    "dependent": "39:below",
+    "head": "35:tarry",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L260",
+    "dependent": "38:hour",
+    "head": "36:yet",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L261",
+    "dependent": "51:unknown",
+    "head": "50:yet",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L262",
+    "dependent": "50:yet",
+    "head": "48:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L263",
+    "dependent": "26:well",
+    "head": "23:wilt",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L264",
+    "dependent": "50:yet",
+    "head": "49:are",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "L265",
+    "dependent": "35:tarry",
+    "head": "32:but",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L266",
+    "dependent": "12:space",
+    "head": "6:if",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "L267",
+    "dependent": "8:unwillingly",
+    "head": "15:allow",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "L268",
+    "dependent": "44:learnt",
+    "head": "36:yet",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "L269",
+    "dependent": "41:till",
+    "head": "44:learnt",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "L270",
+    "dependent": "12:space",
+    "head": "ROOT",
+    "relation": "ROOT"
+   }
+  ]
+ }
+]

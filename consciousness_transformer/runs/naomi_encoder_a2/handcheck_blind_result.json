@@ -1,0 +1,2331 @@
+{
+ "summary": {
+  "per_model": {
+   "A": {
+    "r": 60,
+    "d": 52,
+    "w": 61
+   },
+   "A2": {
+    "r": 65,
+    "d": 47,
+    "w": 61
+   }
+  },
+  "per_model_by_band": {
+   "A": {
+    "<=10": {
+     "r": 7,
+     "d": 7
+    },
+    "36+": {
+     "d": 21,
+     "r": 25,
+     "w": 38
+    },
+    "11-20": {
+     "d": 10,
+     "r": 6,
+     "w": 5
+    },
+    "21-35": {
+     "r": 22,
+     "w": 18,
+     "d": 14
+    }
+   },
+   "A2": {
+    "<=10": {
+     "r": 7,
+     "w": 2,
+     "d": 5
+    },
+    "36+": {
+     "d": 20,
+     "r": 28,
+     "w": 36
+    },
+    "11-20": {
+     "d": 9,
+     "w": 4,
+     "r": 8
+    },
+    "21-35": {
+     "w": 19,
+     "r": 22,
+     "d": 13
+    }
+   }
+  },
+  "link_sets": {
+   "both": {
+    "r": 38,
+    "d": 23,
+    "w": 15
+   },
+   "only_A2": {
+    "d": 24,
+    "r": 27,
+    "w": 46
+   },
+   "only_A": {
+    "d": 29,
+    "r": 22,
+    "w": 46
+   }
+  },
+  "rater_consistency_stage_A_links": {
+   "n": 173,
+   "same_judgment": 120,
+   "old_new_counts": {
+    "d->d": 31,
+    "d->r": 12,
+    "d->w": 15,
+    "r->d": 9,
+    "r->r": 45,
+    "r->w": 2,
+    "w->d": 12,
+    "w->r": 3,
+    "w->w": 44
+   }
+  }
+ },
+ "rows": [
+  {
+   "link": "L001",
+   "key": "v7-000003|0|2|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L002",
+   "key": "v7-012921|18|11|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L003",
+   "key": "v7-012921|10|4|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L004",
+   "key": "v7-012921|18|0|ROOT",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L005",
+   "key": "v7-012921|21|23|DESCRIPTION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L006",
+   "key": "v7-012921|46|46|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L007",
+   "key": "v7-012921|34|46|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L008",
+   "key": "v7-012921|23|19|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L009",
+   "key": "v7-012921|10|19|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L010",
+   "key": "v7-012921|21|20|SUBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L011",
+   "key": "v7-012921|34|24|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L012",
+   "key": "v7-012921|23|19|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L013",
+   "key": "v7-000380|5|3|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L014",
+   "key": "v7-000380|0|3|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L015",
+   "key": "v7-000380|5|3|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L016",
+   "key": "v7-000380|0|2|DESCRIPTION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L017",
+   "key": "v7-012781|55|41|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L018",
+   "key": "v7-012781|21|19|COMPLEMENT",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L019",
+   "key": "v7-012781|14|8|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L020",
+   "key": "v7-012781|7|17|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L021",
+   "key": "v7-012781|25|25|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L022",
+   "key": "v7-012781|48|56|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L023",
+   "key": "v7-012781|2|4|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L024",
+   "key": "v7-012781|3|8|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L025",
+   "key": "v7-012781|7|4|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L026",
+   "key": "v7-012781|40|39|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L027",
+   "key": "v7-012781|21|19|SPECIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L028",
+   "key": "v7-012781|18|25|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L029",
+   "key": "v7-012781|55|49|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L030",
+   "key": "v7-012781|25|35|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L031",
+   "key": "v7-012781|48|40|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L032",
+   "key": "v7-012781|3|2|SPECIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L033",
+   "key": "v7-012781|40|40|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L034",
+   "key": "v7-012934|16|5|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L035",
+   "key": "v7-008409|15|10|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L036",
+   "key": "v7-008409|15|2|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L037",
+   "key": "v7-008409|4|6|PREPOSITION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L038",
+   "key": "v7-008409|4|4|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L039",
+   "key": "v7-027660|23|19|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L040",
+   "key": "v7-027660|13|18|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L041",
+   "key": "v7-027660|34|43|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L042",
+   "key": "v7-027660|17|6|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L043",
+   "key": "v7-027660|4|6|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L044",
+   "key": "v7-027660|5|2|INDIRECT_OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L045",
+   "key": "v7-027660|24|35|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L046",
+   "key": "v7-027660|24|35|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L047",
+   "key": "v7-027660|5|3|PREPOSITION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L048",
+   "key": "v7-027660|9|6|APPOSITION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L049",
+   "key": "v7-027660|9|14|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L050",
+   "key": "v7-027660|4|2|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L051",
+   "key": "v7-027660|23|6|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L052",
+   "key": "v7-027660|17|35|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L053",
+   "key": "v7-017847|3|1|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L054",
+   "key": "v7-017847|13|4|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L055",
+   "key": "v7-017847|3|0|ROOT",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L056",
+   "key": "v7-017847|20|25|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L057",
+   "key": "v7-017847|22|25|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L058",
+   "key": "v7-017847|22|25|SUBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L059",
+   "key": "v7-017847|24|14|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L060",
+   "key": "v7-000013|16|9|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L061",
+   "key": "v7-000013|47|51|SPECIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L062",
+   "key": "v7-000013|50|38|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L063",
+   "key": "v7-000013|54|51|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L064",
+   "key": "v7-000013|54|51|COMPLEMENT",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L065",
+   "key": "v7-000013|47|50|DESCRIPTION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L066",
+   "key": "v7-000013|0|4|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L067",
+   "key": "v7-000013|25|36|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L068",
+   "key": "v7-000013|35|17|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L069",
+   "key": "v7-008628|20|18|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L070",
+   "key": "v7-008628|18|21|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L071",
+   "key": "v7-008628|17|13|SUBORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L072",
+   "key": "v7-008628|20|9|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L073",
+   "key": "v7-008628|17|9|SUBORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L074",
+   "key": "v7-008628|31|29|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L075",
+   "key": "v7-000234|0|3|DESCRIPTION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L076",
+   "key": "v7-000234|0|7|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L077",
+   "key": "v7-000234|6|3|SUBORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L078",
+   "key": "v7-000108|15|8|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L079",
+   "key": "v7-000108|15|22|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L080",
+   "key": "v7-000108|18|22|COMPLEMENT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L081",
+   "key": "v7-000108|16|16|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L082",
+   "key": "v7-000108|18|22|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L083",
+   "key": "v7-000108|21|8|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L084",
+   "key": "v7-000108|26|22|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L085",
+   "key": "v7-000279|9|8|PREPOSITION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L086",
+   "key": "v7-000279|8|10|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L087",
+   "key": "v7-008332|5|5|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L088",
+   "key": "v7-008380|14|10|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L089",
+   "key": "v7-008380|14|13|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L090",
+   "key": "v7-008380|9|4|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L091",
+   "key": "v7-008380|9|8|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L092",
+   "key": "v7-027558|18|18|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L093",
+   "key": "v7-027558|16|18|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L094",
+   "key": "v7-027558|12|12|PREPOSITION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L095",
+   "key": "v7-027558|10|2|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L096",
+   "key": "v7-027558|14|18|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L097",
+   "key": "v7-027558|19|11|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L098",
+   "key": "v7-027558|18|20|DESCRIPTION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L099",
+   "key": "v7-027558|20|18|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L100",
+   "key": "v7-027558|19|18|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L101",
+   "key": "v7-012782|35|30|SUBORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L102",
+   "key": "v7-012782|29|26|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L103",
+   "key": "v7-012782|3|7|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L104",
+   "key": "v7-012782|24|26|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L105",
+   "key": "v7-012782|6|4|SUBORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L106",
+   "key": "v7-012782|25|21|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L107",
+   "key": "v7-012782|5|7|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L108",
+   "key": "v7-012782|24|24|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L109",
+   "key": "v7-012782|6|21|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L110",
+   "key": "v7-012782|25|24|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L111",
+   "key": "v7-012782|34|30|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L112",
+   "key": "v7-012782|4|7|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L113",
+   "key": "v7-012782|4|6|SPECIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L114",
+   "key": "v7-012782|3|1|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L115",
+   "key": "v7-027722|0|3|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L116",
+   "key": "v7-012799|8|28|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L117",
+   "key": "v7-012799|7|10|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L118",
+   "key": "v7-012799|14|7|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L119",
+   "key": "v7-012799|14|12|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L120",
+   "key": "v7-012799|8|7|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L121",
+   "key": "v7-012799|10|7|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L122",
+   "key": "v7-012799|27|7|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L123",
+   "key": "v7-012799|7|7|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L124",
+   "key": "v7-008465|16|10|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L125",
+   "key": "v7-008465|16|16|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L126",
+   "key": "v7-008465|26|14|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L127",
+   "key": "v7-008465|9|7|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L128",
+   "key": "v7-008465|26|22|DESCRIPTION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L129",
+   "key": "v7-008465|11|14|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L130",
+   "key": "v7-000252|5|4|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L131",
+   "key": "v7-000252|5|2|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L132",
+   "key": "v7-017857|31|20|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L133",
+   "key": "v7-017857|31|21|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L134",
+   "key": "v7-017857|26|28|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L135",
+   "key": "v7-017857|13|2|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L136",
+   "key": "v7-017857|45|38|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L137",
+   "key": "v7-017857|37|32|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L138",
+   "key": "v7-000031|0|4|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L139",
+   "key": "v7-000031|14|13|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L140",
+   "key": "v7-000031|9|13|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L141",
+   "key": "v7-000031|14|13|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L142",
+   "key": "v7-000031|0|4|COMPLEMENT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L143",
+   "key": "v7-000031|12|6|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L144",
+   "key": "v7-013066|7|4|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L145",
+   "key": "v7-000269|2|1|SPECIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L146",
+   "key": "v7-000269|2|1|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L147",
+   "key": "v7-000080|17|6|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L148",
+   "key": "v7-000080|38|35|SPECIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L149",
+   "key": "v7-000080|4|3|COMPLEMENT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L150",
+   "key": "v7-000080|5|3|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L151",
+   "key": "v7-000080|22|18|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L152",
+   "key": "v7-000080|39|35|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L153",
+   "key": "v7-000080|34|18|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L154",
+   "key": "v7-000080|37|35|SUBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L155",
+   "key": "v7-000080|38|43|SPECIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L156",
+   "key": "v7-000080|46|43|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L157",
+   "key": "v7-000080|39|43|SUBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L158",
+   "key": "v7-000080|11|6|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L159",
+   "key": "v7-000080|46|43|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L160",
+   "key": "v7-000080|42|35|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L161",
+   "key": "v7-000080|5|3|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L162",
+   "key": "v7-000080|4|6|SUBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L163",
+   "key": "v7-000080|22|18|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L164",
+   "key": "v7-000080|34|23|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L165",
+   "key": "v7-019886|4|3|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L166",
+   "key": "v7-000207|10|0|ROOT",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L167",
+   "key": "v7-000207|4|1|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L168",
+   "key": "v7-000207|10|1|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L169",
+   "key": "v7-000207|4|11|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L170",
+   "key": "v7-012932|1|7|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L171",
+   "key": "v7-012932|6|0|ROOT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L172",
+   "key": "v7-012932|0|2|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L173",
+   "key": "v7-012932|16|7|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L174",
+   "key": "v7-008506|19|11|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L175",
+   "key": "v7-008506|9|1|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L176",
+   "key": "v7-008506|9|11|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L177",
+   "key": "v7-008506|19|10|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L178",
+   "key": "v7-000378|3|1|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L179",
+   "key": "v7-000378|13|4|MODIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L180",
+   "key": "v7-000378|20|19|PREPOSITION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L181",
+   "key": "v7-000378|19|21|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L182",
+   "key": "v7-000378|34|26|SUBORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L183",
+   "key": "v7-000378|34|33|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L184",
+   "key": "v7-000378|32|26|SUBORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L185",
+   "key": "v7-000378|30|26|SPECIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L186",
+   "key": "v7-000378|28|26|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L187",
+   "key": "v7-000378|25|14|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L188",
+   "key": "v7-000378|30|29|SPECIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L189",
+   "key": "v7-012975|4|4|SPECIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L190",
+   "key": "v7-012975|7|4|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L191",
+   "key": "v7-012975|4|4|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L192",
+   "key": "v7-008609|35|39|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L193",
+   "key": "v7-008609|16|12|PREPOSITION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L194",
+   "key": "v7-008609|5|3|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L195",
+   "key": "v7-008609|8|3|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L196",
+   "key": "v7-008609|34|34|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L197",
+   "key": "v7-008609|7|17|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L198",
+   "key": "v7-008609|16|7|SUBORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L199",
+   "key": "v7-008609|20|22|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L200",
+   "key": "v7-008609|34|38|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L201",
+   "key": "v7-008609|0|2|DESCRIPTION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L202",
+   "key": "v7-008609|11|7|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L203",
+   "key": "v7-008609|7|7|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L204",
+   "key": "v7-008609|21|26|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L205",
+   "key": "v7-008609|25|22|SUBORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L206",
+   "key": "v7-008609|11|3|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L207",
+   "key": "v7-008609|25|17|SUBORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L208",
+   "key": "v7-008609|33|26|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L209",
+   "key": "v7-008609|19|22|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L210",
+   "key": "v7-012893|14|2|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L211",
+   "key": "v7-012893|14|11|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L212",
+   "key": "v7-012993|27|23|SUBORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L213",
+   "key": "v7-012993|9|12|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L214",
+   "key": "v7-012993|13|12|SUBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L215",
+   "key": "v7-012993|16|7|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L216",
+   "key": "v7-012993|26|28|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L217",
+   "key": "v7-012993|11|9|PREPOSITION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L218",
+   "key": "v7-012993|13|7|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L219",
+   "key": "v7-012993|6|2|OBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L220",
+   "key": "v7-012993|16|14|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L221",
+   "key": "v7-012993|11|7|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L222",
+   "key": "v7-012993|23|17|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L223",
+   "key": "v7-012993|10|12|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L224",
+   "key": "v7-012993|27|24|SUBORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L225",
+   "key": "v7-012993|25|28|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L226",
+   "key": "v7-013030|6|4|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L227",
+   "key": "v7-013030|7|7|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L228",
+   "key": "v7-013030|8|7|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L229",
+   "key": "v7-013030|7|9|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L230",
+   "key": "v7-013030|8|7|SUBORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L231",
+   "key": "v7-008461|15|15|COMPLEMENT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L232",
+   "key": "v7-008461|6|5|PREPOSITION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L233",
+   "key": "v7-008461|5|7|DESCRIPTION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L234",
+   "key": "v7-008461|15|2|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L235",
+   "key": "v7-000024|9|8|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L236",
+   "key": "v7-000024|24|27|SPECIFICATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L237",
+   "key": "v7-000024|26|17|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L238",
+   "key": "v7-000024|14|10|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L239",
+   "key": "v7-000024|26|17|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L240",
+   "key": "v7-000024|11|10|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L241",
+   "key": "v7-000024|16|15|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L242",
+   "key": "v7-000024|11|15|SPECIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L243",
+   "key": "v7-000024|10|12|SPECIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L244",
+   "key": "v7-000024|10|12|SUBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L245",
+   "key": "v7-000024|7|3|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L246",
+   "key": "v7-000024|9|8|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L247",
+   "key": "v7-000024|7|5|SUBORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L248",
+   "key": "v7-000024|16|15|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L249",
+   "key": "v7-012909|17|24|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L250",
+   "key": "v7-012909|23|13|COORDINATION",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L251",
+   "key": "v7-012909|17|24|SUBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L252",
+   "key": "v7-012814|15|13|SUBORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L253",
+   "key": "v7-012814|3|16|SUBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L254",
+   "key": "v7-012814|6|16|OBJECT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L255",
+   "key": "v7-012814|2|4|DESCRIPTION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L256",
+   "key": "v7-012814|10|7|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L257",
+   "key": "v7-012814|35|28|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L258",
+   "key": "v7-012814|3|7|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L259",
+   "key": "v7-012814|39|36|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L260",
+   "key": "v7-012814|38|37|COORDINATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L261",
+   "key": "v7-012814|51|51|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L262",
+   "key": "v7-012814|50|49|MODIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L263",
+   "key": "v7-012814|26|24|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L264",
+   "key": "v7-012814|50|50|OBJECT",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L265",
+   "key": "v7-012814|35|33|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "r"
+  },
+  {
+   "link": "L266",
+   "key": "v7-012814|12|7|MODIFICATION",
+   "models": [
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L267",
+   "key": "v7-012814|8|16|SPECIFICATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "d"
+  },
+  {
+   "link": "L268",
+   "key": "v7-012814|44|37|COORDINATION",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L269",
+   "key": "v7-012814|41|45|SUBJECT",
+   "models": [
+    "A",
+    "A2"
+   ],
+   "judgment": "w"
+  },
+  {
+   "link": "L270",
+   "key": "v7-012814|12|0|ROOT",
+   "models": [
+    "A"
+   ],
+   "judgment": "w"
+  }
+ ]
+}

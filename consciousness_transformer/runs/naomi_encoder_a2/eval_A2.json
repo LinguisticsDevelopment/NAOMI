@@ -1,0 +1,812 @@
+{
+ "ckpt": "runs/naomi_encoder_a2/a2_best.pt",
+ "meta": {
+  "epoch": 25,
+  "dev": {
+   "loss": 0.39424255218168514,
+   "uas": 0.9243221725861382,
+   "las": 0.9101685169622716,
+   "n": 22609,
+   "score": 0.6552437481143096,
+   "tb_uas": 0.4916267942583732,
+   "tb_las": 0.4003189792663477
+  },
+  "args": {
+   "tag": "a2",
+   "gold": "/home/user/NAOMI/consciousness_transformer/runs/gold_v7.jsonl.gz",
+   "max_minutes": 58.0,
+   "epochs": 60,
+   "patience": 5,
+   "hidden": 192,
+   "layers": 3,
+   "hash_buckets": 0,
+   "lr": 0.002,
+   "batch_tokens": 1800,
+   "seed": 0,
+   "limit": 0,
+   "threads": 4,
+   "out_dir": "runs/naomi_encoder_a2",
+   "base_cache": "/home/user/NAOMI/consciousness_transformer/runs/naomi_encoder/prep_cache.pkl",
+   "extra_train": "runs/treebank/ewt_train.jsonl.gz",
+   "extra_dev": "runs/treebank/ewt_dev.jsonl.gz",
+   "no_treebank_links": false
+  },
+  "n_params": 2637549,
+  "train_sentences": 32406
+ },
+ "test_split": {
+  "connected_sentences": {
+   "model": {
+    "11-20": {
+     "sentences": 83,
+     "tokens": 1164,
+     "uas": 0.9356,
+     "las": 0.9261,
+     "exact_unlabelled": 0.6627,
+     "exact_labelled": 0.6265,
+     "scorer_meaning": 90.54,
+     "scorer_shape": 91.66,
+     "scorer_overall": 91.1
+    },
+    "21-35": {
+     "sentences": 20,
+     "tokens": 480,
+     "uas": 0.875,
+     "las": 0.8625,
+     "exact_unlabelled": 0.15,
+     "exact_labelled": 0.1,
+     "scorer_meaning": 79.58,
+     "scorer_shape": 81.87,
+     "scorer_overall": 80.72
+    },
+    "<=10": {
+     "sentences": 310,
+     "tokens": 1771,
+     "uas": 0.9396,
+     "las": 0.9289,
+     "exact_unlabelled": 0.8419,
+     "exact_labelled": 0.8194,
+     "scorer_meaning": 92.42,
+     "scorer_shape": 93.29,
+     "scorer_overall": 92.86
+    },
+    "all": {
+     "sentences": 413,
+     "tokens": 3415,
+     "uas": 0.9291,
+     "las": 0.9186,
+     "exact_unlabelled": 0.7724,
+     "exact_labelled": 0.7458,
+     "scorer_meaning": 91.42,
+     "scorer_shape": 92.41,
+     "scorer_overall": 91.92
+    }
+   },
+   "baseline_nearest_verb": {
+    "11-20": {
+     "sentences": 83,
+     "tokens": 1164,
+     "uas": 0.3067,
+     "las": 0.256,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": 17.01,
+     "scorer_shape": 22.0,
+     "scorer_overall": 19.5
+    },
+    "21-35": {
+     "sentences": 20,
+     "tokens": 480,
+     "uas": 0.2833,
+     "las": 0.2417,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": 11.55,
+     "scorer_shape": 15.19,
+     "scorer_overall": 13.37
+    },
+    "<=10": {
+     "sentences": 310,
+     "tokens": 1771,
+     "uas": 0.3834,
+     "las": 0.3292,
+     "exact_unlabelled": 0.1484,
+     "exact_labelled": 0.1161,
+     "scorer_meaning": 34.35,
+     "scorer_shape": 44.05,
+     "scorer_overall": 39.2
+    },
+    "all": {
+     "sentences": 413,
+     "tokens": 3415,
+     "uas": 0.3432,
+     "las": 0.2919,
+     "exact_unlabelled": 0.1114,
+     "exact_labelled": 0.0872,
+     "scorer_meaning": 29.76,
+     "scorer_shape": 38.22,
+     "scorer_overall": 33.99
+    }
+   }
+  },
+  "fragmented_sentences": {
+   "sentences": 1098,
+   "supervised_agreement": {
+    "sentences": 1098,
+    "tokens": 18923,
+    "uas": 0.9209,
+    "las": 0.9067,
+    "exact_unlabelled": 0.4554,
+    "exact_labelled": 0.4126,
+    "scorer_meaning": null,
+    "scorer_shape": null,
+    "scorer_overall": null
+   },
+   "by_band": {
+    "11-20": {
+     "sentences": 333,
+     "tokens": 4200,
+     "uas": 0.9007,
+     "las": 0.8824,
+     "exact_unlabelled": 0.4775,
+     "exact_labelled": 0.4444,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 353,
+     "tokens": 7766,
+     "uas": 0.9196,
+     "las": 0.9051,
+     "exact_unlabelled": 0.3201,
+     "exact_labelled": 0.2635,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "36+": {
+     "sentences": 162,
+     "tokens": 5759,
+     "uas": 0.9418,
+     "las": 0.9309,
+     "exact_unlabelled": 0.2531,
+     "exact_labelled": 0.216,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 250,
+     "tokens": 1198,
+     "uas": 0.8998,
+     "las": 0.8856,
+     "exact_unlabelled": 0.748,
+     "exact_labelled": 0.708,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   },
+   "unknown_tokens": 4500,
+   "supervised_tokens": 18923,
+   "unknown_placement_share": {
+    "inside another piece": 0.9413,
+    "own piece": 0.0351,
+    "ROOT": 0.0236
+   },
+   "output_single_rooted_connected_share": 1.0,
+   "main_root_agreement": 0.8616,
+   "margin_added_links": {
+    "mean": 2.984,
+    "median": 1.857
+   },
+   "margin_supervised_links": {
+    "mean": 11.804,
+    "median": 10.932
+   },
+   "top1_prob_added": {
+    "mean": 0.66,
+    "median": 0.731
+   },
+   "top1_prob_supervised": {
+    "mean": 0.953,
+    "median": 1.0
+   },
+   "relations_used_for_added_links": {
+    "COORDINATION": 0.2662,
+    "MODIFICATION": 0.2078,
+    "OBJECT": 0.142,
+    "SPECIFICATION": 0.0876,
+    "DESCRIPTION": 0.0829,
+    "SUBJECT": 0.0578,
+    "PREPOSITION": 0.0533,
+    "SUBORDINATION": 0.0478,
+    "ROOT": 0.0236,
+    "COMPLEMENT": 0.0184,
+    "APPOSITION": 0.0078,
+    "INDIRECT_OBJECT": 0.0049
+   }
+  }
+ },
+ "frozen_holdout": {
+  "connected_sentences": {
+   "model": {
+    "11-20": {
+     "sentences": 14,
+     "tokens": 196,
+     "uas": 0.9133,
+     "las": 0.8827,
+     "exact_unlabelled": 0.7143,
+     "exact_labelled": 0.6429,
+     "scorer_meaning": 88.38,
+     "scorer_shape": 88.38,
+     "scorer_overall": 88.38
+    },
+    "<=10": {
+     "sentences": 16,
+     "tokens": 120,
+     "uas": 0.925,
+     "las": 0.9,
+     "exact_unlabelled": 0.6875,
+     "exact_labelled": 0.6875,
+     "scorer_meaning": 90.05,
+     "scorer_shape": 90.51,
+     "scorer_overall": 90.28
+    },
+    "all": {
+     "sentences": 30,
+     "tokens": 316,
+     "uas": 0.9177,
+     "las": 0.8892,
+     "exact_unlabelled": 0.7,
+     "exact_labelled": 0.6667,
+     "scorer_meaning": 89.27,
+     "scorer_shape": 89.52,
+     "scorer_overall": 89.39
+    }
+   },
+   "baseline_nearest_verb": {
+    "11-20": {
+     "sentences": 14,
+     "tokens": 196,
+     "uas": 0.2551,
+     "las": 0.2245,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": 16.42,
+     "scorer_shape": 22.04,
+     "scorer_overall": 19.23
+    },
+    "<=10": {
+     "sentences": 16,
+     "tokens": 120,
+     "uas": 0.4,
+     "las": 0.3167,
+     "exact_unlabelled": 0.0625,
+     "exact_labelled": 0.0625,
+     "scorer_meaning": 28.32,
+     "scorer_shape": 40.1,
+     "scorer_overall": 34.21
+    },
+    "all": {
+     "sentences": 30,
+     "tokens": 316,
+     "uas": 0.3101,
+     "las": 0.2595,
+     "exact_unlabelled": 0.0333,
+     "exact_labelled": 0.0333,
+     "scorer_meaning": 22.76,
+     "scorer_shape": 31.67,
+     "scorer_overall": 27.22
+    }
+   }
+  },
+  "fragmented_sentences": {
+   "sentences": 64,
+   "supervised_agreement": {
+    "sentences": 64,
+    "tokens": 1223,
+    "uas": 0.9256,
+    "las": 0.906,
+    "exact_unlabelled": 0.3906,
+    "exact_labelled": 0.3125,
+    "scorer_meaning": null,
+    "scorer_shape": null,
+    "scorer_overall": null
+   },
+   "by_band": {
+    "11-20": {
+     "sentences": 27,
+     "tokens": 346,
+     "uas": 0.9046,
+     "las": 0.8728,
+     "exact_unlabelled": 0.3704,
+     "exact_labelled": 0.3333,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 23,
+     "tokens": 481,
+     "uas": 0.9314,
+     "las": 0.9106,
+     "exact_unlabelled": 0.4783,
+     "exact_labelled": 0.3478,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "36+": {
+     "sentences": 12,
+     "tokens": 384,
+     "uas": 0.9375,
+     "las": 0.9297,
+     "exact_unlabelled": 0.25,
+     "exact_labelled": 0.1667,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 2,
+     "tokens": 12,
+     "uas": 0.9167,
+     "las": 0.9167,
+     "exact_unlabelled": 0.5,
+     "exact_labelled": 0.5,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   },
+   "unknown_tokens": 349,
+   "supervised_tokens": 1223,
+   "unknown_placement_share": {
+    "inside another piece": 0.9341,
+    "own piece": 0.0401,
+    "ROOT": 0.0258
+   },
+   "output_single_rooted_connected_share": 1.0,
+   "main_root_agreement": 0.8125,
+   "margin_added_links": {
+    "mean": 2.875,
+    "median": 1.816
+   },
+   "margin_supervised_links": {
+    "mean": 11.623,
+    "median": 10.849
+   },
+   "top1_prob_added": {
+    "mean": 0.691,
+    "median": 0.766
+   },
+   "top1_prob_supervised": {
+    "mean": 0.955,
+    "median": 1.0
+   },
+   "relations_used_for_added_links": {
+    "MODIFICATION": 0.2493,
+    "COORDINATION": 0.2264,
+    "DESCRIPTION": 0.1232,
+    "OBJECT": 0.0946,
+    "SPECIFICATION": 0.0716,
+    "SUBJECT": 0.0688,
+    "PREPOSITION": 0.063,
+    "SUBORDINATION": 0.0458,
+    "COMPLEMENT": 0.0315,
+    "ROOT": 0.0258
+   }
+  }
+ },
+ "frozen_holdout_dev": {
+  "connected_sentences": {
+   "model": {
+    "11-20": {
+     "sentences": 8,
+     "tokens": 116,
+     "uas": 0.8879,
+     "las": 0.8534,
+     "exact_unlabelled": 0.5,
+     "exact_labelled": 0.5,
+     "scorer_meaning": 81.55,
+     "scorer_shape": 82.78,
+     "scorer_overall": 82.17
+    },
+    "21-35": {
+     "sentences": 2,
+     "tokens": 45,
+     "uas": 0.9111,
+     "las": 0.8667,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": 78.3,
+     "scorer_shape": 84.09,
+     "scorer_overall": 81.2
+    },
+    "<=10": {
+     "sentences": 5,
+     "tokens": 25,
+     "uas": 0.96,
+     "las": 0.96,
+     "exact_unlabelled": 0.8,
+     "exact_labelled": 0.8,
+     "scorer_meaning": 98.0,
+     "scorer_shape": 98.0,
+     "scorer_overall": 98.0
+    },
+    "all": {
+     "sentences": 15,
+     "tokens": 186,
+     "uas": 0.9032,
+     "las": 0.871,
+     "exact_unlabelled": 0.5333,
+     "exact_labelled": 0.5333,
+     "scorer_meaning": 86.6,
+     "scorer_shape": 88.03,
+     "scorer_overall": 87.31
+    }
+   },
+   "baseline_nearest_verb": {
+    "11-20": {
+     "sentences": 8,
+     "tokens": 116,
+     "uas": 0.1983,
+     "las": 0.1897,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": 10.82,
+     "scorer_shape": 18.79,
+     "scorer_overall": 14.8
+    },
+    "21-35": {
+     "sentences": 2,
+     "tokens": 45,
+     "uas": 0.2444,
+     "las": 0.2,
+     "exact_unlabelled": 0.0,
+     "exact_labelled": 0.0,
+     "scorer_meaning": 8.35,
+     "scorer_shape": 20.04,
+     "scorer_overall": 14.2
+    },
+    "<=10": {
+     "sentences": 5,
+     "tokens": 25,
+     "uas": 0.4,
+     "las": 0.28,
+     "exact_unlabelled": 0.2,
+     "exact_labelled": 0.0,
+     "scorer_meaning": 24.22,
+     "scorer_shape": 30.88,
+     "scorer_overall": 27.55
+    },
+    "all": {
+     "sentences": 15,
+     "tokens": 186,
+     "uas": 0.2366,
+     "las": 0.2043,
+     "exact_unlabelled": 0.0667,
+     "exact_labelled": 0.0,
+     "scorer_meaning": 14.96,
+     "scorer_shape": 22.98,
+     "scorer_overall": 18.97
+    }
+   }
+  },
+  "fragmented_sentences": {
+   "sentences": 83,
+   "supervised_agreement": {
+    "sentences": 83,
+    "tokens": 1596,
+    "uas": 0.9185,
+    "las": 0.9054,
+    "exact_unlabelled": 0.3614,
+    "exact_labelled": 0.3133,
+    "scorer_meaning": null,
+    "scorer_shape": null,
+    "scorer_overall": null
+   },
+   "by_band": {
+    "11-20": {
+     "sentences": 23,
+     "tokens": 308,
+     "uas": 0.9123,
+     "las": 0.8929,
+     "exact_unlabelled": 0.3913,
+     "exact_labelled": 0.3478,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "21-35": {
+     "sentences": 38,
+     "tokens": 826,
+     "uas": 0.9104,
+     "las": 0.8995,
+     "exact_unlabelled": 0.2632,
+     "exact_labelled": 0.2105,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "36+": {
+     "sentences": 11,
+     "tokens": 394,
+     "uas": 0.9315,
+     "las": 0.9162,
+     "exact_unlabelled": 0.1818,
+     "exact_labelled": 0.0909,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    },
+    "<=10": {
+     "sentences": 11,
+     "tokens": 68,
+     "uas": 0.9706,
+     "las": 0.9706,
+     "exact_unlabelled": 0.8182,
+     "exact_labelled": 0.8182,
+     "scorer_meaning": null,
+     "scorer_shape": null,
+     "scorer_overall": null
+    }
+   },
+   "unknown_tokens": 334,
+   "supervised_tokens": 1596,
+   "unknown_placement_share": {
+    "inside another piece": 0.9222,
+    "ROOT": 0.0419,
+    "own piece": 0.0359
+   },
+   "output_single_rooted_connected_share": 1.0,
+   "main_root_agreement": 0.8193,
+   "margin_added_links": {
+    "mean": 2.602,
+    "median": 1.473
+   },
+   "margin_supervised_links": {
+    "mean": 11.737,
+    "median": 10.999
+   },
+   "top1_prob_added": {
+    "mean": 0.631,
+    "median": 0.678
+   },
+   "top1_prob_supervised": {
+    "mean": 0.956,
+    "median": 1.0
+   },
+   "relations_used_for_added_links": {
+    "COORDINATION": 0.3144,
+    "MODIFICATION": 0.2036,
+    "OBJECT": 0.1437,
+    "DESCRIPTION": 0.0778,
+    "SPECIFICATION": 0.0629,
+    "SUBJECT": 0.0479,
+    "SUBORDINATION": 0.0479,
+    "PREPOSITION": 0.0419,
+    "ROOT": 0.0419,
+    "COMPLEMENT": 0.015,
+    "INDIRECT_OBJECT": 0.003
+   }
+  }
+ },
+ "test_fragmented_contiguous_share": 0.8215,
+ "ewt_dev": {
+  "fragmented_sentences": 1183,
+  "treebank_links": {
+   "n": 2508,
+   "head": 0.5092,
+   "headrel": 0.4135,
+   "prev_token_head": 0.2081
+  },
+  "by_band": {
+   "11-20": {
+    "n": 795,
+    "head": 0.5132,
+    "headrel": 0.4164,
+    "prev_token_head": 0.1874
+   },
+   "21-35": {
+    "n": 923,
+    "head": 0.4745,
+    "headrel": 0.4074,
+    "prev_token_head": 0.1723
+   },
+   "36+": {
+    "n": 328,
+    "head": 0.4665,
+    "headrel": 0.375,
+    "prev_token_head": 0.1921
+   },
+   "<=10": {
+    "n": 462,
+    "head": 0.6017,
+    "headrel": 0.4481,
+    "prev_token_head": 0.3268
+   }
+  },
+  "by_relation": {
+   "MODIFICATION": {
+    "n": 472,
+    "head": 0.5127,
+    "headrel": 0.4153,
+    "prev_token_head": 0.3326
+   },
+   "DESCRIPTION": {
+    "n": 451,
+    "head": 0.6408,
+    "headrel": 0.5543,
+    "prev_token_head": 0.2129
+   },
+   "COORDINATION": {
+    "n": 420,
+    "head": 0.4667,
+    "headrel": 0.3786,
+    "prev_token_head": 0.131
+   },
+   "PREPOSITION": {
+    "n": 264,
+    "head": 0.5341,
+    "headrel": 0.4886,
+    "prev_token_head": 0.2841
+   },
+   "OBJECT": {
+    "n": 258,
+    "head": 0.5388,
+    "headrel": 0.4419,
+    "prev_token_head": 0.0775
+   },
+   "SPECIFICATION": {
+    "n": 217,
+    "head": 0.4424,
+    "headrel": 0.3041,
+    "prev_token_head": 0.2028
+   },
+   "SUBORDINATION": {
+    "n": 196,
+    "head": 0.4082,
+    "headrel": 0.3265,
+    "prev_token_head": 0.2398
+   },
+   "SUBJECT": {
+    "n": 137,
+    "head": 0.4234,
+    "headrel": 0.3212,
+    "prev_token_head": 0.0073
+   },
+   "APPOSITION": {
+    "n": 56,
+    "head": 0.3214,
+    "headrel": 0.2143,
+    "prev_token_head": 0.375
+   },
+   "COMPLEMENT": {
+    "n": 33,
+    "head": 0.4848,
+    "headrel": 0.0909,
+    "prev_token_head": 0.1515
+   },
+   "INDIRECT_OBJECT": {
+    "n": 4,
+    "head": 0.5,
+    "headrel": 0.0,
+    "prev_token_head": 0.25
+   }
+  },
+  "parser_committed_agreement": {
+   "n": 13407,
+   "head": 0.8814
+  }
+ },
+ "ewt_test": {
+  "fragmented_sentences": 1194,
+  "treebank_links": {
+   "n": 2489,
+   "head": 0.489,
+   "headrel": 0.3941,
+   "prev_token_head": 0.2214
+  },
+  "by_band": {
+   "11-20": {
+    "n": 808,
+    "head": 0.5297,
+    "headrel": 0.4295,
+    "prev_token_head": 0.2104
+   },
+   "21-35": {
+    "n": 848,
+    "head": 0.4375,
+    "headrel": 0.362,
+    "prev_token_head": 0.1828
+   },
+   "36+": {
+    "n": 288,
+    "head": 0.375,
+    "headrel": 0.3229,
+    "prev_token_head": 0.2049
+   },
+   "<=10": {
+    "n": 545,
+    "head": 0.5688,
+    "headrel": 0.4294,
+    "prev_token_head": 0.3064
+   }
+  },
+  "by_relation": {
+   "MODIFICATION": {
+    "n": 553,
+    "head": 0.4611,
+    "headrel": 0.3942,
+    "prev_token_head": 0.2622
+   },
+   "DESCRIPTION": {
+    "n": 473,
+    "head": 0.5285,
+    "headrel": 0.4461,
+    "prev_token_head": 0.2516
+   },
+   "COORDINATION": {
+    "n": 381,
+    "head": 0.4252,
+    "headrel": 0.3465,
+    "prev_token_head": 0.1339
+   },
+   "PREPOSITION": {
+    "n": 244,
+    "head": 0.5492,
+    "headrel": 0.5041,
+    "prev_token_head": 0.3361
+   },
+   "OBJECT": {
+    "n": 244,
+    "head": 0.6148,
+    "headrel": 0.4795,
+    "prev_token_head": 0.0779
+   },
+   "SUBORDINATION": {
+    "n": 186,
+    "head": 0.414,
+    "headrel": 0.2903,
+    "prev_token_head": 0.2581
+   },
+   "SPECIFICATION": {
+    "n": 178,
+    "head": 0.4607,
+    "headrel": 0.2865,
+    "prev_token_head": 0.2528
+   },
+   "SUBJECT": {
+    "n": 131,
+    "head": 0.5115,
+    "headrel": 0.4198,
+    "prev_token_head": 0.0076
+   },
+   "APPOSITION": {
+    "n": 60,
+    "head": 0.3333,
+    "headrel": 0.2333,
+    "prev_token_head": 0.5667
+   },
+   "COMPLEMENT": {
+    "n": 35,
+    "head": 0.4857,
+    "headrel": 0.1714,
+    "prev_token_head": 0.2
+   },
+   "INDIRECT_OBJECT": {
+    "n": 4,
+    "head": 0.75,
+    "headrel": 0.0,
+    "prev_token_head": 0.0
+   }
+  },
+  "parser_committed_agreement": {
+   "n": 13155,
+   "head": 0.8883
+  }
+ }
+}
