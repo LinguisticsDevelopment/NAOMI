@@ -1,0 +1,603 @@
+[
+ {
+  "type": "clause_coord",
+  "id": "GUM_bio_byron-4",
+  "text": "His mother interfered with his studies, often withdrawing him from school, with the result that he lacked discipline and his classical studies were neglected.",
+  "ud": "neglected(VERB) -conj-> lacked",
+  "marks": [],
+  "conv_up": "result <-SUBORDINATION- ",
+  "conv_frag": "that(MODIFICATION:and(COORDINATION:lacked(...) COORDINATION:neglected(...)))"
+ },
+ {
+  "type": "clause_coord",
+  "id": "weblog-blogspot.com_alaindewitt_20060827093500_ENG_20060827_093500-0018",
+  "text": "\"We were on the road and the first bridge was bombed and we drove home and all the other bridges were bombed and there was absolutely no way for us to get home,\" Chahine told reporters outside federal court in Detroit.",
+  "ud": "bombed(VERB) -conj-> drove",
+  "marks": [],
+  "conv_up": "told <-COORDINATION- ",
+  "conv_frag": "and(COORDINATION:were(SUBJECT:We MODIFICATION:on(...)) COORDINATION:bombed(SUBJECT:bridge(...) MODIFICATION:was) MODIFICATION:and COORDINATION:and(COORDINATION:drove(...) COORDINATION:bombed(...)) MODIFICATION:and COORDINATION:was(SPECIFICATION:there SUBJECT:way(...)))"
+ },
+ {
+  "type": "clause_coord",
+  "id": "GUM_court_negligence-11",
+  "text": "And I wish to start by clarifying a point of terminology, and it relates to the use of the term waiver of tort.",
+  "ud": "relates(VERB) -conj-> wish",
+  "marks": [],
+  "conv_up": "ROOT <-ROOT- ",
+  "conv_frag": "And(COORDINATION:wish(SUBJECT:I MODIFICATION:to(...)) MODIFICATION:and COORDINATION:relates(SUBJECT:it MODIFICATION:to(...)))"
+ },
+ {
+  "type": "clause_coord",
+  "id": "email-enronsent28_01-0019",
+  "text": "By late 1974 investors were dizzy, they were desperate, they were wrung-out, they had left Wall Street, many for good.",
+  "ud": "wrung(VERB) -conj-> dizzy",
+  "marks": [],
+  "conv_up": "ROOT <-ROOT- ",
+  "conv_frag": "were(SUBJECT:investors COMPLEMENT:dizzy(MODIFICATION:By(...)) COORDINATION:were(SUBJECT:they COMPLEMENT:desperate) COORDINATION:wrung(SUBJECT:they MODIFICATION:were MODIFICATION:out) COORDINATION:left(SUBJECT:they MODIFICATION:had OBJECT:Street(...)) COORDINATION:many(MODIFICATION:for(...)))"
+ },
+ {
+  "type": "clause_coord",
+  "id": "weblog-blogspot.com_thelameduck_20041119192207_ENG_20041119_192207-0002",
+  "text": "Al-Qaeda wants them, Iran wants them, Russia wants the better ones, and all the US wants is to give them all a piece of coal.",
+  "ud": "wants(VERB) -conj-> wants",
+  "marks": [],
+  "conv_up": "wants <-COORDINATION- ",
+  "conv_frag": "wants(SUBJECT:Iran OBJECT:them)"
+ },
+ {
+  "type": "clause_coord",
+  "id": "newsgroup-groups.google.com_hiddennook_f50294175d32a8ac_ENG_20041120_152800-0004",
+  "text": "China has been a great help at getting North Korea to the table and Bush is hoping that with their cooperation Korea can become a nuclear free peninsula.",
+  "ud": "hoping(VERB) -conj-> help",
+  "marks": [],
+  "conv_up": "ROOT <-ROOT- ",
+  "conv_frag": "and(COORDINATION:been(SUBJECT:China MODIFICATION:has OBJECT:help(...)) COORDINATION:hoping(SUBJECT:Bush MODIFICATION:is SUBORDINATION:that(...)))"
+ },
+ {
+  "type": "clause_coord",
+  "id": "email-enronsent20_02-0007",
+  "text": "I enjoyed working with all of you during the past five years at Enron / Azurix, and I wish you all of the best.",
+  "ud": "wish(VERB) -conj-> enjoyed",
+  "marks": [],
+  "conv_up": "ROOT <-ROOT- ",
+  "conv_frag": "and(COORDINATION:enjoyed(SUBJECT:I OBJECT:working(...)) COORDINATION:wish(SUBJECT:I INDIRECT_OBJECT:you OBJECT:all(...)))"
+ },
+ {
+  "type": "clause_coord",
+  "id": "answers-20111108084227AAtbjAp_ans-0001",
+  "text": "I sent a phone to Mobile Phone Exchange and it failed a test due to lost or stolen what should I do?",
+  "ud": "failed(VERB) -conj-> sent",
+  "marks": [],
+  "conv_up": "ROOT <-ROOT- ",
+  "conv_frag": "and(COORDINATION:sent(SUBJECT:I OBJECT:phone(...) MODIFICATION:to(...) COORDINATION:do(...)) COORDINATION:failed(SUBJECT:it OBJECT:test(...) SPECIFICATION:due(...)))"
+ },
+ {
+  "type": "clause_coord",
+  "id": "email-enronsent19_02-0053",
+  "text": "Again, it was a good chance for me to get to know what I can do in this field and what I have to more focus on in school.",
+  "ud": "have(VERB) -conj-> do",
+  "marks": [],
+  "conv_up": "know <-OBJECT- ",
+  "conv_frag": "and(COORDINATION:do(OBJECT:what SUBJECT:I MODIFICATION:can MODIFICATION:in(...)) COORDINATION:have(SUBJECT:I MODIFICATION:to(...)))"
+ },
+ {
+  "type": "clause_coord",
+  "id": "weblog-blogspot.com_thelameduck_20041119192207_ENG_20041119_192207-0013",
+  "text": "North Korea\u2019s Kim Jong Ill also has the bomb at the top of his list and Santa seems to have already come a few years ago.",
+  "ud": "seems(VERB) -conj-> has",
+  "marks": [],
+  "conv_up": "ROOT <-ROOT- ",
+  "conv_frag": "and(COORDINATION:has(SUBJECT:Kim(...) SPECIFICATION:also OBJECT:bomb(...) MODIFICATION:at(...)) COORDINATION:seems(SUBJECT:Santa MODIFICATION:to(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "newsgroup-groups.google.com_hiddennook_e21e429b3ad58235_ENG_20050830_214700-0005",
+  "text": "It looks as if NASA is transitioning away from the shuttle model, as in the past they have proven to be quite dangerous as Columbia has recently proved.",
+  "ud": "transitioning(VERB) -advcl-> looks",
+  "marks": [
+   "as",
+   "if"
+  ],
+  "conv_up": "looks <-SUBORDINATION- ",
+  "conv_frag": "as(MODIFICATION:if(MODIFICATION:transitioning(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "GUM_letter_wiki-21",
+  "text": "Although every effort is made to present current and accurate information, the University does not author or edit all of the pages presented here and therefore cannot assume responsibility for all information.",
+  "ud": "made(VERB) -advcl-> author",
+  "marks": [
+   "Although"
+  ],
+  "conv_up": "author <-SUBORDINATION- ",
+  "conv_frag": "Although(MODIFICATION:made(SUBJECT:effort(...) MODIFICATION:is MODIFICATION:to(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "GUM_conversation_grounded-18",
+  "text": "If I did spend the night, and I was trying to lie, I would give up, cause then I wouldn't care, cause I knew I deserved it.",
+  "ud": "spend(VERB) -advcl-> give",
+  "marks": [
+   "If"
+  ],
+  "conv_up": "give <-SUBORDINATION- ",
+  "conv_frag": "If(MODIFICATION:and(COORDINATION:spend(...) COORDINATION:trying(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "newsgroup-groups.google.com_AlexandrianReligiousStudies_ebcd97e243c4440b_ENG_20051021_201800-0001",
+  "text": "I apologize for the following inconvenience, but I have decided to move this group to Yahoo, so that we can post files and photos and other useful things.",
+  "ud": "post(VERB) -advcl-> move",
+  "marks": [
+   "so"
+  ],
+  "conv_up": "move <-SUBORDINATION- ",
+  "conv_frag": "so(MODIFICATION:that MODIFICATION:post(SUBJECT:we MODIFICATION:can OBJECT:and(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "newsgroup-groups.google.com_hiddennook_edef226e24a57863_ENG_20051116_085200-0008",
+  "text": "Although some may praise this as an opportunity for the private sector to finally serve the public good, NASA seems hesitant about turning over the reigns to the corporate world.",
+  "ud": "turning(VERB) -advcl-> hesitant",
+  "marks": [
+   "about"
+  ],
+  "conv_up": "hesitant <-SUBORDINATION- ",
+  "conv_frag": "about(MODIFICATION:turning(MODIFICATION:over OBJECT:reigns(...) MODIFICATION:to(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "GUM_whow_overalls-33",
+  "text": "The straps wear out fastest around the adjusters over the course of numerous wash and dry cycles (not to mention being out in the elements if they are work clothes).",
+  "ud": "clothes(NOUN) -advcl-> out",
+  "marks": [
+   "if"
+  ],
+  "conv_up": "mention <-OBJECT- ",
+  "conv_frag": "being(SPECIFICATION:out(MODIFICATION:in(...)) SUBORDINATION:if(MODIFICATION:are(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "answers-20111108103447AAI7MDa_ans-0004",
+  "text": "Just make a list of reasons why you like the job and do a little bit of internet searching to see what people have to say about being in the job.",
+  "ud": "job(NOUN) -advcl-> say",
+  "marks": [
+   "about"
+  ],
+  "conv_up": "say <-SUBORDINATION- ",
+  "conv_frag": "about(MODIFICATION:being(MODIFICATION:in(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "GUM_news_iodine-33",
+  "text": "So that alarms me, because there's quite serious potential for adverse effects and brain damage in the next generation of children born in this country,\" he said.",
+  "ud": "'s(VERB) -advcl-> alarms",
+  "marks": [
+   "because"
+  ],
+  "conv_up": "alarms <-SUBORDINATION- ",
+  "conv_frag": "because(MODIFICATION:'s(SPECIFICATION:there SUBJECT:potential(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "GUM_whow_joke-33",
+  "text": "The opening of the joke \u2014 or setup \u2014 should have a basis in the real world so your audience can relate to it, but it should also include exaggeration because this is what gives a joke its humorous edge. [3]",
+  "ud": "relate(VERB) -advcl-> have",
+  "marks": [
+   "so"
+  ],
+  "conv_up": "have <-SUBORDINATION- ",
+  "conv_frag": "so(MODIFICATION:relate(SUBJECT:audience(...) MODIFICATION:can MODIFICATION:to(...)))"
+ },
+ {
+  "type": "subordinate",
+  "id": "GUM_letter_arendt-25",
+  "text": "I've seen the doctor twice since I've been back, and he's convinced that I just missed an \"episode,\" which means that I suffered what is always called, rather badly I think, a \"coronary insufficiency.\"",
+  "ud": "back(ADV) -advcl-> seen",
+  "marks": [
+   "since"
+  ],
+  "conv_up": "seen <-SUBORDINATION- ",
+  "conv_frag": "since(MODIFICATION:been(SUBJECT:I MODIFICATION:'ve SPECIFICATION:back))"
+ },
+ {
+  "type": "relative",
+  "id": "GUM_academic_librarians-6",
+  "text": "At the initial meeting it became apparent that most participants were there to learn more about digital humanities and were not (yet) in the situation where they were able to offer expertise on the subject.",
+  "ud": "able(ADJ) -acl:relcl-> situation",
+  "marks": [],
+  "conv_up": "situation <-SUBORDINATION- ",
+  "conv_frag": "were(SUBJECT:they COMPLEMENT:able(SPECIFICATION:where MODIFICATION:to(...)))"
+ },
+ {
+  "type": "relative",
+  "id": "newsgroup-groups.google.com_hiddennook_88969236563fa748_ENG_20050215_173600-0005",
+  "text": "\"Our new lunar transportation system utilizes a unique architecture that will establish the equivalent of a two-way highway between the Earth and the Moon,\" Kistler told SPACE.com.",
+  "ud": "establish(VERB) -acl:relcl-> architecture",
+  "marks": [],
+  "conv_up": "architecture <-SUBORDINATION- ",
+  "conv_frag": "establish(SUBJECT:that MODIFICATION:will OBJECT:equivalent(DESCRIPTION:the MODIFICATION:of(...)))"
+ },
+ {
+  "type": "relative",
+  "id": "answers-20111108102204AAIivYN_ans-0011",
+  "text": "I would go with a small rodent such as a mouse, rat, hamster or gerbil if you want something you can handle and hold.",
+  "ud": "handle(VERB) -acl:relcl-> something",
+  "marks": [],
+  "conv_up": "something <-SUBORDINATION- ",
+  "conv_frag": "and(COORDINATION:handle(SUBJECT:you MODIFICATION:can) COORDINATION:hold)"
+ },
+ {
+  "type": "relative",
+  "id": "weblog-juancole.com_juancole_20040722101300_ENG_20040722_101300-0028",
+  "text": "Clinton had worked out a deal with Pakistani Prime Minister Nawaz Sharif in summer of 1999 that would have allowed the US to send a Special Ops team in after Bin Laden in Qandahar, based from Pakistan.",
+  "ud": "allowed(VERB) -acl:relcl-> deal",
+  "marks": [],
+  "conv_up": "deal <-SUBORDINATION- ",
+  "conv_frag": "allowed(SUBJECT:that MODIFICATION:would MODIFICATION:have INDIRECT_OBJECT:US(DESCRIPTION:the) MODIFICATION:to(MODIFICATION:send(...)))"
+ },
+ {
+  "type": "relative",
+  "id": "reviews-211933-0002",
+  "text": "Seth provides deep tissue massage which has significantly reduced the pain in my neck and shoulders and added flexibility and movement back to the area.",
+  "ud": "reduced(VERB) -acl:relcl-> massage",
+  "marks": [],
+  "conv_up": "massage <-SUBORDINATION- ",
+  "conv_frag": "and(COORDINATION:reduced(SUBJECT:which MODIFICATION:has SPECIFICATION:significantly OBJECT:pain(...)) COORDINATION:added(OBJECT:and(...) SPECIFICATION:back(...)))"
+ },
+ {
+  "type": "relative",
+  "id": "answers-20111106230959AAuYQ5Q_ans-0004",
+  "text": "Or how about visiting the Chicago Botanical Gardens and see the change of colors and enjoy the air, They also have many inside exhibits you might enjoy, food is pretty good to.",
+  "ud": "enjoy(VERB) -acl:relcl-> exhibits",
+  "marks": [],
+  "conv_up": "exhibits <-SUBORDINATION- ",
+  "conv_frag": "enjoy(SUBJECT:you MODIFICATION:might)"
+ },
+ {
+  "type": "relative",
+  "id": "reviews-202709-0002",
+  "text": "All I can say is that Elmira you are the best Ive experienced, never before has the seamstress done a perfect job until i met you.",
+  "ud": "experienced(VERB) -acl:relcl-> best",
+  "marks": [],
+  "conv_up": "best <-SUBORDINATION- ",
+  "conv_frag": "experienced(SUBJECT:I MODIFICATION:ve)"
+ },
+ {
+  "type": "relative",
+  "id": "GUM_court_negligence-9",
+  "text": "And Mr. Kelly, who acts for the remaining appellants, will address the requirement that any order of disgorgement of profits must be limited to those profits that result from, or that are causally linked to the breach of contract or other wrongdoing at issue.",
+  "ud": "acts(VERB) -acl:relcl-> Kelly",
+  "marks": [],
+  "conv_up": "Kelly <-SUBORDINATION- ",
+  "conv_frag": "acts(SUBJECT:who MODIFICATION:for(PREPOSITION:appellants(...)))"
+ },
+ {
+  "type": "relative",
+  "id": "email-enronsent28_01-0038",
+  "text": "In addition, there is a reduction of 22,101MMBTU which is the difference between the SCADA values (Best Available) that Anita showed on the February 29th Storage Sheet and the \"official\" February 29th values that Gary Wilson received from MIPS.",
+  "ud": "received(VERB) -acl:relcl-> values",
+  "marks": [],
+  "conv_up": "values <-SUBORDINATION- ",
+  "conv_frag": "received(OBJECT:that SUBJECT:Gary(DESCRIPTION:Wilson) MODIFICATION:from(PREPOSITION:MIPS))"
+ },
+ {
+  "type": "relative",
+  "id": "GUM_speech_impeachment-25",
+  "text": "It is the Senate, Madam Speaker, that will fail if it does not hold this President accountable for using a hold on military aid to compel an ally to interfere in our election for his own personal gain.",
+  "ud": "fail(VERB) -acl:relcl-> Senate",
+  "marks": [],
+  "conv_up": "Senate <-SUBORDINATION- ",
+  "conv_frag": "fail(SUBJECT:that MODIFICATION:will SUBORDINATION:if(MODIFICATION:hold(...)))"
+ },
+ {
+  "type": "complement",
+  "id": "GUM_vlog_portland-43",
+  "text": "I actually don't know if they're like technically in Forest Park but they're right in the same area.",
+  "ud": "Park(PROPN) -ccomp-> know",
+  "marks": [
+   "if"
+  ],
+  "conv_up": "know <-SUBORDINATION- ",
+  "conv_frag": "if(MODIFICATION:'re(SUBJECT:they MODIFICATION:like MODIFICATION:in(...)))"
+ },
+ {
+  "type": "complement",
+  "id": "GUM_vlog_portland-6",
+  "text": "I thought that I would make sort of like more of an informative video because I could just like post a vlog, but um the footage was like so random, and all over the place.",
+  "ud": "make(VERB) -ccomp-> thought",
+  "marks": [
+   "that"
+  ],
+  "conv_up": "thought <-SUBORDINATION- ",
+  "conv_frag": "that(MODIFICATION:make(SUBJECT:I MODIFICATION:would OBJECT:more(...) SUBORDINATION:because(...)))"
+ },
+ {
+  "type": "complement",
+  "id": "weblog-juancole.com_juancole_20041018060600_ENG_20041018_060600-0001",
+  "text": "On the internet site of Monotheism and Holy War (al-Tawhid wa al-Jihad) , the group allegedly declared, \"We announce that the Tawhid and Jihad Group, its prince and soldiers, have pledged allegiance to the sheikh of the mujahideen Osama bin Laden.\"",
+  "ud": "pledged(VERB) -ccomp-> announce",
+  "marks": [
+   "that"
+  ],
+  "conv_up": "announce <-SUBORDINATION- ",
+  "conv_frag": "that(MODIFICATION:pledged(SUBJECT:Group(...) MODIFICATION:have OBJECT:allegiance MODIFICATION:to(...)))"
+ },
+ {
+  "type": "complement",
+  "id": "answers-20111107080027AA9zCIG_ans-0002",
+  "text": "It's my two year anniversary in a few days and was wondering if somone could tell me about a great restaurant in sf or other nearby cities",
+  "ud": "tell(VERB) -ccomp-> wondering",
+  "marks": [
+   "if"
+  ],
+  "conv_up": "wondering <-SUBORDINATION- ",
+  "conv_frag": "if(MODIFICATION:tell(SUBJECT:somone MODIFICATION:could INDIRECT_OBJECT:me MODIFICATION:about(...)))"
+ },
+ {
+  "type": "complement",
+  "id": "weblog-blogspot.com_aggressivevoicedaily_20060814163400_ENG_20060814_163400-0010",
+  "text": "He added that around 1,100 cartoons were submitted by participants from more than 60 countries and that more than 200 are on show.",
+  "ud": "submitted(VERB) -ccomp-> added",
+  "marks": [
+   "that"
+  ],
+  "conv_up": "added <-SUBORDINATION- ",
+  "conv_frag": "that(MODIFICATION:submitted(SUBJECT:cartoons(...) MODIFICATION:were MODIFICATION:by(...)) COORDINATION:that(MODIFICATION:are(...)))"
+ },
+ {
+  "type": "complement",
+  "id": "weblog-blogspot.com_thelameduck_20041119192207_ENG_20041119_192207-0012",
+  "text": "It is estimated that Israel has over 200 nuclear weapons yet neither the US nor any of her allies expresses the slightest concern.",
+  "ud": "has(VERB) -ccomp-> estimated",
+  "marks": [
+   "that"
+  ],
+  "conv_up": "estimated <-SUBORDINATION- ",
+  "conv_frag": "that(MODIFICATION:has(SUBJECT:Israel OBJECT:weapons(...)))"
+ },
+ {
+  "type": "complement",
+  "id": "newsgroup-groups.google.com_hiddennook_edef226e24a57863_ENG_20051116_085200-0012",
+  "text": "\"I hope that industry, if put to the test, can do better [than the government], but I do not expect it,\" Griffin added.",
+  "ud": "do(VERB) -ccomp-> hope",
+  "marks": [
+   "that"
+  ],
+  "conv_up": "hope <-SUBORDINATION- ",
+  "conv_frag": "that(MODIFICATION:do(SUBJECT:industry SUBORDINATION:if(...) MODIFICATION:can SPECIFICATION:better(...)))"
+ },
+ {
+  "type": "complement",
+  "id": "email-enronsent08_01-0002",
+  "text": "I meant to comment that I thought the people profiled in the article should pull their heads out of their self important asses.",
+  "ud": "thought(VERB) -ccomp-> comment",
+  "marks": [
+   "that"
+  ],
+  "conv_up": "comment <-SUBORDINATION- ",
+  "conv_frag": "that(MODIFICATION:thought(SUBJECT:I OBJECT:pull(...)))"
+ },
+ {
+  "type": "complement",
+  "id": "GUM_speech_impeachment-32",
+  "text": "I am often asked why the House passed Articles of Impeachment even knowing that the odds were slim that Senate Republicans would set aside partisanship and hear the case as impartial jurors.",
+  "ud": "slim(ADJ) -ccomp-> knowing",
+  "marks": [
+   "that"
+  ],
+  "conv_up": "knowing <-SUBORDINATION- ",
+  "conv_frag": "that(MODIFICATION:were(SUBJECT:odds(...) COMPLEMENT:slim))"
+ },
+ {
+  "type": "complement",
+  "id": "GUM_essay_evolved-8",
+  "text": "As a psychiatrist specialized in anxiety and trauma, I often tell my patients and students that to understand how fear works in us, we have to see it in the context where it evolved.",
+  "ud": "have(VERB) -ccomp-> tell",
+  "marks": [
+   "that"
+  ],
+  "conv_up": "tell <-SUBORDINATION- ",
+  "conv_frag": "that(MODIFICATION:have(MODIFICATION:to(...) SUBJECT:we MODIFICATION:to(...)))"
+ },
+ {
+  "type": "reported_speech",
+  "id": "weblog-blogspot.com_tacitusproject_20040712123425_ENG_20040712_123425-0034",
+  "text": "\"The book -- I guess one way, one thing to think about it is -- one of the themes would be, I was given a charge to keep.",
+  "ud": "guess(VERB) -parataxis-> book",
+  "marks": [],
+  "conv_up": "book <-COORDINATION- ",
+  "conv_frag": "guess(SUBJECT:I OBJECT:way(DESCRIPTION:one) COORDINATION:is(SUBJECT:thing(...) COORDINATION:be(...)))"
+ },
+ {
+  "type": "reported_speech",
+  "id": "newsgroup-groups.google.com_jokecity_0566f0ba3b5f748f_ENG_20051125_240500-0011",
+  "text": "In a timid voice, he says: \"If an airplane carrying Winston Peters was blown up by a bomb, THAT would be a tragedy\".",
+  "ud": "tragedy(NOUN) -ccomp-> says",
+  "marks": [],
+  "conv_up": "says <-OBJECT- ",
+  "conv_frag": "be(SUBORDINATION:If(MODIFICATION:blown(...)) SUBJECT:THAT MODIFICATION:would OBJECT:tragedy(DESCRIPTION:a))"
+ },
+ {
+  "type": "reported_speech",
+  "id": "GUM_bio_byron-13",
+  "text": "His nostalgic poems about his Harrow friendships, Childish Recollections (1806), express a prescient \"consciousness of sexual differences that may in the end make England untenable to him.\" [23]",
+  "ud": "23(NUM) -parataxis-> express",
+  "marks": [],
+  "conv_up": "express <-COORDINATION- ",
+  "conv_frag": "23"
+ },
+ {
+  "type": "reported_speech",
+  "id": "newsgroup-groups.google.com_hiddennook_edef226e24a57863_ENG_20051116_085200-0005",
+  "text": "\"It's not cost-effective doing station flights while at the same time focusing on getting back to the Moon,\" says Brett Alexander, vice-president of Transformational Space, one of the companies hoping to launch astronauts to the ISS.",
+  "ud": "effective(ADJ) -ccomp-> says",
+  "marks": [],
+  "conv_up": "says <-OBJECT- ",
+  "conv_frag": "'s(SPECIFICATION:It COMPLEMENT:effective(MODIFICATION:not OBJECT:cost) SUBJECT:doing(OBJECT:flights(...) SUBORDINATION:while(...)))"
+ },
+ {
+  "type": "reported_speech",
+  "id": "weblog-juancole.com_juancole_20030914114200_ENG_20030914_114200-0003",
+  "text": "It read, \"The people of Fallujah condemn the massacre which was committed on Friday against people dedicated to the protection of Fallujah.",
+  "ud": "condemn(VERB) -ccomp-> read",
+  "marks": [],
+  "conv_up": "read <-OBJECT- ",
+  "conv_frag": "condemn(SUBJECT:people(DESCRIPTION:The MODIFICATION:of(...)) OBJECT:massacre(DESCRIPTION:the SUBORDINATION:committed(...)))"
+ },
+ {
+  "type": "reported_speech",
+  "id": "GUM_news_iodine-17",
+  "text": "\"I suspect they won't do that on a voluntary basis, we've tried so far and haven't succeeded, so we've convinced the Food Standards of Australia and New Zealand | that all salt should be iodised,\" he said.",
+  "ud": "tried(VERB) -parataxis-> suspect",
+  "marks": [],
+  "conv_up": "suspect <-COORDINATION- ",
+  "conv_frag": "and(COORDINATION:tried(SUBJECT:we MODIFICATION:'ve SPECIFICATION:far(...) COORDINATION:convinced(...)) COORDINATION:succeeded(MODIFICATION:have MODIFICATION:n't))"
+ },
+ {
+  "type": "reported_speech",
+  "id": "GUM_bio_byron-9",
+  "text": "His mother wrote, \"He has no indisposition that I know of but love, desperate love, the worst of all maladies in my opinion. In short, the boy is distractedly in love with Miss Chaworth.\" [6]",
+  "ud": "short(ADJ) -parataxis-> has",
+  "marks": [],
+  "conv_up": "has <-COORDINATION- ",
+  "conv_frag": "In(PREPOSITION:short)"
+ },
+ {
+  "type": "reported_speech",
+  "id": "weblog-blogspot.com_floppingaces_20050313182621_ENG_20050313_182621-0005",
+  "text": "UN Secretary-General Kofi Annan has indicated it is time to \"recognize Hezbollah\" after easily being duped by \"the message on the placards they are using\".",
+  "ud": "time(NOUN) -ccomp-> indicated",
+  "marks": [],
+  "conv_up": "indicated <-OBJECT- ",
+  "conv_frag": "is(SPECIFICATION:it OBJECT:time(MODIFICATION:to(...)))"
+ },
+ {
+  "type": "reported_speech",
+  "id": "weblog-blogspot.com_tacitusproject_20040712123425_ENG_20040712_123425-0004",
+  "text": "\"Q Thank you -- I was wondering, there's a lot of talk right now about memoirs being written with the former President.",
+  "ud": "'s(VERB) -parataxis-> Thank",
+  "marks": [],
+  "conv_up": "Thank <-COORDINATION- ",
+  "conv_frag": "'s(SPECIFICATION:there SUBJECT:lot(DESCRIPTION:a MODIFICATION:of(...)) SPECIFICATION:now(SPECIFICATION:right) SUBORDINATION:about(MODIFICATION:written(...)))"
+ },
+ {
+  "type": "reported_speech",
+  "id": "newsgroup-groups.google.com_CognitiveScienceNews_05a0175fc6ece48b_ENG_20050828_091900-0004",
+  "text": "The findings demonstrate the inhibitory network is central to controlling not only the amplitude, extent and duration of activation of recurrent excitatory cortical networks, but also the precise timing of action potentials, and, thus, network synchronization...\"",
+  "ud": "central(ADJ) -ccomp-> demonstrate",
+  "marks": [],
+  "conv_up": "demonstrate <-OBJECT- ",
+  "conv_frag": "is(SUBJECT:network(DESCRIPTION:the DESCRIPTION:inhibitory) COMPLEMENT:central SUBORDINATION:to(MODIFICATION:controlling(...)))"
+ },
+ {
+  "type": "purpose",
+  "id": "GUM_court_loan-9",
+  "text": "The states ask this Court to deny that vital relief to millions of Americans, but they lack standing to seek that result.",
+  "ud": "deny(VERB) -xcomp-> ask",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "ask <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:deny(OBJECT:relief(...) MODIFICATION:to(...)))"
+ },
+ {
+  "type": "purpose",
+  "id": "GUM_news_homeopathic-16",
+  "text": "Allegedly, Thomas' sister pleaded with him to send Gloria to a conventional medical doctor, but he replied \"I am not able to do that\".",
+  "ud": "send(VERB) -xcomp-> pleaded",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "pleaded <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:send(OBJECT:Gloria MODIFICATION:to(...)))"
+ },
+ {
+  "type": "purpose",
+  "id": "newsgroup-groups.google.com_hiddennook_1fd8f731ae7ffaa0_ENG_20050214_192900-0003",
+  "text": "Wiki Media Foundation, the group behind the Wikipedia online encyclopedia project, said Friday that search giant Google has volunteered to host some of its content on company servers.",
+  "ud": "host(VERB) -xcomp-> volunteered",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "volunteered <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:host(OBJECT:some(...) MODIFICATION:on(...)))"
+ },
+ {
+  "type": "purpose",
+  "id": "weblog-blogspot.com_tacitusproject_20040712123425_ENG_20040712_123425-0001",
+  "text": "Though I am loathe to quote other writers at legnth in this space, this little bit from Dan Froomkin's \"White House Briefing\" column in the WashPost today is just too good to pass up (read the whole column here ):",
+  "ud": "quote(VERB) -xcomp-> loathe",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "loathe <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:quote(OBJECT:writers(...) MODIFICATION:at(...) MODIFICATION:in(...)))"
+ },
+ {
+  "type": "purpose",
+  "id": "weblog-juancole.com_juancole_20040404101100_ENG_20040404_101100-0011",
+  "text": "The Neocons in the CPA have all sorts of ulterior motives and social experiments they want to impose on the Iraqi people, including Polish-style economic shock therapy, some sort of sweetheart deal for Israel, and maybe even breaking the country up into three parts.",
+  "ud": "impose(VERB) -xcomp-> want",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "want <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:impose(MODIFICATION:on(...)))"
+ },
+ {
+  "type": "purpose",
+  "id": "GUM_fiction_lunre-28",
+  "text": "Then we stood, unable to keep from staring at the stranger, who faced us awkwardly, half-smiling, taller than any man there.",
+  "ud": "keep(VERB) -xcomp-> unable",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "unable <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:keep(SUBORDINATION:from(...)))"
+ },
+ {
+  "type": "purpose",
+  "id": "answers-20111108071348AAWu2FU_ans-0008",
+  "text": "French women are the ones to say yes, the way we say it is not usually as straigthforward as you propose to do.",
+  "ud": "do(VERB) -xcomp-> propose",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "propose <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:do)"
+ },
+ {
+  "type": "purpose",
+  "id": "GUM_speech_impeachment-11",
+  "text": "After voting to refuse to hear evidence and call witnesses with pertinent information, nearly all Republican Senators have already announced that they will vote against the articles.",
+  "ud": "refuse(VERB) -xcomp-> voting",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "voting <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:refuse(MODIFICATION:to(...)))"
+ },
+ {
+  "type": "purpose",
+  "id": "GUM_letter_wiki-39",
+  "text": "Under the pilot program, faculty members would be able to volunteer their classes for participation, and any person with University affiliation would be able to edit any of the descriptions.",
+  "ud": "volunteer(VERB) -xcomp-> able",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "able <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:volunteer(OBJECT:classes(...) MODIFICATION:for(...)))"
+ },
+ {
+  "type": "purpose",
+  "id": "GUM_whow_joke-49",
+  "text": "For your joke to be funny, it has to surprise the audience in some way, which means it has to seem original or new.",
+  "ud": "seem(VERB) -xcomp-> has",
+  "marks": [
+   "to"
+  ],
+  "conv_up": "has <-MODIFICATION- ",
+  "conv_frag": "to(MODIFICATION:seem(OBJECT:or(...)))"
+ }
+]

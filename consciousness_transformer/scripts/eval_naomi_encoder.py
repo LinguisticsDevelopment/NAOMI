@@ -26,7 +26,7 @@ from naomi.reader import Reader, _sense_space  # noqa: E402
 from naomi.score import score_pair  # noqa: E402
 from naomi.tree import compact, tree_from_dict  # noqa: E402
 from naomi.types import REL_ROOT  # noqa: E402
-from train_naomi_encoder import GOLD, OUT, load_jsonl, prep  # noqa: E402
+from train_naomi_encoder import GOLD, OUT, load_jsonl, prep, prep_extra  # noqa: E402
 
 BANDS = [("<=10", 0, 10), ("11-20", 11, 20), ("21-35", 21, 35), ("36+", 36, 10 ** 9)]
 VERB_TAG = "VERB"
@@ -228,15 +228,182 @@ def handcheck_tally(path, dump_path):
     return {"overall": dict(tot), "by_relation": {k: dict(v) for k, v in sorted(by_rel.items())}}
 
 
+# ----------------------------------------------------------------------------- stage A2 additions
+TB_DIR = ROOT / "runs" / "treebank"
+
+
+def contiguous_share(trees_heads):
+    """Share of decoded trees whose every subtree is a contiguous block of node tokens (rank among node tokens)."""
+    ok = 0
+    for heads, nodes in trees_heads:
+        rank = {i: r for r, i in enumerate(sorted(nodes))}
+        kids = defaultdict(list)
+        for i, h in heads.items():
+            kids[h - 1 if h else -1].append(i)
+        good = True
+
+        def span(i):
+            nonlocal good
+            lo = hi = rank[i]
+            cnt = 1
+            for c in kids.get(i, []):
+                l, h, n = span(c)
+                lo, hi, cnt = min(lo, l), max(hi, h), cnt + n
+            good = good and (hi - lo + 1 == cnt)
+            return lo, hi, cnt
+        for r_ in kids.get(-1, []):
+            span(r_)
+        ok += good
+    return round(ok / max(len(trees_heads), 1), 4)
+
+
+def evaluate_ewt(enc, items):
+    """(c) EWT sentences the parser leaves in pieces: agreement of the model's head / head+relation with the converted
+    treebank link on tokens whose supervision came from the treebank, by length band, plus the previous-token baseline."""
+    T, band, relc = Counter(), defaultdict(Counter), defaultdict(Counter)
+    committed = Counter()
+    for it in items:
+        if it["sv_parser"].connected or not any(t.is_node for t in it["infos"]):
+            continue
+        infos, sv = it["infos"], it["sv"]
+        prop, _ = enc.decode_infos(it["text"], infos)
+        b = band_of(len(prop.heads))
+        nodes = sorted(prop.heads)
+        for i in nodes:
+            if it["src"][i] == "treebank":
+                prev = max((j for j in nodes if j < i), default=-1)
+                hit = prop.heads[i] == sv.head[i]
+                hl = hit and prop.rels[i] == sv.rel[i]
+                for d in (T, band[b], relc[sv.rel[i]]):
+                    d["n"] += 1
+                    d["head"] += hit
+                    d["headrel"] += hl
+                    d["prev_token_head"] += (prev + 1 == sv.head[i])
+            elif it["src"][i] == "parser":
+                committed["n"] += 1
+                committed["head"] += prop.heads[i] == sv.head[i]
+    f = lambda d: {"n": d["n"], **{k: round(d[k] / max(d["n"], 1), 4) for k in ("head", "headrel", "prev_token_head")}}  # noqa: E731
+    return {"fragmented_sentences": sum(not it["sv_parser"].connected for it in items), "treebank_links": f(T),
+            "by_band": {k: f(v) for k, v in sorted(band.items())},
+            "by_relation": {k: f(v) for k, v in sorted(relc.items(), key=lambda x: -x[1]["n"])},
+            "parser_committed_agreement": {"n": committed["n"], "head": round(committed["head"] / max(committed["n"], 1), 4)}}
+
+
+def added_links(enc, it, cap, seed):
+    """Links a model adds beyond the parser (tokens the parser left unknown), at most `cap` per sentence, seeded."""
+    infos, sv = it["infos"], it["sv"]
+    prop, logp = enc.decode_infos(it["text"], infos)
+    added = [i for i in prop.heads if sv.unknown[i]]
+    random.Random(f"{seed}-{it['id']}").shuffle(added)
+    return {i: (prop.heads[i], prop.rels[i]) for i in sorted(added[:cap])}, prop
+
+
+def blind_build(args, test_items):
+    """Pool the links stage A and the other model(s) add on the stage-A hand-check sentences; shuffle; no model names."""
+    dump = json.load(open(args.handcheck_dump))
+    byid = {it["id"]: it for it in test_items}
+    usvs = _sense_space()
+    models = {name: E.NaomiEncoder.load(path, usvs) for name, path in (kv.split("=") for kv in args.models.split(","))}
+    pool, who = {}, defaultdict(dict)                          # key -> link ; key -> {model: True}
+    for d in dump:
+        it = byid[d["id"]]
+        for name, enc in models.items():
+            if name == "A":                                    # stage A: exactly the links recorded and judged then
+                links = {l["dep"]: ((l["head"] + 1) if l["head"] != "ROOT" else 0, l["rel"]) for l in d["links"]}
+                chk, _ = added_links(enc, it, 10 ** 6, 0)
+                assert all(chk.get(i) == v for i, v in links.items()), "stage A decode differs from the recorded dump"
+            else:
+                links, _ = added_links(enc, it, 10, args.seed)
+            for i, (h, r) in links.items():
+                key = f"{d['id']}|{i}|{h}|{r}"
+                pool[key] = {"sid": d["id"], "dep": i, "head": h, "rel": r}
+                who[key][name] = True
+    sents = defaultdict(list)
+    for key, l in pool.items():
+        sents[l["sid"]].append(key)
+    rng = random.Random(args.seed)
+    order = sorted(sents)
+    rng.shuffle(order)
+    blind, secret, n = [], {"sentences": {}, "links": {}}, 0
+    for si, sid in enumerate(order):
+        it, d = byid[sid], next(x for x in dump if x["id"] == sid)
+        keys = sorted(sents[sid])
+        rng.shuffle(keys)
+        links = []
+        for key in keys:
+            l = pool[key]
+            n += 1
+            lid = f"L{n:03d}"
+            secret["links"][lid] = {"key": key, "models": sorted(who[key])}
+            links.append({"link": lid, "dependent": f"{l['dep']}:{it['infos'][l['dep']].token}",
+                          "head": "ROOT" if l["head"] == 0 else f"{l['head'] - 1}:{it['infos'][l['head'] - 1].token}",
+                          "relation": l["rel"]})
+        secret["sentences"][f"S{si + 1:02d}"] = {"id": sid, "band": d["band"]}
+        blind.append({"sentence": f"S{si + 1:02d}", "tokens": d["tokens"], "parser_pieces": d["parser"], "links": links})
+    json.dump(blind, open(args.blind_out, "w"), indent=1)
+    json.dump(secret, open(args.blind_key, "w"), indent=1)
+    print(f"{len(blind)} sentences, {n} distinct links -> {args.blind_out} (key in {args.blind_key}, not to be read before judging)")
+
+
+def blind_join(args):
+    j = json.load(open(args.blind_judgments))["judgments"]
+    sec = json.load(open(args.blind_key))
+    old = json.load(open(args.stage_a_judgments))["judgments"]
+    tot = defaultdict(Counter)
+    band = defaultdict(lambda: defaultdict(Counter))
+    both = Counter()
+    confusion = Counter()
+    rows = []
+    for lid, v in j.items():
+        meta = sec["links"][lid]
+        sid, dep, head, rel = meta["key"].split("|")
+        b = next(x["band"] for x in sec["sentences"].values() if x["id"] == sid)
+        ms = meta["models"]
+        both["both" if len(ms) > 1 else "only_" + ms[0]] += 1
+        for m in ms:
+            tot[m][v] += 1
+            band[m][b][v] += 1
+        if "A" in ms and sid in old and dep in old[sid]:
+            confusion[(old[sid][dep], v)] += 1
+        rows.append({"link": lid, "key": meta["key"], "models": ms, "judgment": v})
+    by_set = defaultdict(Counter)
+    for r in rows:
+        by_set["both" if len(r["models"]) > 1 else "only_" + r["models"][0]][r["judgment"]] += 1
+    n_same = sum(c for (a, b_), c in confusion.items() if a == b_)
+    res = {"per_model": {m: dict(c) for m, c in tot.items()},
+           "per_model_by_band": {m: {b: dict(c) for b, c in bb.items()} for m, bb in band.items()},
+           "link_sets": {k: dict(c) for k, c in by_set.items()},
+           "rater_consistency_stage_A_links": {"n": sum(confusion.values()), "same_judgment": n_same,
+                                               "old_new_counts": {f"{a}->{b_}": c for (a, b_), c in sorted(confusion.items())}}}
+    json.dump({"summary": res, "rows": rows}, open(args.blind_result, "w"), indent=1)
+    print(json.dumps(res, indent=1))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", default=str(OUT / "main_best.pt"))
     ap.add_argument("--out", default=str(OUT / "eval_main.json"))
-    ap.add_argument("--handcheck-dump", default=str(OUT / "handcheck_dump.json"))
+    ap.add_argument("--handcheck-dump", default=None, help="write a stage-A style dump here (never overwritten by default)")
+    ap.add_argument("--ewt", action="store_true", help="(c) EWT dev+test pieces vs converted treebank links; (e) contiguity")
+    ap.add_argument("--blind-build", action="store_true")
+    ap.add_argument("--blind-join", action="store_true")
+    ap.add_argument("--models", default="A=runs/naomi_encoder/main_best.pt,A2=runs/naomi_encoder_a2/a2_best.pt")
+    ap.add_argument("--stage-a-dump", default=str(OUT / "handcheck_dump.json"))
+    ap.add_argument("--stage-a-judgments", default=str(OUT / "handcheck_judgments.json"))
+    ap.add_argument("--seed", type=int, default=0)
+    A2D = ROOT / "runs" / "naomi_encoder_a2"
+    ap.add_argument("--blind-out", default=str(A2D / "handcheck_blind.json"))
+    ap.add_argument("--blind-key", default=str(A2D / "handcheck_blind_key.json"))
+    ap.add_argument("--blind-judgments", default=str(A2D / "handcheck_blind_judgments.json"))
+    ap.add_argument("--blind-result", default=str(A2D / "handcheck_blind_result.json"))
     ap.add_argument("--handcheck-tally", default=None)
     ap.add_argument("--max-sents", type=int, default=0, help="quick check on the first N test sentences")
     ap.add_argument("--no-scores", action="store_true")
     a = ap.parse_args()
+    a.handcheck_dump = a.handcheck_dump or a.stage_a_dump
+    if a.blind_join:
+        blind_join(a)
+        return
     if a.handcheck_tally:
         res = handcheck_tally(a.handcheck_tally, a.handcheck_dump)
         print(json.dumps(res, indent=1))
@@ -257,6 +424,9 @@ def main():
     for it in test + dev:
         it["tree"], it["text"] = tree_from_dict(gold[it["id"]]["tree"]), gold[it["id"]]["text"]
     print(f"loaded in {time.time() - t0:.0f}s; test {len(test)}", flush=True)
+    if a.blind_build:
+        blind_build(a, test)
+        return
     res = {"ckpt": a.ckpt, "meta": E.torch.load(a.ckpt, map_location="cpu", weights_only=False)["meta"]}
     sets = {"test_split": test}
     rd = Reader(use_encoder=False, cache_path=None)
@@ -267,8 +437,17 @@ def main():
     for name, its in sets.items():
         res[name] = evaluate_set(enc, its, table, fallback, usvs, not a.no_scores)
         print(f"{name}: done {time.time() - t0:.0f}s", flush=True)
+    frag = [it for it in test if not it["sv"].connected]
+    res["test_fragmented_contiguous_share"] = contiguous_share(
+        [(p.heads, set(p.heads)) for p in (enc.decode_infos(it["text"], it["infos"])[0] for it in frag)])
+    if a.ewt:
+        for sp in ("dev", "test"):
+            its = prep_extra(TB_DIR / f"ewt_{sp}.jsonl.gz", rd, True)[0]
+            res["ewt_" + sp] = evaluate_ewt(enc, its)
+            print(f"ewt_{sp}: done {time.time() - t0:.0f}s", flush=True)
     json.dump(res, open(a.out, "w"), indent=1)
-    handcheck_dump(enc, test, a.handcheck_dump)
+    if "--handcheck-dump" in sys.argv:
+        handcheck_dump(enc, test, a.handcheck_dump)
     print(json.dumps(res["test_split"]["connected_sentences"]["model"]["all"], indent=1))
     print(json.dumps(res["test_split"]["fragmented_sentences"], indent=1)[:2500])
 

@@ -25,8 +25,8 @@ import torch.nn.functional as F
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from naomi.encoder import (EncoderNet, FeatureBuilder, collate, head_mask, infos_from_record,  # noqa: E402
-                           supervision_from_tree)
+from naomi.encoder import (EncoderNet, FeatureBuilder, Supervision, collate, head_mask,  # noqa: E402
+                           infos_from_record, supervision_from_tree)
 from naomi.reader import Reader, _sense_space  # noqa: E402
 from naomi.tree import tree_from_dict  # noqa: E402
 from naomi.types import REL_ROOT  # noqa: E402
@@ -86,6 +86,36 @@ def prep(records, builder, reader, vocab_from=None):
     return items, skipped
 
 
+def prep_extra(path, reader, use_treebank):
+    """Extra supervision source (converted treebank records, scripts/build_treebank_gold.py): per-token head/rel with
+    a source tag. Parser-sourced links always count; treebank-sourced ones only if use_treebank (else unknown).
+    it["sv_parser"] is the parser-only view (to tell fragmented from connected sentences)."""
+    items, skipped = [], 0
+    for r in load_jsonl(path):
+        infos = infos_from_record(reader, r)
+        if infos is None:
+            skipped += 1
+            continue
+        ok = [s == "parser" or (use_treebank and s == "treebank") for s in r["sup_source"]]
+        sv = Supervision([h if o else -1 for h, o in zip(r["sup_head"], ok)],
+                         [x if o else None for x, o in zip(r["sup_rel"], ok)], ok,
+                         [t.is_node and not o for t, o in zip(infos, ok)], False)
+        items.append({"id": r["id"], "text": r["text"], "source": r["source"], "infos": infos, "sv": sv, "src": r["sup_source"],
+                      "sv_parser": supervision_from_tree(tree_from_dict(r["tree"]), len(infos))})
+    return items, skipped
+
+
+def tb_only(items):
+    """Copies of items whose supervision is only the treebank-sourced tokens (the treebank dev measure)."""
+    out = []
+    for it in items:
+        sv, m = it["sv"], [s == "treebank" for s in it["src"]]
+        if any(m):
+            out.append({**it, "sv": Supervision([h if o else -1 for h, o in zip(sv.head, m)],
+                                                [x if o else None for x, o in zip(sv.rel, m)], m, [False] * len(m), False)})
+    return out
+
+
 def attach_feats(items, builder):
     for it in items:
         it["feats"] = builder.build(it["infos"])
@@ -95,6 +125,7 @@ def targets(items, rel_ids):
     for it in items:
         sv = it["sv"]
         it["head"] = np.array(sv.head, dtype=np.int64)
+        assert all(x in rel_ids for x, o in zip(sv.rel, sv.sup) if o), "relation outside the stage-A label set"
         it["relid"] = np.array([rel_ids.get(x, 0) if x else 0 for x in sv.rel], dtype=np.int64)
         it["sup"] = np.array(sv.sup, dtype=bool)
 
@@ -175,13 +206,20 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--limit", type=int, default=0, help="pilot: use only the first N training sentences")
     ap.add_argument("--threads", type=int, default=4)
+    ap.add_argument("--out-dir", default=str(OUT))
+    ap.add_argument("--base-cache", default=str(OUT / "prep_cache.pkl"), help="stage-A prepared items (never rewritten)")
+    ap.add_argument("--extra-train", default=None, help="converted treebank train records (.jsonl.gz)")
+    ap.add_argument("--extra-dev", default=None, help="converted treebank dev records: treebank dev measure")
+    ap.add_argument("--no-treebank-links", action="store_true", help="control: extra sentences, parser links only")
+    ap.add_argument("--select-parser-dev", action="store_true", help="keep-best on the parser dev LAS only (control)")
     a = ap.parse_args()
     torch.set_num_threads(a.threads)
     torch.manual_seed(a.seed)
-    OUT.mkdir(parents=True, exist_ok=True)
+    out = Path(a.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
 
-    cache = OUT / "prep_cache.pkl"
+    cache = Path(a.base_cache)
     if cache.exists() and not a.limit:
         d = pickle.load(open(cache, "rb"))
         items, keys, skipped = d["items"], d["keys"], d["skipped"]
@@ -206,7 +244,7 @@ def main():
     if not a.limit:
         json.dump({"seed": a.seed, "chunk": CHUNK, "split_of_source": splits,
                    "counts": {s: sum(1 for it in items if it["split"] == s) for s in ("train", "dev", "test")}},
-                  open(OUT / "splits.json", "w"), indent=1, sort_keys=True)
+                  open(out / "splits.json", "w"), indent=1, sort_keys=True)
     tr = [it for it in items if it["split"] == "train"]
     dv = [it for it in items if it["split"] == "dev"]
     te = [it for it in items if it["split"] == "test"]
@@ -217,7 +255,7 @@ def main():
         nu = sum(sum(it["sv"].unknown) for it in grp)
         print(f"  {name}: node tokens {nt}, supervised {ns} ({100 * ns / max(nt, 1):.1f}%), unknown {nu}", flush=True)
 
-    # vocabularies from TRAIN only
+    # vocabularies from the stage-A TRAIN split only (extra data never changes the model's shape or label set)
     pos_cnt = Counter(t.pos for it in tr for t in it["infos"])
     pos_vocab = {None: 0, **{p: i + 1 for i, p in enumerate(sorted(pos_cnt))}}
     sub_cnt = Counter(s for it in tr for t in it["infos"] for s in t.subtypes)
@@ -230,8 +268,21 @@ def main():
 
     usvs = _sense_space()
     builder = FeatureBuilder(usvs, pos_vocab, sub_vocab, a.hash_buckets)
-    attach_feats(items, builder)
-    targets(items, rel_ids)
+    extra_tr, tb_dv = [], []
+    if a.extra_train or a.extra_dev:
+        rd = Reader(use_encoder=False, cache_path=None)
+        if a.extra_train:
+            extra_tr, sk = prep_extra(a.extra_train, rd, not a.no_treebank_links)
+            print(f"extra train: {len(extra_tr)} sentences (skipped {sk}); tokens by source: "
+                  f"{dict(Counter(s for it in extra_tr for s, t in zip(it['src'], it['infos']) if t.is_node))}; "
+                  f"supervised {sum(sum(it['sv'].sup) for it in extra_tr)}", flush=True)
+        if a.extra_dev:
+            ed, _ = prep_extra(a.extra_dev, rd, True)
+            tb_dv = tb_only(ed)
+            print(f"treebank dev measure: {len(tb_dv)} sentences, {sum(sum(it['sv'].sup) for it in tb_dv)} tokens", flush=True)
+    tr = tr + extra_tr
+    attach_feats(items + extra_tr + tb_dv, builder)
+    targets(items + extra_tr + tb_dv, rel_ids)
     table = builder.table
     print(f"meaning table {table.shape}", flush=True)
     cfg = dict(d_in=192, hidden=a.hidden, layers=a.layers, hash_buckets=a.hash_buckets, d_arc=128, d_rel=64,
@@ -244,9 +295,9 @@ def main():
     n_sub = len(sub_vocab)
     rng = random.Random(a.seed)
     best, bad = -1.0, 0
-    ckpt_best = OUT / f"{a.tag}_best.pt"
-    curve = open(OUT / f"{a.tag}_curve.tsv", "w")
-    curve.write("epoch\tminutes\ttrain_loss\ttrain_uas\ttrain_las\tdev_loss\tdev_uas\tdev_las\tlr\n")
+    ckpt_best = out / f"{a.tag}_best.pt"
+    curve = open(out / f"{a.tag}_curve.tsv", "w")
+    curve.write("epoch\tminutes\ttrain_loss\ttrain_uas\ttrain_las\tdev_loss\tdev_uas\tdev_las\tlr\ttb_dev_uas\ttb_dev_las\tscore\n")
     train_start = time.time()
 
     def save(path, epoch, dm):
@@ -273,18 +324,24 @@ def main():
             if (time.time() - train_start) / 60 > a.max_minutes:
                 break
         dm = dev_eval(net, dv, table, n_sub)
-        sched.step(-dm["las"])
+        tm = dev_eval(net, tb_dv, table, n_sub) if tb_dv else None
+        dm["score"] = (dm["las"] + tm["las"]) / 2 if tm and not a.select_parser_dev else dm["las"]     # keep-best: mean of parser dev and treebank dev
+        if tm:
+            dm["tb_uas"], dm["tb_las"] = tm["uas"], tm["las"]
+        sched.step(-dm["score"])
         mins = (time.time() - train_start) / 60
         curve.write(f"{ep}\t{mins:.1f}\t{tl / max(tn, 1):.4f}\t{th / max(tn, 1):.4f}\t{tlc / max(tn, 1):.4f}\t"
-                    f"{dm['loss']:.4f}\t{dm['uas']:.4f}\t{dm['las']:.4f}\t{opt.param_groups[0]['lr']:.5f}\n")
+                    f"{dm['loss']:.4f}\t{dm['uas']:.4f}\t{dm['las']:.4f}\t{opt.param_groups[0]['lr']:.5f}\t"
+                    f"{dm.get('tb_uas', 0):.4f}\t{dm.get('tb_las', 0):.4f}\t{dm['score']:.4f}\n")
         curve.flush()
         print(f"epoch {ep} {time.time() - te0:.0f}s (total {mins:.1f} min) train loss {tl / max(tn, 1):.3f} "
-              f"uas {th / max(tn, 1):.3f} | dev uas {dm['uas']:.4f} las {dm['las']:.4f} loss {dm['loss']:.3f}", flush=True)
-        save(OUT / f"{a.tag}_last.pt", ep, dm)
-        if dm["las"] > best:
-            best, bad = dm["las"], 0
+              f"uas {th / max(tn, 1):.3f} | dev uas {dm['uas']:.4f} las {dm['las']:.4f} loss {dm['loss']:.3f} | "
+              f"tb-dev las {dm.get('tb_las', 0):.4f} | score {dm['score']:.4f}", flush=True)
+        save(out / f"{a.tag}_last.pt", ep, dm)
+        if dm["score"] > best:
+            best, bad = dm["score"], 0
             save(ckpt_best, ep, dm)
-            print(f"  new best dev LAS {best:.4f} -> {ckpt_best.name}", flush=True)
+            print(f"  new best score {best:.4f} -> {ckpt_best.name}", flush=True)
         else:
             bad += 1
             if bad >= a.patience:
@@ -293,7 +350,7 @@ def main():
         if mins > a.max_minutes:
             print("time budget reached", flush=True)
             break
-    print(f"done in {(time.time() - t0) / 60:.1f} min; best dev LAS {best:.4f}", flush=True)
+    print(f"done in {(time.time() - t0) / 60:.1f} min; best score {best:.4f}", flush=True)
 
 
 if __name__ == "__main__":
