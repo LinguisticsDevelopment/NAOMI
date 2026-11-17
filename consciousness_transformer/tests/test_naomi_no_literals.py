@@ -40,6 +40,13 @@ ALLOWED = {
     # naomi.mind_v1 / naomi.mind: result-dict keys, batch-tensor keys, dataset / split identifiers, file modes and
     # tree-walk direction tags (non-linguistic identifiers; no word of any language)
     'abstain_prob', 'answer_idx', 'cache_info', 'candidates_considered', 'cfg', 'compare', 'context', 'correct', 'cv', 'dataset', 'down', 'ex', 'ex_wp', 'extra', 'facts', 'fairytaleqa', 'find', 'fs', 'items', 'items_', 'itf', 'mask', 'mctest', 'meta', 'n_story_sentences', 'n_words', 'node_gid', 'options', 'prob', 'qf', 'question', 'question_tree', 'question_trusted', 'question_words', 'reads', 'rel_vocab', 'sentence_ids', 'split', 'stated', 'story', 'story_id', 'subtree', 'top', 'trusted', 'up', 'val', 'wb', 'wh_found', 'wp', 'wv',
+    # naomi.mind_v2: batch-tensor / result-dict keys, pair-kind tags (normal / wrong passage / shuffled question), dataset field
+    # names of the FairytaleQA metadata and file / cache names (non-linguistic identifiers; no word of any language)
+    'ablog', 'all_gold_answers', 'alog', 'anchors', 'ans_len', 'ans_sent', 'answer', 'answer_text', 'context_key', 'depth', 'desc',
+    'done', 'ex_or_im', 'explicit', 'ft', 'golds', 'hs', 'item', 'local', 'local_or_sum', 'n_sent', 'normal', 'p_abstain', 'p_anchor',
+    'pairs', 'pairs_', 'poss', 'q_bits', 'q_item', 'q_parent', 'q_pos', 'q_rel', 'q_scal', 'q_sense', 'q_wh', 'qb', 'qvec', 'read_cache',
+    'ref_missing', 'ref_n', 'rels', 's_bits', 's_depth', 's_item', 's_off', 's_parent', 's_pos', 's_rel', 's_scal', 's_sense', 's_sent',
+    's_size', 'sb', 'scal', 'sent', 'sent_text', 'shuf', 'sid', 'sidx', 'skey', 'specs', 'table', 'tgt', 'tidx', 'vec', 'vocab', 'wh', 'wrong',
 }
 _WORDISH = re.compile(r"^[a-z][a-z_]+$")
 

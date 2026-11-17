@@ -1,0 +1,21 @@
+stage2 start: val_rouge(decoded) 0.2892 answer_rate 0.973 wrong_abstain 0.932
+ep 0 train_reward 0.4783 val_rouge 0.2896 answer_rate 0.962 wrong_abstain 0.965 17s
+ep 1 train_reward 0.5081 val_rouge 0.2979 answer_rate 0.965 wrong_abstain 0.957 33s
+ep 2 train_reward 0.5069 val_rouge 0.2900 answer_rate 0.940 wrong_abstain 0.965 50s
+ep 3 train_reward 0.5151 val_rouge 0.2915 answer_rate 0.946 wrong_abstain 0.967 67s
+ep 4 train_reward 0.5184 val_rouge 0.2861 answer_rate 0.965 wrong_abstain 0.954 82s
+ep 5 train_reward 0.5200 val_rouge 0.2808 answer_rate 0.962 wrong_abstain 0.954 98s
+ep 6 train_reward 0.5284 val_rouge 0.2864 answer_rate 0.962 wrong_abstain 0.954 114s
+ep 7 train_reward 0.5344 val_rouge 0.2953 answer_rate 0.946 wrong_abstain 0.970 129s
+ep 8 train_reward 0.5332 val_rouge 0.2863 answer_rate 0.932 wrong_abstain 0.973 145s
+ep 9 train_reward 0.5323 val_rouge 0.2893 answer_rate 0.943 wrong_abstain 0.967 160s
+ep 10 train_reward 0.5367 val_rouge 0.2899 answer_rate 0.962 wrong_abstain 0.954 175s
+ep 11 train_reward 0.5405 val_rouge 0.2931 answer_rate 0.957 wrong_abstain 0.970 190s
+ep 12 train_reward 0.5441 val_rouge 0.2999 answer_rate 0.959 wrong_abstain 0.970 205s
+ep 13 train_reward 0.5424 val_rouge 0.3079 answer_rate 0.962 wrong_abstain 0.957 221s
+ep 14 train_reward 0.5399 val_rouge 0.2898 answer_rate 0.970 wrong_abstain 0.938 237s
+ep 15 train_reward 0.5448 val_rouge 0.2973 answer_rate 0.962 wrong_abstain 0.957 253s
+ep 16 train_reward 0.5406 val_rouge 0.2915 answer_rate 0.959 wrong_abstain 0.957 269s
+ep 17 train_reward 0.5527 val_rouge 0.2966 answer_rate 0.967 wrong_abstain 0.943 286s
+ep 18 train_reward 0.5460 val_rouge 0.2902 answer_rate 0.919 wrong_abstain 0.970 302s
+ep 19 train_reward 0.5510 val_rouge 0.2969 answer_rate 0.954 wrong_abstain 0.949 318s

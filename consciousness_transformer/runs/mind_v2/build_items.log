@@ -1,0 +1,29 @@
+contexts 1222 pairs 5197
+contexts 50/1222 50s
+contexts 100/1222 75s
+contexts 150/1222 100s
+contexts 200/1222 123s
+contexts 250/1222 146s
+contexts 300/1222 168s
+contexts 350/1222 191s
+contexts 400/1222 214s
+contexts 450/1222 237s
+contexts 500/1222 262s
+contexts 550/1222 284s
+contexts 600/1222 307s
+contexts 650/1222 330s
+contexts 700/1222 353s
+contexts 750/1222 376s
+contexts 800/1222 400s
+contexts 850/1222 425s
+contexts 900/1222 448s
+contexts 950/1222 472s
+contexts 1000/1222 495s
+contexts 1050/1222 518s
+contexts 1100/1222 542s
+contexts 1150/1222 566s
+contexts 1200/1222 589s
+train 2872 Counter({'normal': 2225, 'wrong': 647})
+val 1107 Counter({'normal': 369, 'shuf': 369, 'wrong': 369})
+test 1218 Counter({'normal': 406, 'shuf': 406, 'wrong': 406})
+done 599.5600402355194
