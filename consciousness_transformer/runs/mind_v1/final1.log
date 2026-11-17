@@ -1,0 +1,3 @@
+done policy_all_cfgA best val score 0.771 77s
+done policy_all_cfgB best val score 0.7595 79s
+done policy_all_cfgC best val score 0.7366 81s

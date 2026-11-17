@@ -216,3 +216,13 @@ Report: `dev/reports/NAOMI_ENCODER_STAGE_A2.md`. Code: `src/naomi/treebank.py`, 
 - NOT committed (licensed): `data/ud/` (UD v2.18 files, git-ignored) and `runs/treebank/ewt_*.jsonl.gz`, `runs/treebank/work_*` (converted/parsed text + annotation-derived links). Not artifacts: `*_last.pt`, `prep_cache.pkl`.
 - Licence note: A2 is trained partly on links derived from UD English-EWT annotations (CC BY-SA 4.0; the underlying web texts carry their own copyright). The converted data is not redistributed; `naomi.treebank.fetch` + `scripts/build_treebank_gold.py --split {dev,test,train}` reproduce it. Share-alike attribution: Universal Dependencies English Web Treebank (Silveira et al.; UD v2.18).
 - Headline: on EWT-test pieces the model's head for unknown tops agrees with the converted treebank link 49% (stage A 32%, control 33%); parser-connected gold v7 test UAS/LAS .929/.919 (stage A .936/.926); blind hand-check of added links on the project's own sentences: 35% wrong (stage A 35%), target <=15% not reached.
+
+## Mind v1 (one-step learned answering policy)
+
+Report: `dev/reports/MIND_V1.md`. Code: `src/naomi/mind_v1.py`, `src/naomi/mind.py` (`Mind.ask`), `scripts/build_mind_data.py`, `scripts/train_mind_v1.py`, `scripts/eval_mind_v1.py`, `tests/test_mind_v1.py`.
+
+- **`runs/mind_v1/policy_all_best.pt`** (108 KB; trained on all sentence lengths; = `policy_all_cfgA_best.pt`, epoch 32) -- THE policy; `Mind.ask` loads it. **`runs/mind_v1/policy_short_best.pt`** (answer sentence <= 10 words only; the short-to-long comparison model). Load: `naomi.mind_v1.load_policy(path)` -> `(policy, rel_vocab)`.
+- `rel_vocab.json` (relation labels the policy's one-hots use), curves `policy_{all,short}_cfgA.curve.tsv`, `policy_all_cfg{B,C}.curve.tsv` (the other two configurations tried; their `_best.pt` are not artifacts), logs `build_read.log`, `build_items.log`, `final1.log`, `sweep3.log`, `eval.log`.
+- Evaluation: `eval_summary.json` (all tables), `eval_rows.json` (per item), `eval_traces_all.jsonl` (every test answer with its trace), `eval_traces_30.json` + `eval_traces_30_judgments.json` (the hand-read).
+- NOT committed (regenerable): `runs/mind_v1/read_cache/` (26 MB reading cache, ~13 min), `items_{train,val,test}.pkl` (208 MB features/labels, ~13 min), `*_last.pt`.
+- Headline (held-out test, abstain counted wrong): MCTest 0.208, FairytaleQA 0.317 vs word-overlap cheat 0.410 / 0.564; answer-in-candidates ceiling 0.583 / 0.756; memory-severed answers 0%; wrong-passage abstain 89% / 95%. Does not beat the cheat.

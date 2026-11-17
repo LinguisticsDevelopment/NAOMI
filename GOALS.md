@@ -22,7 +22,7 @@ memory, written by ordinary graph/tensor writes, never by training. See
 | Read | usable on short simple text (5-8% of links wrong at <=10 words; ~20% beyond); the parser itself is ~15% wrong on children's stories; joining pieces of long literary sentences remains unsolved |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
-| Answer from memory | not started in its proper form — the rule-based answerer was removed (owner, 2026-11-14); answering will be learned by the consciousness after the encoder/decoder pair works |
+| Answer from memory | first learned version built (2026-11-17, `dev/reports/MIND_V1.md`): one-step policy picks a memory node or abstains; controls behave (empty memory -> always abstains; wrong story -> abstains 92%), but accuracy 0.25 is below the word-overlap cheat 0.47 — fails its own bar, rethink before multi-step |
 | Reason | in progress on archived code; to be re-attached on the minimal loop |
 | Speak | decoder un-parked as the encoder's round-trip partner only; must be learned (grammar cannot generate) |
 | Any language | working at curriculum scale (archived code), not yet at real-text scale |
@@ -578,6 +578,17 @@ ledger entries should cite the topic, matching the headings below.
   wherever its parser commits; converted links are used only where the
   parser is silent. Treebank data is fetched by script and not committed.
   `consciousness_transformer/dev/reports/TREEBANK_TEACHER_FEASIBILITY.md`.
+
+- **2026-11-17 — consciousness v1 approved** (`consciousness_transformer/dev/design/CONSCIOUSNESS_V1_PROPOSAL.md`).
+  Answers by pointing to a memory node (speaking stays parked); trained on
+  the answer only, one step first, then several; MCTest and FairytaleQA
+  stand in for K-12 lessons (no particular K-12 source chosen); first
+  operations find / follow / compare / answer / abstain. Owner caution:
+  do NOT lock the system to basic sentences — it must show generative-
+  grammar behaviour (finite means, unbounded sentences by composition).
+  So short sentences are where training starts, not a limit: every result
+  is reported by sentence length, and generalisation from short to long
+  (train on short, test on long) is an explicit test.
 
 ## Ops rules
 

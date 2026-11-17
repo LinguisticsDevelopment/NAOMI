@@ -1,4 +1,4 @@
-"""Mind: a tiny teach facade over Reader + Memory. Answering is not built yet."""
+"""Mind: teach facade over Reader + Memory, and ``ask`` through the learned one-step policy (naomi.mind_v1)."""
 
 from __future__ import annotations
 
@@ -21,10 +21,14 @@ def render_tree(t: Optional[Tree]) -> str:
 
 
 class Mind:
+    DEFAULT_POLICY = "runs/mind_v1/policy_all_best.pt"
+
     def __init__(self, reader: Optional[Reader] = None, memory: Optional[Memory] = None,
-                 cache_path: Optional[str] = None):
+                 cache_path: Optional[str] = None, policy=None, rel_vocab=None):
         self.reader = reader or Reader(cache_path=cache_path)
         self.memory = memory or Memory()
+        self.policy, self.rel_vocab = policy, rel_vocab
+        self.last_trace: Optional[dict] = None
 
     def teach(self, text_or_sentences, layer: str = "current", source=None) -> dict:
         sents = (split_sentences(text_or_sentences) if isinstance(text_or_sentences, str)
@@ -39,8 +43,32 @@ class Mind:
                 counts["trees"] += 1
         return counts
 
+    def _policy(self):
+        if self.policy is None:
+            from . import mind_v1
+            self.policy, self.rel_vocab = mind_v1.load_policy(Reader._resolve(self.DEFAULT_POLICY))
+        return self.policy, self.rel_vocab
+
     def ask(self, question: str, options=None, layers=None) -> Answer:
-        raise NotImplementedError("answering is learned by the consciousness model; not built yet")
+        """Answer = a memory node and its subtree (rendered as text), or "not stated" (``stated`` False, ``text`` None).
+        ``options`` is unused: the policy never sees them. The full trace (candidates, scores, sentences used) is
+        ``last_trace`` and, JSON-encoded, ``Answer.trace[0]``."""
+        import json
+        from . import mind_v1
+        policy, rel_vocab = self._policy()
+        rr = self.reader.read_question(question)
+        if rr.tree is None:
+            self.last_trace = {"question": question, "stated": False, "text": None, "candidates_considered": 0,
+                               "top": [], "sentence_ids": [], "facts": [], "abstain_prob": 1.0}
+            return Answer(text=None, stated=False, trace=[json.dumps(self.last_trace)])
+        tr = mind_v1.answer_from_memory(policy, rel_vocab, self.memory, rr.tree, layers)
+        self.last_trace = tr
+        support = None
+        if tr["stated"]:
+            refs, _ = mind_v1.node_table(self.memory, layers)
+            support = mind_v1.subtree_tree(refs[tr["node_gid"]].node, tr["facts"][0]["sentence"])
+        return Answer(text=tr["text"], stated=tr["stated"], support=support, score=float(tr.get("prob", 0.0)),
+                      trace=[json.dumps(tr)])
 
     def sleep(self) -> int:
         return self.memory.consolidate("current", "long_term")

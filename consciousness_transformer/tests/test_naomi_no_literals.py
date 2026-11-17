@@ -37,6 +37,9 @@ ALLOWED = {
     # naomi.treebank: conversion-table schema keys (the table is data, these are only its field names), result counters,
     # alignment status tags, split names and supervision-source tags; no word of any language
     'accepted', 'base_url', 'bring_up_conj_if_conjunct_has_marker', 'bring_up_rels', 'cc_rel', 'conj_rel', 'coord_lift', 'coordinator_must_follow_first_conjunct', 'copula_swap', 'cycle_dropped', 'default_label', 'dep_feat', 'dep_upos', 'dev', 'drop_punct', 'feats', 'fetch', 'files', 'head_not_node', 'head_upos', 'id', 'kids', 'marker_rel', 'move_conj_if_conjunct_has_rel', 'move_to_copula_rels', 'no_link', 'ok', 'ok_masked', 'op_order', 'ops', 'orig', 'par', 'phrase_head_swap', 'preconj_rel', 'pseudo_asyndeton', 'pseudo_item', 'pseudo_rel', 'root_conflict', 'root_label', 'root_rel', 'rule', 'rules', 'sent_id', 'stream', 'test', 'train', 'treebank', 'ud', 'unknown', 'upos',
+    # naomi.mind_v1 / naomi.mind: result-dict keys, batch-tensor keys, dataset / split identifiers, file modes and
+    # tree-walk direction tags (non-linguistic identifiers; no word of any language)
+    'abstain_prob', 'answer_idx', 'cache_info', 'candidates_considered', 'cfg', 'compare', 'context', 'correct', 'cv', 'dataset', 'down', 'ex', 'ex_wp', 'extra', 'facts', 'fairytaleqa', 'find', 'fs', 'items', 'items_', 'itf', 'mask', 'mctest', 'meta', 'n_story_sentences', 'n_words', 'node_gid', 'options', 'prob', 'qf', 'question', 'question_tree', 'question_trusted', 'question_words', 'reads', 'rel_vocab', 'sentence_ids', 'split', 'stated', 'story', 'story_id', 'subtree', 'top', 'trusted', 'up', 'val', 'wb', 'wh_found', 'wp', 'wv',
 }
 _WORDISH = re.compile(r"^[a-z][a-z_]+$")
 
