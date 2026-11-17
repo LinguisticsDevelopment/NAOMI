@@ -1,0 +1,6 @@
+ep 39 loss 1.4195 val acc 0.168 hit 0.145 ans 0.366 wp_abs 0.992 43s
+done policy_all_sw_novecP8H32drop0.2wd0.05lr2e3 best val score 0.7023 43s
+ep 39 loss 1.5288 val acc 0.153 hit 0.145 ans 0.252 wp_abs 1.000 60s
+done policy_all_sw_P8H32drop0.5wd0.1lr1e3 best val score 0.6908 60s
+ep 39 loss 0.9491 val acc 0.206 hit 0.176 ans 0.405 wp_abs 1.000 51s
+done policy_all_sw_P16H64drop0.3wd0.05lr1e3 best val score 0.771 51s

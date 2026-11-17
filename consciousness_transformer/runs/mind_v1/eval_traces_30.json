@@ -1,0 +1,3173 @@
+[
+ {
+  "question": "How did the princess feel in her new home?",
+  "question_tree": "how(MODIFICATION:feel(MODIFICATION:did SUBJECT:princess(DESCRIPTION:the) MODIFICATION:in(PREPOSITION:her) OBJECT:home(DESCRIPTION:new)))",
+  "candidates_considered": 33,
+  "top": [
+   {
+    "candidate": 5,
+    "node": "beautiful",
+    "subtree": "beautiful",
+    "rel": "DESCRIPTION",
+    "sentence_index": 2,
+    "sentence": "the princess was too happy in her new home to remember all that she had suffered in the old one , and she welcomed them both gladly , and gave them quantities of beautiful things to take back with them .",
+    "prob": 0.8004,
+    "find": 0.3476,
+    "compare": 0.4331
+   },
+   {
+    "candidate": 20,
+    "node": "old",
+    "subtree": "old",
+    "rel": "DESCRIPTION",
+    "sentence_index": 2,
+    "sentence": "the princess was too happy in her new home to remember all that she had suffered in the old one , and she welcomed them both gladly , and gave them quantities of beautiful things to take back with them .",
+    "prob": 0.0385,
+    "find": 0.2033,
+    "compare": 0.8124
+   },
+   {
+    "candidate": 30,
+    "node": "one",
+    "subtree": "the old one",
+    "rel": "PREPOSITION",
+    "sentence_index": 2,
+    "sentence": "the princess was too happy in her new home to remember all that she had suffered in the old one , and she welcomed them both gladly , and gave them quantities of beautiful things to take back with them .",
+    "prob": 0.0364,
+    "find": 0.0457,
+    "compare": 0.0
+   },
+   {
+    "candidate": 1,
+    "node": "new",
+    "subtree": "new",
+    "rel": "DESCRIPTION",
+    "sentence_index": 2,
+    "sentence": "the princess was too happy in her new home to remember all that she had suffered in the old one , and she welcomed them both gladly , and gave them quantities of beautiful things to take back with them .",
+    "prob": 0.031,
+    "find": 1.0,
+    "compare": 1.0
+   },
+   {
+    "candidate": 15,
+    "node": "home",
+    "subtree": "her new home",
+    "rel": "PREPOSITION",
+    "sentence_index": 2,
+    "sentence": "the princess was too happy in her new home to remember all that she had suffered in the old one , and she welcomed them both gladly , and gave them quantities of beautiful things to take back with them .",
+    "prob": 0.0064,
+    "find": 0.9131,
+    "compare": 1.0
+   }
+  ],
+  "abstain_prob": 0.0771,
+  "stated": true,
+  "text": "beautiful",
+  "sentence_ids": [
+   2
+  ],
+  "facts": [
+   {
+    "sentence_index": 2,
+    "sentence": "the princess was too happy in her new home to remember all that she had suffered in the old one , and she welcomed them both gladly , and gave them quantities of beautiful things to take back with them .",
+    "tree": "was(SUBJECT:princess(DESCRIPTION:the) COMPLEMENT:happy(SPECIFICATION:too) MODIFICATION:in(PREPOSITION:home(DESCRIPTION:her DESCRIPTION:new)) MODIFICATION:to(MODIFICATION:remember(OBJECT:all SUBORDINATION:that(MODIFICATION:suffered(SUBJECT:she MODIFICATION:had))) MODIFICATION:in(PREPOSITION:one(DESCRIPTION:the DESCRIPTION:old))) COORDINATION:and(COORDINATION:and COORDINATION:welcomed(SUBJECT:she INDIRECT_OBJECT:them OBJECT:both SPECIFICATION:gladly) COORDINATION:gave(INDIRECT_OBJECT:them OBJECT:quantities(MODIFICATION:of(PREPOSITION:things(DESCRIPTION:beautiful)))) MODIFICATION:to(MODIFICATION:take(OBJECT:back(MODIFICATION:with(PREPOSITION:them))))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 2,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 91,
+  "prob": 0.8004,
+  "id": "fairytaleqa:enchanted-wreath:604",
+  "dataset": "fairytaleqa",
+  "options": [
+   "a chance",
+   "happy",
+   "the rock",
+   "the prince"
+  ],
+  "correct_option": "happy",
+  "predicted_option": "happy",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "in a few days she heard that a great hunt was planned , and the prince would leave the palace very early in the morning , so that his wife would be alone all day .",
+   "this was a chance not to be missed , and taking her daughter with her she went up to the palace , where she had never been before .",
+   "the princess was too happy in her new home to remember all that she had suffered in the old one , and she welcomed them both gladly , and gave them quantities of beautiful things to take back with them .",
+   "at last she took them down to the shore to see a pleasure boat which her husband had had made for her ; and here , the woman seizing her opportunity , stole softly behind the girl and pushed her off the rock on which she was standing , into the deep water , where she instantly sank to the bottom .",
+   "then she fastened the mask on her daughter , flung over her shoulders a velvet cloak , which the princess had let fall , and finally arranged a lace veil over her head ."
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "How did the man feel about the rain falling even more heavily?",
+  "question_tree": "how(MODIFICATION:feel(MODIFICATION:did SUBJECT:man(DESCRIPTION:the) MODIFICATION:about(PREPOSITION:rain(DESCRIPTION:the)) INDIRECT_OBJECT:falling OBJECT:even SPECIFICATION:heavily(SPECIFICATION:more)))",
+  "candidates_considered": 36,
+  "top": [
+   {
+    "candidate": 3,
+    "node": "beautiful",
+    "subtree": "beautiful",
+    "rel": "DESCRIPTION",
+    "sentence_index": 4,
+    "sentence": "the old man 's spirits revived when he looked out at the beautiful twilight , and he was about to step out from his strange hiding-place in the hollow tree when the sound of what seemed like the approaching steps of several people caught his ear .",
+    "prob": 0.8055,
+    "find": 0.102,
+    "compare": 0.4331
+   },
+   {
+    "candidate": 28,
+    "node": "old",
+    "subtree": "old",
+    "rel": "DESCRIPTION",
+    "sentence_index": 0,
+    "sentence": "but much to the old man 's disappointment , instead of clearing the rain fell more and more heavily , and finally a heavy thunderstorm broke over the mountain .",
+    "prob": 0.0732,
+    "find": 0.009,
+    "compare": 0.6669
+   },
+   {
+    "candidate": 29,
+    "node": "old",
+    "subtree": "old",
+    "rel": "DESCRIPTION",
+    "sentence_index": 1,
+    "sentence": "the thunder roared so terrifically , and the heavens seemed to be so ablaze with lightning , that the old man could hardly believe himself to be alive .",
+    "prob": 0.0179,
+    "find": 0.009,
+    "compare": 0.6669
+   },
+   {
+    "candidate": 30,
+    "node": "old",
+    "subtree": "old",
+    "rel": "DESCRIPTION",
+    "sentence_index": 4,
+    "sentence": "the old man 's spirits revived when he looked out at the beautiful twilight , and he was about to step out from his strange hiding-place in the hollow tree when the sound of what seemed like the approaching steps of several people caught his ear .",
+    "prob": 0.0153,
+    "find": 0.009,
+    "compare": 0.6669
+   },
+   {
+    "candidate": 16,
+    "node": "thought",
+    "subtree": "he thought that he must die of fright",
+    "rel": "ROOT",
+    "sentence_index": 2,
+    "sentence": "he thought that he must die of fright .",
+    "prob": 0.0045,
+    "find": 0.2026,
+    "compare": 0.1416
+   }
+  ],
+  "abstain_prob": 0.0665,
+  "stated": true,
+  "text": "beautiful",
+  "sentence_ids": [
+   4
+  ],
+  "facts": [
+   {
+    "sentence_index": 4,
+    "sentence": "the old man 's spirits revived when he looked out at the beautiful twilight , and he was about to step out from his strange hiding-place in the hollow tree when the sound of what seemed like the approaching steps of several people caught his ear .",
+    "tree": "revived(SUBJECT:spirits(MODIFICATION:'s(PREPOSITION:man(DESCRIPTION:the DESCRIPTION:old))) SPECIFICATION:when COORDINATION:was(COORDINATION:and(COORDINATION:looked(SUBJECT:he MODIFICATION:out MODIFICATION:at(PREPOSITION:twilight(DESCRIPTION:the DESCRIPTION:beautiful)))) SUBJECT:he MODIFICATION:about MODIFICATION:to(PREPOSITION:step) MODIFICATION:out MODIFICATION:from(PREPOSITION:hiding-place(DESCRIPTION:his DESCRIPTION:strange)) MODIFICATION:in(PREPOSITION:hollow(DESCRIPTION:the) PREPOSITION:tree(SUBORDINATION:seemed(SUBJECT:sound(DESCRIPTION:the(SPECIFICATION:when) MODIFICATION:of(PREPOSITION:what)) MODIFICATION:like(INDIRECT_OBJECT:approaching(DESCRIPTION:the) OBJECT:steps(MODIFICATION:of(PREPOSITION:people(DESCRIPTION:several))) MODIFICATION:caught(OBJECT:ear(DESCRIPTION:his))))))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 4,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 95,
+  "prob": 0.8055,
+  "id": "fairytaleqa:how-an-old-man-lost-his-wen:784",
+  "dataset": "fairytaleqa",
+  "options": [
+   "disappointment",
+   "sun",
+   "the thunder",
+   "lightning"
+  ],
+  "correct_option": "disappointment",
+  "predicted_option": "disappointment",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "but much to the old man 's disappointment , instead of clearing the rain fell more and more heavily , and finally a heavy thunderstorm broke over the mountain .",
+   "the thunder roared so terrifically , and the heavens seemed to be so ablaze with lightning , that the old man could hardly believe himself to be alive .",
+   "he thought that he must die of fright .",
+   "at last , however , the sky cleared , and the whole country was aglow in the rays of the setting sun .",
+   "the old man 's spirits revived when he looked out at the beautiful twilight , and he was about to step out from his strange hiding-place in the hollow tree when the sound of what seemed like the approaching steps of several people caught his ear .",
+   "he at once thought that his friends had come to look for him , and he was delighted at the idea of having some jolly companions with whom to walk home ."
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "What did we do at the castle?",
+  "question_tree": "did(SUBJECT:what MODIFICATION:do(SUBJECT:we MODIFICATION:at(PREPOSITION:castle(DESCRIPTION:the))))",
+  "candidates_considered": 45,
+  "top": [
+   {
+    "candidate": 15,
+    "node": "river",
+    "subtree": "river",
+    "rel": "SUBJECT",
+    "sentence_index": 3,
+    "sentence": "they wanted to take us all to elk river castle .",
+    "prob": 0.4634,
+    "find": 0.1321,
+    "compare": 0.1176
+   },
+   {
+    "candidate": 16,
+    "node": "river",
+    "subtree": "river",
+    "rel": "SUBJECT",
+    "sentence_index": 15,
+    "sentence": "we 'll never forget our trip to elk river castle !",
+    "prob": 0.1571,
+    "find": 0.1321,
+    "compare": 0.1176
+   },
+   {
+    "candidate": 24,
+    "node": "than",
+    "subtree": "bigger than we had imagined",
+    "rel": "OBJECT",
+    "sentence_index": 6,
+    "sentence": "once we arrive , the castle looked much bigger than we had imagined .",
+    "prob": 0.1043,
+    "find": 0.071,
+    "compare": 0.0
+   },
+   {
+    "candidate": 27,
+    "node": "trip",
+    "subtree": "our trip to elk river castle",
+    "rel": "OBJECT",
+    "sentence_index": 15,
+    "sentence": "we 'll never forget our trip to elk river castle !",
+    "prob": 0.043,
+    "find": 0.0682,
+    "compare": 0.0493
+   },
+   {
+    "candidate": 44,
+    "node": "all",
+    "subtree": "all to elk river castle",
+    "rel": "OBJECT",
+    "sentence_index": 3,
+    "sentence": "they wanted to take us all to elk river castle .",
+    "prob": 0.0319,
+    "find": -0.0785,
+    "compare": 0.1267
+   }
+  ],
+  "abstain_prob": 0.0392,
+  "stated": true,
+  "text": "river",
+  "sentence_ids": [
+   3
+  ],
+  "facts": [
+   {
+    "sentence_index": 3,
+    "sentence": "they wanted to take us all to elk river castle .",
+    "tree": "wanted(SUBJECT:they INDIRECT_OBJECT:to(MODIFICATION:take(OBJECT:us)) OBJECT:all(MODIFICATION:to(PREPOSITION:elk PREPOSITION:castle(SUBJECT:river))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 3,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 49,
+  "prob": 0.4634,
+  "id": "mctest:mc160.dev.4:299",
+  "dataset": "mctest",
+  "options": [
+   "Played ball",
+   "Fished",
+   "Swam in the swimming pool",
+   "Ran in the woods"
+  ],
+  "correct_option": "Swam in the swimming pool",
+  "predicted_option": "Swam in the swimming pool",
+  "answer_in_candidates": false,
+  "story_sentences": [
+   "my parents , kelly and kelley , said that it was that time of year to take a family vacation .",
+   "we 've been to big ride parks that have hotels with large pools .",
+   "this year my parents wanted to do something different .",
+   "they wanted to take us all to elk river castle .",
+   "after lots of planning we hit the road for our trip .",
+   "my brother kelsey and i enjoyed the long car ride there .",
+   "once we arrive , the castle looked much bigger than we had imagined .",
+   "there was so much to see and so much to do .",
+   "there was a swimming pool , movie theater and an elevator to take us from floor to floor .",
+   "what a magical place !",
+   "i was so excited because we had the whole place to our family !",
+   "we spent our vacation playing around the huge castle and finding small mysterious places .",
+   "there was even a tiny room in the back of one of the closets .",
+   "my brother , kelsey , and i played hide and go seek for hours , watched movies and swam until the sun went down .",
+   "it was sad when our vacation finally came to an end but we made some amazing memories .",
+   "we 'll never forget our trip to elk river castle !"
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "What did the old man carry in his hand?",
+  "question_tree": "did(SUBJECT:what INDIRECT_OBJECT:man(DESCRIPTION:the DESCRIPTION:old) OBJECT:carry(MODIFICATION:in(PREPOSITION:hand(DESCRIPTION:his))))",
+  "candidates_considered": 38,
+  "top": [
+   {
+    "candidate": 17,
+    "node": "stick",
+    "subtree": "a stick in his hand",
+    "rel": "OBJECT",
+    "sentence_index": 3,
+    "sentence": "while he stood on the beach , lost in perplexity and wondering what he had best do next , an old man suddenly appeared carrying a stick in his hand .",
+    "prob": 0.5933,
+    "find": 0.3135,
+    "compare": 0.1608
+   },
+   {
+    "candidate": 16,
+    "node": "carrying",
+    "subtree": "carrying",
+    "rel": "INDIRECT_OBJECT",
+    "sentence_index": 3,
+    "sentence": "while he stood on the beach , lost in perplexity and wondering what he had best do next , an old man suddenly appeared carrying a stick in his hand .",
+    "prob": 0.093,
+    "find": 0.8364,
+    "compare": 1.0
+   },
+   {
+    "candidate": 7,
+    "node": "coming",
+    "subtree": "coming",
+    "rel": "OBJECT",
+    "sentence_index": 4,
+    "sentence": "the happy hunter afterwards remembered that he did not see from whence the old man came , neither did he know how he was there-he happened to look up and saw the old man coming towards him .",
+    "prob": 0.0635,
+    "find": 0.2246,
+    "compare": 0.1873
+   },
+   {
+    "candidate": 30,
+    "node": "stood",
+    "subtree": "he stood on the beach",
+    "rel": "MODIFICATION",
+    "sentence_index": 3,
+    "sentence": "while he stood on the beach , lost in perplexity and wondering what he had best do next , an old man suddenly appeared carrying a stick in his hand .",
+    "prob": 0.0286,
+    "find": 0.1523,
+    "compare": 0.5314
+   },
+   {
+    "candidate": 31,
+    "node": "appeared",
+    "subtree": "an old man suddenly appeared carrying a stick in his hand",
+    "rel": "COORDINATION",
+    "sentence_index": 3,
+    "sentence": "while he stood on the beach , lost in perplexity and wondering what he had best do next , an old man suddenly appeared carrying a stick in his hand .",
+    "prob": 0.0182,
+    "find": 0.0708,
+    "compare": 0.1678
+   }
+  ],
+  "abstain_prob": 0.0833,
+  "stated": true,
+  "text": "a stick in his hand",
+  "sentence_ids": [
+   3
+  ],
+  "facts": [
+   {
+    "sentence_index": 3,
+    "sentence": "while he stood on the beach , lost in perplexity and wondering what he had best do next , an old man suddenly appeared carrying a stick in his hand .",
+    "tree": "while(MODIFICATION:stood(SUBJECT:he MODIFICATION:on(PREPOSITION:beach(DESCRIPTION:the))) MODIFICATION:lost(MODIFICATION:in(PREPOSITION:and(COORDINATION:perplexity COORDINATION:what(DESCRIPTION:wondering))) SUBORDINATION:had(SUBJECT:he SPECIFICATION:best(SPECIFICATION:do(COMPLEMENT:next)) COORDINATION:appeared(SUBJECT:man(DESCRIPTION:an DESCRIPTION:old) SPECIFICATION:suddenly INDIRECT_OBJECT:carrying OBJECT:stick(DESCRIPTION:a MODIFICATION:in(PREPOSITION:hand(DESCRIPTION:his)))))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 3,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 130,
+  "prob": 0.5933,
+  "id": "fairytaleqa:happy-hunter-skillful-fisher:739",
+  "dataset": "fairytaleqa",
+  "options": [
+   "japan",
+   "fishing",
+   "perplexity",
+   "a stick"
+  ],
+  "correct_option": "a stick",
+  "predicted_option": "a stick",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "nothing would appease the anger of the skillful fisher , for he had a bad disposition , and had always hated his brother because of his virtues , and now with the excuse of the lost fishing hook he planned to kill him and to usurp his place as ruler of japan .",
+   "the happy hunter knew all this full well , but he could say nothing , for being the younger he owed his elder brother obedience ; so he returned to the seashore and once more began to look for the missing hook .",
+   "he was much cast down , for he had lost all hope of ever finding his brother 's hook now .",
+   "while he stood on the beach , lost in perplexity and wondering what he had best do next , an old man suddenly appeared carrying a stick in his hand .",
+   "the happy hunter afterwards remembered that he did not see from whence the old man came , neither did he know how he was there-he happened to look up and saw the old man coming towards him ."
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "Who was young, handsome, and gifted?",
+  "question_tree": "was(SUBJECT:who COMPLEMENT:young(SPECIFICATION:gifted(COORDINATION:and(COORDINATION:handsome))))",
+  "candidates_considered": 44,
+  "top": [
+   {
+    "candidate": 25,
+    "node": "son",
+    "subtree": "the son",
+    "rel": "SUBJECT",
+    "sentence_index": 4,
+    "sentence": "the son was young , handsome and gifted .",
+    "prob": 0.9688,
+    "find": 0.1712,
+    "compare": 0.2071
+   },
+   {
+    "candidate": 34,
+    "node": "slave",
+    "subtree": "three beautiful slave",
+    "rel": "OBJECT",
+    "sentence_index": 6,
+    "sentence": "when he entered the prince 's palace , there stood three beautiful slave girls , who piled rosy peaches into a golden bowl , poured sugar over them and presented them to him .",
+    "prob": 0.0044,
+    "find": 0.0741,
+    "compare": 0.4105
+   },
+   {
+    "candidate": 28,
+    "node": "man",
+    "subtree": "the young man",
+    "rel": "PREPOSITION",
+    "sentence_index": 8,
+    "sentence": "as they went along the young man kept looking back at her .",
+    "prob": 0.0037,
+    "find": 0.0702,
+    "compare": 0.2287
+   },
+   {
+    "candidate": 27,
+    "node": "man",
+    "subtree": "a young man",
+    "rel": "OBJECT",
+    "sentence_index": 2,
+    "sentence": "at that time there lived a young man named tsui , whose father was a high official and the friend of the prince .",
+    "prob": 0.0033,
+    "find": 0.0699,
+    "compare": 0.2287
+   },
+   {
+    "candidate": 26,
+    "node": "son",
+    "subtree": "his son",
+    "rel": "OBJECT",
+    "sentence_index": 3,
+    "sentence": "and the father once sent his son to visit his princely friend , who was ill .",
+    "prob": 0.0022,
+    "find": 0.1711,
+    "compare": 0.2071
+   }
+  ],
+  "abstain_prob": 0.0074,
+  "stated": true,
+  "text": "the son",
+  "sentence_ids": [
+   4
+  ],
+  "facts": [
+   {
+    "sentence_index": 4,
+    "sentence": "the son was young , handsome and gifted .",
+    "tree": "was(SUBJECT:son(DESCRIPTION:the) COMPLEMENT:young(COORDINATION:and(COORDINATION:handsome COORDINATION:gifted)))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 4,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 69,
+  "prob": 0.9688,
+  "id": "fairytaleqa:how-molo-stole-the-lovely-rose-red:813",
+  "dataset": "fairytaleqa",
+  "options": [
+   "old dragonbeard",
+   "Tsui",
+   "molo",
+   "a sword hero"
+  ],
+  "correct_option": "Tsui",
+  "predicted_option": "Tsui",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "old dragonbeard must have been a master swordsman standing midway between those of the first and of the second order .",
+   "molo , however , of whom this story tells , was a sword hero .",
+   "at that time there lived a young man named tsui , whose father was a high official and the friend of the prince .",
+   "and the father once sent his son to visit his princely friend , who was ill .",
+   "the son was young , handsome and gifted .",
+   "he went to carry out his father 's instructions .",
+   "when he entered the prince 's palace , there stood three beautiful slave girls , who piled rosy peaches into a golden bowl , poured sugar over them and presented them to him .",
+   "after he had eaten he took his leave , and his princely host ordered one of the slave girls , rose-red by name , to escort him to the gate .",
+   "as they went along the young man kept looking back at her .",
+   "and she smiled at him and made signs with her fingers .",
+   "first she would stretch out three fingers , then she would turn her hand around three times , and finally she would point to a little mirror which she wore on her breast .",
+   "when they parted she whispered to him : \" do not forget me ! \""
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "It took the young couple how long to find a parking spot?",
+  "question_tree": "took(SUBJECT:it OBJECT:couple(DESCRIPTION:the DESCRIPTION:young) COMPLEMENT:long(SPECIFICATION:how) OBJECT:spot(SUBJECT:to(MODIFICATION:find(OBJECT:parking(DESCRIPTION:a)))))",
+  "candidates_considered": 45,
+  "top": [
+   {
+    "candidate": 18,
+    "node": "beach",
+    "subtree": "the beach",
+    "rel": "INDIRECT_OBJECT",
+    "sentence_index": 2,
+    "sentence": "they drove to the crowded beach parking lot and spent almost an hour trying to find a parking spot .",
+    "prob": 0.3267,
+    "find": 0.1427,
+    "compare": 0.2169
+   },
+   {
+    "candidate": 43,
+    "node": "trying",
+    "subtree": "trying",
+    "rel": "OBJECT",
+    "sentence_index": 2,
+    "sentence": "they drove to the crowded beach parking lot and spent almost an hour trying to find a parking spot .",
+    "prob": 0.0769,
+    "find": 0.0632,
+    "compare": 0.9133
+   },
+   {
+    "candidate": 33,
+    "node": "lot",
+    "subtree": "lot",
+    "rel": "OBJECT",
+    "sentence_index": 2,
+    "sentence": "they drove to the crowded beach parking lot and spent almost an hour trying to find a parking spot .",
+    "prob": 0.0684,
+    "find": 0.1153,
+    "compare": 0.1572
+   },
+   {
+    "candidate": 4,
+    "node": "spot",
+    "subtree": "spot",
+    "rel": "OBJECT",
+    "sentence_index": 2,
+    "sentence": "they drove to the crowded beach parking lot and spent almost an hour trying to find a parking spot .",
+    "prob": 0.0517,
+    "find": 0.8292,
+    "compare": 1.0
+   },
+   {
+    "candidate": 21,
+    "node": "trip",
+    "subtree": "a trip",
+    "rel": "PREPOSITION",
+    "sentence_index": 0,
+    "sentence": "once upon a time a young boy and young girl set out on a trip to the beach .",
+    "prob": 0.0277,
+    "find": 0.2598,
+    "compare": 0.3398
+   }
+  ],
+  "abstain_prob": 0.305,
+  "stated": true,
+  "text": "the beach",
+  "sentence_ids": [
+   2
+  ],
+  "facts": [
+   {
+    "sentence_index": 2,
+    "sentence": "they drove to the crowded beach parking lot and spent almost an hour trying to find a parking spot .",
+    "tree": "drove(SUBJECT:they MODIFICATION:to COORDINATION:spent(COORDINATION:and(COORDINATION:crowded(INDIRECT_OBJECT:beach(DESCRIPTION:the) OBJECT:parking OBJECT:lot)) INDIRECT_OBJECT:hour(DESCRIPTION:an(SPECIFICATION:almost)) OBJECT:trying MODIFICATION:to(MODIFICATION:find(INDIRECT_OBJECT:parking(DESCRIPTION:a) OBJECT:spot))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 2,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 39,
+  "prob": 0.3267,
+  "id": "mctest:mc160.dev.11:327",
+  "dataset": "mctest",
+  "options": [
+   "almost a half hour",
+   "only a short time",
+   "almost an hour",
+   "over an hour"
+  ],
+  "correct_option": "almost an hour",
+  "predicted_option": "almost an hour",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "once upon a time a young boy and young girl set out on a trip to the beach .",
+   "they packed a few towels , an umbrella , a few beach chairs and a lunch cooler .",
+   "they drove to the crowded beach parking lot and spent almost an hour trying to find a parking spot .",
+   "once they found a spot they parked and began walking to the beach area .",
+   "they found a nice spot with a good view of the water and set up their belongings .",
+   "once they sat down they began to enjoy a nice lunch on the beach .",
+   "they watched the boats go by and people playing in the water .",
+   "it was a wonderful day and one they would always remember .",
+   "once they arrived home they suddenly found out that they both had a pretty good sunburn .",
+   "they both said that next time they would use sun screen ."
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "What did Peter actually do when Sammie came?",
+  "question_tree": "did(SUBJECT:what MODIFICATION:do(SUBJECT:peter SPECIFICATION:actually SUBORDINATION:when(MODIFICATION:came(SUBJECT:sammie))))",
+  "candidates_considered": 43,
+  "top": [
+   {
+    "candidate": 7,
+    "node": "store",
+    "subtree": "the store",
+    "rel": "PREPOSITION",
+    "sentence_index": 7,
+    "sentence": "sammie came into the store looking for a golden puppy .",
+    "prob": 0.476,
+    "find": 0.2396,
+    "compare": 0.0886
+   },
+   {
+    "candidate": 14,
+    "node": "hold",
+    "subtree": "hold him",
+    "rel": "MODIFICATION",
+    "sentence_index": 10,
+    "sentence": "sammie came to hold him .",
+    "prob": 0.1135,
+    "find": 0.1491,
+    "compare": 0.0514
+   },
+   {
+    "candidate": 6,
+    "node": "store",
+    "subtree": "the store",
+    "rel": "PREPOSITION",
+    "sentence_index": 5,
+    "sentence": "he tried and tried to please every person who came to the store , but they all picked smaller puppies .",
+    "prob": 0.0725,
+    "find": 0.2396,
+    "compare": 0.0886
+   },
+   {
+    "candidate": 39,
+    "node": "puppy",
+    "subtree": "a very sad puppy",
+    "rel": "OBJECT",
+    "sentence_index": 0,
+    "sentence": "peter was a very sad puppy .",
+    "prob": 0.0617,
+    "find": 0.027,
+    "compare": 0.0592
+   },
+   {
+    "candidate": 41,
+    "node": "person",
+    "subtree": "a person",
+    "rel": "OBJECT",
+    "sentence_index": 3,
+    "sentence": "peter had seen many other puppies find a person ; he began to wonder why he could not get one .",
+    "prob": 0.0418,
+    "find": 0.1357,
+    "compare": 0.3841
+   }
+  ],
+  "abstain_prob": 0.0893,
+  "stated": true,
+  "text": "the store",
+  "sentence_ids": [
+   7
+  ],
+  "facts": [
+   {
+    "sentence_index": 7,
+    "sentence": "sammie came into the store looking for a golden puppy .",
+    "tree": "came(SUBJECT:sammie MODIFICATION:into(PREPOSITION:store(DESCRIPTION:the)) OBJECT:looking MODIFICATION:for(PREPOSITION:puppy(DESCRIPTION:a DESCRIPTION:golden)))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 7,
+     "reader": "parser"
+    }
+   }
+  ],
+  "node_gid": 94,
+  "prob": 0.476,
+  "id": "mctest:mc160.dev.9:318",
+  "dataset": "mctest",
+  "options": [
+   "Peter showed off his fur",
+   "Peter showed off his bark",
+   "Peter fell asleep",
+   "Peter wondered if he would be a good enough puppy"
+  ],
+  "correct_option": "Peter fell asleep",
+  "predicted_option": "Peter fell asleep",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "peter was a very sad puppy .",
+   "he had been inside of the pet store for a very long time .",
+   "in fact , he had been there for three months !",
+   "peter had seen many other puppies find a person ; he began to wonder why he could not get one .",
+   "he thought that maybe his fur was not pretty enough or maybe his bark was not loud enough .",
+   "he tried and tried to please every person who came to the store , but they all picked smaller puppies .",
+   "however , one day all of this changed .",
+   "sammie came into the store looking for a golden puppy .",
+   "she wanted a puppy she could snuggle with .",
+   "it so happened that peter was very sad and tired that day .",
+   "sammie came to hold him .",
+   "peter wanted to show off his bark , but he was too tired .",
+   "he fell right to sleep .",
+   "sammie loved him at once and loved holding him in her arms .",
+   "sammie took peter home that day , and they made lots of fun memories ."
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "Who went into the forest next?",
+  "question_tree": "went(SUBJECT:who MODIFICATION:into(PREPOSITION:forest(DESCRIPTION:the)) SPECIFICATION:next)",
+  "candidates_considered": 49,
+  "top": [
+   {
+    "candidate": 23,
+    "node": "son",
+    "subtree": "then the second son",
+    "rel": "SUBJECT",
+    "sentence_index": 2,
+    "sentence": "then the second son went to the forest , and his mother gave him a good cake and a bottle of wine as she had to his elder brother .",
+    "prob": 0.7198,
+    "find": 0.1872,
+    "compare": 0.1198
+   },
+   {
+    "candidate": 36,
+    "node": "way",
+    "subtree": "your own way",
+    "rel": "OBJECT",
+    "sentence_index": 0,
+    "sentence": "but this clever son replied : 'if i give you my cake and wine i shall have none left for myself ; you just go your own way ; ' and he left the little man standing there and went further on into the forest .",
+    "prob": 0.071,
+    "find": 0.0038,
+    "compare": 0.0416
+   },
+   {
+    "candidate": 34,
+    "node": "you",
+    "subtree": "you",
+    "rel": "SUBJECT",
+    "sentence_index": 0,
+    "sentence": "but this clever son replied : 'if i give you my cake and wine i shall have none left for myself ; you just go your own way ; ' and he left the little man standing there and went further on into the forest .",
+    "prob": 0.0618,
+    "find": 0.0517,
+    "compare": 0.0
+   },
+   {
+    "candidate": 13,
+    "node": "man",
+    "subtree": "the little man",
+    "rel": "INDIRECT_OBJECT",
+    "sentence_index": 0,
+    "sentence": "but this clever son replied : 'if i give you my cake and wine i shall have none left for myself ; you just go your own way ; ' and he left the little man standing there and went further on into the forest .",
+    "prob": 0.0335,
+    "find": 0.1779,
+    "compare": 0.0746
+   },
+   {
+    "candidate": 42,
+    "node": "'if",
+    "subtree": "'if",
+    "rel": "SUBJECT",
+    "sentence_index": 0,
+    "sentence": "but this clever son replied : 'if i give you my cake and wine i shall have none left for myself ; you just go your own way ; ' and he left the little man standing there and went further on into the forest .",
+    "prob": 0.0305,
+    "find": 0.0697,
+    "compare": 0.0
+   }
+  ],
+  "abstain_prob": 0.0368,
+  "stated": true,
+  "text": "then the second son",
+  "sentence_ids": [
+   2
+  ],
+  "facts": [
+   {
+    "sentence_index": 2,
+    "sentence": "then the second son went to the forest , and his mother gave him a good cake and a bottle of wine as she had to his elder brother .",
+    "tree": "and(COORDINATION:went(SUBJECT:son(DESCRIPTION:the(SPECIFICATION:then) DESCRIPTION:second) MODIFICATION:to(PREPOSITION:forest(DESCRIPTION:the))) COORDINATION:gave(SUBJECT:mother(DESCRIPTION:his) INDIRECT_OBJECT:him OBJECT:and(COORDINATION:cake(DESCRIPTION:a DESCRIPTION:good) COORDINATION:bottle(DESCRIPTION:a) MODIFICATION:of(PREPOSITION:wine))) SUBORDINATION:as(MODIFICATION:had(SUBJECT:she MODIFICATION:to(PREPOSITION:elder(DESCRIPTION:his)) OBJECT:brother)))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 2,
+     "reader": "parser"
+    }
+   }
+  ],
+  "node_gid": 81,
+  "prob": 0.7198,
+  "id": "fairytaleqa:golden-goose:712",
+  "dataset": "fairytaleqa",
+  "options": [
+   "than",
+   "you",
+   "his mother",
+   "the second son"
+  ],
+  "correct_option": "the second son",
+  "predicted_option": "the second son",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "but this clever son replied : 'if i give you my cake and wine i shall have none left for myself ; you just go your own way ; ' and he left the little man standing there and went further on into the forest .",
+   "there he began to cut down a tree , but before long he made a false stroke with his axe , and cut his own arm so badly that he was obliged to go home and have it bound up .",
+   "then the second son went to the forest , and his mother gave him a good cake and a bottle of wine as she had to his elder brother .",
+   "he too met the little old grey man , who begged him for a morsel of cake and a draught of wine .",
+   "but the second son spoke most sensibly too , and said : 'whatever i give to you i deprive myself of .",
+   "just go your own way , will you ? '",
+   "not long after his punishment overtook him , for no sooner had he struck a couple of blows on a tree with his axe , than he cut his leg so badly that he had to be carried home ."
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "What did Greta and Tony do after they got their ice cream?",
+  "question_tree": "did(SUBJECT:what OBJECT:and(COORDINATION:greta COORDINATION:tony COORDINATION:do(MODIFICATION:after(PREPOSITION:they) MODIFICATION:got(INDIRECT_OBJECT:ice(DESCRIPTION:their) OBJECT:cream))))",
+  "candidates_considered": 45,
+  "top": [
+   {
+    "candidate": 3,
+    "node": "cone",
+    "subtree": "cone",
+    "rel": "OBJECT",
+    "sentence_index": 13,
+    "sentence": "he almost got a snow cone .",
+    "prob": 0.2469,
+    "find": 0.2264,
+    "compare": 0.1062
+   },
+   {
+    "candidate": 32,
+    "node": "started",
+    "subtree": "cream so he started pulling away from the curb when they got to the corner",
+    "rel": "OBJECT",
+    "sentence_index": 3,
+    "sentence": "the ice cream truck driver thought that no more children were coming to get ice cream so he started pulling away from the curb when they got to the corner .",
+    "prob": 0.2449,
+    "find": 0.095,
+    "compare": 0.0856
+   },
+   {
+    "candidate": 37,
+    "node": "brother",
+    "subtree": "her brother tony",
+    "rel": "SUBJECT",
+    "sentence_index": 22,
+    "sentence": "her brother , tony , was happy too .",
+    "prob": 0.097,
+    "find": 0.1422,
+    "compare": 0.1044
+   },
+   {
+    "candidate": 2,
+    "node": "pulling",
+    "subtree": "pulling",
+    "rel": "OBJECT",
+    "sentence_index": 3,
+    "sentence": "the ice cream truck driver thought that no more children were coming to get ice cream so he started pulling away from the curb when they got to the corner .",
+    "prob": 0.0909,
+    "find": 0.2662,
+    "compare": 0.0816
+   },
+   {
+    "candidate": 30,
+    "node": "ran",
+    "subtree": "greta ran to the corner with her older brother tony",
+    "rel": "ROOT",
+    "sentence_index": 0,
+    "sentence": "greta ran to the corner with her older brother tony .",
+    "prob": 0.0588,
+    "find": 0.1264,
+    "compare": 0.1112
+   }
+  ],
+  "abstain_prob": 0.0718,
+  "stated": true,
+  "text": "cone",
+  "sentence_ids": [
+   13
+  ],
+  "facts": [
+   {
+    "sentence_index": 13,
+    "sentence": "he almost got a snow cone .",
+    "tree": "got(SUBJECT:he SPECIFICATION:almost INDIRECT_OBJECT:snow(DESCRIPTION:a) OBJECT:cone)",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 13,
+     "reader": "parser"
+    }
+   }
+  ],
+  "node_gid": 161,
+  "prob": 0.2469,
+  "id": "mctest:mc160.dev.3:295",
+  "dataset": "mctest",
+  "options": [
+   "They walked to a friend's house and talked to his mother about what happened.",
+   "They bit into it.",
+   "They got in the truck.",
+   "They walked home and went outside in their back yard to play."
+  ],
+  "correct_option": "They bit into it.",
+  "predicted_option": "They bit into it.",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "greta ran to the corner with her older brother tony .",
+   "he had money for the ice cream truck in his pocket and she was very happy .",
+   "the ice cream truck had been parked at the curb waiting for children for a very long time .",
+   "the ice cream truck driver thought that no more children were coming to get ice cream so he started pulling away from the curb when they got to the corner .",
+   "they yelled .",
+   "they screamed , \" stop !",
+   "stop ! \"",
+   "and jumped up and down on the side walk trying to get him to see them .",
+   "the driver of the truck saw them , waved at them and smiled , pulled back to the curb and opened his truck up so that they could see everything that he had for sale .",
+   "they were so excited .",
+   "they saw some new treats .",
+   "tony wanted to try something new .",
+   "he got an ice cream sundae with chocolate ice cream and nuts .",
+   "he almost got a snow cone .",
+   "greta looked at everything that the ice cream truck had .",
+   "she saw candy , ice cream cones , snow cones , and everything else .",
+   "it all looked so good .",
+   "but after looking at everything , she wanted to get an ice cream sandwich .",
+   "she got the ice cream sandwich .",
+   "she bit into it and smiled .",
+   "it tasted so good .",
+   "she felt so happy .",
+   "her brother , tony , was happy too .",
+   "he bit into his ice cream cone sundae and grinned .",
+   "they walked home with their ice cream and told their mom about how close they came to not getting their ice cream at all .",
+   "their mom was happy that the truck had stopped for them .",
+   "she said that they were very lucky to have gotten to the curb before the ice cream truck left ."
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "How did the cottager feel when everyone ignored him?",
+  "question_tree": "did(SPECIFICATION:how INDIRECT_OBJECT:cottager(DESCRIPTION:the) OBJECT:feel SUBORDINATION:when(MODIFICATION:ignored(SUBJECT:everyone OBJECT:him)))",
+  "candidates_considered": 42,
+  "top": [
+   {
+    "candidate": 13,
+    "node": "angry",
+    "subtree": "angry",
+    "rel": "COMPLEMENT",
+    "sentence_index": 7,
+    "sentence": "at last he grew angry and thought : \" i might as well go home , for not a soul pays a bit of attention to me here . \"",
+    "prob": 0.6873,
+    "find": 0.1973,
+    "compare": 0.5205
+   },
+   {
+    "candidate": 32,
+    "node": "old",
+    "subtree": "old",
+    "rel": "DESCRIPTION",
+    "sentence_index": 1,
+    "sentence": "as he chanced to cross a field , he found a milk-strainer , such as are usually made of cows' tails , and looking just like an old brown rag .",
+    "prob": 0.0366,
+    "find": -0.0017,
+    "compare": 0.2893
+   },
+   {
+    "candidate": 6,
+    "node": "wedding-feast",
+    "subtree": "the wedding-feast",
+    "rel": "PREPOSITION",
+    "sentence_index": 0,
+    "sentence": "once upon a time there was a big wedding at a certain farmstead , and a certain cottager was on his way to the wedding-feast .",
+    "prob": 0.0217,
+    "find": 0.19,
+    "compare": 0.0
+   },
+   {
+    "candidate": 21,
+    "node": "other",
+    "subtree": "other",
+    "rel": "DESCRIPTION",
+    "sentence_index": 5,
+    "sentence": "then the chief cook came and asked the other folk to sit down to the table ; but he was not asked , nor did he get anything to eat .",
+    "prob": 0.013,
+    "find": 0.1849,
+    "compare": 0.3448
+   },
+   {
+    "candidate": 28,
+    "node": "certain",
+    "subtree": "certain",
+    "rel": "DESCRIPTION",
+    "sentence_index": 0,
+    "sentence": "once upon a time there was a big wedding at a certain farmstead , and a certain cottager was on his way to the wedding-feast .",
+    "prob": 0.0103,
+    "find": 0.1118,
+    "compare": 0.5231
+   }
+  ],
+  "abstain_prob": 0.2123,
+  "stated": true,
+  "text": "angry",
+  "sentence_ids": [
+   7
+  ],
+  "facts": [
+   {
+    "sentence_index": 7,
+    "sentence": "at last he grew angry and thought : \" i might as well go home , for not a soul pays a bit of attention to me here . \"",
+    "tree": "at(PREPOSITION:he(DESCRIPTION:last) COORDINATION:and(COORDINATION:grew(COMPLEMENT:angry) COORDINATION:thought OBJECT:might(SUBJECT:i SPECIFICATION:as MODIFICATION:go(SUBJECT:well OBJECT:home MODIFICATION:for(MODIFICATION:pays(SUBJECT:soul(DESCRIPTION:a(SPECIFICATION:not)) OBJECT:bit(DESCRIPTION:a MODIFICATION:of(PREPOSITION:attention) MODIFICATION:to(PREPOSITION:me)) SPECIFICATION:here))))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 7,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 172,
+  "prob": 0.6873,
+  "id": "fairytaleqa:hat-of-huldres:760",
+  "dataset": "fairytaleqa",
+  "options": [
+   "the house",
+   "angry",
+   "good evening",
+   "the table"
+  ],
+  "correct_option": "angry",
+  "predicted_option": "angry",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "once upon a time there was a big wedding at a certain farmstead , and a certain cottager was on his way to the wedding-feast .",
+   "as he chanced to cross a field , he found a milk-strainer , such as are usually made of cows' tails , and looking just like an old brown rag .",
+   "he picked it up , for he thought it could be washed , and then he would give it to his wife for a dish-rag .",
+   "but when he came to the house where they were celebrating the wedding , it seemed as though no one saw him .",
+   "the bride and groom nodded to the rest of the guests , they spoke to them and poured for them ; but he got neither greeting nor drink .",
+   "then the chief cook came and asked the other folk to sit down to the table ; but he was not asked , nor did he get anything to eat .",
+   "for he did not care to sit down of his own accord when no one had asked him .",
+   "at last he grew angry and thought : \" i might as well go home , for not a soul pays a bit of attention to me here . \"",
+   "when he reached home , he said : \" good evening , here i am back again . \""
+  ],
+  "outcome": "right"
+ },
+ {
+  "question": "Who likes to go to the park?",
+  "question_tree": "likes(SUBJECT:who OBJECT:to(MODIFICATION:go(MODIFICATION:to(PREPOSITION:park(DESCRIPTION:the)))))",
+  "candidates_considered": 40,
+  "top": [
+   {
+    "candidate": 30,
+    "node": "tammy",
+    "subtree": "tammy",
+    "rel": "SUBJECT",
+    "sentence_index": 0,
+    "sentence": "tammy likes the park .",
+    "prob": 0.5764,
+    "find": -0.0532,
+    "compare": 0.0612
+   },
+   {
+    "candidate": 31,
+    "node": "max",
+    "subtree": "max",
+    "rel": "SUBJECT",
+    "sentence_index": 10,
+    "sentence": "max likes the park .",
+    "prob": 0.3317,
+    "find": 0.0382,
+    "compare": 0.0392
+   },
+   {
+    "candidate": 36,
+    "node": "mary",
+    "subtree": "mary",
+    "rel": "SUBJECT",
+    "sentence_index": 3,
+    "sentence": "mary goes to the park with tammy .",
+    "prob": 0.0366,
+    "find": 0.1213,
+    "compare": 0.0577
+   },
+   {
+    "candidate": 35,
+    "node": "cannot",
+    "subtree": "cannot",
+    "rel": "SUBJECT",
+    "sentence_index": 17,
+    "sentence": "mother says no . they are sad when they cannot go to the park .",
+    "prob": 0.0104,
+    "find": 0.0832,
+    "compare": 0.0
+   },
+   {
+    "candidate": 20,
+    "node": "park",
+    "subtree": "the park",
+    "rel": "OBJECT",
+    "sentence_index": 0,
+    "sentence": "tammy likes the park .",
+    "prob": 0.0067,
+    "find": 1.0,
+    "compare": 1.0
+   }
+  ],
+  "abstain_prob": 0.0095,
+  "stated": true,
+  "text": "tammy",
+  "sentence_ids": [
+   0
+  ],
+  "facts": [
+   {
+    "sentence_index": 0,
+    "sentence": "tammy likes the park .",
+    "tree": "likes(SUBJECT:tammy OBJECT:park(DESCRIPTION:the))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 0,
+     "reader": "parser"
+    }
+   }
+  ],
+  "node_gid": 1,
+  "prob": 0.5764,
+  "id": "mctest:mc160.dev.27:390",
+  "dataset": "mctest",
+  "options": [
+   "Dolls",
+   "Mother",
+   "Tammy and Mary",
+   "The rabbits"
+  ],
+  "correct_option": "Tammy and Mary",
+  "predicted_option": "Dolls",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "tammy likes the park .",
+   "there are swings at the park .",
+   "there is a slide at the park .",
+   "mary goes to the park with tammy .",
+   "they jump rope .",
+   "they play tag .",
+   "they like the park .",
+   "tammy and mary have fun at the park .",
+   "tammy has a dog named max .",
+   "tammy and mary take max to the park .",
+   "max likes the park .",
+   "he chases rabbits .",
+   "he chases a ball .",
+   "tammy throws the ball to max .",
+   "mary throws the ball to max .",
+   "the park is no fun in the rain .",
+   "tammy and mary cannot go to the park when it rains .",
+   "mother says no . they are sad when they cannot go to the park .",
+   "tammy and mary play in the house when it rains .",
+   "they play with dolls .",
+   "they dress up and have a tea party .",
+   "today is sunny .",
+   "tammy and mary can go to the park .",
+   "mother says yes .",
+   "they can take max to the park .",
+   "they are happy when it is sunny ."
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "What did Sally do this summer?",
+  "question_tree": "did(SUBJECT:what MODIFICATION:do(SUBJECT:sally OBJECT:summer(DESCRIPTION:this)))",
+  "candidates_considered": 38,
+  "top": [
+   {
+    "candidate": 27,
+    "node": "went",
+    "subtree": "sally went to the beach with her family in the summer as well",
+    "rel": "ROOT",
+    "sentence_index": 9,
+    "sentence": "sally went to the beach with her family in the summer as well .",
+    "prob": 0.3075,
+    "find": 0.0563,
+    "compare": 0.047
+   },
+   {
+    "candidate": 26,
+    "node": "beach",
+    "subtree": "the beach",
+    "rel": "PREPOSITION",
+    "sentence_index": 9,
+    "sentence": "sally went to the beach with her family in the summer as well .",
+    "prob": 0.2712,
+    "find": 0.1334,
+    "compare": 0.0488
+   },
+   {
+    "candidate": 33,
+    "node": "canoeing",
+    "subtree": "canoeing",
+    "rel": "OBJECT",
+    "sentence_index": 7,
+    "sentence": "even after she fell in the water , sally still enjoyed canoeing .",
+    "prob": 0.0953,
+    "find": 0.082,
+    "compare": 0.1899
+   },
+   {
+    "candidate": 7,
+    "node": "nature",
+    "subtree": "nature",
+    "rel": "OBJECT",
+    "sentence_index": 4,
+    "sentence": "sally 's favorite activity was walking in the woods because she enjoyed nature .",
+    "prob": 0.076,
+    "find": 0.3782,
+    "compare": 0.1248
+   },
+   {
+    "candidate": 24,
+    "node": "friend",
+    "subtree": "her new friend",
+    "rel": "PREPOSITION",
+    "sentence_index": 8,
+    "sentence": "she was sad when the camp was over , but promised to keep in touch with her new friend .",
+    "prob": 0.0189,
+    "find": 0.1694,
+    "compare": 0.0887
+   }
+  ],
+  "abstain_prob": 0.0865,
+  "stated": true,
+  "text": "sally went to the beach with her family in the summer as well",
+  "sentence_ids": [
+   9
+  ],
+  "facts": [
+   {
+    "sentence_index": 9,
+    "sentence": "sally went to the beach with her family in the summer as well .",
+    "tree": "went(SUBJECT:sally MODIFICATION:to(PREPOSITION:beach(DESCRIPTION:the)) MODIFICATION:with(PREPOSITION:her) OBJECT:family(MODIFICATION:in(PREPOSITION:summer(DESCRIPTION:the))) SPECIFICATION:well(SPECIFICATION:as))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 9,
+     "reader": "parser"
+    }
+   }
+  ],
+  "node_gid": 91,
+  "prob": 0.3075,
+  "id": "mctest:mc160.dev.1:287",
+  "dataset": "mctest",
+  "options": [
+   "She went to summer camp and the beach.",
+   "She went to Paris.",
+   "She went to a baseball game.",
+   "She went to summer school."
+  ],
+  "correct_option": "She went to summer camp and the beach.",
+  "predicted_option": "She went to Paris.",
+  "answer_in_candidates": false,
+  "story_sentences": [
+   "sally had a very exciting summer vacation .",
+   "she went to summer camp for the first time .",
+   "she made friends with a girl named tina .",
+   "they shared a bunk bed in their cabin .",
+   "sally 's favorite activity was walking in the woods because she enjoyed nature .",
+   "tina liked arts and crafts .",
+   "together , they made some art using leaves they found in the woods .",
+   "even after she fell in the water , sally still enjoyed canoeing .",
+   "she was sad when the camp was over , but promised to keep in touch with her new friend .",
+   "sally went to the beach with her family in the summer as well .",
+   "she loves the beach .",
+   "sally collected shells and mailed some to her friend , tina , so she could make some arts and crafts with them .",
+   "sally liked fishing with her brothers , cooking on the grill with her dad , and swimming in the ocean with her mother .",
+   "the summer was fun , but sally was very excited to go back to school .",
+   "she missed her friends and teachers .",
+   "she was excited to tell them about her summer vacation ."
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "What do Tammy and Mary do when it rains?",
+  "question_tree": "and(COORDINATION:tammy(SUBJECT:what MODIFICATION:do) COORDINATION:do(SUBJECT:mary SPECIFICATION:when INDIRECT_OBJECT:it OBJECT:rains))",
+  "candidates_considered": 40,
+  "top": [
+   {
+    "candidate": 32,
+    "node": "goes",
+    "subtree": "mary goes to the park with tammy",
+    "rel": "ROOT",
+    "sentence_index": 3,
+    "sentence": "mary goes to the park with tammy .",
+    "prob": 0.1883,
+    "find": 0.0963,
+    "compare": 0.0662
+   },
+   {
+    "candidate": 33,
+    "node": "throws",
+    "subtree": "mary throws the ball to max",
+    "rel": "ROOT",
+    "sentence_index": 14,
+    "sentence": "mary throws the ball to max .",
+    "prob": 0.147,
+    "find": 0.143,
+    "compare": 0.1868
+   },
+   {
+    "candidate": 25,
+    "node": "dog",
+    "subtree": "a dog",
+    "rel": "OBJECT",
+    "sentence_index": 8,
+    "sentence": "tammy has a dog named max .",
+    "prob": 0.0725,
+    "find": 0.1883,
+    "compare": 0.1221
+   },
+   {
+    "candidate": 35,
+    "node": "jump",
+    "subtree": "they jump rope",
+    "rel": "ROOT",
+    "sentence_index": 4,
+    "sentence": "they jump rope .",
+    "prob": 0.0493,
+    "find": 0.041,
+    "compare": 0.1783
+   },
+   {
+    "candidate": 39,
+    "node": "chases",
+    "subtree": "he chases rabbits",
+    "rel": "ROOT",
+    "sentence_index": 11,
+    "sentence": "he chases rabbits .",
+    "prob": 0.0488,
+    "find": 0.1067,
+    "compare": 0.1024
+   }
+  ],
+  "abstain_prob": 0.1235,
+  "stated": true,
+  "text": "mary goes to the park with tammy",
+  "sentence_ids": [
+   3
+  ],
+  "facts": [
+   {
+    "sentence_index": 3,
+    "sentence": "mary goes to the park with tammy .",
+    "tree": "goes(SUBJECT:mary MODIFICATION:to(PREPOSITION:park(DESCRIPTION:the)) MODIFICATION:with(PREPOSITION:tammy))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 3,
+     "reader": "parser"
+    }
+   }
+  ],
+  "node_gid": 17,
+  "prob": 0.1883,
+  "id": "mctest:mc160.dev.27:389",
+  "dataset": "mctest",
+  "options": [
+   "go to the park",
+   "Play with dolls, have a tea party",
+   "play ball",
+   "chase rabbits"
+  ],
+  "correct_option": "Play with dolls, have a tea party",
+  "predicted_option": "go to the park",
+  "answer_in_candidates": false,
+  "story_sentences": [
+   "tammy likes the park .",
+   "there are swings at the park .",
+   "there is a slide at the park .",
+   "mary goes to the park with tammy .",
+   "they jump rope .",
+   "they play tag .",
+   "they like the park .",
+   "tammy and mary have fun at the park .",
+   "tammy has a dog named max .",
+   "tammy and mary take max to the park .",
+   "max likes the park .",
+   "he chases rabbits .",
+   "he chases a ball .",
+   "tammy throws the ball to max .",
+   "mary throws the ball to max .",
+   "the park is no fun in the rain .",
+   "tammy and mary cannot go to the park when it rains .",
+   "mother says no . they are sad when they cannot go to the park .",
+   "tammy and mary play in the house when it rains .",
+   "they play with dolls .",
+   "they dress up and have a tea party .",
+   "today is sunny .",
+   "tammy and mary can go to the park .",
+   "mother says yes .",
+   "they can take max to the park .",
+   "they are happy when it is sunny ."
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "Besides boats what did the couple watch?",
+  "question_tree": "watch(SPECIFICATION:besides SUBJECT:boats(SUBORDINATION:did(MODIFICATION:what OBJECT:couple(DESCRIPTION:the))))",
+  "candidates_considered": 42,
+  "top": [
+   {
+    "candidate": 35,
+    "node": "go",
+    "subtree": "the boats go by",
+    "rel": "COORDINATION",
+    "sentence_index": 6,
+    "sentence": "they watched the boats go by and people playing in the water .",
+    "prob": 0.7835,
+    "find": 0.1114,
+    "compare": 0.2964
+   },
+   {
+    "candidate": 21,
+    "node": "water",
+    "subtree": "the water",
+    "rel": "PREPOSITION",
+    "sentence_index": 6,
+    "sentence": "they watched the boats go by and people playing in the water .",
+    "prob": 0.052,
+    "find": 0.1881,
+    "compare": 0.1046
+   },
+   {
+    "candidate": 0,
+    "node": "watched",
+    "subtree": "they watched the boats go by and people playing in the water",
+    "rel": "ROOT",
+    "sentence_index": 6,
+    "sentence": "they watched the boats go by and people playing in the water .",
+    "prob": 0.0114,
+    "find": 0.5056,
+    "compare": 1.0
+   },
+   {
+    "candidate": 19,
+    "node": "crowded",
+    "subtree": "the crowded beach parking lot",
+    "rel": "COORDINATION",
+    "sentence_index": 2,
+    "sentence": "they drove to the crowded beach parking lot and spent almost an hour trying to find a parking spot .",
+    "prob": 0.0102,
+    "find": 0.1952,
+    "compare": 0.1422
+   },
+   {
+    "candidate": 36,
+    "node": "beach",
+    "subtree": "an umbrella a few beach chairs and a lunch cooler",
+    "rel": "MODIFICATION",
+    "sentence_index": 1,
+    "sentence": "they packed a few towels , an umbrella , a few beach chairs and a lunch cooler .",
+    "prob": 0.0086,
+    "find": 0.0702,
+    "compare": 0.2169
+   }
+  ],
+  "abstain_prob": 0.084,
+  "stated": true,
+  "text": "the boats go by",
+  "sentence_ids": [
+   6
+  ],
+  "facts": [
+   {
+    "sentence_index": 6,
+    "sentence": "they watched the boats go by and people playing in the water .",
+    "tree": "watched(SUBJECT:they OBJECT:and(COORDINATION:go(SUBJECT:boats(DESCRIPTION:the) MODIFICATION:by) COORDINATION:playing(SUBJECT:people MODIFICATION:in(PREPOSITION:water(DESCRIPTION:the)))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 6,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 100,
+  "prob": 0.7835,
+  "id": "mctest:mc160.dev.11:326",
+  "dataset": "mctest",
+  "options": [
+   "dolphins",
+   "people making sand castles",
+   "people playing in the water",
+   "children playing in the sand"
+  ],
+  "correct_option": "people playing in the water",
+  "predicted_option": "people making sand castles",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "once upon a time a young boy and young girl set out on a trip to the beach .",
+   "they packed a few towels , an umbrella , a few beach chairs and a lunch cooler .",
+   "they drove to the crowded beach parking lot and spent almost an hour trying to find a parking spot .",
+   "once they found a spot they parked and began walking to the beach area .",
+   "they found a nice spot with a good view of the water and set up their belongings .",
+   "once they sat down they began to enjoy a nice lunch on the beach .",
+   "they watched the boats go by and people playing in the water .",
+   "it was a wonderful day and one they would always remember .",
+   "once they arrived home they suddenly found out that they both had a pretty good sunburn .",
+   "they both said that next time they would use sun screen ."
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "How did the monkey treat the jelly fish once he escaped?",
+  "question_tree": "escaped(SUBORDINATION:how(MODIFICATION:treat(MODIFICATION:did SUBJECT:monkey(DESCRIPTION:the) INDIRECT_OBJECT:jelly(DESCRIPTION:the) OBJECT:fish SPECIFICATION:once)) SUBJECT:he)",
+  "candidates_considered": 41,
+  "top": [
+   {
+    "candidate": 24,
+    "node": "delight",
+    "subtree": "delight",
+    "rel": "PREPOSITION",
+    "sentence_index": 5,
+    "sentence": "when they caught sight of him approaching the palace , they hailed him with delight .",
+    "prob": 0.8125,
+    "find": 0.2073,
+    "compare": 0.0297
+   },
+   {
+    "candidate": 19,
+    "node": "fish",
+    "subtree": "fish to do now",
+    "rel": "COORDINATION",
+    "sentence_index": 2,
+    "sentence": "there was nothing for the jelly fish to do now but to repent of his stupidity , and to return to the dragon king of the sea and to confess his failure , so he started sadly and slowly to swim back .",
+    "prob": 0.0326,
+    "find": 0.8355,
+    "compare": 1.0
+   },
+   {
+    "candidate": 8,
+    "node": "slowly",
+    "subtree": "slowly",
+    "rel": "COORDINATION",
+    "sentence_index": 2,
+    "sentence": "there was nothing for the jelly fish to do now but to repent of his stupidity , and to return to the dragon king of the sea and to confess his failure , so he started sadly and slowly to swim back .",
+    "prob": 0.0186,
+    "find": 0.2265,
+    "compare": 0.8293
+   },
+   {
+    "candidate": 18,
+    "node": "fish",
+    "subtree": "fish",
+    "rel": "OBJECT",
+    "sentence_index": 4,
+    "sentence": "meanwhile the dragon king , the doctor , the chief steward , and all the servants were waiting impatiently for the return of the jelly fish .",
+    "prob": 0.0067,
+    "find": 1.0,
+    "compare": 1.0
+   },
+   {
+    "candidate": 20,
+    "node": "sadly",
+    "subtree": "sadly",
+    "rel": "COORDINATION",
+    "sentence_index": 2,
+    "sentence": "there was nothing for the jelly fish to do now but to repent of his stupidity , and to return to the dragon king of the sea and to confess his failure , so he started sadly and slowly to swim back .",
+    "prob": 0.0023,
+    "find": 0.3126,
+    "compare": 0.6794
+   }
+  ],
+  "abstain_prob": 0.1174,
+  "stated": true,
+  "text": "delight",
+  "sentence_ids": [
+   5
+  ],
+  "facts": [
+   {
+    "sentence_index": 5,
+    "sentence": "when they caught sight of him approaching the palace , they hailed him with delight .",
+    "tree": "hailed(SUBORDINATION:when(MODIFICATION:caught(SUBJECT:they INDIRECT_OBJECT:sight(MODIFICATION:of(PREPOSITION:him)) OBJECT:approaching)) MODIFICATION:palace(DESCRIPTION:the) SUBJECT:they OBJECT:him(MODIFICATION:with(PREPOSITION:delight)))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 5,
+     "reader": "parser"
+    }
+   }
+  ],
+  "node_gid": 120,
+  "prob": 0.8125,
+  "id": "fairytaleqa:jelly-fish-and-monkey:867",
+  "dataset": "fairytaleqa",
+  "options": [
+   "the sea",
+   "all the trouble",
+   "mockingly",
+   "the island"
+  ],
+  "correct_option": "mockingly",
+  "predicted_option": "all the trouble",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "\" of course , i wo n't give you my liver , but come and get it if you can ! \"",
+   "added the monkey mockingly from the tree .",
+   "there was nothing for the jelly fish to do now but to repent of his stupidity , and to return to the dragon king of the sea and to confess his failure , so he started sadly and slowly to swim back .",
+   "the last thing he heard as he glided away , leaving the island behind him , was the monkey laughing at him .",
+   "meanwhile the dragon king , the doctor , the chief steward , and all the servants were waiting impatiently for the return of the jelly fish .",
+   "when they caught sight of him approaching the palace , they hailed him with delight .",
+   "they began to thank him profusely for all the trouble he had taken in going to monkey island , and then they asked him where the monkey was ."
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "Why did Bob and Sally stop looking for the treasure?",
+  "question_tree": "and(COORDINATION:bob(SPECIFICATION:why MODIFICATION:did) COORDINATION:sally INDIRECT_OBJECT:stop OBJECT:looking MODIFICATION:for(PREPOSITION:treasure(DESCRIPTION:the)))",
+  "candidates_considered": 41,
+  "top": [
+   {
+    "candidate": 33,
+    "node": "showed",
+    "subtree": "sally showed the map to bob",
+    "rel": "COORDINATION",
+    "sentence_index": 9,
+    "sentence": "sally showed the map to bob and they started to look for the treasure .",
+    "prob": 0.2951,
+    "find": 0.0657,
+    "compare": 0.7366
+   },
+   {
+    "candidate": 39,
+    "node": "buried",
+    "subtree": "buried",
+    "rel": "DESCRIPTION",
+    "sentence_index": 1,
+    "sentence": "when they got there , the first thing they wanted to do was to look for buried treasure .",
+    "prob": 0.2157,
+    "find": 0.0574,
+    "compare": 0.7988
+   },
+   {
+    "candidate": 30,
+    "node": "made",
+    "subtree": "made bob",
+    "rel": "COORDINATION",
+    "sentence_index": 5,
+    "sentence": "this made bob and sally very sad .",
+    "prob": 0.0375,
+    "find": 0.1357,
+    "compare": 0.1249
+   },
+   {
+    "candidate": 35,
+    "node": "step",
+    "subtree": "walking every step that the map said",
+    "rel": "MODIFICATION",
+    "sentence_index": 10,
+    "sentence": "after walking every step that the map said , they started digging with their shovels .",
+    "prob": 0.036,
+    "find": 0.0082,
+    "compare": 0.1969
+   },
+   {
+    "candidate": 38,
+    "node": "find",
+    "subtree": "find the treasure",
+    "rel": "MODIFICATION",
+    "sentence_index": 2,
+    "sentence": "to find the treasure they had brought two shovels and two buckets .",
+    "prob": 0.0311,
+    "find": 0.0446,
+    "compare": 0.1454
+   }
+  ],
+  "abstain_prob": 0.1999,
+  "stated": true,
+  "text": "sally showed the map to bob",
+  "sentence_ids": [
+   9
+  ],
+  "facts": [
+   {
+    "sentence_index": 9,
+    "sentence": "sally showed the map to bob and they started to look for the treasure .",
+    "tree": "and(COORDINATION:showed(SUBJECT:sally INDIRECT_OBJECT:map(DESCRIPTION:the) OBJECT:to(MODIFICATION:bob)) COORDINATION:started(SUBJECT:they) MODIFICATION:to(MODIFICATION:look(MODIFICATION:for(PREPOSITION:treasure(DESCRIPTION:the)))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 9,
+     "reader": "parser"
+    }
+   }
+  ],
+  "node_gid": 110,
+  "prob": 0.2951,
+  "id": "mctest:mc160.dev.21:367",
+  "dataset": "mctest",
+  "options": [
+   "They were sad at not finding anything.",
+   "They forgot to bring a shovel.",
+   "They did not want to find the treasure.",
+   "They got hungry."
+  ],
+  "correct_option": "They were sad at not finding anything.",
+  "predicted_option": "They forgot to bring a shovel.",
+  "answer_in_candidates": false,
+  "story_sentences": [
+   "on a nice and sunny day , bob and sally walked to the beach .",
+   "when they got there , the first thing they wanted to do was to look for buried treasure .",
+   "to find the treasure they had brought two shovels and two buckets .",
+   "they both started digging holes in the sand with their shovels .",
+   "after looking very hard for treasure for an hour , they did n't find anything .",
+   "this made bob and sally very sad .",
+   "they gave up and went to play in the water .",
+   "while they were playing in the water , sally found a bottle with a little paper inside .",
+   "sally opened the bottle and found a treasure map .",
+   "sally showed the map to bob and they started to look for the treasure .",
+   "after walking every step that the map said , they started digging with their shovels .",
+   "after digging a really a big hole , they found a box .",
+   "they were very happy that they found it and wanted to see what was inside .",
+   "bob slowly opened the box and there was a very big pearl .",
+   "next , they ran to a special store to ask about the pearl .",
+   "the worker in the store told bob and sally that the pearl could make them rich .",
+   "bob and sally looked at each other and decided not to sell it .",
+   "they took the pearl home and saved it in a special box , so they could remember their day at the beach ."
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "What did Peter want to do when Sammie came?",
+  "question_tree": "did(SUBJECT:what MODIFICATION:want(SUBJECT:peter OBJECT:to(MODIFICATION:do) SUBORDINATION:when(MODIFICATION:came(SUBJECT:sammie))))",
+  "candidates_considered": 39,
+  "top": [
+   {
+    "candidate": 15,
+    "node": "store",
+    "subtree": "the store",
+    "rel": "PREPOSITION",
+    "sentence_index": 7,
+    "sentence": "sammie came into the store looking for a golden puppy .",
+    "prob": 0.4385,
+    "find": 0.2396,
+    "compare": 0.0886
+   },
+   {
+    "candidate": 13,
+    "node": "snuggle",
+    "subtree": "snuggle",
+    "rel": "OBJECT",
+    "sentence_index": 8,
+    "sentence": "she wanted a puppy she could snuggle with .",
+    "prob": 0.1069,
+    "find": 0.2402,
+    "compare": 0.1143
+   },
+   {
+    "candidate": 25,
+    "node": "show",
+    "subtree": "show off his bark",
+    "rel": "MODIFICATION",
+    "sentence_index": 11,
+    "sentence": "peter wanted to show off his bark , but he was too tired .",
+    "prob": 0.087,
+    "find": 0.2419,
+    "compare": 0.0983
+   },
+   {
+    "candidate": 14,
+    "node": "store",
+    "subtree": "the store",
+    "rel": "PREPOSITION",
+    "sentence_index": 5,
+    "sentence": "he tried and tried to please every person who came to the store , but they all picked smaller puppies .",
+    "prob": 0.058,
+    "find": 0.2396,
+    "compare": 0.0886
+   },
+   {
+    "candidate": 28,
+    "node": "puppy",
+    "subtree": "a puppy she could snuggle with",
+    "rel": "OBJECT",
+    "sentence_index": 8,
+    "sentence": "she wanted a puppy she could snuggle with .",
+    "prob": 0.0528,
+    "find": 0.0001,
+    "compare": 0.0592
+   }
+  ],
+  "abstain_prob": 0.046,
+  "stated": true,
+  "text": "the store",
+  "sentence_ids": [
+   7
+  ],
+  "facts": [
+   {
+    "sentence_index": 7,
+    "sentence": "sammie came into the store looking for a golden puppy .",
+    "tree": "came(SUBJECT:sammie MODIFICATION:into(PREPOSITION:store(DESCRIPTION:the)) OBJECT:looking MODIFICATION:for(PREPOSITION:puppy(DESCRIPTION:a DESCRIPTION:golden)))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 7,
+     "reader": "parser"
+    }
+   }
+  ],
+  "node_gid": 94,
+  "prob": 0.4385,
+  "id": "mctest:mc160.dev.9:316",
+  "dataset": "mctest",
+  "options": [
+   "He wanted to show off his fur",
+   "He wanted to be beautiful",
+   "He wanted to snuggle with her",
+   "He wanted to show off his bark"
+  ],
+  "correct_option": "He wanted to show off his bark",
+  "predicted_option": "He wanted to be beautiful",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "peter was a very sad puppy .",
+   "he had been inside of the pet store for a very long time .",
+   "in fact , he had been there for three months !",
+   "peter had seen many other puppies find a person ; he began to wonder why he could not get one .",
+   "he thought that maybe his fur was not pretty enough or maybe his bark was not loud enough .",
+   "he tried and tried to please every person who came to the store , but they all picked smaller puppies .",
+   "however , one day all of this changed .",
+   "sammie came into the store looking for a golden puppy .",
+   "she wanted a puppy she could snuggle with .",
+   "it so happened that peter was very sad and tired that day .",
+   "sammie came to hold him .",
+   "peter wanted to show off his bark , but he was too tired .",
+   "he fell right to sleep .",
+   "sammie loved him at once and loved holding him in her arms .",
+   "sammie took peter home that day , and they made lots of fun memories ."
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "What did the huntsmen say the creature could do?",
+  "question_tree": "did(SUBJECT:what INDIRECT_OBJECT:huntsmen(DESCRIPTION:the) OBJECT:say(OBJECT:do(SUBJECT:creature(DESCRIPTION:the) MODIFICATION:could)))",
+  "candidates_considered": 39,
+  "top": [
+   {
+    "candidate": 28,
+    "node": "come",
+    "subtree": "come with us and sweep the ashes together",
+    "rel": "COORDINATION",
+    "sentence_index": 7,
+    "sentence": "then they said to her , 'many-furred creature , you can work in the kitchen ; come with us and sweep the ashes together . '",
+    "prob": 0.5383,
+    "find": 0.0648,
+    "compare": 0.0285
+   },
+   {
+    "candidate": 3,
+    "node": "kitchen",
+    "subtree": "the kitchen",
+    "rel": "PREPOSITION",
+    "sentence_index": 7,
+    "sentence": "then they said to her , 'many-furred creature , you can work in the kitchen ; come with us and sweep the ashes together . '",
+    "prob": 0.1004,
+    "find": 0.3955,
+    "compare": 0.0462
+   },
+   {
+    "candidate": 5,
+    "node": "ashes",
+    "subtree": "the ashes",
+    "rel": "OBJECT",
+    "sentence_index": 7,
+    "sentence": "then they said to her , 'many-furred creature , you can work in the kitchen ; come with us and sweep the ashes together . '",
+    "prob": 0.0555,
+    "find": 0.3506,
+    "compare": 0.0336
+   },
+   {
+    "candidate": 21,
+    "node": "cart",
+    "subtree": "the cart",
+    "rel": "PREPOSITION",
+    "sentence_index": 5,
+    "sentence": "the king said , 'see if you can catch it alive , and then fasten it to the cart , and we will take it with us . '",
+    "prob": 0.0544,
+    "find": 0.3033,
+    "compare": 0.2163
+   },
+   {
+    "candidate": 25,
+    "node": "king",
+    "subtree": "the king",
+    "rel": "SUBJECT",
+    "sentence_index": 3,
+    "sentence": "the king said to the huntsmen , 'see what sort of a wild beast is in there . '",
+    "prob": 0.0452,
+    "find": 0.2549,
+    "compare": 0.3714
+   }
+  ],
+  "abstain_prob": 0.0416,
+  "stated": true,
+  "text": "come with us and sweep the ashes together",
+  "sentence_ids": [
+   7
+  ],
+  "facts": [
+   {
+    "sentence_index": 7,
+    "sentence": "then they said to her , 'many-furred creature , you can work in the kitchen ; come with us and sweep the ashes together . '",
+    "tree": "said(SPECIFICATION:then SUBJECT:they MODIFICATION:to(PREPOSITION:her PREPOSITION:can(MODIFICATION:creature(DESCRIPTION:'many-furred) SUBJECT:you OBJECT:work(MODIFICATION:in(PREPOSITION:kitchen(DESCRIPTION:the)) COORDINATION:come(MODIFICATION:with(PREPOSITION:and(COORDINATION:us COORDINATION:sweep)) OBJECT:ashes(DESCRIPTION:the) SPECIFICATION:together)))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 7,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 183,
+  "prob": 0.5383,
+  "id": "fairytaleqa:alleleiraugh-or-the-many-furred-creature:452",
+  "dataset": "fairytaleqa",
+  "options": [
+   "water",
+   "hunting",
+   "daughter",
+   "work in the kitchen"
+  ],
+  "correct_option": "work in the kitchen",
+  "predicted_option": "water",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "the sun rose and she still slept on and on , although it was nearly noon .",
+   "now , it happened that the king to whom this wood belonged was hunting in it .",
+   "when his dogs came to the tree , they sniffed , and ran round and round it , barking .",
+   "the king said to the huntsmen , 'see what sort of a wild beast is in there . '",
+   "the huntsmen went in , and then came back and said , 'in the hollow tree there lies a wonderful animal that we do n't know , and we have never seen one like it ; its skin is made of a thousand pieces of fur ; but it is lying down asleep . '",
+   "the king said , 'see if you can catch it alive , and then fasten it to the cart , and we will take it with us . '",
+   "when the huntsmen seized the maiden , she awoke and was frightened , and cried out to them , 'i am a poor child , forsaken by father and mother ; take pity on me , and let me go with you . '",
+   "then they said to her , 'many-furred creature , you can work in the kitchen ; come with us and sweep the ashes together . '",
+   "so they put her in the cart and they went back to the palace .",
+   "there they showed her a tiny room under the stairs , where no daylight came , and said to her , 'many-furred creature , you can live and sleep here . '",
+   "then she was sent into the kitchen , where she carried wood and water , poked the fire , washed vegetables , plucked fowls , swept up the ashes , and did all the dirty work .",
+   "so the many-furred creature lived for a long time in great poverty .",
+   "ah , beautiful king 's daughter , what is going to befall you now ?"
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "Who did the woman send to gather wood?",
+  "question_tree": "did(SUBJECT:who OBJECT:send(SUBJECT:woman(DESCRIPTION:the) OBJECT:to(MODIFICATION:gather(OBJECT:wood))))",
+  "candidates_considered": 42,
+  "top": [
+   {
+    "candidate": 20,
+    "node": "wood",
+    "subtree": "wood",
+    "rel": "OBJECT",
+    "sentence_index": 1,
+    "sentence": "she had but little to bite and less to burn , so she sent her little boy to the forest to gather wood .",
+    "prob": 0.4129,
+    "find": 1.0,
+    "compare": 0.1605
+   },
+   {
+    "candidate": 28,
+    "node": "boy",
+    "subtree": "her little boy to the forest",
+    "rel": "INDIRECT_OBJECT",
+    "sentence_index": 1,
+    "sentence": "she had but little to bite and less to burn , so she sent her little boy to the forest to gather wood .",
+    "prob": 0.2605,
+    "find": 0.051,
+    "compare": 0.8372
+   },
+   {
+    "candidate": 13,
+    "node": "forest",
+    "subtree": "the forest",
+    "rel": "PREPOSITION",
+    "sentence_index": 1,
+    "sentence": "she had but little to bite and less to burn , so she sent her little boy to the forest to gather wood .",
+    "prob": 0.0426,
+    "find": 0.1902,
+    "compare": 0.1605
+   },
+   {
+    "candidate": 0,
+    "node": "sent",
+    "subtree": "she sent her little boy to the forest to gather wood",
+    "rel": "COORDINATION",
+    "sentence_index": 1,
+    "sentence": "she had but little to bite and less to burn , so she sent her little boy to the forest to gather wood .",
+    "prob": 0.037,
+    "find": 0.6923,
+    "compare": 1.0
+   },
+   {
+    "candidate": 14,
+    "node": "gather",
+    "subtree": "gather wood",
+    "rel": "MODIFICATION",
+    "sentence_index": 1,
+    "sentence": "she had but little to bite and less to burn , so she sent her little boy to the forest to gather wood .",
+    "prob": 0.0331,
+    "find": 1.0,
+    "compare": 1.0
+   }
+  ],
+  "abstain_prob": 0.1279,
+  "stated": true,
+  "text": "wood",
+  "sentence_ids": [
+   1
+  ],
+  "facts": [
+   {
+    "sentence_index": 1,
+    "sentence": "she had but little to bite and less to burn , so she sent her little boy to the forest to gather wood .",
+    "tree": "had(SUBJECT:she COORDINATION:so(COORDINATION:to(MODIFICATION:bite MODIFICATION:and(COORDINATION:little(SPECIFICATION:but) COORDINATION:less)) COORDINATION:to(MODIFICATION:burn) COORDINATION:sent(SUBJECT:she INDIRECT_OBJECT:boy(DESCRIPTION:her DESCRIPTION:little MODIFICATION:to(PREPOSITION:forest(DESCRIPTION:the))) OBJECT:to(MODIFICATION:gather(OBJECT:wood)))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 1,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 41,
+  "prob": 0.4129,
+  "id": "fairytaleqa:four-shilling-piece:674",
+  "dataset": "fairytaleqa",
+  "options": [
+   "you",
+   "her little boy",
+   "whenever",
+   "pale you"
+  ],
+  "correct_option": "her little boy",
+  "predicted_option": "pale you",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "once upon a time there was a poor woman , who lived in a wretched hut far away from the village .",
+   "she had but little to bite and less to burn , so she sent her little boy to the forest to gather wood .",
+   "he skipped and leaped , and leaped and skipped , in order to keep warm , for it was a cold , gray autumn day , and whenever he had gathered a root or a branch to add to his bundle , he had to slap his arms against his shoulders , for the cold made his hands as red as the whortleberry bushes over which he walked .",
+   "when he had filled his barrow , and was wandering homeward , he crossed a field of stubble .",
+   "there he saw lying a jagged white stone .",
+   "\" o , you poor old stone , how white and pale you are !",
+   "you must be freezing terribly ! \"",
+   "said the boy ; took off his jacket , and laid it over the stone .",
+   "and when he came back home with his wood , his mother asked him how it was that he was going around in the autumn cold in his shirt-sleeves .",
+   "he told her that he had seen a jagged old stone , quite white and pale with the frost , and that he had given it his jacket .",
+   "\" you fool , \" said the woman , \" do you think a stone can freeze ?",
+   "and even if it had chattered with frost , still , charity begins at home .",
+   "your clothes cost enough as it is , even when you do n't hang them on the stones out in the field ! \" -- and with that she drove the boy out again to fetch his jacket .",
+   "when he came to the stone , the stone had turned around , and had raised itself from the ground on one side ."
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "what did the bear and wolf cross, and why did they turn back?",
+  "question_tree": "did(SUBJECT:what COMPLEMENT:the INDIRECT_OBJECT:and(COORDINATION:bear COORDINATION:and(COORDINATION:cross(SUBJECT:wolf) COORDINATION:did(SPECIFICATION:why INDIRECT_OBJECT:they OBJECT:turn SPECIFICATION:back))))",
+  "candidates_considered": 38,
+  "top": [
+   {
+    "candidate": 29,
+    "node": "bridge",
+    "subtree": "the bridge",
+    "rel": "OBJECT",
+    "sentence_index": 5,
+    "sentence": "the bear and the wolf crossed the bridge that was built by the beaver and found that they were now in a part of the woods they had never seen before .",
+    "prob": 0.926,
+    "find": 0.092,
+    "compare": 0.1921
+   },
+   {
+    "candidate": 33,
+    "node": "seen",
+    "subtree": "seen before the bear and the wolf turned",
+    "rel": "MODIFICATION",
+    "sentence_index": 6,
+    "sentence": "a little worried that they may get lost in this part of the woods they had never seen before the bear and the wolf turned around .",
+    "prob": 0.0125,
+    "find": 0.0639,
+    "compare": 0.0397
+   },
+   {
+    "candidate": 31,
+    "node": "bridge",
+    "subtree": "his new bridge",
+    "rel": "PREPOSITION",
+    "sentence_index": 8,
+    "sentence": "the beaver thanked both the bear and the wolf for trying out his new bridge and then started to build yet another bridge close to the first bridge .",
+    "prob": 0.0121,
+    "find": 0.084,
+    "compare": 0.1921
+   },
+   {
+    "candidate": 35,
+    "node": "went",
+    "subtree": "went back over the bridge",
+    "rel": "COORDINATION",
+    "sentence_index": 7,
+    "sentence": "they went back over the bridge and were happy to be back in a part of the woods they knew so well .",
+    "prob": 0.0102,
+    "find": 0.1044,
+    "compare": 0.8137
+   },
+   {
+    "candidate": 20,
+    "node": "woods",
+    "subtree": "the woods",
+    "rel": "PREPOSITION",
+    "sentence_index": 5,
+    "sentence": "the bear and the wolf crossed the bridge that was built by the beaver and found that they were now in a part of the woods they had never seen before .",
+    "prob": 0.0062,
+    "find": 0.1508,
+    "compare": 0.2904
+   }
+  ],
+  "abstain_prob": 0.0188,
+  "stated": true,
+  "text": "the bridge",
+  "sentence_ids": [
+   5
+  ],
+  "facts": [
+   {
+    "sentence_index": 5,
+    "sentence": "the bear and the wolf crossed the bridge that was built by the beaver and found that they were now in a part of the woods they had never seen before .",
+    "tree": "and(COORDINATION:bear(DESCRIPTION:the) COORDINATION:crossed(SUBJECT:wolf(DESCRIPTION:the) OBJECT:bridge(DESCRIPTION:the) SUBORDINATION:that(MODIFICATION:and(COORDINATION:built(MODIFICATION:was MODIFICATION:by(PREPOSITION:beaver(DESCRIPTION:the))) COORDINATION:found COORDINATION:had(SUBORDINATION:that(MODIFICATION:were(SUBJECT:they SPECIFICATION:now MODIFICATION:in(PREPOSITION:part(DESCRIPTION:a)) MODIFICATION:of(PREPOSITION:woods(DESCRIPTION:the)))) SUBJECT:they SPECIFICATION:never MODIFICATION:seen MODIFICATION:before)))))",
+    "provenance": {
+     "source": "story",
+     "sentence_index": 5,
+     "reader": "encoder"
+    }
+   }
+  ],
+  "node_gid": 80,
+  "prob": 0.926,
+  "id": "mctest:mc160.dev.14:337",
+  "dataset": "mctest",
+  "options": [
+   "a bridge, and they got hungry.",
+   "a lake, and they did not want to get lost.",
+   "a field and they did not want to get lost.",
+   "a bridge, and they did not want to get lost."
+  ],
+  "correct_option": "a bridge, and they did not want to get lost.",
+  "predicted_option": "a bridge, and they got hungry.",
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "this is a story about a bear and a wolf .",
+   "the bear met the wolf one day in the woods .",
+   "the bear said to the wolf , would you like to go to the river with me ?",
+   "the wolf said yes , he would like to go to the river .",
+   "when the bear and the wolf got to the river they found that a beaver had built a bridge to the other side of the river .",
+   "the bear and the wolf crossed the bridge that was built by the beaver and found that they were now in a part of the woods they had never seen before .",
+   "a little worried that they may get lost in this part of the woods they had never seen before the bear and the wolf turned around .",
+   "they went back over the bridge and were happy to be back in a part of the woods they knew so well .",
+   "the beaver thanked both the bear and the wolf for trying out his new bridge and then started to build yet another bridge close to the first bridge .",
+   "he was a very busy beaver ."
+  ],
+  "outcome": "wrong"
+ },
+ {
+  "question": "Where did Dullhead spend the night?",
+  "question_tree": "where(MODIFICATION:spend(MODIFICATION:did SUBJECT:dullhead OBJECT:night(DESCRIPTION:the)))",
+  "candidates_considered": 38,
+  "top": [
+   {
+    "candidate": 14,
+    "node": "one",
+    "subtree": "one of its golden feathers",
+    "rel": "OBJECT",
+    "sentence_index": 2,
+    "sentence": "now the landlord of the inn had three daughters , and when they saw the goose they were filled with curiosity as to what this wonderful bird could be , and each longed to have one of its golden feathers .",
+    "prob": 0.0997,
+    "find": 0.236,
+    "compare": 0.0
+   },
+   {
+    "candidate": 7,
+    "node": "bird",
+    "subtree": "this wonderful bird",
+    "rel": "SUBJECT",
+    "sentence_index": 2,
+    "sentence": "now the landlord of the inn had three daughters , and when they saw the goose they were filled with curiosity as to what this wonderful bird could be , and each longed to have one of its golden feathers .",
+    "prob": 0.0781,
+    "find": 0.1402,
+    "compare": 0.0143
+   },
+   {
+    "candidate": 25,
+    "node": "feathers",
+    "subtree": "its feathers",
+    "rel": "PREPOSITION",
+    "sentence_index": 3,
+    "sentence": "the eldest thought to herself : 'no doubt i shall soon find a good opportunity to pluck out one of its feathers , ' and the first time dullhead happened to leave the room she caught hold of the goose by its wing .",
+    "prob": 0.0715,
+    "find": 0.201,
+    "compare": 0.09
+   },
+   {
+    "candidate": 19,
+    "node": "goose",
+    "subtree": "the goose",
+    "rel": "OBJECT",
+    "sentence_index": 2,
+    "sentence": "now the landlord of the inn had three daughters , and when they saw the goose they were filled with curiosity as to what this wonderful bird could be , and each longed to have one of its golden feathers .",
+    "prob": 0.0644,
+    "find": 0.3253,
+    "compare": 0.0534
+   },
+   {
+    "candidate": 21,
+    "node": "goose",
+    "subtree": "the goose",
+    "rel": "PREPOSITION",
+    "sentence_index": 5,
+    "sentence": "her fingers seemed to stick fast to the goose , and she could not take her hand away .",
+    "prob": 0.0623,
+    "find": 0.3253,
+    "compare": 0.0534
+   }
+  ],
+  "abstain_prob": 0.37,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "fairytaleqa:golden-goose:713",
+  "dataset": "fairytaleqa",
+  "options": [
+   "stick",
+   "dullhead",
+   "an inn",
+   "its feathers"
+  ],
+  "correct_option": "an inn",
+  "predicted_option": null,
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "then dullhead fell to at once to hew down the tree , and when it fell he found amongst its roots a goose , whose feathers were all of pure gold .",
+   "he lifted it out , carried it off , and took it with him to an inn where he meant to spend the night .",
+   "now the landlord of the inn had three daughters , and when they saw the goose they were filled with curiosity as to what this wonderful bird could be , and each longed to have one of its golden feathers .",
+   "the eldest thought to herself : 'no doubt i shall soon find a good opportunity to pluck out one of its feathers , ' and the first time dullhead happened to leave the room she caught hold of the goose by its wing .",
+   "but , lo and behold !",
+   "her fingers seemed to stick fast to the goose , and she could not take her hand away ."
+  ],
+  "outcome": "abstain"
+ },
+ {
+  "question": "This is a story of which two animals taking a walk in the woods?",
+  "question_tree": "is(SUBJECT:this INDIRECT_OBJECT:story(DESCRIPTION:a MODIFICATION:of(PREPOSITION:which)) OBJECT:animals(DESCRIPTION:two INDIRECT_OBJECT:taking(OBJECT:walk(DESCRIPTION:a MODIFICATION:in(PREPOSITION:woods(DESCRIPTION:the))))))",
+  "candidates_considered": 39,
+  "top": [
+   {
+    "candidate": 38,
+    "node": "one",
+    "subtree": "one",
+    "rel": "DESCRIPTION",
+    "sentence_index": 1,
+    "sentence": "the bear met the wolf one day in the woods .",
+    "prob": 0.0136,
+    "find": 0.0958,
+    "compare": 0.0
+   },
+   {
+    "candidate": 5,
+    "node": "bridge",
+    "subtree": "the bridge",
+    "rel": "OBJECT",
+    "sentence_index": 5,
+    "sentence": "the bear and the wolf crossed the bridge that was built by the beaver and found that they were now in a part of the woods they had never seen before .",
+    "prob": 0.0127,
+    "find": 0.282,
+    "compare": 0.1904
+   },
+   {
+    "candidate": 31,
+    "node": "bridge",
+    "subtree": "his new bridge",
+    "rel": "PREPOSITION",
+    "sentence_index": 8,
+    "sentence": "the beaver thanked both the bear and the wolf for trying out his new bridge and then started to build yet another bridge close to the first bridge .",
+    "prob": 0.012,
+    "find": 0.1362,
+    "compare": 0.1904
+   },
+   {
+    "candidate": 0,
+    "node": "story",
+    "subtree": "a story about a bear and a wolf",
+    "rel": "OBJECT",
+    "sentence_index": 0,
+    "sentence": "this is a story about a bear and a wolf .",
+    "prob": 0.0093,
+    "find": 0.7294,
+    "compare": 1.0
+   },
+   {
+    "candidate": 29,
+    "node": "seen",
+    "subtree": "seen before the bear and the wolf turned",
+    "rel": "MODIFICATION",
+    "sentence_index": 6,
+    "sentence": "a little worried that they may get lost in this part of the woods they had never seen before the bear and the wolf turned around .",
+    "prob": 0.0091,
+    "find": 0.0529,
+    "compare": 0.0493
+   }
+  ],
+  "abstain_prob": 0.8681,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "mctest:mc160.dev.14:339",
+  "dataset": "mctest",
+  "options": [
+   "a bear and a beaver",
+   "a dog and a wolf",
+   "a bear and a dog",
+   "a bear and a wolf"
+  ],
+  "correct_option": "a bear and a wolf",
+  "predicted_option": null,
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "this is a story about a bear and a wolf .",
+   "the bear met the wolf one day in the woods .",
+   "the bear said to the wolf , would you like to go to the river with me ?",
+   "the wolf said yes , he would like to go to the river .",
+   "when the bear and the wolf got to the river they found that a beaver had built a bridge to the other side of the river .",
+   "the bear and the wolf crossed the bridge that was built by the beaver and found that they were now in a part of the woods they had never seen before .",
+   "a little worried that they may get lost in this part of the woods they had never seen before the bear and the wolf turned around .",
+   "they went back over the bridge and were happy to be back in a part of the woods they knew so well .",
+   "the beaver thanked both the bear and the wolf for trying out his new bridge and then started to build yet another bridge close to the first bridge .",
+   "he was a very busy beaver ."
+  ],
+  "outcome": "abstain"
+ },
+ {
+  "question": "Why was Luna afraid of humans?",
+  "question_tree": "was(SPECIFICATION:why SUBJECT:luna COMPLEMENT:afraid MODIFICATION:of(PREPOSITION:humans))",
+  "candidates_considered": 47,
+  "top": [
+   {
+    "candidate": 44,
+    "node": "made",
+    "subtree": "on tree branches made her feet very cold",
+    "rel": "COORDINATION",
+    "sentence_index": 1,
+    "sentence": "it was the middle of winter and sitting on tree branches made her feet very cold .",
+    "prob": 0.1011,
+    "find": 0.0844,
+    "compare": 0.1205
+   },
+   {
+    "candidate": 37,
+    "node": "flew",
+    "subtree": "then flew back to her",
+    "rel": "COORDINATION",
+    "sentence_index": 34,
+    "sentence": "she put on the socks and then flew back to her home in the huge tree .",
+    "prob": 0.0791,
+    "find": 0.091,
+    "compare": 0.0832
+   },
+   {
+    "candidate": 40,
+    "node": "maple",
+    "subtree": "the old maple",
+    "rel": "PREPOSITION",
+    "sentence_index": 3,
+    "sentence": "she flew to the old maple tree where olive the owl lived .",
+    "prob": 0.0601,
+    "find": 0.1399,
+    "compare": 0.0993
+   },
+   {
+    "candidate": 12,
+    "node": "warm",
+    "subtree": "were warm",
+    "rel": "COORDINATION",
+    "sentence_index": 35,
+    "sentence": "when she landed , her feet were warm and dry .",
+    "prob": 0.0397,
+    "find": 0.2741,
+    "compare": 0.3686
+   },
+   {
+    "candidate": 46,
+    "node": "icy",
+    "subtree": "icy",
+    "rel": "DESCRIPTION",
+    "sentence_index": 10,
+    "sentence": "luna flew across the field and landed next to the icy creek .",
+    "prob": 0.0256,
+    "find": 0.1094,
+    "compare": 0.2997
+   }
+  ],
+  "abstain_prob": 0.5087,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "mctest:mc160.dev.10:321",
+  "dataset": "mctest",
+  "options": [
+   "Her grandmother and mother had told stories about mean humans hurting hawks.",
+   "Humans were large and scary-looking.",
+   "Humans put garbage in the hawks' nests.",
+   "Humans stole all of the hawks' food."
+  ],
+  "correct_option": "Her grandmother and mother had told stories about mean humans hurting hawks.",
+  "predicted_option": null,
+  "answer_in_candidates": false,
+  "story_sentences": [
+   "luna the hawk wanted some socks .",
+   "it was the middle of winter and sitting on tree branches made her feet very cold .",
+   "luna hoped that her friends could help her find some socks .",
+   "she flew to the old maple tree where olive the owl lived .",
+   "\" olive , may i please borrow a pair of your socks ? \"",
+   "she asked .",
+   "olive the owl looked surprised .",
+   "\" luna , i have no use for socks because my legs and toes have thick feathers .",
+   "go visit one of the animals that walk on four legs .",
+   "they might have extra socks you could borrow . \"",
+   "luna flew across the field and landed next to the icy creek .",
+   "rose the raccoon was teaching her six babies how to wash their paws .",
+   "the water was very cold , but the babies were having fun .",
+   "\" rose , my bare legs and bare toes are so cold , may i please borrow a pair of your socks ? \"",
+   "begged luna .",
+   "rose laughed hard .",
+   "\" silly luna , i do not have socks .",
+   "look at my legs and feet .",
+   "they are covered with thick , warm fur .",
+   "i 'm sorry i cannot help you .",
+   "go visit the humans .",
+   "sometimes i tip over their garbage cans at night when i am looking for food .",
+   "once i saw a pair of socks . \"",
+   "luna was very afraid of humans .",
+   "her grandmother and mother had warned her about them .",
+   "she was told that some humans are mean and hurt hawks .",
+   "her feet were so cold that it was difficult to grip tree branches .",
+   "she became brave .",
+   "she flew to the farmhouse on the big hill .",
+   "when she landed on the roof , she could not believe her eyes .",
+   "she saw socks !",
+   "in late autumn , henrietta the human had put laundry outside to dry and she had forgotten to bring in one tiny pair of socks .",
+   "the socks were hanging on the clothesline by two wooden pins .",
+   "luna used her powerful beak to break the pins .",
+   "she put on the socks and then flew back to her home in the huge tree .",
+   "when she landed , her feet were warm and dry .",
+   "luna was very happy ."
+  ],
+  "outcome": "abstain"
+ },
+ {
+  "question": "Why was Sara practicing?",
+  "question_tree": "practicing(MODIFICATION:was(SPECIFICATION:why SUBJECT:sara))",
+  "candidates_considered": 38,
+  "top": [
+   {
+    "candidate": 0,
+    "node": "practice",
+    "subtree": "practice",
+    "rel": "MODIFICATION",
+    "sentence_index": 2,
+    "sentence": "her dad gave her a bat and together they went to the park to practice .",
+    "prob": 0.1481,
+    "find": 0.8259,
+    "compare": 0.3424
+   },
+   {
+    "candidate": 6,
+    "node": "baseball",
+    "subtree": "a baseball",
+    "rel": "PREPOSITION",
+    "sentence_index": 0,
+    "sentence": "sara wanted to play on a baseball team .",
+    "prob": 0.1021,
+    "find": 0.1685,
+    "compare": 0.173
+   },
+   {
+    "candidate": 22,
+    "node": "hit",
+    "subtree": "hit",
+    "rel": "COORDINATION",
+    "sentence_index": 1,
+    "sentence": "she had never tried to swing a bat and hit a baseball before .",
+    "prob": 0.049,
+    "find": 0.1572,
+    "compare": 0.0431
+   },
+   {
+    "candidate": 37,
+    "node": "kept",
+    "subtree": "kept trying",
+    "rel": "COORDINATION",
+    "sentence_index": 11,
+    "sentence": "she felt like quitting but kept trying .",
+    "prob": 0.0457,
+    "find": -0.1023,
+    "compare": 0.1317
+   },
+   {
+    "candidate": 36,
+    "node": "grabbed",
+    "subtree": "park sara grabbed the",
+    "rel": "COORDINATION",
+    "sentence_index": 7,
+    "sentence": "when sara and her dad reached the park , sara grabbed the bat and stood a few steps away from her dad .",
+    "prob": 0.0448,
+    "find": 0.086,
+    "compare": 0.1234
+   }
+  ],
+  "abstain_prob": 0.2445,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "mctest:mc160.dev.8:312",
+  "dataset": "mctest",
+  "options": [
+   "She wanted to show off",
+   "She didn't want to do her homework",
+   "She wanted to play on a team",
+   "She was bored"
+  ],
+  "correct_option": "She wanted to play on a team",
+  "predicted_option": null,
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "sara wanted to play on a baseball team .",
+   "she had never tried to swing a bat and hit a baseball before .",
+   "her dad gave her a bat and together they went to the park to practice .",
+   "sara wondered if she could hit a ball .",
+   "she was n't sure if she would be any good .",
+   "she really wanted to play on a team and wear a real uniform .",
+   "she could n't wait to get to the park and test out her bat .",
+   "when sara and her dad reached the park , sara grabbed the bat and stood a few steps away from her dad .",
+   "sara waited as her dad pitched the ball to her .",
+   "her heart was beating fast .",
+   "she missed the first few pitches .",
+   "she felt like quitting but kept trying .",
+   "soon she was hitting the ball very far .",
+   "she was very happy and she could n't wait to sign up for a real team .",
+   "her dad was very proud of her for not giving up ."
+  ],
+  "outcome": "abstain"
+ },
+ {
+  "question": "How did the boy live after he got the six hundred dollars?",
+  "question_tree": "how(MODIFICATION:live(MODIFICATION:did SUBJECT:boy(DESCRIPTION:the) MODIFICATION:after(PREPOSITION:he)) MODIFICATION:got(INDIRECT_OBJECT:hundred(DESCRIPTION:the DESCRIPTION:six) OBJECT:dollars))",
+  "candidates_considered": 29,
+  "top": [
+   {
+    "candidate": 21,
+    "node": "happiness",
+    "subtree": "happiness",
+    "rel": "COORDINATION",
+    "sentence_index": 7,
+    "sentence": "for now the scullion was as rich as the merchant himself and richer , and thereafter he lived in splendor and happiness .",
+    "prob": 0.2419,
+    "find": 0.2393,
+    "compare": 0.3216
+   },
+   {
+    "candidate": 4,
+    "node": "hundred",
+    "subtree": "hundred",
+    "rel": "DESCRIPTION",
+    "sentence_index": 6,
+    "sentence": "and when he landed , he gave the youth the six hundred dollars and his daughter to boot .",
+    "prob": 0.1476,
+    "find": 0.8051,
+    "compare": 1.0
+   },
+   {
+    "candidate": 12,
+    "node": "dollars",
+    "subtree": "the six hundred dollars",
+    "rel": "COORDINATION",
+    "sentence_index": 6,
+    "sentence": "and when he landed , he gave the youth the six hundred dollars and his daughter to boot .",
+    "prob": 0.102,
+    "find": 0.762,
+    "compare": 1.0
+   },
+   {
+    "candidate": 3,
+    "node": "journey",
+    "subtree": "his journey",
+    "rel": "PREPOSITION",
+    "sentence_index": 5,
+    "sentence": "no sooner had he made his vow , than the weather turned fair , and he had a favoring wind for his journey home .",
+    "prob": 0.0727,
+    "find": 0.1382,
+    "compare": 0.2631
+   },
+   {
+    "candidate": 17,
+    "node": "treated",
+    "subtree": "treated",
+    "rel": "DESCRIPTION",
+    "sentence_index": 8,
+    "sentence": "and he took in his mother and treated her kindly .",
+    "prob": 0.0669,
+    "find": 0.2078,
+    "compare": 0.0142
+   }
+  ],
+  "abstain_prob": 0.2496,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "fairytaleqa:four-shilling-piece:677",
+  "dataset": "fairytaleqa",
+  "options": [
+   "in splendor and happiness",
+   "tempest",
+   "the four-shilling piece",
+   "a storm"
+  ],
+  "correct_option": "in splendor and happiness",
+  "predicted_option": null,
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "now when the merchant was out at sea again , he considered how much the boy had gained with the four-shilling piece he had given him .",
+   "\" well , he shall have some of the money , \" said the merchant to himself , \" but not all of it .",
+   "for he has to thank me for the cat , which i bought for him , and charity begins at home . \"",
+   "but while the merchant was thinking these thoughts , such a storm and tempest arose that all thought the ship would sink .",
+   "then the merchant realized that there was nothing left for him to do but to promise that the boy should have all the money .",
+   "no sooner had he made his vow , than the weather turned fair , and he had a favoring wind for his journey home .",
+   "and when he landed , he gave the youth the six hundred dollars and his daughter to boot .",
+   "for now the scullion was as rich as the merchant himself and richer , and thereafter he lived in splendor and happiness .",
+   "and he took in his mother and treated her kindly .",
+   "\" for i do not believe that charity begins at home , \" said the youth ."
+  ],
+  "outcome": "abstain"
+ },
+ {
+  "question": "Where does the princess live in the beginning?",
+  "question_tree": "where(MODIFICATION:live(MODIFICATION:does SUBJECT:princess(DESCRIPTION:the) MODIFICATION:in(PREPOSITION:beginning(DESCRIPTION:the))))",
+  "candidates_considered": 32,
+  "top": [
+   {
+    "candidate": 1,
+    "node": "lives",
+    "subtree": "their lives",
+    "rel": "PREPOSITION",
+    "sentence_index": 15,
+    "sentence": "after thinking of the best way to get there , john and the princess go to the castle where they live for the rest of their lives .",
+    "prob": 0.0949,
+    "find": 0.6557,
+    "compare": 1.0
+   },
+   {
+    "candidate": 17,
+    "node": "middle",
+    "subtree": "the middle",
+    "rel": "PREPOSITION",
+    "sentence_index": 7,
+    "sentence": "john asked the princess why such a beautiful woman like her was out in the middle of a forest .",
+    "prob": 0.0721,
+    "find": 0.2432,
+    "compare": 0.2189
+   },
+   {
+    "candidate": 22,
+    "node": "forest",
+    "subtree": "the forest",
+    "rel": "PREPOSITION",
+    "sentence_index": 11,
+    "sentence": "as they go through the forest they run into many problems .",
+    "prob": 0.033,
+    "find": 0.2355,
+    "compare": 0.2206
+   },
+   {
+    "candidate": 10,
+    "node": "princess",
+    "subtree": "the princess",
+    "rel": "COORDINATION",
+    "sentence_index": 15,
+    "sentence": "after thinking of the best way to get there , john and the princess go to the castle where they live for the rest of their lives .",
+    "prob": 0.0319,
+    "find": 1.0,
+    "compare": 1.0
+   },
+   {
+    "candidate": 21,
+    "node": "forest",
+    "subtree": "the forest",
+    "rel": "PREPOSITION",
+    "sentence_index": 4,
+    "sentence": "finally she went into the forest where there are no electric poles but where there are some caves .",
+    "prob": 0.0318,
+    "find": 0.2355,
+    "compare": 0.2206
+   }
+  ],
+  "abstain_prob": 0.6313,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "mctest:mc160.dev.29:399",
+  "dataset": "mctest",
+  "options": [
+   "Castle",
+   "house",
+   "Cave",
+   "High Tower"
+  ],
+  "correct_option": "High Tower",
+  "predicted_option": null,
+  "answer_in_candidates": false,
+  "story_sentences": [
+   "once upon a time there was a princess who lived in a high tower and she was not allowed to leave because of her mean mother .",
+   "one day she chose to leave but her mother would not let her .",
+   "the princess climbed out the window of the high tower and climbed down the south wall when her mother was sleeping .",
+   "she wandered out a good ways .",
+   "finally she went into the forest where there are no electric poles but where there are some caves .",
+   "there she met a young man who was running .",
+   "his name was john .",
+   "john asked the princess why such a beautiful woman like her was out in the middle of a forest .",
+   "she said that she had been trapped for her whole life by an evil woman who said she was her mother .",
+   "the man said that he would take the princess to a castle that was near .",
+   "he also said that he thought that she may be the missing princess .",
+   "as they go through the forest they run into many problems .",
+   "they see that they are lost and have no way of finding where to go .",
+   "after several days pass , the princess climbs up to the top of a tree in order to find out where they are .",
+   "she sees that the castle where they want to go is not that far away and near a mountain .",
+   "after thinking of the best way to get there , john and the princess go to the castle where they live for the rest of their lives ."
+  ],
+  "outcome": "abstain"
+ },
+ {
+  "question": "Who did Rin Jin call to find a wife?",
+  "question_tree": "did(SUBJECT:who OBJECT:rin MODIFICATION:call(SUBJECT:jin OBJECT:to(MODIFICATION:find(OBJECT:wife(DESCRIPTION:a)))))",
+  "candidates_considered": 28,
+  "top": [
+   {
+    "candidate": 1,
+    "node": "retainers",
+    "subtree": "retainers",
+    "rel": "OBJECT",
+    "sentence_index": 5,
+    "sentence": "calling all his fish retainers together , he chose several of them as ambassadors to go through the sea and seek for a young dragon princess who would be his bride .",
+    "prob": 0.2048,
+    "find": 0.2804,
+    "compare": 0.0745
+   },
+   {
+    "candidate": 4,
+    "node": "mother-of-pearl",
+    "subtree": "the finest mother-of-pearl",
+    "rel": "PREPOSITION",
+    "sentence_index": 1,
+    "sentence": "the walls were of coral , the roof of jadestone and chrysoprase , and the floors were of the finest mother-of-pearl .",
+    "prob": 0.1281,
+    "find": 0.1988,
+    "compare": 0.0372
+   },
+   {
+    "candidate": 20,
+    "node": "ambassadors",
+    "subtree": "ambassadors",
+    "rel": "PREPOSITION",
+    "sentence_index": 5,
+    "sentence": "calling all his fish retainers together , he chose several of them as ambassadors to go through the sea and seek for a young dragon princess who would be his bride .",
+    "prob": 0.0797,
+    "find": 0.153,
+    "compare": 0.7571
+   },
+   {
+    "candidate": 9,
+    "node": "bride",
+    "subtree": "his bride",
+    "rel": "OBJECT",
+    "sentence_index": 5,
+    "sentence": "calling all his fish retainers together , he chose several of them as ambassadors to go through the sea and seek for a young dragon princess who would be his bride .",
+    "prob": 0.0573,
+    "find": 0.1707,
+    "compare": 0.5923
+   },
+   {
+    "candidate": 26,
+    "node": "take",
+    "subtree": "take a wife",
+    "rel": "MODIFICATION",
+    "sentence_index": 4,
+    "sentence": "so he decided to take a wife .",
+    "prob": 0.0189,
+    "find": 0.1105,
+    "compare": 0.1486
+   }
+  ],
+  "abstain_prob": 0.4071,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "fairytaleqa:jelly-fish-and-monkey:857",
+  "dataset": "fairytaleqa",
+  "options": [
+   "the floors",
+   "his bride",
+   "rin jin",
+   "all his fish retainers"
+  ],
+  "correct_option": "all his fish retainers",
+  "predicted_option": null,
+  "answer_in_candidates": false,
+  "story_sentences": [
+   "the palace of rin jin was at the bottom of the sea , and was so beautiful that no one has ever seen anything like it even in dreams .",
+   "the walls were of coral , the roof of jadestone and chrysoprase , and the floors were of the finest mother-of-pearl .",
+   "but the dragon king , in spite of his wide-spreading kingdom , his beautiful palace and all its wonders , and his power which none disputed throughout the whole sea , was not at all happy , for he reigned alone .",
+   "at last he thought that if he married he would not only be happier , but also more powerful .",
+   "so he decided to take a wife .",
+   "calling all his fish retainers together , he chose several of them as ambassadors to go through the sea and seek for a young dragon princess who would be his bride ."
+  ],
+  "outcome": "abstain"
+ },
+ {
+  "question": "What will the king do with the beautiful maiden when he sees her again?",
+  "question_tree": "will(SUBJECT:what OBJECT:king(DESCRIPTION:the) OBJECT:do(MODIFICATION:with(PREPOSITION:maiden(DESCRIPTION:the DESCRIPTION:beautiful)) SUBORDINATION:when(MODIFICATION:sees(SUBJECT:he OBJECT:her SPECIFICATION:again))))",
+  "candidates_considered": 49,
+  "top": [
+   {
+    "candidate": 36,
+    "node": "came",
+    "subtree": "the king came",
+    "rel": "COORDINATION",
+    "sentence_index": 20,
+    "sentence": "then she went upstairs looking just like a king 's daughter , and the king came towards her , delighted to see her again , and as the dance had just begun , they danced together .",
+    "prob": 0.2175,
+    "find": 0.1263,
+    "compare": 0.1347
+   },
+   {
+    "candidate": 10,
+    "node": "nut",
+    "subtree": "the nut",
+    "rel": "PREPOSITION",
+    "sentence_index": 19,
+    "sentence": "so she ran away to her little room , washed herself quickly , took out of the nut the dress as silver as the moon and put it on .",
+    "prob": 0.0396,
+    "find": 0.2762,
+    "compare": 0.0905
+   },
+   {
+    "candidate": 43,
+    "node": "sunbeam",
+    "subtree": "one sunbeam after another",
+    "rel": "SUBJECT",
+    "sentence_index": 3,
+    "sentence": "then she took her little oil-lamp , and went into her little room , drew off her fur cloak , and washed off the soot from her face and hands , so that her beauty shone forth , and it was as if one sunbeam after another were coming out of a black cloud .",
+    "prob": 0.0226,
+    "find": 0.1026,
+    "compare": 0.062
+   },
+   {
+    "candidate": 30,
+    "node": "asked",
+    "subtree": "he asked",
+    "rel": "ROOT",
+    "sentence_index": 14,
+    "sentence": "he asked .",
+    "prob": 0.0177,
+    "find": 0.1981,
+    "compare": 0.0702
+   },
+   {
+    "candidate": 21,
+    "node": "one",
+    "subtree": "no one",
+    "rel": "SUBJECT",
+    "sentence_index": 8,
+    "sentence": "the guards who were standing before the palace were called and questioned , but no one had seen her .",
+    "prob": 0.0153,
+    "find": 0.2508,
+    "compare": 0.0
+   }
+  ],
+  "abstain_prob": 0.538,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "fairytaleqa:alleleiraugh-or-the-many-furred-creature:454",
+  "dataset": "fairytaleqa",
+  "options": [
+   "'my eyes",
+   "dance",
+   "'what",
+   "face"
+  ],
+  "correct_option": "dance",
+  "predicted_option": null,
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "it happened once when a great feast was being held in the palace , that she said to the cook , 'can i go upstairs for a little bit and look on ?",
+   "i will stand outside the doors . '",
+   "the cook replied , 'yes , you can go up , but in half-an-hour you must be back here to sweep up the ashes . '",
+   "then she took her little oil-lamp , and went into her little room , drew off her fur cloak , and washed off the soot from her face and hands , so that her beauty shone forth , and it was as if one sunbeam after another were coming out of a black cloud .",
+   "then she opened the nut , and took out the dress as golden as the sun .",
+   "and when she had done this , she went up to the feast , and everyone stepped out of her way , for nobody knew her , and they thought she must be a king 's daughter .",
+   "but the king came towards her and gave her his hand , and danced with her , thinking to himself , 'my eyes have never beheld anyone so fair ! '",
+   "when the dance was ended , she curtseyed to him , and when the king looked round she had disappeared , no one knew whither .",
+   "the guards who were standing before the palace were called and questioned , but no one had seen her .",
+   "when the many-furred creature came , the king asked her who she was .",
+   "'i am a poor child without father or mother . '",
+   "then he asked her , 'what do you do in my palace ? '",
+   "'i am of no use except to have boots thrown at my head . '",
+   "'how did you get the ring which was in the soup ? '",
+   "he asked .",
+   "'i know nothing at all about the ring , ' she answered .",
+   "so the king could find out nothing , and was obliged to send her away .",
+   "after a time there was another feast , and the many-furred creature begged the cook as at the last one to let her go and look on .",
+   "he answered , 'yes , but come back again in half-an-hour and cook the king the bread-soup that he likes so much . '",
+   "so she ran away to her little room , washed herself quickly , took out of the nut the dress as silver as the moon and put it on .",
+   "then she went upstairs looking just like a king 's daughter , and the king came towards her , delighted to see her again , and as the dance had just begun , they danced together ."
+  ],
+  "outcome": "abstain"
+ },
+ {
+  "question": "What was I doing on this day at the beginning of the story?",
+  "question_tree": "was(SUBJECT:what INDIRECT_OBJECT:i OBJECT:doing MODIFICATION:on(PREPOSITION:day(DESCRIPTION:this)) MODIFICATION:at(PREPOSITION:beginning(DESCRIPTION:the)) MODIFICATION:of(PREPOSITION:story(DESCRIPTION:the)))",
+  "candidates_considered": 41,
+  "top": [
+   {
+    "candidate": 20,
+    "node": "binoculars",
+    "subtree": "the binoculars",
+    "rel": "OBJECT",
+    "sentence_index": 14,
+    "sentence": "i went to get the binoculars to see if i could spot anything .",
+    "prob": 0.0298,
+    "find": 0.3096,
+    "compare": 0.1558
+   },
+   {
+    "candidate": 2,
+    "node": "look",
+    "subtree": "look",
+    "rel": "COORDINATION",
+    "sentence_index": 3,
+    "sentence": "i live by a lake so sometimes i take a break from my chores and look at the lake .",
+    "prob": 0.0154,
+    "find": 0.1948,
+    "compare": 0.0996
+   },
+   {
+    "candidate": 27,
+    "node": "spot",
+    "subtree": "spot",
+    "rel": "INDIRECT_OBJECT",
+    "sentence_index": 14,
+    "sentence": "i went to get the binoculars to see if i could spot anything .",
+    "prob": 0.0134,
+    "find": 0.1986,
+    "compare": 0.1109
+   },
+   {
+    "candidate": 12,
+    "node": "sound",
+    "subtree": "this strange sound",
+    "rel": "OBJECT",
+    "sentence_index": 7,
+    "sentence": "i kept hearing this strange sound .",
+    "prob": 0.0131,
+    "find": 0.2708,
+    "compare": 0.1112
+   },
+   {
+    "candidate": 16,
+    "node": "side",
+    "subtree": "the other side",
+    "rel": "PREPOSITION",
+    "sentence_index": 21,
+    "sentence": "finally i went around to the other side of the place where we keep our boats .",
+    "prob": 0.0129,
+    "find": 0.405,
+    "compare": 0.138
+   }
+  ],
+  "abstain_prob": 0.7951,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "mctest:mc160.dev.22:368",
+  "dataset": "mctest",
+  "options": [
+   "fishing",
+   "sleeping",
+   "working in the garden",
+   "cooking"
+  ],
+  "correct_option": "working in the garden",
+  "predicted_option": null,
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "it was a beautiful sunny and warm day .",
+   "i was working outside in my garden .",
+   "i was pulling weeds which is not my favorite job , but i was enjoying the day .",
+   "i live by a lake so sometimes i take a break from my chores and look at the lake .",
+   "it is so beautiful and it makes me happy to look at the beautiful lake and see what animals i can find swimming in or near the lake .",
+   "on this day , i kept hearing a low soft sound coming from the lake .",
+   "i got up from my garden and walked to the lake .",
+   "i kept hearing this strange sound .",
+   "it sounded like someone talking in a very low voice .",
+   "i thought it might be a lake bird because we see and hear them all of the time .",
+   "the lake birds have several different calls that tell what they want to \" say \" to other lake birds .",
+   "there is the call when they are flying which is very hurried and short .",
+   "then there is the \" where are you \" call which is long , slow and loud .",
+   "but this sound was not like any i had ever heard .",
+   "i went to get the binoculars to see if i could spot anything .",
+   "but , no luck .",
+   "i still kept hearing this low talking sound .",
+   "i had now totally given up weeding .",
+   "finding this strange sound was going to be more fun .",
+   "but where was it coming from ?",
+   "i looked again up and down the lake and saw nothing .",
+   "finally i went around to the other side of the place where we keep our boats .",
+   "there is an area there where it is not a very deep part of the water .",
+   "i spotted them !",
+   "it was a mother lake bird and a father lake bird with a baby in between them .",
+   "they were teaching the baby how to swim and eat fish .",
+   "the low talking sound that i heard must have been them trying to teach the baby to swim and eat the fish .",
+   "i sat there on the bank and watched for a half an hour .",
+   "i felt very special that i got to see this .",
+   "it was such a fun thing to see and way more fun than gardening ."
+  ],
+  "outcome": "abstain"
+ },
+ {
+  "question": "What made Jenny happy about being in Utah?",
+  "question_tree": "made(SUBJECT:what OBJECT:jenny SPECIFICATION:happy MODIFICATION:about(MODIFICATION:being(MODIFICATION:in(PREPOSITION:utah))))",
+  "candidates_considered": 38,
+  "top": [
+   {
+    "candidate": 22,
+    "node": "school",
+    "subtree": "school",
+    "rel": "COORDINATION",
+    "sentence_index": 1,
+    "sentence": "one day jenny came home from school and her mom told her that the family was moving to utah .",
+    "prob": 0.0901,
+    "find": 0.233,
+    "compare": 0.0966
+   },
+   {
+    "candidate": 23,
+    "node": "school",
+    "subtree": "school",
+    "rel": "OBJECT",
+    "sentence_index": 3,
+    "sentence": "jenny was sad to leave her school .",
+    "prob": 0.0785,
+    "find": 0.233,
+    "compare": 0.0966
+   },
+   {
+    "candidate": 27,
+    "node": "moving",
+    "subtree": "the family was moving to utah",
+    "rel": "MODIFICATION",
+    "sentence_index": 1,
+    "sentence": "one day jenny came home from school and her mom told her that the family was moving to utah .",
+    "prob": 0.0605,
+    "find": 0.0941,
+    "compare": 0.0859
+   },
+   {
+    "candidate": 3,
+    "node": "family",
+    "subtree": "the family",
+    "rel": "SUBJECT",
+    "sentence_index": 1,
+    "sentence": "one day jenny came home from school and her mom told her that the family was moving to utah .",
+    "prob": 0.0578,
+    "find": 0.1195,
+    "compare": 0.1336
+   },
+   {
+    "candidate": 2,
+    "node": "house",
+    "subtree": "the house",
+    "rel": "PREPOSITION",
+    "sentence_index": 8,
+    "sentence": "when the family got to their new home in utah , jenny helped her parents to take all of the boxes into the house .",
+    "prob": 0.0332,
+    "find": 0.2261,
+    "compare": 0.4081
+   }
+  ],
+  "abstain_prob": 0.5191,
+  "stated": false,
+  "text": null,
+  "sentence_ids": [],
+  "facts": [],
+  "node_gid": null,
+  "id": "mctest:mc160.dev.15:342",
+  "dataset": "mctest",
+  "options": [
+   "the music",
+   "the pretty views",
+   "being with her mom",
+   "a little girl came to play"
+  ],
+  "correct_option": "a little girl came to play",
+  "predicted_option": null,
+  "answer_in_candidates": true,
+  "story_sentences": [
+   "jenny 's family lived in a small apartment in seattle .",
+   "one day jenny came home from school and her mom told her that the family was moving to utah .",
+   "jenny was sad to leave her friends .",
+   "jenny was sad to leave her school .",
+   "jenny helped her mom pack boxes and clean their apartment to get ready for the move .",
+   "soon the day came when jenny 's dad brought a large truck to the parking lot and all of the family 's things were put inside .",
+   "jenny and her mom rode in their car and her dad drove the truck towards utah .",
+   "jenny loved getting to eat lots of yummy fast food on the way .",
+   "when the family got to their new home in utah , jenny helped her parents to take all of the boxes into the house .",
+   "she loved her new bedroom !",
+   "when jenny was emptying box of her toys , there was a knock at the door .",
+   "it was a little girl who wanted jenny to play !",
+   "jenny was going to like utah !"
+  ],
+  "outcome": "abstain"
+ }
+]

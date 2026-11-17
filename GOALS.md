@@ -22,7 +22,7 @@ memory, written by ordinary graph/tensor writes, never by training. See
 | Read | usable on short simple text (5-8% of links wrong at <=10 words; ~20% beyond); the parser itself is ~15% wrong on children's stories; joining pieces of long literary sentences remains unsolved |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
-| Answer from memory | not started in its proper form — the rule-based answerer was removed (owner, 2026-11-14); answering will be learned by the consciousness after the encoder/decoder pair works |
+| Answer from memory | first learned version built (2026-11-17, `dev/reports/MIND_V1.md`): one-step policy picks a memory node or abstains; controls behave (empty memory -> always abstains; wrong story -> abstains 92%), but accuracy 0.25 is below the word-overlap cheat 0.47 — fails its own bar, rethink before multi-step |
 | Reason | in progress on archived code; to be re-attached on the minimal loop |
 | Speak | decoder un-parked as the encoder's round-trip partner only; must be learned (grammar cannot generate) |
 | Any language | working at curriculum scale (archived code), not yet at real-text scale |
