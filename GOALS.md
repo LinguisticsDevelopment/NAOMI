@@ -579,6 +579,17 @@ ledger entries should cite the topic, matching the headings below.
   parser is silent. Treebank data is fetched by script and not committed.
   `consciousness_transformer/dev/reports/TREEBANK_TEACHER_FEASIBILITY.md`.
 
+- **2026-11-17 — consciousness v1 approved** (`consciousness_transformer/dev/design/CONSCIOUSNESS_V1_PROPOSAL.md`).
+  Answers by pointing to a memory node (speaking stays parked); trained on
+  the answer only, one step first, then several; MCTest and FairytaleQA
+  stand in for K-12 lessons (no particular K-12 source chosen); first
+  operations find / follow / compare / answer / abstain. Owner caution:
+  do NOT lock the system to basic sentences — it must show generative-
+  grammar behaviour (finite means, unbounded sentences by composition).
+  So short sentences are where training starts, not a limit: every result
+  is reported by sentence length, and generalisation from short to long
+  (train on short, test on long) is an explicit test.
+
 ## Ops rules
 
 The working agreement (who writes code, agent discipline, training-run rules,
