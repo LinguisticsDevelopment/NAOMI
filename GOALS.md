@@ -567,6 +567,18 @@ ledger entries should cite the topic, matching the headings below.
   trip as referees; the parser's unconnected pieces are treated as unknown,
   never as targets. `consciousness_transformer/dev/design/ENCODER_DECODER_PAIR_PROPOSAL.md`.
 
+- **2026-11-17 — treebanks as pre-labelled examples.** The stage-B referees
+  could not tell right added links from wrong ones, so the missing evidence
+  about how clauses connect is taken from human-annotated treebanks,
+  converted into the project's tree format by a data table (no words in
+  it; the same table runs on Spanish). Owner condition: this is only a
+  source of pre-labelled sentences for learning to encode and decode — it
+  must not become a way of hand-coding how a particular language works.
+  The project's grammar remains the definition of the format and wins
+  wherever its parser commits; converted links are used only where the
+  parser is silent. Treebank data is fetched by script and not committed.
+  `consciousness_transformer/dev/reports/TREEBANK_TEACHER_FEASIBILITY.md`.
+
 ## Ops rules
 
 The working agreement (who writes code, agent discipline, training-run rules,

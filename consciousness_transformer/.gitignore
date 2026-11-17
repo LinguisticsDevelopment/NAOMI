@@ -35,3 +35,6 @@ data/usvs/dictionary.jsonl.gz
 # K-12 corpus full downloads (scripts/fetch_k12.py --allow-download).
 # Only the small curated samples under data/k12_samples/ are committed.
 data/k12/
+
+# downloaded treebanks (licensed data; fetched by script, never committed)
+data/ud/
