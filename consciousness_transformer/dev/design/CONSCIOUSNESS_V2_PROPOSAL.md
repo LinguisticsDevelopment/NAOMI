@@ -27,9 +27,9 @@ produced anything.
 Given: reading, memory, USVS, decoder (frozen). Learned here: which nodes go in the answer tree,
 how they attach, when to stop, when to abstain.
 
-Limit of this version: the answer's words come from the story or the question, because the
-decoder only orders the words it is given (choosing word forms from meaning is decoder v2,
-still parked). Most FairytaleQA answers are phrases from the text; the rest are reported
+Limit of this version: the answer's words come from the story or the question -- in setting (b)
+the decoder chooses among those words by meaning; choosing ANY word of the language from meaning
+(decoder v2) stays parked. Most FairytaleQA answers are phrases from the text; the rest are reported
 separately as "needs new words", not tuned on.
 
 ## 2. Scoring every answer with a percentage
