@@ -589,6 +589,7 @@ ledger entries should cite the topic, matching the headings below.
   So short sentences are where training starts, not a limit: every result
   is reported by sentence length, and generalisation from short to long
   (train on short, test on long) is an explicit test.
+- 2026-11-17 — consciousness v2 approved (`dev/design/CONSCIOUSNESS_V2_PROPOSAL.md`): v1's pick-a-node-then-map-to-option test judged broken by the owner. Full chain encoder -> thinker -> decoder, answer scored as TEXT (ROUGE-L + tree score % with reasons); thinker trained toward the reference answer tree, then on the final text score; answer words from story/question only for now; decoder also chooses words from meaning (reported beside order-only); short sentences first as a widening weighting, all lengths always reported.
 
 ## Ops rules
 

@@ -1,6 +1,10 @@
 # The consciousness, text in / text out — method statement for owner approval
 
-Status: DRAFT (2026-11-17). Replaces the scoring of v1 (`CONSCIOUSNESS_V1_PROPOSAL.md`), whose
+Status: APPROVED (owner, 2026-11-17): 1 yes, 2 yes, 3 yes, 4 yes. Owner note on 1: the decoder should
+be choosing the word that best matches the node's meaning, not just ordering given words -- so
+this version runs the decoder both ways and reports both (see section 1, step 4).
+
+Originally drafted 2026-11-17. Replaces the scoring of v1 (`CONSCIOUSNESS_V1_PROPOSAL.md`), whose
 "pick a memory node, map it to the closest multiple-choice option" test the owner judged broken:
 it grades word-picking through a hand-tuned mapping (a 20% meaning threshold), and cannot give
 each answer a percentage. Owner direction: force the full chain encoder -> thinker -> decoder and
@@ -14,7 +18,10 @@ produced anything.
 3. **Thinker (learned):** given memory and the question tree, writes an ANSWER TREE, or
    abstains. It builds the tree step by step: take a node from memory (optionally with part of
    its subtree), or a node of the question, and attach it to the answer tree under a relation.
-4. Answer tree -> decoder -> answer text (decoder v1: it orders the words).
+4. Answer tree -> decoder -> answer text. Two settings, both reported: (a) nodes carry their words,
+   decoder only orders them (decoder v1); (b) nodes carry only meaning (USVS point, relation, tag),
+   and the decoder chooses each word from the words of the story and question by best match to
+   that meaning, then orders them. (b) is the honest chain; (a) isolates the thinker's share.
 5. The answer text is scored against the reference answer text.
 
 Given: reading, memory, USVS, decoder (frozen). Learned here: which nodes go in the answer tree,
