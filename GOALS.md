@@ -19,7 +19,7 @@ memory, written by ordinary graph/tensor writes, never by training. See
 
 | Goal | Status |
 |---|---|
-| Read | in progress — encoder matches the parser 93% where it commits; joining unconnected pieces of long sentences is 35% wrong, unchanged by adding treebank examples (web text does not transfer to the project's prose); decision pending on the next source of evidence |
+| Read | usable on short simple text (5-8% of links wrong at <=10 words; ~20% beyond); the parser itself is ~15% wrong on children's stories; joining pieces of long literary sentences remains unsolved |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
 | Answer from memory | not started in its proper form — the rule-based answerer was removed (owner, 2026-11-14); answering will be learned by the consciousness after the encoder/decoder pair works |

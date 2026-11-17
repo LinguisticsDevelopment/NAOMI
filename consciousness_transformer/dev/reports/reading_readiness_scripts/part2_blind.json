@@ -1,0 +1,4346 @@
+[
+ {
+  "sentence": "J01",
+  "text": "tim chose to do whatever he could to get rid of horace .",
+  "tokens": "0:tim 1:chose 2:to 3:do 4:whatever 5:he 6:could 7:to 8:get 9:rid 10:of 11:horace 12:.",
+  "links": [
+   {
+    "link": "J01.1",
+    "dependent": "8:get",
+    "head": "7:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J01.2",
+    "dependent": "10:of",
+    "head": "9:rid",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J01.3",
+    "dependent": "2:to",
+    "head": "1:chose",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J01.4",
+    "dependent": "9:rid",
+    "head": "3:do",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J01.5",
+    "dependent": "5:he",
+    "head": "3:do",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J01.6",
+    "dependent": "11:horace",
+    "head": "10:of",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J01.7",
+    "dependent": "7:to",
+    "head": "3:do",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J01.8",
+    "dependent": "4:whatever",
+    "head": "5:he",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J01.9",
+    "dependent": "1:chose",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J01.10",
+    "dependent": "6:could",
+    "head": "9:rid",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J01.11",
+    "dependent": "3:do",
+    "head": "2:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J01.12",
+    "dependent": "0:tim",
+    "head": "1:chose",
+    "relation": "SUBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J02",
+  "text": "timmy liked to play games and play sports but more than anything he liked to collect things .",
+  "tokens": "0:timmy 1:liked 2:to 3:play 4:games 5:and 6:play 7:sports 8:but 9:more 10:than 11:anything 12:he 13:liked 14:to 15:collect 16:things 17:.",
+  "links": [
+   {
+    "link": "J02.1",
+    "dependent": "3:play",
+    "head": "5:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J02.2",
+    "dependent": "0:timmy",
+    "head": "1:liked",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J02.3",
+    "dependent": "4:games",
+    "head": "3:play",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J02.4",
+    "dependent": "13:liked",
+    "head": "8:but",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J02.5",
+    "dependent": "16:things",
+    "head": "15:collect",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J02.6",
+    "dependent": "6:play",
+    "head": "5:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J02.7",
+    "dependent": "10:than",
+    "head": "8:but",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J02.8",
+    "dependent": "12:he",
+    "head": "13:liked",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J02.9",
+    "dependent": "15:collect",
+    "head": "14:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J02.10",
+    "dependent": "5:and",
+    "head": "2:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J02.11",
+    "dependent": "8:but",
+    "head": "6:play",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J02.12",
+    "dependent": "1:liked",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J02.13",
+    "dependent": "2:to",
+    "head": "1:liked",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J02.14",
+    "dependent": "14:to",
+    "head": "13:liked",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J02.15",
+    "dependent": "7:sports",
+    "head": "8:but",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J02.16",
+    "dependent": "11:anything",
+    "head": "6:play",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J02.17",
+    "dependent": "9:more",
+    "head": "10:than",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "J03",
+  "text": "laura looked in the sky and saw a pretty bird flying in a large circle .",
+  "tokens": "0:laura 1:looked 2:in 3:the 4:sky 5:and 6:saw 7:a 8:pretty 9:bird 10:flying 11:in 12:a 13:large 14:circle 15:.",
+  "links": [
+   {
+    "link": "J03.1",
+    "dependent": "5:and",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J03.2",
+    "dependent": "12:a",
+    "head": "14:circle",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J03.3",
+    "dependent": "7:a",
+    "head": "9:bird",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J03.4",
+    "dependent": "1:looked",
+    "head": "5:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J03.5",
+    "dependent": "14:circle",
+    "head": "11:in",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J03.6",
+    "dependent": "13:large",
+    "head": "14:circle",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J03.7",
+    "dependent": "6:saw",
+    "head": "5:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J03.8",
+    "dependent": "0:laura",
+    "head": "5:and",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J03.9",
+    "dependent": "10:flying",
+    "head": "5:and",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J03.10",
+    "dependent": "3:the",
+    "head": "4:sky",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J03.11",
+    "dependent": "2:in",
+    "head": "1:looked",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J03.12",
+    "dependent": "4:sky",
+    "head": "2:in",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J03.13",
+    "dependent": "9:bird",
+    "head": "5:and",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J03.14",
+    "dependent": "8:pretty",
+    "head": "9:bird",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J03.15",
+    "dependent": "11:in",
+    "head": "5:and",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J04",
+  "text": "frank 's father was jim .",
+  "tokens": "0:frank 1:'s 2:father 3:was 4:jim 5:.",
+  "links": [
+   {
+    "link": "J04.1",
+    "dependent": "4:jim",
+    "head": "3:was",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J04.2",
+    "dependent": "2:father",
+    "head": "3:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J04.3",
+    "dependent": "0:frank",
+    "head": "1:'s",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J04.4",
+    "dependent": "1:'s",
+    "head": "2:father",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J04.5",
+    "dependent": "3:was",
+    "head": "ROOT",
+    "relation": "ROOT"
+   }
+  ]
+ },
+ {
+  "sentence": "J05",
+  "text": "alex saw the whole thing and was proud of james for being brave .",
+  "tokens": "0:alex 1:saw 2:the 3:whole 4:thing 5:and 6:was 7:proud 8:of 9:james 10:for 11:being 12:brave 13:.",
+  "links": [
+   {
+    "link": "J05.1",
+    "dependent": "2:the",
+    "head": "3:whole",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J05.2",
+    "dependent": "11:being",
+    "head": "10:for",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J05.3",
+    "dependent": "0:alex",
+    "head": "5:and",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J05.4",
+    "dependent": "5:and",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J05.5",
+    "dependent": "8:of",
+    "head": "5:and",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J05.6",
+    "dependent": "3:whole",
+    "head": "1:saw",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J05.7",
+    "dependent": "9:james",
+    "head": "8:of",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J05.8",
+    "dependent": "12:brave",
+    "head": "11:being",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J05.9",
+    "dependent": "6:was",
+    "head": "5:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J05.10",
+    "dependent": "7:proud",
+    "head": "6:was",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J05.11",
+    "dependent": "10:for",
+    "head": "5:and",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J05.12",
+    "dependent": "1:saw",
+    "head": "5:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J05.13",
+    "dependent": "4:thing",
+    "head": "1:saw",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J06",
+  "text": "tommy begins to see that james is getting better every day .",
+  "tokens": "0:tommy 1:begins 2:to 3:see 4:that 5:james 6:is 7:getting 8:better 9:every 10:day 11:.",
+  "links": [
+   {
+    "link": "J06.1",
+    "dependent": "9:every",
+    "head": "10:day",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J06.2",
+    "dependent": "1:begins",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J06.3",
+    "dependent": "8:better",
+    "head": "7:getting",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J06.4",
+    "dependent": "6:is",
+    "head": "7:getting",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J06.5",
+    "dependent": "3:see",
+    "head": "2:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J06.6",
+    "dependent": "10:day",
+    "head": "7:getting",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J06.7",
+    "dependent": "0:tommy",
+    "head": "1:begins",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J06.8",
+    "dependent": "7:getting",
+    "head": "4:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J06.9",
+    "dependent": "4:that",
+    "head": "1:begins",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J06.10",
+    "dependent": "2:to",
+    "head": "1:begins",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J06.11",
+    "dependent": "5:james",
+    "head": "7:getting",
+    "relation": "SUBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J07",
+  "text": "\" well , nothing important , \" bentley told the cat .",
+  "tokens": "0:\" 1:well 2:, 3:nothing 4:important 5:, 6:\" 7:bentley 8:told 9:the 10:cat 11:.",
+  "links": [
+   {
+    "link": "J07.1",
+    "dependent": "4:important",
+    "head": "8:told",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J07.2",
+    "dependent": "7:bentley",
+    "head": "8:told",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J07.3",
+    "dependent": "1:well",
+    "head": "8:told",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J07.4",
+    "dependent": "9:the",
+    "head": "10:cat",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J07.5",
+    "dependent": "10:cat",
+    "head": "8:told",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J07.6",
+    "dependent": "3:nothing",
+    "head": "1:well",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J07.7",
+    "dependent": "8:told",
+    "head": "ROOT",
+    "relation": "ROOT"
+   }
+  ]
+ },
+ {
+  "sentence": "J08",
+  "text": "i said i was sorry , but i was scared .",
+  "tokens": "0:i 1:said 2:i 3:was 4:sorry 5:, 6:but 7:i 8:was 9:scared 10:.",
+  "links": [
+   {
+    "link": "J08.1",
+    "dependent": "2:i",
+    "head": "3:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J08.2",
+    "dependent": "8:was",
+    "head": "9:scared",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J08.3",
+    "dependent": "6:but",
+    "head": "1:said",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J08.4",
+    "dependent": "0:i",
+    "head": "1:said",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J08.5",
+    "dependent": "1:said",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J08.6",
+    "dependent": "3:was",
+    "head": "6:but",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J08.7",
+    "dependent": "9:scared",
+    "head": "6:but",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J08.8",
+    "dependent": "7:i",
+    "head": "9:scared",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J08.9",
+    "dependent": "4:sorry",
+    "head": "3:was",
+    "relation": "COMPLEMENT"
+   }
+  ]
+ },
+ {
+  "sentence": "J09",
+  "text": "timmy spent the most money on his bottle cap collection .",
+  "tokens": "0:timmy 1:spent 2:the 3:most 4:money 5:on 6:his 7:bottle 8:cap 9:collection 10:.",
+  "links": [
+   {
+    "link": "J09.1",
+    "dependent": "8:cap",
+    "head": "1:spent",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J09.2",
+    "dependent": "6:his",
+    "head": "7:bottle",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J09.3",
+    "dependent": "9:collection",
+    "head": "8:cap",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J09.4",
+    "dependent": "1:spent",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J09.5",
+    "dependent": "3:most",
+    "head": "4:money",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J09.6",
+    "dependent": "7:bottle",
+    "head": "5:on",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J09.7",
+    "dependent": "4:money",
+    "head": "8:cap",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J09.8",
+    "dependent": "5:on",
+    "head": "4:money",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J09.9",
+    "dependent": "2:the",
+    "head": "4:money",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J09.10",
+    "dependent": "0:timmy",
+    "head": "1:spent",
+    "relation": "SUBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J10",
+  "text": "jacob 's puppy was named sally .",
+  "tokens": "0:jacob 1:'s 2:puppy 3:was 4:named 5:sally 6:.",
+  "links": [
+   {
+    "link": "J10.1",
+    "dependent": "0:jacob",
+    "head": "1:'s",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J10.2",
+    "dependent": "4:named",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J10.3",
+    "dependent": "2:puppy",
+    "head": "4:named",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J10.4",
+    "dependent": "1:'s",
+    "head": "2:puppy",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J10.5",
+    "dependent": "5:sally",
+    "head": "4:named",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J10.6",
+    "dependent": "3:was",
+    "head": "4:named",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J11",
+  "text": "he let out a breath .",
+  "tokens": "0:he 1:let 2:out 3:a 4:breath 5:.",
+  "links": [
+   {
+    "link": "J11.1",
+    "dependent": "1:let",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J11.2",
+    "dependent": "0:he",
+    "head": "1:let",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J11.3",
+    "dependent": "3:a",
+    "head": "4:breath",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J11.4",
+    "dependent": "4:breath",
+    "head": "2:out",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J11.5",
+    "dependent": "2:out",
+    "head": "1:let",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J12",
+  "text": "the cops came and the guy ran away as soon as he heard the cop car coming .",
+  "tokens": "0:the 1:cops 2:came 3:and 4:the 5:guy 6:ran 7:away 8:as 9:soon 10:as 11:he 12:heard 13:the 14:cop 15:car 16:coming 17:.",
+  "links": [
+   {
+    "link": "J12.1",
+    "dependent": "9:soon",
+    "head": "6:ran",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J12.2",
+    "dependent": "16:coming",
+    "head": "12:heard",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J12.3",
+    "dependent": "0:the",
+    "head": "1:cops",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J12.4",
+    "dependent": "7:away",
+    "head": "8:as",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J12.5",
+    "dependent": "6:ran",
+    "head": "3:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J12.6",
+    "dependent": "11:he",
+    "head": "12:heard",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J12.7",
+    "dependent": "14:cop",
+    "head": "12:heard",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J12.8",
+    "dependent": "4:the",
+    "head": "5:guy",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J12.9",
+    "dependent": "3:and",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J12.10",
+    "dependent": "13:the",
+    "head": "14:cop",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J12.11",
+    "dependent": "15:car",
+    "head": "12:heard",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J12.12",
+    "dependent": "5:guy",
+    "head": "6:ran",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J12.13",
+    "dependent": "10:as",
+    "head": "3:and",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J12.14",
+    "dependent": "8:as",
+    "head": "9:soon",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J12.15",
+    "dependent": "12:heard",
+    "head": "10:as",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J12.16",
+    "dependent": "2:came",
+    "head": "3:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J12.17",
+    "dependent": "1:cops",
+    "head": "2:came",
+    "relation": "SUBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J13",
+  "text": "he pressed a kiss to her head , and her eyes opened .",
+  "tokens": "0:he 1:pressed 2:a 3:kiss 4:to 5:her 6:head 7:, 8:and 9:her 10:eyes 11:opened 12:.",
+  "links": [
+   {
+    "link": "J13.1",
+    "dependent": "5:her",
+    "head": "4:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J13.2",
+    "dependent": "4:to",
+    "head": "3:kiss",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J13.3",
+    "dependent": "0:he",
+    "head": "1:pressed",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J13.4",
+    "dependent": "3:kiss",
+    "head": "8:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J13.5",
+    "dependent": "2:a",
+    "head": "1:pressed",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J13.6",
+    "dependent": "8:and",
+    "head": "1:pressed",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J13.7",
+    "dependent": "9:her",
+    "head": "10:eyes",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J13.8",
+    "dependent": "6:head",
+    "head": "3:kiss",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J13.9",
+    "dependent": "11:opened",
+    "head": "10:eyes",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J13.10",
+    "dependent": "1:pressed",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J13.11",
+    "dependent": "10:eyes",
+    "head": "8:and",
+    "relation": "COORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J14",
+  "text": "when i was eight years old i went to the park with my dad to fly my new kite .",
+  "tokens": "0:when 1:i 2:was 3:eight 4:years 5:old 6:i 7:went 8:to 9:the 10:park 11:with 12:my 13:dad 14:to 15:fly 16:my 17:new 18:kite 19:.",
+  "links": [
+   {
+    "link": "J14.1",
+    "dependent": "9:the",
+    "head": "10:park",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J14.2",
+    "dependent": "7:went",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J14.3",
+    "dependent": "3:eight",
+    "head": "4:years",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J14.4",
+    "dependent": "6:i",
+    "head": "7:went",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J14.5",
+    "dependent": "18:kite",
+    "head": "15:fly",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J14.6",
+    "dependent": "10:park",
+    "head": "8:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J14.7",
+    "dependent": "5:old",
+    "head": "6:i",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J14.8",
+    "dependent": "4:years",
+    "head": "2:was",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J14.9",
+    "dependent": "1:i",
+    "head": "2:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J14.10",
+    "dependent": "16:my",
+    "head": "18:kite",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J14.11",
+    "dependent": "0:when",
+    "head": "7:went",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J14.12",
+    "dependent": "14:to",
+    "head": "7:went",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J14.13",
+    "dependent": "2:was",
+    "head": "0:when",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J14.14",
+    "dependent": "13:dad",
+    "head": "11:with",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J14.15",
+    "dependent": "8:to",
+    "head": "7:went",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J14.16",
+    "dependent": "17:new",
+    "head": "18:kite",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J14.17",
+    "dependent": "11:with",
+    "head": "7:went",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J14.18",
+    "dependent": "12:my",
+    "head": "13:dad",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J14.19",
+    "dependent": "15:fly",
+    "head": "14:to",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J15",
+  "text": "he collected bottle caps .",
+  "tokens": "0:he 1:collected 2:bottle 3:caps 4:.",
+  "links": [
+   {
+    "link": "J15.1",
+    "dependent": "2:bottle",
+    "head": "1:collected",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J15.2",
+    "dependent": "1:collected",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J15.3",
+    "dependent": "0:he",
+    "head": "1:collected",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J15.4",
+    "dependent": "3:caps",
+    "head": "1:collected",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J16",
+  "text": "school is fun .",
+  "tokens": "0:school 1:is 2:fun 3:.",
+  "links": [
+   {
+    "link": "J16.1",
+    "dependent": "0:school",
+    "head": "1:is",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J16.2",
+    "dependent": "2:fun",
+    "head": "1:is",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J16.3",
+    "dependent": "1:is",
+    "head": "ROOT",
+    "relation": "ROOT"
+   }
+  ]
+ },
+ {
+  "sentence": "J17",
+  "text": "when he opened the gift from thomas , rudy was so exited that he jumped and barked .",
+  "tokens": "0:when 1:he 2:opened 3:the 4:gift 5:from 6:thomas 7:, 8:rudy 9:was 10:so 11:exited 12:that 13:he 14:jumped 15:and 16:barked 17:.",
+  "links": [
+   {
+    "link": "J17.1",
+    "dependent": "12:that",
+    "head": "10:so",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J17.2",
+    "dependent": "11:exited",
+    "head": "10:so",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J17.3",
+    "dependent": "0:when",
+    "head": "10:so",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J17.4",
+    "dependent": "6:thomas",
+    "head": "5:from",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J17.5",
+    "dependent": "14:jumped",
+    "head": "15:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J17.6",
+    "dependent": "4:gift",
+    "head": "10:so",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J17.7",
+    "dependent": "9:was",
+    "head": "10:so",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J17.8",
+    "dependent": "1:he",
+    "head": "0:when",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J17.9",
+    "dependent": "3:the",
+    "head": "4:gift",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J17.10",
+    "dependent": "13:he",
+    "head": "15:and",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J17.11",
+    "dependent": "10:so",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J17.12",
+    "dependent": "2:opened",
+    "head": "4:gift",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J17.13",
+    "dependent": "8:rudy",
+    "head": "10:so",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J17.14",
+    "dependent": "16:barked",
+    "head": "15:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J17.15",
+    "dependent": "15:and",
+    "head": "12:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J17.16",
+    "dependent": "5:from",
+    "head": "4:gift",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J18",
+  "text": "i used to be afraid of butterflies !",
+  "tokens": "0:i 1:used 2:to 3:be 4:afraid 5:of 6:butterflies 7:!",
+  "links": [
+   {
+    "link": "J18.1",
+    "dependent": "6:butterflies",
+    "head": "5:of",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J18.2",
+    "dependent": "5:of",
+    "head": "1:used",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J18.3",
+    "dependent": "4:afraid",
+    "head": "3:be",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J18.4",
+    "dependent": "0:i",
+    "head": "1:used",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J18.5",
+    "dependent": "3:be",
+    "head": "2:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J18.6",
+    "dependent": "1:used",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J18.7",
+    "dependent": "2:to",
+    "head": "1:used",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J19",
+  "text": "this is enough money for james to buy a new glove !",
+  "tokens": "0:this 1:is 2:enough 3:money 4:for 5:james 6:to 7:buy 8:a 9:new 10:glove 11:!",
+  "links": [
+   {
+    "link": "J19.1",
+    "dependent": "5:james",
+    "head": "4:for",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J19.2",
+    "dependent": "8:a",
+    "head": "10:glove",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J19.3",
+    "dependent": "7:buy",
+    "head": "6:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J19.4",
+    "dependent": "4:for",
+    "head": "3:money",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J19.5",
+    "dependent": "1:is",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J19.6",
+    "dependent": "2:enough",
+    "head": "3:money",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J19.7",
+    "dependent": "6:to",
+    "head": "1:is",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J19.8",
+    "dependent": "3:money",
+    "head": "1:is",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J19.9",
+    "dependent": "10:glove",
+    "head": "7:buy",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J19.10",
+    "dependent": "0:this",
+    "head": "1:is",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J19.11",
+    "dependent": "9:new",
+    "head": "10:glove",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "J20",
+  "text": "they put spike on his leash and they went home .",
+  "tokens": "0:they 1:put 2:spike 3:on 4:his 5:leash 6:and 7:they 8:went 9:home 10:.",
+  "links": [
+   {
+    "link": "J20.1",
+    "dependent": "5:leash",
+    "head": "6:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J20.2",
+    "dependent": "1:put",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J20.3",
+    "dependent": "0:they",
+    "head": "1:put",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J20.4",
+    "dependent": "9:home",
+    "head": "8:went",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J20.5",
+    "dependent": "6:and",
+    "head": "3:on",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J20.6",
+    "dependent": "7:they",
+    "head": "6:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J20.7",
+    "dependent": "2:spike",
+    "head": "8:went",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J20.8",
+    "dependent": "4:his",
+    "head": "5:leash",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J20.9",
+    "dependent": "3:on",
+    "head": "2:spike",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J20.10",
+    "dependent": "8:went",
+    "head": "1:put",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J21",
+  "text": "there once was a woman named mary .",
+  "tokens": "0:there 1:once 2:was 3:a 4:woman 5:named 6:mary 7:.",
+  "links": [
+   {
+    "link": "J21.1",
+    "dependent": "4:woman",
+    "head": "2:was",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J21.2",
+    "dependent": "5:named",
+    "head": "2:was",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J21.3",
+    "dependent": "2:was",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J21.4",
+    "dependent": "1:once",
+    "head": "2:was",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J21.5",
+    "dependent": "0:there",
+    "head": "1:once",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J21.6",
+    "dependent": "6:mary",
+    "head": "5:named",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J21.7",
+    "dependent": "3:a",
+    "head": "4:woman",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "J22",
+  "text": "the bullies did n't know what to do and then gave up .",
+  "tokens": "0:the 1:bullies 2:did 3:n't 4:know 5:what 6:to 7:do 8:and 9:then 10:gave 11:up 12:.",
+  "links": [
+   {
+    "link": "J22.1",
+    "dependent": "7:do",
+    "head": "6:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J22.2",
+    "dependent": "6:to",
+    "head": "4:know",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J22.3",
+    "dependent": "11:up",
+    "head": "10:gave",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J22.4",
+    "dependent": "2:did",
+    "head": "4:know",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J22.5",
+    "dependent": "8:and",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J22.6",
+    "dependent": "5:what",
+    "head": "4:know",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J22.7",
+    "dependent": "10:gave",
+    "head": "8:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J22.8",
+    "dependent": "9:then",
+    "head": "10:gave",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J22.9",
+    "dependent": "0:the",
+    "head": "1:bullies",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J22.10",
+    "dependent": "1:bullies",
+    "head": "8:and",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J22.11",
+    "dependent": "4:know",
+    "head": "8:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J22.12",
+    "dependent": "3:n't",
+    "head": "4:know",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J23",
+  "text": "after looking , she saw her friend george by the basketball hoop .",
+  "tokens": "0:after 1:looking 2:, 3:she 4:saw 5:her 6:friend 7:george 8:by 9:the 10:basketball 11:hoop 12:.",
+  "links": [
+   {
+    "link": "J23.1",
+    "dependent": "11:hoop",
+    "head": "4:saw",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J23.2",
+    "dependent": "7:george",
+    "head": "11:hoop",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J23.3",
+    "dependent": "0:after",
+    "head": "4:saw",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J23.4",
+    "dependent": "10:basketball",
+    "head": "8:by",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J23.5",
+    "dependent": "3:she",
+    "head": "4:saw",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J23.6",
+    "dependent": "8:by",
+    "head": "7:george",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J23.7",
+    "dependent": "4:saw",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J23.8",
+    "dependent": "5:her",
+    "head": "4:saw",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J23.9",
+    "dependent": "6:friend",
+    "head": "4:saw",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J23.10",
+    "dependent": "9:the",
+    "head": "10:basketball",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J23.11",
+    "dependent": "1:looking",
+    "head": "0:after",
+    "relation": "PREPOSITION"
+   }
+  ]
+ },
+ {
+  "sentence": "J24",
+  "text": "one day bentley got outside and walked down the street .",
+  "tokens": "0:one 1:day 2:bentley 3:got 4:outside 5:and 6:walked 7:down 8:the 9:street 10:.",
+  "links": [
+   {
+    "link": "J24.1",
+    "dependent": "0:one",
+    "head": "1:day",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J24.2",
+    "dependent": "1:day",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J24.3",
+    "dependent": "8:the",
+    "head": "9:street",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J24.4",
+    "dependent": "6:walked",
+    "head": "5:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J24.5",
+    "dependent": "3:got",
+    "head": "5:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J24.6",
+    "dependent": "4:outside",
+    "head": "3:got",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J24.7",
+    "dependent": "2:bentley",
+    "head": "3:got",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J24.8",
+    "dependent": "5:and",
+    "head": "1:day",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J24.9",
+    "dependent": "9:street",
+    "head": "6:walked",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J24.10",
+    "dependent": "7:down",
+    "head": "8:the",
+    "relation": "SPECIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J25",
+  "text": "he took me out for ice cream and we went home .",
+  "tokens": "0:he 1:took 2:me 3:out 4:for 5:ice 6:cream 7:and 8:we 9:went 10:home 11:.",
+  "links": [
+   {
+    "link": "J25.1",
+    "dependent": "5:ice",
+    "head": "4:for",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J25.2",
+    "dependent": "8:we",
+    "head": "7:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J25.3",
+    "dependent": "7:and",
+    "head": "9:went",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J25.4",
+    "dependent": "10:home",
+    "head": "9:went",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J25.5",
+    "dependent": "2:me",
+    "head": "1:took",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J25.6",
+    "dependent": "0:he",
+    "head": "1:took",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J25.7",
+    "dependent": "4:for",
+    "head": "1:took",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J25.8",
+    "dependent": "3:out",
+    "head": "1:took",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J25.9",
+    "dependent": "9:went",
+    "head": "4:for",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J25.10",
+    "dependent": "6:cream",
+    "head": "7:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J25.11",
+    "dependent": "1:took",
+    "head": "ROOT",
+    "relation": "ROOT"
+   }
+  ]
+ },
+ {
+  "sentence": "J26",
+  "text": "i saw snakes .",
+  "tokens": "0:i 1:saw 2:snakes 3:.",
+  "links": [
+   {
+    "link": "J26.1",
+    "dependent": "0:i",
+    "head": "1:saw",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J26.2",
+    "dependent": "1:saw",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J26.3",
+    "dependent": "2:snakes",
+    "head": "1:saw",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J27",
+  "text": "martha looked everywhere .",
+  "tokens": "0:martha 1:looked 2:everywhere 3:.",
+  "links": [
+   {
+    "link": "J27.1",
+    "dependent": "1:looked",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J27.2",
+    "dependent": "0:martha",
+    "head": "1:looked",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J27.3",
+    "dependent": "2:everywhere",
+    "head": "1:looked",
+    "relation": "SPECIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J28",
+  "text": "bentley 's human 's came home and were very upset that their house was now very wet .",
+  "tokens": "0:bentley 1:'s 2:human 3:'s 4:came 5:home 6:and 7:were 8:very 9:upset 10:that 11:their 12:house 13:was 14:now 15:very 16:wet 17:.",
+  "links": [
+   {
+    "link": "J28.1",
+    "dependent": "7:were",
+    "head": "6:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J28.2",
+    "dependent": "3:'s",
+    "head": "2:human",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J28.3",
+    "dependent": "1:'s",
+    "head": "2:human",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J28.4",
+    "dependent": "12:house",
+    "head": "13:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J28.5",
+    "dependent": "16:wet",
+    "head": "13:was",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J28.6",
+    "dependent": "4:came",
+    "head": "6:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J28.7",
+    "dependent": "2:human",
+    "head": "6:and",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J28.8",
+    "dependent": "13:was",
+    "head": "10:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J28.9",
+    "dependent": "11:their",
+    "head": "12:house",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J28.10",
+    "dependent": "9:upset",
+    "head": "8:very",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J28.11",
+    "dependent": "15:very",
+    "head": "16:wet",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J28.12",
+    "dependent": "10:that",
+    "head": "9:upset",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J28.13",
+    "dependent": "0:bentley",
+    "head": "1:'s",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J28.14",
+    "dependent": "8:very",
+    "head": "7:were",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J28.15",
+    "dependent": "5:home",
+    "head": "4:came",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J28.16",
+    "dependent": "6:and",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J28.17",
+    "dependent": "14:now",
+    "head": "15:very",
+    "relation": "SPECIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J29",
+  "text": "wendy , had she known about the writing would have been sad that mark spent so much time thinking of odd stories .",
+  "tokens": "0:wendy 1:, 2:had 3:she 4:known 5:about 6:the 7:writing 8:would 9:have 10:been 11:sad 12:that 13:mark 14:spent 15:so 16:much 17:time 18:thinking 19:of 20:odd 21:stories 22:.",
+  "links": [
+   {
+    "link": "J29.1",
+    "dependent": "8:would",
+    "head": "9:have",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J29.2",
+    "dependent": "12:that",
+    "head": "10:been",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J29.3",
+    "dependent": "11:sad",
+    "head": "10:been",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J29.4",
+    "dependent": "15:so",
+    "head": "12:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J29.5",
+    "dependent": "4:known",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J29.6",
+    "dependent": "9:have",
+    "head": "4:known",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J29.7",
+    "dependent": "7:writing",
+    "head": "9:have",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J29.8",
+    "dependent": "18:thinking",
+    "head": "15:so",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J29.9",
+    "dependent": "6:the",
+    "head": "7:writing",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J29.10",
+    "dependent": "19:of",
+    "head": "18:thinking",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J29.11",
+    "dependent": "20:odd",
+    "head": "21:stories",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J29.12",
+    "dependent": "2:had",
+    "head": "4:known",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J29.13",
+    "dependent": "3:she",
+    "head": "4:known",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J29.14",
+    "dependent": "17:time",
+    "head": "15:so",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J29.15",
+    "dependent": "16:much",
+    "head": "17:time",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J29.16",
+    "dependent": "13:mark",
+    "head": "12:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J29.17",
+    "dependent": "5:about",
+    "head": "4:known",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J29.18",
+    "dependent": "14:spent",
+    "head": "15:so",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J29.19",
+    "dependent": "0:wendy",
+    "head": "4:known",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J29.20",
+    "dependent": "10:been",
+    "head": "9:have",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J29.21",
+    "dependent": "21:stories",
+    "head": "19:of",
+    "relation": "PREPOSITION"
+   }
+  ]
+ },
+ {
+  "sentence": "J30",
+  "text": "it was time for breakfast .",
+  "tokens": "0:it 1:was 2:time 3:for 4:breakfast 5:.",
+  "links": [
+   {
+    "link": "J30.1",
+    "dependent": "4:breakfast",
+    "head": "3:for",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J30.2",
+    "dependent": "1:was",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J30.3",
+    "dependent": "0:it",
+    "head": "1:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J30.4",
+    "dependent": "3:for",
+    "head": "2:time",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J30.5",
+    "dependent": "2:time",
+    "head": "1:was",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J31",
+  "text": "it would be rudy 's birthday .",
+  "tokens": "0:it 1:would 2:be 3:rudy 4:'s 5:birthday 6:.",
+  "links": [
+   {
+    "link": "J31.1",
+    "dependent": "1:would",
+    "head": "2:be",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J31.2",
+    "dependent": "5:birthday",
+    "head": "2:be",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J31.3",
+    "dependent": "3:rudy",
+    "head": "4:'s",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J31.4",
+    "dependent": "2:be",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J31.5",
+    "dependent": "0:it",
+    "head": "2:be",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J31.6",
+    "dependent": "4:'s",
+    "head": "5:birthday",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J32",
+  "text": "another problem pawn had was that he did n't like some of the other people in this land .",
+  "tokens": "0:another 1:problem 2:pawn 3:had 4:was 5:that 6:he 7:did 8:n't 9:like 10:some 11:of 12:the 13:other 14:people 15:in 16:this 17:land 18:.",
+  "links": [
+   {
+    "link": "J32.1",
+    "dependent": "12:the",
+    "head": "14:people",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J32.2",
+    "dependent": "6:he",
+    "head": "9:like",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J32.3",
+    "dependent": "15:in",
+    "head": "9:like",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J32.4",
+    "dependent": "4:was",
+    "head": "3:had",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J32.5",
+    "dependent": "9:like",
+    "head": "5:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J32.6",
+    "dependent": "5:that",
+    "head": "4:was",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J32.7",
+    "dependent": "3:had",
+    "head": "1:problem",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J32.8",
+    "dependent": "14:people",
+    "head": "11:of",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J32.9",
+    "dependent": "17:land",
+    "head": "15:in",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J32.10",
+    "dependent": "8:n't",
+    "head": "9:like",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J32.11",
+    "dependent": "16:this",
+    "head": "17:land",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J32.12",
+    "dependent": "0:another",
+    "head": "1:problem",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J32.13",
+    "dependent": "7:did",
+    "head": "9:like",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J32.14",
+    "dependent": "10:some",
+    "head": "9:like",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J32.15",
+    "dependent": "1:problem",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J32.16",
+    "dependent": "11:of",
+    "head": "9:like",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J32.17",
+    "dependent": "2:pawn",
+    "head": "3:had",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J32.18",
+    "dependent": "13:other",
+    "head": "14:people",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "J33",
+  "text": "there were so many choices for mark .",
+  "tokens": "0:there 1:were 2:so 3:many 4:choices 5:for 6:mark 7:.",
+  "links": [
+   {
+    "link": "J33.1",
+    "dependent": "4:choices",
+    "head": "1:were",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J33.2",
+    "dependent": "6:mark",
+    "head": "5:for",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J33.3",
+    "dependent": "3:many",
+    "head": "4:choices",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J33.4",
+    "dependent": "0:there",
+    "head": "1:were",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J33.5",
+    "dependent": "5:for",
+    "head": "4:choices",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J33.6",
+    "dependent": "2:so",
+    "head": "4:choices",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J33.7",
+    "dependent": "1:were",
+    "head": "ROOT",
+    "relation": "ROOT"
+   }
+  ]
+ },
+ {
+  "sentence": "J34",
+  "text": "when it was almost dark , the school kids got back on the bus to go home .",
+  "tokens": "0:when 1:it 2:was 3:almost 4:dark 5:, 6:the 7:school 8:kids 9:got 10:back 11:on 12:the 13:bus 14:to 15:go 16:home 17:.",
+  "links": [
+   {
+    "link": "J34.1",
+    "dependent": "13:bus",
+    "head": "11:on",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J34.2",
+    "dependent": "6:the",
+    "head": "7:school",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J34.3",
+    "dependent": "7:school",
+    "head": "8:kids",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J34.4",
+    "dependent": "3:almost",
+    "head": "4:dark",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J34.5",
+    "dependent": "1:it",
+    "head": "2:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J34.6",
+    "dependent": "8:kids",
+    "head": "9:got",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J34.7",
+    "dependent": "11:on",
+    "head": "10:back",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J34.8",
+    "dependent": "10:back",
+    "head": "9:got",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J34.9",
+    "dependent": "14:to",
+    "head": "9:got",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J34.10",
+    "dependent": "4:dark",
+    "head": "2:was",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J34.11",
+    "dependent": "2:was",
+    "head": "0:when",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J34.12",
+    "dependent": "0:when",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J34.13",
+    "dependent": "12:the",
+    "head": "13:bus",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J34.14",
+    "dependent": "16:home",
+    "head": "15:go",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J34.15",
+    "dependent": "9:got",
+    "head": "0:when",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J34.16",
+    "dependent": "15:go",
+    "head": "14:to",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J35",
+  "text": "this was so he could show off for his girl , wendy .",
+  "tokens": "0:this 1:was 2:so 3:he 4:could 5:show 6:off 7:for 8:his 9:girl 10:, 11:wendy 12:.",
+  "links": [
+   {
+    "link": "J35.1",
+    "dependent": "3:he",
+    "head": "4:could",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J35.2",
+    "dependent": "0:this",
+    "head": "1:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J35.3",
+    "dependent": "8:his",
+    "head": "9:girl",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J35.4",
+    "dependent": "6:off",
+    "head": "2:so",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J35.5",
+    "dependent": "11:wendy",
+    "head": "2:so",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J35.6",
+    "dependent": "1:was",
+    "head": "2:so",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J35.7",
+    "dependent": "9:girl",
+    "head": "7:for",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J35.8",
+    "dependent": "5:show",
+    "head": "4:could",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J35.9",
+    "dependent": "4:could",
+    "head": "2:so",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J35.10",
+    "dependent": "7:for",
+    "head": "2:so",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J35.11",
+    "dependent": "2:so",
+    "head": "ROOT",
+    "relation": "ROOT"
+   }
+  ]
+ },
+ {
+  "sentence": "J36",
+  "text": "her friend then looked at her strangely and asked , \" did n't stephan invite you to his party ? \"",
+  "tokens": "0:her 1:friend 2:then 3:looked 4:at 5:her 6:strangely 7:and 8:asked 9:, 10:\" 11:did 12:n't 13:stephan 14:invite 15:you 16:to 17:his 18:party 19:? 20:\"",
+  "links": [
+   {
+    "link": "J36.1",
+    "dependent": "0:her",
+    "head": "1:friend",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J36.2",
+    "dependent": "5:her",
+    "head": "4:at",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J36.3",
+    "dependent": "7:and",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J36.4",
+    "dependent": "8:asked",
+    "head": "7:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J36.5",
+    "dependent": "11:did",
+    "head": "7:and",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J36.6",
+    "dependent": "17:his",
+    "head": "18:party",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J36.7",
+    "dependent": "15:you",
+    "head": "14:invite",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J36.8",
+    "dependent": "2:then",
+    "head": "3:looked",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J36.9",
+    "dependent": "1:friend",
+    "head": "7:and",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J36.10",
+    "dependent": "13:stephan",
+    "head": "14:invite",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J36.11",
+    "dependent": "4:at",
+    "head": "3:looked",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J36.12",
+    "dependent": "3:looked",
+    "head": "7:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J36.13",
+    "dependent": "18:party",
+    "head": "16:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J36.14",
+    "dependent": "6:strangely",
+    "head": "3:looked",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J36.15",
+    "dependent": "16:to",
+    "head": "15:you",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J36.16",
+    "dependent": "12:n't",
+    "head": "14:invite",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J36.17",
+    "dependent": "14:invite",
+    "head": "7:and",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J37",
+  "text": "we even saw one place where there were giant bugs and they did n't even scare me .",
+  "tokens": "0:we 1:even 2:saw 3:one 4:place 5:where 6:there 7:were 8:giant 9:bugs 10:and 11:they 12:did 13:n't 14:even 15:scare 16:me 17:.",
+  "links": [
+   {
+    "link": "J37.1",
+    "dependent": "8:giant",
+    "head": "7:were",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J37.2",
+    "dependent": "3:one",
+    "head": "4:place",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J37.3",
+    "dependent": "9:bugs",
+    "head": "10:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J37.4",
+    "dependent": "13:n't",
+    "head": "14:even",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J37.5",
+    "dependent": "10:and",
+    "head": "7:were",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J37.6",
+    "dependent": "0:we",
+    "head": "2:saw",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J37.7",
+    "dependent": "1:even",
+    "head": "2:saw",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J37.8",
+    "dependent": "6:there",
+    "head": "7:were",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J37.9",
+    "dependent": "4:place",
+    "head": "7:were",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J37.10",
+    "dependent": "15:scare",
+    "head": "12:did",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J37.11",
+    "dependent": "7:were",
+    "head": "2:saw",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J37.12",
+    "dependent": "11:they",
+    "head": "10:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J37.13",
+    "dependent": "16:me",
+    "head": "15:scare",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J37.14",
+    "dependent": "12:did",
+    "head": "7:were",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J37.15",
+    "dependent": "2:saw",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J37.16",
+    "dependent": "5:where",
+    "head": "6:there",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J37.17",
+    "dependent": "14:even",
+    "head": "12:did",
+    "relation": "SPECIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J38",
+  "text": "they all had so much fun playing together .",
+  "tokens": "0:they 1:all 2:had 3:so 4:much 5:fun 6:playing 7:together 8:.",
+  "links": [
+   {
+    "link": "J38.1",
+    "dependent": "1:all",
+    "head": "2:had",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J38.2",
+    "dependent": "5:fun",
+    "head": "6:playing",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J38.3",
+    "dependent": "4:much",
+    "head": "5:fun",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J38.4",
+    "dependent": "0:they",
+    "head": "2:had",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J38.5",
+    "dependent": "6:playing",
+    "head": "2:had",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J38.6",
+    "dependent": "2:had",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J38.7",
+    "dependent": "7:together",
+    "head": "6:playing",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J38.8",
+    "dependent": "3:so",
+    "head": "4:much",
+    "relation": "SPECIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J39",
+  "text": "when frank died , tim became the ruler .",
+  "tokens": "0:when 1:frank 2:died 3:, 4:tim 5:became 6:the 7:ruler 8:.",
+  "links": [
+   {
+    "link": "J39.1",
+    "dependent": "4:tim",
+    "head": "5:became",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J39.2",
+    "dependent": "6:the",
+    "head": "7:ruler",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J39.3",
+    "dependent": "2:died",
+    "head": "0:when",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J39.4",
+    "dependent": "1:frank",
+    "head": "2:died",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J39.5",
+    "dependent": "7:ruler",
+    "head": "5:became",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J39.6",
+    "dependent": "5:became",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J39.7",
+    "dependent": "0:when",
+    "head": "5:became",
+    "relation": "SUBORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J40",
+  "text": "\" how strange , where is everyone ? \"",
+  "tokens": "0:\" 1:how 2:strange 3:, 4:where 5:is 6:everyone 7:? 8:\"",
+  "links": [
+   {
+    "link": "J40.1",
+    "dependent": "1:how",
+    "head": "2:strange",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J40.2",
+    "dependent": "4:where",
+    "head": "5:is",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J40.3",
+    "dependent": "2:strange",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J40.4",
+    "dependent": "6:everyone",
+    "head": "5:is",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J40.5",
+    "dependent": "5:is",
+    "head": "2:strange",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J41",
+  "text": "Was it a good day for the couple, and what did they find out when they got home?",
+  "tokens": "0:was 1:it 2:a 3:good 4:day 5:for 6:the 7:couple 8:, 9:and 10:what 11:did 12:they 13:find 14:out 15:when 16:they 17:got 18:home 19:?",
+  "links": [
+   {
+    "link": "J41.1",
+    "dependent": "17:got",
+    "head": "15:when",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J41.2",
+    "dependent": "18:home",
+    "head": "17:got",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J41.3",
+    "dependent": "13:find",
+    "head": "11:did",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J41.4",
+    "dependent": "9:and",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J41.5",
+    "dependent": "0:was",
+    "head": "9:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J41.6",
+    "dependent": "2:a",
+    "head": "4:day",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J41.7",
+    "dependent": "11:did",
+    "head": "9:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J41.8",
+    "dependent": "3:good",
+    "head": "4:day",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J41.9",
+    "dependent": "15:when",
+    "head": "11:did",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J41.10",
+    "dependent": "12:they",
+    "head": "11:did",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J41.11",
+    "dependent": "16:they",
+    "head": "17:got",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J41.12",
+    "dependent": "14:out",
+    "head": "15:when",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J41.13",
+    "dependent": "4:day",
+    "head": "0:was",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J41.14",
+    "dependent": "1:it",
+    "head": "0:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J41.15",
+    "dependent": "5:for",
+    "head": "4:day",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J41.16",
+    "dependent": "7:couple",
+    "head": "5:for",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J41.17",
+    "dependent": "6:the",
+    "head": "7:couple",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J41.18",
+    "dependent": "10:what",
+    "head": "11:did",
+    "relation": "SUBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J42",
+  "text": "Where does Bob's mom work?",
+  "tokens": "0:where 1:does 2:bob 3:'s 4:mom 5:work 6:?",
+  "links": [
+   {
+    "link": "J42.1",
+    "dependent": "5:work",
+    "head": "1:does",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J42.2",
+    "dependent": "0:where",
+    "head": "1:does",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J42.3",
+    "dependent": "3:'s",
+    "head": "4:mom",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J42.4",
+    "dependent": "1:does",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J42.5",
+    "dependent": "2:bob",
+    "head": "3:'s",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J42.6",
+    "dependent": "4:mom",
+    "head": "1:does",
+    "relation": "INDIRECT_OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J43",
+  "text": "What time of day did Jeff and Forrest go for a walk?",
+  "tokens": "0:what 1:time 2:of 3:day 4:did 5:jeff 6:and 7:forrest 8:go 9:for 10:a 11:walk 12:?",
+  "links": [
+   {
+    "link": "J43.1",
+    "dependent": "2:of",
+    "head": "1:time",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J43.2",
+    "dependent": "4:did",
+    "head": "8:go",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J43.3",
+    "dependent": "5:jeff",
+    "head": "6:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J43.4",
+    "dependent": "7:forrest",
+    "head": "6:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J43.5",
+    "dependent": "6:and",
+    "head": "8:go",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J43.6",
+    "dependent": "0:what",
+    "head": "1:time",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J43.7",
+    "dependent": "11:walk",
+    "head": "9:for",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J43.8",
+    "dependent": "3:day",
+    "head": "2:of",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J43.9",
+    "dependent": "1:time",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J43.10",
+    "dependent": "10:a",
+    "head": "11:walk",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J43.11",
+    "dependent": "9:for",
+    "head": "8:go",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J43.12",
+    "dependent": "8:go",
+    "head": "1:time",
+    "relation": "SUBORDINATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J44",
+  "text": "What did the children do when they saw the ice cream truck driver pull away from the curb?",
+  "tokens": "0:what 1:did 2:the 3:children 4:do 5:when 6:they 7:saw 8:the 9:ice 10:cream 11:truck 12:driver 13:pull 14:away 15:from 16:the 17:curb 18:?",
+  "links": [
+   {
+    "link": "J44.1",
+    "dependent": "1:did",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J44.2",
+    "dependent": "3:children",
+    "head": "1:did",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J44.3",
+    "dependent": "13:pull",
+    "head": "11:truck",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J44.4",
+    "dependent": "6:they",
+    "head": "4:do",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J44.5",
+    "dependent": "8:the",
+    "head": "9:ice",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J44.6",
+    "dependent": "11:truck",
+    "head": "7:saw",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J44.7",
+    "dependent": "12:driver",
+    "head": "11:truck",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J44.8",
+    "dependent": "15:from",
+    "head": "11:truck",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J44.9",
+    "dependent": "9:ice",
+    "head": "7:saw",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J44.10",
+    "dependent": "7:saw",
+    "head": "4:do",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J44.11",
+    "dependent": "5:when",
+    "head": "4:do",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J44.12",
+    "dependent": "4:do",
+    "head": "1:did",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J44.13",
+    "dependent": "14:away",
+    "head": "11:truck",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J44.14",
+    "dependent": "10:cream",
+    "head": "7:saw",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J44.15",
+    "dependent": "0:what",
+    "head": "1:did",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J44.16",
+    "dependent": "16:the",
+    "head": "17:curb",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J44.17",
+    "dependent": "2:the",
+    "head": "3:children",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J44.18",
+    "dependent": "17:curb",
+    "head": "15:from",
+    "relation": "PREPOSITION"
+   }
+  ]
+ },
+ {
+  "sentence": "J45",
+  "text": "What did Cowboy like to eat when he was hungry?",
+  "tokens": "0:what 1:did 2:cowboy 3:like 4:to 5:eat 6:when 7:he 8:was 9:hungry 10:?",
+  "links": [
+   {
+    "link": "J45.1",
+    "dependent": "3:like",
+    "head": "1:did",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J45.2",
+    "dependent": "1:did",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J45.3",
+    "dependent": "4:to",
+    "head": "3:like",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J45.4",
+    "dependent": "0:what",
+    "head": "1:did",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J45.5",
+    "dependent": "5:eat",
+    "head": "4:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J45.6",
+    "dependent": "7:he",
+    "head": "8:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J45.7",
+    "dependent": "6:when",
+    "head": "3:like",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J45.8",
+    "dependent": "8:was",
+    "head": "6:when",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J45.9",
+    "dependent": "9:hungry",
+    "head": "8:was",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J45.10",
+    "dependent": "2:cowboy",
+    "head": "1:did",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J46",
+  "text": "What did the driver of the ice cream truck do when Greta and Tony got to the corner?",
+  "tokens": "0:what 1:did 2:the 3:driver 4:of 5:the 6:ice 7:cream 8:truck 9:do 10:when 11:greta 12:and 13:tony 14:got 15:to 16:the 17:corner 18:?",
+  "links": [
+   {
+    "link": "J46.1",
+    "dependent": "13:tony",
+    "head": "12:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J46.2",
+    "dependent": "16:the",
+    "head": "17:corner",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J46.3",
+    "dependent": "12:and",
+    "head": "14:got",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J46.4",
+    "dependent": "1:did",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J46.5",
+    "dependent": "15:to",
+    "head": "14:got",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J46.6",
+    "dependent": "10:when",
+    "head": "9:do",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J46.7",
+    "dependent": "7:cream",
+    "head": "1:did",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J46.8",
+    "dependent": "2:the",
+    "head": "3:driver",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J46.9",
+    "dependent": "3:driver",
+    "head": "1:did",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J46.10",
+    "dependent": "14:got",
+    "head": "10:when",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J46.11",
+    "dependent": "9:do",
+    "head": "1:did",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J46.12",
+    "dependent": "5:the",
+    "head": "6:ice",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J46.13",
+    "dependent": "0:what",
+    "head": "1:did",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J46.14",
+    "dependent": "11:greta",
+    "head": "12:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J46.15",
+    "dependent": "8:truck",
+    "head": "9:do",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J46.16",
+    "dependent": "17:corner",
+    "head": "15:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J46.17",
+    "dependent": "6:ice",
+    "head": "4:of",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J46.18",
+    "dependent": "4:of",
+    "head": "3:driver",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J47",
+  "text": "What did Hannah's mother do with the leftovers?",
+  "tokens": "0:what 1:did 2:hannah 3:'s 4:mother 5:do 6:with 7:the 8:leftovers 9:?",
+  "links": [
+   {
+    "link": "J47.1",
+    "dependent": "0:what",
+    "head": "1:did",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J47.2",
+    "dependent": "7:the",
+    "head": "8:leftovers",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J47.3",
+    "dependent": "8:leftovers",
+    "head": "6:with",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J47.4",
+    "dependent": "2:hannah",
+    "head": "3:'s",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J47.5",
+    "dependent": "6:with",
+    "head": "5:do",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J47.6",
+    "dependent": "3:'s",
+    "head": "4:mother",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J47.7",
+    "dependent": "5:do",
+    "head": "1:did",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J47.8",
+    "dependent": "1:did",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J47.9",
+    "dependent": "4:mother",
+    "head": "5:do",
+    "relation": "SUBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J48",
+  "text": "What did Mitch need to get for his mother at the store?",
+  "tokens": "0:what 1:did 2:mitch 3:need 4:to 5:get 6:for 7:his 8:mother 9:at 10:the 11:store 12:?",
+  "links": [
+   {
+    "link": "J48.1",
+    "dependent": "4:to",
+    "head": "1:did",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J48.2",
+    "dependent": "11:store",
+    "head": "9:at",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J48.3",
+    "dependent": "10:the",
+    "head": "11:store",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J48.4",
+    "dependent": "9:at",
+    "head": "5:get",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J48.5",
+    "dependent": "3:need",
+    "head": "1:did",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J48.6",
+    "dependent": "2:mitch",
+    "head": "1:did",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J48.7",
+    "dependent": "1:did",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J48.8",
+    "dependent": "5:get",
+    "head": "4:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J48.9",
+    "dependent": "6:for",
+    "head": "5:get",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J48.10",
+    "dependent": "0:what",
+    "head": "1:did",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J48.11",
+    "dependent": "7:his",
+    "head": "8:mother",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J48.12",
+    "dependent": "8:mother",
+    "head": "6:for",
+    "relation": "PREPOSITION"
+   }
+  ]
+ },
+ {
+  "sentence": "J49",
+  "text": "Who likes to go to the park?",
+  "tokens": "0:who 1:likes 2:to 3:go 4:to 5:the 6:park 7:?",
+  "links": [
+   {
+    "link": "J49.1",
+    "dependent": "1:likes",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J49.2",
+    "dependent": "6:park",
+    "head": "4:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J49.3",
+    "dependent": "3:go",
+    "head": "2:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J49.4",
+    "dependent": "2:to",
+    "head": "1:likes",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J49.5",
+    "dependent": "5:the",
+    "head": "6:park",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J49.6",
+    "dependent": "0:who",
+    "head": "1:likes",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J49.7",
+    "dependent": "4:to",
+    "head": "3:go",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J50",
+  "text": "Why was it dangerous for Snowball to get the ball of yarn?",
+  "tokens": "0:why 1:was 2:it 3:dangerous 4:for 5:snowball 6:to 7:get 8:the 9:ball 10:of 11:yarn 12:?",
+  "links": [
+   {
+    "link": "J50.1",
+    "dependent": "5:snowball",
+    "head": "4:for",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J50.2",
+    "dependent": "0:why",
+    "head": "1:was",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J50.3",
+    "dependent": "11:yarn",
+    "head": "10:of",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J50.4",
+    "dependent": "1:was",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J50.5",
+    "dependent": "6:to",
+    "head": "1:was",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J50.6",
+    "dependent": "7:get",
+    "head": "6:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J50.7",
+    "dependent": "3:dangerous",
+    "head": "1:was",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J50.8",
+    "dependent": "8:the",
+    "head": "9:ball",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J50.9",
+    "dependent": "4:for",
+    "head": "1:was",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J50.10",
+    "dependent": "10:of",
+    "head": "9:ball",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J50.11",
+    "dependent": "2:it",
+    "head": "1:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J50.12",
+    "dependent": "9:ball",
+    "head": "7:get",
+    "relation": "OBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J51",
+  "text": "What did Sally like to do?",
+  "tokens": "0:what 1:did 2:sally 3:like 4:to 5:do 6:?",
+  "links": [
+   {
+    "link": "J51.1",
+    "dependent": "2:sally",
+    "head": "3:like",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J51.2",
+    "dependent": "5:do",
+    "head": "4:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J51.3",
+    "dependent": "4:to",
+    "head": "3:like",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J51.4",
+    "dependent": "0:what",
+    "head": "1:did",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J51.5",
+    "dependent": "3:like",
+    "head": "1:did",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J51.6",
+    "dependent": "1:did",
+    "head": "ROOT",
+    "relation": "ROOT"
+   }
+  ]
+ },
+ {
+  "sentence": "J52",
+  "text": "Who pitched the ball to Sara?",
+  "tokens": "0:who 1:pitched 2:the 3:ball 4:to 5:sara 6:?",
+  "links": [
+   {
+    "link": "J52.1",
+    "dependent": "2:the",
+    "head": "3:ball",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J52.2",
+    "dependent": "5:sara",
+    "head": "4:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J52.3",
+    "dependent": "0:who",
+    "head": "1:pitched",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J52.4",
+    "dependent": "1:pitched",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J52.5",
+    "dependent": "3:ball",
+    "head": "1:pitched",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J52.6",
+    "dependent": "4:to",
+    "head": "3:ball",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J53",
+  "text": "What was on Sarah's shirt?",
+  "tokens": "0:what 1:was 2:on 3:sarah 4:'s 5:shirt 6:?",
+  "links": [
+   {
+    "link": "J53.1",
+    "dependent": "0:what",
+    "head": "1:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J53.2",
+    "dependent": "4:'s",
+    "head": "5:shirt",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J53.3",
+    "dependent": "2:on",
+    "head": "1:was",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J53.4",
+    "dependent": "1:was",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J53.5",
+    "dependent": "5:shirt",
+    "head": "2:on",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J53.6",
+    "dependent": "3:sarah",
+    "head": "2:on",
+    "relation": "PREPOSITION"
+   }
+  ]
+ },
+ {
+  "sentence": "J54",
+  "text": "Why doesn't using the stool work at first?",
+  "tokens": "0:why 1:does 2:n't 3:using 4:the 5:stool 6:work 7:at 8:first 9:?",
+  "links": [
+   {
+    "link": "J54.1",
+    "dependent": "3:using",
+    "head": "1:does",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J54.2",
+    "dependent": "6:work",
+    "head": "3:using",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J54.3",
+    "dependent": "2:n't",
+    "head": "3:using",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J54.4",
+    "dependent": "7:at",
+    "head": "6:work",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J54.5",
+    "dependent": "0:why",
+    "head": "1:does",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J54.6",
+    "dependent": "1:does",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J54.7",
+    "dependent": "8:first",
+    "head": "7:at",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J54.8",
+    "dependent": "4:the",
+    "head": "5:stool",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J54.9",
+    "dependent": "5:stool",
+    "head": "6:work",
+    "relation": "SUBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J55",
+  "text": "What did the students have to write about?",
+  "tokens": "0:what 1:did 2:the 3:students 4:have 5:to 6:write 7:about 8:?",
+  "links": [
+   {
+    "link": "J55.1",
+    "dependent": "0:what",
+    "head": "1:did",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J55.2",
+    "dependent": "5:to",
+    "head": "4:have",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J55.3",
+    "dependent": "3:students",
+    "head": "4:have",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J55.4",
+    "dependent": "6:write",
+    "head": "5:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J55.5",
+    "dependent": "7:about",
+    "head": "4:have",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J55.6",
+    "dependent": "1:did",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J55.7",
+    "dependent": "4:have",
+    "head": "1:did",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J55.8",
+    "dependent": "2:the",
+    "head": "3:students",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "J56",
+  "text": "What was Bob the clown doing when Billy and Sandy got to the fair, and what did they have to do before they could get something from the clown too?",
+  "tokens": "0:what 1:was 2:bob 3:the 4:clown 5:doing 6:when 7:billy 8:and 9:sandy 10:got 11:to 12:the 13:fair 14:, 15:and 16:what 17:did 18:they 19:have 20:to 21:do 22:before 23:they 24:could 25:get 26:something 27:from 28:the 29:clown 30:too 31:?",
+  "links": [
+   {
+    "link": "J56.1",
+    "dependent": "30:too",
+    "head": "25:get",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J56.2",
+    "dependent": "8:and",
+    "head": "2:bob",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J56.3",
+    "dependent": "21:do",
+    "head": "20:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J56.4",
+    "dependent": "10:got",
+    "head": "15:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J56.5",
+    "dependent": "1:was",
+    "head": "2:bob",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J56.6",
+    "dependent": "25:get",
+    "head": "21:do",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J56.7",
+    "dependent": "29:clown",
+    "head": "27:from",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J56.8",
+    "dependent": "19:have",
+    "head": "17:did",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J56.9",
+    "dependent": "13:fair",
+    "head": "11:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J56.10",
+    "dependent": "7:billy",
+    "head": "2:bob",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J56.11",
+    "dependent": "0:what",
+    "head": "2:bob",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J56.12",
+    "dependent": "9:sandy",
+    "head": "10:got",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J56.13",
+    "dependent": "22:before",
+    "head": "21:do",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J56.14",
+    "dependent": "6:when",
+    "head": "2:bob",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J56.15",
+    "dependent": "16:what",
+    "head": "17:did",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J56.16",
+    "dependent": "4:clown",
+    "head": "2:bob",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J56.17",
+    "dependent": "27:from",
+    "head": "26:something",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J56.18",
+    "dependent": "12:the",
+    "head": "13:fair",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J56.19",
+    "dependent": "17:did",
+    "head": "2:bob",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J56.20",
+    "dependent": "3:the",
+    "head": "4:clown",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J56.21",
+    "dependent": "2:bob",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J56.22",
+    "dependent": "20:to",
+    "head": "19:have",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J56.23",
+    "dependent": "15:and",
+    "head": "17:did",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J56.24",
+    "dependent": "24:could",
+    "head": "25:get",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J56.25",
+    "dependent": "26:something",
+    "head": "25:get",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J56.26",
+    "dependent": "23:they",
+    "head": "22:before",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J56.27",
+    "dependent": "5:doing",
+    "head": "2:bob",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J56.28",
+    "dependent": "11:to",
+    "head": "10:got",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J56.29",
+    "dependent": "18:they",
+    "head": "17:did",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J56.30",
+    "dependent": "28:the",
+    "head": "29:clown",
+    "relation": "DESCRIPTION"
+   }
+  ]
+ },
+ {
+  "sentence": "J57",
+  "text": "How did Bobby and his grandmother get back to her school from the Port Authority bus stop?",
+  "tokens": "0:how 1:did 2:bobby 3:and 4:his 5:grandmother 6:get 7:back 8:to 9:her 10:school 11:from 12:the 13:port 14:authority 15:bus 16:stop 17:?",
+  "links": [
+   {
+    "link": "J57.1",
+    "dependent": "13:port",
+    "head": "14:authority",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J57.2",
+    "dependent": "10:school",
+    "head": "8:to",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J57.3",
+    "dependent": "0:how",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J57.4",
+    "dependent": "14:authority",
+    "head": "11:from",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J57.5",
+    "dependent": "5:grandmother",
+    "head": "3:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J57.6",
+    "dependent": "16:stop",
+    "head": "6:get",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J57.7",
+    "dependent": "6:get",
+    "head": "0:how",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J57.8",
+    "dependent": "15:bus",
+    "head": "6:get",
+    "relation": "INDIRECT_OBJECT"
+   },
+   {
+    "link": "J57.9",
+    "dependent": "7:back",
+    "head": "6:get",
+    "relation": "SPECIFICATION"
+   },
+   {
+    "link": "J57.10",
+    "dependent": "12:the",
+    "head": "14:authority",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J57.11",
+    "dependent": "9:her",
+    "head": "10:school",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J57.12",
+    "dependent": "2:bobby",
+    "head": "3:and",
+    "relation": "COORDINATION"
+   },
+   {
+    "link": "J57.13",
+    "dependent": "1:did",
+    "head": "6:get",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J57.14",
+    "dependent": "11:from",
+    "head": "6:get",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J57.15",
+    "dependent": "4:his",
+    "head": "5:grandmother",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J57.16",
+    "dependent": "3:and",
+    "head": "6:get",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J57.17",
+    "dependent": "8:to",
+    "head": "6:get",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J58",
+  "text": "Why does Daddy get mad?",
+  "tokens": "0:why 1:does 2:daddy 3:get 4:mad 5:?",
+  "links": [
+   {
+    "link": "J58.1",
+    "dependent": "0:why",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J58.2",
+    "dependent": "4:mad",
+    "head": "3:get",
+    "relation": "COMPLEMENT"
+   },
+   {
+    "link": "J58.3",
+    "dependent": "2:daddy",
+    "head": "3:get",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J58.4",
+    "dependent": "1:does",
+    "head": "3:get",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J58.5",
+    "dependent": "3:get",
+    "head": "0:why",
+    "relation": "MODIFICATION"
+   }
+  ]
+ },
+ {
+  "sentence": "J59",
+  "text": "What do the boys get to play on at their school next year?",
+  "tokens": "0:what 1:do 2:the 3:boys 4:get 5:to 6:play 7:on 8:at 9:their 10:school 11:next 12:year 13:?",
+  "links": [
+   {
+    "link": "J59.1",
+    "dependent": "12:year",
+    "head": "8:at",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J59.2",
+    "dependent": "11:next",
+    "head": "12:year",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J59.3",
+    "dependent": "7:on",
+    "head": "4:get",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J59.4",
+    "dependent": "4:get",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J59.5",
+    "dependent": "2:the",
+    "head": "3:boys",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J59.6",
+    "dependent": "5:to",
+    "head": "4:get",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J59.7",
+    "dependent": "0:what",
+    "head": "1:do",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J59.8",
+    "dependent": "10:school",
+    "head": "8:at",
+    "relation": "PREPOSITION"
+   },
+   {
+    "link": "J59.9",
+    "dependent": "8:at",
+    "head": "4:get",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J59.10",
+    "dependent": "9:their",
+    "head": "10:school",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J59.11",
+    "dependent": "6:play",
+    "head": "5:to",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J59.12",
+    "dependent": "1:do",
+    "head": "4:get",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J59.13",
+    "dependent": "3:boys",
+    "head": "4:get",
+    "relation": "SUBJECT"
+   }
+  ]
+ },
+ {
+  "sentence": "J60",
+  "text": "What was the huge ride called that Anna told the class about?",
+  "tokens": "0:what 1:was 2:the 3:huge 4:ride 5:called 6:that 7:anna 8:told 9:the 10:class 11:about 12:?",
+  "links": [
+   {
+    "link": "J60.1",
+    "dependent": "2:the",
+    "head": "4:ride",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J60.2",
+    "dependent": "6:that",
+    "head": "1:was",
+    "relation": "SUBORDINATION"
+   },
+   {
+    "link": "J60.3",
+    "dependent": "10:class",
+    "head": "8:told",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J60.4",
+    "dependent": "1:was",
+    "head": "ROOT",
+    "relation": "ROOT"
+   },
+   {
+    "link": "J60.5",
+    "dependent": "5:called",
+    "head": "1:was",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J60.6",
+    "dependent": "9:the",
+    "head": "10:class",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J60.7",
+    "dependent": "4:ride",
+    "head": "1:was",
+    "relation": "OBJECT"
+   },
+   {
+    "link": "J60.8",
+    "dependent": "7:anna",
+    "head": "8:told",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J60.9",
+    "dependent": "3:huge",
+    "head": "4:ride",
+    "relation": "DESCRIPTION"
+   },
+   {
+    "link": "J60.10",
+    "dependent": "0:what",
+    "head": "1:was",
+    "relation": "SUBJECT"
+   },
+   {
+    "link": "J60.11",
+    "dependent": "8:told",
+    "head": "6:that",
+    "relation": "MODIFICATION"
+   },
+   {
+    "link": "J60.12",
+    "dependent": "11:about",
+    "head": "1:was",
+    "relation": "MODIFICATION"
+   }
+  ]
+ }
+]
