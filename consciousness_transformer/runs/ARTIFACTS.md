@@ -206,3 +206,13 @@ round-trip numbers. Report: `dev/reports/NAOMI_DECODER_REFEREE_STAGE_A.md`. Code
 - Headline (test-source sentences the parser fully connects, 393): exact word order 0.72 (cheat lookup baseline 0.43), per-head order 0.92; round trip tree -> text -> tree
   scores 78.5 (parser tree) / 81.8 (encoder tree) overall with final punctuation restored (true-order control 80.5 / 85.5); fragmented sentences 51.4 (control 63.4).
   No referee signal separates good from bad added links to <= 15% wrong at >= 25% acceptance (best: encoder confidence >= q75, 18.9% wrong at 22%).
+
+## NAOMI encoder stage A2 (treebank links for the unknown tops)
+
+Report: `dev/reports/NAOMI_ENCODER_STAGE_A2.md`. Code: `src/naomi/treebank.py`, `scripts/build_treebank_gold.py`, `data/treebank/conversion_table.json` (the table, project data), train/eval extensions in `scripts/train_naomi_encoder.py`, `scripts/eval_naomi_encoder.py`.
+
+- **`runs/naomi_encoder_a2/a2_best.pt`** (10.6 MB; same architecture as stage A main; trained on stage-A gold v7 train + 5,959 EWT train sentences with treebank links for unknown tops; epoch 25) and **`runs/naomi_encoder_a2/a2ctrl_best.pt`** (control: same sentences, parser links only; epoch 38). Load as stage A: `naomi.encoder.NaomiEncoder.load(path)`.
+- `a2_curve.tsv`, `a2ctrl_curve.tsv` (extra columns: treebank-dev UAS/LAS, keep-best score), `ctrl_v1_meanscore/` (discarded first control, curve + log), `eval_{A,A2,A2ctrl}.json`, blind hand-check `handcheck_blind{,_key,_judgments,_result}.json`, `splits.json`, `runs/treebank/stats_{train,dev,test}.json` (counts by source and table rule), logs `runs/naomi_encoder_a2_*.log`, `runs/treebank_build.log`.
+- NOT committed (licensed): `data/ud/` (UD v2.18 files, git-ignored) and `runs/treebank/ewt_*.jsonl.gz`, `runs/treebank/work_*` (converted/parsed text + annotation-derived links). Not artifacts: `*_last.pt`, `prep_cache.pkl`.
+- Licence note: A2 is trained partly on links derived from UD English-EWT annotations (CC BY-SA 4.0; the underlying web texts carry their own copyright). The converted data is not redistributed; `naomi.treebank.fetch` + `scripts/build_treebank_gold.py --split {dev,test,train}` reproduce it. Share-alike attribution: Universal Dependencies English Web Treebank (Silveira et al.; UD v2.18).
+- Headline: on EWT-test pieces the model's head for unknown tops agrees with the converted treebank link 49% (stage A 32%, control 33%); parser-connected gold v7 test UAS/LAS .929/.919 (stage A .936/.926); blind hand-check of added links on the project's own sentences: 35% wrong (stage A 35%), target <=15% not reached.

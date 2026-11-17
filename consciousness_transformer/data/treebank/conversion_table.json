@@ -1,0 +1,452 @@
+{
+ "_doc": "UD -> project relation conversion table (DATA), version 3. Translates another annotation scheme's relation names and structural conventions into the project's tree format; it holds NO words of any language. Rules are matched top to bottom, first match wins. Fields: name = traceability name carried by every converted link; ud = full or base (before ':') deprel, or an internal pseudo-relation made by an operation; dep_upos / head_upos = UPOS lists; dep_feat = 'Key=Val' in the dependent's FEATS. 'ops' are named structural operations applied in 'op_order'. v3 changes vs the feasibility v2: leading conjunction cannot coordinate later conjuncts (coord_lift.first_conjunct_precedes_cc); a leftover conjunction is COORDINATION; relative pronouns get the parser's label (see rules rel_pron_*). Relative-pronoun rules: the project's parser (gold v7) labels subject relative pronouns SUBJECT (who 1060/1511, which 472/759) and object ones OBJECT, so the pronoun is labelled by its role in the relative clause.",
+ "op_order": [
+  "drop_punct",
+  "copula_swap",
+  "phrase_head_swap",
+  "coord_lift"
+ ],
+ "ops": {
+  "drop_punct": {
+   "upos": [
+    "PUNCT"
+   ],
+   "note": "punctuation is not a node in the project format"
+  },
+  "copula_swap": {
+   "marker_rel": "cop",
+   "pseudo_rel": "pred",
+   "move_to_copula_rels": [
+    "nsubj",
+    "csubj",
+    "aux",
+    "mark",
+    "advcl",
+    "expl",
+    "discourse",
+    "vocative",
+    "parataxis",
+    "cop",
+    "dislocated",
+    "orphan"
+   ],
+   "move_conj_if_conjunct_has_rel": [
+    "nsubj",
+    "csubj",
+    "cop"
+   ],
+   "note": "predicate loses head role: the copula becomes head, takes the predicate's own place and relation, and receives its subject/aux/clausal dependents; the predicate becomes its child (label by predicate UPOS via the 'pred' rules)",
+   "conj_rel": "conj"
+  },
+  "phrase_head_swap": [
+   {
+    "name": "adposition_heads_noun",
+    "marker_rel": "case",
+    "pseudo_rel": "case_obj",
+    "bring_up_rels": [
+     "cc"
+    ],
+    "bring_up_conj_if_conjunct_has_marker": true,
+    "note": "case marker becomes head of the phrase and takes its relation to the outer head (chain if several); the old phrase head becomes its child",
+    "conj_rel": "conj",
+    "preconj_rel": "cc:preconj"
+   },
+   {
+    "name": "subordinator_heads_clause",
+    "marker_rel": "mark",
+    "pseudo_rel": "in_mark",
+    "bring_up_rels": [
+     "cc"
+    ],
+    "bring_up_conj_if_conjunct_has_marker": true,
+    "note": "mark becomes head of its clause; the clause head becomes its child",
+    "conj_rel": "conj",
+    "preconj_rel": "cc:preconj"
+   }
+  ],
+  "coord_lift": {
+   "conj_rel": "conj",
+   "cc_rel": "cc",
+   "pseudo_item": "coord_item",
+   "pseudo_asyndeton": "coord_asyn",
+   "note": "the first coordinator (cc) takes the place of the first conjunct in the tree; first conjunct and all conj dependents become its children. Without cc the later conjuncts hang under the first (asyndeton). A coordinator before the first conjunct is never chosen; it stays a child of that conjunct.",
+   "preconj_rel": "cc:preconj",
+   "coordinator_must_follow_first_conjunct": true
+  }
+ },
+ "rules": [
+  {
+   "ud": "root",
+   "label": "ROOT",
+   "name": "R00_root_ROOT"
+  },
+  {
+   "ud": [
+    "nsubj",
+    "nsubj:pass",
+    "csubj"
+   ],
+   "dep_feat": "PronType=Rel",
+   "label": "SUBJECT",
+   "name": "rel_pron_subject_SUBJECT"
+  },
+  {
+   "ud": [
+    "obj",
+    "obl",
+    "obl:unmarked",
+    "nmod"
+   ],
+   "dep_feat": "PronType=Rel",
+   "dep_upos": [
+    "PRON",
+    "DET"
+   ],
+   "label": "OBJECT",
+   "name": "rel_pron_object_OBJECT"
+  },
+  {
+   "ud": [
+    "advmod",
+    "obl:tmod",
+    "obl:npmod"
+   ],
+   "dep_feat": "PronType=Rel",
+   "label": "SPECIFICATION",
+   "name": "rel_pron_adverb_SPECIFICATION"
+  },
+  {
+   "ud": [
+    "xcomp",
+    "advcl",
+    "acl",
+    "acl:relcl",
+    "ccomp",
+    "csubj",
+    "conj",
+    "parataxis"
+   ],
+   "dep_upos": [
+    "PART"
+   ],
+   "label": "MODIFICATION",
+   "name": "R01_xcomp_advcl_P_MODIFICATION"
+  },
+  {
+   "ud": [
+    "nsubj",
+    "csubj",
+    "nsubj:pass",
+    "csubj:pass"
+   ],
+   "label": "SUBJECT",
+   "name": "R02_nsubj_csubj_SUBJECT"
+  },
+  {
+   "ud": "expl",
+   "label": "SPECIFICATION",
+   "name": "R03_expl_SPECIFICATION"
+  },
+  {
+   "ud": "obj",
+   "label": "OBJECT",
+   "name": "R04_obj_OBJECT"
+  },
+  {
+   "ud": "iobj",
+   "label": "INDIRECT_OBJECT",
+   "name": "R05_iobj_INDIRECT_OBJECT"
+  },
+  {
+   "ud": "ccomp",
+   "dep_upos": [
+    "SCONJ"
+   ],
+   "label": "SUBORDINATION",
+   "name": "R06_ccomp_S_SUBORDINATION"
+  },
+  {
+   "ud": "ccomp",
+   "label": "OBJECT",
+   "name": "R07_ccomp_OBJECT"
+  },
+  {
+   "ud": "xcomp",
+   "dep_upos": [
+    "ADJ"
+   ],
+   "label": "COMPLEMENT",
+   "name": "R08_xcomp_A_COMPLEMENT"
+  },
+  {
+   "ud": "xcomp",
+   "label": "OBJECT",
+   "name": "R09_xcomp_OBJECT"
+  },
+  {
+   "ud": "nmod:poss",
+   "dep_upos": [
+    "PART",
+    "ADP"
+   ],
+   "label": "MODIFICATION",
+   "name": "R10_nmod_poss_PA_MODIFICATION"
+  },
+  {
+   "ud": [
+    "det",
+    "det:predet",
+    "amod",
+    "nummod",
+    "nmod:poss"
+   ],
+   "label": "DESCRIPTION",
+   "name": "R11_det_det_predet_DESCRIPTION"
+  },
+  {
+   "ud": "compound:prt",
+   "label": "MODIFICATION",
+   "name": "R12_compound_prt_MODIFICATION"
+  },
+  {
+   "ud": [
+    "compound",
+    "flat",
+    "flat:name",
+    "flat:foreign"
+   ],
+   "label": "DESCRIPTION",
+   "name": "R13_compound_flat_DESCRIPTION"
+  },
+  {
+   "ud": "appos",
+   "label": "APPOSITION",
+   "name": "R14_appos_APPOSITION"
+  },
+  {
+   "ud": [
+    "acl:relcl",
+    "acl",
+    "advcl"
+   ],
+   "dep_upos": [
+    "SCONJ",
+    "PART",
+    "ADP"
+   ],
+   "label": "SUBORDINATION",
+   "name": "R15_acl_relcl_acl_SPA_SUBORDINATION"
+  },
+  {
+   "ud": [
+    "acl:relcl",
+    "acl",
+    "advcl"
+   ],
+   "label": "SUBORDINATION",
+   "name": "R16_acl_relcl_acl_SUBORDINATION"
+  },
+  {
+   "ud": "advmod",
+   "dep_feat": "Polarity=Neg",
+   "label": "MODIFICATION",
+   "name": "R17_advmod_Neg_MODIFICATION"
+  },
+  {
+   "ud": "advmod",
+   "label": "SPECIFICATION",
+   "name": "R18_advmod_SPECIFICATION"
+  },
+  {
+   "ud": [
+    "obl",
+    "obl:tmod",
+    "obl:npmod",
+    "obl:agent",
+    "nmod",
+    "nmod:tmod",
+    "nmod:npmod"
+   ],
+   "dep_upos": [
+    "ADP",
+    "PART"
+   ],
+   "label": "MODIFICATION",
+   "name": "R19_obl_obl_tmod_AP_MODIFICATION"
+  },
+  {
+   "ud": [
+    "obl",
+    "obl:tmod",
+    "obl:npmod",
+    "obl:unmarked"
+   ],
+   "dep_upos": [
+    "NOUN",
+    "PROPN",
+    "NUM",
+    "PRON"
+   ],
+   "label": "OBJECT",
+   "name": "R20_obl_obl_tmod_NPNP_OBJECT"
+  },
+  {
+   "ud": [
+    "obl",
+    "obl:tmod",
+    "obl:npmod",
+    "nmod",
+    "nmod:tmod",
+    "nmod:npmod"
+   ],
+   "label": "SPECIFICATION",
+   "name": "R21_obl_obl_tmod_SPECIFICATION"
+  },
+  {
+   "ud": [
+    "aux",
+    "aux:pass"
+   ],
+   "label": "MODIFICATION",
+   "name": "R22_aux_aux_pass_MODIFICATION"
+  },
+  {
+   "ud": "cop",
+   "label": "MODIFICATION",
+   "name": "R23_cop_MODIFICATION"
+  },
+  {
+   "ud": "cc",
+   "label": "COORDINATION",
+   "name": "R24_cc_COORDINATION"
+  },
+  {
+   "ud": "conj",
+   "label": "COORDINATION",
+   "name": "R25_conj_COORDINATION"
+  },
+  {
+   "ud": "parataxis",
+   "label": "COORDINATION",
+   "name": "R26_parataxis_COORDINATION"
+  },
+  {
+   "ud": "fixed",
+   "label": "MODIFICATION",
+   "name": "R27_fixed_MODIFICATION"
+  },
+  {
+   "ud": [
+    "discourse",
+    "vocative",
+    "dislocated",
+    "list",
+    "orphan",
+    "reparandum",
+    "goeswith",
+    "dep",
+    "clf"
+   ],
+   "label": "MODIFICATION",
+   "name": "R28_discourse_vocative_MODIFICATION"
+  },
+  {
+   "ud": "case_obj",
+   "label": "PREPOSITION",
+   "name": "R29_case_obj_PREPOSITION"
+  },
+  {
+   "ud": "coord_item",
+   "label": "COORDINATION",
+   "name": "R30_coord_item_COORDINATION"
+  },
+  {
+   "ud": "coord_asyn",
+   "label": "COORDINATION",
+   "name": "R31_coord_asyn_COORDINATION"
+  },
+  {
+   "ud": "in_mark",
+   "dep_feat": "VerbForm=Ger",
+   "label": "PREPOSITION",
+   "_note": "gerund clause under a subordinator that behaves like a preposition",
+   "name": "R32_in_mark_Ger_PREPOSITION"
+  },
+  {
+   "ud": "in_mark",
+   "label": "MODIFICATION",
+   "name": "R33_in_mark_MODIFICATION"
+  },
+  {
+   "ud": "pred",
+   "dep_upos": [
+    "ADJ",
+    "VERB",
+    "DET",
+    "NUM"
+   ],
+   "label": "COMPLEMENT",
+   "name": "R34_pred_AVDN_COMPLEMENT"
+  },
+  {
+   "ud": "pred",
+   "dep_upos": [
+    "ADV"
+   ],
+   "label": "SPECIFICATION",
+   "name": "R35_pred_A_SPECIFICATION"
+  },
+  {
+   "ud": "pred",
+   "dep_upos": [
+    "ADP",
+    "SCONJ"
+   ],
+   "label": "MODIFICATION",
+   "name": "R36_pred_AS_MODIFICATION"
+  },
+  {
+   "ud": "pred",
+   "label": "OBJECT",
+   "name": "R37_pred_OBJECT"
+  },
+  {
+   "ud": [
+    "obl",
+    "nmod",
+    "obl:tmod",
+    "obl:agent",
+    "advcl",
+    "acl",
+    "acl:relcl",
+    "ccomp",
+    "xcomp",
+    "conj",
+    "parataxis",
+    "obj",
+    "nsubj",
+    "appos"
+   ],
+   "dep_upos": [
+    "SCONJ",
+    "ADP",
+    "PART"
+   ],
+   "label": "SUBORDINATION",
+   "_note": "fallback for marker nodes that took their clause's relation",
+   "name": "R38_obl_nmod_SAP_SUBORDINATION"
+  }
+ ],
+ "default_label": "MODIFICATION",
+ "root_rel": "root",
+ "root_label": "ROOT",
+ "fetch": {
+  "base_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_English-EWT/r2.18/",
+  "files": {
+   "train": "en_ewt-ud-train.conllu",
+   "dev": "en_ewt-ud-dev.conllu",
+   "test": "en_ewt-ud-test.conllu"
+  },
+  "licence": "CC BY-SA 4.0 (annotations)"
+ }
+}
