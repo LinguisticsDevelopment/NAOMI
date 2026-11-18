@@ -20,7 +20,7 @@ import torch  # noqa: E402
 from naomi import orderer as O  # noqa: E402
 from train_naomi_orderer import fragments_from_items, load_items, tins_from_items  # noqa: E402
 
-BANDS = [("2-4", 2, 4), ("5-8", 5, 8), ("9-12", 9, 12), ("13-15", 13, 15)]
+BANDS = [("2-4", 2, 4), ("5-8", 5, 8), ("9-12", 9, 12), ("13-15", 13, 15), ("16-30", 16, 30)]
 
 
 def frag_metrics(tins, orders):
@@ -43,9 +43,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpts", nargs="+", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--frag-max", type=int, default=15, help="evaluate sizes 2..frag-max (above 15: extra weight on the long tail)")
     ap.add_argument("--threads", type=int, default=4)
     a = ap.parse_args()
     torch.set_num_threads(a.threads)
+    if a.frag_max > 15:
+        O.FRAG_SIZES[:] = list(range(2, a.frag_max + 1))
+        O.FRAG_WEIGHTS[:] = O.FRAG_WEIGHTS[:-4] + [3, 3, 2, 2] + [2] * (a.frag_max - 15)
     by = load_items()
     res = {}
     for spec in a.ckpts:

@@ -290,9 +290,13 @@ def main():
     ap.add_argument("--fragments", action="store_true", help="add gappy fragments to the training mix and select on a fragment dev set")
     ap.add_argument("--frag-per-piece", type=int, default=3)
     ap.add_argument("--init", default=None, help="start from this checkpoint (its config is used)")
+    ap.add_argument("--frag-max", type=int, default=15, help="largest fragment size; sizes above 15 get weight 2 each")
     ap.add_argument("--out-dir", default=None)
     ap.add_argument("--threads", type=int, default=4)
     a = ap.parse_args()
+    if a.frag_max > 15:
+        O.FRAG_SIZES[:] = list(range(2, a.frag_max + 1))
+        O.FRAG_WEIGHTS[:] = O.FRAG_WEIGHTS[:-4] + [3, 3, 2, 2] + [2] * (a.frag_max - 15)
     if a.out_dir:
         OUT = ROOT / a.out_dir
     if a.eval:

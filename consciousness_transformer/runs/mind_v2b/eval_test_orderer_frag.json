@@ -1,0 +1,522 @@
+{
+ "split": "test",
+ "n_items": 1007,
+ "n_reachable": 874,
+ "n_needs_new": 224,
+ "overall": {
+  "cheat: best-overlap sentence": {
+   "n": 1007,
+   "rouge_abstain0": 0.2201559384530839
+  },
+  "baseline: question echo": {
+   "n": 1007,
+   "rouge_abstain0": 0.11568140679649601
+  },
+  "baseline: random story sentence": {
+   "n": 1007,
+   "rouge_abstain0": 0.13606823001445767
+  },
+  "baseline: random-anchor full subtree": {
+   "n": 1007,
+   "rouge_abstain0": 0.07806705315789418
+  },
+  "oracle: best full subtree (by ROUGE, true order)": {
+   "n": 1007,
+   "rouge_abstain0": 0.7570805929803615
+  },
+  "oracle: lemma-F1 pruned subtree (true order)": {
+   "n": 1007,
+   "rouge_abstain0": 0.7518038490663623
+  },
+  "s2b_all: (a) order-only decoder": {
+   "n": 1007,
+   "rouge_abstain0": 0.34905002946619745,
+   "answer_rate": 0.9324726911618669,
+   "rouge_answered_only": 0.3743273478939945
+  },
+  "s2b_all: (b) meaning-only decoder": {
+   "n": 1007,
+   "rouge_abstain0": 0.34266093313860996,
+   "answer_rate": 0.9324726911618669,
+   "rouge_answered_only": 0.3674755694042388
+  },
+  "s2b_all: true word order (no decoder)": {
+   "n": 1007,
+   "rouge_abstain0": 0.372238256572431,
+   "answer_rate": 0.9324726911618669,
+   "rouge_answered_only": 0.39919480763411935
+  }
+ },
+ "by_band": {
+  "<=10": {
+   "cheat: best-overlap sentence": {
+    "n": 35,
+    "rouge_abstain0": 0.10409389756102964
+   },
+   "baseline: question echo": {
+    "n": 35,
+    "rouge_abstain0": 0.12807192700468092
+   },
+   "baseline: random story sentence": {
+    "n": 35,
+    "rouge_abstain0": 0.13897198290841462
+   },
+   "baseline: random-anchor full subtree": {
+    "n": 35,
+    "rouge_abstain0": 0.06768707482993198
+   },
+   "oracle: best full subtree (by ROUGE, true order)": {
+    "n": 35,
+    "rouge_abstain0": 0.8149733796107083
+   },
+   "oracle: lemma-F1 pruned subtree (true order)": {
+    "n": 35,
+    "rouge_abstain0": 0.8113977339187424
+   },
+   "s2b_all: (a) order-only decoder": {
+    "n": 35,
+    "rouge_abstain0": 0.16762774147061718,
+    "answer_rate": 0.9142857142857143,
+    "rouge_answered_only": 0.1833428422334875
+   },
+   "s2b_all: (b) meaning-only decoder": {
+    "n": 35,
+    "rouge_abstain0": 0.16762774147061718,
+    "answer_rate": 0.9142857142857143,
+    "rouge_answered_only": 0.1833428422334875
+   },
+   "s2b_all: true word order (no decoder)": {
+    "n": 35,
+    "rouge_abstain0": 0.18858012242299813,
+    "answer_rate": 0.9142857142857143,
+    "rouge_answered_only": 0.2062595089001542
+   }
+  },
+  "11-20": {
+   "cheat: best-overlap sentence": {
+    "n": 202,
+    "rouge_abstain0": 0.20493958440338036
+   },
+   "baseline: question echo": {
+    "n": 202,
+    "rouge_abstain0": 0.10790997227948285
+   },
+   "baseline: random story sentence": {
+    "n": 202,
+    "rouge_abstain0": 0.13102129406854646
+   },
+   "baseline: random-anchor full subtree": {
+    "n": 202,
+    "rouge_abstain0": 0.08596335080702863
+   },
+   "oracle: best full subtree (by ROUGE, true order)": {
+    "n": 202,
+    "rouge_abstain0": 0.8019877303356412
+   },
+   "oracle: lemma-F1 pruned subtree (true order)": {
+    "n": 202,
+    "rouge_abstain0": 0.8117518402774057
+   },
+   "s2b_all: (a) order-only decoder": {
+    "n": 202,
+    "rouge_abstain0": 0.41027372168018317,
+    "answer_rate": 0.9702970297029703,
+    "rouge_answered_only": 0.4228331213234541
+   },
+   "s2b_all: (b) meaning-only decoder": {
+    "n": 202,
+    "rouge_abstain0": 0.4004107858695528,
+    "answer_rate": 0.9702970297029703,
+    "rouge_answered_only": 0.41266825890637593
+   },
+   "s2b_all: true word order (no decoder)": {
+    "n": 202,
+    "rouge_abstain0": 0.4245398902414976,
+    "answer_rate": 0.9702970297029703,
+    "rouge_answered_only": 0.437536009330523
+   }
+  },
+  "21+": {
+   "cheat: best-overlap sentence": {
+    "n": 688,
+    "rouge_abstain0": 0.2513509672842412
+   },
+   "baseline: question echo": {
+    "n": 688,
+    "rouge_abstain0": 0.12776675380933872
+   },
+   "baseline: random story sentence": {
+    "n": 688,
+    "rouge_abstain0": 0.14985429611773204
+   },
+   "baseline: random-anchor full subtree": {
+    "n": 688,
+    "rouge_abstain0": 0.08349574045856373
+   },
+   "oracle: best full subtree (by ROUGE, true order)": {
+    "n": 688,
+    "rouge_abstain0": 0.7916746175610286
+   },
+   "oracle: lemma-F1 pruned subtree (true order)": {
+    "n": 688,
+    "rouge_abstain0": 0.8207757028875509
+   },
+   "s2b_all: (a) order-only decoder": {
+    "n": 688,
+    "rouge_abstain0": 0.37302326428849003,
+    "answer_rate": 0.9476744186046512,
+    "rouge_answered_only": 0.3936196408442961
+   },
+   "s2b_all: (b) meaning-only decoder": {
+    "n": 688,
+    "rouge_abstain0": 0.36656758555573815,
+    "answer_rate": 0.9476744186046512,
+    "rouge_answered_only": 0.38680751359255805
+   },
+   "s2b_all: true word order (no decoder)": {
+    "n": 688,
+    "rouge_abstain0": 0.4017085045693888,
+    "answer_rate": 0.9476744186046512,
+    "rouge_answered_only": 0.4238887287480667
+   }
+  },
+  "none": {
+   "cheat: best-overlap sentence": {
+    "n": 82,
+    "rouge_abstain0": 0.04544490325095926
+   },
+   "baseline: question echo": {
+    "n": 82,
+    "rouge_abstain0": 0.02813802655642807
+   },
+   "baseline: random story sentence": {
+    "n": 82,
+    "rouge_abstain0": 0.03159306209656495
+   },
+   "baseline: random-anchor full subtree": {
+    "n": 82,
+    "rouge_abstain0": 0.017497666005368187
+   },
+   "oracle: best full subtree (by ROUGE, true order)": {
+    "n": 82,
+    "rouge_abstain0": 0.3314930540861222
+   },
+   "oracle: lemma-F1 pruned subtree (true order)": {
+    "n": 82,
+    "rouge_abstain0": 0.0
+   },
+   "s2b_all: (a) order-only decoder": {
+    "n": 82,
+    "rouge_abstain0": 0.07452574525745256,
+    "answer_rate": 0.7195121951219512,
+    "rouge_answered_only": 0.10357815442561205
+   },
+   "s2b_all: (b) meaning-only decoder": {
+    "n": 82,
+    "rouge_abstain0": 0.07452574525745256,
+    "answer_rate": 0.7195121951219512,
+    "rouge_answered_only": 0.10357815442561205
+   },
+   "s2b_all: true word order (no decoder)": {
+    "n": 82,
+    "rouge_abstain0": 0.07452574525745256,
+    "answer_rate": 0.7195121951219512,
+    "rouge_answered_only": 0.10357815442561205
+   }
+  }
+ },
+ "needs_new_words": {
+  "cheat: best-overlap sentence": {
+   "n": 224,
+   "rouge_abstain0": 0.11872375876005829
+  },
+  "baseline: question echo": {
+   "n": 224,
+   "rouge_abstain0": 0.11717002534591733
+  },
+  "baseline: random story sentence": {
+   "n": 224,
+   "rouge_abstain0": 0.09615441456991948
+  },
+  "baseline: random-anchor full subtree": {
+   "n": 224,
+   "rouge_abstain0": 0.06943823101468492
+  },
+  "oracle: best full subtree (by ROUGE, true order)": {
+   "n": 224,
+   "rouge_abstain0": 0.5083401370083197
+  },
+  "oracle: lemma-F1 pruned subtree (true order)": {
+   "n": 224,
+   "rouge_abstain0": 0.3030259614919905
+  },
+  "s2b_all: (a) order-only decoder": {
+   "n": 224,
+   "rouge_abstain0": 0.1504270723250627,
+   "answer_rate": 0.8705357142857143,
+   "rouge_answered_only": 0.1727982779528925
+  },
+  "s2b_all: (b) meaning-only decoder": {
+   "n": 224,
+   "rouge_abstain0": 0.1487214522282318,
+   "answer_rate": 0.8705357142857143,
+   "rouge_answered_only": 0.17083900153396883
+  },
+  "s2b_all: true word order (no decoder)": {
+   "n": 224,
+   "rouge_abstain0": 0.15712888779017528,
+   "answer_rate": 0.8705357142857143,
+   "rouge_answered_only": 0.18049677366666284
+  }
+ },
+ "reachable_only": {
+  "cheat: best-overlap sentence": {
+   "n": 874,
+   "rouge_abstain0": 0.24159755342100867
+  },
+  "baseline: question echo": {
+   "n": 874,
+   "rouge_abstain0": 0.12005972847981174
+  },
+  "baseline: random story sentence": {
+   "n": 874,
+   "rouge_abstain0": 0.14685335488575307
+  },
+  "baseline: random-anchor full subtree": {
+   "n": 874,
+   "rouge_abstain0": 0.08296247333150913
+  },
+  "oracle: best full subtree (by ROUGE, true order)": {
+   "n": 874,
+   "rouge_abstain0": 0.810108290002232
+  },
+  "oracle: lemma-F1 pruned subtree (true order)": {
+   "n": 874,
+   "rouge_abstain0": 0.8462081490653388
+  },
+  "s2b_all: (a) order-only decoder": {
+   "n": 874,
+   "rouge_abstain0": 0.38709034254862673,
+   "answer_rate": 0.954233409610984,
+   "rouge_answered_only": 0.4056558266037168
+  },
+  "s2b_all: (b) meaning-only decoder": {
+   "n": 874,
+   "rouge_abstain0": 0.3796191861437626,
+   "answer_rate": 0.954233409610984,
+   "rouge_answered_only": 0.3978263413544946
+  },
+  "s2b_all: true word order (no decoder)": {
+   "n": 874,
+   "rouge_abstain0": 0.4130927328925479,
+   "answer_rate": 0.954233409610984,
+   "rouge_answered_only": 0.43290533399051184
+  }
+ },
+ "old3000_subset": {
+  "cheat: best-overlap sentence": {
+   "n": 406,
+   "rouge_abstain0": 0.2427754606463115
+  },
+  "baseline: question echo": {
+   "n": 406,
+   "rouge_abstain0": 0.12184212640024539
+  },
+  "baseline: random story sentence": {
+   "n": 406,
+   "rouge_abstain0": 0.14570270274015404
+  },
+  "baseline: random-anchor full subtree": {
+   "n": 406,
+   "rouge_abstain0": 0.09428045280858716
+  },
+  "oracle: best full subtree (by ROUGE, true order)": {
+   "n": 406,
+   "rouge_abstain0": 0.7650062653558443
+  },
+  "oracle: lemma-F1 pruned subtree (true order)": {
+   "n": 406,
+   "rouge_abstain0": 0.7656616165838056
+  },
+  "s2b_all: (a) order-only decoder": {
+   "n": 406,
+   "rouge_abstain0": 0.38950223631872216,
+   "answer_rate": 0.9507389162561576,
+   "rouge_answered_only": 0.4096836993404176
+  },
+  "s2b_all: (b) meaning-only decoder": {
+   "n": 406,
+   "rouge_abstain0": 0.3789664297526588,
+   "answer_rate": 0.9507389162561576,
+   "rouge_answered_only": 0.3986019960610868
+  },
+  "s2b_all: true word order (no decoder)": {
+   "n": 406,
+   "rouge_abstain0": 0.4145365116270473,
+   "answer_rate": 0.9507389162561576,
+   "rouge_answered_only": 0.43601508735901867
+  }
+ },
+ "n_old3000": 406,
+ "new_items_only": {
+  "cheat: best-overlap sentence": {
+   "n": 601,
+   "rouge_abstain0": 0.20487552911789192
+  },
+  "baseline: question echo": {
+   "n": 601,
+   "rouge_abstain0": 0.11151958956001977
+  },
+  "baseline: random story sentence": {
+   "n": 601,
+   "rouge_abstain0": 0.12955975093520186
+  },
+  "baseline: random-anchor full subtree": {
+   "n": 601,
+   "rouge_abstain0": 0.06711424074827464
+  },
+  "oracle: best full subtree (by ROUGE, true order)": {
+   "n": 601,
+   "rouge_abstain0": 0.7517264781975894
+  },
+  "oracle: lemma-F1 pruned subtree (true order)": {
+   "n": 601,
+   "rouge_abstain0": 0.742442362191018
+  },
+  "s2b_all: (a) order-only decoder": {
+   "n": 601,
+   "rouge_abstain0": 0.32172291468728725,
+   "answer_rate": 0.9201331114808652,
+   "rouge_answered_only": 0.3496482309711748
+  },
+  "s2b_all: (b) meaning-only decoder": {
+   "n": 601,
+   "rouge_abstain0": 0.31813509016805447,
+   "answer_rate": 0.9201331114808652,
+   "rouge_answered_only": 0.345748985878844
+  },
+  "s2b_all: true word order (no decoder)": {
+   "n": 601,
+   "rouge_abstain0": 0.3436640609781312,
+   "answer_rate": 0.9201331114808652,
+   "rouge_answered_only": 0.3734938528894337
+  }
+ },
+ "multi_gold_items": 917,
+ "band_counts": {
+  "<=10": 35,
+  "11-20": 202,
+  "21+": 688,
+  "none": 82
+ },
+ "controls": {
+  "s2b_all": {
+   "wrong_abstain": 0.9463753723932473,
+   "n_wrong": 1007,
+   "shuf_answer_rate": 0.4826216484607746,
+   "shuf_rouge": 0.06127696431254077,
+   "n_shuf": 1007,
+   "severed_abstain": 0.8361469712015889,
+   "empty_abstain": 1.0,
+   "n_severed": 1007,
+   "n_empty": 1007
+  }
+ },
+ "oracle_ceiling_note": "oracle rows use the reference to pick the subtree; they are ceilings, not systems",
+ "tree_and_roundtrip_main": {
+  "a": {
+   "tree_score_answered_mean": 38.03870016510682,
+   "tree_score_abstain0_mean": 35.4700491112565,
+   "n_scored": 939,
+   "roundtrip_share_lt50": 0.22044728434504793,
+   "roundtrip_mean": 73.32698706050708,
+   "roundtrip_fail_share_lt80": 0.5090521831735889,
+   "n_roundtrip": 939,
+   "rt2_pass_rate": 0.5899893503727369,
+   "rt2_threshold": 99,
+   "reason_counts": {
+    "node_extra": 4595,
+    "node_dropped": 1386,
+    "meaning_shift": 1195,
+    "head_changed": 804,
+    "operator_folded_differs": 767,
+    "subtree_moved": 609,
+    "name_mismatch": 307,
+    "relation_changed": 158,
+    "opposite_meaning": 1
+   },
+   "rt2_by_len": {
+    "1-3 words": {
+     "n": 246,
+     "pass_rate": 0.9796747967479674
+    },
+    "4-6 words": {
+     "n": 139,
+     "pass_rate": 0.841726618705036
+    },
+    "7+ words": {
+     "n": 554,
+     "pass_rate": 0.35379061371841153
+    }
+   }
+  },
+  "b": {
+   "tree_score_answered_mean": 37.96617164160327,
+   "tree_score_abstain0_mean": 35.40241824375914,
+   "n_scored": 939,
+   "roundtrip_share_lt50": 0.2215122470713525,
+   "roundtrip_mean": 72.99666458510431,
+   "roundtrip_fail_share_lt80": 0.5133120340788072,
+   "n_roundtrip": 939,
+   "rt2_pass_rate": 0.56975505857295,
+   "rt2_threshold": 99,
+   "reason_counts": {
+    "node_extra": 4598,
+    "node_dropped": 1391,
+    "meaning_shift": 1195,
+    "head_changed": 803,
+    "operator_folded_differs": 765,
+    "subtree_moved": 611,
+    "name_mismatch": 310,
+    "relation_changed": 156,
+    "opposite_meaning": 1
+   },
+   "rt2_by_len": {
+    "1-3 words": {
+     "n": 246,
+     "pass_rate": 0.9512195121951219
+    },
+    "4-6 words": {
+     "n": 139,
+     "pass_rate": 0.8273381294964028
+    },
+    "7+ words": {
+     "n": 554,
+     "pass_rate": 0.33574007220216606
+    }
+   }
+  },
+  "true": {
+   "roundtrip_share_lt50": 0.1703940362087327,
+   "roundtrip_mean": 77.14899333434738,
+   "roundtrip_fail_share_lt80": 0.4504792332268371,
+   "n_roundtrip": 939
+  },
+  "cheat_tree_score_mean": 13.585306856540017
+ },
+ "main": "s2b_all",
+ "word_choice_accuracy": {
+  "s2b_all": {
+   "nodes": 10449,
+   "accuracy": 0.981242224136281,
+   "with_meaning_point": {
+    "n": 10149,
+    "acc": 0.9864026012415016
+   },
+   "no_point_names_or_unlexiconed": {
+    "n": 300,
+    "acc": 0.8066666666666666
+   }
+  }
+ }
+}

@@ -1,0 +1,49 @@
+fragments: train total 288258, dev fragments 5948
+pieces train 288258 (1971084 nodes, 2714085 pairs), dev 3543 in 41s
+params 580417
+/home/user/NAOMI/consciousness_transformer/scripts/train_naomi_orderer.py:203: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tl, tn = tl + float(loss), tn + 1
+  ep 1 batch 0/658 loss 0.070 1s
+  ep 1 batch 100/658 loss 0.064 11s
+  ep 1 batch 200/658 loss 0.071 22s
+  ep 1 batch 300/658 loss 0.073 33s
+  ep 1 batch 400/658 loss 0.070 45s
+  ep 1 batch 500/658 loss 0.059 56s
+  ep 1 batch 600/658 loss 0.075 68s
+epoch 1 76s (total 1.3 min) loss 0.0705 | dev pair 0.9443 heads-right 0.9322 exact 0.7917 | frag {'sentences': 5948, 'exact_order': 0.7703, 'heads': 20093, 'heads_fully_right': 0.9244, 'pairwise_acc': 0.9411, 'kendall_distance': 0.0655} | select 0.9283
+  new best 0.9283 -> frag30_best.pt
+  ep 2 batch 0/658 loss 0.068 0s
+  ep 2 batch 100/658 loss 0.061 12s
+  ep 2 batch 200/658 loss 0.067 23s
+  ep 2 batch 300/658 loss 0.063 34s
+  ep 2 batch 400/658 loss 0.062 45s
+  ep 2 batch 500/658 loss 0.067 56s
+  ep 2 batch 600/658 loss 0.066 66s
+epoch 2 73s (total 2.5 min) loss 0.0685 | dev pair 0.9441 heads-right 0.9318 exact 0.7897 | frag {'sentences': 5948, 'exact_order': 0.768, 'heads': 20093, 'heads_fully_right': 0.9237, 'pairwise_acc': 0.9404, 'kendall_distance': 0.0665} | select 0.9277
+  ep 3 batch 0/658 loss 0.067 0s
+  ep 3 batch 100/658 loss 0.064 11s
+  ep 3 batch 200/658 loss 0.066 21s
+  ep 3 batch 300/658 loss 0.072 32s
+  ep 3 batch 400/658 loss 0.070 43s
+  ep 3 batch 500/658 loss 0.072 54s
+  ep 3 batch 600/658 loss 0.055 65s
+epoch 3 73s (total 3.7 min) loss 0.0666 | dev pair 0.9443 heads-right 0.9316 exact 0.7894 | frag {'sentences': 5948, 'exact_order': 0.7671, 'heads': 20093, 'heads_fully_right': 0.9232, 'pairwise_acc': 0.9405, 'kendall_distance': 0.0669} | select 0.9274
+  ep 4 batch 0/658 loss 0.065 0s
+  ep 4 batch 100/658 loss 0.064 12s
+  ep 4 batch 200/658 loss 0.067 23s
+  ep 4 batch 300/658 loss 0.068 33s
+  ep 4 batch 400/658 loss 0.064 44s
+  ep 4 batch 500/658 loss 0.067 55s
+  ep 4 batch 600/658 loss 0.058 67s
+epoch 4 75s (total 5.0 min) loss 0.0639 | dev pair 0.9447 heads-right 0.9321 exact 0.7886 | frag {'sentences': 5948, 'exact_order': 0.7668, 'heads': 20093, 'heads_fully_right': 0.9236, 'pairwise_acc': 0.9407, 'kendall_distance': 0.0666} | select 0.9279
+  ep 5 batch 0/658 loss 0.058 1s
+  ep 5 batch 100/658 loss 0.052 12s
+  ep 5 batch 200/658 loss 0.059 22s
+  ep 5 batch 300/658 loss 0.066 33s
+  ep 5 batch 400/658 loss 0.063 44s
+  ep 5 batch 500/658 loss 0.065 55s
+  ep 5 batch 600/658 loss 0.055 66s
+epoch 5 74s (total 6.2 min) loss 0.0625 | dev pair 0.9437 heads-right 0.9307 exact 0.7866 | frag {'sentences': 5948, 'exact_order': 0.7641, 'heads': 20093, 'heads_fully_right': 0.9222, 'pairwise_acc': 0.9396, 'kendall_distance': 0.0678} | select 0.9264
+early stop
+done in 6.9 min; best dev heads-right 0.9283
