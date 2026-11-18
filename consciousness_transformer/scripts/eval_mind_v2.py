@@ -72,10 +72,12 @@ def run_model(model, stories, pairs, tab, bs=48):
 def _read_texts(texts):
     """Read decoded strings with the same reader as the references (cached)."""
     have = {}
-    if RB.exists():
-        for line in open(RB, encoding="utf-8"):
-            r = json.loads(line)
-            have[r["k"]] = r
+    for p in (CT / "runs/mind_v2/read_cache/readback.jsonl", CT / "runs/mind_v2/read_cache/roundtrip_reads.jsonl", RB):
+        if p.exists():
+            for line in open(p, encoding="utf-8"):
+                r = json.loads(line)
+                have[r["k"]] = r
+    RB.parent.mkdir(parents=True, exist_ok=True)
     todo = sorted({t for t in texts if t and t not in have})
     if todo:
         print(f"reading back {len(todo)} decoded strings", flush=True)
@@ -94,13 +96,19 @@ def main():
     ap.add_argument("--alllen", default=None, help="stage-1 all-lengths model name for the short-to-long table (default: main)")
     ap.add_argument("--short", default=None, help="name of the short-trained model (for the short-to-long table)")
     ap.add_argument("--no_readback", action="store_true")
+    ap.add_argument("--dir", default="mind_v2", help="run directory under runs/ (mind_v2b: the full FairytaleQA)")
+    ap.add_argument("--rt_thr", default=None, help="roundtrip_<split>.json whose thresholds (declared on val controls) the new round-trip check uses")
     args = ap.parse_args()
+    global OUT, RB
+    OUT = CT / "runs" / args.dir
+    RB = OUT / "read_cache" / "readback.jsonl"
     torch.set_num_threads(4)
     rng = random.Random(0)
     stories = pickle.load(open(OUT / "stories.pkl", "rb"))
     pairs = pickle.load(open(OUT / f"pairs_{args.split}.pkl", "rb"))
     meta = json.load(open(OUT / "items_meta.json"))
-    reads = m2.load_reads([B.CACHE, OUT / "read_cache" / "reads_v2.jsonl"])
+    reads = m2.load_reads([B.CACHE, CT / "runs/mind_v2/read_cache/reads_v2.jsonl", OUT / "read_cache" / "reads_v2.jsonl", OUT / "read_cache" / "reads_v2b.jsonl"])
+    rt_thr = json.load(open(args.rt_thr))["thresholds"]["A"] if args.rt_thr else 99
     vj = json.load(open(OUT / "vocab.json"))
     vocab = m2.Vocab(vj["rels"], vj["poss"])
     tab = m2.SenseTable()
@@ -123,7 +131,7 @@ def main():
                            "band": m2.band_of(t["ans_len"]) if t["ans_len"] is not None else "none",
                            "best_f1": t["best_f1"], "reachable": t["best_f1"] >= m2.ACCEPT_F1,
                            "needs_new": t["ref_missing"] >= 1.0 / 3.0, "ref_missing": t["ref_missing"],
-                           "story": m["story"], "local": m["local"], "explicit": m["explicit"]}
+                           "story": m["story"], "local": m["local"], "explicit": m["explicit"], "old3000": m.get("old3000"), "n_golds": len(m["golds"])}
     skeys = {p["item"]: p["skey"] for p in normal}
 
     # ---- baselines and oracles (text)
@@ -235,26 +243,30 @@ def main():
     reason_counts = {"a": Counter(), "b": Counter(), "true": Counter()}
     for i in rows:
         r = rows[i]
-        ref_t = m1.tree_of(reads, r["reference"])
+        ref_ts = [t for t in (m1.tree_of(reads, g) for g in r["golds"]) if t is not None]
         for tag, key in (("a", f"{M}_text_a"), ("b", f"{M}_text_b"), ("true", f"{M}_true_order_text")):
             if not r.get(f"{M}_answered"):
                 continue
             tt = read_tree(r[key])
-            if tt is None or ref_t is None:
+            if tt is None or not ref_ts:
                 continue
             th = tree_from_dict(r[f"{M}_thinker_tree"])
-            r[f"roundtrip_{tag}"] = score.score_pair(th, tt, usvs).overall
+            r[f"roundtrip_{tag}"] = score.score_pair(th, tt, usvs).overall                       # the OLD check (vs the thinker's tree cut from its sentence)
             if tag == "true":
                 continue
-            ps = score.score_pair(ref_t, tt, usvs)
+            src = read_tree(r[f"{M}_true_order_text"])                                            # NEW check: same words in true order, read as a fragment
+            if src is not None:
+                r[f"rt2_{tag}"] = float(score.score_pair(src, tt, usvs).overall)
+            pss = [score.score_pair(g, tt, usvs) for g in ref_ts]                                  # tree score: max over ALL gold answers
+            ps = max(pss, key=lambda x: x.overall)
             r[f"tree_{tag}"] = ps.overall
             r[f"tree_{tag}_meaning"], r[f"tree_{tag}_shape"] = ps.meaning, ps.shape
             r[f"tree_{tag}_reasons"] = [x["kind"] for x in ps.reasons]
             r[f"tree_{tag}_reason_detail"] = [{k: v for k, v in x.items() if k in ("kind", "reference_token", "candidate_token", "side", "token")} for x in ps.reasons][:8]
             reason_counts[tag].update(x["kind"] for x in ps.reasons)
         ct = m1.tree_of(reads, r["cheat_text"])
-        if ct is not None and ref_t is not None:
-            r["tree_cheat"] = score.score_pair(ref_t, ct, usvs).overall
+        if ct is not None and ref_ts:
+            r["tree_cheat"] = max(score.score_pair(g, ct, usvs).overall for g in ref_ts)
 
     # ---- tables
     def rouge_of(r, key, answered_key=None):
@@ -285,6 +297,9 @@ def main():
     summary = {"split": args.split, "n_items": len(R), "n_reachable": sum(r["reachable"] for r in R), "n_needs_new": sum(r["needs_new"] for r in R),
                "overall": table(R), "by_band": {b: table([r for r in R if r["band"] == b]) for b in BANDS},
                "needs_new_words": table([r for r in R if r["needs_new"]]), "reachable_only": table([r for r in R if r["reachable"]]),
+               "old3000_subset": table([r for r in R if r.get("old3000")]), "n_old3000": sum(bool(r.get("old3000")) for r in R),
+               "new_items_only": table([r for r in R if not r.get("old3000")]),
+               "multi_gold_items": sum(r["n_golds"] > 1 for r in R),
                "band_counts": {b: sum(r["band"] == b for r in R) for b in BANDS}, "controls": stats_wc,
                "oracle_ceiling_note": "oracle rows use the reference to pick the subtree; they are ceilings, not systems"}
     # tree scores / round trip for the main model
@@ -295,9 +310,15 @@ def main():
         rt = [r[f"roundtrip_{tag}"] for r in ans if f"roundtrip_{tag}" in r]
         tsum[tag] = {"tree_score_answered_mean": mean(v), "tree_score_abstain0_mean": sum(v) / max(len(R), 1), "n_scored": len(v),
                      "roundtrip_share_lt50": mean([float(x < 50.0) for x in rt]), "roundtrip_mean": mean(rt), "roundtrip_fail_share_lt80": mean([float(x < 80.0) for x in rt]), "n_roundtrip": len(rt),
+                     "rt2_pass_rate": mean([float(r[f"rt2_{tag}"] >= rt_thr) for r in ans if f"rt2_{tag}" in r]) if tag != "true" else None, "rt2_threshold": rt_thr,
                      "reason_counts": dict(reason_counts[tag].most_common())}
         if tag == "true":
             tsum[tag] = {k: v_ for k, v_ in tsum[tag].items() if k.startswith("roundtrip") or k == "n_roundtrip"}
+    for tag in ("a", "b"):
+        tsum[tag]["rt2_by_len"] = {nm: {"n": len(sel), "pass_rate": mean([float(r[f"rt2_{tag}"] >= rt_thr) for r in sel])} for nm, sel in
+                                   (("1-3 words", [r for r in ans if f"rt2_{tag}" in r and len(r[f"{M}_true_order_text"].split()) <= 3]),
+                                    ("4-6 words", [r for r in ans if f"rt2_{tag}" in r and 4 <= len(r[f"{M}_true_order_text"].split()) <= 6]),
+                                    ("7+ words", [r for r in ans if f"rt2_{tag}" in r and len(r[f"{M}_true_order_text"].split()) >= 7]))}
     cheat_t = [r["tree_cheat"] for r in R if "tree_cheat" in r]
     tsum["cheat_tree_score_mean"] = mean(cheat_t)
     summary["tree_and_roundtrip_main"] = tsum

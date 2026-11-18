@@ -1,0 +1,399 @@
+[
+ {
+  "group": "low",
+  "id": "ft9921",
+  "q": "What happened after the king returned to the cottage?",
+  "golds": [
+   "it was empty, and none could inform his where his bride had gone.",
+   "It was empty"
+  ],
+  "answer": "were so struck with her beauty that fled all else from mind",
+  "p_abs": 0.0,
+  "band": "21+",
+  "best_sentence": "when next you rode up to the cottage , it was empty , and none could inform you whither your bride had gone .",
+  "cheat": "' ' after the ceremony you gave her three rings and a charm with a cross on it , and then put her in a cottage in the forest , thinking to hide the matter securely .",
+  "tree": 19.304132557374054,
+  "reasons": [
+   "meaning_shift",
+   "meaning_shift",
+   "head_changed",
+   "node_dropped",
+   "meaning_shift",
+   "operator_folded_differs",
+   "meaning_shift",
+   "subtree_moved",
+   "meaning_shift",
+   "operator_folded_differs",
+   "head_changed",
+   "node_dropped",
+   "node_dropped",
+   "node_extra",
+   "node_extra",
+   "node_extra",
+   "node_extra",
+   "node_extra",
+   "node_extra"
+  ]
+ },
+ {
+  "group": "low",
+  "id": "ft10190",
+  "q": "Where did Andrew discover the boat and his brother?",
+  "golds": [
+   "far out",
+   "Far out darting for land"
+  ],
+  "answer": "the island",
+  "p_abs": 0.0,
+  "band": "11-20",
+  "best_sentence": "then he discovered him far out , darting for land like a sea - gull .",
+  "cheat": "when andrew awoke he found himself alone ; and he saw neither brother nor boat , until he came to the highest point of the island .",
+  "tree": 35.33628243687767,
+  "reasons": [
+   "meaning_shift",
+   "operator_folded_differs",
+   "node_dropped"
+  ]
+ },
+ {
+  "group": "low",
+  "id": "ft9964",
+  "q": "What happened after the Old Woman touched the pig on the snout, ears, and tail?",
+  "golds": [
+   "The pig was cured.",
+   "The pig was healthy again.",
+   "The beast jumped"
+  ],
+  "answer": "like fingers into it",
+  "p_abs": 0.0,
+  "band": "21+",
+  "best_sentence": "no sooner had she done so than up the beast jumped , and , with a grunt of contentment , ran off to its trough to look for its breakfast .",
+  "cheat": "she took the cork out , and dropped one of her long lady - like fingers into it ; then she touched the pig on the snout and on his ears , and on the tip of his curly tail .",
+  "tree": 16.983340994051286,
+  "reasons": [
+   "meaning_shift",
+   "node_dropped",
+   "node_extra",
+   "node_extra",
+   "node_extra"
+  ]
+ },
+ {
+  "group": "low",
+  "id": "ft10000",
+  "q": "How did the Prince feel when he found an old woman, who begged him to help her out of the ditch?",
+  "golds": [
+   "astonished",
+   "surprised",
+   "shocked"
+  ],
+  "answer": "astonishment",
+  "p_abs": 0.0,
+  "band": "none",
+  "best_sentence": "a young prince was riding one day through a meadow that stretched for miles in front of him , when he came to a deep open ditch .",
+  "cheat": "to his astonishment he found an old woman , who begged him to help her out of the ditch .",
+  "tree": 69.08010076963076,
+  "reasons": [
+   "meaning_shift"
+  ]
+ },
+ {
+  "group": "low",
+  "id": "ft9586",
+  "q": "How did the three tailors feel after they saw the bannock?",
+  "golds": [
+   "frightened",
+   "scared",
+   "afraid",
+   "Frightened",
+   "Afraid"
+  ],
+  "answer": "fright",
+  "p_abs": 0.0,
+  "band": "none",
+  "best_sentence": "now , it chanced that this house belonged to a tailor , and he and his two apprentices were sitting cross - legged on the top of a big table by the window , sewing away with all their might , while the tailor 's wife was sitting beside the fire carding lint .",
+  "cheat": "when the wee bannock came trundling across the floor , all three tailors got such a fright that they jumped down from the table and hid behind the master tailor 's wife .",
+  "tree": 91.3651989451042,
+  "reasons": [
+   "meaning_shift"
+  ]
+ },
+ {
+  "group": "low",
+  "id": "ft10339",
+  "q": "How did Molo look when he flew up the high wall?",
+  "golds": [
+   "like a hawk"
+  ],
+  "answer": "drew his dagger",
+  "p_abs": 0.0,
+  "band": "<=10",
+  "best_sentence": "thence he looked about him like a hawk .",
+  "cheat": "but molo drew his dagger and flew up the high wall .",
+  "tree": 51.36037456489669,
+  "reasons": [
+   "meaning_shift",
+   "meaning_shift",
+   "operator_folded_differs"
+  ]
+ },
+ {
+  "group": "low",
+  "id": "ft10423",
+  "q": "How did the wife and wife's daughter treat the man's daughter?",
+  "golds": [
+   "badly",
+   "terribly",
+   "poorly"
+  ],
+  "answer": "it is all the more that she should go and get the axe",
+  "p_abs": 0.0,
+  "band": "none",
+  "best_sentence": "but the wife answered : 'if your daughter is wet already , it is all the more reason that she should go and get the axe .",
+  "cheat": "but the wife answered : 'if your daughter is wet already , it is all the more reason that she should go and get the axe .",
+  "tree": 9.090909090909092,
+  "reasons": [
+   "meaning_shift",
+   "node_extra",
+   "node_extra",
+   "node_extra",
+   "node_extra",
+   "node_extra",
+   "node_extra",
+   "node_extra",
+   "node_extra",
+   "node_extra"
+  ]
+ },
+ {
+  "group": "low",
+  "id": "ft10180",
+  "q": "How were Andrew's feelings about being capsized different from how other people would feel?",
+  "golds": [
+   "Other people would be scared or upset.",
+   "Andrew still felt well even in danger.",
+   "he felt lucky and not scared"
+  ],
+  "answer": "too rare",
+  "p_abs": 0.003,
+  "band": "21+",
+  "best_sentence": "the other , lucky andrew , was wild and high spirited , but always good natured , and no matter how badly off he might be , he would always insist that he had been born under a lucky star .",
+  "cheat": "the other , lucky andrew , was wild and high spirited , but always good natured , and no matter how badly off he might be , he would always insist that he had been born under a lucky star .",
+  "tree": 16.666666666666668,
+  "reasons": [
+   "meaning_shift",
+   "operator_folded_differs",
+   "node_dropped",
+   "node_dropped",
+   "node_dropped",
+   "node_dropped"
+  ]
+ },
+ {
+  "group": "low",
+  "id": "ft10440",
+  "q": "Who governed Japan long ago?",
+  "golds": [
+   "Hohodemi"
+  ],
+  "answer": "the fourth mikoto",
+  "p_abs": 0.0,
+  "band": "21+",
+  "best_sentence": "long , long ago japan was governed by hohodemi , the fourth mikoto ( or augustness ) in descent from the illustrious amaterasu , the sun goddess .",
+  "cheat": "long , long ago japan was governed by hohodemi , the fourth mikoto ( or augustness ) in descent from the illustrious amaterasu , the sun goddess .",
+  "tree": 51.01100286299702,
+  "reasons": [
+   "name_mismatch",
+   "operator_folded_differs",
+   "node_extra"
+  ]
+ },
+ {
+  "group": "low",
+  "id": "ft10475",
+  "q": "Where did Ryn Jin live?",
+  "golds": [
+   "Ryn Gu"
+  ],
+  "answer": "you",
+  "p_abs": 0.001,
+  "band": "21+",
+  "best_sentence": "\" you had better go down to ryn gu and tell ryn jin , the dragon king of the sea , what your trouble is and ask him to find the hook for you .",
+  "cheat": "\" you had better go down to ryn gu and tell ryn jin , the dragon king of the sea , what your trouble is and ask him to find the hook for you .",
+  "tree": 33.333333333333336,
+  "reasons": [
+   "name_mismatch",
+   "node_dropped"
+  ]
+ },
+ {
+  "group": "abstain",
+  "id": "ft9683",
+  "q": "How will the princess feel when the king fulfills her request?",
+  "golds": [
+   "surprised",
+   "shocked",
+   "upset",
+   "scared"
+  ],
+  "answer": null,
+  "p_abs": 1.0,
+  "band": "none",
+  "best_sentence": "besides these , i want a cloak made of a thousand different kinds of skin ; every animal in your kingdom must give a bit of his skin to it . '",
+  "cheat": "at last , when all was ready , the king commanded the cloak to be brought to him , and he spread it out before the princess , and said , 'tomorrow shall be your wedding-day . '",
+  "tree": null,
+  "reasons": null
+ },
+ {
+  "group": "abstain",
+  "id": "ft10371",
+  "q": "What did the lady do after she could not wake Ian up?",
+  "golds": [
+   "gave it up, and lifting his arm, wrote her name across the side",
+   "Wrote her name across the side"
+  ],
+  "answer": null,
+  "p_abs": 0.476,
+  "band": "21+",
+  "best_sentence": "a sad look came on her face , as she saw it was no use , and at last she gave it up , and lifting his arm , wrote her name across the side -- 'the daughter of the king of the town under the waves .",
+  "cheat": "nothing could waken him , not even the sound of sweetest music , nor the touch of a lady who bent over him .",
+  "tree": null,
+  "reasons": null
+ },
+ {
+  "group": "abstain",
+  "id": "ft10218",
+  "q": "How did the fiddler feel as he played merrily?",
+  "golds": [
+   "tired",
+   "exhausted",
+   "excitement"
+  ],
+  "answer": null,
+  "p_abs": 0.592,
+  "band": "none",
+  "best_sentence": "the fiddler knew neither rest nor repose , and did not pass his cap , but played merrily on with his left hand , and beat time with his foot , until he was dripping with sweat , and the fiddle was hidden by the dust and smoke .",
+  "cheat": "the fiddler knew neither rest nor repose , and did not pass his cap , but played merrily on with his left hand , and beat time with his foot , until he was dripping with sweat , and the fiddle was hid",
+  "tree": null,
+  "reasons": null
+ },
+ {
+  "group": "abstain",
+  "id": "ft9731",
+  "q": "How did the man's right cheek feel after the wen was removed?",
+  "golds": [
+   "as smooth as his left"
+  ],
+  "answer": null,
+  "p_abs": 0.796,
+  "band": "21+",
+  "best_sentence": "he put up his hand to feel if any scar remained , but found that his right cheek was as smooth as his left .",
+  "cheat": "he put up his hand to feel if any scar remained , but found that his right cheek was as smooth as his left .",
+  "tree": null,
+  "reasons": null
+ },
+ {
+  "group": "abstain",
+  "id": "ft9952",
+  "q": "How did the widowed Mistress feel after she saw her dying pig?",
+  "golds": [
+   "sad",
+   "upset",
+   "worried",
+   "Despair"
+  ],
+  "answer": null,
+  "p_abs": 0.999,
+  "band": "none",
+  "best_sentence": "but the song was quickly changed into a cry of despair when she reached the pig - stye , for there lay her cherished pig on its back , with its legs in the air and its eyes shut , just as if it were going to breathe its last breath .",
+  "cheat": "but the song was quickly changed into a cry of despair when she reached the pig - stye , for there lay her cherished pig on its back , with its legs in the air and its eyes shut , just as if it were g",
+  "tree": null,
+  "reasons": null
+ },
+ {
+  "group": "abstain",
+  "id": "ft10378",
+  "q": "How did Ian feel after he realized he missed meeting the lady for the second time?",
+  "golds": [
+   "sad",
+   "upset",
+   "unhappy",
+   "Heart broken"
+  ],
+  "answer": null,
+  "p_abs": 1.0,
+  "band": "none",
+  "best_sentence": "at this the fisher 's son felt the cold creeping up to his heart , yet he knew the fault had not been his that sleep had overtaken him .",
+  "cheat": "as soon as the lady had departed the fisher 's son awoke , and the dark lad told him of her visit , and how he would never see her as long as he lived .",
+  "tree": null,
+  "reasons": null
+ },
+ {
+  "group": "abstain",
+  "id": "ft9701",
+  "q": "How did the man feel about being outside?",
+  "golds": [
+   "happy",
+   "content",
+   "comfortable",
+   "joyful",
+   "peaceful"
+  ],
+  "answer": null,
+  "p_abs": 1.0,
+  "band": "none",
+  "best_sentence": "one day the firewood gave out in his kitchen , so , as his wife wanted some at once , the old man took his ax and set out for the woods up among the hills not very far from his home .",
+  "cheat": "one day the firewood gave out in his kitchen , so , as his wife wanted some at once , the old man took his ax and set out for the woods up among the hills not very far from his home .",
+  "tree": null,
+  "reasons": null
+ },
+ {
+  "group": "abstain",
+  "id": "ft10394",
+  "q": "What happened after Ian won the horse-race again?",
+  "golds": [
+   "He left the prize unclaimed.",
+   "All the people in the kingdom were gathered to see the race"
+  ],
+  "answer": null,
+  "p_abs": 0.828,
+  "band": "21+",
+  "best_sentence": "but again he left the prize unclaimed , and so it happened on the third day , when it seemed as if all the people in the kingdom were gathered to see the race , for they were filled with curiosity to know who the winner could be .",
+  "cheat": "but again he left the prize unclaimed , and so it happened on the third day , when it seemed as if all the people in the kingdom were gathered to see the race , for they were filled with curiosity to ",
+  "tree": null,
+  "reasons": null
+ },
+ {
+  "group": "abstain",
+  "id": "ft9755",
+  "q": "How did the Islanders feel about Snorro?",
+  "golds": [
+   "fear",
+   "Fear"
+  ],
+  "answer": null,
+  "p_abs": 1.0,
+  "band": "21+",
+  "best_sentence": "and he would not attend to the country people who came to seek his help , unless they bowed themselves humbly before him and spoke to him as if he were a king .",
+  "cheat": "he was also the possessor of a wonderful leathern - covered book , clasped with clasps of brass , over which he would pore for hours together , and out of which he would tell the simple islanders thei",
+  "tree": null,
+  "reasons": null
+ },
+ {
+  "group": "abstain",
+  "id": "ft9629",
+  "q": "How did the king's daughter look?",
+  "golds": [
+   "just as beautiful as her dead mother",
+   "had just such golden hair",
+   "she was exactly like her mother"
+  ],
+  "answer": null,
+  "p_abs": 0.521,
+  "band": "21+",
+  "best_sentence": "now , the king had a daughter , who was just as beautiful as her dead mother , and had just such golden hair .",
+  "cheat": "but when the princess heard of her father 's decision , she was not at all pleased , and said to him , 'before i do your bidding , i must have three dresses ; one as golden as the sun , one as silver ",
+  "tree": null,
+  "reasons": null
+ }
+]

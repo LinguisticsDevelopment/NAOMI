@@ -43,7 +43,7 @@ def load_items(path) -> List[dict]:
             continue
         out.append({"id": f"ft{len(out)}", "story": m["story_id"], "split": m["split"], "context": list(r["context"]),
                     "question": r["question"], "answer": r["answer_text"], "golds": golds,
-                    "local": m.get("local_or_sum"), "explicit": m.get("ex_or_im")})
+                    "local": m.get("local_or_sum"), "explicit": m.get("ex_or_im"), "old3000": m.get("in_old_3000")})
     return out
 
 
@@ -659,19 +659,26 @@ def _job(job):
     return job["skey"], arr, out
 
 
-def build_items_stage(args, B, out_dir):
+def build_items_stage(args, B, out_dir, items_path=None, base_caches=None):
     import multiprocessing as mp
     import pickle
     import random
     import time
     from pathlib import Path
-    cache2 = Path(out_dir) / "read_cache" / "reads_v2.jsonl"
-    paths = [B.CACHE, cache2]
+    if base_caches is not None:          # v2b: v1 cache + v2 cache + the new cache
+        paths = list(base_caches) + [Path(out_dir) / "read_cache" / "reads_v2b.jsonl"]
+    else:
+        paths = [B.CACHE, Path(out_dir) / "read_cache" / "reads_v2.jsonl"]
     reads = load_reads(paths)
     vocab = Vocab.from_reads(reads)
+    old_vj = Path(out_dir).parent / "mind_v2" / "vocab.json"
+    if base_caches is not None and old_vj.exists():        # v2b: keep the v2 ids first so the v2 checkpoint stays loadable
+        ov = json.load(open(old_vj))
+        vocab = Vocab(list(ov["rels"]) + sorted(set(vocab.rels) - set(ov["rels"])), list(ov["poss"]) + sorted(set(vocab.poss) - set(ov["poss"])))
+        print(f"vocab: {len(vocab.rels)} rels ({len(ov['rels'])} in v2), {len(vocab.poss)} pos ({len(ov['poss'])} in v2)", flush=True)
     vj = Path(out_dir) / "vocab.json"
     json.dump(vocab.to_json(), open(vj, "w"))
-    items = load_items(B.FT)
+    items = load_items(items_path or B.FT)
     rng = random.Random(0)
     by_split = {}
     for it in items:
@@ -716,6 +723,6 @@ def build_items_stage(args, B, out_dir):
         ps = [p for p in pairs if id2split[p["item"]] == sp]
         pickle.dump(ps, open(Path(out_dir) / f"pairs_{sp}.pkl", "wb"))
         print(sp, len(ps), Counter(p["kind"] for p in ps), flush=True)
-    json.dump({it["id"]: {k: it[k] for k in ("split", "story", "question", "answer", "golds", "local", "explicit")} | {"context_key": ctx_ids[tuple(it["context"])]} for it in items},
+    json.dump({it["id"]: {k: it[k] for k in ("split", "story", "question", "answer", "golds", "local", "explicit", "old3000")} | {"context_key": ctx_ids[tuple(it["context"])]} for it in items},
               open(Path(out_dir) / "items_meta.json", "w"))
     print("done", time.time() - t0, flush=True)

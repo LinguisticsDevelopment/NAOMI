@@ -1,0 +1,154 @@
+reading 1791 strings
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+{
+ "split": "test",
+ "model": "s2b_all",
+ "n_answered": 388,
+ "n_multiword": 339,
+ "thresholds": {
+  "A": 99,
+  "C": 100,
+  "B": 0.0
+ },
+ "pass_rates": {
+  "true": {
+   "n": 388,
+   "A": {
+    "pass_rate": 1.0,
+    "n": 388
+   },
+   "B": {
+    "pass_rate": 1.0,
+    "n": 339
+   },
+   "C": {
+    "pass_rate": 1.0,
+    "n": 388
+   },
+   "A_and_B": {
+    "pass_rate": 1.0,
+    "n": 388
+   }
+  },
+  "a": {
+   "n": 388,
+   "A": {
+    "pass_rate": 0.6675257731958762,
+    "n": 388
+   },
+   "B": {
+    "pass_rate": 0.5811209439528023,
+    "n": 339
+   },
+   "C": {
+    "pass_rate": 0.7153846153846154,
+    "n": 130
+   },
+   "A_and_B": {
+    "pass_rate": 0.6262886597938144,
+    "n": 388
+   }
+  },
+  "b": {
+   "n": 388,
+   "A": {
+    "pass_rate": 0.6288659793814433,
+    "n": 388
+   },
+   "B": {
+    "pass_rate": null,
+    "n": 0
+   },
+   "C": {
+    "pass_rate": 0.6923076923076923,
+    "n": 130
+   },
+   "A_and_B": {
+    "pass_rate": 0.6288659793814433,
+    "n": 388
+   }
+  },
+  "shuffle": {
+   "n": 339,
+   "A": {
+    "pass_rate": 0.05309734513274336,
+    "n": 339
+   },
+   "B": {
+    "pass_rate": 0.0058997050147492625,
+    "n": 339
+   },
+   "C": {
+    "pass_rate": 0.0,
+    "n": 114
+   },
+   "A_and_B": {
+    "pass_rate": 0.0058997050147492625,
+    "n": 339
+   }
+  },
+  "adjswap": {
+   "n": 339,
+   "A": {
+    "pass_rate": 0.12979351032448377,
+    "n": 339
+   },
+   "B": {
+    "pass_rate": 0.23893805309734514,
+    "n": 339
+   },
+   "C": {
+    "pass_rate": 0.017543859649122806,
+    "n": 114
+   },
+   "A_and_B": {
+    "pass_rate": 0.02654867256637168,
+    "n": 339
+   }
+  },
+  "wordswap": {
+   "n": 339,
+   "A": {
+    "pass_rate": 0.02359882005899705,
+    "n": 339
+   },
+   "B": {
+    "pass_rate": null,
+    "n": 0
+   },
+   "C": {
+    "pass_rate": 0.008771929824561403,
+    "n": 114
+   },
+   "A_and_B": {
+    "pass_rate": 0.02359882005899705,
+    "n": 339
+   }
+  },
+  "drop": {
+   "n": 339,
+   "A": {
+    "pass_rate": 0.0029498525073746312,
+    "n": 339
+   },
+   "B": {
+    "pass_rate": null,
+    "n": 0
+   },
+   "C": {
+    "pass_rate": 0.0,
+    "n": 114
+   },
+   "A_and_B": {
+    "pass_rate": 0.0029498525073746312,
+    "n": 339
+   }
+  }
+ },
+ "old_check": {
+  "share_lt80_a": 0.4484536082474227,
+  "share_lt80_true_order": 0.35309278350515466,
+  "n": 388
+ }
+}
