@@ -1,0 +1,26 @@
+{
+ "low": {
+  "ft9921": "wrong span",
+  "ft10190": "wrong span",
+  "ft9964": "wrong span",
+  "ft10000": "correct, metric miss (astonishment vs astonished)",
+  "ft9586": "correct, metric miss (fright vs frightened)",
+  "ft10339": "wrong span",
+  "ft10423": "answer not a span (implicit; a spurious sentence was picked)",
+  "ft10180": "answer not a span (inference)",
+  "ft10440": "wrong span, near miss (right sentence, appositive instead of the name; same person)",
+  "ft10475": "wrong span (right sentence, a pronoun node)"
+ },
+ "abstain": {
+  "ft9683": "answer not a span (feeling, unstated)",
+  "ft10371": "answer verbatim in sentence (wrong abstain, p=0.476)",
+  "ft10218": "answer not a span (tired; unstated)",
+  "ft9731": "answer verbatim in sentence (wrong abstain, p=0.796)",
+  "ft9952": "answer word 'despair' in sentence (wrong abstain, p=0.999)",
+  "ft10378": "answer not a span (feeling, unstated)",
+  "ft9701": "answer not a span (feeling, unstated)",
+  "ft10394": "answer verbatim in sentence (wrong abstain, p=0.828)",
+  "ft9755": "answer not a span (feeling, unstated)",
+  "ft9629": "answer verbatim in sentence (wrong abstain, p=0.521)"
+ }
+}

@@ -232,3 +232,10 @@ Report: `dev/reports/MIND_V1.md`. Code: `src/naomi/mind_v1.py`, `src/naomi/mind.
 Report: `dev/reports/MIND_V2.md`. Code: `src/naomi/mind_v2.py`, `scripts/{build_mind_v2_data,train_mind_v2,eval_mind_v2}.py`, `tests/test_mind_v2.py`.
 - **`runs/mind_v2/thinker_s2b_all_best.pt`** -- THE thinker (stage 2, all lengths; test ROUGE-L 0.326). Also `thinker_s1_all_best.pt` (stage 1), `thinker_s2_all_best.pt`, `thinker_s1_short_best.pt` (short-to-long comparison). `vocab.json`; curves, logs, `eval_{val,test}.json`, `eval_rows_*.jsonl`, hand-read files.
 - NOT committed (regenerable): `stories.pkl` (72 MB), `pairs_*.pkl`, `read_cache/`.
+
+## Mind v2b (full FairytaleQA, new round-trip check) — 2026-11-18
+
+Report: `dev/reports/MIND_V2B.md`. Code: `src/naomi/roundtrip.py`, `scripts/{fetch_fairytaleqa_full,build_fairytaleqa_full_items,roundtrip_controls}.py`, `--dir mind_v2b` / `--full` options of the v2 build/train/eval scripts, `tests/test_roundtrip.py`.
+- **`runs/mind_v2b/thinker_s2b_all_best.pt`** -- THE thinker for the full data (test ROUGE-L 0.348 on the official 23-story test split; v2 checkpoint 0.301 on the same items). Also `thinker_s1_all_best.pt`, `thinker_s1_short_best.pt`; `vocab.json`, curves, logs, `eval_{val,test}.json`, `eval_handread_20*.json`, `roundtrip_test.json`.
+- `runs/mind_v2/roundtrip_{val,test}.json`: round-trip check thresholds (declared on val) and pass rates for the v2 model.
+- NOT committed: `read_cache/` (158 MB), `stories.pkl`, `pairs_*.pkl`, raw `data/fairytaleqa_full/*.json` (licence: research use only; regenerate with `scripts/fetch_fairytaleqa_full.py`).

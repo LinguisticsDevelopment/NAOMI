@@ -38,3 +38,5 @@ data/k12/
 
 # downloaded treebanks (licensed data; fetched by script, never committed)
 data/ud/
+data/fairytaleqa_full/*
+!data/fairytaleqa_full/SOURCE.md

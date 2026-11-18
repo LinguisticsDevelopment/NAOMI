@@ -19,16 +19,27 @@ sys.path.insert(0, str(CT / "scripts"))
 RUNS = CT / "runs"
 OUT = RUNS / "mind_v2"
 CACHE2 = OUT / "read_cache" / "reads_v2.jsonl"
+V2B = RUNS / "mind_v2b"                                  # full FairytaleQA (scripts/build_fairytaleqa_full_items.py)
+CACHE_B = V2B / "read_cache" / "reads_v2b.jsonl"
+ITEMS_B = V2B / "items_full.jsonl"
 
 
 def stage_read(args):
     import build_mind_data as B
     from naomi import mind_v2 as m2
-    items = m2.load_items(B.FT)
-    have = set(B.load_reads())
+    global CACHE2
+    if args.full:
+        items = m2.load_items(ITEMS_B)
+        have = set(m2.load_reads([B.CACHE, CACHE2]))
+        CACHE2 = CACHE_B
+    else:
+        items = m2.load_items(B.FT)
+        have = set(B.load_reads())
     seen, todo = set(), []
     for it in items:
-        for s in list(it["context"]) + [it["question"], it["answer"]]:
+        # train items: first answer only (the training target); val/test: every gold answer (tree score takes the max)
+        golds = [it["answer"]] if (it["split"] == "train" or not args.full) else it["golds"]
+        for s in list(it["context"]) + [it["question"]] + golds:
             if s and s not in have and s not in seen:
                 seen.add(s)
                 todo.append(s)
@@ -56,13 +67,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("stage", choices=["read", "items"])
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--full", action="store_true", help="Mind v2b: the full FairytaleQA items, cache and outputs in runs/mind_v2b")
     args = ap.parse_args()
     if args.stage == "read":
         stage_read(args)
     else:
         import build_mind_data as B
         from naomi import mind_v2 as m2
-        m2.build_items_stage(args, B, OUT)
+        if args.full:
+            m2.build_items_stage(args, B, V2B, items_path=ITEMS_B, base_caches=[B.CACHE, CACHE2])
+        else:
+            m2.build_items_stage(args, B, OUT)
 
 
 if __name__ == "__main__":

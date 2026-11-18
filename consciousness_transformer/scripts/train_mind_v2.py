@@ -278,8 +278,12 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--init", default=None)
     ap.add_argument("--tag", default="s1_all")
+    ap.add_argument("--dir", default="mind_v2", help="run directory under runs/ (mind_v2b for the full FairytaleQA)")
+    ap.add_argument("--threads", type=int, default=4)
     args = ap.parse_args()
-    torch.set_num_threads(4)
+    global OUT
+    OUT = CT / "runs" / args.dir
+    torch.set_num_threads(args.threads)
     stories, pairs, meta, vocab = load_all()
     tab = m2.SenseTable()
     (stage1 if args.stage == 1 else stage2)(args, stories, pairs, meta, vocab, tab)

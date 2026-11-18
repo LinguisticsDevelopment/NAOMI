@@ -1,0 +1,180 @@
+reading 1498 strings
+[ParserInputEncoder] graph parse failed (maximum recursion depth exceeded); no discourse structure.
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+{
+ "split": "val",
+ "model": "s2b_all",
+ "n_answered": 355,
+ "n_multiword": 320,
+ "thresholds": {
+  "A": 99,
+  "C": 100,
+  "B": 0.0
+ },
+ "pass_rates": {
+  "true": {
+   "n": 355,
+   "A": {
+    "pass_rate": 1.0,
+    "n": 355
+   },
+   "B": {
+    "pass_rate": 1.0,
+    "n": 320
+   },
+   "C": {
+    "pass_rate": 1.0,
+    "n": 355
+   },
+   "A_and_B": {
+    "pass_rate": 1.0,
+    "n": 355
+   }
+  },
+  "a": {
+   "n": 355,
+   "A": {
+    "pass_rate": 0.6140845070422535,
+    "n": 355
+   },
+   "B": {
+    "pass_rate": 0.540625,
+    "n": 320
+   },
+   "C": {
+    "pass_rate": 0.6050420168067226,
+    "n": 119
+   },
+   "A_and_B": {
+    "pass_rate": 0.5830985915492958,
+    "n": 355
+   }
+  },
+  "b": {
+   "n": 355,
+   "A": {
+    "pass_rate": 0.5830985915492958,
+    "n": 355
+   },
+   "B": {
+    "pass_rate": null,
+    "n": 0
+   },
+   "C": {
+    "pass_rate": 0.5798319327731093,
+    "n": 119
+   },
+   "A_and_B": {
+    "pass_rate": 0.5830985915492958,
+    "n": 355
+   }
+  },
+  "shuffle": {
+   "n": 320,
+   "A": {
+    "pass_rate": 0.05,
+    "n": 320
+   },
+   "B": {
+    "pass_rate": 0.003125,
+    "n": 320
+   },
+   "C": {
+    "pass_rate": 0.0,
+    "n": 106
+   },
+   "A_and_B": {
+    "pass_rate": 0.0,
+    "n": 320
+   }
+  },
+  "adjswap": {
+   "n": 320,
+   "A": {
+    "pass_rate": 0.13125,
+    "n": 320
+   },
+   "B": {
+    "pass_rate": 0.278125,
+    "n": 320
+   },
+   "C": {
+    "pass_rate": 0.04716981132075472,
+    "n": 106
+   },
+   "A_and_B": {
+    "pass_rate": 0.0125,
+    "n": 320
+   }
+  },
+  "wordswap": {
+   "n": 320,
+   "A": {
+    "pass_rate": 0.0375,
+    "n": 320
+   },
+   "B": {
+    "pass_rate": null,
+    "n": 0
+   },
+   "C": {
+    "pass_rate": 0.009433962264150943,
+    "n": 106
+   },
+   "A_and_B": {
+    "pass_rate": 0.0375,
+    "n": 320
+   }
+  },
+  "drop": {
+   "n": 320,
+   "A": {
+    "pass_rate": 0.009375,
+    "n": 320
+   },
+   "B": {
+    "pass_rate": null,
+    "n": 0
+   },
+   "C": {
+    "pass_rate": 0.0,
+    "n": 106
+   },
+   "A_and_B": {
+    "pass_rate": 0.009375,
+    "n": 320
+   }
+  }
+ },
+ "old_check": {
+  "share_lt80_a": 0.48450704225352115,
+  "share_lt80_true_order": 0.4394366197183099,
+  "n": 355
+ }
+}
+A chosen 99
+   50 1.0 {'shuffle': 0.163, 'adjswap': 0.756, 'wordswap': 0.734, 'drop': 0.794} 0.612
+   60 1.0 {'shuffle': 0.087, 'adjswap': 0.572, 'wordswap': 0.591, 'drop': 0.656} 0.477
+   70 1.0 {'shuffle': 0.075, 'adjswap': 0.481, 'wordswap': 0.475, 'drop': 0.544} 0.394
+   80 1.0 {'shuffle': 0.059, 'adjswap': 0.366, 'wordswap': 0.319, 'drop': 0.369} 0.278
+   90 1.0 {'shuffle': 0.053, 'adjswap': 0.219, 'wordswap': 0.156, 'drop': 0.188} 0.154
+   95 1.0 {'shuffle': 0.05, 'adjswap': 0.159, 'wordswap': 0.069, 'drop': 0.087} 0.091
+   99 1.0 {'shuffle': 0.05, 'adjswap': 0.131, 'wordswap': 0.037, 'drop': 0.009} 0.057
+   100 1.0 {'shuffle': 0.05, 'adjswap': 0.131, 'wordswap': 0.025, 'drop': 0.0} 0.052
+C chosen 100
+   50 1.0 {'shuffle': 0.528, 'adjswap': 0.962, 'wordswap': 0.953, 'drop': 0.953} 0.849
+   60 1.0 {'shuffle': 0.415, 'adjswap': 0.925, 'wordswap': 0.925, 'drop': 0.896} 0.79
+   70 1.0 {'shuffle': 0.33, 'adjswap': 0.821, 'wordswap': 0.755, 'drop': 0.783} 0.672
+   80 1.0 {'shuffle': 0.245, 'adjswap': 0.632, 'wordswap': 0.585, 'drop': 0.679} 0.535
+   90 1.0 {'shuffle': 0.085, 'adjswap': 0.34, 'wordswap': 0.311, 'drop': 0.387} 0.281
+   95 1.0 {'shuffle': 0.019, 'adjswap': 0.151, 'wordswap': 0.189, 'drop': 0.226} 0.146
+   99 1.0 {'shuffle': 0.0, 'adjswap': 0.047, 'wordswap': 0.028, 'drop': 0.066} 0.035
+   100 1.0 {'shuffle': 0.0, 'adjswap': 0.047, 'wordswap': 0.009, 'drop': 0.0} 0.014
+B chosen 0.0
+   0.0 1.0 {'shuffle': 0.003, 'adjswap': 0.278} 0.141
+   0.05 1.0 {'shuffle': 0.003, 'adjswap': 0.494} 0.248
+   0.1 1.0 {'shuffle': 0.006, 'adjswap': 0.644} 0.325
+   0.2 1.0 {'shuffle': 0.031, 'adjswap': 0.794} 0.412
+   0.25 1.0 {'shuffle': 0.053, 'adjswap': 0.828} 0.441
+   0.34 1.0 {'shuffle': 0.144, 'adjswap': 0.887} 0.516
+   0.5 1.0 {'shuffle': 0.525, 'adjswap': 0.919} 0.722
