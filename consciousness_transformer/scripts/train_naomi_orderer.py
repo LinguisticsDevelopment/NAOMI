@@ -75,6 +75,25 @@ def tins_from_items(items, builder, rel_ids, connected_only=False, seed=0):
     return res
 
 
+def fragments_from_items(items, builder, rel_ids, per_piece=2, seed=0, min_piece=3):
+    """Gappy fragments: random connected sub-trees (random descendants dropped with their sub-trees, sizes 2-15)
+    of the same connected pieces; root relation reset to ROOT; true order = source order."""
+    res = []
+    rng = random.Random(seed)
+    for k, it in enumerate(items):
+        for members, par, rels in pieces_of(it):
+            if len(members) < min_piece:
+                continue
+            for j in range(per_piece):
+                keep = O.sample_fragment(par, rng)
+                loc = {g: q for q, g in enumerate(keep)}
+                kp = [(loc[par[g]] if par[g] in loc else -1) for g in keep]
+                kr = [(REL_ROOT if kp[q] < 0 else rels[g]) for q, g in enumerate(keep)]
+                res.append(O.make_tree_in([it["infos"][members[g]] for g in keep], kr, kp, builder, rel_ids,
+                                          true_pos=[members[g] for g in keep], seed=seed + 7919 * k + j))
+    return res
+
+
 def load_items():
     cache = pickle.load(open(ENC_DIR / "prep_cache.pkl", "rb"))
     splits = json.load(open(ENC_DIR / "splits.json"))["split_of_source"]
@@ -137,10 +156,21 @@ def train(a):
     rel_ids = {r: i for i, r in enumerate(rel_labels)}
     tr = tins_from_items(by["train"], builder, rel_ids)
     dv = tins_from_items(by["dev"], builder, rel_ids)
+    dvf = []
+    if a.fragments:
+        tr = tr + fragments_from_items(by["train"], builder, rel_ids, a.frag_per_piece, seed=a.seed + 1)
+        dvf = fragments_from_items(by["dev"], builder, rel_ids, 2, seed=12345)
+        print(f"fragments: train total {len(tr)}, dev fragments {len(dvf)}", flush=True)
     print(f"pieces train {len(tr)} ({sum(t.n for t in tr)} nodes, {sum(len(t.pa) for t in tr)} pairs), dev {len(dv)} "
           f"in {time.time() - t0:.0f}s", flush=True)
     cfg = dict(d=a.d, rounds=a.rounds, d_pair=192, dropout=0.2)
+    if a.init:
+        ik = torch.load(a.init, map_location="cpu", weights_only=False)
+        assert ik["rel_labels"] == rel_labels and ik["pos_vocab"] == builder.pos_vocab and ik["sub_vocab"] == builder.sub_vocab
+        cfg = ik["config"]
     net = O.OrdererNet(len(builder.pos_vocab), len(builder.sub_vocab), len(rel_labels), len(usvs.axes), **cfg)
+    if a.init:
+        net.load_state_dict(ik["state"])
     n_params = sum(p.numel() for p in net.parameters())
     print(f"params {n_params}", flush=True)
     opt = torch.optim.Adam(net.parameters(), lr=a.lr)
@@ -148,7 +178,7 @@ def train(a):
     rng = random.Random(a.seed)
     table, n_sub = builder.table, len(builder.sub_vocab)
     curve = open(OUT / f"{a.tag}_curve.tsv", "w")
-    curve.write("epoch\tminutes\ttrain_loss\tdev_pair_acc\tdev_heads_right\tdev_exact\tlr\n")
+    curve.write("epoch\tminutes\ttrain_loss\tdev_pair_acc\tdev_heads_right\tdev_exact\tfrag_pair_acc\tfrag_heads_right\tfrag_exact\tselect\tlr\n")
     best, bad, start = -1.0, 0, time.time()
 
     def save(path, ep, dm):
@@ -176,16 +206,19 @@ def train(a):
             if (time.time() - start) / 60 > a.max_minutes:
                 break
         dm = dev_eval(net, dv, builder)
-        sched.step(-dm["heads_fully_right"])
+        fm = dev_eval(net, dvf, builder) if dvf else None
+        sel = (dm["heads_fully_right"] + fm["heads_fully_right"]) / 2 if fm else dm["heads_fully_right"]
+        sched.step(-sel)
         mins = (time.time() - start) / 60
         curve.write(f"{ep}\t{mins:.1f}\t{tl / max(tn, 1):.4f}\t{dm['pairwise_acc']}\t{dm['heads_fully_right']}\t"
-                    f"{dm['exact_order']}\t{opt.param_groups[0]['lr']:.5f}\n")
+                    f"{dm['exact_order']}\t"
+                    f"{fm['pairwise_acc'] if fm else ''}\t{fm['heads_fully_right'] if fm else ''}\t{fm['exact_order'] if fm else ''}\t{sel:.4f}\t{opt.param_groups[0]['lr']:.5f}\n")
         curve.flush()
         print(f"epoch {ep} {time.time() - te:.0f}s (total {mins:.1f} min) loss {tl / max(tn, 1):.4f} | dev pair "
-              f"{dm['pairwise_acc']} heads-right {dm['heads_fully_right']} exact {dm['exact_order']}", flush=True)
+              f"{dm['pairwise_acc']} heads-right {dm['heads_fully_right']} exact {dm['exact_order']} | frag {fm} | select {sel:.4f}", flush=True)
         save(OUT / f"{a.tag}_last.pt", ep, dm)
-        if dm["heads_fully_right"] > best:
-            best, bad = dm["heads_fully_right"], 0
+        if sel > best:
+            best, bad = sel, 0
             save(OUT / f"{a.tag}_best.pt", ep, dm)
             print(f"  new best {best} -> {a.tag}_best.pt", flush=True)
         else:
@@ -240,6 +273,7 @@ def evaluate_all(a):
 
 
 def main():
+    global OUT
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="main")
     ap.add_argument("--eval", default=None)
@@ -253,8 +287,14 @@ def main():
     ap.add_argument("--batch-nodes", type=int, default=3000)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--fragments", action="store_true", help="add gappy fragments to the training mix and select on a fragment dev set")
+    ap.add_argument("--frag-per-piece", type=int, default=3)
+    ap.add_argument("--init", default=None, help="start from this checkpoint (its config is used)")
+    ap.add_argument("--out-dir", default=None)
     ap.add_argument("--threads", type=int, default=4)
     a = ap.parse_args()
+    if a.out_dir:
+        OUT = ROOT / a.out_dir
     if a.eval:
         torch.set_num_threads(a.threads)
         evaluate_all(a)
