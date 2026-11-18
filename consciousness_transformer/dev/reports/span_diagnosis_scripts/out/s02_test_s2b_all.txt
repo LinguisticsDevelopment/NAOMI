@@ -1,0 +1,119 @@
+n 1007 oracle 0.7570805985188295 model 0.372238256572431
+
+## Q1 overall
+| group | n | oracle | model | gap | abstained items% / loss% | wrong_sentence items% / loss% | right_sentence_wrong_anchor items% / loss% | right_anchor_too_much items% / loss% | right_anchor_too_little items% / loss% | right items% / loss% |
+| all | 1007 | 0.757 | 0.372 | 0.385 | 6.8 / 10.4 | 34.4 / 58.4 | 29.6 / 33.6 | 0.1 / 0.0 | 1.6 / 0.7 | 27.6 / -3.1 |
+
+## Q1 oracle>=0.5 (reachable-ish)
+| group | n | oracle | model | gap | abstained items% / loss% | wrong_sentence items% / loss% | right_sentence_wrong_anchor items% / loss% | right_anchor_too_much items% / loss% | right_anchor_too_little items% / loss% | right items% / loss% |
+| oracle>=0.5 | 886 | 0.830 | 0.408 | 0.422 | 5.2 / 9.9 | 36.1 / 58.4 | 30.4 / 32.8 | 0.1 / 0.0 | 1.8 / 0.7 | 26.4 / -1.9 |
+| oracle<0.5 | 121 | 0.222 | 0.113 | 0.109 | 18.2 / 24.2 | 21.5 / 59.3 | 24.0 / 54.0 | 0.0 / 0.0 | 0.0 / 0.0 | 36.4 / -37.5 |
+
+## Q1 by answer-sentence length band
+| group | n | oracle | model | gap | abstained items% / loss% | wrong_sentence items% / loss% | right_sentence_wrong_anchor items% / loss% | right_anchor_too_much items% / loss% | right_anchor_too_little items% / loss% | right items% / loss% |
+| <=10 | 35 | 0.815 | 0.189 | 0.626 | 8.6 / 9.0 | 71.4 / 84.5 | 11.4 / 6.9 | 0.0 / 0.0 | 0.0 / 0.0 | 8.6 / -0.4 |
+| 11-20 | 202 | 0.802 | 0.425 | 0.377 | 3.0 / 6.8 | 44.1 / 79.7 | 15.8 / 14.7 | 0.0 / 0.0 | 2.0 / 0.7 | 35.1 / -1.9 |
+| 21+ | 688 | 0.792 | 0.402 | 0.390 | 5.2 / 9.7 | 31.7 / 51.0 | 36.6 / 42.2 | 0.1 / 0.0 | 1.6 / 0.8 | 24.7 / -3.7 |
+| none | 82 | 0.331 | 0.075 | 0.257 | 28.0 / 33.0 | 17.1 / 48.2 | 12.2 / 20.0 | 0.0 / 0.0 | 1.2 / 0.3 | 41.5 / -1.6 |
+answered share 0.9324726911618669
+
+## Q2: oracle anchors vs the model's scores
+alog covers all N nodes (every node is a candidate): True
+items oracle>=0.5: 886  best-acceptable-anchor rank in model scores: top1 0.254 top3 0.407 top5 0.503 top10 0.597 median 4.0
+  oracle anchor in model top1 / top3 when model answered: 0.2619047619047619
+oracle sentence = argmax sentence mass: 0.6060948081264108  model anchor in oracle sentence: 0.5812641083521445
+
+### (c) right sentence, wrong anchor: relation of model anchor to the nearest oracle anchor (n=298)
+| same sentence, other clause | 85 | 28.5% | loss share within (c) 42.8% |
+| model is parent of oracle | 72 | 24.2% | loss share within (c) 13.6% |
+| model is higher ancestor of oracle | 71 | 23.8% | loss share within (c) 22.0% |
+| model is child of oracle | 21 | 7.0% | loss share within (c) 3.6% |
+| sibling | 21 | 7.0% | loss share within (c) 7.6% |
+| model is deeper descendant of oracle | 20 | 6.7% | loss share within (c) 5.9% |
+| same sentence, other branch (same clause head) | 8 | 2.7% | loss share within (c) 4.4% |
+(c) precision/recall of the model's text by relation (broad = high recall low precision):
+| model is child of oracle | prec 0.95 | rec 0.47 | f 0.60 | oracle 0.83 |
+| same sentence, other clause | prec 0.14 | rec 0.14 | f 0.12 | oracle 0.77 |
+| model is parent of oracle | prec 0.43 | rec 0.79 | f 0.53 | oracle 0.77 |
+| model is higher ancestor of oracle | prec 0.28 | rec 0.71 | f 0.37 | oracle 0.77 |
+| model is deeper descendant of oracle | prec 0.79 | rec 0.30 | f 0.43 | oracle 0.81 |
+| sibling | prec 0.20 | rec 0.30 | f 0.21 | oracle 0.68 |
+| same sentence, other branch (same clause head) | prec 0.09 | rec 0.13 | f 0.11 | oracle 0.82 |
+(c) overall: prec 0.35 rec 0.48; too broad (rec>prec) 0.56
+tree distance histogram: [(1, 93), (2, 66), (3, 49), (4, 32), (5, 17), (6, 17), (7, 7), (8, 8), (9, 5), (10, 3), (12, 1)]
+mean tdist 2.976510067114094
+
+### (b) wrong sentence: sentence-index distance to the nearest oracle sentence: {4: 38, 1: 148, 2: 56, 3: 40, '5+': 64}
+
+### oracle anchor geometry by band (the best acceptable anchor with the largest size)
+| <=10 | n=33 | mean depth 1.30 | mean subtree/sentence size 0.55 | anchor is sentence head (depth<=1) 0.67 |
+| 11-20 | n=189 | mean depth 1.83 | mean subtree/sentence size 0.40 | anchor is sentence head (depth<=1) 0.48 |
+| 21+ | n=633 | mean depth 3.18 | mean subtree/sentence size 0.30 | anchor is sentence head (depth<=1) 0.25 |
+| none | n=31 | mean depth 4.00 | mean subtree/sentence size 0.17 | anchor is sentence head (depth<=1) 0.16 |
+
+## Q3a: question type by the wh node's lexicon dimensions (other than UNKNOWN)
+| group | n | oracle | model | gap | abstained items% / loss% | wrong_sentence items% / loss% | right_sentence_wrong_anchor items% / loss% | right_anchor_too_much items% / loss% | right_anchor_too_little items% / loss% | right items% / loss% |
+| SOMETHING | 420 | 0.811 | 0.366 | 0.445 | 5.0 / 8.9 | 38.8 / 60.2 | 33.3 / 31.7 | 0.0 / 0.0 | 1.7 / 0.9 | 21.2 / -1.6 |
+| BECAUSE | 195 | 0.749 | 0.381 | 0.368 | 3.6 / 5.4 | 46.7 / 73.8 | 26.2 / 21.5 | 0.5 / 0.1 | 1.5 / 0.4 | 21.5 / -1.2 |
+| LIKE | 164 | 0.554 | 0.264 | 0.290 | 20.1 / 31.5 | 19.5 / 44.6 | 16.5 / 33.7 | 0.0 / 0.0 | 1.8 / 1.6 | 42.1 / -11.4 |
+| SOMEONE | 79 | 0.876 | 0.532 | 0.344 | 2.5 / 6.8 | 19.0 / 37.5 | 30.4 / 60.7 | 0.0 / 0.0 | 0.0 / 0.0 | 48.1 / -5.0 |
+| BECAUSE [+MUCH_MANY child] | 77 | 0.709 | 0.387 | 0.322 | 2.6 / 6.7 | 36.4 / 62.5 | 32.5 / 34.1 | 0.0 / 0.0 | 3.9 / 0.7 | 24.7 / -4.1 |
+| WHERE | 45 | 0.900 | 0.478 | 0.423 | 0.0 / 0.0 | 20.0 / 37.4 | 53.3 / 63.6 | 0.0 / 0.0 | 0.0 / 0.0 | 26.7 / -1.0 |
+| LIKE [+MUCH_MANY child] | 14 | 0.625 | 0.210 | 0.415 | 21.4 / 20.6 | 28.6 / 59.6 | 28.6 / 19.8 | 0.0 / 0.0 | 0.0 / 0.0 | 21.4 / 0.0 |
+| WHERE [+MUCH_MANY child] | 11 | 0.881 | 0.587 | 0.294 | 0.0 / 0.0 | 27.3 / 66.9 | 27.3 / 33.1 | 0.0 / 0.0 | 0.0 / 0.0 | 45.5 / 0.0 |
+small groups: {'WHEN [+MUCH_MANY child]': 1, 'WHEN': 1}
+
+## Q3b: FairytaleQA attribute
+| group | n | oracle | model | gap | abstained items% / loss% | wrong_sentence items% / loss% | right_sentence_wrong_anchor items% / loss% | right_anchor_too_much items% / loss% | right_anchor_too_little items% / loss% | right items% / loss% |
+| action | 315 | 0.825 | 0.375 | 0.450 | 6.7 / 11.8 | 34.3 / 54.5 | 33.3 / 34.4 | 0.0 / 0.0 | 2.2 / 1.1 | 23.5 / -1.8 |
+| causal relationship | 278 | 0.740 | 0.381 | 0.359 | 3.2 / 6.1 | 43.5 / 69.7 | 28.4 / 25.6 | 0.4 / 0.1 | 2.2 / 0.4 | 22.3 / -1.9 |
+| feeling | 106 | 0.462 | 0.269 | 0.193 | 27.4 / 51.6 | 11.3 / 39.4 | 7.5 / 27.1 | 0.0 / 0.0 | 1.9 / 2.0 | 51.9 / -20.1 |
+| character | 103 | 0.882 | 0.483 | 0.399 | 3.9 / 9.4 | 24.3 / 43.4 | 30.1 / 49.7 | 0.0 / 0.0 | 1.0 / 0.8 | 40.8 / -3.3 |
+| outcome resolution | 78 | 0.813 | 0.377 | 0.436 | 2.6 / 4.0 | 44.9 / 70.7 | 35.9 / 26.1 | 0.0 / 0.0 | 0.0 / 0.0 | 16.7 / -0.8 |
+| prediction | 65 | 0.582 | 0.183 | 0.400 | 3.1 / 2.6 | 49.2 / 75.0 | 29.2 / 27.3 | 0.0 / 0.0 | 0.0 / 0.0 | 18.5 / -4.9 |
+| setting | 62 | 0.898 | 0.502 | 0.396 | 1.6 / 4.1 | 21.0 / 41.4 | 45.2 / 56.6 | 0.0 / 0.0 | 0.0 / 0.0 | 32.3 / -2.0 |
+
+## Q3c: explicit/implicit
+| group | n | oracle | model | gap | abstained items% / loss% | wrong_sentence items% / loss% | right_sentence_wrong_anchor items% / loss% | right_anchor_too_much items% / loss% | right_anchor_too_little items% / loss% | right items% / loss% |
+| explicit | 754 | 0.827 | 0.442 | 0.385 | 5.2 / 10.0 | 30.1 / 56.4 | 30.8 / 36.5 | 0.1 / 0.0 | 2.0 / 0.9 | 31.8 / -3.9 |
+| implicit | 253 | 0.548 | 0.164 | 0.385 | 11.5 / 11.4 | 47.0 / 64.5 | 26.1 / 24.7 | 0.0 / 0.0 | 0.4 / 0.1 | 15.0 / -0.6 |
+
+## Q3d: local/summary
+| group | n | oracle | model | gap | abstained items% / loss% | wrong_sentence items% / loss% | right_sentence_wrong_anchor items% / loss% | right_anchor_too_much items% / loss% | right_anchor_too_little items% / loss% | right items% / loss% |
+| local | 919 | 0.766 | 0.386 | 0.380 | 7.1 / 11.1 | 31.6 / 55.6 | 30.8 / 35.9 | 0.1 / 0.0 | 1.7 / 0.8 | 28.7 / -3.4 |
+| summary | 88 | 0.665 | 0.226 | 0.439 | 3.4 / 4.1 | 63.6 / 83.7 | 17.0 / 12.4 | 0.0 / 0.0 | 0.0 / 0.0 | 15.9 / -0.2 |
+
+attribute x wh-group counts (top):
+('action', 'SOMETHING') 273
+('causal relationship', 'BECAUSE') 194
+('feeling', 'LIKE') 102
+('causal relationship', 'BECAUSE [+MUCH_MANY child]') 77
+('outcome resolution', 'SOMETHING') 77
+('character', 'SOMEONE') 76
+('setting', 'WHERE') 45
+('prediction', 'SOMETHING') 41
+('action', 'LIKE') 31
+('prediction', 'LIKE') 21
+('character', 'SOMETHING') 18
+('setting', 'WHERE [+MUCH_MANY child]') 11
+('character', 'LIKE') 9
+('action', 'LIKE [+MUCH_MANY child]') 9
+
+## Q5: attachment of the question's wh node (structure only: tags and relations)
+| group | n | oracle | model | gap | abstained items% / loss% | wrong_sentence items% / loss% | right_sentence_wrong_anchor items% / loss% | right_anchor_too_much items% / loss% | right_anchor_too_little items% / loss% | right items% / loss% |
+| wh under AUX | 597 | 0.769 | 0.373 | 0.397 | 7.0 / 10.5 | 35.7 / 59.9 | 27.0 / 31.2 | 0.2 / 0.0 | 1.8 / 0.9 | 28.3 / -2.5 |
+| wh is the root (verb below it) | 209 | 0.710 | 0.365 | 0.345 | 7.7 / 11.8 | 31.6 / 56.2 | 32.5 / 37.2 | 0.0 / 0.0 | 1.9 / 0.3 | 26.3 / -5.6 |
+| wh directly under main verb | 166 | 0.758 | 0.388 | 0.370 | 4.8 / 8.5 | 33.1 / 59.6 | 31.9 / 34.3 | 0.0 / 0.0 | 0.6 / 0.5 | 29.5 / -3.0 |
+| wh under other (NOUN) | 15 | 0.831 | 0.277 | 0.554 | 13.3 / 20.1 | 40.0 / 43.9 | 40.0 / 36.0 | 0.0 / 0.0 | 0.0 / 0.0 | 6.7 / 0.0 |
+| wh is the root (no verb) | 9 | 0.705 | 0.302 | 0.404 | 0.0 / 0.0 | 55.6 / 85.1 | 22.2 / 14.9 | 0.0 / 0.0 | 0.0 / 0.0 | 22.2 / -0.0 |
+| wh under other (ADJ) | 6 | 0.944 | 0.372 | 0.572 | 0.0 / 0.0 | 16.7 / 19.4 | 66.7 / 80.6 | 0.0 / 0.0 | 0.0 / 0.0 | 16.7 / 0.0 |
+| wh under other (ADV) | 2 | 0.733 | 0.528 | 0.206 | 0.0 / 0.0 | 0.0 / 0.0 | 100.0 / 100.0 | 0.0 / 0.0 | 0.0 / 0.0 | 0.0 / 0.0 |
+| wh under other (ADP) | 2 | 0.929 | 0.182 | 0.747 | 0.0 / 0.0 | 0.0 / 0.0 | 100.0 / 100.0 | 0.0 / 0.0 | 0.0 / 0.0 | 0.0 / 0.0 |
+| wh under a non-main VERB | 1 | 1.000 | 1.000 | 0.000 | 0.0 / 0.0 | 0.0 / 0.0 | 0.0 / 0.0 | 0.0 / 0.0 | 0.0 / 0.0 | 100.0 / 0.0 |
+
+## Q5 coarse
+| group | n | oracle | model | gap | abstained items% / loss% | wrong_sentence items% / loss% | right_sentence_wrong_anchor items% / loss% | right_anchor_too_much items% / loss% | right_anchor_too_little items% / loss% | right items% / loss% |
+| wh under main verb or is root above verb | 375 | 0.731 | 0.375 | 0.356 | 6.4 / 10.3 | 32.3 / 57.8 | 32.3 / 35.9 | 0.0 / 0.0 | 1.3 / 0.4 | 27.7 / -4.4 |
+| wh under AUX / other (not under the main verb) | 632 | 0.772 | 0.370 | 0.402 | 7.0 / 10.4 | 35.6 / 58.7 | 28.0 / 32.3 | 0.2 / 0.0 | 1.7 / 0.9 | 27.5 / -2.4 |
+wh under main verb or is root above verb oracle anchor top1/top3: 0.23974763406940064 0.4069400630914827 n 317
+wh under AUX / other (not under the main verb) oracle anchor top1/top3: 0.2618629173989455 0.4077328646748682 n 569
