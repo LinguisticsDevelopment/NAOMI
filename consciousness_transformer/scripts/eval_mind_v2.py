@@ -98,6 +98,8 @@ def main():
     ap.add_argument("--no_readback", action="store_true")
     ap.add_argument("--dir", default="mind_v2", help="run directory under runs/ (mind_v2b: the full FairytaleQA)")
     ap.add_argument("--rt_thr", default=None, help="roundtrip_<split>.json whose thresholds (declared on val controls) the new round-trip check uses")
+    ap.add_argument("--orderer", default="runs/naomi_orderer/large_best.pt", help="orderer (decoder) checkpoint, relative to the repo or absolute")
+    ap.add_argument("--out_tag", default="", help="suffix for the eval_<split><tag>.json / eval_rows files (keeps the default outputs intact)")
     args = ap.parse_args()
     global OUT, RB
     OUT = CT / "runs" / args.dir
@@ -113,7 +115,7 @@ def main():
     vocab = m2.Vocab(vj["rels"], vj["poss"])
     tab = m2.SenseTable()
     ctx = m1.Ctx.get()
-    dec = m2.Decoder(str(CT / "runs/naomi_orderer/large_best.pt"))
+    dec = m2.Decoder(str(CT / args.orderer))
     normal = [p for p in pairs if p["kind"] == "normal"]
     wrong = [p for p in pairs if p["kind"] == "wrong"]
     shuf = [p for p in pairs if p["kind"] == "shuf"]
@@ -339,8 +341,8 @@ def main():
                                         "all_lengths": mean([sysfn[f"{AL}: (a) order-only decoder"](r) for r in R if r["band"] == b]),
                                         "short_only": mean([sysfn[f"{args.short}: (a) order-only decoder"](r) for r in R if r["band"] == b])}
                                     for b in BANDS}
-    json.dump(summary, open(OUT / f"eval_{args.split}.json", "w"), indent=1)
-    with open(OUT / f"eval_rows_{args.split}.jsonl", "w") as f:
+    json.dump(summary, open(OUT / f"eval_{args.split}{args.out_tag}.json", "w"), indent=1)
+    with open(OUT / f"eval_rows_{args.split}{args.out_tag}.jsonl", "w") as f:
         for r in R:
             f.write(json.dumps(r, default=str) + "\n")
     print(json.dumps({k: summary[k] for k in ("split", "n_items", "n_reachable", "n_needs_new", "band_counts")}))

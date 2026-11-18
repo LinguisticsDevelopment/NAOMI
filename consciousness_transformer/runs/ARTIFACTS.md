@@ -239,3 +239,5 @@ Report: `dev/reports/MIND_V2B.md`. Code: `src/naomi/roundtrip.py`, `scripts/{fet
 - **`runs/mind_v2b/thinker_s2b_all_best.pt`** -- THE thinker for the full data (test ROUGE-L 0.348 on the official 23-story test split; v2 checkpoint 0.301 on the same items). Also `thinker_s1_all_best.pt`, `thinker_s1_short_best.pt`; `vocab.json`, curves, logs, `eval_{val,test}.json`, `eval_handread_20*.json`, `roundtrip_test.json`.
 - `runs/mind_v2/roundtrip_{val,test}.json`: round-trip check thresholds (declared on val) and pass rates for the v2 model.
 - NOT committed: `read_cache/` (158 MB), `stories.pkl`, `pairs_*.pkl`, raw `data/fairytaleqa_full/*.json` (licence: research use only; regenerate with `scripts/fetch_fairytaleqa_full.py`).
+
+- **`runs/naomi_orderer_frag/`**: orderer fine-tuned on gappy fragments (`frag_best.pt`, sizes 2-15; `frag30_best.pt`, sizes 2-30), curves, logs, `eval_fragments*.json`. Not the default; see `dev/reports/ORDERER_FRAGMENTS.md`. Chain evals: `runs/mind_v2b/eval_test_orderer_{old,frag,frag30}.json`.

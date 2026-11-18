@@ -96,6 +96,41 @@ def tree_in(tree: Tree, builder: FeatureBuilder, rel_ids: Dict[str, int], seed: 
     return make_tree_in(infos, [n.rel for n in ns], parent, builder, rel_ids, tp, virtual, ns, seed)
 
 
+# ----------------------------------------------------------------------------- gappy fragments (training data)
+FRAG_SIZES = list(range(2, 16))
+FRAG_WEIGHTS = [1, 1, 2, 3, 4, 4, 4, 4, 4, 3, 3, 2, 1, 1]      # sizes 2..15, weighted toward 5-12
+
+
+def sample_fragment(parent: Sequence[int], rng: random.Random, size: Optional[int] = None) -> List[int]:
+    """Indices of a random connected sub-tree of a forest given by ``parent`` (-1 = root): a root, then random frontier
+    children are added until ``size`` is reached (a child that is never added drops its whole sub-tree, so the kept
+    nodes have gaps like an answer cut from a sentence). ``size`` defaults to a draw from FRAG_SIZES/FRAG_WEIGHTS."""
+    n = len(parent)
+    kids: Dict[int, List[int]] = {}
+    for i, p in enumerate(parent):
+        if p >= 0:
+            kids.setdefault(int(p), []).append(i)
+    if size is None:
+        size = rng.choices(FRAG_SIZES, FRAG_WEIGHTS)[0]
+    sub = [1] * n
+    order, st = [], [i for i in range(n) if parent[i] < 0]
+    while st:
+        i = st.pop()
+        order.append(i)
+        st.extend(kids.get(i, []))
+    for i in reversed(order):
+        for c in kids.get(i, []):
+            sub[i] += sub[c]
+    ok = [i for i in range(n) if sub[i] >= size] or [max(range(n), key=lambda i: sub[i])]
+    root = rng.choice(ok)
+    keep, frontier = [root], list(kids.get(root, []))
+    while frontier and len(keep) < size:
+        c = frontier.pop(rng.randrange(len(frontier)))
+        keep.append(c)
+        frontier += kids.get(c, [])
+    return sorted(keep)
+
+
 # ----------------------------------------------------------------------------- batching
 def collate_trees(tins: Sequence[TreeIn], table: np.ndarray, n_sub: int) -> dict:
     N = sum(t.n for t in tins)

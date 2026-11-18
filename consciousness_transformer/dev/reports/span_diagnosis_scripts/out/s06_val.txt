@@ -1,0 +1,6 @@
+| model | spearman(mass, sentence length) | spearman(mass, q-coverage sb4) | spearman(mass, sentence index) | n items |
+| s1_short | -0.63 | -0.08 | -0.03 | 830 |
+| s1_all | +0.51 | +0.49 | -0.02 | 830 |
+| s2b_all | +0.34 | +0.46 | -0.02 | 830 |
+
+Thinker.encode mentions s_sent only for pooling: 4 uses; any sentence-index scalar in NS scalars? no (NS=6: depth, log size, token position within sentence, is_function, is_name, has key)

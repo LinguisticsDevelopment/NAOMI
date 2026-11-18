@@ -1,0 +1,11 @@
+answered answerable items 892 wrong-sentence share 0.42152466367713004
+oracle_sent_cov0: among wrong-sentence 0.394  among right-sentence 0.045
+oracle_sent_cov_ge_chosen: among wrong-sentence 0.362  among right-sentence 1.000
+oracle_is_maxcov: among wrong-sentence 0.186  among right-sentence 0.818
+chosen_is_maxcov: among wrong-sentence 0.593  among right-sentence 0.808
+rank of oracle sentence in model sentence mass: wrong-sentence items: rank1 (2nd) 0.38, rank<=2 0.58, rank<=4 0.81; mean 2.91
+share of gold content words NOT in the story or question (needs new words): wrong 0.157 right 0.078
+median # sentences tied at max coverage: wrong 1.0 right 1.0
+
+wrong-sentence items: signed offset (oracle sentence - model sentence) histogram
+[(-4, 44), (-3, 15), (-2, 29), (-1, 60), (1, 97), (2, 42), (3, 28), (4, 60)]

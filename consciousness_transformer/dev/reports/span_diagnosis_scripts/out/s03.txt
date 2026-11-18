@@ -1,0 +1,52 @@
+reachable items with an answer sentence: train 7536 val 906
+train counts by band Counter({'21+': 4851, '11-20': 2196, '<=10': 489}) val Counter({'21+': 668, '11-20': 206, '<=10': 32})
+
+## Feature means by answer-sentence band (reachable items; train+val pooled), standardized shift 21+ vs <=10 (Cohen d, pooled sd), share of 21+ values outside the range seen in <=10 TRAIN items
+| feature | <=10 | 11-20 | 21+ | d(21+ vs <=10) | 21+ outside short-train [min,max] | 21+ above short-train p95 |
+| ans_max_logsize | 2.163 | 2.823 | 3.535 | +4.36 | 100.0% | 100.0% |
+| ans_len | 7.950 | 16.057 | 35.243 | +2.12 | 100.0% | 100.0% |
+| ans_max_depth | 3.100 | 5.173 | 8.294 | +1.98 | 53.9% | 88.2% |
+| ans_mean_depth | 1.585 | 2.598 | 4.158 | +1.93 | 53.7% | 97.6% |
+| ans_max_sb2_sim | 0.698 | 0.860 | 0.936 | +1.29 | 0.2% | 0.0% |
+| ans_n_ident_nodes | 1.712 | 3.810 | 7.085 | +1.25 | 24.1% | 58.1% |
+| nodes_per_sent | 15.191 | 18.173 | 24.245 | +1.12 | 6.8% | 48.9% |
+| kept_over_sent | 0.505 | 0.387 | 0.258 | -1.10 | 28.2% | 0.0% |
+| ans_sb4_cov_over_max | 0.316 | 0.565 | 0.710 | +0.97 | 0.0% | 0.0% |
+| anc_is_head | 0.795 | 0.569 | 0.356 | -0.93 | 0.0% | 0.0% |
+| ans_n_ident_content | 0.708 | 1.533 | 2.338 | +0.90 | 3.0% | 40.7% |
+| anc_logsize | 1.702 | 2.094 | 2.463 | +0.85 | 33.8% | 54.8% |
+| kept_max_logsize | 1.702 | 2.094 | 2.463 | +0.85 | 33.8% | 54.8% |
+| ans_is_top_cov | 0.226 | 0.463 | 0.626 | +0.84 | 0.0% | 0.0% |
+| anc_size | 5.342 | 9.182 | 15.867 | +0.82 | 33.8% | 54.8% |
+| anc_depth | 0.839 | 1.522 | 2.789 | +0.82 | 8.1% | 32.1% |
+| ans_sb4_cov | 0.177 | 0.341 | 0.434 | +0.77 | 0.3% | 0.3% |
+| kept_max_reldepth | 1.747 | 2.578 | 3.180 | +0.67 | 7.4% | 26.1% |
+| kept_n | 3.902 | 6.129 | 8.387 | +0.66 | 30.0% | 38.5% |
+| anc_size_over_sent | 0.682 | 0.576 | 0.468 | -0.61 | 19.0% | 0.3% |
+| n_sent | 11.630 | 10.871 | 9.154 | -0.44 | 0.3% | 2.5% |
+| ans_sb5_find | 0.063 | 0.035 | 0.020 | -0.38 | 0.0% | 0.6% |
+| n_anchors_accepted | 1.255 | 1.348 | 1.528 | +0.38 | 0.0% | 0.0% |
+| N | 168.618 | 186.031 | 199.875 | +0.32 | 0.1% | 8.5% |
+| ident_nodes_elsewhere | 5.921 | 5.298 | 4.593 | -0.30 | 0.0% | 3.2% |
+| anc_sb1 | 0.044 | 0.067 | 0.057 | +0.06 | 0.0% | 5.7% |
+| ans_share_ident_nodes | 0.212 | 0.238 | 0.206 | -0.05 | 0.0% | 1.2% |
+| ans_sb6_findrank | 0.403 | 0.411 | 0.416 | +0.04 | 0.1% | 2.5% |
+| ans_is_top_find | 0.173 | 0.164 | 0.162 | -0.03 | 0.0% | 0.0% |
+| sent_pos | 0.473 | 0.451 | 0.478 | +0.01 | 0.0% | 0.0% |
+| anc_sb2 | 0.196 | 0.206 | 0.194 | -0.01 | 0.0% | 7.0% |
+| anc_relpos | 0.454 | 0.448 | 0.453 | -0.01 | 3.5% | 5.8% |
+
+## Keep-head inputs for nodes inside the target kept subtree (relative depth, log size): distribution by band
+| <=10 | kept nodes 2033 | rel-depth mean 0.25 p95 0.60 max 1.20 | log-size/4 mean 0.29 p95 0.58 max 0.76 |
+| 11-20 | kept nodes 14723 | rel-depth mean 0.38 p95 1.00 max 1.80 | log-size/4 mean 0.32 p95 0.68 max 1.01 |
+| 21+ | kept nodes 46290 | rel-depth mean 0.48 p95 1.20 max 3.00 | log-size/4 mean 0.35 p95 0.80 max 1.14 |
+
+## Anchor-head candidate nodes (all nodes of the answer sentence), by band: depth/8 and log1p(size)/4
+| <=10 | items 521 | candidate nodes/sentence 8.0 | depth/8 mean 0.21 p95 0.50 max 0.88 | logsize/4 mean 0.28 max 0.60 |
+| 11-20 | items 2402 | candidate nodes/sentence 16.1 | depth/8 mean 0.33 p95 0.75 max 1.50 | logsize/4 mean 0.31 max 0.76 |
+| 21+ | items 5519 | candidate nodes/sentence 35.2 | depth/8 mean 0.56 p95 1.25 max 2.75 | logsize/4 mean 0.33 max 1.24 |
+
+## Story-level (same for all bands because the passage is the whole story section): nodes per story / sentences per story
+<=10 N mean 169, n_sent mean 11.6
+11-20 N mean 186, n_sent mean 10.9
+21+ N mean 200, n_sent mean 9.2

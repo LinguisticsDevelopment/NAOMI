@@ -1,0 +1,123 @@
+reading back 159 decoded strings
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+{"split": "test", "n_items": 1007, "n_reachable": 874, "n_needs_new": 224, "band_counts": {"<=10": 35, "11-20": 202, "21+": 688, "none": 82}}
+cheat: best-overlap sentence                            {'n': 1007, 'rouge_abstain0': 0.2201559384530839}
+baseline: question echo                                 {'n': 1007, 'rouge_abstain0': 0.11568140679649601}
+baseline: random story sentence                         {'n': 1007, 'rouge_abstain0': 0.13606823001445767}
+baseline: random-anchor full subtree                    {'n': 1007, 'rouge_abstain0': 0.07806705315789418}
+oracle: best full subtree (by ROUGE, true order)        {'n': 1007, 'rouge_abstain0': 0.7570805929803615}
+oracle: lemma-F1 pruned subtree (true order)            {'n': 1007, 'rouge_abstain0': 0.7518038490663623}
+s2b_all: (a) order-only decoder                         {'n': 1007, 'rouge_abstain0': 0.34862247351845194, 'answer_rate': 0.9324726911618669, 'rouge_answered_only': 0.3738688294282014}
+s2b_all: (b) meaning-only decoder                       {'n': 1007, 'rouge_abstain0': 0.3422695186984093, 'answer_rate': 0.9324726911618669, 'rouge_answered_only': 0.3670558097223623}
+s2b_all: true word order (no decoder)                   {'n': 1007, 'rouge_abstain0': 0.372238256572431, 'answer_rate': 0.9324726911618669, 'rouge_answered_only': 0.39919480763411935}
+{
+ "s2b_all": {
+  "wrong_abstain": 0.9463753723932473,
+  "n_wrong": 1007,
+  "shuf_answer_rate": 0.4826216484607746,
+  "shuf_rouge": 0.06160553689513029,
+  "n_shuf": 1007,
+  "severed_abstain": 0.8361469712015889,
+  "empty_abstain": 1.0,
+  "n_severed": 1007,
+  "n_empty": 1007
+ }
+}
+{
+ "a": {
+  "tree_score_answered_mean": 38.10280406926693,
+  "tree_score_abstain0_mean": 35.52982425128266,
+  "n_scored": 939,
+  "roundtrip_share_lt50": 0.21512247071352503,
+  "roundtrip_mean": 73.32131648507688,
+  "roundtrip_fail_share_lt80": 0.5079872204472844,
+  "n_roundtrip": 939,
+  "rt2_pass_rate": 0.597444089456869,
+  "rt2_threshold": 99,
+  "reason_counts": {
+   "node_extra": 4602,
+   "node_dropped": 1388,
+   "meaning_shift": 1196,
+   "head_changed": 795,
+   "operator_folded_differs": 775,
+   "subtree_moved": 618,
+   "name_mismatch": 301,
+   "relation_changed": 153,
+   "opposite_meaning": 1
+  },
+  "rt2_by_len": {
+   "1-3 words": {
+    "n": 246,
+    "pass_rate": 0.975609756097561
+   },
+   "4-6 words": {
+    "n": 139,
+    "pass_rate": 0.8561151079136691
+   },
+   "7+ words": {
+    "n": 554,
+    "pass_rate": 0.36462093862815886
+   }
+  }
+ },
+ "b": {
+  "tree_score_answered_mean": 38.03717922547993,
+  "tree_score_abstain0_mean": 35.46863087658953,
+  "n_scored": 939,
+  "roundtrip_share_lt50": 0.21405750798722045,
+  "roundtrip_mean": 73.07621648670639,
+  "roundtrip_fail_share_lt80": 0.5101171458998935,
+  "n_roundtrip": 939,
+  "rt2_pass_rate": 0.5782747603833865,
+  "rt2_threshold": 99,
+  "reason_counts": {
+   "node_extra": 4604,
+   "node_dropped": 1392,
+   "meaning_shift": 1199,
+   "head_changed": 795,
+   "operator_folded_differs": 775,
+   "subtree_moved": 622,
+   "name_mismatch": 304,
+   "relation_changed": 150,
+   "opposite_meaning": 1
+  },
+  "rt2_by_len": {
+   "1-3 words": {
+    "n": 246,
+    "pass_rate": 0.9471544715447154
+   },
+   "4-6 words": {
+    "n": 139,
+    "pass_rate": 0.841726618705036
+   },
+   "7+ words": {
+    "n": 554,
+    "pass_rate": 0.3483754512635379
+   }
+  }
+ },
+ "true": {
+  "roundtrip_share_lt50": 0.1703940362087327,
+  "roundtrip_mean": 77.14899333434738,
+  "roundtrip_fail_share_lt80": 0.4504792332268371,
+  "n_roundtrip": 939
+ },
+ "cheat_tree_score_mean": 13.585306856540017
+}
+{
+ "s2b_all": {
+  "nodes": 10449,
+  "accuracy": 0.981242224136281,
+  "with_meaning_point": {
+   "n": 10149,
+   "acc": 0.9864026012415016
+  },
+  "no_point_names_or_unlexiconed": {
+   "n": 300,
+   "acc": 0.8066666666666666
+  }
+ }
+}

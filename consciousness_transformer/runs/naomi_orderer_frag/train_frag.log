@@ -1,0 +1,185 @@
+fragments: train total 288258, dev fragments 5948
+pieces train 288258 (1767827 nodes, 2368491 pairs), dev 3543 in 42s
+params 580417
+/home/user/NAOMI/consciousness_transformer/scripts/train_naomi_orderer.py:203: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tl, tn = tl + float(loss), tn + 1
+  ep 1 batch 0/590 loss 0.161 3s
+  ep 1 batch 100/590 loss 0.118 279s
+  ep 1 batch 200/590 loss 0.096 470s
+  ep 1 batch 300/590 loss 0.121 541s
+  ep 1 batch 400/590 loss 0.118 594s
+  ep 1 batch 500/590 loss 0.099 605s
+epoch 1 617s (total 10.3 min) loss 0.1130 | dev pair 0.9427 heads-right 0.9294 exact 0.7832 | frag {'sentences': 5948, 'exact_order': 0.7789, 'heads': 17185, 'heads_fully_right': 0.9166, 'pairwise_acc': 0.9362, 'kendall_distance': 0.0676} | select 0.9230
+  new best 0.923 -> frag_best.pt
+  ep 2 batch 0/590 loss 0.092 1s
+  ep 2 batch 100/590 loss 0.103 11s
+  ep 2 batch 200/590 loss 0.113 22s
+  ep 2 batch 300/590 loss 0.113 34s
+  ep 2 batch 400/590 loss 0.108 45s
+  ep 2 batch 500/590 loss 0.102 56s
+epoch 2 68s (total 11.4 min) loss 0.1076 | dev pair 0.9441 heads-right 0.931 exact 0.7878 | frag {'sentences': 5948, 'exact_order': 0.7813, 'heads': 17185, 'heads_fully_right': 0.9167, 'pairwise_acc': 0.9363, 'kendall_distance': 0.0674} | select 0.9239
+  new best 0.9238500000000001 -> frag_best.pt
+  ep 3 batch 0/590 loss 0.112 0s
+  ep 3 batch 100/590 loss 0.103 12s
+  ep 3 batch 200/590 loss 0.104 24s
+  ep 3 batch 300/590 loss 0.113 35s
+  ep 3 batch 400/590 loss 0.099 46s
+  ep 3 batch 500/590 loss 0.128 58s
+epoch 3 69s (total 12.6 min) loss 0.1038 | dev pair 0.9447 heads-right 0.9307 exact 0.7878 | frag {'sentences': 5948, 'exact_order': 0.783, 'heads': 17185, 'heads_fully_right': 0.9181, 'pairwise_acc': 0.9376, 'kendall_distance': 0.0668} | select 0.9244
+  new best 0.9244 -> frag_best.pt
+  ep 4 batch 0/590 loss 0.102 0s
+  ep 4 batch 100/590 loss 0.108 12s
+  ep 4 batch 200/590 loss 0.094 23s
+  ep 4 batch 300/590 loss 0.092 34s
+  ep 4 batch 400/590 loss 0.089 46s
+  ep 4 batch 500/590 loss 0.099 58s
+epoch 4 69s (total 13.7 min) loss 0.1010 | dev pair 0.945 heads-right 0.9318 exact 0.7906 | frag {'sentences': 5948, 'exact_order': 0.783, 'heads': 17185, 'heads_fully_right': 0.9176, 'pairwise_acc': 0.9372, 'kendall_distance': 0.0663} | select 0.9247
+  new best 0.9247 -> frag_best.pt
+  ep 5 batch 0/590 loss 0.087 0s
+  ep 5 batch 100/590 loss 0.084 11s
+  ep 5 batch 200/590 loss 0.103 23s
+  ep 5 batch 300/590 loss 0.089 34s
+  ep 5 batch 400/590 loss 0.095 46s
+  ep 5 batch 500/590 loss 0.123 57s
+epoch 5 69s (total 14.9 min) loss 0.0982 | dev pair 0.9436 heads-right 0.9314 exact 0.7894 | frag {'sentences': 5948, 'exact_order': 0.7831, 'heads': 17185, 'heads_fully_right': 0.9181, 'pairwise_acc': 0.9366, 'kendall_distance': 0.0667} | select 0.9247
+  new best 0.92475 -> frag_best.pt
+  ep 6 batch 0/590 loss 0.086 0s
+  ep 6 batch 100/590 loss 0.083 12s
+  ep 6 batch 200/590 loss 0.089 24s
+  ep 6 batch 300/590 loss 0.092 35s
+  ep 6 batch 400/590 loss 0.081 47s
+  ep 6 batch 500/590 loss 0.094 58s
+epoch 6 70s (total 16.0 min) loss 0.0955 | dev pair 0.9448 heads-right 0.9317 exact 0.7894 | frag {'sentences': 5948, 'exact_order': 0.7814, 'heads': 17185, 'heads_fully_right': 0.9182, 'pairwise_acc': 0.9374, 'kendall_distance': 0.0665} | select 0.9249
+  new best 0.9249499999999999 -> frag_best.pt
+  ep 7 batch 0/590 loss 0.092 0s
+  ep 7 batch 100/590 loss 0.100 12s
+  ep 7 batch 200/590 loss 0.101 24s
+  ep 7 batch 300/590 loss 0.100 35s
+  ep 7 batch 400/590 loss 0.106 47s
+  ep 7 batch 500/590 loss 0.090 59s
+epoch 7 70s (total 17.2 min) loss 0.0929 | dev pair 0.9443 heads-right 0.9311 exact 0.7878 | frag {'sentences': 5948, 'exact_order': 0.7843, 'heads': 17185, 'heads_fully_right': 0.9188, 'pairwise_acc': 0.9368, 'kendall_distance': 0.0669} | select 0.9249
+  ep 8 batch 0/590 loss 0.097 1s
+  ep 8 batch 100/590 loss 0.081 13s
+  ep 8 batch 200/590 loss 0.081 25s
+  ep 8 batch 300/590 loss 0.101 37s
+  ep 8 batch 400/590 loss 0.097 49s
+  ep 8 batch 500/590 loss 0.079 61s
+epoch 8 73s (total 18.4 min) loss 0.0911 | dev pair 0.9427 heads-right 0.9295 exact 0.7863 | frag {'sentences': 5948, 'exact_order': 0.7828, 'heads': 17185, 'heads_fully_right': 0.918, 'pairwise_acc': 0.9359, 'kendall_distance': 0.0672} | select 0.9238
+  ep 9 batch 0/590 loss 0.084 1s
+  ep 9 batch 100/590 loss 0.083 13s
+  ep 9 batch 200/590 loss 0.098 24s
+  ep 9 batch 300/590 loss 0.081 36s
+  ep 9 batch 400/590 loss 0.092 47s
+  ep 9 batch 500/590 loss 0.080 58s
+epoch 9 70s (total 19.6 min) loss 0.0889 | dev pair 0.9429 heads-right 0.9307 exact 0.7869 | frag {'sentences': 5948, 'exact_order': 0.7841, 'heads': 17185, 'heads_fully_right': 0.9192, 'pairwise_acc': 0.9359, 'kendall_distance': 0.0671} | select 0.9249
+  ep 10 batch 0/591 loss 0.087 0s
+  ep 10 batch 100/591 loss 0.072 12s
+  ep 10 batch 200/591 loss 0.086 23s
+  ep 10 batch 300/591 loss 0.091 35s
+  ep 10 batch 400/591 loss 0.089 46s
+  ep 10 batch 500/591 loss 0.073 58s
+epoch 10 69s (total 20.7 min) loss 0.0874 | dev pair 0.9423 heads-right 0.9297 exact 0.7849 | frag {'sentences': 5948, 'exact_order': 0.7801, 'heads': 17185, 'heads_fully_right': 0.9171, 'pairwise_acc': 0.9356, 'kendall_distance': 0.0678} | select 0.9234
+  ep 11 batch 0/591 loss 0.086 0s
+  ep 11 batch 100/591 loss 0.090 11s
+  ep 11 batch 200/591 loss 0.075 21s
+  ep 11 batch 300/591 loss 0.092 33s
+  ep 11 batch 400/591 loss 0.079 45s
+  ep 11 batch 500/591 loss 0.079 57s
+epoch 11 68s (total 21.9 min) loss 0.0859 | dev pair 0.9443 heads-right 0.9314 exact 0.7914 | frag {'sentences': 5948, 'exact_order': 0.7863, 'heads': 17185, 'heads_fully_right': 0.9199, 'pairwise_acc': 0.9377, 'kendall_distance': 0.0658} | select 0.9257
+  new best 0.9256500000000001 -> frag_best.pt
+  ep 12 batch 0/591 loss 0.081 0s
+  ep 12 batch 100/591 loss 0.090 12s
+  ep 12 batch 200/591 loss 0.074 22s
+  ep 12 batch 300/591 loss 0.081 32s
+  ep 12 batch 400/591 loss 0.089 45s
+  ep 12 batch 500/591 loss 0.089 56s
+epoch 12 68s (total 23.0 min) loss 0.0847 | dev pair 0.9432 heads-right 0.9302 exact 0.7875 | frag {'sentences': 5948, 'exact_order': 0.7836, 'heads': 17185, 'heads_fully_right': 0.9189, 'pairwise_acc': 0.9358, 'kendall_distance': 0.0683} | select 0.9245
+  ep 13 batch 0/590 loss 0.078 0s
+  ep 13 batch 100/590 loss 0.077 11s
+  ep 13 batch 200/590 loss 0.083 22s
+  ep 13 batch 300/590 loss 0.083 33s
+  ep 13 batch 400/590 loss 0.074 44s
+  ep 13 batch 500/590 loss 0.101 56s
+epoch 13 69s (total 24.2 min) loss 0.0836 | dev pair 0.9438 heads-right 0.9307 exact 0.7892 | frag {'sentences': 5948, 'exact_order': 0.7811, 'heads': 17185, 'heads_fully_right': 0.9182, 'pairwise_acc': 0.9354, 'kendall_distance': 0.0683} | select 0.9244
+  ep 14 batch 0/590 loss 0.085 1s
+  ep 14 batch 100/590 loss 0.085 12s
+  ep 14 batch 200/590 loss 0.075 22s
+  ep 14 batch 300/590 loss 0.081 34s
+  ep 14 batch 400/590 loss 0.079 46s
+  ep 14 batch 500/590 loss 0.088 57s
+epoch 14 69s (total 25.3 min) loss 0.0776 | dev pair 0.9434 heads-right 0.93 exact 0.7869 | frag {'sentences': 5948, 'exact_order': 0.7818, 'heads': 17185, 'heads_fully_right': 0.9181, 'pairwise_acc': 0.9362, 'kendall_distance': 0.0674} | select 0.9241
+  ep 15 batch 0/590 loss 0.077 0s
+  ep 15 batch 100/590 loss 0.080 13s
+  ep 15 batch 200/590 loss 0.085 24s
+  ep 15 batch 300/590 loss 0.085 35s
+  ep 15 batch 400/590 loss 0.065 46s
+  ep 15 batch 500/590 loss 0.072 58s
+epoch 15 70s (total 26.5 min) loss 0.0754 | dev pair 0.9445 heads-right 0.931 exact 0.7892 | frag {'sentences': 5948, 'exact_order': 0.7868, 'heads': 17185, 'heads_fully_right': 0.9206, 'pairwise_acc': 0.9376, 'kendall_distance': 0.0672} | select 0.9258
+  new best 0.9258 -> frag_best.pt
+  ep 16 batch 0/590 loss 0.078 0s
+  ep 16 batch 100/590 loss 0.077 12s
+  ep 16 batch 200/590 loss 0.065 24s
+  ep 16 batch 300/590 loss 0.090 35s
+  ep 16 batch 400/590 loss 0.073 46s
+  ep 16 batch 500/590 loss 0.076 58s
+epoch 16 70s (total 27.6 min) loss 0.0745 | dev pair 0.9447 heads-right 0.9303 exact 0.7869 | frag {'sentences': 5948, 'exact_order': 0.7855, 'heads': 17185, 'heads_fully_right': 0.9198, 'pairwise_acc': 0.9377, 'kendall_distance': 0.0661} | select 0.9250
+  ep 17 batch 0/590 loss 0.087 0s
+  ep 17 batch 100/590 loss 0.064 12s
+  ep 17 batch 200/590 loss 0.067 23s
+  ep 17 batch 300/590 loss 0.066 35s
+  ep 17 batch 400/590 loss 0.069 46s
+  ep 17 batch 500/590 loss 0.071 58s
+epoch 17 70s (total 28.8 min) loss 0.0730 | dev pair 0.944 heads-right 0.93 exact 0.7869 | frag {'sentences': 5948, 'exact_order': 0.7868, 'heads': 17185, 'heads_fully_right': 0.9199, 'pairwise_acc': 0.9371, 'kendall_distance': 0.0664} | select 0.9250
+  ep 18 batch 0/590 loss 0.064 1s
+  ep 18 batch 100/590 loss 0.085 12s
+  ep 18 batch 200/590 loss 0.068 23s
+  ep 18 batch 300/590 loss 0.071 35s
+  ep 18 batch 400/590 loss 0.075 47s
+  ep 18 batch 500/590 loss 0.076 58s
+epoch 18 69s (total 30.0 min) loss 0.0705 | dev pair 0.9446 heads-right 0.9315 exact 0.7903 | frag {'sentences': 5948, 'exact_order': 0.7885, 'heads': 17185, 'heads_fully_right': 0.9209, 'pairwise_acc': 0.9371, 'kendall_distance': 0.0666} | select 0.9262
+  new best 0.9262 -> frag_best.pt
+  ep 19 batch 0/590 loss 0.080 0s
+  ep 19 batch 100/590 loss 0.069 11s
+  ep 19 batch 200/590 loss 0.060 22s
+  ep 19 batch 300/590 loss 0.061 34s
+  ep 19 batch 400/590 loss 0.083 45s
+  ep 19 batch 500/590 loss 0.062 57s
+epoch 19 68s (total 31.1 min) loss 0.0692 | dev pair 0.9437 heads-right 0.93 exact 0.7863 | frag {'sentences': 5948, 'exact_order': 0.786, 'heads': 17185, 'heads_fully_right': 0.9199, 'pairwise_acc': 0.9365, 'kendall_distance': 0.0676} | select 0.9250
+  ep 20 batch 0/590 loss 0.067 0s
+  ep 20 batch 100/590 loss 0.078 11s
+  ep 20 batch 200/590 loss 0.056 22s
+  ep 20 batch 300/590 loss 0.066 34s
+  ep 20 batch 400/590 loss 0.061 45s
+  ep 20 batch 500/590 loss 0.074 57s
+epoch 20 68s (total 32.2 min) loss 0.0683 | dev pair 0.9441 heads-right 0.9309 exact 0.7883 | frag {'sentences': 5948, 'exact_order': 0.7863, 'heads': 17185, 'heads_fully_right': 0.9198, 'pairwise_acc': 0.9368, 'kendall_distance': 0.0676} | select 0.9253
+  ep 21 batch 0/590 loss 0.067 0s
+  ep 21 batch 100/590 loss 0.074 12s
+  ep 21 batch 200/590 loss 0.059 23s
+  ep 21 batch 300/590 loss 0.071 34s
+  ep 21 batch 400/590 loss 0.076 45s
+  ep 21 batch 500/590 loss 0.070 57s
+epoch 21 69s (total 33.4 min) loss 0.0669 | dev pair 0.9437 heads-right 0.9312 exact 0.7897 | frag {'sentences': 5948, 'exact_order': 0.7872, 'heads': 17185, 'heads_fully_right': 0.9201, 'pairwise_acc': 0.9363, 'kendall_distance': 0.068} | select 0.9257
+  ep 22 batch 0/590 loss 0.061 0s
+  ep 22 batch 100/590 loss 0.071 11s
+  ep 22 batch 200/590 loss 0.061 22s
+  ep 22 batch 300/590 loss 0.058 33s
+  ep 22 batch 400/590 loss 0.063 45s
+  ep 22 batch 500/590 loss 0.060 56s
+epoch 22 68s (total 34.5 min) loss 0.0663 | dev pair 0.9437 heads-right 0.9305 exact 0.7875 | frag {'sentences': 5948, 'exact_order': 0.7877, 'heads': 17185, 'heads_fully_right': 0.9205, 'pairwise_acc': 0.937, 'kendall_distance': 0.067} | select 0.9255
+  ep 23 batch 0/590 loss 0.071 0s
+  ep 23 batch 100/590 loss 0.070 12s
+  ep 23 batch 200/590 loss 0.072 23s
+  ep 23 batch 300/590 loss 0.059 35s
+  ep 23 batch 400/590 loss 0.073 45s
+  ep 23 batch 500/590 loss 0.073 56s
+epoch 23 68s (total 35.6 min) loss 0.0658 | dev pair 0.9439 heads-right 0.9313 exact 0.7897 | frag {'sentences': 5948, 'exact_order': 0.7888, 'heads': 17185, 'heads_fully_right': 0.9207, 'pairwise_acc': 0.9368, 'kendall_distance': 0.0675} | select 0.9260
+  ep 24 batch 0/590 loss 0.057 0s
+  ep 24 batch 100/590 loss 0.068 12s
+  ep 24 batch 200/590 loss 0.060 23s
+  ep 24 batch 300/590 loss 0.072 34s
+  ep 24 batch 400/590 loss 0.054 46s
+  ep 24 batch 500/590 loss 0.064 58s
+epoch 24 70s (total 36.8 min) loss 0.0655 | dev pair 0.9441 heads-right 0.9318 exact 0.7903 | frag {'sentences': 5948, 'exact_order': 0.788, 'heads': 17185, 'heads_fully_right': 0.9206, 'pairwise_acc': 0.9369, 'kendall_distance': 0.0673} | select 0.9262
+early stop
+done in 37.5 min; best dev heads-right 0.9262

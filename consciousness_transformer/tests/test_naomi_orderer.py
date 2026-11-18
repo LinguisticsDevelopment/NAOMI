@@ -158,3 +158,18 @@ def test_tiny_overfit_and_baseline():
 def test_kendall_distance():
     assert O.kendall_distance([0, 1, 2, 3]) == 0.0
     assert O.kendall_distance([3, 2, 1, 0]) == 1.0
+
+
+def test_sample_fragment_is_connected_with_gaps():
+    rng = random.Random(1)
+    parent = [-1, 0, 0, 1, 1, 2, 3, 3, 5, 0]
+    sizes = set()
+    for _ in range(200):
+        keep = O.sample_fragment(parent, rng)
+        ks = set(keep)
+        tops = [i for i in keep if parent[i] not in ks]
+        assert len(tops) == 1                                # one root, every other kept node's parent is kept
+        assert 1 <= len(keep) <= 10 and keep == sorted(keep)
+        sizes.add(len(keep))
+    assert len(sizes) > 4
+    assert len(O.sample_fragment(parent, rng, size=4)) == 4

@@ -40,3 +40,4 @@ data/k12/
 data/ud/
 data/fairytaleqa_full/*
 !data/fairytaleqa_full/SOURCE.md
+dev/reports/span_diagnosis_scripts/out/*.pkl
