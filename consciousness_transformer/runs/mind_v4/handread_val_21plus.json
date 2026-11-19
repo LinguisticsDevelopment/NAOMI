@@ -1,0 +1,557 @@
+{
+ "n_fail_pool": 407,
+ "items": [
+  {
+   "id": "ft9014",
+   "question": "What did the daughter do when she married the beggar?",
+   "reference": "dwelt with him in a little hut, and had to hunt for herbs and roots, and cook them herself",
+   "oracle_sentence_text": "she dwelt with him in a little hut , and had to hunt for herbs and roots , and cook them herself , so that they might have something to eat ; and often they both went hungry .",
+   "oracle_sentence_tree": "and/ROOT <== answer\n  and/COORDINATION\n    dwelt/COORDINATION\n      she/SUBJECT\n      with/MODIFICATION\n        him/PREPOSITION\n      in/MODIFICATION\n        hut/PREPOSITION\n          a/DESCRIPTION\n          little/DESCRIPTION\n    had/COORDINATION\n    to/MODIFICATION\n      hunt/MODIFICATION\n        for/MODIFICATION\n          and/PREPOSITION\n            herbs/COORDINATION\n            roots/COORDINATION\n  cook/COORDINATION\n    them/INDIRECT_OBJECT\n    herself/OBJECT\n    so/COORDINATION\n      that/COORDINATION\n        have/MODIFICATION\n          they/SUBJECT\n          might/MODIFICATION\n          something/INDIRECT_OBJECT\n          to/OBJECT\n            eat/MODIFICATION\n      and/COORDINATION\n        went/COORDINATION\n          they/SUBJECT\n            often/DESCRIPTION\n          both/SUBJECT\n          hungry/COMPLEMENT",
+   "oracle_best_subtree_text": "she dwelt with him in a little hut and had to hunt for herbs and roots",
+   "oracle_best_subtree_rouge": 0.8571428571428572,
+   "oracle_anchor": "and",
+   "v4_path_tokens": [
+    "said",
+    "is"
+   ],
+   "v4_path_sentences": [
+    0,
+    0
+   ],
+   "oracle_sentence_index": 3,
+   "v4_answered": true,
+   "v4_text": "he is a favorite of fortune",
+   "v4_rouge": 0.08,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9525",
+   "question": "Why did the neighbors whipser their surprise about Tephany among themselves?",
+   "reference": "Tephany had not been able to resist the pleasure of putting the feather in her hair for some of the people who despised her.",
+   "oracle_sentence_text": "soon the neighbours whispered their surprise among themselves , for tephany had not been able to resist the pleasure of putting the feather in her hair for some of the people who despised her for her poor clothes , and many were the jokes she made about them .",
+   "oracle_sentence_tree": "neighbours/ROOT\n  the/DESCRIPTION\n    soon/SPECIFICATION\n  surprise/APPOSITION\n    whispered/DESCRIPTION\n    their/DESCRIPTION\n    among/MODIFICATION\n      themselves/PREPOSITION\n    for/MODIFICATION\n      tephany/PREPOSITION\n    had/SUBORDINATION <== answer\n      been/MODIFICATION\n        not/MODIFICATION\n        able/COMPLEMENT\n        to/MODIFICATION\n          resist/MODIFICATION\n            pleasure/OBJECT\n              the/DESCRIPTION\n          of/MODIFICATION\n            putting/MODIFICATION\n              feather/OBJECT\n                the/DESCRIPTION\n                in/MODIFICATION\n                  hair/PREPOSITION\n                    her/DESCRIPTION\n                for/MODIFICATION\n                  some/PREPOSITION\n                    despised/SUBORDINATION\n                      of/MODIFICATION\n                        people/PREPOSITION\n                          the/DESCRIPTION\n                      who/SUBJECT\n                      her/OBJECT\n                        for/MODIFICATION\n                          clothes/PREPOSITION\n                            her/DESCRIPTION\n                            poor/DESCRIPTION\n                      and/COORDINATION\n                        were/COORDINATION\n                          many/SUBJECT\n                          jokes/INDIRECT_OBJECT\n                            the/DESCRIPTION\n                          she/OBJECT\n                          made/MODIFICATION\n                            about/MODIFICATION\n                              them/PREPOSITION",
+   "oracle_best_subtree_text": "had not been able to resist the pleasure of putting the feather in her hair for some of the people who despised her for her poor clothes and many were the jokes she made about them",
+   "oracle_best_subtree_rouge": 0.7666666666666666,
+   "oracle_anchor": "had",
+   "v4_path_tokens": [
+    "neighbours",
+    "surprise",
+    "had",
+    "been",
+    "to",
+    "of",
+    "putting",
+    "feather",
+    "for",
+    "some",
+    "despised"
+   ],
+   "v4_path_sentences": [
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7,
+    7
+   ],
+   "oracle_sentence_index": 7,
+   "v4_answered": true,
+   "v4_text": "of the people who despised her for her poor clothes and many were the jokes she made about them",
+   "v4_rouge": 0.27906976744186046,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9077",
+   "question": "What was the warning the butler gave to the little page-boy?",
+   "reference": "keep far away from the Fairy Knowe",
+   "oracle_sentence_text": "\" now , mind my words , laddie , and keep far away from the fairy knowe , for the little folk are not to trust to .",
+   "oracle_sentence_tree": "words/ROOT\n  now/MODIFICATION\n  my/DESCRIPTION\n  laddie/MODIFICATION\n  keep/DESCRIPTION <== answer\n    mind/OBJECT\n    and/COORDINATION\n    away/SPECIFICATION\n      far/SPECIFICATION\n    from/MODIFICATION\n      fairy/PREPOSITION\n        the/DESCRIPTION\n    knowe/OBJECT\n    for/MODIFICATION\n      folk/PREPOSITION\n        the/DESCRIPTION\n        little/DESCRIPTION\n        are/SUBORDINATION\n          to/MODIFICATION\n            not/MODIFICATION\n            trust/MODIFICATION\n            to/MODIFICATION",
+   "oracle_best_subtree_text": "from the fairy",
+   "oracle_best_subtree_rouge": 0.6,
+   "oracle_anchor": "keep",
+   "v4_path_tokens": [
+    "before",
+    "went",
+    "out",
+    "man"
+   ],
+   "v4_path_sentences": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "oracle_sentence_index": 3,
+   "v4_answered": true,
+   "v4_text": "the old man",
+   "v4_rouge": 0.2,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft8613",
+   "question": "What did the dog do when he grew angry at the cat?",
+   "reference": "chased her and tried to seize her",
+   "oracle_sentence_text": "then the dog grew angry at the cat , because she had robbed him of his reward , and when he saw her he chased her and tried to seize her .",
+   "oracle_sentence_tree": "and/ROOT\n  grew/COORDINATION\n    dog/SUBJECT\n      the/DESCRIPTION\n        then/SPECIFICATION\n    angry/COMPLEMENT\n    at/MODIFICATION\n      cat/PREPOSITION\n        the/DESCRIPTION\n    because/SUBORDINATION\n      robbed/MODIFICATION\n        she/SUBJECT\n        had/MODIFICATION\n        him/OBJECT\n          of/MODIFICATION\n            reward/PREPOSITION\n              his/DESCRIPTION\n  and/COORDINATION <== answer\n    when/SUBORDINATION\n      saw/MODIFICATION\n        he/SUBJECT\n    he/SUBJECT\n      her/DESCRIPTION\n    chased/COORDINATION\n      her/OBJECT\n    tried/COORDINATION\n      to/OBJECT\n        seize/MODIFICATION\n          her/OBJECT",
+   "oracle_best_subtree_text": "when he saw her he chased her and tried to seize her",
+   "oracle_best_subtree_rouge": 0.7368421052631579,
+   "oracle_anchor": "and",
+   "v4_path_tokens": [
+    "and",
+    "grew",
+    "because",
+    "robbed"
+   ],
+   "v4_path_sentences": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "oracle_sentence_index": 4,
+   "v4_answered": true,
+   "v4_text": "she had robbed him of his reward",
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft8908",
+   "question": "Why did the queen command that the portraits of several princesses should be brought for the prince to see?",
+   "reference": "The Queen thought it was time that he should be married.",
+   "oracle_sentence_text": "when his twentieth birthday was passed the queen thought it was time that he should be married , so she commanded that the portraits of several princesses should be brought for him to see , and among the others was a picture of the dear little princess !",
+   "oracle_sentence_tree": "passed/ROOT <== answer\n  birthday/SUBJECT\n    his/DESCRIPTION\n      when/SPECIFICATION\n    twentieth/DESCRIPTION\n  was/MODIFICATION\n  queen/OBJECT\n    the/DESCRIPTION\n  thought/OBJECT\n  time/OBJECT\n    it/SUBJECT\n    was/MODIFICATION\n    that/SUBORDINATION\n      so/MODIFICATION\n        married/COORDINATION\n          he/SUBJECT\n          be/MODIFICATION\n            should/MODIFICATION\n        commanded/COORDINATION\n          she/SUBJECT\n        that/SUBORDINATION\n          brought/MODIFICATION\n            portraits/SUBJECT\n              the/DESCRIPTION\n              of/MODIFICATION\n                princesses/PREPOSITION\n                  several/DESCRIPTION\n            be/MODIFICATION\n              should/MODIFICATION\n            for/MODIFICATION\n              him/PREPOSITION\n            and/COORDINATION\n              among/COORDINATION\n                others/PREPOSITION\n                  the/DESCRIPTION\n              was/COORDINATION\n                picture/INDIRECT_OBJECT\n                  a/DESCRIPTION\n                  of/MODIFICATION\n                    little/PREPOSITION\n                      the/DESCRIPTION\n                      dear/DESCRIPTION\n                princess/OBJECT\n    to/MODIFICATION\n      see/MODIFICATION",
+   "oracle_best_subtree_text": "he should be married",
+   "oracle_best_subtree_rouge": 0.8,
+   "oracle_anchor": "passed",
+   "v4_path_tokens": [
+    "passed",
+    "time",
+    "that",
+    "so",
+    "that",
+    "brought",
+    "and",
+    "was"
+   ],
+   "v4_path_sentences": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "oracle_sentence_index": 2,
+   "v4_answered": true,
+   "v4_text": "was a picture of the dear little princess",
+   "v4_rouge": 0.10526315789473685,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9223",
+   "question": "What did the bird do after the woman cut off its tongue?",
+   "reference": "It flew away.",
+   "oracle_sentence_text": "now you may see what it is like to go without it !",
+   "oracle_sentence_tree": "see/ROOT\n  now/SPECIFICATION\n  you/SUBJECT\n  may/MODIFICATION\n  what/OBJECT\n    like/SUBORDINATION\n      it/SUBJECT <== answer\n      is/MODIFICATION\n      to/OBJECT\n        go/MODIFICATION\n          without/MODIFICATION\n            it/PREPOSITION",
+   "oracle_best_subtree_text": "it",
+   "oracle_best_subtree_rouge": 0.6666666666666666,
+   "oracle_anchor": "it",
+   "v4_path_tokens": [
+    "woman",
+    "driven",
+    "had",
+    "made"
+   ],
+   "v4_path_sentences": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "oracle_sentence_index": 1,
+   "v4_answered": true,
+   "v4_text": "made some more rice paste grumbling all the time and after starching spread the things to",
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9181",
+   "question": "What was Helge-Hal in the Blue Hill?",
+   "reference": "a troll",
+   "oracle_sentence_text": "here they went in , and the cat stood with a cake of rye meal just below the door .",
+   "oracle_sentence_tree": "and/ROOT\n  here/SPECIFICATION\n  went/COORDINATION\n    they/SUBJECT\n    in/MODIFICATION\n  stood/COORDINATION\n    cat/SUBJECT\n      the/DESCRIPTION\n    with/MODIFICATION\n      cake/PREPOSITION\n        a/DESCRIPTION <== answer\n    of/MODIFICATION\n      rye/PREPOSITION\n    meal/OBJECT\n    just/SPECIFICATION\n    below/MODIFICATION\n      door/PREPOSITION\n        the/DESCRIPTION",
+   "oracle_best_subtree_text": "a",
+   "oracle_best_subtree_rouge": 0.6666666666666666,
+   "oracle_anchor": "a",
+   "v4_path_tokens": [
+    "was",
+    "and",
+    "had",
+    "heads"
+   ],
+   "v4_path_sentences": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "oracle_sentence_index": 0,
+   "v4_answered": true,
+   "v4_text": "his three great horrible heads",
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9048",
+   "question": "Why did the mudjee monedo believe someone was living with the widow?",
+   "reference": "casted sharp glances at the scaffolds so well laden with meat",
+   "oracle_sentence_text": "the mudjee monedo cast sharp glances at the scaffolds so well laden with meat , and as soon as he had entered , he said , \" why , who is it that is furnishing you with meat so plentifully ?",
+   "oracle_sentence_tree": "mudjee/ROOT\n  the/DESCRIPTION\n  cast/SUBORDINATION <== answer\n    monedo/SUBJECT\n    sharp/COMPLEMENT\n    glances/OBJECT\n      at/MODIFICATION\n        so/PREPOSITION\n          scaffolds/COORDINATION\n            the/DESCRIPTION\n          well/COORDINATION\n      laden/COMPLEMENT\n      with/MODIFICATION\n        meat/PREPOSITION\n      and/COORDINATION\n        said/COORDINATION\n          as/SUBORDINATION\n            soon/SPECIFICATION\n              as/SPECIFICATION\n            entered/MODIFICATION\n              he/SUBJECT\n              had/MODIFICATION\n          he/SUBJECT\n          is/OBJECT\n            why/SPECIFICATION\n            who/SUBJECT\n            it/INDIRECT_OBJECT\n            that/OBJECT\n              furnishing/MODIFICATION\n                is/MODIFICATION\n                  so/SPECIFICATION\n                    plentifully/COORDINATION\n                you/OBJECT\n                  with/MODIFICATION\n                    meat/PREPOSITION",
+   "oracle_best_subtree_text": "the scaffolds so well",
+   "oracle_best_subtree_rouge": 0.6666666666666666,
+   "oracle_anchor": "cast",
+   "v4_path_tokens": [
+    "retorted"
+   ],
+   "v4_path_sentences": [
+    8
+   ],
+   "oracle_sentence_index": 6,
+   "v4_answered": true,
+   "v4_text": "he retorted one is living with",
+   "v4_rouge": 0.14285714285714288,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9563",
+   "question": "Why didn't Barbaik want the neighbors to know about the pearls?",
+   "reference": "She did not want to share with others.",
+   "oracle_sentence_text": "cry on , my dear , cry on , ' she continued to tephany .",
+   "oracle_sentence_tree": "cry/ROOT\n  on/MODIFICATION\n  continued/COORDINATION <== answer\n    dear/OBJECT\n      my/DESCRIPTION\n    cry/OBJECT\n      on/MODIFICATION\n    she/SUBJECT\n    to/MODIFICATION\n      tephany/PREPOSITION",
+   "oracle_best_subtree_text": "to rush from the hall",
+   "oracle_best_subtree_rouge": 0.3076923076923077,
+   "oracle_anchor": "continued",
+   "v4_path_tokens": [
+    "and",
+    "though",
+    "and",
+    "said",
+    "which",
+    "thought"
+   ],
+   "v4_path_sentences": [
+    8,
+    8,
+    8,
+    8,
+    8,
+    8
+   ],
+   "oracle_sentence_index": 5,
+   "v4_answered": true,
+   "v4_text": "she thought would make the girl weep the more tephany with a violent effort forced back her tears and wiped her eyes",
+   "v4_rouge": 0.13333333333333333,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft8951",
+   "question": "How will the Giant feel when the eldest Princess does not properly do her tasks?",
+   "reference": "angry",
+   "oracle_sentence_text": "as you may imagine , he was very angry , and raged , and stamped , and used the most dreadful words ; and at last he took her by the heels , and beat her until all her back was skinned and bleeding ; then he carried her out to the byre , and threw her up on the joists among the hens .",
+   "oracle_sentence_tree": "and/ROOT\n  and/COORDINATION\n    imagine/COORDINATION\n      as/SPECIFICATION\n      you/SUBJECT\n      may/MODIFICATION\n    was/COORDINATION\n      he/SUBJECT\n      angry/COMPLEMENT <== answer\n        very/SPECIFICATION\n    raged/COORDINATION\n  stamped/COORDINATION\n    and/COORDINATION\n      used/COORDINATION\n        words/OBJECT\n          the/DESCRIPTION\n          dreadful/DESCRIPTION\n            most/SPECIFICATION\n        and/COORDINATION\n        and/COORDINATION\n          at/MODIFICATION\n            he/PREPOSITION\n              last/DESCRIPTION\n          took/COORDINATION\n            her/COMPLEMENT\n            by/MODIFICATION\n              heels/PREPOSITION\n                the/DESCRIPTION\n          beat/COORDINATION\n            her/COMPLEMENT\n            until/SUBORDINATION\n          skinned/COORDINATION\n            back/SPECIFICATION\n              her/DESCRIPTION\n                all/SPECIFICATION\n            was/MODIFICATION\n            and/COMPLEMENT\n              bleeding/COORDINATION\n          carried/COORDINATION\n            then/SPECIFICATION\n            he/SUBJECT\n            her/COMPLEMENT\n            out/SPECIFICATION\n            to/MODIFICATION\n              byre/PREPOSITION\n                the/DESCRIPTION\n            and/COORDINATION\n              threw/COORDINATION\n                her/OBJECT\n                up/SPECIFICATION\n                on/MODIFICATION\n                  joists/PREPOSITION\n                    the/DESCRIPTION\n                among/MODIFICATION\n                  hens/PREPOSITION\n                    the/DESCRIPTION",
+   "oracle_best_subtree_text": "raged",
+   "oracle_best_subtree_rouge": 1.0,
+   "oracle_anchor": "angry",
+   "v4_path_tokens": [
+    "came",
+    "found",
+    "in",
+    "despair"
+   ],
+   "v4_path_sentences": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "oracle_sentence_index": 3,
+   "v4_answered": true,
+   "v4_text": "despair",
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9170",
+   "question": "What did the sheep look like?",
+   "reference": "large as full-grown calves",
+   "oracle_sentence_text": "they were as large as full-grown calves , and their wool was so long that it dragged along the ground after them .",
+   "oracle_sentence_tree": "and/ROOT\n  were/COORDINATION <== answer\n    they/SUBJECT\n    as/SPECIFICATION\n      large/SPECIFICATION\n        as/SPECIFICATION\n    full-grown/MODIFICATION\n      calves/OBJECT\n  was/COORDINATION\n    wool/SUBJECT\n      their/DESCRIPTION\n  so/COORDINATION\n  that/SUBORDINATION\n    long/DESCRIPTION\n    dragged/MODIFICATION\n      it/SUBJECT\n      along/MODIFICATION\n        ground/PREPOSITION\n          the/DESCRIPTION\n      after/MODIFICATION\n        them/PREPOSITION",
+   "oracle_best_subtree_text": "they were as large as full-grown calves and their wool was so long that it dragged along the ground after them",
+   "oracle_best_subtree_rouge": 0.9047619047619048,
+   "oracle_anchor": "were",
+   "v4_path_tokens": [
+    "after",
+    "gone",
+    "met",
+    "and",
+    "bleating",
+    "were",
+    "and",
+    "grazing"
+   ],
+   "v4_path_sentences": [
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8,
+    8
+   ],
+   "oracle_sentence_index": 9,
+   "v4_answered": true,
+   "v4_text": "grazing over the whole plain",
+   "v4_rouge": 0.1111111111111111,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft8992",
+   "question": "What did the Giant see while he was on his way home?",
+   "reference": "a troop of little Peerie Folk",
+   "oracle_sentence_text": "meanwhile the giant was coming down the hill in the darkening , and , to his astonishment , he met a troop of little peerie folk toiling up it , looking as if they were so tired that they could hardly get along .",
+   "oracle_sentence_tree": "coming/ROOT\n  giant/SUBJECT\n    the/DESCRIPTION\n      meanwhile/SPECIFICATION\n  was/MODIFICATION\n  down/MODIFICATION\n    hill/PREPOSITION\n      the/DESCRIPTION\n  in/MODIFICATION\n    darkening/PREPOSITION\n      the/DESCRIPTION\n  met/COORDINATION <== answer\n    and/COORDINATION\n    to/MODIFICATION\n      astonishment/PREPOSITION\n        his/DESCRIPTION\n    he/SUBJECT\n    troop/INDIRECT_OBJECT\n      a/DESCRIPTION\n      of/MODIFICATION\n        peerie/PREPOSITION\n          little/DESCRIPTION\n    folk/OBJECT\n    toiling/OBJECT\n    up/MODIFICATION\n      it/PREPOSITION\n    looking/MODIFICATION\n      as/SPECIFICATION\n        could/MODIFICATION\n          if/SUBORDINATION\n            so/MODIFICATION\n              they/SUBJECT\n              were/COORDINATION\n              tired/COORDINATION\n              that/OBJECT\n          they/SUBJECT\n          hardly/SPECIFICATION\n            get/SPECIFICATION\n              along/MODIFICATION",
+   "oracle_best_subtree_text": "a troop of little peerie",
+   "oracle_best_subtree_rouge": 0.9090909090909091,
+   "oracle_anchor": "met",
+   "v4_path_tokens": [
+    "knew",
+    "that",
+    "and",
+    "disappointed",
+    "that",
+    "flung"
+   ],
+   "v4_path_sentences": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "oracle_sentence_index": 3,
+   "v4_answered": true,
+   "v4_text": "flung the webs of cloth down in a heap ran out at door",
+   "v4_rouge": 0.10526315789473684,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9314",
+   "question": "What happened when the husband ate the birthday noodles?",
+   "reference": "felt terrible pains, which soon grew unbearable, so that he fell to the ground unconscious",
+   "oracle_sentence_text": "but still he did not believe her , until he suddenly felt terrible pains , which soon grew unbearable , so that he fell to the ground unconscious .",
+   "oracle_sentence_tree": "believe/ROOT\n  but/COORDINATION\n  still/SPECIFICATION\n  he/SUBJECT\n  did/MODIFICATION\n  not/MODIFICATION\n  her/COMPLEMENT\n  until/SUBORDINATION\n    felt/MODIFICATION\n      he/SUBJECT\n      suddenly/SPECIFICATION\n  so/COORDINATION <== answer\n    grew/COORDINATION\n      pains/MODIFICATION\n        terrible/DESCRIPTION\n      which/SUBJECT\n      soon/SPECIFICATION\n      unbearable/COMPLEMENT\n    that/COORDINATION\n      fell/MODIFICATION\n        he/SUBJECT\n        to/MODIFICATION\n          ground/PREPOSITION\n            the/DESCRIPTION\n        unconscious/OBJECT",
+   "oracle_best_subtree_text": "terrible pains which soon grew unbearable so that he fell to the ground unconscious",
+   "oracle_best_subtree_rouge": 0.9655172413793104,
+   "oracle_anchor": "so",
+   "v4_path_tokens": [
+    "he"
+   ],
+   "v4_path_sentences": [
+    9
+   ],
+   "oracle_sentence_index": 4,
+   "v4_answered": false,
+   "v4_text": null,
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft8847",
+   "question": "How was the six headed troll different from the first one?",
+   "reference": "The troll with six heads is twice as strong as the first one.",
+   "oracle_sentence_text": "now i must fight for my very life , for the troll with six heads is twice as strong as the first one ; but see that you take care of the leaf and keep it carefully ! \"",
+   "oracle_sentence_tree": "fight/ROOT\n  now/SPECIFICATION\n  i/SUBJECT\n  must/MODIFICATION\n  for/MODIFICATION\n    life/PREPOSITION <== answer\n      my/DESCRIPTION\n      very/SPECIFICATION\n      for/MODIFICATION\n        troll/PREPOSITION\n          the/DESCRIPTION\n      with/MODIFICATION\n        heads/PREPOSITION\n          six/DESCRIPTION\n        is/MODIFICATION\n          strong/COMPLEMENT\n            as/SPECIFICATION\n              twice/SPECIFICATION\n          the/COMPLEMENT\n            as/SPECIFICATION\n          see/OBJECT\n            but/COORDINATION\n              one/COORDINATION\n                first/DESCRIPTION\n            that/SUBORDINATION\n              take/MODIFICATION\n                you/SUBJECT\n                care/INDIRECT_OBJECT\n                  of/MODIFICATION\n                    and/PREPOSITION\n                      leaf/COORDINATION\n                        the/DESCRIPTION\n                      keep/COORDINATION\n                it/OBJECT\n                carefully/SPECIFICATION",
+   "oracle_best_subtree_text": "my very life for the troll with six heads is twice as strong as the first one but see that you take care of the leaf and keep it carefully",
+   "oracle_best_subtree_rouge": 0.6046511627906976,
+   "oracle_anchor": "life",
+   "v4_path_tokens": [
+    "fight",
+    "for",
+    "life",
+    "with",
+    "is",
+    "see"
+   ],
+   "v4_path_sentences": [
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "oracle_sentence_index": 6,
+   "v4_answered": true,
+   "v4_text": "see that take care of leaf and carefully",
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9215",
+   "question": "Why did the man not notice his wife's crossness?",
+   "reference": "He was out most of the day in the fields.",
+   "oracle_sentence_text": "he was out most of the day at work in the fields , and as he had no child , for his amusement when he came home , he kept a tame sparrow .",
+   "oracle_sentence_tree": "was/ROOT <== answer\n  he/SUBJECT\n  out/MODIFICATION\n    most/PREPOSITION\n  of/MODIFICATION\n    day/PREPOSITION\n      the/DESCRIPTION\n  at/MODIFICATION\n    work/PREPOSITION\n      in/MODIFICATION\n        fields/PREPOSITION\n          the/DESCRIPTION\n      and/COORDINATION\n        had/COORDINATION\n          he/SUBJECT\n          child/OBJECT\n            no/DESCRIPTION\n          for/MODIFICATION\n            amusement/PREPOSITION\n              his/DESCRIPTION\n        kept/COORDINATION\n          as/SUBORDINATION\n          when/SUBORDINATION\n            came/MODIFICATION\n              he/SUBJECT\n              home/OBJECT\n          he/SUBJECT\n          sparrow/OBJECT\n            a/DESCRIPTION\n            tame/DESCRIPTION",
+   "oracle_best_subtree_text": "he was out most of the day at work in the fields and as he had no child for his amusement when he came home he kept a tame sparrow",
+   "oracle_best_subtree_rouge": 0.5,
+   "oracle_anchor": "was",
+   "v4_path_tokens": [
+    "had"
+   ],
+   "v4_path_sentences": [
+    3
+   ],
+   "oracle_sentence_index": 4,
+   "v4_answered": true,
+   "v4_text": "the old man had for a long time to take",
+   "v4_rouge": 0.10000000000000002,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft8744",
+   "question": "Why did the eldest daughter give the dead man no answer?",
+   "reference": "She was surprised.",
+   "oracle_sentence_text": "she walked , and she walked , till she was tired and hungry , and then she sat down to take her dinner .",
+   "oracle_sentence_tree": "and/ROOT\n  walked/COORDINATION\n    she/SUBJECT\n  walked/COORDINATION\n    she/SUBJECT\n  and/COORDINATION\n    was/COORDINATION <== answer\n      till/OBJECT\n      she/SUBJECT\n      and/COMPLEMENT\n        tired/COORDINATION\n        hungry/COORDINATION\n    sat/COORDINATION\n      she/SUBJECT\n        then/DESCRIPTION\n      to/OBJECT\n        take/MODIFICATION\n          dinner/OBJECT\n            her/DESCRIPTION\n    down/MODIFICATION",
+   "oracle_best_subtree_text": "she",
+   "oracle_best_subtree_rouge": 0.5,
+   "oracle_anchor": "was",
+   "v4_path_tokens": [
+    "was"
+   ],
+   "v4_path_sentences": [
+    0
+   ],
+   "oracle_sentence_index": 4,
+   "v4_answered": true,
+   "v4_text": "was a woman and eldest said and",
+   "v4_rouge": 0.2105263157894737,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft8932",
+   "question": "How did the eldest Princess feel when the Giant would not leave?",
+   "reference": "angry",
+   "oracle_sentence_text": "\" i should like to see you try , \" retorted the princess , rising from her stool and stamping her foot ; for she felt so angry that she forgot for a moment that she was only a weak maiden and he was a great and powerful giant .",
+   "oracle_sentence_tree": "like/ROOT\n  i/SUBJECT\n  should/MODIFICATION\n  to/MODIFICATION\n    see/MODIFICATION\n      you/OBJECT\n      retorted/OBJECT\n        try/OBJECT\n        princess/SUBJECT\n          the/DESCRIPTION\n        rising/MODIFICATION\n        from/MODIFICATION\n          stool/PREPOSITION\n            her/DESCRIPTION\n          and/PREPOSITION\n            stamping/COORDINATION\n              foot/OBJECT\n                her/DESCRIPTION\n        was/OBJECT\n          that/SUBORDINATION\n            for/MODIFICATION\n              she/PREPOSITION\n            so/MODIFICATION\n              felt/COORDINATION\n            angry/DESCRIPTION <== answer\n            forgot/MODIFICATION\n              she/SUBJECT\n              for/MODIFICATION\n                moment/PREPOSITION\n                  a/DESCRIPTION\n              that/SUBORDINATION\n                was/MODIFICATION\n                  she/SUBJECT\n          and/SUBJECT\n            maiden/COORDINATION\n              a/DESCRIPTION\n                only/SPECIFICATION\n              weak/DESCRIPTION\n            he/COORDINATION\n          giant/OBJECT\n            a/DESCRIPTION\n            and/DESCRIPTION\n              great/COORDINATION\n              powerful/COORDINATION",
+   "oracle_best_subtree_text": "angry",
+   "oracle_best_subtree_rouge": 1.0,
+   "oracle_anchor": "angry",
+   "v4_path_tokens": [
+    "but",
+    "paid"
+   ],
+   "v4_path_sentences": [
+    2,
+    2
+   ],
+   "oracle_sentence_index": 6,
+   "v4_answered": true,
+   "v4_text": "the giant paid no heed",
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9523",
+   "question": "How did Denis feel after Tephany spoke so wisely?",
+   "reference": "surprised",
+   "oracle_sentence_text": "soon the neighbours whispered their surprise among themselves , for tephany had not been able to resist the pleasure of putting the feather in her hair for some of the people who despised her for her poor clothes , and many were the jokes she made about them .",
+   "oracle_sentence_tree": "neighbours/ROOT\n  the/DESCRIPTION\n    soon/SPECIFICATION\n  surprise/APPOSITION <== answer\n    whispered/DESCRIPTION\n    their/DESCRIPTION\n    among/MODIFICATION\n      themselves/PREPOSITION\n    for/MODIFICATION\n      tephany/PREPOSITION\n    had/SUBORDINATION\n      been/MODIFICATION\n        not/MODIFICATION\n        able/COMPLEMENT\n        to/MODIFICATION\n          resist/MODIFICATION\n            pleasure/OBJECT\n              the/DESCRIPTION\n          of/MODIFICATION\n            putting/MODIFICATION\n              feather/OBJECT\n                the/DESCRIPTION\n                in/MODIFICATION\n                  hair/PREPOSITION\n                    her/DESCRIPTION\n                for/MODIFICATION\n                  some/PREPOSITION\n                    despised/SUBORDINATION\n                      of/MODIFICATION\n                        people/PREPOSITION\n                          the/DESCRIPTION\n                      who/SUBJECT\n                      her/OBJECT\n                        for/MODIFICATION\n                          clothes/PREPOSITION\n                            her/DESCRIPTION\n                            poor/DESCRIPTION\n                      and/COORDINATION\n                        were/COORDINATION\n                          many/SUBJECT\n                          jokes/INDIRECT_OBJECT\n                            the/DESCRIPTION\n                          she/OBJECT\n                          made/MODIFICATION\n                            about/MODIFICATION\n                              them/PREPOSITION",
+   "oracle_best_subtree_text": "blushing with pleasure tephany went home and stuck the feather into the blue ribbon which girls always wear in that part of the country",
+   "oracle_best_subtree_rouge": 0.0,
+   "oracle_anchor": "surprise",
+   "v4_path_tokens": [
+    "neighbours",
+    "surprise"
+   ],
+   "v4_path_sentences": [
+    7,
+    7
+   ],
+   "oracle_sentence_index": 7,
+   "v4_answered": true,
+   "v4_text": "surprise",
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft8681",
+   "question": "Where did Assipattle go before he attempted to defeat the Stoorworm?",
+   "reference": "a little cottage",
+   "oracle_sentence_text": "he climbed down from his seat on go-swift 's back , and tethered the good steed to a tree , and walked on , looking well about him , till he came to a little cottage on the edge of a wood .",
+   "oracle_sentence_tree": "climbed/ROOT\n  he/SUBJECT\n  down/MODIFICATION\n  from/MODIFICATION\n    seat/PREPOSITION\n      his/DESCRIPTION\n  on/MODIFICATION\n    go-swift/PREPOSITION\n    back/PREPOSITION\n      's/MODIFICATION\n  till/COORDINATION\n    walked/OBJECT\n      and/COORDINATION\n      steed/MODIFICATION\n        tethered/DESCRIPTION\n        the/DESCRIPTION\n        good/DESCRIPTION\n        to/MODIFICATION\n          tree/PREPOSITION\n            a/DESCRIPTION\n      and/COORDINATION\n      on/MODIFICATION\n    looking/MODIFICATION\n      well/OBJECT\n        about/MODIFICATION\n          him/PREPOSITION\n    came/OBJECT\n      he/SUBJECT\n      to/MODIFICATION\n        little/PREPOSITION <== answer\n          a/DESCRIPTION\n      cottage/OBJECT\n        on/MODIFICATION\n          edge/PREPOSITION\n            the/DESCRIPTION\n        of/MODIFICATION\n          wood/PREPOSITION\n            a/DESCRIPTION",
+   "oracle_best_subtree_text": "a little",
+   "oracle_best_subtree_rouge": 0.8,
+   "oracle_anchor": "little",
+   "v4_path_tokens": [
+    "said",
+    "of",
+    "making",
+    "attempt"
+   ],
+   "v4_path_sentences": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "oracle_sentence_index": 5,
+   "v4_answered": true,
+   "v4_text": "such an attempt for",
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  },
+  {
+   "id": "ft9366",
+   "question": "Who did the boy ask for as his wife?",
+   "reference": "the youngest",
+   "oracle_sentence_text": "then they parted , and on the morrow , as the girl had said , the giant called his three daughters to him , and likewise the young prince to whom he spoke .",
+   "oracle_sentence_tree": "and/ROOT\n  then/SPECIFICATION\n  parted/COORDINATION\n    they/SUBJECT\n  said/COORDINATION\n    on/MODIFICATION\n      morrow/PREPOSITION\n        the/DESCRIPTION\n    girl/SUBJECT\n      the/DESCRIPTION\n        as/SPECIFICATION\n    had/MODIFICATION\n  called/COORDINATION\n    giant/SUBJECT\n      the/DESCRIPTION\n    daughters/OBJECT\n      his/DESCRIPTION\n      three/DESCRIPTION\n      to/MODIFICATION\n        him/PREPOSITION\n    and/OBJECT\n      spoke/COORDINATION\n        prince/SUBJECT <== answer\n          the/DESCRIPTION\n            likewise/SPECIFICATION\n          young/DESCRIPTION\n          to/MODIFICATION\n            whom/PREPOSITION\n        he/SUBJECT",
+   "oracle_best_subtree_text": "the",
+   "oracle_best_subtree_rouge": 0.6666666666666666,
+   "oracle_anchor": "prince",
+   "v4_path_tokens": [
+    "said",
+    "but",
+    "so",
+    "blood",
+    "that",
+    "roll",
+    "apple"
+   ],
+   "v4_path_sentences": [
+    6,
+    6,
+    6,
+    6,
+    6,
+    6,
+    6
+   ],
+   "oracle_sentence_index": 0,
+   "v4_answered": true,
+   "v4_text": "a golden apple",
+   "v4_rouge": 0.0,
+   "v4_exhausted": false
+  }
+ ]
+}

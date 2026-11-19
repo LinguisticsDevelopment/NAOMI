@@ -48,8 +48,9 @@ def main():
     ap.add_argument("models", nargs="+", help="models for the headline / band tables; the first is the main model, the second the v2b comparison")
     ap.add_argument("--short", nargs=2, action="append", default=[], metavar=("SHORT", "ALLLEN"), help="short-only / all-lengths pair (repeatable)")
     ap.add_argument("--tag", default="")
+    ap.add_argument("--dir", default="mind_v3", help="run directory holding eval_<split>.json (mind_v4 for the v4 tables)")
     args = ap.parse_args()
-    D = CT / "runs" / "mind_v3"
+    D = CT / "runs" / args.dir
     rows = [json.loads(l) for l in open(D / f"eval_rows_{args.split}{args.tag}.jsonl")]
     S = json.load(open(D / f"eval_{args.split}{args.tag}.json"))
     main_m, base_m = args.models[0], args.models[1]
