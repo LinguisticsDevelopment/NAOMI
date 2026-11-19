@@ -1,0 +1,25 @@
+stage1 v4 variant=all: normal 7536 (skipped unreachable 1012), wrong-passage 2534
+ep 0 loss 3.1145 val_rouge 0.1292 answer_rate 0.768 wrong_abstain 0.987 steps 3.98 exhausted 0.016 64s
+ep 1 loss 2.8729 val_rouge 0.2656 answer_rate 0.945 wrong_abstain 0.935 steps 3.51 exhausted 0.006 121s
+ep 2 loss 2.7963 val_rouge 0.2451 answer_rate 0.923 wrong_abstain 0.925 steps 4.31 exhausted 0.010 176s
+ep 3 loss 2.7476 val_rouge 0.2499 answer_rate 0.905 wrong_abstain 0.950 steps 4.40 exhausted 0.017 232s
+ep 4 loss 2.7127 val_rouge 0.2585 answer_rate 0.925 wrong_abstain 0.954 steps 4.15 exhausted 0.011 288s
+ep 5 loss 2.6677 val_rouge 0.2745 answer_rate 0.919 wrong_abstain 0.963 steps 4.28 exhausted 0.014 345s
+ep 6 loss 2.6348 val_rouge 0.2841 answer_rate 0.926 wrong_abstain 0.951 steps 4.14 exhausted 0.013 402s
+ep 7 loss 2.6011 val_rouge 0.2548 answer_rate 0.946 wrong_abstain 0.912 steps 4.32 exhausted 0.016 462s
+ep 8 loss 2.5874 val_rouge 0.2832 answer_rate 0.880 wrong_abstain 0.978 steps 3.74 exhausted 0.010 523s
+ep 9 loss 2.5587 val_rouge 0.3034 answer_rate 0.940 wrong_abstain 0.936 steps 3.61 exhausted 0.006 581s
+ep 10 loss 2.5426 val_rouge 0.2763 answer_rate 0.909 wrong_abstain 0.969 steps 3.92 exhausted 0.012 641s
+ep 11 loss 2.5211 val_rouge 0.2856 answer_rate 0.849 wrong_abstain 0.984 steps 3.74 exhausted 0.007 700s
+ep 12 loss 2.5057 val_rouge 0.2568 answer_rate 0.914 wrong_abstain 0.970 steps 3.39 exhausted 0.006 753s
+ep 13 loss 2.4812 val_rouge 0.2883 answer_rate 0.915 wrong_abstain 0.959 steps 3.98 exhausted 0.012 808s
+ep 14 loss 2.4592 val_rouge 0.2871 answer_rate 0.924 wrong_abstain 0.941 steps 3.69 exhausted 0.010 862s
+ep 15 loss 2.4474 val_rouge 0.2747 answer_rate 0.909 wrong_abstain 0.960 steps 3.92 exhausted 0.012 921s
+ep 16 loss 2.4220 val_rouge 0.2960 answer_rate 0.928 wrong_abstain 0.951 steps 3.83 exhausted 0.009 977s
+ep 17 loss 2.4166 val_rouge 0.3169 answer_rate 0.940 wrong_abstain 0.958 steps 4.05 exhausted 0.006 1034s
+ep 18 loss 2.3897 val_rouge 0.2982 answer_rate 0.890 wrong_abstain 0.976 steps 3.84 exhausted 0.011 1090s
+ep 19 loss 2.3860 val_rouge 0.3036 answer_rate 0.926 wrong_abstain 0.949 steps 3.72 exhausted 0.011 1146s
+ep 20 loss 2.3696 val_rouge 0.2941 answer_rate 0.909 wrong_abstain 0.969 steps 3.79 exhausted 0.007 1202s
+ep 21 loss 2.3440 val_rouge 0.2990 answer_rate 0.927 wrong_abstain 0.950 steps 3.68 exhausted 0.006 1257s
+ep 22 loss 2.3412 val_rouge 0.2898 answer_rate 0.902 wrong_abstain 0.972 steps 3.67 exhausted 0.012 1313s
+ep 23 loss 2.3177 val_rouge 0.3170 answer_rate 0.951 wrong_abstain 0.926 steps 4.05 exhausted 0.009 1368s

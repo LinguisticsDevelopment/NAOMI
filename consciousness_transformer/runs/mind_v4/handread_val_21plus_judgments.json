@@ -1,0 +1,102 @@
+[
+ {
+  "id": "ft9014",
+  "verdict": "policy",
+  "note": "wrong sentence; tree ok (0.86)"
+ },
+ {
+  "id": "ft9525",
+  "verdict": "policy",
+  "note": "right sentence, walked past the anchor 'had' into a deeper branch; the root is odd ('neighbours') so the tree is partly suspect"
+ },
+ {
+  "id": "ft9077",
+  "verdict": "policy+tree",
+  "note": "wrong sentence; and the tree has no subtree equal to the answer (best 0.60)"
+ },
+ {
+  "id": "ft8613",
+  "verdict": "policy",
+  "note": "right sentence, took the first conjunct instead of the second; tree ok (0.74)"
+ },
+ {
+  "id": "ft8908",
+  "verdict": "policy",
+  "note": "right sentence, descended into the wrong branch; tree ok (0.80)"
+ },
+ {
+  "id": "ft9223",
+  "verdict": "reference not in text",
+  "note": "reference needs words not in the story ('flew away'); oracle anchor is the pronoun 'it'"
+ },
+ {
+  "id": "ft9181",
+  "verdict": "reference not in text",
+  "note": "'a troll' is not in the story; oracle anchor is the article 'a'"
+ },
+ {
+  "id": "ft9048",
+  "verdict": "policy+tree",
+  "note": "wrong sentence; tree has no subtree equal to the answer (best 0.67)"
+ },
+ {
+  "id": "ft9563",
+  "verdict": "reference not in text",
+  "note": "reference is an inference ('She did not want to share'), not in the text; best subtree 0.31"
+ },
+ {
+  "id": "ft8951",
+  "verdict": "policy",
+  "note": "wrong sentence; tree ok (1.0)"
+ },
+ {
+  "id": "ft9170",
+  "verdict": "policy",
+  "note": "wrong sentence (adjacent); tree ok (0.90)"
+ },
+ {
+  "id": "ft8992",
+  "verdict": "policy",
+  "note": "wrong sentence (adjacent); tree ok (0.91)"
+ },
+ {
+  "id": "ft9314",
+  "verdict": "policy",
+  "note": "abstained / wrong sentence; tree ok (0.97)"
+ },
+ {
+  "id": "ft8847",
+  "verdict": "policy+tree",
+  "note": "right sentence, passed the anchor 'life' without HERE; the clause 'but see that you take care...' is attached under 'life' so no clean subtree (best 0.60)"
+ },
+ {
+  "id": "ft9215",
+  "verdict": "policy+tree",
+  "note": "wrong sentence (adjacent); the answer clause hangs under a node that also carries 'and as he had no child ...' (best 0.50)"
+ },
+ {
+  "id": "ft8744",
+  "verdict": "reference not in text",
+  "note": "'She was surprised' is not in the text; oracle anchor 'was'/'she'"
+ },
+ {
+  "id": "ft8932",
+  "verdict": "policy",
+  "note": "wrong sentence; tree ok (1.0)"
+ },
+ {
+  "id": "ft9523",
+  "verdict": "metric",
+  "note": "v4 found 'surprise' in the right sentence; reference 'surprised' differs in inflection, ROUGE 0"
+ },
+ {
+  "id": "ft8681",
+  "verdict": "policy",
+  "note": "wrong sentence; tree ok (0.80)"
+ },
+ {
+  "id": "ft9366",
+  "verdict": "reference not in text",
+  "note": "'the youngest' is not in the sentence; oracle anchor is the article 'the'"
+ }
+]

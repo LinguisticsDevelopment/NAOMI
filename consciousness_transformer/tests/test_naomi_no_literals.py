@@ -48,6 +48,8 @@ ALLOWED = {
     'ref_missing', 'ref_n', 'rels', 's_bits', 's_depth', 's_item', 's_off', 's_parent', 's_pos', 's_rel', 's_scal', 's_sense', 's_sent',
     's_size', 'sb', 'scal', 'sent', 'sent_text', 'shuf', 'sid', 'sidx', 'skey', 'specs', 'table', 'tgt', 'tidx', 'vec', 'vocab', 'wh', 'wrong',
     # naomi.mind_v3: encoder-output dict keys (tensor names) and the torch scatter_reduce mode (non-linguistic identifiers)
+    # naomi.mind_v4: encoder-output / walk-result dict keys and the per-item root-list cache key (non-linguistic identifiers)
+    'next_node', 'prev_node', 'rcount', 'rstart', 'roots_l', 'move', 'in2', 'sv', 'start_v', 'value', 'find', 'steps', 'exhausted', 'path',
     'amax', 'anode', 'gs', 'maxd', 'n_per', 'rank', 'sent_item', 'sl_pad', 'ssz', 'start', 'within',
 }
 _WORDISH = re.compile(r"^[a-z][a-z_]+$")

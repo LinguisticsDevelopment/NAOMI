@@ -1,0 +1,10 @@
+stage1 v4 variant=all: normal 7536 (skipped unreachable 1012), wrong-passage 2534
+ep 0 loss 3.1232 val_rouge 0.1618 answer_rate 0.829 wrong_abstain 0.983 steps 3.66 exhausted 0.012 65s
+ep 1 loss 2.8790 val_rouge 0.2400 answer_rate 0.887 wrong_abstain 0.967 steps 4.20 exhausted 0.014 118s
+ep 2 loss 2.7914 val_rouge 0.2409 answer_rate 0.915 wrong_abstain 0.948 steps 4.16 exhausted 0.014 168s
+ep 3 loss 2.7386 val_rouge 0.2474 answer_rate 0.902 wrong_abstain 0.966 steps 4.18 exhausted 0.016 218s
+ep 4 loss 2.7017 val_rouge 0.2470 answer_rate 0.906 wrong_abstain 0.951 steps 4.53 exhausted 0.019 268s
+ep 5 loss 2.6675 val_rouge 0.2526 answer_rate 0.927 wrong_abstain 0.943 steps 4.48 exhausted 0.016 354s
+ep 6 loss 2.6353 val_rouge 0.2614 answer_rate 0.916 wrong_abstain 0.953 steps 4.27 exhausted 0.014 408s
+ep 7 loss 2.6177 val_rouge 0.2500 answer_rate 0.932 wrong_abstain 0.929 steps 4.55 exhausted 0.017 462s
+ep 8 loss 2.5929 val_rouge 0.2620 answer_rate 0.849 wrong_abstain 0.987 steps 3.75 exhausted 0.013 688s

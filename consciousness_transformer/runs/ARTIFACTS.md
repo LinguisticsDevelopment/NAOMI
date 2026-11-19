@@ -247,3 +247,8 @@ Report: `dev/reports/MIND_V2B.md`. Code: `src/naomi/roundtrip.py`, `scripts/{fet
 Report: `dev/reports/MIND_V3.md`. Code: `src/naomi/mind_v3.py`, `scripts/{train,eval,tables}_mind_v3.py`, `tests/test_mind_v3.py`.
 - `runs/mind_v3/thinker_v3_s2_best.pt` (main, declared on val; test 0.345, = v2b), plus `s1`, ablations `noctx`, `noinv`, short-only `short`, `short_inv2`, `short_noinv`. Curves, logs, `eval_{val,test}.json`, `tables_{val,test}.md`, hand-read.
 - NOT committed: `eval_rows_{val,test}.jsonl` (24-28 MB, regenerable with `scripts/eval_mind_v3.py`), caches, pickles.
+
+### Thinker v4 (step-down walk), 2026-11-19
+Report: `dev/reports/MIND_V4.md`. Code: `src/naomi/mind_v4.py`, `scripts/{train,eval,probe,tables}_mind_v4.py`, `tests/test_mind_v4.py`.
+- `runs/mind_v4/thinker_v4_all_best.pt` (main; test 0.297, below v3), `thinker_v4_short_best.pt` (short-only), killed designs `v4a_freenav`, `v4b_hillclimb`, `v4c_localmlp`. Curves, logs, eval/steps/probe json+md, tables, hand-read of 20 val 21+ failures with judgments.
+- NOT committed: `eval_rows_{val,test}.jsonl` (18 MB each), symlinked pickles/caches.
