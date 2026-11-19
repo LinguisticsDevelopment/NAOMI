@@ -47,6 +47,8 @@ ALLOWED = {
     'pairs', 'pairs_', 'poss', 'q_bits', 'q_item', 'q_parent', 'q_pos', 'q_rel', 'q_scal', 'q_sense', 'q_wh', 'qb', 'qvec', 'read_cache',
     'ref_missing', 'ref_n', 'rels', 's_bits', 's_depth', 's_item', 's_off', 's_parent', 's_pos', 's_rel', 's_scal', 's_sense', 's_sent',
     's_size', 'sb', 'scal', 'sent', 'sent_text', 'shuf', 'sid', 'sidx', 'skey', 'specs', 'table', 'tgt', 'tidx', 'vec', 'vocab', 'wh', 'wrong',
+    # naomi.mind_v3: encoder-output dict keys (tensor names) and the torch scatter_reduce mode (non-linguistic identifiers)
+    'amax', 'anode', 'gs', 'maxd', 'n_per', 'rank', 'sent_item', 'sl_pad', 'ssz', 'start', 'within',
 }
 _WORDISH = re.compile(r"^[a-z][a-z_]+$")
 
