@@ -22,7 +22,7 @@ memory, written by ordinary graph/tensor writes, never by training. See
 | Read | usable on short simple text (5-8% of links wrong at <=10 words; ~20% beyond); the parser itself is ~15% wrong on children's stories; joining pieces of long literary sentences remains unsolved |
 | Remember | live memory is now a layered graph (`src/naomi/memory.py`); earlier results were on the archived flat-tensor path |
 | Resolve | working on archived code, with an open WSD gap; to be re-attached |
-| Answer from memory | full chain on the full FairytaleQA (2026-11-18, `dev/reports/MIND_V2B.md`): held-out ROUGE-L 0.348 vs overlap cheat 0.220 (oracle 0.757; v2 on less data 0.301); controls pass; sound round-trip check now shows the order decoder breaks on 7+-word answers; short-sentence training does not extend to long sentences. Pipeline not yet working well: span choice is the main gap |
+| Answer from memory | full chain plateaus at ~0.35 ROUGE-L on held-out FairytaleQA over three thinker versions (v2b 0.348, v3 0.345; cheat 0.220, oracle 0.757; `dev/reports/MIND_V3.md`); controls pass; short-sentence training does not extend to long sentences in any version. Method rethink pending owner |
 | Reason | in progress on archived code; to be re-attached on the minimal loop |
 | Speak | decoder un-parked as the encoder's round-trip partner only; must be learned (grammar cannot generate) |
 | Any language | working at curriculum scale (archived code), not yet at real-text scale |

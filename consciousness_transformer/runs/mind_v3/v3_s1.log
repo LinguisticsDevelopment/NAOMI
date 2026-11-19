@@ -1,0 +1,28 @@
+stage1 v3 variant=all inv=1 ctx=1: normal 7536 (skipped unreachable 1012), wrong-passage 2534
+/home/user/NAOMI/consciousness_transformer/scripts/train_mind_v3.py:141: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tl += float(loss) * len(ch)
+ep 0 loss 3.5532 val_rouge 0.1713 answer_rate 0.907 wrong_abstain 0.964 125s
+ep 1 loss 3.2384 val_rouge 0.2374 answer_rate 0.932 wrong_abstain 0.953 160s
+ep 2 loss 3.0956 val_rouge 0.2627 answer_rate 0.965 wrong_abstain 0.909 193s
+ep 3 loss 2.9953 val_rouge 0.3108 answer_rate 0.931 wrong_abstain 0.951 227s
+ep 4 loss 2.9147 val_rouge 0.3161 answer_rate 0.933 wrong_abstain 0.962 258s
+ep 5 loss 2.8515 val_rouge 0.3179 answer_rate 0.973 wrong_abstain 0.899 293s
+ep 6 loss 2.8170 val_rouge 0.2859 answer_rate 0.947 wrong_abstain 0.945 329s
+ep 7 loss 2.7636 val_rouge 0.3282 answer_rate 0.963 wrong_abstain 0.921 364s
+ep 8 loss 2.7112 val_rouge 0.3357 answer_rate 0.949 wrong_abstain 0.946 403s
+ep 9 loss 2.6790 val_rouge 0.3151 answer_rate 0.972 wrong_abstain 0.901 440s
+ep 10 loss 2.6332 val_rouge 0.3442 answer_rate 0.941 wrong_abstain 0.961 476s
+ep 11 loss 2.6008 val_rouge 0.3449 answer_rate 0.973 wrong_abstain 0.891 511s
+ep 12 loss 2.5810 val_rouge 0.3344 answer_rate 0.954 wrong_abstain 0.944 549s
+ep 13 loss 2.5461 val_rouge 0.3364 answer_rate 0.958 wrong_abstain 0.931 587s
+ep 14 loss 2.5379 val_rouge 0.3462 answer_rate 0.965 wrong_abstain 0.922 625s
+ep 15 loss 2.5191 val_rouge 0.3503 answer_rate 0.966 wrong_abstain 0.936 661s
+ep 16 loss 2.4639 val_rouge 0.3276 answer_rate 0.951 wrong_abstain 0.949 699s
+ep 17 loss 2.4668 val_rouge 0.3369 answer_rate 0.959 wrong_abstain 0.936 738s
+ep 18 loss 2.4481 val_rouge 0.3652 answer_rate 0.932 wrong_abstain 0.961 776s
+ep 19 loss 2.4191 val_rouge 0.3472 answer_rate 0.928 wrong_abstain 0.963 818s
+ep 20 loss 2.3994 val_rouge 0.3608 answer_rate 0.982 wrong_abstain 0.888 859s
+ep 21 loss 2.3738 val_rouge 0.3560 answer_rate 0.944 wrong_abstain 0.953 897s
+ep 22 loss 2.3507 val_rouge 0.3423 answer_rate 0.960 wrong_abstain 0.941 938s
+ep 23 loss 2.3261 val_rouge 0.3502 answer_rate 0.965 wrong_abstain 0.931 975s

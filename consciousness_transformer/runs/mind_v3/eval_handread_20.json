@@ -1,0 +1,208 @@
+{
+ "low": [
+  {
+   "id": "ft9715",
+   "question": "How did the old man feel to see their strange antics?",
+   "reference": "amused",
+   "answer": "excited",
+   "p_abstain": 4.3922838699472777e-07,
+   "band": "<=10",
+   "oracle_text": "so interested",
+   "cheat_text": "it made the old man laugh to see their strange antics ."
+  },
+  {
+   "id": "ft9734",
+   "question": "How did the wife feel about her husband returning home so late?",
+   "reference": "very anxious",
+   "answer": "happy",
+   "p_abstain": 6.252927065020231e-10,
+   "band": "11-20",
+   "oracle_text": "very anxious",
+   "cheat_text": "he found his wife very anxious , wondering what had happened to make him so late ."
+  },
+  {
+   "id": "ft9816",
+   "question": "How did Snorro the Dwarf feel after Harold came for his help?",
+   "reference": "happy",
+   "answer": "a love",
+   "p_abstain": 6.158710347259344e-11,
+   "band": "none",
+   "oracle_text": "for he scented more gold",
+   "cheat_text": "when he arrived there he hurried up the lonely valley to where the dwarfie stone stood , and he had no difficulty in finding its uncanny occupant , for snorro was standing at the hole that served as a door , his raven on his shoulder , gazing placidly at the setting sun ."
+  },
+  {
+   "id": "ft10481",
+   "question": "What made his boat queer?",
+   "reference": "it went through the water of its own accord",
+   "answer": "much shorter than",
+   "p_abstain": 1.5520072726982193e-10,
+   "band": "21+",
+   "oracle_text": "through the water",
+   "cheat_text": "his queer boat seemed to go through the water of its own accord , and the distance was much shorter than he had expected , for in a few hours he caught sight of the gate and the roof of the sea king 's palace ."
+  },
+  {
+   "id": "ft9892",
+   "question": "What did the gentleman do for fourteen days?",
+   "reference": "seek counsel from wise men of all sorts",
+   "answer": "he might escape death but no one could help him",
+   "p_abstain": 8.839258953230456e-06,
+   "band": "21+",
+   "oracle_text": "seek counsel from wise men of all sorts",
+   "cheat_text": "by their advice he spent the fourteen days that remained to him going about to seek counsel from wise men of all sorts , as to how he might escape death , but no one could help him , for none could find any excuse for the blow he had given to the prince ."
+  },
+  {
+   "id": "ft10278",
+   "question": "What were the names of the Prince's and Princess's children",
+   "reference": "Morning and Day",
+   "answer": "a a son",
+   "p_abstain": 1.5557574783997552e-07,
+   "band": "21+",
+   "oracle_text": "morning",
+   "cheat_text": "they went into the great hall of looking - glasses , where they supped , and were served by the princess 's officers , the violins and hautboys played old tunes , but very excellent , though it was now above a hundred years since they had played ; and after supper , without losing any time , the lord almoner married them in the chapel of the castle , and the chief lady of honor drew the curtains ."
+  },
+  {
+   "id": "ft10147",
+   "question": "Where was the small village?",
+   "reference": "the foot of some high mountains",
+   "answer": "a little way off two roads",
+   "p_abstain": 1.1478985539881137e-09,
+   "band": "21+",
+   "oracle_text": "of some high mountains",
+   "cheat_text": "at the foot of some high mountains there was , once upon a time , a small village , and a little way off two roads met , one of them going to the east and the other to the west ."
+  },
+  {
+   "id": "ft10551",
+   "question": "How did the bonze feel when the artisan gave him a pear?",
+   "reference": "thankful",
+   "answer": "annoyed",
+   "p_abstain": 1.5770522665548015e-09,
+   "band": "none",
+   "oracle_text": "the bystanders told the farmer that he ought to give the bonze one of the smaller pears and let him go",
+   "cheat_text": "an artisan saw the whole affair from his shop , and since the noise annoyed him , he took some money , bought a pear and gave it to the bonze ."
+  },
+  {
+   "id": "ft10175",
+   "question": "Who was Lucky Andrew?",
+   "reference": "the youngest son",
+   "answer": "peasant had two sons named john and",
+   "p_abstain": 1.0283803808519565e-09,
+   "band": "11-20",
+   "oracle_text": "the",
+   "cheat_text": "there was once a rich peasant who had two sons , named john nicholas and lucky andrew ."
+  },
+  {
+   "id": "ft10475",
+   "question": "Where did Ryn Jin live?",
+   "reference": "Ryn Gu",
+   "answer": "the distressed man",
+   "p_abstain": 2.4567921741436294e-07,
+   "band": "21+",
+   "oracle_text": "ryn",
+   "cheat_text": "\" you had better go down to ryn gu and tell ryn jin , the dragon king of the sea , what your trouble is and ask him to find the hook for you ."
+  }
+ ],
+ "abstain": [
+  {
+   "id": "ft10378",
+   "question": "How did Ian feel after he realized he missed meeting the lady for the second time?",
+   "reference": "sad",
+   "answer": null,
+   "p_abstain": 1.0,
+   "band": "none",
+   "oracle_text": "his heart",
+   "cheat_text": "as soon as the lady had departed the fisher 's son awoke , and the dark lad told him of her visit , and how he would never see her as long as he lived ."
+  },
+  {
+   "id": "ft9973",
+   "question": "What did the widowed Mistress need to do to keep her son?",
+   "reference": "find out the Old Woman's name",
+   "answer": null,
+   "p_abstain": 0.9976723790168762,
+   "band": "21+",
+   "oracle_text": "the fairy",
+   "cheat_text": "\" ye promised me what i liked to ask , and i have asked your son ; and your son i will have , \" she replied , \" so it is useless making such a din about it ."
+  },
+  {
+   "id": "ft10491",
+   "question": "What were the women holding?",
+   "reference": "golden buckets",
+   "answer": null,
+   "p_abstain": 0.9999998807907104,
+   "band": "<=10",
+   "oracle_text": "golden buckets",
+   "cheat_text": "he said not a word , however , but silently gazed at them through the foliage of the trees , waiting to see what they would do ."
+  },
+  {
+   "id": "ft9984",
+   "question": "How did the widowed Mistress find out the Old Woman's name?",
+   "reference": "The Old Woman revealed her name in a song.",
+   "answer": null,
+   "p_abstain": 0.9999992847442627,
+   "band": "21+",
+   "oracle_text": "a song",
+   "cheat_text": "now in this fir wood there was an old quarry hole , in the bottom of which was a bonnie spring well , the water of which was always sweet and pure ."
+  },
+  {
+   "id": "ft10201",
+   "question": "How did Andrew survive?",
+   "reference": "shot sea-birds",
+   "answer": null,
+   "p_abstain": 1.0,
+   "band": "11-20",
+   "oracle_text": "shot sea birds and looked for mussels and roots",
+   "cheat_text": "but the latter did not lose heart ."
+  },
+  {
+   "id": "ft10371",
+   "question": "What did the lady do after she could not wake Ian up?",
+   "reference": "gave it up, and lifting his arm, wrote her name across the side",
+   "answer": null,
+   "p_abstain": 0.8463325500488281,
+   "band": "21+",
+   "oracle_text": "gave it up and lifting his arm wrote her name across the side 'the daughter of the king of the town under the waves",
+   "cheat_text": "nothing could waken him , not even the sound of sweetest music , nor the touch of a lady who bent over him ."
+  },
+  {
+   "id": "ft9887",
+   "question": "What did the king do after the young nobles finished talking?",
+   "reference": "walked to the window and stood for a few minutes with his back to the room",
+   "answer": null,
+   "p_abstain": 0.9999983310699463,
+   "band": "21+",
+   "oracle_text": "walked to the window",
+   "cheat_text": "' on hearing this the king walked to the window and stood for a few minutes with his back to the room , where the company of young men remained silent ."
+  },
+  {
+   "id": "ft10396",
+   "question": "How did the princess recognize Ian?",
+   "reference": "The king's daughter saw the name which she had written under it.",
+   "answer": null,
+   "p_abstain": 1.0,
+   "band": "21+",
+   "oracle_text": "'s side saw the name which she had written under it",
+   "cheat_text": "so the gallows was built upon a high platform , and the fisher 's son mounted the steps up to it , and turned at the top to make the speech that was expected from every doomed man , innocent or guilt ."
+  },
+  {
+   "id": "ft10408",
+   "question": "What did the man's daughter give the little doves?",
+   "reference": "bread",
+   "answer": null,
+   "p_abstain": 0.9963867664337158,
+   "band": "21+",
+   "oracle_text": "this bread",
+   "cheat_text": "'you poor little things , ' said the girl , stroking them ."
+  },
+  {
+   "id": "ft9663",
+   "question": "How did the cook feel when the king called him in?",
+   "reference": "terrified",
+   "answer": null,
+   "p_abstain": 0.9986668825149536,
+   "band": "21+",
+   "oracle_text": "the cook was terrified when he heard the command and said to the many-furred creature 'you must have let a hair fall into the soup and if you have you deserve a good beating",
+   "cheat_text": "when the dance was ended , the king had his soup brought to him and ate it , and it was so good that he thought he had never tasted such soup in his life ."
+  }
+ ],
+ "n_low_total": 193,
+ "n_abstain_total": 77
+}

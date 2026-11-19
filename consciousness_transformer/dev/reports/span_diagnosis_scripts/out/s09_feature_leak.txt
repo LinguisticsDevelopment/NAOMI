@@ -1,0 +1,4 @@
+sentences 42767 Spearman(N, mean size/N) = -0.907 ; Spearman(N, mean depth/maxdepth) = -0.099
+2 10 11042 mean(size/N) 0.410  mean(depth/maxd) 0.535
+11 20 15007 mean(size/N) 0.233  mean(depth/maxd) 0.510
+21 500 16718 mean(size/N) 0.162  mean(depth/maxd) 0.506
