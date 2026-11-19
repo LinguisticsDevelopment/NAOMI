@@ -1,0 +1,12 @@
+test s2b_all: oracle>=0.5 items 886; oracle sentence in top-1/2/4 sentences: 60.6% / 75.1% / 90.9%; answered anchor in oracle sentence 61.3%; wrong sentence offset to nearest oracle sentence {'+1': 92, '-1': 47, 'other': 186}
+test v3_s2: oracle>=0.5 items 886; oracle sentence in top-1/2/4 sentences: 62.3% / 79.0% / 91.6%; answered anchor in oracle sentence 63.1%; wrong sentence offset to nearest oracle sentence {'+1': 87, '-1': 56, 'other': 164}
+===VAL
+val s2b_all: oracle>=0.5 items 925; oracle sentence in top-1/2/4 sentences: 57.1% / 73.7% / 88.0%; answered anchor in oracle sentence 57.8%; wrong sentence offset to nearest oracle sentence {'+1': 97, '-1': 60, 'other': 219}
+val v3_s1: oracle>=0.5 items 925; oracle sentence in top-1/2/4 sentences: 60.1% / 77.3% / 91.2%; answered anchor in oracle sentence 62.6%; wrong sentence offset to nearest oracle sentence {'+1': 80, '-1': 58, 'other': 187}
+val v3_s2: oracle>=0.5 items 925; oracle sentence in top-1/2/4 sentences: 59.7% / 76.8% / 90.3%; answered anchor in oracle sentence 61.3%; wrong sentence offset to nearest oracle sentence {'+1': 96, '-1': 58, 'other': 188}
+val v3_noctx: oracle>=0.5 items 925; oracle sentence in top-1/2/4 sentences: 57.1% / 72.9% / 88.5%; answered anchor in oracle sentence 58.7%; wrong sentence offset to nearest oracle sentence {'+1': 91, '-1': 52, 'other': 220}
+val v3_short: oracle>=0.5 items 925; oracle sentence in top-1/2/4 sentences: 19.8% / 35.6% / 63.5%; answered anchor in oracle sentence 18.8%; wrong sentence offset to nearest oracle sentence {'+1': 120, '-1': 164, 'other': 385}
+val v3_short_inv2: oracle>=0.5 items 925; oracle sentence in top-1/2/4 sentences: 19.0% / 36.5% / 63.7%; answered anchor in oracle sentence 18.3%; wrong sentence offset to nearest oracle sentence {'+1': 132, '-1': 156, 'other': 424}
+val v3_short_noinv: oracle>=0.5 items 925; oracle sentence in top-1/2/4 sentences: 21.8% / 37.9% / 64.9%; answered anchor in oracle sentence 21.3%; wrong sentence offset to nearest oracle sentence {'+1': 110, '-1': 111, 'other': 431}
+val s1_short: oracle>=0.5 items 925; oracle sentence in top-1/2/4 sentences: 17.8% / 33.1% / 57.6%; answered anchor in oracle sentence 14.6%; wrong sentence offset to nearest oracle sentence {'+1': 111, '-1': 98, 'other': 480}
+val s1_all: oracle>=0.5 items 925; oracle sentence in top-1/2/4 sentences: 57.3% / 72.6% / 88.2%; answered anchor in oracle sentence 56.3%; wrong sentence offset to nearest oracle sentence {'+1': 102, '-1': 52, 'other': 236}

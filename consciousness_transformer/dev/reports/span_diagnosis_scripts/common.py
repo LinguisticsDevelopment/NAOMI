@@ -9,8 +9,15 @@ sys.path.insert(0, str(CT / "scripts"))
 from naomi import mind_v1 as m1  # noqa: E402
 from naomi import mind_v2 as m2  # noqa: E402
 import train_mind_v2 as T  # noqa: E402
+import os  # noqa: E402
 
 RUN = CT / "runs" / "mind_v2b"
+CKPT = RUN                                   # where thinker_<name>_best.pt lives
+if os.environ.get("MIND") == "v3":           # Mind v3 thinkers: same analysis, decide() dispatches on the model type (top-1 sentence unless TOPK is set)
+    from naomi import mind_v3 as m3  # noqa: E402
+    import train_mind_v3 as T  # noqa: E402,F811
+    m2 = m3.Mind(int(os.environ.get("TOPK", "1")))  # noqa: F811
+    CKPT = CT / "runs" / "mind_v3"
 OUTD = Path(__file__).resolve().parent / "out"
 OUTD.mkdir(exist_ok=True)
 

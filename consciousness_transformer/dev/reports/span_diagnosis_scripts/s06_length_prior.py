@@ -10,7 +10,8 @@ def sp(a, b):
     if ra.std() == 0 or rb.std() == 0: return np.nan
     return float(np.corrcoef(ra, rb)[0, 1])
 print("| model | spearman(mass, sentence length) | spearman(mass, q-coverage sb4) | spearman(mass, sentence index) | n items |")
-for m in ("s1_short", "s1_all", "s2b_all"):
+import os
+for m in (os.environ.get("MODELS","s1_short s1_all s2b_all").split()):
     col = pickle.load(open(OUTD / f"collect_{split}_{m}.pkl", "rb"))
     a, b, c = [], [], []
     for r in col:
@@ -23,6 +24,3 @@ for m in ("s1_short", "s1_all", "s2b_all"):
         a.append(sp(mass, slen)); b.append(sp(mass, cov)); c.append(sp(mass, np.arange(S, dtype=float)))
     print(f"| {m} | {np.nanmean(a):+.2f} | {np.nanmean(b):+.2f} | {np.nanmean(c):+.2f} | {len(a)} |")
 # the feature set has no sentence index / neighbour input: confirm from the batch tensors
-import inspect
-src = inspect.getsource(m2.Thinker.encode)
-print("\nThinker.encode mentions s_sent only for pooling:", src.count("s_sent"), "uses; any sentence-index scalar in NS scalars?", "no (NS=6: depth, log size, token position within sentence, is_function, is_name, has key)")

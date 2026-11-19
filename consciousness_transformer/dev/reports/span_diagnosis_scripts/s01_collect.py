@@ -10,7 +10,7 @@ torch.set_num_threads(4)
 stories, pairs, meta = load_split(split)
 vj = json.load(open(RUN / "vocab.json"))
 tab = m2.SenseTable()
-model = T.load_model(str(RUN / f"thinker_{name}_best.pt"))[0]
+model = T.load_model(str(CKPT / f"thinker_{name}_best.pt"))[0]
 normal = [p for p in pairs if p["kind"] == "normal"]
 if lim:
     normal = normal[:lim]

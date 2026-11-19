@@ -241,3 +241,9 @@ Report: `dev/reports/MIND_V2B.md`. Code: `src/naomi/roundtrip.py`, `scripts/{fet
 - NOT committed: `read_cache/` (158 MB), `stories.pkl`, `pairs_*.pkl`, raw `data/fairytaleqa_full/*.json` (licence: research use only; regenerate with `scripts/fetch_fairytaleqa_full.py`).
 
 - **`runs/naomi_orderer_frag/`**: orderer fine-tuned on gappy fragments (`frag_best.pt`, sizes 2-15; `frag30_best.pt`, sizes 2-30), curves, logs, `eval_fragments*.json`. Not the default; see `dev/reports/ORDERER_FRAGMENTS.md`. Chain evals: `runs/mind_v2b/eval_test_orderer_{old,frag,frag30}.json`.
+
+## Mind v3 (sentence-then-anchor thinker) — 2026-11-19
+
+Report: `dev/reports/MIND_V3.md`. Code: `src/naomi/mind_v3.py`, `scripts/{train,eval,tables}_mind_v3.py`, `tests/test_mind_v3.py`.
+- `runs/mind_v3/thinker_v3_s2_best.pt` (main, declared on val; test 0.345, = v2b), plus `s1`, ablations `noctx`, `noinv`, short-only `short`, `short_inv2`, `short_noinv`. Curves, logs, `eval_{val,test}.json`, `tables_{val,test}.md`, hand-read.
+- NOT committed: `eval_rows_{val,test}.jsonl` (24-28 MB, regenerable with `scripts/eval_mind_v3.py`), caches, pickles.
