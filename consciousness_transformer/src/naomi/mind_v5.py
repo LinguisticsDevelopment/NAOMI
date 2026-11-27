@@ -5,8 +5,8 @@ Output = the question tree with one of its nodes replaced by a FILLER tree built
     attached under an earlier filler node; STOP ends it; ABSTAIN at step 0 leaves the question unfilled;
   * which question node to replace. NOTHING in this file, in data prep or in the targets names, finds or scores the
     question word / unknown slot: the thinker sees every question node's USVS point (one of its dimensions is whatever
-    the lexicon says) plus tag / relation features and chooses; the choice is trained by an expected-reward loss over the
-    placements (reward = placement-free frame share, see ``frame_rewards``). No code here reads the lexicon's unknown axis.
+    the lexicon says) plus tag / relation features and chooses; the choice is trained ONLY by REINFORCE on the score of the
+    decoded output sentence (ROUGE-L vs the reference, scripts/train_mind_v5.py stage2). No code here reads the lexicon's unknown axis.
 Data, memory, encoder pieces, decoders and ROUGE are Mind v2/v3's (``mind_v2``, ``mind_v3``).
 """
 from __future__ import annotations
@@ -93,30 +93,8 @@ def preorder(arr: dict, a: int, kept: set) -> List[int]:
     return out
 
 
-def frame_rewards(parent: np.ndarray, supp: np.ndarray) -> np.ndarray:
-    """Placement-free frame reward for replacing question node j (with its subtree): 1 minus the share of SUPPORTED question
-    nodes (supp = the node's lemma occurs in the answer-bearing memory sentence, i.e. "memory already says it") that the
-    replacement removes. Uses only the question tree shape and the support vector; no slot label, no word, no axis."""
-    Q = len(parent)
-    tot = float(supp.sum())
-    sub = np.eye(Q, dtype=np.float32)
-    for i in range(Q - 1, -1, -1):          # pre-order: parents come before children
-        if parent[i] >= 0:
-            sub[parent[i]] += sub[i]
-    return (1.0 - (sub @ supp) / max(tot, 1e-6)).astype(np.float32)
-
-
-def support_vector(arr: dict, ans_sent: Optional[int], qn: Sequence) -> Optional[np.ndarray]:
-    """1 for every question node whose (kind, lemma) occurs in the answer-bearing memory sentence (the sentence that holds the
-    most reference lemmas): "memory already says it". None when no sentence holds any reference lemma."""
-    if ans_sent is None or not len(qn):
-        return None
-    keys = {(n.kind, n.lemma) for n, sn in zip(arr["nodes"], arr["sent"]) if int(sn) == int(ans_sent)}
-    return np.array([float((n.kind, n.lemma) in keys) for n in qn], dtype=np.float32)
-
-
-def build_targets5(arr: dict, tgt: Optional[dict], qn: Sequence, qparent: np.ndarray) -> Optional[dict]:
-    """Imitation target for the filler (the reference nodes aligned to memory by lemma, as v2-v4) and the frame rewards.
+def build_targets5(arr: dict, tgt: Optional[dict]) -> Optional[dict]:
+    """Imitation target for the filler (the reference nodes aligned to memory by lemma, as v2-v4).
     None for unreachable items (counted by the caller, not tuned on)."""
     if not tgt or not tgt["anchors"] or tgt["best_f1"] < m2.ACCEPT_F1:
         return None
@@ -133,9 +111,7 @@ def build_targets5(arr: dict, tgt: Optional[dict], qn: Sequence, qparent: np.nda
             acc.append([g for g in order if g not in chosen and int(arr["parent"][g]) in chosen])
         else:
             acc.append([])
-    supp = support_vector(arr, tgt["ans_sent"], qn)
-    rew = frame_rewards(qparent, supp) if (supp is not None and supp.sum() > 0) else None
-    return {"seq": order, "par": par, "acc": acc, "rew": rew, "ref_n": tgt["ref_n"]}
+    return {"seq": order, "par": par, "acc": acc, "ref_n": tgt["ref_n"]}
 
 
 # ----------------------------------------------------------------------------- the model
@@ -227,8 +203,8 @@ class Thinker5(m3.Thinker3):
         return lg.masked_fill(~P["validQ"], NEGINF)
 
     # ---- teacher-forced training loss
-    def tf_loss(self, b: dict, pairs: Sequence[dict], w_rep: float = 1.0):
-        """pairs carry ``tg`` (imitation target; None = abstain target). Returns (pointer loss, parent loss, replace loss, stats)."""
+    def tf_loss(self, b: dict, pairs: Sequence[dict]):
+        """pairs carry ``tg`` (imitation target; None = abstain target). Returns (pointer loss, parent loss)."""
         e = self.encode(b)
         P = self.pack(b, e)
         B, M, H = len(pairs), P["M"], self.H
@@ -277,21 +253,17 @@ class Thinker5(m3.Thinker3):
                 prev = torch.where(adv.unsqueeze(1), prev_new, prev)
                 Kseq.append(prev_new)
                 seqpos_list.append(idx)
-        # ---- replace-choice: expected frame reward over the placements (never a slot label)
-        rl = self._replace_logits(P, chosen)
-        pj = torch.softmax(rl, 1)
-        R = torch.zeros(B, P["Qmax"])
-        has = torch.zeros(B)
-        for i, p in enumerate(pairs):
-            tg = p.get("tg")
-            if tg is not None and tg["rew"] is not None:
-                r = torch.from_numpy(tg["rew"])
-                R[i, :len(r)] = r
-                has[i] = 1.0
-        loss_rep = -((pj * R).sum(1) * has).sum() / has.sum().clamp(min=1)
-        ent = -(pj * torch.log(pj.clamp(min=1e-9))).sum(1)
-        loss_rep = loss_rep - 0.01 * (ent * has).sum() / has.sum().clamp(min=1)
-        return lp_tot / max(n_ptr, 1), par_tot / max(n_par, 1), loss_rep, {"exp_frame": float(((pj * R).sum(1) * has).sum() / has.sum().clamp(min=1))}
+        return lp_tot / max(n_ptr, 1), par_tot / max(n_par, 1)
+
+    def replace_logits_for(self, b: dict, res: Sequence[dict]) -> torch.Tensor:
+        """Replace-choice logits [B, Qmax] given the (already decoded) fillers; differentiable (stage 2 REINFORCE)."""
+        e = self.encode(b)
+        P = self.pack(b, e)
+        chosen = torch.zeros(b["B"], P["M"], dtype=torch.bool)
+        for i, r in enumerate(res):
+            for x in r["pos"]:
+                chosen[i, x] = True
+        return self._replace_logits(P, chosen)
 
     # ---- greedy decode
     @torch.no_grad()
@@ -387,24 +359,6 @@ def assemble(qtree: Tree, qn: Sequence, j: int, filler: Tree, base: int = 1000) 
             return replace(f, rel=n.rel)
         return replace(n, children=[go(c) for c in n.children])
     return Tree(sentence=qtree.sentence, root=go(qtree.root))
-
-
-def frame_parts(qparent: np.ndarray, j: int, supp: Optional[np.ndarray]):
-    """(share of question nodes kept, share of supported question nodes kept) when node j's subtree is replaced."""
-    Q = len(qparent)
-    rem = {j}
-    for i in range(Q):
-        a = i
-        while a >= 0:
-            if a == j:
-                rem.add(i)
-                break
-            a = int(qparent[a])
-    fa = 1.0 - len(rem) / Q
-    fs = None
-    if supp is not None and supp.sum() > 0:
-        fs = 1.0 - float(sum(supp[i] for i in rem)) / float(supp.sum())
-    return fa, fs
 
 
 def lemma_f1(pred_keys: Sequence, ref: Counter) -> float:

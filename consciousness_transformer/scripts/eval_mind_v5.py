@@ -142,8 +142,7 @@ def main():
         qt = m1.tree_of(reads, m["question"])
         qn = m2.flat_tree(qt)[0]
         qpar = p["q"]["parent"]
-        supp = m5.support_vector(arr, t0["ans_sent"], qn)
-        Q[p["item"]] = (qt, qn, qpar, supp)
+        Q[p["item"]] = (qt, qn, qpar)
         rows[p["item"]] = {"id": p["item"], "question": m["question"], "reference": m["answer"], "golds": m["golds"], "story": m["story"],
                            "band": m2.band_of(t0["ans_len"]) if t0["ans_len"] is not None else "none", "reachable": t0["best_f1"] >= m2.ACCEPT_F1,
                            "needs_new": t0["ref_missing"] >= 1.0 / 3.0, "n_q": len(qn)}
@@ -173,7 +172,7 @@ def main():
             i = p["item"]
             rr = res[p["id"]]
             arr = stories[p["skey"]]
-            qt, qn, qpar, supp = Q[i]
+            qt, qn, qpar = Q[i]
             if rr["abstain"] or not rr["pos"]:
                 fill.setdefault(nm, {})[i] = None
                 jch.setdefault(nm, {})[i] = None
@@ -193,10 +192,11 @@ def main():
     systems = list(fill)
     print("systems:", systems, flush=True)
 
-    # ---------------------------------------------------------------- scoring: answer part, frame part, decoded filler, ROUGE
+    # ---------------------------------------------------------------- the output of every system: question tree with node j replaced
     score = ctx.score
+    out_trees = {}
     for s in systems:
-        jsrc = s if s in jch else (args.main)
+        jsrc = s if s in jch else args.main
         for p in normal:
             i = p["item"]
             r = rows[i]
@@ -204,20 +204,14 @@ def main():
             r[f"{s}_ans"] = tr is not None
             if tr is None:
                 continue
-            qt, qn, qpar, supp = Q[i]
+            qt, qn, qpar = Q[i]
             j = jch[jsrc][i]
-            if j is None:                      # a baseline filler where the main model abstained: plug into the model's would-be choice
+            if j is None:                      # baseline filler where the model abstained: plug into the model's would-be choice
                 lg = dm[jsrc][p["id"]]["j_logits"]
                 j = int(np.argmax(lg)) if lg else 0
             r[f"{s}_j"] = j
-            fa, fs = m5.frame_parts(qpar, j, supp)
-            r[f"{s}_fa"], r[f"{s}_fs"] = fa, (fs if fs is not None else fa)
-            if ref_trees[i]:
-                ps = max((score.score_pair(g, tr, ctx.usvs) for g in ref_trees[i]), key=lambda x: x.overall)
-                r[f"{s}_A"] = ps.overall
-                r[f"{s}_reasons"] = [x["kind"] for x in ps.reasons]
+            out_trees[(s, i)] = m5.assemble(qt, qn, j, tr)
             r[f"{s}_true_text"] = source_text(tr)
-    print("scored answer parts", flush=True)
 
     def decode_system(s, which):
         ids = [i for i in rows if fill[s].get(i) is not None]
@@ -235,24 +229,14 @@ def main():
         decode_system(s, "b")
         print("decoded", s, flush=True)
 
-    # full output sentences for the v5 models
-    for nm in models:
-        ids, trees_a, trees_b = [], [], []
-        for p in normal:
-            i = p["item"]
-            tr = fill[nm][i]
-            if tr is None:
-                continue
-            qt, qn, qpar, supp = Q[i]
-            out = m5.assemble(qt, qn, jch[nm][i], tr)
-            ids.append(i)
-            trees_a.append(out)
-            arr = stories[p["skey"]]
-            trees_b.append(m2.meaning_only(out, m2.Pool(arr["nodes"], qn))[0])
-        for i, ta, tb in zip(ids, dec.texts(trees_a), dec.texts(trees_b)):
-            rows[i][f"{nm}_full_a"], rows[i][f"{nm}_full_b"] = ta, tb
-            rows[i][f"{nm}_out_tree"] = tree_to_dict(m5.assemble(Q[i][0], Q[i][1], jch[nm][i], fill[nm][i]))
-        print("full sentences", nm, flush=True)
+    # full decoded output sentences for every system (order-only (a), meaning-only (b)); the score is on THESE texts
+    for s in systems:
+        ids = [i for i in rows if (s, i) in out_trees]
+        ta = dec.texts([out_trees[(s, i)] for i in ids])
+        tb = dec.texts([m2.meaning_only(out_trees[(s, i)], m2.Pool(stories[by_id[i]["skey"]]["nodes"], Q[i][1]))[0] for i in ids])
+        for i, x, y in zip(ids, ta, tb):
+            rows[i][f"{s}_full_a"], rows[i][f"{s}_full_b"] = x, y
+        print("full sentences", s, flush=True)
 
     # provenance (main): every output node is a copy of a memory or question node; verify token + lemma equality
     pv_stats = {}
@@ -276,22 +260,39 @@ def main():
     for r in rows.values():
         for s in systems:
             if not r.get(f"{s}_ans"):
-                for k in ("A", "fa", "fs", "comb", "comb_all", "rouge_a", "rouge_b", "rouge_t"):
-                    r[f"{s}_{k}"] = 0.0
+                for k in ("full_a", "full_b", "filler_a", "filler_b", "filler_t"):
+                    r[f"{s}_R_{k}"] = 0.0
                 continue
-            r.setdefault(f"{s}_A", 0.0)
-            a = r[f"{s}_A"]
-            r[f"{s}_comb"] = math.sqrt(max(a, 0.0) * 100.0 * r[f"{s}_fs"])            # geometric mean of answer % and frame % (declared)
-            r[f"{s}_comb_all"] = math.sqrt(max(a, 0.0) * 100.0 * r[f"{s}_fa"])
-            r[f"{s}_rouge_a"] = m2.rouge_multi(r.get(f"{s}_text_a") or "", r["golds"])
-            r[f"{s}_rouge_b"] = m2.rouge_multi(r.get(f"{s}_text_b") or "", r["golds"])
-            r[f"{s}_rouge_t"] = m2.rouge_multi(r.get(f"{s}_true_text") or "", r["golds"])
+            r[f"{s}_R_full_a"] = m2.rouge_multi(r[f"{s}_full_a"], r["golds"])      # THE score: ROUGE-L of the decoded output sentence
+            r[f"{s}_R_full_b"] = m2.rouge_multi(r[f"{s}_full_b"], r["golds"])
+            r[f"{s}_R_filler_a"] = m2.rouge_multi(r.get(f"{s}_text_a") or "", r["golds"])   # secondary: the filler alone (comparable to v2-v4)
+            r[f"{s}_R_filler_b"] = m2.rouge_multi(r.get(f"{s}_text_b") or "", r["golds"])
+            r[f"{s}_R_filler_t"] = m2.rouge_multi(r.get(f"{s}_true_text") or "", r["golds"])
         r["cheat_raw_rouge"] = m2.rouge_multi(r["cheat_text"], r["golds"])
         r["oracle_subtree_rouge"] = m2.rouge_multi(r["oracle_subtree_text"], r["golds"])
-        for nm in models:
-            if r.get(f"{nm}_full_a"):
-                r[f"{nm}_full_rouge_a"] = m2.rouge_multi(r[f"{nm}_full_a"], r["golds"])
     R = list(rows.values())
+
+    # tree score of the decoded full sentence read back vs the reference read as a tree (seeded subsample: reading is slow)
+    tsub = [i for i in rows if ref_trees[i]]
+    if args.rt_n and args.rt_n < len(tsub):
+        tsub = rng.sample(tsub, args.rt_n)
+    tree_reasons = {}
+    if not args.no_readback:
+        texts = [rows[i][f"{s}_full_a"] for s in systems for i in tsub if rows[i].get(f"{s}_ans")]
+        rb0 = E2._read_texts(texts)
+        for s in systems:
+            rc = Counter()
+            for i in tsub:
+                r = rows[i]
+                x = rb0.get(r.get(f"{s}_full_a")) if r.get(f"{s}_ans") else None
+                if x is None or x["tree"] is None:
+                    continue
+                tt = tree_from_dict(x["tree"])
+                ps = max((score.score_pair(g, tt, ctx.usvs) for g in ref_trees[i]), key=lambda z: z.overall)
+                r[f"{s}_tree_full"] = ps.overall
+                r[f"{s}_tree_reasons"] = [z["kind"] for z in ps.reasons]
+                rc.update(r[f"{s}_tree_reasons"])
+            tree_reasons[s] = dict(rc.most_common())
 
     # ---------------------------------------------------------------- UNKNOWN diagnostic (reads the axis; diagnostic only)
     diag = {}
@@ -305,7 +306,7 @@ def main():
             if j is None:
                 continue
             n_ans += 1
-            qt, qn, qpar, supp = Q[i]
+            qt, qn, qpar = Q[i]
             vals = []
             for n in qn:
                 v = ctx.raw(ctx.chosen(n))
@@ -325,11 +326,6 @@ def main():
         diag[nm] = {"answered": n_ans, "questions_with_a_node_above_zero": n_has, "replaced_is_top_unknown": agree / max(n_has, 1),
                     "chance_if_uniform": float(np.mean(chance)) if chance else float("nan"), "root_replaced_share": n_root / max(n_ans, 1),
                     "rank_by_unknown_of_replaced": {str(k): v / max(n_has, 1) for k, v in sorted(rk.items())}, "n_has": n_has}
-    # frame reference points: what a random / root / best choice of node gets
-    ref_pts = {"random_node_fs": mean([mean([r_ for r_ in m5.frame_rewards(Q[i][2], Q[i][3])]) for i in rows if Q[i][3] is not None and Q[i][3].sum() > 0]),
-               "best_node_fs": mean([float(m5.frame_rewards(Q[i][2], Q[i][3]).max()) for i in rows if Q[i][3] is not None and Q[i][3].sum() > 0]),
-               "random_node_fa": mean([mean([m5.frame_parts(Q[i][2], j, None)[0] for j in range(len(Q[i][1]))]) for i in rows])}
-
     # ---------------------------------------------------------------- controls
     stats = {}
     ctxs = {it["id"]: it for it in m2.load_items(DATA / "items_full.jsonl")}
@@ -423,26 +419,29 @@ def main():
     names.update({k: f"{k}: old method (v3 anchor subtree as filler)" for k in v3models})
     names.update({k: f"{k}: v5 thinker" for k in models})
     sysorder = [s for s in ["cheat"] + list(v3models) + list(models) + ["oracle"] if s in systems]
+    COLS = ("R_full_a", "R_full_b", "R_filler_a", "R_filler_b", "R_filler_t")
 
-    def tab_rows(sel, cols=("A", "fs", "fa", "comb", "comb_all", "rouge_a", "rouge_b", "rouge_t")):
+    def tab_rows(sel):
         out = {}
         for s in sysorder:
-            out[s] = {"n": len(sel), "answer_rate": mean([float(bool(r.get(f"{s}_ans"))) for r in sel]), **{c: mean([r[f"{s}_{c}"] for r in sel]) for c in cols}}
+            t = [r[f"{s}_tree_full"] for r in sel if f"{s}_tree_full" in r]
+            out[s] = {"n": len(sel), "answer_rate": mean([float(bool(r.get(f"{s}_ans"))) for r in sel]), **{c: mean([r[f"{s}_{c}"] for r in sel]) for c in COLS},
+                      "tree_full": mean(t), "n_tree": len(t)}
         return out
     summary = {"split": args.split, "n_items": len(R), "main": M, "short": args.short, "systems": sysorder, "band_counts": {b: sum(r["band"] == b for r in R) for b in BANDS},
                "overall": tab_rows(R), "by_band": {b: tab_rows([r for r in R if r["band"] == b]) for b in BANDS},
                "needs_new_words": tab_rows([r for r in R if r["needs_new"]]), "reachable_only": tab_rows([r for r in R if r["reachable"]]),
                "old_cheat_raw_text_rouge": mean([r["cheat_raw_rouge"] for r in R]), "oracle_subtree_rouge": mean([r["oracle_subtree_rouge"] for r in R]),
-               "full_sentence_rouge_a": {nm: mean([r.get(f"{nm}_full_rouge_a", 0.0) for r in R]) for nm in models},
-               "controls": stats, "provenance": pv_stats, "unknown_diagnostic": diag, "frame_reference_points": ref_pts, "round_trip_main": rtres,
-               "reasons_main": dict(Counter(x for r in R for x in r.get(f"{M}_reasons", [])).most_common()),
-               "decoder_note": "(a) order-only decoder on the filler tree; (b) meaning-only decoder; rouge_t = filler words in memory order, no decoder"}
-    # paired differences
+               "controls": stats, "provenance": pv_stats, "unknown_diagnostic": diag, "round_trip_main": rtres, "tree_reasons_by_system": tree_reasons,
+               "score_note": "score = ROUGE-L F1 (max over references) of the decoded output sentence (question with node j replaced by the filler); tree_full = tree score % of that text read back vs the reference tree (subsample, rt_n); references are often short phrases so a full sentence pays a precision cost (reported, not compensated)"}
     pd = {}
     for base in [s for s in sysorder if s != M]:
-        for k in ("A", "rouge_a", "comb"):
-            d, ci, cs = boot(R, lambda r, k=k: r[f"{M}_{k}"], lambda r, k=k, base=base: r[f"{base}_{k}"])
-            pd[f"{M} - {base} [{k}]"] = {"mean": d, "items_95": ci.tolist(), "stories_95": cs.tolist()}
+        d, ci, cs = boot(R, lambda r: r[f"{M}_R_full_a"], lambda r, base=base: r[f"{base}_R_full_a"])
+        pd[f"{M} - {base} [full-sentence ROUGE-L (a)]"] = {"mean": d, "items_95": ci.tolist(), "stories_95": cs.tolist()}
+        both = [r for r in R if f"{M}_tree_full" in r and f"{base}_tree_full" in r]
+        if len(both) > 20:
+            d, ci, cs = boot(both, lambda r: r[f"{M}_tree_full"], lambda r, base=base: r[f"{base}_tree_full"])
+            pd[f"{M} - {base} [tree score % of decoded full sentence]"] = {"mean": d, "items_95": ci.tolist(), "stories_95": cs.tolist()}
     summary["paired"] = pd
     if args.short and args.short in models:
         summary["short_to_long"] = {b: {"all": tab_rows([r for r in R if r["band"] == b])[M], "short": tab_rows([r for r in R if r["band"] == b])[args.short]} for b in BANDS}
@@ -451,50 +450,48 @@ def main():
     with open(OUT / f"eval_rows_{args.split}{tag}.jsonl", "w") as f:
         for r in R:
             f.write(json.dumps(r, default=float) + "\n")
-    # hand-read dump (seeded sample of answered main items)
     hr = random.Random(7)
     pool = [r for r in R if r.get(f"{M}_ans")]
     pick = hr.sample(pool, min(20, len(pool)))
     json.dump([{"id": r["id"], "question": r["question"], "golds": r["golds"], "band": r["band"], "filler_true_order": r[f"{M}_true_text"], "filler_decoded_a": r.get(f"{M}_text_a"),
-                "full_sentence_a": r.get(f"{M}_full_a"), "replaced_node": Q[r["id"]][1][r[f"{M}_j"]].token, "question_nodes": [n.token for n in Q[r["id"]][1]],
-                "A": r.get(f"{M}_A"), "fs": r.get(f"{M}_fs"), "provenance": [list(x) for x in prov[M][r["id"]]]} for r in pick],
+                "full_sentence_a": r.get(f"{M}_full_a"), "full_sentence_b": r.get(f"{M}_full_b"), "replaced_node": Q[r["id"]][1][r[f"{M}_j"]].token, "question_nodes": [n.token for n in Q[r["id"]][1]],
+                "rouge_full_a": r.get(f"{M}_R_full_a"), "provenance": [list(x) for x in prov[M][r["id"]]]} for r in pick],
               open(OUT / f"handread_{args.split}{tag}.json", "w"), indent=1, default=float)
     write_tables(summary, R, OUT / f"tables_{args.split}{tag}.md", sysorder, names)
     print("done", flush=True)
 
 
 def write_tables(S, R, path, sysorder, names):
-    L = [f"## {S['split']}: n={S['n_items']} items; bands {S['band_counts']}; main = {S['main']}\n"]
-    L.append("### Headline (abstain = 0). A = answer part (tree score % of the inserted nodes vs the best reference tree), Fr_sup / Fr_all = frame part, combined = sqrt(A * Fr_sup), ROUGE-L of the decoded filler (max over golds)\n")
-    L.append("| system | answer rate | A % | Fr_sup | Fr_all | combined (sup) | combined (all) | ROUGE (a) | ROUGE (b) | ROUGE true order |\n|---|---|---|---|---|---|---|---|---|---|")
+    L = [f"## {S['split']}: n={S['n_items']} items; bands {S['band_counts']}; main = {S['main']}\n", S["score_note"] + "\n"]
+    L.append("### Headline (abstain = 0). Primary: ROUGE-L of the decoded full output sentence; tree score of the read-back sentence on the subsample; secondary: ROUGE-L of the filler alone\n")
+    L.append("| system | answer rate | full-sentence ROUGE (a) | full (b) | tree score % (n) | filler ROUGE (a) | filler (b) | filler true order |\n|---|---|---|---|---|---|---|---|")
     for s in sysorder:
         v = S["overall"][s]
-        L.append(f"| {names[s]} | {v['answer_rate']:.3f} | {v['A']:.1f} | {v['fs']:.3f} | {v['fa']:.3f} | {v['comb']:.1f} | {v['comb_all']:.1f} | {v['rouge_a']:.3f} | {v['rouge_b']:.3f} | {v['rouge_t']:.3f} |")
-    L.append(f"\nOld raw-text cheat ROUGE-L (whole best-overlap sentence text): {S['old_cheat_raw_text_rouge']:.3f}; oracle best full subtree: {S['oracle_subtree_rouge']:.3f}; full output sentence ROUGE (a): {json.dumps({k: round(v, 3) for k, v in S['full_sentence_rouge_a'].items()})}\n")
-    for metric, label in (("A", "A % (answer part)"), ("rouge_a", "ROUGE-L (a)"), ("comb", "combined")):
+        L.append(f"| {names[s]} | {v['answer_rate']:.3f} | {v['R_full_a']:.3f} | {v['R_full_b']:.3f} | {v['tree_full']:.1f} ({v['n_tree']}) | {v['R_filler_a']:.3f} | {v['R_filler_b']:.3f} | {v['R_filler_t']:.3f} |")
+    L.append(f"\nOld raw-text cheat ROUGE-L (whole best-overlap sentence text, as v2-v4): {S['old_cheat_raw_text_rouge']:.3f}; oracle best full subtree: {S['oracle_subtree_rouge']:.3f}\n")
+    for metric, label in (("R_full_a", "full-sentence ROUGE-L (a)"), ("R_filler_a", "filler ROUGE-L (a)"), ("tree_full", "tree score % of decoded full sentence")):
         L.append(f"### By answer-sentence length band: {label}\n\n| band | n | " + " | ".join(sysorder) + " |\n|---|---|" + "---|" * len(sysorder))
         for b in BANDS:
             v = S["by_band"][b]
             if v[sysorder[0]]["n"]:
-                L.append(f"| {b} | {v[sysorder[0]]['n']} | " + " | ".join(f"{v[s][metric]:.3f}" if metric == 'rouge_a' else f"{v[s][metric]:.1f}" for s in sysorder) + " |")
+                L.append(f"| {b} | {v[sysorder[0]]['n']} | " + " | ".join(f"{v[s][metric]:.3f}" if metric != "tree_full" else f"{v[s][metric]:.1f}" for s in sysorder) + " |")
         L.append("")
     if "short_to_long" in S:
-        L.append(f"### Short-to-long ({S['short']} trained on answer sentences <= 10 words vs {S['main']} all lengths)\n\n| band | n | A all | A short | ROUGE(a) all | ROUGE(a) short | combined all | combined short | answer rate all | answer rate short |\n|---|---|---|---|---|---|---|---|---|---|")
+        L.append(f"### Short-to-long ({S['short']} trained on answer sentences <= 10 words vs {S['main']} all lengths)\n\n| band | n | full ROUGE all | full ROUGE short | filler ROUGE all | filler ROUGE short | tree % all | tree % short | answer rate all | answer rate short |\n|---|---|---|---|---|---|---|---|---|---|")
         for b in BANDS:
             x = S["short_to_long"][b]
             if x["all"]["n"]:
-                L.append(f"| {b} | {x['all']['n']} | {x['all']['A']:.1f} | {x['short']['A']:.1f} | {x['all']['rouge_a']:.3f} | {x['short']['rouge_a']:.3f} | {x['all']['comb']:.1f} | {x['short']['comb']:.1f} | {x['all']['answer_rate']:.3f} | {x['short']['answer_rate']:.3f} |")
+                L.append(f"| {b} | {x['all']['n']} | {x['all']['R_full_a']:.3f} | {x['short']['R_full_a']:.3f} | {x['all']['R_filler_a']:.3f} | {x['short']['R_filler_a']:.3f} | {x['all']['tree_full']:.1f} | {x['short']['tree_full']:.1f} | {x['all']['answer_rate']:.3f} | {x['short']['answer_rate']:.3f} |")
     L.append("\n### Paired differences (mean, 95% interval over items, over stories)\n")
     for k, v in S["paired"].items():
         L.append(f"- {k}: {v['mean']:+.3f} (items {v['items_95'][0]:+.3f} to {v['items_95'][1]:+.3f}; stories {v['stories_95'][0]:+.3f} to {v['stories_95'][1]:+.3f})")
-    L.append("\n### Controls\n\n| model | empty-memory abstain | wrong story abstain | shuffled questions: answer rate / ROUGE | memory = question only: abstain |\n|---|---|---|---|---|")
+    L.append("\n### Controls\n\n| model | empty-memory abstain | wrong story abstain | shuffled questions: answer rate / filler ROUGE | memory = question only: abstain |\n|---|---|---|---|---|")
     for k, v in S["controls"].items():
         L.append(f"| {k} | {v['empty_abstain']:.3f} | {v['wrong_abstain']:.3f} | {v['shuf_answer_rate']:.3f} / {v['shuf_rouge']:.3f} | {v['severed_abstain']:.3f} |")
     L.append("\n### Provenance\n\n" + "\n".join(f"- {k}: {json.dumps(v)}" for k, v in S["provenance"].items()))
     L.append("\n### UNKNOWN-discovery diagnostic (never a training signal)\n\n" + "\n".join(f"- {k}: {json.dumps(v)}" for k, v in S["unknown_diagnostic"].items()))
-    L.append(f"\nFrame reference points: {json.dumps(S['frame_reference_points'])}")
     L.append(f"\n### Round trip (main, filler, threshold {S['round_trip_main'].get('threshold')})\n\n{json.dumps(S['round_trip_main'])}")
-    L.append(f"\n### Scorer reasons (main filler vs best reference)\n\n{json.dumps(S['reasons_main'])}")
+    L.append(f"\n### Tree-score reasons by system (decoded full sentence vs reference)\n\n{json.dumps(S['tree_reasons_by_system'])}")
     open(path, "w").write("\n".join(L) + "\n")
 
 
