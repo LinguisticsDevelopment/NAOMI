@@ -1,0 +1,126 @@
+{
+ "n": 1025,
+ "thr": 0.5,
+ "tau": 0.5,
+ "rouge_loop": 0.17741482862766894,
+ "rouge_cheat_decoded": 0.20721015648193156,
+ "rouge_cheat_raw": 0.22793011189440043,
+ "answer_rate": 1.0,
+ "tree_loop": 38.540073268972904,
+ "tree_cheat": 13.028405484213156,
+ "tree_n": 300,
+ "tree_reasons": {
+  "loop": {
+   "node_dropped": 972,
+   "meaning_shift": 533,
+   "operator_folded_differs": 303,
+   "node_extra": 105,
+   "subtree_moved": 39,
+   "relation_changed": 36,
+   "name_mismatch": 20,
+   "head_changed": 15
+  },
+  "cheat": {
+   "node_extra": 5911,
+   "head_changed": 601,
+   "meaning_shift": 426,
+   "subtree_moved": 398,
+   "operator_folded_differs": 363,
+   "node_dropped": 298,
+   "name_mismatch": 207,
+   "relation_changed": 60,
+   "opposite_meaning": 1
+  }
+ },
+ "controls": {
+  "empty": {
+   "n": 1025,
+   "abstain_rate": 1.0,
+   "mean_nodes": 0.0,
+   "rouge_vs_own_reference": 0.0,
+   "steps_mean": 1.0
+  },
+  "wrong": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 3.3492682926829267,
+   "rouge_vs_own_reference": 0.15105787943996593,
+   "steps_mean": 2.0009756097560976
+  },
+  "qonly": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 2.259512195121951,
+   "rouge_vs_own_reference": 0.11222080777468835,
+   "steps_mean": 2.0
+  },
+  "shuffled": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 3.357073170731707,
+   "rouge_vs_own_reference": 0.13461229038674907,
+   "steps_mean": 2.0009756097560976
+  },
+  "block": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 3.1541463414634148,
+   "rouge_vs_own_reference": 0.16907484668370054,
+   "steps_mean": 2.0,
+   "rouge_delta_vs_normal": -0.0083399819439684
+  }
+ },
+ "mean_nodes": 3.348292682926829,
+ "steps_dist": {
+  "2": 1024,
+  "3": 1
+ },
+ "steps_mean": 2.0009756097560976,
+ "cis": {
+  "loop_minus_cheat": {
+   "mean": -0.029795327854262626,
+   "items": [
+    -0.0447391051574261,
+    -0.015466496537860558
+   ],
+   "stories": [
+    -0.04909290091454026,
+    -0.012546054557614254
+   ]
+  }
+ },
+ "bands": {
+  "<=10": {
+   "n": 38,
+   "loop": 0.25533167039358995,
+   "cheat": 0.15835983146405885,
+   "steps": 2.0,
+   "nodes": 3.4473684210526314,
+   "short": null
+  },
+  "11-20": {
+   "n": 209,
+   "loop": 0.1785488557612157,
+   "cheat": 0.20590920561491408,
+   "steps": 2.0,
+   "nodes": 3.263157894736842,
+   "short": null
+  },
+  "21+": {
+   "n": 708,
+   "loop": 0.18775548730834768,
+   "cheat": 0.22940472565598702,
+   "steps": 2.001412429378531,
+   "nodes": 3.5903954802259888,
+   "short": null
+  },
+  "none": {
+   "n": 70,
+   "loop": 0.027142857142857142,
+   "cheat": 0.01313095800556835,
+   "steps": 2.0,
+   "nodes": 1.1,
+   "short": null
+  }
+ }
+}

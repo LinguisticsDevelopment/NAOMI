@@ -1,0 +1,202 @@
+[
+ {
+  "id": "ft9145",
+  "question": "Where did the cat take the buck after she captured him?",
+  "reference": "the castle",
+  "text": "the king",
+  "rouge": 0.5,
+  "steps": 2,
+  "n_nodes": 2,
+  "band": "21+"
+ },
+ {
+  "id": "ft9223",
+  "question": "What did the bird do after the woman cut off its tongue?",
+  "reference": "It flew away.",
+  "text": "the go the woman",
+  "rouge": 0.0,
+  "steps": 2,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft8906",
+  "question": "What happened after the prince realized how long his nose really was?",
+  "reference": "Prince Hyacinth's nose was now just like anyone's else.",
+  "text": "the was the princess",
+  "rouge": 0.16666666666666666,
+  "steps": 2,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft9511",
+  "question": "How did Tephany feel after she spent the evening with Denis?",
+  "reference": "happy",
+  "text": "sad",
+  "rouge": 0.0,
+  "steps": 2,
+  "n_nodes": 1,
+  "band": "none"
+ },
+ {
+  "id": "ft8717",
+  "question": "Where will the dead man go after he enters the cave of terror?",
+  "reference": "through the burning forest",
+  "text": "the maid",
+  "rouge": 0.3333333333333333,
+  "steps": 2,
+  "n_nodes": 2,
+  "band": "11-20"
+ },
+ {
+  "id": "ft8794",
+  "question": "What will happen to the church after the giant leaves?",
+  "reference": "It will never be finished.",
+  "text": "the wife the were",
+  "rouge": 0.39999999999999997,
+  "steps": 2,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft8847",
+  "question": "How was the six headed troll different from the first one?",
+  "reference": "The troll with six heads is twice as strong as the first one.",
+  "text": "hands the troll",
+  "rouge": 0.25,
+  "steps": 2,
+  "n_nodes": 3,
+  "band": "21+"
+ },
+ {
+  "id": "ft8703",
+  "question": "Why did the eldest daughter not give the old woman food?",
+  "reference": "It's all too little for herself.",
+  "text": "the was the farmer",
+  "rouge": 0.0,
+  "steps": 2,
+  "n_nodes": 4,
+  "band": "11-20"
+ },
+ {
+  "id": "ft8727",
+  "question": "What did the youngest hear when she passed through the dark cavern of horrors?",
+  "reference": "the most horrible yells",
+  "text": "out the fairy",
+  "rouge": 0.28571428571428575,
+  "steps": 2,
+  "n_nodes": 3,
+  "band": "21+"
+ },
+ {
+  "id": "ft9203",
+  "question": "What did Tschang O do when she reached the moon?",
+  "reference": "ran into the castle there, and has lived there ever since as the Lady of the Moon",
+  "text": "the was the wife",
+  "rouge": 0.19047619047619047,
+  "steps": 2,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft8812",
+  "question": "What did the bull have in his left ear?",
+  "reference": "a cloth",
+  "text": "the servants",
+  "rouge": 0.0,
+  "steps": 2,
+  "n_nodes": 2,
+  "band": "21+"
+ },
+ {
+  "id": "ft9029",
+  "question": "What happened because Charcoal Nils forgot to the sign?",
+  "reference": "He saw something that nearly robbed him of his wits.",
+  "text": "the woman the was",
+  "rouge": 0.125,
+  "steps": 2,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft8988",
+  "question": "How did the Yellow-Peerie Boy complete the youngest Princess's task?",
+  "reference": "made the Peerie Folk to his work",
+  "text": "creeping the little",
+  "rouge": 0.2,
+  "steps": 2,
+  "n_nodes": 3,
+  "band": "21+"
+ },
+ {
+  "id": "ft8575",
+  "question": "Who held an official position in Yangdschou?",
+  "reference": "Sir We",
+  "text": "the husband",
+  "rouge": 0.0,
+  "steps": 2,
+  "n_nodes": 2,
+  "band": "11-20"
+ },
+ {
+  "id": "ft9110",
+  "question": "Who had been taken prisoner by the Fairies and did not want a like fate to befall the adventurous page-boy?",
+  "reference": "a poor mortal",
+  "text": "the prisoner",
+  "rouge": 0.0,
+  "steps": 2,
+  "n_nodes": 2,
+  "band": "21+"
+ },
+ {
+  "id": "ft8579",
+  "question": "How will Sir We feel when the match-maker recommends Old Dschang to marry his daughter?",
+  "reference": "angry",
+  "text": "beautiful",
+  "rouge": 0.0,
+  "steps": 2,
+  "n_nodes": 1,
+  "band": "11-20"
+ },
+ {
+  "id": "ft9001",
+  "question": "Why did the youngest Princess tell the Giant she would come home late?",
+  "reference": "She wanted to hide herself in the creel.",
+  "text": "the was the princess",
+  "rouge": 0.4444444444444445,
+  "steps": 2,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft8706",
+  "question": "Where did the eldest daughter get lodging?",
+  "reference": "at a farmer's",
+  "text": "the farmer",
+  "rouge": 0.3333333333333333,
+  "steps": 2,
+  "n_nodes": 2,
+  "band": "21+"
+ },
+ {
+  "id": "ft8599",
+  "question": "What did the dog and the cat do when their owners had grown poorer?",
+  "reference": "took counsel together as to how they might restore to their owners their former good fortune",
+  "text": "go the cat",
+  "rouge": 0.09090909090909091,
+  "steps": 2,
+  "n_nodes": 3,
+  "band": "11-20"
+ },
+ {
+  "id": "ft8890",
+  "question": "Why was the prince unable to help the king's daughter?",
+  "reference": "She stepped right into the middle of the tar and leaped over.",
+  "text": "the was the prince",
+  "rouge": 0.25,
+  "steps": 2,
+  "n_nodes": 4,
+  "band": "11-20"
+ }
+]
