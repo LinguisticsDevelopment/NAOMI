@@ -3,6 +3,10 @@
 Status: APPROVED (owner, 2026-11-27): 1 A now, B later; 2 yes; 3 yes, but the unknown must be
 LEARNED, not defined; 4 yes.
 
+**Owner amendment to 2 (binding, 2026-11-27):** score the actual decoded output text against the
+reference answer text: ROUGE-L F1, plus the tree score of the decoded text read back vs the
+reference tree. No separate answer/frame parts; section 3's item 1 is superseded by this.
+
 **Owner amendment to 3 (binding).** Nothing in code, data prep or the training target tells the
 thinker which question node is the unknown. The thinker sees every question node's USVS point
 (the UNKNOWN axis is just one of its dimensions) and chooses for itself which node to replace and
