@@ -257,3 +257,8 @@ Report: `dev/reports/MIND_V4.md`. Code: `src/naomi/mind_v4.py`, `scripts/{train,
 Report: `dev/reports/MIND_V5.md`. Code: `src/naomi/mind_v5.py`, `scripts/{train,eval}_mind_v5.py`, `tests/test_mind_v5.py`.
 - `runs/mind_v5/thinker_v5_all_s2_best.pt` (main; test 0.298), `thinker_v5_all_s1.pt`, `thinker_v5_short_{s1,s2_best}.pt`. Curves, logs, eval json/log (incl. val_rootfix), tables, hand-reads, prep stats.
 - NOT committed: `data_{train,val,test}.pkl` (13-77 MB, regenerable), `eval_rows_*.jsonl`, symlinks.
+
+### Looped thinker (trees + state + pre-stored memory, learned halt), 2026-11-27
+Report: `dev/reports/MIND_LOOP.md`. Code: `src/naomi/mind_loop.py`, `scripts/{train,eval}_mind_loop.py`, `tests/test_mind_loop.py`. Needs scipy (Hungarian matching).
+- `runs/mind_loop/loop_all_best.pt` (main; test 0.177), `loop_short_best.pt`. Curves (incl. overfit20), logs, eval json, tables, hand-reads, val_choice.json, dims.json.
+- NOT committed: `items_*.pkl`, `stories_f.pkl`, `sense_matrix.npy` (rebuilt by `train_mind_loop.py prep`), eval_rows, `*_last.pt`, smoke, overfit20 checkpoints, read_cache.

@@ -52,6 +52,8 @@ ALLOWED = {
     'next_node', 'prev_node', 'rcount', 'rstart', 'roots_l', 'move', 'in2', 'sv', 'start_v', 'value', 'find', 'steps', 'exhausted', 'path',
     # naomi.mind_v5: tensor / result-dict keys (non-linguistic identifiers)
     'abstain', 'acc', 'hq', 'hsent', 'isq', 'isroot', 'j_logits', 'keep', 'kq', 'nper', 'p_abs', 'parpad', 'qm', 'qper', 'seq', 'tg', 'valid',
+    # naomi.mind_loop: tree-form tensor keys (non-linguistic identifiers)
+    'has', 'idc', 'idm', 'key', 'pos_logit', 'rel_logit', 'tix',
     'amax', 'anode', 'gs', 'maxd', 'n_per', 'rank', 'sent_item', 'sl_pad', 'ssz', 'start', 'within',
 }
 _WORDISH = re.compile(r"^[a-z][a-z_]+$")

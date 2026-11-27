@@ -1,0 +1,136 @@
+{
+ "n": 1025,
+ "thr": 0.4,
+ "tau": 0.3,
+ "rouge_loop": 0.1945837324831482,
+ "rouge_cheat_decoded": 0.20721015648193156,
+ "rouge_cheat_raw": 0.22793011189440043,
+ "answer_rate": 1.0,
+ "tree_loop": 32.18749334224632,
+ "tree_cheat": 13.028405484213156,
+ "tree_n": 300,
+ "tree_reasons": {
+  "loop": {
+   "node_dropped": 929,
+   "meaning_shift": 530,
+   "node_extra": 324,
+   "operator_folded_differs": 299,
+   "subtree_moved": 84,
+   "relation_changed": 74,
+   "head_changed": 69,
+   "name_mismatch": 32
+  },
+  "cheat": {
+   "node_extra": 5911,
+   "head_changed": 601,
+   "meaning_shift": 426,
+   "subtree_moved": 398,
+   "operator_folded_differs": 363,
+   "node_dropped": 298,
+   "name_mismatch": 207,
+   "relation_changed": 60,
+   "opposite_meaning": 1
+  }
+ },
+ "controls": {
+  "empty": {
+   "n": 1025,
+   "abstain_rate": 1.0,
+   "mean_nodes": 0.0,
+   "rouge_vs_own_reference": 0.0,
+   "steps_mean": 1.0
+  },
+  "wrong": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 4.512195121951219,
+   "rouge_vs_own_reference": 0.15390979262261148,
+   "steps_mean": 1.0
+  },
+  "qonly": {
+   "n": 1025,
+   "abstain_rate": 0.00878048780487805,
+   "mean_nodes": 2.8234146341463413,
+   "rouge_vs_own_reference": 0.1266233910674971,
+   "steps_mean": 1.0009756097560976
+  },
+  "shuffled": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 4.549268292682926,
+   "rouge_vs_own_reference": 0.13497807197782655,
+   "steps_mean": 1.0
+  },
+  "block": {
+   "n": 1025,
+   "abstain_rate": 0.7160975609756097,
+   "mean_nodes": 0.47024390243902436,
+   "rouge_vs_own_reference": 0.020567975695174972,
+   "steps_mean": 1.8360975609756098,
+   "rouge_delta_vs_normal": -0.17401575678797324
+  }
+ },
+ "mean_nodes": 4.5112195121951215,
+ "steps_dist": {
+  "1": 1025
+ },
+ "steps_mean": 1.0,
+ "cis": {
+  "loop_minus_cheat": {
+   "mean": -0.012626423998783375,
+   "items": [
+    -0.027989361504412454,
+    0.002304908663306114
+   ],
+   "stories": [
+    -0.029221031177525957,
+    0.0030081934559021543
+   ]
+  },
+  "loop_minus_short": {
+   "mean": 0.0635459967233966,
+   "items": [
+    0.05212580071054629,
+    0.07402810488491868
+   ],
+   "stories": [
+    0.05208309286987994,
+    0.07588984168812983
+   ]
+  }
+ },
+ "bands": {
+  "<=10": {
+   "n": 38,
+   "loop": 0.26408700948174635,
+   "cheat": 0.15835983146405885,
+   "steps": 1.0,
+   "nodes": 4.631578947368421,
+   "short": 0.13826487553267738
+  },
+  "11-20": {
+   "n": 209,
+   "loop": 0.21723366861855878,
+   "cheat": 0.20590920561491408,
+   "steps": 1.0,
+   "nodes": 4.344497607655502,
+   "short": 0.1508494585211188
+  },
+  "21+": {
+   "n": 708,
+   "loop": 0.20072200945429625,
+   "cheat": 0.22940472565598702,
+   "steps": 1.0,
+   "nodes": 4.892655367231638,
+   "short": 0.1356385269104376
+  },
+  "none": {
+   "n": 70,
+   "loop": 0.027142857142857142,
+   "cheat": 0.01313095800556835,
+   "steps": 1.0,
+   "nodes": 1.0857142857142856,
+   "short": 0.02142857142857143
+  }
+ }
+}
