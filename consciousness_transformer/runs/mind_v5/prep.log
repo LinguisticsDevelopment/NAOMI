@@ -1,0 +1,13 @@
+train 0 11082 0s
+train 2000 11082 7s
+train 4000 11082 9s
+train 6000 11082 11s
+train 8000 11082 13s
+train 10000 11082 15s
+train {'pairs': 11082, 'unread': 0, 'normal_unreachable': 1012, 'kinds': {'normal': 8548, 'wrong': 2534}}
+val 0 3075 0s
+val 2000 3075 1s
+val {'pairs': 2050, 'unread': 0, 'normal_unreachable': 119, 'kinds': {'normal': 1025, 'wrong': 1025}}
+test 0 3021 0s
+test 2000 3021 1s
+test {'pairs': 2014, 'unread': 0, 'normal_unreachable': 133, 'kinds': {'normal': 1007, 'wrong': 1007}}

@@ -150,7 +150,7 @@ class Thinker3(nn.Module):
             ab = self._abst_in(torch.zeros(B, 1, H), torch.full((B, 6), -10.0), qvec)
             return {"hs": torch.zeros(0, H), "qvec": qvec, "alog": torch.zeros(0), "anode": torch.zeros(0), "gs": torch.zeros(0, dtype=torch.long),
                     "sl_pad": torch.full((B, 1), NEG), "n_per": torch.zeros(B, dtype=torch.long), "ablog": self.abst(ab).squeeze(1), "rank": torch.zeros(0, dtype=torch.long),
-                    "sent_item": torch.zeros(0, dtype=torch.long), "maxd": torch.zeros(0), "ssz": torch.zeros(0), "start": torch.zeros(B, dtype=torch.long)}
+                    "sent_item": torch.zeros(0, dtype=torch.long), "maxd": torch.zeros(0), "ssz": torch.zeros(0), "start": torch.zeros(B, dtype=torch.long), "hq": hq, "hsent": torch.zeros(0, H)}
         uniq, gs = torch.unique(b["s_sent"], return_inverse=True)
         Sg = uniq.numel()
         cnt = torch.bincount(gs, minlength=Sg).float()
@@ -218,7 +218,7 @@ class Thinker3(nn.Module):
         st = (st * has_item + (-10.0) * (1 - has_item)).clamp(-30, 30)
         ablog = self.abst(self._abst_in(hp, st, qvec, top)).squeeze(1)
         return {"hs": hs, "qvec": qvec, "alog": alog, "anode": anode, "within": within, "gs": gs, "sl_pad": sl_pad, "n_per": n_per, "ablog": ablog,
-                "rank": rank, "sent_item": sent_item, "maxd": maxd, "ssz": ssz, "start": start}
+                "rank": rank, "sent_item": sent_item, "maxd": maxd, "ssz": ssz, "start": start, "hq": hq, "hsent": h[gs]}
 
     def _abst_in(self, hp, st, qvec, top=None):
         B = qvec.size(0)

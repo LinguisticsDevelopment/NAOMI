@@ -1,0 +1,22 @@
+systems: ['cheat', 'oracle', 'v5_all', 'v5_short', 'v5_all_s1', 'v3_s2']
+decoded cheat
+decoded oracle
+decoded v5_all
+decoded v5_short
+decoded v5_all_s1
+decoded v3_s2
+full sentences cheat
+full sentences oracle
+full sentences v5_all
+full sentences v5_short
+full sentences v5_all_s1
+full sentences v3_s2
+reading back 167 decoded strings
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+[ParserInputEncoder] graph parse failed (); no discourse structure.
+controls v5_all {'wrong_abstain': 0.9482926829268292, 'n_wrong': 1025, 'shuf_answer_rate': 0.45170731707317074, 'shuf_rouge': 0.048689564484842913, 'n_shuf': 1025, 'severed_abstain': 0.001951219512195122, 'empty_abstain': 1.0, 'n_severed': 1025, 'n_empty': 1025}
+controls v5_short {'wrong_abstain': 0.8770731707317073, 'n_wrong': 1025, 'shuf_answer_rate': 0.49073170731707316, 'shuf_rouge': 0.04264843821014107, 'n_shuf': 1025, 'severed_abstain': 0.000975609756097561, 'empty_abstain': 1.0, 'n_severed': 1025, 'n_empty': 1025}
+controls v5_all_s1 {'wrong_abstain': 0.9482926829268292, 'n_wrong': 1025, 'shuf_answer_rate': 0.45170731707317074, 'shuf_rouge': 0.048689564484842913, 'n_shuf': 1025, 'severed_abstain': 0.001951219512195122, 'empty_abstain': 1.0, 'n_severed': 1025, 'n_empty': 1025}
+done

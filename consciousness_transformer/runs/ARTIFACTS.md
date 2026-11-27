@@ -252,3 +252,8 @@ Report: `dev/reports/MIND_V3.md`. Code: `src/naomi/mind_v3.py`, `scripts/{train,
 Report: `dev/reports/MIND_V4.md`. Code: `src/naomi/mind_v4.py`, `scripts/{train,eval,probe,tables}_mind_v4.py`, `tests/test_mind_v4.py`.
 - `runs/mind_v4/thinker_v4_all_best.pt` (main; test 0.297, below v3), `thinker_v4_short_best.pt` (short-only), killed designs `v4a_freenav`, `v4b_hillclimb`, `v4c_localmlp`. Curves, logs, eval/steps/probe json+md, tables, hand-read of 20 val 21+ failures with judgments.
 - NOT committed: `eval_rows_{val,test}.jsonl` (18 MB each), symlinked pickles/caches.
+
+### Thinker v5 (question completion, copy from all memory), 2026-11-27
+Report: `dev/reports/MIND_V5.md`. Code: `src/naomi/mind_v5.py`, `scripts/{train,eval}_mind_v5.py`, `tests/test_mind_v5.py`.
+- `runs/mind_v5/thinker_v5_all_s2_best.pt` (main; test 0.298), `thinker_v5_all_s1.pt`, `thinker_v5_short_{s1,s2_best}.pt`. Curves, logs, eval json/log (incl. val_rootfix), tables, hand-reads, prep stats.
+- NOT committed: `data_{train,val,test}.pkl` (13-77 MB, regenerable), `eval_rows_*.jsonl`, symlinks.
