@@ -54,6 +54,8 @@ ALLOWED = {
     'abstain', 'acc', 'hq', 'hsent', 'isq', 'isroot', 'j_logits', 'keep', 'kq', 'nper', 'p_abs', 'parpad', 'qm', 'qper', 'seq', 'tg', 'valid',
     # naomi.mind_loop: tree-form tensor keys (non-linguistic identifiers)
     'has', 'idc', 'idm', 'key', 'pos_logit', 'rel_logit', 'tix',
+    # naomi.mind_loop_v2: counterfactual-memory result-dict keys (non-linguistic identifiers)
+    'keys', 'mem', 'ref', 'swaps',
     'amax', 'anode', 'gs', 'maxd', 'n_per', 'rank', 'sent_item', 'sl_pad', 'ssz', 'start', 'within',
 }
 _WORDISH = re.compile(r"^[a-z][a-z_]+$")

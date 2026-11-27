@@ -1,0 +1,20 @@
+items 8548 stories 3460 val_cf 150 params 788254 warm 4 lam 0.3333 beta 0.3 p_cf 0.4
+/home/user/NAOMI/consciousness_transformer/scripts/train_mind_loop_v2.py:147: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tl += float(loss)
+ep 0 2.4min warm=1 train 4.7230 val_loss 4.8430 steps 4.16 val_rouge 0.0176 cf_rouge 0.0219 cf_new 0.020 cf_old 0.000 per-step [4.761, 4.807, 4.782, 4.809, 4.903, 4.863] halt_p [0.155, 0.119, 0.108, 0.093, 0.079, 0.447]
+ep 1 4.8min warm=1 train 3.9600 val_loss 4.2301 steps 3.92 val_rouge 0.0250 cf_rouge 0.0234 cf_new 0.027 cf_old 0.000 per-step [4.248, 4.215, 4.207, 4.215, 4.195, 4.226] halt_p [0.173, 0.146, 0.122, 0.096, 0.076, 0.387]
+ep 2 7.3min warm=1 train 3.8471 val_loss 4.2968 steps 3.35 val_rouge 0.0179 cf_rouge 0.0243 cf_new 0.033 cf_old 0.000 per-step [4.25, 4.262, 4.324, 4.32, 4.291, 4.335] halt_p [0.227, 0.187, 0.158, 0.107, 0.076, 0.245]
+ep 3 9.7min warm=1 train 3.8079 val_loss 4.3135 steps 3.68 val_rouge 0.0169 cf_rouge 0.0247 cf_new 0.027 cf_old 0.000 per-step [4.402, 4.307, 4.302, 4.246, 4.301, 4.277] halt_p [0.196, 0.155, 0.14, 0.109, 0.079, 0.321]
+ep 4 12.2min warm=0 train 3.7801 val_loss 4.2758 steps 2.78 val_rouge 0.0185 cf_rouge 0.0277 cf_new 0.020 cf_old 0.000 per-step [4.212, 4.283, 4.338, 4.336, 4.254, 4.298] halt_p [0.318, 0.222, 0.156, 0.102, 0.067, 0.134]
+ep 5 14.6min warm=0 train 3.6752 val_loss 3.9004 steps 2.71 val_rouge 0.1004 cf_rouge 0.1129 cf_new 0.033 cf_old 0.000 per-step [3.904, 3.871, 3.902, 3.942, 3.93, 3.9] halt_p [0.349, 0.219, 0.14, 0.092, 0.061, 0.139]
+ep 6 17.1min warm=0 train 3.5552 val_loss 3.7552 steps 2.59 val_rouge 0.1588 cf_rouge 0.1598 cf_new 0.020 cf_old 0.000 per-step [3.737, 3.75, 3.785, 3.776, 3.767, 3.766] halt_p [0.363, 0.232, 0.144, 0.09, 0.057, 0.113]
+ep 7 19.5min warm=0 train 3.4605 val_loss 3.7297 steps 2.74 val_rouge 0.1723 cf_rouge 0.1531 cf_new 0.033 cf_old 0.000 per-step [3.739, 3.74, 3.705, 3.728, 3.743, 3.709] halt_p [0.344, 0.217, 0.14, 0.093, 0.063, 0.143]
+ep 8 21.8min warm=0 train 3.4236 val_loss 3.7202 steps 2.61 val_rouge 0.1600 cf_rouge 0.1353 cf_new 0.027 cf_old 0.000 per-step [3.738, 3.695, 3.714, 3.719, 3.73, 3.713] halt_p [0.362, 0.228, 0.143, 0.091, 0.059, 0.117]
+ep 9 24.2min warm=0 train 3.3775 val_loss 3.6779 steps 2.74 val_rouge 0.1702 cf_rouge 0.1645 cf_new 0.033 cf_old 0.000 per-step [3.678, 3.674, 3.672, 3.69, 3.682, 3.675] halt_p [0.339, 0.22, 0.144, 0.096, 0.064, 0.138]
+ep 10 26.6min warm=0 train 3.3310 val_loss 3.6533 steps 2.74 val_rouge 0.1493 cf_rouge 0.1204 cf_new 0.007 cf_old 0.000 per-step [3.681, 3.627, 3.651, 3.636, 3.65, 3.641] halt_p [0.34, 0.219, 0.143, 0.096, 0.064, 0.137]
+ep 11 28.9min warm=0 train 3.3342 val_loss 3.6145 steps 2.71 val_rouge 0.1485 cf_rouge 0.1321 cf_new 0.020 cf_old 0.000 per-step [3.63, 3.595, 3.621, 3.617, 3.613, 3.593] halt_p [0.342, 0.222, 0.145, 0.096, 0.064, 0.132]
+ep 12 31.2min warm=0 train 3.3035 val_loss 3.6366 steps 2.71 val_rouge 0.1492 cf_rouge 0.1238 cf_new 0.020 cf_old 0.000 per-step [3.64, 3.618, 3.646, 3.66, 3.648, 3.624] halt_p [0.344, 0.221, 0.143, 0.095, 0.063, 0.133]
+ep 13 33.4min warm=0 train 3.3088 val_loss 3.6421 steps 2.73 val_rouge 0.1365 cf_rouge 0.1127 cf_new 0.027 cf_old 0.000 per-step [3.649, 3.633, 3.653, 3.623, 3.643, 3.643] halt_p [0.341, 0.219, 0.144, 0.096, 0.064, 0.137]
+ep 14 35.8min warm=0 train 3.2694 val_loss 3.6047 steps 2.71 val_rouge 0.1539 cf_rouge 0.1250 cf_new 0.007 cf_old 0.000 per-step [3.616, 3.591, 3.611, 3.62, 3.576, 3.591] halt_p [0.346, 0.22, 0.143, 0.095, 0.063, 0.132]
+ep 15 38.1min warm=0 train 3.2399 val_loss 3.6212 steps 2.74 val_rouge 0.1442 cf_rouge 0.1243 cf_new 0.007 cf_old 0.000 per-step [3.623, 3.601, 3.636, 3.63, 3.624, 3.623] halt_p [0.338, 0.219, 0.145, 0.097, 0.065, 0.137]

@@ -1,0 +1,35 @@
+{
+ "n_cf": 456,
+ "n_items": 1025,
+ "cf_rouge_vs_swapped_gold": 0.16160050432114914,
+ "cf_new_token_rate": 0.015350877192982455,
+ "cf_old_token_rate": 0.0,
+ "orig_memory_rouge_vs_orig_gold": 0.1622584682577412,
+ "cf_memory_rouge_vs_orig_gold": 0.1569989744940923,
+ "orig_memory_old_token_rate": 0.02412280701754386,
+ "orig_memory_new_token_rate": 0.0,
+ "output_changed_by_swap": 0.06359649122807018,
+ "per_step_loss": [
+  3.5865,
+  3.5685,
+  3.5571,
+  3.556,
+  3.557,
+  3.5574
+ ],
+ "mean_halt_prob": [
+  0.3148,
+  0.223,
+  0.1508,
+  0.1017,
+  0.068,
+  0.1418
+ ],
+ "halt_steps_dist": {
+  "3": 102,
+  "4": 923
+ },
+ "story_adds_vs_qonly": 0.12226438229419805,
+ "story_adds_vs_wrong": 0.034995745707172204,
+ "story_adds_vs_shuffled": 0.047920796699133406
+}

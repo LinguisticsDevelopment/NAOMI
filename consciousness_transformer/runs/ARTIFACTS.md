@@ -262,3 +262,8 @@ Report: `dev/reports/MIND_V5.md`. Code: `src/naomi/mind_v5.py`, `scripts/{train,
 Report: `dev/reports/MIND_LOOP.md`. Code: `src/naomi/mind_loop.py`, `scripts/{train,eval}_mind_loop.py`, `tests/test_mind_loop.py`. Needs scipy (Hungarian matching).
 - `runs/mind_loop/loop_all_best.pt` (main; test 0.177), `loop_short_best.pt`. Curves (incl. overfit20), logs, eval json, tables, hand-reads, val_choice.json, dims.json.
 - NOT committed: `items_*.pkl`, `stories_f.pkl`, `sense_matrix.npy` (rebuilt by `train_mind_loop.py prep`), eval_rows, `*_last.pt`, smoke, overfit20 checkpoints, read_cache.
+
+### Looped thinker v2 (halt warm-up, counterfactual memory), 2026-11-27
+Report: `dev/reports/MIND_LOOP_V2.md`. Code: `src/naomi/mind_loop_v2.py`, `scripts/{train,eval}_mind_loop_v2.py`, `tests/test_mind_loop_v2.py`. Reads prep from `runs/mind_loop/` (rebuild with `train_mind_loop.py prep`).
+- `runs/mind_loop_v2/v2_s1_best.pt` (chosen; test 0.180), `v2_s0_best.pt`. Curves, logs, eval/extras json, tables, hand-reads, val_choice.
+- NOT committed: eval_rows, `*_last.pt`, read_cache.

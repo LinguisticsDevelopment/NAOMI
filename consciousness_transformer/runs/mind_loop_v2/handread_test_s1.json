@@ -1,0 +1,202 @@
+[
+ {
+  "id": "ft9937",
+  "question": "Who was the old man that arrived to the princess's house?",
+  "reference": "a wizard",
+  "text": "the princess",
+  "rouge": 0.0,
+  "steps": 4,
+  "n_nodes": 2,
+  "band": "21+"
+ },
+ {
+  "id": "ft10370",
+  "question": "Why did Ian fall into a dark slumber?",
+  "reference": "He touched an enchanted stick.",
+  "text": "he was the daughter",
+  "rouge": 0.25,
+  "steps": 3,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft9608",
+  "question": "What did Janet and her husband want to do with the bannock?",
+  "reference": "split the bannock in half",
+  "text": "dodged the goodman",
+  "rouge": 0.3333333333333333,
+  "steps": 4,
+  "n_nodes": 3,
+  "band": "11-20"
+ },
+ {
+  "id": "ft9676",
+  "question": "What did the king see when he saw the Many-furred Creature?",
+  "reference": "the white finger",
+  "text": "the king",
+  "rouge": 0.4,
+  "steps": 4,
+  "n_nodes": 2,
+  "band": "21+"
+ },
+ {
+  "id": "ft10451",
+  "question": "What happened because the Happy Hunter did not know hot to fish properly?",
+  "reference": "He was unable to catch any fish.",
+  "text": "he was the fisher",
+  "rouge": 0.6666666666666665,
+  "steps": 4,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft9773",
+  "question": "Why didn't Lady Morna wish to marry Harold?",
+  "reference": "Lady Morna had sometimes caught glimpses of his jealous temper; she had seen an evil expression in his eyes, and had heard him speak sharply to his servants.",
+  "text": "the wife he was",
+  "rouge": 0.0,
+  "steps": 4,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft9650",
+  "question": "What happened after the huntsmen seized the maiden?",
+  "reference": "She awoke.",
+  "text": "the was the daughter",
+  "rouge": 0.14285714285714288,
+  "steps": 4,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft10406",
+  "question": "Why did the wife not want her daughter to fetch the axe?",
+  "reference": "Her daughter would be sure to catch a bad cold.",
+  "text": "he was the girl",
+  "rouge": 0.22222222222222224,
+  "steps": 4,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft9928",
+  "question": "What happened after every man present took and oath?",
+  "reference": "A message was sent to the false prince, forbidding him ever again to appear at court, though a handsome pension was granted him.",
+  "text": "he was the prince to",
+  "rouge": 0.38095238095238093,
+  "steps": 4,
+  "n_nodes": 5,
+  "band": "21+"
+ },
+ {
+  "id": "ft9839",
+  "question": "What will Harold do after his mother's words anger him?",
+  "reference": "snatch the vest from the table",
+  "text": "thread the brother",
+  "rouge": 0.2222222222222222,
+  "steps": 4,
+  "n_nodes": 3,
+  "band": "<=10"
+ },
+ {
+  "id": "ft9670",
+  "question": "What did the Many-furred Creature say her use was?",
+  "reference": "have boots thrown at her head",
+  "text": "the daughter",
+  "rouge": 0.0,
+  "steps": 4,
+  "n_nodes": 2,
+  "band": "21+"
+ },
+ {
+  "id": "ft10469",
+  "question": "Who did the Happy Hunter see on the beach?",
+  "reference": "an old man",
+  "text": "the man",
+  "rouge": 0.4,
+  "steps": 4,
+  "n_nodes": 2,
+  "band": "21+"
+ },
+ {
+  "id": "ft10100",
+  "question": "What did the lovely young dragon look like?",
+  "reference": "scales were of glittering green",
+  "text": "the whales",
+  "rouge": 0.07142857142857144,
+  "steps": 3,
+  "n_nodes": 2,
+  "band": "21+"
+ },
+ {
+  "id": "ft10363",
+  "question": "Why did the leader punish the four men who were told to kill Ian last night?",
+  "reference": "He found out Ian was still alive.",
+  "text": "the man he were",
+  "rouge": 0.18181818181818182,
+  "steps": 3,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft9974",
+  "question": "Why couldn't the Old Woman take the son immediately?",
+  "reference": "She had to follow the laws of Fairy-land.",
+  "text": "the son him was",
+  "rouge": 0.18181818181818182,
+  "steps": 4,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft9966",
+  "question": "Why did the widowed Mistress feel joyful after the Old Woman cured her pig?",
+  "reference": "She felt that her rent was safe.",
+  "text": "the was the son",
+  "rouge": 0.18181818181818182,
+  "steps": 4,
+  "n_nodes": 4,
+  "band": "21+"
+ },
+ {
+  "id": "ft9816",
+  "question": "How did Snorro the Dwarf feel after Harold came for his help?",
+  "reference": "happy",
+  "text": "love",
+  "rouge": 0.0,
+  "steps": 4,
+  "n_nodes": 1,
+  "band": "none"
+ },
+ {
+  "id": "ft10359",
+  "question": "What did the men do after the leader told them where Ian was hiding?",
+  "reference": "killed the fisher's son and left him, and then went to bed",
+  "text": "he jumped the son",
+  "rouge": 0.4444444444444445,
+  "steps": 4,
+  "n_nodes": 4,
+  "band": "11-20"
+ },
+ {
+  "id": "ft9696",
+  "question": "Why did the man spend all his time and money trying to get rid of his wen?",
+  "reference": "It so annoyed him.",
+  "text": "he he was the man",
+  "rouge": 0.2608695652173913,
+  "steps": 4,
+  "n_nodes": 5,
+  "band": "21+"
+ },
+ {
+  "id": "ft9713",
+  "question": "Why did the man get back in the tree?",
+  "reference": "He did not want to be seen by the demons.",
+  "text": "he was the demons",
+  "rouge": 0.8,
+  "steps": 4,
+  "n_nodes": 4,
+  "band": "21+"
+ }
+]

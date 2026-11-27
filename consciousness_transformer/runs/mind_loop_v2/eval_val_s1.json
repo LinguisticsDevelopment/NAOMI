@@ -1,0 +1,126 @@
+{
+ "n": 1025,
+ "thr": 0.5,
+ "tau": 0.7,
+ "rouge_loop": 0.18659814080569576,
+ "rouge_cheat_decoded": 0.20721015648193156,
+ "rouge_cheat_raw": 0.22793011189440043,
+ "answer_rate": 1.0,
+ "tree_loop": 38.26085129425992,
+ "tree_cheat": 13.028405484213156,
+ "tree_n": 300,
+ "tree_reasons": {
+  "loop": {
+   "node_dropped": 987,
+   "meaning_shift": 441,
+   "operator_folded_differs": 266,
+   "node_extra": 84,
+   "subtree_moved": 34,
+   "relation_changed": 31,
+   "name_mismatch": 19,
+   "head_changed": 19
+  },
+  "cheat": {
+   "node_extra": 5911,
+   "head_changed": 601,
+   "meaning_shift": 426,
+   "subtree_moved": 398,
+   "operator_folded_differs": 363,
+   "node_dropped": 298,
+   "name_mismatch": 207,
+   "relation_changed": 60,
+   "opposite_meaning": 1
+  }
+ },
+ "controls": {
+  "empty": {
+   "n": 1025,
+   "abstain_rate": 1.0,
+   "mean_nodes": 0.0,
+   "rouge_vs_own_reference": 0.0,
+   "steps_mean": 1.0
+  },
+  "wrong": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 3.088780487804878,
+   "rouge_vs_own_reference": 0.15160239509852355,
+   "steps_mean": 3.8858536585365853
+  },
+  "qonly": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 1.7590243902439024,
+   "rouge_vs_own_reference": 0.06433375851149771,
+   "steps_mean": 3.9570731707317073
+  },
+  "shuffled": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 3.1209756097560977,
+   "rouge_vs_own_reference": 0.13867734410656235,
+   "steps_mean": 3.902439024390244
+  },
+  "block": {
+   "n": 1025,
+   "abstain_rate": 0.0,
+   "mean_nodes": 2.812682926829268,
+   "rouge_vs_own_reference": 0.18450170596848725,
+   "steps_mean": 3.64,
+   "rouge_delta_vs_normal": -0.002096434837208505
+  }
+ },
+ "mean_nodes": 3.0897560975609757,
+ "steps_dist": {
+  "3": 102,
+  "4": 923
+ },
+ "steps_mean": 3.9004878048780487,
+ "cis": {
+  "loop_minus_cheat": {
+   "mean": -0.020612015676235815,
+   "items": [
+    -0.035870733612290165,
+    -0.005527459579830123
+   ],
+   "stories": [
+    -0.037480875380544766,
+    -0.004796798393279389
+   ]
+  }
+ },
+ "bands": {
+  "<=10": {
+   "n": 38,
+   "loop": 0.2566513165197376,
+   "cheat": 0.15835983146405885,
+   "steps": 3.763157894736842,
+   "nodes": 3.1052631578947367,
+   "short": null
+  },
+  "11-20": {
+   "n": 209,
+   "loop": 0.18867818736009537,
+   "cheat": 0.20590920561491408,
+   "steps": 3.8325358851674642,
+   "nodes": 3.0430622009569377,
+   "short": null
+  },
+  "21+": {
+   "n": 708,
+   "loop": 0.1979895524573844,
+   "cheat": 0.22940472565598702,
+   "steps": 3.919491525423729,
+   "nodes": 3.303672316384181,
+   "short": null
+  },
+  "none": {
+   "n": 70,
+   "loop": 0.027142857142857142,
+   "cheat": 0.01313095800556835,
+   "steps": 3.9857142857142858,
+   "nodes": 1.0571428571428572,
+   "short": null
+  }
+ }
+}
