@@ -210,7 +210,9 @@ def main():
                 lg = dm[jsrc][p["id"]]["j_logits"]
                 j = int(np.argmax(lg)) if lg else 0
             r[f"{s}_j"] = j
-            out_trees[(s, i)] = m5.assemble(qt, qn, j, tr)
+            keep = dm[jsrc][p["id"]]["keep"]
+            out_trees[(s, i)] = m5.assemble(qt, qn, j, tr, keep)
+            r[f"{s}_kept_share"] = m5.kept_count(qpar, j, keep) / len(qn)
             r[f"{s}_true_text"] = source_text(tr)
 
     def decode_system(s, which):
@@ -426,7 +428,7 @@ def main():
         for s in sysorder:
             t = [r[f"{s}_tree_full"] for r in sel if f"{s}_tree_full" in r]
             out[s] = {"n": len(sel), "answer_rate": mean([float(bool(r.get(f"{s}_ans"))) for r in sel]), **{c: mean([r[f"{s}_{c}"] for r in sel]) for c in COLS},
-                      "tree_full": mean(t), "n_tree": len(t)}
+                      "tree_full": mean(t), "n_tree": len(t), "kept_share": mean([r[f"{s}_kept_share"] for r in sel if f"{s}_kept_share" in r])}
         return out
     summary = {"split": args.split, "n_items": len(R), "main": M, "short": args.short, "systems": sysorder, "band_counts": {b: sum(r["band"] == b for r in R) for b in BANDS},
                "overall": tab_rows(R), "by_band": {b: tab_rows([r for r in R if r["band"] == b]) for b in BANDS},
@@ -464,12 +466,12 @@ def main():
 def write_tables(S, R, path, sysorder, names):
     L = [f"## {S['split']}: n={S['n_items']} items; bands {S['band_counts']}; main = {S['main']}\n", S["score_note"] + "\n"]
     L.append("### Headline (abstain = 0). Primary: ROUGE-L of the decoded full output sentence; tree score of the read-back sentence on the subsample; secondary: ROUGE-L of the filler alone\n")
-    L.append("| system | answer rate | full-sentence ROUGE (a) | full (b) | tree score % (n) | filler ROUGE (a) | filler (b) | filler true order |\n|---|---|---|---|---|---|---|---|")
+    L.append("| system | answer rate | full-sentence ROUGE (a) | full (b) | tree score % (n) | filler ROUGE (a) | filler (b) | filler true order | question nodes kept |\n|---|---|---|---|---|---|---|---|---|")
     for s in sysorder:
         v = S["overall"][s]
-        L.append(f"| {names[s]} | {v['answer_rate']:.3f} | {v['R_full_a']:.3f} | {v['R_full_b']:.3f} | {v['tree_full']:.1f} ({v['n_tree']}) | {v['R_filler_a']:.3f} | {v['R_filler_b']:.3f} | {v['R_filler_t']:.3f} |")
+        L.append(f"| {names[s]} | {v['answer_rate']:.3f} | {v['R_full_a']:.3f} | {v['R_full_b']:.3f} | {v['tree_full']:.1f} ({v['n_tree']}) | {v['R_filler_a']:.3f} | {v['R_filler_b']:.3f} | {v['R_filler_t']:.3f} | {v['kept_share']:.3f} |")
     L.append(f"\nOld raw-text cheat ROUGE-L (whole best-overlap sentence text, as v2-v4): {S['old_cheat_raw_text_rouge']:.3f}; oracle best full subtree: {S['oracle_subtree_rouge']:.3f}\n")
-    for metric, label in (("R_full_a", "full-sentence ROUGE-L (a)"), ("R_filler_a", "filler ROUGE-L (a)"), ("tree_full", "tree score % of decoded full sentence")):
+    for metric, label in (("R_full_a", "full-sentence ROUGE-L (a)"), ("R_filler_a", "filler ROUGE-L (a)"), ("tree_full", "tree score % of decoded full sentence"), ("kept_share", "average share of question nodes kept in the output")):
         L.append(f"### By answer-sentence length band: {label}\n\n| band | n | " + " | ".join(sysorder) + " |\n|---|---|" + "---|" * len(sysorder))
         for b in BANDS:
             v = S["by_band"][b]

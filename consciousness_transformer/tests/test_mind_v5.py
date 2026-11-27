@@ -37,11 +37,14 @@ def _code_names(path):
 @pytest.mark.parametrize("f", ["src/naomi/mind_v5.py", "scripts/train_mind_v5.py"])
 def test_no_code_path_reads_the_unknown_axis_or_a_slot_label(f):
     names = [x.lower() for x in _code_names(CT / f)]
+    names_raw = names
     bad = [x for x in names if "unknown" in x or x in ("wh_found", "unknown_idx", "unknown_axis")]
     assert not bad, bad
     # the only place a wh index appears is the constant -1 handed to the shared batch builder, and the model asserts it
-    if f.endswith("mind_v5.py"):
+    if f.startswith("src"):
         assert "q_wh" in names                                # the assertion in Thinker5.pack
+    else:
+        assert "q_wh" not in names
     src = (CT / f).read_text()
     assert ".unknown_idx" not in src
 
@@ -57,22 +60,15 @@ def _qtree():
     return Tree(sentence="why was angry very", root=root)
 
 
-def test_frame_rewards_shape_only():
-    parent = np.array([-1, 0, 0, 2])
-    supp = np.array([1, 0, 1, 1], dtype=np.float32)
-    r = m5.frame_rewards(parent, supp)
-    assert r.tolist() == pytest.approx([0.0, 1.0, 1 / 3, 2 / 3], abs=1e-6)
-
-
-def test_support_vector_and_frame_parts():
+def test_keep_drop_and_removed_subtree():
     qt = _qtree()
     from naomi import mind_v2 as m2
     qn, par, _ = m2.flat_tree(qt)
-    arr = {"nodes": [_node("was", 0), _node("angry", 1), _node("king", 2)], "sent": np.array([0, 0, 1])}
-    supp = m5.support_vector(arr, 0, qn)
-    assert supp.tolist() == [1.0, 0.0, 1.0, 0.0]
-    fa, fs = m5.frame_parts(np.array(par), 2, supp)
-    assert fa == pytest.approx(0.5) and fs == pytest.approx(0.5)
+    assert m5.removed_by(np.array(par), 2) == {2, 3}
+    assert m5.kept_count(np.array(par), 2, [True, True, True, False]) == 2
+    tr = Tree(sentence="", root=_node("lied", 0, REL_ROOT))
+    out = m5.assemble(qt, qn, 2, tr, [False, False, True, True])      # drop "was" (root) and "why": the filler becomes the root
+    assert out.root.token == "lied" and out.root.rel == REL_ROOT and out.root.children == []
 
 
 def test_filler_and_assemble_keep_provenance_and_replace_subtree():
@@ -122,11 +118,11 @@ def test_loss_and_decode_run_on_real_pairs():
     model = m5.Thinker5(m1.Ctx.get().D, len(vocab["rels"]), len(vocab["poss"]))
     tab = m2.SenseTable()
     b = m2.collate(chl, stories, tab, with_targets=False)
-    lp, lpar, lrep, st = model.tf_loss(b, chl)
-    assert torch.isfinite(lp) and torch.isfinite(lpar) and torch.isfinite(lrep)
-    (lp + lpar + lrep).backward()
+    lp, lpar = model.tf_loss(b, chl)
+    assert torch.isfinite(lp) and torch.isfinite(lpar)
+    (lp + lpar).backward()
     res = model.decode(b)
     assert len(res) == 4
     for r, p in zip(res, chl):
         assert 0 <= r["j"] < len(p["q"]["parent"])
-        assert len(r["pos"]) == len(r["par"]) <= m5.TMAX
+        assert len(r["pos"]) == len(r["par"]) <= m5.TMAX and len(r["keep"]) == len(p["q"]["parent"])

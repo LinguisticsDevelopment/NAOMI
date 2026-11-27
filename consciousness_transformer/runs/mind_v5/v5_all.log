@@ -1,0 +1,8 @@
+v5 variant=all: normal 7536 (unreachable skipped 1012), wrong-story 2534, empty-memory 753
+warm start from runs/mind_v3/thinker_v3_s1_best.pt: 46 new tensors, 0 unexpected
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  return lp_tot / max(n_ptr, 1), par_tot / max(n_par, 1), loss_rep, {"exp_frame": float(((pj * R).sum(1) * has).sum() / has.sum().clamp(min=1))}
+ep 0 ptr 1.866 par 0.142 rep -0.963 train_exp_frame 0.962 | val sel 0.6076 f1 0.253 frame 0.882 answer_rate 0.895 wrong_abstain 0.971 72s
+ep 1 ptr 1.169 par 0.045 rep -0.983 train_exp_frame 0.982 | val sel 0.5960 f1 0.215 frame 0.894 answer_rate 0.906 wrong_abstain 0.969 139s
+ep 2 ptr 0.939 par 0.023 rep -0.983 train_exp_frame 0.982 | val sel 0.6390 f1 0.267 frame 0.946 answer_rate 0.959 wrong_abstain 0.933 205s
+ep 3 ptr 0.818 par 0.013 rep -0.984 train_exp_frame 0.983 | val sel 0.6303 f1 0.276 frame 0.911 answer_rate 0.924 wrong_abstain 0.964 271s

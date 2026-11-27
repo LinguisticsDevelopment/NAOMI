@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 CT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(CT / "src"))
@@ -86,7 +87,7 @@ def save(model, vocab, path, extra=None):
 def load_model(path):
     ck = torch.load(path, map_location="cpu", weights_only=False)
     model = make_model(ck["vocab"], **ck["cfg"])
-    model.load_state_dict(ck["state"])
+    model.load_state_dict(ck["state"], strict=False)          # stage-1 checkpoints predate the keep head (it then starts at its init)
     return model.eval(), ck["vocab"]
 
 
@@ -218,7 +219,7 @@ def stage2(args):
     dec = m2.Decoder(str(CT / "runs/naomi_orderer/large_best.pt"))
     model, _ = load_model(args.init)
     for n_, p_ in model.named_parameters():
-        p_.requires_grad = n_.startswith(("rep.",))
+        p_.requires_grad = n_.startswith(("rep.", "keep_q."))
     opt = torch.optim.AdamW([p_ for p_ in model.parameters() if p_.requires_grad], lr=args.lr, weight_decay=args.wd)
     qcache = {}
 
@@ -228,7 +229,7 @@ def stage2(args):
             qcache[i] = (qt, m2.flat_tree(qt)[0])
         return qcache[i]
 
-    def outputs(ch, res, js):
+    def outputs(ch, res, js, keeps):
         trees, where = [], []
         for n, (p, r) in enumerate(zip(ch, res)):
             if r["abstain"] or not r["pos"]:
@@ -237,7 +238,7 @@ def stage2(args):
             arr = stories[p["skey"]]
             tr, _ = m5.filler_tree(arr, qn, [m5.source_of(x, r["Nmax"]) for x in r["pos"]], r["par"])
             for k, j in enumerate(js[n]):
-                trees.append(m5.assemble(qt, qn, j, tr))
+                trees.append(m5.assemble(qt, qn, j, tr, keeps[n][k]))
                 where.append((n, k))
         return trees, where
 
@@ -247,7 +248,7 @@ def stage2(args):
             ch = pairs[i:i + 48]
             b = m2.collate(ch, stories, tab, with_targets=False)
             res = model.decode(b)
-            trees, where = outputs(ch, res, [[r["j"]] for r in res])
+            trees, where = outputs(ch, res, [[r["j"]] for r in res], [[r["keep"]] for r in res])
             sc = {w: 0.0 for w in range(len(ch))}
             for (n, _k), t in zip(where, dec.texts(trees)):
                 sc[n] = m2.rouge_multi(t, meta[ch[n]["item"]]["golds"])
@@ -271,17 +272,30 @@ def stage2(args):
             b = m2.collate(ch, stories, tab, with_targets=False)
             res = model.decode(b)
             with torch.enable_grad():
-                rl = model.replace_logits_for(b, res)
+                rl, kl = model.replace_logits_for(b, res)
             lp = torch.log_softmax(rl, 1)
             js = [torch.multinomial(lp[n].exp().detach(), args.K, replacement=True).tolist() for n in range(len(ch))]
-            trees, where = outputs(ch, res, js)
+            keeps, lkeep = [], torch.zeros(len(ch), args.K)
+            for n, p in enumerate(ch):
+                qn_ = len(p["q"]["parent"])
+                pk = torch.sigmoid(kl[n, :qn_]).detach()
+                row = []
+                for k in range(args.K):
+                    kk = torch.bernoulli(pk).bool()
+                    row.append(kk.tolist())
+                    rem = m5.removed_by(p["q"]["parent"], js[n][k])
+                    live = torch.tensor([i not in rem for i in range(qn_)])
+                    ll = torch.where(kk, F.logsigmoid(kl[n, :qn_]), F.logsigmoid(-kl[n, :qn_]))
+                    lkeep[n, k] = (ll * live.float()).sum()
+                keeps.append(row)
+            trees, where = outputs(ch, res, js, keeps)
             rew = np.zeros((len(ch), args.K), dtype=np.float32)
             for (n, k), t in zip(where, dec.texts(trees)):
                 rew[n, k] = m2.rouge_multi(t, meta[ch[n]["item"]]["golds"])
             act = np.array([not (r["abstain"] or not r["pos"]) for r in res], dtype=np.float32)
             base = (rew.sum(1, keepdims=True) - rew) / (args.K - 1)
             adv = torch.from_numpy(rew - base) * torch.from_numpy(act)[:, None]
-            logp = torch.stack([lp[n, js[n]] for n in range(len(ch))])
+            logp = torch.stack([lp[n, js[n]] for n in range(len(ch))]) + lkeep
             loss = -(adv * logp).sum() / max(float(act.sum()), 1.0)
             opt.zero_grad()
             loss.backward()

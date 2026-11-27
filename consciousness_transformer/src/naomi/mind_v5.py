@@ -132,6 +132,8 @@ class Thinker5(m3.Thinker3):
         self.par_q, self.par_k = nn.Linear(H, H), nn.Linear(H, H)
         self.w_pm = nn.Parameter(torch.tensor(2.0))
         self.rep = nn.Sequential(nn.Linear(3 * H, H), nn.GELU(), nn.Linear(H, 1))
+        self.keep_q = nn.Sequential(nn.Linear(3 * H, H), nn.GELU(), nn.Linear(H, 1))      # per question node: keep (1) / drop (0)
+        nn.init.constant_(self.keep_q[2].bias, 2.0)                                       # starts by keeping the frame
 
     # ---- keys over [story nodes | question nodes] for every item
     def pack(self, b: dict, e: dict) -> dict:
@@ -202,6 +204,12 @@ class Thinker5(m3.Thinker3):
         lg = self.rep(torch.cat([kq, fill.unsqueeze(1).expand_as(kq), P["qm"].unsqueeze(1).expand_as(kq)], 2)).squeeze(-1)
         return lg.masked_fill(~P["validQ"], NEGINF)
 
+    def _keep_logits(self, P: dict, chosen: torch.Tensor) -> torch.Tensor:
+        cnt = chosen.float().sum(1, keepdim=True).clamp(min=1)
+        fill = (P["K"] * chosen.unsqueeze(2).float()).sum(1) / cnt
+        kq = P["kq"]
+        return self.keep_q(torch.cat([kq, fill.unsqueeze(1).expand_as(kq), P["qm"].unsqueeze(1).expand_as(kq)], 2)).squeeze(-1)
+
     # ---- teacher-forced training loss
     def tf_loss(self, b: dict, pairs: Sequence[dict]):
         """pairs carry ``tg`` (imitation target; None = abstain target). Returns (pointer loss, parent loss)."""
@@ -263,7 +271,7 @@ class Thinker5(m3.Thinker3):
         for i, r in enumerate(res):
             for x in r["pos"]:
                 chosen[i, x] = True
-        return self._replace_logits(P, chosen)
+        return self._replace_logits(P, chosen), self._keep_logits(P, chosen)
 
     # ---- greedy decode
     @torch.no_grad()
@@ -310,8 +318,10 @@ class Thinker5(m3.Thinker3):
             Kseq.append(prev_new)
             seqpos_list.append(idx)
         rl = self._replace_logits(P, chosen)
+        kl = self._keep_logits(P, chosen)
         for i in range(B):
             q = int(P["qper"][i])
+            res[i]["keep"] = (kl[i, :q] > 0).tolist()
             res[i]["j_logits"] = rl[i, :q].tolist()
             res[i]["j"] = int(rl[i, :q].argmax()) if q else -1
             res[i]["Nmax"] = P["Nmax"]
@@ -346,19 +356,47 @@ def filler_tree(arr: dict, qn: Sequence, srcs: Sequence, par: Sequence[int]):
     return Tree(sentence="", root=copies[0]), [tuple(s) for s in srcs]
 
 
-def assemble(qtree: Tree, qn: Sequence, j: int, filler: Tree, base: int = 1000) -> Tree:
-    """The question tree with node j (and its subtree) replaced by the filler (the filler's root takes j's relation)."""
+def removed_by(qparent: np.ndarray, j: int) -> set:
+    """Question nodes in the subtree of j (the replaced node and everything below it)."""
+    out = set()
+    for i in range(len(qparent)):
+        a = i
+        while a >= 0:
+            if a == j:
+                out.add(i)
+                break
+            a = int(qparent[a])
+    return out
+
+
+def assemble(qtree: Tree, qn: Sequence, j: int, filler: Tree, keep: Optional[Sequence[bool]] = None, base: int = 1000) -> Tree:
+    """The output tree: the question tree with node j (and its subtree) replaced by the filler (the filler's root takes j's relation);
+    a question node with keep[i] False is dropped and its children move up to its parent. If the root is dropped the filler (or the
+    first remaining piece) becomes the root. Returns Tree."""
     target = qn[j]
+    idx = {id(n): i for i, n in enumerate(qn)}
 
     def renum(n, off):
         return replace(n, token_index=None if n.token_index is None else n.token_index + off, children=[renum(c, off) for c in n.children])
 
     def go(n):
         if n is target:
-            f = renum(filler.root, base)
-            return replace(f, rel=n.rel)
-        return replace(n, children=[go(c) for c in n.children])
-    return Tree(sentence=qtree.sentence, root=go(qtree.root))
+            return [replace(renum(filler.root, base), rel=n.rel)]
+        kids = [x for c in n.children for x in go(c)]
+        if keep is not None and id(n) in idx and not keep[idx[id(n)]]:
+            return kids
+        return [replace(n, children=kids)]
+    top = go(qtree.root)
+    if len(top) > 1:
+        r = next((x for x in top if x.token_index is not None and x.token_index >= base), top[0])
+        r = replace(r, rel=REL_ROOT, children=list(r.children) + [x for x in top if x is not r])
+        top = [r]
+    return Tree(sentence=qtree.sentence, root=replace(top[0], rel=REL_ROOT))
+
+
+def kept_count(qparent: np.ndarray, j: int, keep: Optional[Sequence[bool]]) -> int:
+    rem = removed_by(qparent, j)
+    return sum(1 for i in range(len(qparent)) if i not in rem and (keep is None or keep[i]))
 
 
 def lemma_f1(pred_keys: Sequence, ref: Counter) -> float:

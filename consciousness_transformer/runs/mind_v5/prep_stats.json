@@ -1,0 +1,29 @@
+{
+ "train": {
+  "pairs": 11082,
+  "unread": 0,
+  "normal_unreachable": 1012,
+  "kinds": {
+   "normal": 8548,
+   "wrong": 2534
+  }
+ },
+ "val": {
+  "pairs": 2050,
+  "unread": 0,
+  "normal_unreachable": 119,
+  "kinds": {
+   "normal": 1025,
+   "wrong": 1025
+  }
+ },
+ "test": {
+  "pairs": 2014,
+  "unread": 0,
+  "normal_unreachable": 133,
+  "kinds": {
+   "normal": 1007,
+   "wrong": 1007
+  }
+ }
+}

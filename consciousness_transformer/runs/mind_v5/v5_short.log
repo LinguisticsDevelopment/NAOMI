@@ -1,0 +1,35 @@
+v5 variant=short: normal 489 (unreachable skipped 1012), wrong-story 165, empty-memory 48
+warm start from runs/mind_v3/thinker_v3_short_best.pt: 46 new tensors, 0 unexpected
+/home/user/NAOMI/consciousness_transformer/scripts/train_mind_v5.py:189: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  for k, v in enumerate((float(lp), float(lpar), 0.0, 0.0)):
+ep 0 ptr 2.482 par 0.177 | val sel 0.1486 f1 0.063 answer_rate 0.794 wrong_abstain 0.915 7s
+ep 1 ptr 1.518 par 0.110 | val sel 0.1530 f1 0.067 answer_rate 0.804 wrong_abstain 0.924 13s
+ep 2 ptr 1.254 par 0.081 | val sel 0.1545 f1 0.068 answer_rate 0.815 wrong_abstain 0.937 19s
+ep 3 ptr 1.129 par 0.068 | val sel 0.1488 f1 0.056 answer_rate 0.690 wrong_abstain 0.983 26s
+ep 4 ptr 1.052 par 0.049 | val sel 0.1358 f1 0.041 answer_rate 0.628 wrong_abstain 0.985 32s
+ep 5 ptr 1.084 par 0.054 | val sel 0.1484 f1 0.061 answer_rate 0.778 wrong_abstain 0.936 38s
+ep 6 ptr 0.945 par 0.046 | val sel 0.1546 f1 0.063 answer_rate 0.714 wrong_abstain 0.980 44s
+ep 7 ptr 0.847 par 0.028 | val sel 0.1433 f1 0.053 answer_rate 0.774 wrong_abstain 0.953 50s
+ep 8 ptr 0.749 par 0.033 | val sel 0.1573 f1 0.068 answer_rate 0.789 wrong_abstain 0.961 56s
+ep 9 ptr 0.732 par 0.025 | val sel 0.1566 f1 0.072 answer_rate 0.833 wrong_abstain 0.918 62s
+ep 10 ptr 0.745 par 0.030 | val sel 0.1715 f1 0.089 answer_rate 0.889 wrong_abstain 0.915 68s
+ep 11 ptr 0.675 par 0.026 | val sel 0.1591 f1 0.074 answer_rate 0.761 wrong_abstain 0.924 74s
+ep 12 ptr 0.702 par 0.018 | val sel 0.1444 f1 0.055 answer_rate 0.687 wrong_abstain 0.952 80s
+ep 13 ptr 0.594 par 0.017 | val sel 0.1543 f1 0.065 answer_rate 0.740 wrong_abstain 0.960 86s
+ep 14 ptr 0.578 par 0.025 | val sel 0.1613 f1 0.091 answer_rate 0.935 wrong_abstain 0.798 92s
+ep 15 ptr 0.641 par 0.025 | val sel 0.1651 f1 0.078 answer_rate 0.846 wrong_abstain 0.949 98s
+ep 16 ptr 0.521 par 0.027 | val sel 0.1627 f1 0.075 answer_rate 0.784 wrong_abstain 0.955 104s
+ep 17 ptr 0.518 par 0.018 | val sel 0.1608 f1 0.074 answer_rate 0.778 wrong_abstain 0.946 110s
+ep 18 ptr 0.536 par 0.016 | val sel 0.1599 f1 0.072 answer_rate 0.856 wrong_abstain 0.950 116s
+ep 19 ptr 0.554 par 0.013 | val sel 0.1812 f1 0.104 answer_rate 0.925 wrong_abstain 0.877 122s
+ep 20 ptr 0.498 par 0.013 | val sel 0.1579 f1 0.068 answer_rate 0.769 wrong_abstain 0.967 128s
+ep 21 ptr 0.521 par 0.015 | val sel 0.1620 f1 0.079 answer_rate 0.877 wrong_abstain 0.907 134s
+ep 22 ptr 0.493 par 0.012 | val sel 0.1661 f1 0.082 answer_rate 0.889 wrong_abstain 0.922 140s
+ep 23 ptr 0.455 par 0.014 | val sel 0.1472 f1 0.058 answer_rate 0.664 wrong_abstain 0.953 146s
+ep 24 ptr 0.390 par 0.014 | val sel 0.1577 f1 0.071 answer_rate 0.806 wrong_abstain 0.940 152s
+ep 25 ptr 0.387 par 0.012 | val sel 0.1641 f1 0.078 answer_rate 0.841 wrong_abstain 0.938 158s
+ep 26 ptr 0.371 par 0.020 | val sel 0.1569 f1 0.066 answer_rate 0.674 wrong_abstain 0.975 164s
+ep 27 ptr 0.355 par 0.012 | val sel 0.1583 f1 0.069 answer_rate 0.781 wrong_abstain 0.961 170s
+ep 28 ptr 0.351 par 0.010 | val sel 0.1585 f1 0.076 answer_rate 0.905 wrong_abstain 0.900 176s
+ep 29 ptr 0.349 par 0.009 | val sel 0.1516 f1 0.062 answer_rate 0.695 wrong_abstain 0.959 181s

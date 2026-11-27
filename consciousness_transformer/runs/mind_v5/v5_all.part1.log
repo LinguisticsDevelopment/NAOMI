@@ -1,0 +1,14 @@
+v5 variant=all: normal 7536 (unreachable skipped 1012), wrong-story 2534, empty-memory 753
+warm start from runs/mind_v3/thinker_v3_s1_best.pt: 46 new tensors, 0 unexpected
+/home/user/NAOMI/consciousness_transformer/scripts/train_mind_v5.py:189: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  for k, v in enumerate((float(lp), float(lpar), 0.0, 0.0)):
+ep 0 ptr 1.863 par 0.141 | val sel 0.3250 f1 0.254 answer_rate 0.909 wrong_abstain 0.960 71s
+ep 1 ptr 1.141 par 0.044 | val sel 0.2973 f1 0.223 answer_rate 0.905 wrong_abstain 0.966 135s
+ep 2 ptr 0.928 par 0.021 | val sel 0.3245 f1 0.255 answer_rate 0.943 wrong_abstain 0.946 200s
+ep 3 ptr 0.805 par 0.011 | val sel 0.3458 f1 0.278 answer_rate 0.940 wrong_abstain 0.955 265s
+ep 4 ptr 0.736 par 0.007 | val sel 0.3437 f1 0.274 answer_rate 0.917 wrong_abstain 0.968 332s
+ep 5 ptr 0.700 par 0.005 | val sel 0.3301 f1 0.260 answer_rate 0.901 wrong_abstain 0.965 397s
+ep 6 ptr 0.667 par 0.003 | val sel 0.3499 f1 0.280 answer_rate 0.872 wrong_abstain 0.977 463s
+ep 7 ptr 0.656 par 0.002 | val sel 0.3363 f1 0.268 answer_rate 0.937 wrong_abstain 0.951 528s
+time budget for this call reached; rerun with --resume

@@ -1,0 +1,1200 @@
+[
+ {
+  "id": "ft9660",
+  "question": "What will happen if the Many-furred creature drops a hair in the soup?",
+  "golds": [
+   "The Many-furred Creature will get nothing to eat in future.",
+   "you will get nothing to eat in the future!"
+  ],
+  "band": "21+",
+  "filler_true_order": "made a bread-soup and fetched gold from little room and laid it in tureen in which",
+  "filler_decoded_a": "made a bread-soup and laid it in tureen in which and fetched gold from little room",
+  "full_sentence_a": "made a bread-soup and laid it in tureen in which and fetched gold from little room",
+  "full_sentence_b": "done a bread-soup and laid it in tureen in which and fetched gold from little room",
+  "replaced_node": "drops",
+  "question_nodes": [
+   "happen",
+   "what",
+   "will",
+   "if",
+   "drops",
+   "creature",
+   "the",
+   "many-furred",
+   "hair",
+   "a",
+   "in",
+   "soup",
+   "the"
+  ],
+  "rouge_full_a": 0.07692307692307691,
+  "provenance": [
+   [
+    "m",
+    116
+   ],
+   [
+    "m",
+    118
+   ],
+   [
+    "m",
+    119
+   ],
+   [
+    "m",
+    123
+   ],
+   [
+    "m",
+    127
+   ],
+   [
+    "m",
+    132
+   ],
+   [
+    "m",
+    134
+   ],
+   [
+    "m",
+    137
+   ],
+   [
+    "m",
+    138
+   ],
+   [
+    "m",
+    140
+   ],
+   [
+    "m",
+    141
+   ],
+   [
+    "m",
+    142
+   ],
+   [
+    "m",
+    146
+   ],
+   [
+    "m",
+    147
+   ],
+   [
+    "m",
+    143
+   ],
+   [
+    "m",
+    144
+   ]
+  ]
+ },
+ {
+  "id": "ft10284",
+  "question": "Where did the fisherman live?",
+  "golds": [
+   "near the king's castle",
+   "Near the King's castle"
+  ],
+  "band": "21+",
+  "filler_true_order": "'s castle",
+  "filler_decoded_a": "'s castle",
+  "full_sentence_a": "'s castle",
+  "full_sentence_b": "'s castle",
+  "replaced_node": "did",
+  "question_nodes": [
+   "where",
+   "live",
+   "did",
+   "fisherman",
+   "the"
+  ],
+  "rouge_full_a": 0.5714285714285715,
+  "provenance": [
+   [
+    "m",
+    14
+   ],
+   [
+    "m",
+    15
+   ]
+  ]
+ },
+ {
+  "id": "ft9711",
+  "question": "What happened because the man was so surprised at what he saw?",
+  "golds": [
+   "He lost his balance and fell out of the hollow tree."
+  ],
+  "band": "21+",
+  "filler_true_order": "and fell out of the hollow tree",
+  "filler_decoded_a": "fell out of the hollow tree and",
+  "full_sentence_a": "and fell out of the hollow tree",
+  "full_sentence_b": "and fell out of the hollow tree",
+  "replaced_node": "what",
+  "question_nodes": [
+   "happened",
+   "what",
+   "because",
+   "so",
+   "man",
+   "the",
+   "was",
+   "surprised",
+   "at",
+   "what",
+   "he",
+   "saw"
+  ],
+  "rouge_full_a": 0.7777777777777778,
+  "provenance": [
+   [
+    "m",
+    96
+   ],
+   [
+    "m",
+    101
+   ],
+   [
+    "m",
+    103
+   ],
+   [
+    "m",
+    104
+   ],
+   [
+    "m",
+    105
+   ],
+   [
+    "m",
+    106
+   ],
+   [
+    "m",
+    102
+   ]
+  ]
+ },
+ {
+  "id": "ft10033",
+  "question": "How did Maie feel after her husband did not let her buy a cow?",
+  "golds": [
+   "sad",
+   "disappointed",
+   "unhappy",
+   "Saddened"
+  ],
+  "band": "none",
+  "filler_true_order": "plants of garlic",
+  "filler_decoded_a": "plants of garlic",
+  "full_sentence_a": "plants of garlic",
+  "full_sentence_b": "plants of garlic",
+  "replaced_node": "how",
+  "question_nodes": [
+   "how",
+   "feel",
+   "did",
+   "maie",
+   "after",
+   "husband",
+   "her",
+   "let",
+   "did",
+   "not",
+   "buy",
+   "her",
+   "cow",
+   "a"
+  ],
+  "rouge_full_a": 0.0,
+  "provenance": [
+   [
+    "m",
+    60
+   ],
+   [
+    "m",
+    63
+   ],
+   [
+    "m",
+    64
+   ]
+  ]
+ },
+ {
+  "id": "ft9774",
+  "question": "How did Harold feel after Lady Morna refused his offer?",
+  "golds": [
+   "surprised",
+   "astonished",
+   "angry",
+   "Surprised",
+   "Saddened",
+   "Angry"
+  ],
+  "band": "none",
+  "filler_true_order": "amazement",
+  "filler_decoded_a": "amazement",
+  "full_sentence_a": "amazement",
+  "full_sentence_b": "amazement",
+  "replaced_node": "how",
+  "question_nodes": [
+   "refused",
+   "how",
+   "feel",
+   "did",
+   "harold",
+   "after",
+   "lady",
+   "morna",
+   "offer",
+   "his"
+  ],
+  "rouge_full_a": 0.0,
+  "provenance": [
+   [
+    "m",
+    106
+   ]
+  ]
+ },
+ {
+  "id": "ft9651",
+  "question": "How did the princess feel when she awoke?",
+  "golds": [
+   "frightened"
+  ],
+  "band": "21+",
+  "filler_true_order": "frightened",
+  "filler_decoded_a": "frightened",
+  "full_sentence_a": "frightened",
+  "full_sentence_b": "frightened",
+  "replaced_node": "did",
+  "question_nodes": [
+   "did",
+   "how",
+   "princess",
+   "the",
+   "feel",
+   "when",
+   "awoke",
+   "she"
+  ],
+  "rouge_full_a": 1.0,
+  "provenance": [
+   [
+    "m",
+    145
+   ]
+  ]
+ },
+ {
+  "id": "ft10139",
+  "question": "Why did the jelly fish agree to take the monkey back?",
+  "golds": [
+   "The monkey assured him that he would get his very best liver.",
+   "The monkey was no good without a liver.",
+   "the monkey assured him that if he would be so kind as to take him back he would get his very best liver"
+  ],
+  "band": "21+",
+  "filler_true_order": "get his very best liver and bring it with him the next time",
+  "filler_decoded_a": "get his very best liver and bring it with him the next time",
+  "full_sentence_a": "get his very best liver and bring it with him the next time",
+  "full_sentence_b": "get his very best liver and bring it with he the next time",
+  "replaced_node": "back",
+  "question_nodes": [
+   "did",
+   "why",
+   "jelly",
+   "the",
+   "fish",
+   "agree",
+   "to",
+   "take",
+   "monkey",
+   "the",
+   "back"
+  ],
+  "rouge_full_a": 0.4,
+  "provenance": [
+   [
+    "m",
+    115
+   ],
+   [
+    "m",
+    119
+   ],
+   [
+    "m",
+    120
+   ],
+   [
+    "m",
+    121
+   ],
+   [
+    "m",
+    122
+   ],
+   [
+    "m",
+    123
+   ],
+   [
+    "m",
+    124
+   ],
+   [
+    "m",
+    125
+   ],
+   [
+    "m",
+    126
+   ],
+   [
+    "m",
+    127
+   ],
+   [
+    "m",
+    128
+   ],
+   [
+    "m",
+    129
+   ],
+   [
+    "m",
+    130
+   ]
+  ]
+ },
+ {
+  "id": "ft10258",
+  "question": "Why did all three daughters have to spend the night with the goose?",
+  "golds": [
+   "They were all stuck to the goose.",
+   "They touched the goose and were stuck.",
+   "they were stuck to the goose"
+  ],
+  "band": "21+",
+  "filler_true_order": "touched one of them stuck fast to her",
+  "filler_decoded_a": "touched one of them stuck fast to her",
+  "full_sentence_a": "touched one of them stuck fast to her",
+  "full_sentence_b": "touched one of them stuck fast to her",
+  "replaced_node": "the",
+  "question_nodes": [
+   "why",
+   "have",
+   "did",
+   "daughters",
+   "three",
+   "all",
+   "to",
+   "spend",
+   "night",
+   "the",
+   "with",
+   "goose",
+   "the"
+  ],
+  "rouge_full_a": 0.28571428571428575,
+  "provenance": [
+   [
+    "m",
+    238
+   ],
+   [
+    "m",
+    243
+   ],
+   [
+    "m",
+    244
+   ],
+   [
+    "m",
+    245
+   ],
+   [
+    "m",
+    247
+   ],
+   [
+    "m",
+    249
+   ],
+   [
+    "m",
+    250
+   ],
+   [
+    "m",
+    251
+   ]
+  ]
+ },
+ {
+  "id": "ft10133",
+  "question": "How did the monkey feel to learn the truth?",
+  "golds": [
+   "horrified",
+   "angry",
+   "fear",
+   "Horrified",
+   "Very angry"
+  ],
+  "band": "11-20",
+  "filler_true_order": "angry",
+  "filler_decoded_a": "angry",
+  "full_sentence_a": "angry",
+  "full_sentence_b": "angry",
+  "replaced_node": "did",
+  "question_nodes": [
+   "did",
+   "how",
+   "monkey",
+   "the",
+   "feel",
+   "to",
+   "learn",
+   "truth",
+   "the"
+  ],
+  "rouge_full_a": 1.0,
+  "provenance": [
+   [
+    "m",
+    144
+   ]
+  ]
+ },
+ {
+  "id": "ft10299",
+  "question": "Why did the youth want to travel home?",
+  "golds": [
+   "see how his parents fared",
+   "To see how his parents fared"
+  ],
+  "band": "11-20",
+  "filler_true_order": "was of departure said one thing promise that will only do father tells to but what",
+  "filler_decoded_a": "was said one thing promise that will only do father tells to but what of departure",
+  "full_sentence_a": "was of departure said one thing promise that will only do father tells to but what",
+  "full_sentence_b": "was of departure said one thing promise that will only do father tells to but what",
+  "replaced_node": "travel",
+  "question_nodes": [
+   "why",
+   "want",
+   "did",
+   "youth",
+   "the",
+   "to",
+   "travel",
+   "home"
+  ],
+  "rouge_full_a": 0.09090909090909091,
+  "provenance": [
+   [
+    "m",
+    159
+   ],
+   [
+    "m",
+    166
+   ],
+   [
+    "m",
+    167
+   ],
+   [
+    "m",
+    168
+   ],
+   [
+    "m",
+    172
+   ],
+   [
+    "m",
+    173
+   ],
+   [
+    "m",
+    174
+   ],
+   [
+    "m",
+    178
+   ],
+   [
+    "m",
+    179
+   ],
+   [
+    "m",
+    181
+   ],
+   [
+    "m",
+    182
+   ],
+   [
+    "m",
+    184
+   ],
+   [
+    "m",
+    185
+   ],
+   [
+    "m",
+    188
+   ],
+   [
+    "m",
+    190
+   ],
+   [
+    "m",
+    191
+   ]
+  ]
+ },
+ {
+  "id": "ft10548",
+  "question": "What did the farmer do when he grew angry?",
+  "golds": [
+   "call the bonze names",
+   "Began to call him names"
+  ],
+  "band": "11-20",
+  "filler_true_order": "began to call names",
+  "filler_decoded_a": "began to call names",
+  "full_sentence_a": "began to call names",
+  "full_sentence_b": "began to call names",
+  "replaced_node": "grew",
+  "question_nodes": [
+   "did",
+   "what",
+   "do",
+   "farmer",
+   "the",
+   "when",
+   "grew",
+   "he",
+   "angry"
+  ],
+  "rouge_full_a": 0.888888888888889,
+  "provenance": [
+   [
+    "m",
+    64
+   ],
+   [
+    "m",
+    65
+   ],
+   [
+    "m",
+    66
+   ],
+   [
+    "m",
+    68
+   ]
+  ]
+ },
+ {
+  "id": "ft10101",
+  "question": "How did the King feel about the young dragon?",
+  "golds": [
+   "love",
+   "The King fell in love with her at once"
+  ],
+  "band": "11-20",
+  "filler_true_order": "love",
+  "filler_decoded_a": "love",
+  "full_sentence_a": "love",
+  "full_sentence_b": "love",
+  "replaced_node": "how",
+  "question_nodes": [
+   "how",
+   "feel",
+   "did",
+   "king",
+   "the",
+   "about",
+   "dragon",
+   "the",
+   "young"
+  ],
+  "rouge_full_a": 1.0,
+  "provenance": [
+   [
+    "m",
+    56
+   ]
+  ]
+ },
+ {
+  "id": "ft10553",
+  "question": "What will happen when the bonze plants the pear seed?",
+  "golds": [
+   "A tree will grow from the seed.",
+   "The sprout grew and in a moment it had turned into a tree"
+  ],
+  "band": "11-20",
+  "filler_true_order": "held the pit in his hand took pick ax from his shoulder dug a hole deep",
+  "filler_decoded_a": "held took pick deep dug a hole ax from his shoulder the pit in his hand",
+  "full_sentence_a": "held took pick deep dug a hole ax from his shoulder the pit in his hand",
+  "full_sentence_b": "held took pick deep dug a hole ax from his shoulder the pit in his hand",
+  "replaced_node": "plants",
+  "question_nodes": [
+   "happen",
+   "what",
+   "will",
+   "when",
+   "plants",
+   "bonze",
+   "the",
+   "pear",
+   "the",
+   "seed"
+  ],
+  "rouge_full_a": 0.26086956521739124,
+  "provenance": [
+   [
+    "m",
+    128
+   ],
+   [
+    "m",
+    134
+   ],
+   [
+    "m",
+    135
+   ],
+   [
+    "m",
+    136
+   ],
+   [
+    "m",
+    137
+   ],
+   [
+    "m",
+    138
+   ],
+   [
+    "m",
+    139
+   ],
+   [
+    "m",
+    141
+   ],
+   [
+    "m",
+    142
+   ],
+   [
+    "m",
+    143
+   ],
+   [
+    "m",
+    144
+   ],
+   [
+    "m",
+    145
+   ],
+   [
+    "m",
+    146
+   ],
+   [
+    "m",
+    148
+   ],
+   [
+    "m",
+    149
+   ],
+   [
+    "m",
+    154
+   ]
+  ]
+ },
+ {
+  "id": "ft9745",
+  "question": "Why did the natives call the immense boulder the Dwarfie Stone?",
+  "golds": [
+   "Snorro the Dwarf lived there.",
+   "Snorro the Dwarf lived there"
+  ],
+  "band": "21+",
+  "filler_true_order": "the legend has snorro the dwarf lived there",
+  "filler_decoded_a": "the legend has the dwarf lived snorro there",
+  "full_sentence_a": "the legend has the dwarf lived snorro there",
+  "full_sentence_b": "the legend has the dwarf dwelt snorro there",
+  "replaced_node": "the",
+  "question_nodes": [
+   "stone",
+   "why",
+   "call",
+   "did",
+   "natives",
+   "the",
+   "boulder",
+   "the",
+   "immense",
+   "dwarfie",
+   "the"
+  ],
+  "rouge_full_a": 0.6153846153846154,
+  "provenance": [
+   [
+    "m",
+    35
+   ],
+   [
+    "m",
+    37
+   ],
+   [
+    "m",
+    38
+   ],
+   [
+    "m",
+    40
+   ],
+   [
+    "m",
+    44
+   ],
+   [
+    "m",
+    42
+   ],
+   [
+    "m",
+    43
+   ],
+   [
+    "m",
+    41
+   ]
+  ]
+ },
+ {
+  "id": "ft9626",
+  "question": "Who did the king's wife send for when she felt that she would soon die?",
+  "golds": [
+   "the king"
+  ],
+  "band": "21+",
+  "filler_true_order": "no one queen",
+  "filler_decoded_a": "no one queen",
+  "full_sentence_a": "no one queen",
+  "full_sentence_b": "no one queen",
+  "replaced_node": "who",
+  "question_nodes": [
+   "did",
+   "who",
+   "wife",
+   "'s",
+   "king",
+   "the",
+   "send",
+   "for",
+   "when",
+   "felt",
+   "she",
+   "that",
+   "would",
+   "she",
+   "soon",
+   "die"
+  ],
+  "rouge_full_a": 0.0,
+  "provenance": [
+   [
+    "m",
+    63
+   ],
+   [
+    "m",
+    65
+   ],
+   [
+    "m",
+    64
+   ]
+  ]
+ },
+ {
+  "id": "ft9817",
+  "question": "Why did Snorro the Dwarf smile when he heard Harold coming towards him?",
+  "golds": [
+   "He smelled gold.",
+   "He knew he would get more gold.",
+   "He scenter more gold"
+  ],
+  "band": "<=10",
+  "filler_true_order": "sound of turned and his eyes fell on young noble",
+  "filler_decoded_a": "sound of turned and his eyes fell on young noble",
+  "full_sentence_a": "sound of turned and his eyes fell on young noble",
+  "full_sentence_b": "sound of turned and his eyes fell on young noble",
+  "replaced_node": "the",
+  "question_nodes": [
+   "did",
+   "why",
+   "snorro",
+   "dwarf",
+   "the",
+   "smile",
+   "when",
+   "heard",
+   "he",
+   "harold",
+   "coming",
+   "towards",
+   "him"
+  ],
+  "rouge_full_a": 0.0,
+  "provenance": [
+   [
+    "m",
+    82
+   ],
+   [
+    "m",
+    84
+   ],
+   [
+    "m",
+    85
+   ],
+   [
+    "m",
+    89
+   ],
+   [
+    "m",
+    90
+   ],
+   [
+    "m",
+    92
+   ],
+   [
+    "m",
+    93
+   ],
+   [
+    "m",
+    94
+   ],
+   [
+    "m",
+    95
+   ],
+   [
+    "m",
+    97
+   ]
+  ]
+ },
+ {
+  "id": "ft9590",
+  "question": "How did the bannock escape from the tailor's wife and the three tailors?",
+  "golds": [
+   "dodged them round and round the fire, and at last it got safely out of the door and ran down the road",
+   "It dodged them roun and round the fire"
+  ],
+  "band": "21+",
+  "filler_true_order": "dodged the fire and got of the door and ran with of the apprentices after tried",
+  "filler_decoded_a": "dodged the fire and got of the door ran with of the apprentices and tried after",
+  "full_sentence_a": "dodged the fire and got of the door ran with of the apprentices and tried after",
+  "full_sentence_b": "dodged the fire and got of the door ran with of the apprentices and tried after",
+  "replaced_node": "'s",
+  "question_nodes": [
+   "did",
+   "how",
+   "bannock",
+   "the",
+   "and",
+   "'s",
+   "escape",
+   "from",
+   "tailor",
+   "the",
+   "wife",
+   "tailors",
+   "the",
+   "three"
+  ],
+  "rouge_full_a": 0.5263157894736842,
+  "provenance": [
+   [
+    "m",
+    45
+   ],
+   [
+    "m",
+    49
+   ],
+   [
+    "m",
+    53
+   ],
+   [
+    "m",
+    54
+   ],
+   [
+    "m",
+    58
+   ],
+   [
+    "m",
+    61
+   ],
+   [
+    "m",
+    62
+   ],
+   [
+    "m",
+    63
+   ],
+   [
+    "m",
+    64
+   ],
+   [
+    "m",
+    81
+   ],
+   [
+    "m",
+    83
+   ],
+   [
+    "m",
+    84
+   ],
+   [
+    "m",
+    85
+   ],
+   [
+    "m",
+    65
+   ],
+   [
+    "m",
+    66
+   ],
+   [
+    "m",
+    67
+   ]
+  ]
+ },
+ {
+  "id": "ft10123",
+  "question": "What did the jelly fish see on one of the branches?",
+  "golds": [
+   "a live monkey"
+  ],
+  "band": "21+",
+  "filler_true_order": "big pine-tree with drooping",
+  "filler_decoded_a": "big pine-tree with drooping",
+  "full_sentence_a": "big pine-tree with drooping",
+  "full_sentence_b": "big for-a with drooping",
+  "replaced_node": "what",
+  "question_nodes": [
+   "did",
+   "what",
+   "jelly",
+   "the",
+   "see",
+   "fish",
+   "on",
+   "one",
+   "of",
+   "branches",
+   "the"
+  ],
+  "rouge_full_a": 0.0,
+  "provenance": [
+   [
+    "m",
+    262
+   ],
+   [
+    "m",
+    267
+   ],
+   [
+    "m",
+    268
+   ],
+   [
+    "m",
+    269
+   ]
+  ]
+ },
+ {
+  "id": "ft10478",
+  "question": "How will the Happy Hunter get to Ryn Gu?",
+  "golds": [
+   "The old man will make something for him to ride on through the sea.",
+   "The old man will help him get there"
+  ],
+  "band": "21+",
+  "filler_true_order": "get to sea king 's realm have that situated at the bottom of the sea",
+  "filler_decoded_a": "get to sea king 's realm have that situated at the bottom of the sea",
+  "full_sentence_a": "get to sea king 's realm have that situated at the bottom of the sea",
+  "full_sentence_b": "get to sea king 's realm have that situated at the bottom of the sea",
+  "replaced_node": "how",
+  "question_nodes": [
+   "how",
+   "get",
+   "will",
+   "hunter",
+   "the",
+   "happy",
+   "to",
+   "ryn",
+   "gu"
+  ],
+  "rouge_full_a": 0.20689655172413796,
+  "provenance": [
+   [
+    "m",
+    62
+   ],
+   [
+    "m",
+    67
+   ],
+   [
+    "m",
+    68
+   ],
+   [
+    "m",
+    72
+   ],
+   [
+    "m",
+    64
+   ],
+   [
+    "m",
+    65
+   ],
+   [
+    "m",
+    69
+   ],
+   [
+    "m",
+    75
+   ],
+   [
+    "m",
+    76
+   ],
+   [
+    "m",
+    79
+   ],
+   [
+    "m",
+    80
+   ],
+   [
+    "m",
+    81
+   ],
+   [
+    "m",
+    82
+   ],
+   [
+    "m",
+    83
+   ],
+   [
+    "m",
+    84
+   ]
+  ]
+ },
+ {
+  "id": "ft9648",
+  "question": "What did the huntsmen say lived in the tree?",
+  "golds": [
+   "a wonderful animal that they didn't know",
+   "a wonderful animal that we don't know"
+  ],
+  "band": "21+",
+  "filler_true_order": "lived in great poverty",
+  "filler_decoded_a": "lived in great poverty",
+  "full_sentence_a": "lived in great poverty",
+  "full_sentence_b": "lived in great poverty",
+  "replaced_node": "what",
+  "question_nodes": [
+   "did",
+   "what",
+   "huntsmen",
+   "the",
+   "lived",
+   "say",
+   "in",
+   "tree",
+   "the"
+  ],
+  "rouge_full_a": 0.0,
+  "provenance": [
+   [
+    "m",
+    261
+   ],
+   [
+    "m",
+    272
+   ],
+   [
+    "m",
+    270
+   ],
+   [
+    "m",
+    271
+   ]
+  ]
+ }
+]
