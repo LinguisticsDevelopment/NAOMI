@@ -1,6 +1,19 @@
 # The thinker composes an answer tree — method and test redesign, for owner approval
 
-Status: DRAFT (2026-11-27). Owner direction: "it never is supposed to be picking a sentence, it is
+Status: APPROVED (owner, 2026-11-27): 1 A now, B later; 2 yes; 3 yes, but the unknown must be
+LEARNED, not defined; 4 yes.
+
+**Owner amendment to 3 (binding).** Nothing in code, data prep or the training target tells the
+thinker which question node is the unknown. The thinker sees every question node's USVS point
+(the UNKNOWN axis is just one of its dimensions) and chooses for itself which node to replace and
+with what. It is rewarded only for the result: the output must say what the reference answer
+says, and keep the rest of the question. So it should discover that the node sitting on UNKNOWN
+is the one to replace. Whether it did is reported as a diagnostic (how often the replaced node is
+the question's highest-UNKNOWN node), never used as a target. Sections 2-4 below are read with
+this amendment: the gold tree in section 3 is NOT built by placing the reference at a chosen
+slot; scoring is placement-free (section 3, as amended).
+
+Originally drafted 2026-11-27. Owner direction: "it never is supposed to be picking a sentence, it is
 supposed to output a tree/sentence at the end of the day." This proposal replaces the
 anchor-in-memory design of thinkers v2-v4 and the test criteria built around it.
 
@@ -51,9 +64,9 @@ Reported as an external reference only, not built.
 Per answer, all reported:
 1. **Tree score (primary).** Output tree vs gold tree, node and edge matching, giving a % with
    reasons: missing node, extra node, wrong relation, wrong meaning, unknown left unfilled.
-   For A the gold tree is the question tree with the reference answer's tree in the unknown's
-   place — built by the encoder, no rewriting rules. The score is split into the *filler* part
-   (what was learned) and the *frame* part (copied from the question, should be ~100%).
+   Placement-free (owner amendment): (a) *answer part* — the nodes the thinker put in, against
+   the reference answer read into a tree; (b) *frame part* — how much of the question's other
+   nodes the output kept. Neither names a slot; replacing the wrong question node loses (a) or (b).
 2. **ROUGE-L of the decoded filler** against the reference answer, for comparison with
    v2-v4 and the literature.
 3. **Provenance.** Share of output nodes traced to a memory node; nodes from nowhere count as
@@ -68,9 +81,9 @@ beat). Reported by answer length, short-only vs all-lengths kept as the explicit
 
 ## 4. Training signal
 
-Stage 1: imitate the gold filler tree — at each step, copy the memory node aligned to the next
-gold node (alignment by lemma, as before; items with no alignment are counted, not tuned).
-Stage 2: fine-tune on the tree score itself. Data: FairytaleQA full, split by story.
+Stage 1: which question node to replace is never supervised. The filler's content may be
+imitated (copy the memory nodes aligned to the reference by lemma; unaligned items counted, not
+tuned) but the replace-choice is learned from the score. Stage 2: fine-tune on the tree score. Data: FairytaleQA full, split by story.
 
 ## 5. Abandon or rethink if
 
