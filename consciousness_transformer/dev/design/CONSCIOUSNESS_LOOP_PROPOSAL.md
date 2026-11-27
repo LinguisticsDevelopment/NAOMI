@@ -1,6 +1,15 @@
 # The thinker as a loop: trees in, trees out, with state and memory — for owner approval
 
-Status: DRAFT (2026-11-27). Owner correction: thinkers v1-v5 were "bastardized" — each was given
+Status: APPROVED (owner, 2026-11-27):
+1. The thinker reads the story itself and writes memory (memory starts empty), so it learns to
+   answer from memory it built.
+2. Stop is a LEARNED signal read from the state ("the state tells it to output"): not when the
+   output tree equals the input (causal issue), not when the state stops changing (lossy). This
+   replaces the "settled" rule in sections 1 and 4.
+3. Only the final tree is trained; the steps in between are the thinker's own.
+4. Yes: the thinker only works on USVS tree objects; the decoder picks words from node meanings.
+
+Originally drafted 2026-11-27. Owner correction: thinkers v1-v5 were "bastardized" — each was given
 a fixed menu of actions (pick a sentence, pick an anchor, keep/drop words, replace a node), which
 predefines what thinking is. The intended thinker is a single learned transition, looped.
 
