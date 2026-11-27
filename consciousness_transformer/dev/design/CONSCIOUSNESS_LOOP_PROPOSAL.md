@@ -1,8 +1,9 @@
 # The thinker as a loop: trees in, trees out, with state and memory — for owner approval
 
 Status: APPROVED (owner, 2026-11-27):
-1. The thinker reads the story itself and writes memory (memory starts empty), so it learns to
-   answer from memory it built.
+1. (corrected by owner, same day) For now memory is PRE-STORED by code (the story's encoder trees
+   written in, as today); the thinker only answers a question from it and does not write memory.
+   Training it to manipulate its own memory comes later.
 2. Stop is a LEARNED signal read from the state ("the state tells it to output"): not when the
    output tree equals the input (causal issue), not when the state stops changing (lossy). This
    replaces the "settled" rule in sections 1 and 4.
