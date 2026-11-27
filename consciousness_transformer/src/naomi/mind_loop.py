@@ -5,9 +5,10 @@
 * Tree object (same form in and out): K node slots; per slot a USVS point (unit vector in the sense-table space), a has-point
   probability, an identity code (for nodes with no meaning point: names / lexicon-less words, a per-story random code = a variable),
   a relation distribution, a part-of-speech distribution, a soft parent pointer over the K slots (+ ROOT) and an existence probability.
-* Memory: M slots of H numbers, EMPTY (zeros) at the start of every story. Only T writes it: every token of the step (the state token and
-  the K tree slots) emits a content-based write (key vs slot address+content, strength, erase vector, add vector). T reads it by
-  cross-attention in every layer. No other code touches the memory.
+* Memory (owner correction 2026-11-27: PRE-STORED, this version): the story's encoder trees are written into memory BY THE STORING CODE
+  (``story_memory``): every node of every sentence tree is one slot in the same tree form (USVS point, identity code, relation, pos, parent
+  link, sentence index, position in the sentence). T never writes memory and never changes it; T reads it by cross-attention in every layer
+  (after one learned self-attention layer that contextualises the stored slots, computed once per story from the stored tensors).
 * State: one vector; the halting logit is read from it (PonderNet: halting probability per step, loss = expectation over the halting
   step of the output-tree loss + KL to a geometric prior).
 * There is no action menu: no head picks a sentence, a node, keep/drop, or copies anything. Output words come from the decoder
@@ -31,8 +32,8 @@ from . import mind_v2 as m2
 from .types import REL_ROOT, Tree
 
 K = 24                 # node slots per tree
-MEM = 128              # memory slots
 CODE = 24              # identity-code size
+NMEM = 640             # stored node slots per story (later nodes are cut: 1.5% of stories)
 NSTEP = 6              # ask-loop cap (safety limit; halting is learned)
 EPS = 1e-6
 
@@ -74,6 +75,42 @@ def story_chunks(arr: dict, table: m2.SenseTable) -> List[dict]:
             par = [int(arr["parent"][g]) - lo if lo <= int(arr["parent"][g]) <= hi else -1 for g in ch]
             out.append(form_of_nodes([arr["nodes"][g] for g in ch], par, arr["rel"][ch].tolist(), arr["pos"][ch].tolist(), table))
     return out
+
+
+def story_memory(arr: dict, table: m2.SenseTable) -> dict:
+    """The storing code: all nodes of the story's sentence trees as memory slots (reading order), parent = global slot index (NMEM = none)."""
+    n = min(len(arr["parent"]), NMEM)
+    par = [int(arr["parent"][g]) if 0 <= int(arr["parent"][g]) < n else NMEM for g in range(n)]
+    return {"row": np.array([node_row(arr["nodes"][g], table) for g in range(n)], dtype=np.int64), "key": [node_key(arr["nodes"][g]) for g in range(n)],
+            "rel": arr["rel"][:n].astype(np.int64), "pos": arr["pos"][:n].astype(np.int64), "par": np.array(par, dtype=np.int64),
+            "sent": arr["sent"][:n].astype(np.int64), "tidx": arr["tidx"][:n].astype(np.int64), "n": n}
+
+
+def memory_tensors(mems: Sequence[Optional[dict]], books: Sequence["CodeBook"], SM: torch.Tensor, R: int, P: int):
+    """Batch of stored memories (None = empty) -> padded tensors; slot 0 of the batch tensors is real (a learned null slot is added by the model)."""
+    B = len(mems)
+    N = max([m["n"] for m in mems if m is not None] + [1])
+    row = torch.zeros(B, N, dtype=torch.long)
+    rel = torch.zeros(B, N, dtype=torch.long)
+    pos = torch.zeros(B, N, dtype=torch.long)
+    par = torch.full((B, N), -1, dtype=torch.long)
+    sent = torch.zeros(B, N, dtype=torch.long)
+    tix = torch.zeros(B, N, dtype=torch.long)
+    valid = torch.zeros(B, N, dtype=torch.bool)
+    idc = torch.zeros(B, N, CODE)
+    for b, m in enumerate(mems):
+        if m is None or m["n"] == 0:
+            continue
+        n = m["n"]
+        row[b, :n], rel[b, :n], pos[b, :n] = (torch.from_numpy(m[k]) for k in ("row", "rel", "pos"))
+        par[b, :n] = torch.from_numpy(np.where(m["par"] >= n, -1, m["par"]))
+        sent[b, :n], tix[b, :n], valid[b, :n] = torch.from_numpy(m["sent"]), torch.from_numpy(m["tidx"]), True
+        for i, k in enumerate(m["key"]):
+            if k is not None:
+                idc[b, i] = torch.from_numpy(books[b](k))
+    has = (row > 0).float()
+    return {"vec": SM[row], "has": has, "idc": idc, "rel": F.one_hot(rel, R).float(), "pos": F.one_hot(pos, P).float(), "par": par,
+            "sent": sent.clamp(max=63), "tix": tix.clamp(max=63), "valid": valid}
 
 
 # ----------------------------------------------------------------------------- tensors
@@ -130,10 +167,10 @@ class Block(nn.Module):
         self.nh = nh
         self.ln1, self.ln2, self.ln3 = nn.LayerNorm(H), nn.LayerNorm(H), nn.LayerNorm(H)
         self.sa = nn.MultiheadAttention(H, nh, batch_first=True)
-        self.rq, self.rk, self.rv, self.ro, self.ra = (nn.Linear(H, H) for _ in range(5))
+        self.rq, self.rk, self.rv, self.ro = (nn.Linear(H, H) for _ in range(4))
         self.ff = nn.Sequential(nn.Linear(H, 2 * H), nn.GELU(), nn.Linear(2 * H, H))
 
-    def forward(self, x: torch.Tensor, mem: torch.Tensor, addr: torch.Tensor, block_read: bool):
+    def forward(self, x: torch.Tensor, mem: torch.Tensor, mmask: torch.Tensor, block_read: bool):
         h = self.ln1(x)
         x = x + self.sa(h, h, h, need_weights=False)[0]
         if not block_read:
@@ -141,9 +178,9 @@ class Block(nn.Module):
             B, T, H = h.shape
             nh, dh = self.nh, H // self.nh
             q = self.rq(h).view(B, T, nh, dh).transpose(1, 2)
-            k = (self.rk(mem) + self.ra(addr)[None]).view(B, -1, nh, dh).transpose(1, 2)
+            k = self.rk(mem).view(B, -1, nh, dh).transpose(1, 2)
             v = self.rv(mem).view(B, -1, nh, dh).transpose(1, 2)
-            att = torch.softmax(q @ k.transpose(-1, -2) / math.sqrt(dh), -1)
+            att = torch.softmax((q @ k.transpose(-1, -2) / math.sqrt(dh)).masked_fill(~mmask[:, None, None, :], -1e9), -1)
             x = x + self.ro((att @ v).transpose(1, 2).reshape(B, T, H))
         return x + self.ff(self.ln3(x))
 
@@ -151,9 +188,9 @@ class Block(nn.Module):
 class Loop(nn.Module):
     """T. One set of weights for reading a sentence and for asking a question."""
 
-    def __init__(self, D: int, R: int, P: int, H: int = 128, nh: int = 4, L: int = 2, mem: int = MEM):
+    def __init__(self, D: int, R: int, P: int, H: int = 128, nh: int = 4, L: int = 2):
         super().__init__()
-        self.D, self.R, self.P, self.H, self.M = D, R, P, H, mem
+        self.D, self.R, self.P, self.H = D, R, P, H
         self.inp_vec = nn.Linear(D, H, bias=False)
         self.inp_id = nn.Linear(CODE, H, bias=False)
         self.e_rel, self.e_pos = nn.Linear(R, H, bias=False), nn.Linear(P, H, bias=False)
@@ -161,7 +198,10 @@ class Loop(nn.Module):
         self.e_feat = nn.Linear(3, H)
         self.slot = nn.Parameter(torch.randn(K, H) * 0.02)
         self.s0 = nn.Parameter(torch.zeros(H))
-        self.addr = nn.Parameter(torch.randn(mem, H) * 0.1)
+        self.m_sent, self.m_tix = nn.Embedding(64, H), nn.Embedding(64, H)
+        self.m_par = nn.Linear(H, H)
+        self.m_enc = nn.TransformerEncoderLayer(H, nh, 2 * H, 0.0, batch_first=True, norm_first=True)
+        self.null = nn.Parameter(torch.zeros(H))
         self.blocks = nn.ModuleList(Block(H, nh) for _ in range(L))
         self.lnf = nn.LayerNorm(H)
         # output tree heads (per slot)
@@ -171,9 +211,6 @@ class Loop(nn.Module):
         self.halt = nn.Linear(H, 1)
         nn.init.constant_(self.halt.bias, -1.0)
         nn.init.constant_(self.o_ex.bias, -1.0)
-        # memory write (every token of the step)
-        self.w_k, self.w_g, self.w_e, self.w_a, self.w_b = nn.Linear(H, H), nn.Linear(H, 1), nn.Linear(H, H), nn.Linear(H, H), nn.Linear(H, 1)
-        self.k_addr, self.k_cont = nn.Linear(H, H), nn.Linear(H, H, bias=False)
 
     # ---- tree object -> tokens
     def embed(self, t: dict) -> torch.Tensor:
@@ -185,13 +222,22 @@ class Loop(nn.Module):
     def init_state(self, B: int) -> torch.Tensor:
         return self.s0.unsqueeze(0).expand(B, -1)
 
-    def init_memory(self, B: int) -> torch.Tensor:
-        return torch.zeros(B, self.M, self.H)
+    def encode_memory(self, mt: dict):
+        """Stored slots (tensors from ``story_memory``) -> keys/values [B, 1+N, H] with a learned null slot first, and the slot mask. Not a write."""
+        x = self.inp_vec(mt["vec"]) + self.inp_id(mt["idc"] * (1 - mt["has"]).unsqueeze(-1)) + self.e_rel(mt["rel"]) + self.e_pos(mt["pos"])
+        x = x + self.m_sent(mt["sent"]) + self.m_tix(mt["tix"])
+        par = mt["par"]
+        pv = torch.gather(x, 1, par.clamp(min=0).unsqueeze(-1).expand(-1, -1, x.size(-1))) * (par >= 0).unsqueeze(-1)
+        x = x + self.m_par(pv)
+        x = self.m_enc(x, src_key_padding_mask=~mt["valid"])
+        x = torch.cat([self.null.expand(x.size(0), 1, -1), x], 1)
+        return x, torch.cat([torch.ones(x.size(0), 1, dtype=torch.bool), mt["valid"]], 1)
 
-    def step(self, tin: dict, state: torch.Tensor, mem: torch.Tensor, block_read: bool = False):
+    def step(self, tin: dict, state: torch.Tensor, mem, block_read: bool = False):
+        mem, mmask = mem
         x = torch.cat([state.unsqueeze(1), self.embed(tin)], 1)
         for blk in self.blocks:
-            x = blk(x, mem, self.addr, block_read)
+            x = blk(x, mem, mmask, block_read)
         x = self.lnf(x)
         hs, hn = x[:, 0], x[:, 1:]
         q, k = self.o_pq(hn), self.o_pk(hn)
@@ -201,38 +247,13 @@ class Loop(nn.Module):
         tout = {"vec": F.normalize(self.o_vec(hn), dim=-1), "has": torch.sigmoid(self.o_has(hn)).squeeze(-1), "idc": self.o_id(hn),
                 "rel_logit": self.o_rel(hn), "pos_logit": self.o_pos(hn), "par": par, "ex": torch.sigmoid(self.o_ex(hn)).squeeze(-1)}
         tout["rel"], tout["pos"] = torch.softmax(tout["rel_logit"], -1), torch.softmax(tout["pos_logit"], -1)
-        gate = torch.cat([torch.ones(x.size(0), 1), tin["ex"]], 1)
-        return tout, hs, self.halt(hs).squeeze(-1), self.write(x, gate, mem)
+        return tout, hs, self.halt(hs).squeeze(-1)
 
-    def write(self, x: torch.Tensor, gate_in: torch.Tensor, mem: torch.Tensor) -> torch.Tensor:
-        beta = 1 + F.softplus(self.w_b(x))
-        slotk = self.k_addr(self.addr)[None] + self.k_cont(mem)
-        w = torch.softmax(beta * torch.einsum("bth,bmh->btm", self.w_k(x), slotk) / math.sqrt(self.H), -1)
-        g = torch.sigmoid(self.w_g(x)).squeeze(-1) * gate_in
-        wg = w * g.unsqueeze(-1)
-        erase = torch.einsum("btm,bth->bmh", wg, torch.sigmoid(self.w_e(x))).clamp(0, 1)
-        return mem * (1 - erase) + torch.einsum("btm,bth->bmh", wg, torch.tanh(self.w_a(x)))
-
-    # ---- reading a story: one T step per chunk, memory carries across steps
-    def read(self, chunks: List[dict], active: Optional[List[torch.Tensor]] = None, state=None, mem=None):
-        """chunks[s] = input-form dict for step s over a batch of B stories; active[s] = [B] bool (story has a chunk at step s)."""
-        B = chunks[0]["vec"].size(0)
-        state = self.init_state(B) if state is None else state
-        mem = self.init_memory(B) if mem is None else mem
-        for s, tin in enumerate(chunks):
-            _o, st2, _h, m2_ = self.step(tin, state, mem)
-            if active is None:
-                state, mem = st2, m2_
-            else:
-                a = active[s]
-                state, mem = torch.where(a[:, None], st2, state), torch.where(a[:, None, None], m2_, mem)
-        return state, mem
-
-    # ---- asking: loop until the learned halt (cap = safety limit)
-    def ask(self, tin: dict, state: torch.Tensor, mem: torch.Tensor, nstep: int = NSTEP, block_read: bool = False):
+    # ---- asking: loop until the learned halt (cap = safety limit). The memory is read only; it is the same at every step.
+    def ask(self, tin: dict, state: torch.Tensor, mem, nstep: int = NSTEP, block_read: bool = False):
         outs, hl = [], []
         for _ in range(nstep):
-            tout, state, h, mem = self.step(tin, state, mem, block_read)
+            tout, state, h = self.step(tin, state, mem, block_read)
             outs.append(tout)
             hl.append(h)
             tin = {"vec": tout["vec"], "has": tout["has"], "idc": tout["idc"] * (1 - tout["has"]).unsqueeze(-1), "rel": tout["rel"],

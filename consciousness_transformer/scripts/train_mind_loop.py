@@ -46,8 +46,8 @@ def prep():
     for sp, d in data.items():
         needed |= {p["skey"] for p in d}
     for sk in sorted(needed):
-        ch = ML.story_chunks(stories[sk], table)
-        sf[sk] = {"chunks": ch, "keys": {k for c in ch for k in c["key"] if k}}
+        mm = ML.story_memory(stories[sk], table)
+        sf[sk] = {"mem": mm, "keys": {k for k in mm["key"] if k}}
     for sp, d in data.items():
         items, wrong = {}, {}
         for p in d:
@@ -114,27 +114,24 @@ def forward_batch(model, D: Data, reqs, nstep=ML.NSTEP, block_read=False, train=
     for r in reqs:
         if r["mem"] is not None and r["mem"] not in keys:
             keys.append(r["mem"])
-    S = len(keys)
     salts = {k: (rng.randrange(1 << 30) if train else zlib_salt(k)) for k in keys}
     books = {k: ML.CodeBook(salts[k]) for k in keys}
-    chunks = {k: ([r["q"] for r in reqs if r["mem"] == k][0:1] if isinstance(k, tuple) else D.sf[k]["chunks"]) for k in keys}
-    state, mem = model.init_state(S + 1), model.init_memory(S + 1)
-    if S:
-        T = max(len(chunks[k]) for k in keys)
-        steps, act = [], []
-        for s in range(T):
-            forms = [chunks[k][s] if s < len(chunks[k]) else None for k in keys]
-            tin, _ = ML.tree_tensors(forms, [books[k] for k in keys], D.SM, D.R, D.P)
-            steps.append(tin)
-            act.append(torch.tensor([s < len(chunks[k]) for k in keys]))
-        st, me = model.read(steps, act, model.init_state(S), model.init_memory(S))
-        state, mem = torch.cat([st, model.init_state(1)]), torch.cat([me, model.init_memory(1)])
-    ix = torch.tensor([keys.index(r["mem"]) if r["mem"] is not None else S for r in reqs])
+    mems = []
+    for k in keys:
+        if isinstance(k, tuple):                      # memory = only the question, stored as a tree (a stored "sentence")
+            q = [r["q"] for r in reqs if r["mem"] == k][0]
+            mems.append({**q, "sent": np.zeros(q["n"], dtype=np.int64), "tidx": np.arange(q["n"], dtype=np.int64)})
+        else:
+            mems.append(D.sf[k]["mem"])
+    state = model.init_state(len(keys) + 1)
+    mt = ML.memory_tensors(mems + [None], [books[k] for k in keys] + [ML.CodeBook(0)], D.SM, D.R, D.P)
+    mem = model.encode_memory(mt)
+    ix = torch.tensor([keys.index(r["mem"]) if r["mem"] is not None else len(keys) for r in reqs])
     bk = [books[r["mem"]] if r["mem"] is not None else ML.CodeBook(0) for r in reqs]
     known = [(D.sf[r["mem"]]["keys"] if (r["mem"] is not None and not isinstance(r["mem"], tuple)) else set()) | {k for k in r["q"]["key"] if k} for r in reqs]
     qin, _ = ML.tree_tensors([r["q"] for r in reqs], bk, D.SM, D.R, D.P)
     _, tg = ML.tree_tensors([r["t"] for r in reqs], bk, D.SM, D.R, D.P, known)
-    outs, hl = model.ask(qin, state[ix], mem[ix], nstep, block_read)
+    outs, hl = model.ask(qin, state[ix], (mem[0][ix], mem[1][ix]), nstep, block_read)
     return outs, hl, tg
 
 
