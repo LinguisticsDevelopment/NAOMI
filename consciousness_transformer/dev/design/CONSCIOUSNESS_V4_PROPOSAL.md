@@ -1,5 +1,7 @@
 # The thinker composes an answer tree — method and test redesign, for owner approval
 
+**SUPERSEDED (owner, 2026-11-27):** the action-menu design here (replace/keep/drop) predefines what the thinker does. See `CONSCIOUSNESS_LOOP_PROPOSAL.md`.
+
 Status: APPROVED (owner, 2026-11-27): 1 A now, B later; 2 yes; 3 yes, but the unknown must be
 LEARNED, not defined; 4 yes.
 
