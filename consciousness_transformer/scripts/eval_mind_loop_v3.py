@@ -24,8 +24,8 @@ import train_mind_loop as TL  # noqa: E402
 import train_mind_loop_v3 as T3  # noqa: E402
 
 OUT = T3.OUT
-FINE = (0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
-EL.THR_GRID = (0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.85)
+FINE = (1e-5, 1e-4, 1e-3, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+EL.THR_GRID = (1e-4, 1e-3, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.85)
 
 
 def arg(name, default=None):
