@@ -1,0 +1,116 @@
+{
+ "n": 1025,
+ "thr": 0.05,
+ "tau": 0.3,
+ "rouge_loop": 0.0,
+ "rouge_cheat_decoded": 0.20721015648193156,
+ "rouge_cheat_raw": 0.22793011189440043,
+ "answer_rate": 0.0,
+ "tree_loop": 0.0,
+ "tree_cheat": 13.028405484213156,
+ "tree_n": 300,
+ "tree_reasons": {
+  "loop": {},
+  "cheat": {
+   "node_extra": 5911,
+   "head_changed": 601,
+   "meaning_shift": 426,
+   "subtree_moved": 398,
+   "operator_folded_differs": 363,
+   "node_dropped": 298,
+   "name_mismatch": 207,
+   "relation_changed": 60,
+   "opposite_meaning": 1
+  }
+ },
+ "controls": {
+  "empty": {
+   "n": 1025,
+   "abstain_rate": 1.0,
+   "mean_nodes": 0.0,
+   "rouge_vs_own_reference": 0.0,
+   "steps_mean": 1.0
+  },
+  "wrong": {
+   "n": 1025,
+   "abstain_rate": 1.0,
+   "mean_nodes": 0.0,
+   "rouge_vs_own_reference": 0.0,
+   "steps_mean": 1.0
+  },
+  "qonly": {
+   "n": 1025,
+   "abstain_rate": 1.0,
+   "mean_nodes": 0.0,
+   "rouge_vs_own_reference": 0.0,
+   "steps_mean": 1.0
+  },
+  "shuffled": {
+   "n": 1025,
+   "abstain_rate": 1.0,
+   "mean_nodes": 0.0,
+   "rouge_vs_own_reference": 0.0,
+   "steps_mean": 1.0
+  },
+  "block": {
+   "n": 1025,
+   "abstain_rate": 1.0,
+   "mean_nodes": 0.0,
+   "rouge_vs_own_reference": 0.0,
+   "steps_mean": 1.0009756097560976,
+   "rouge_delta_vs_normal": 0.0
+  }
+ },
+ "mean_nodes": 0.0,
+ "steps_dist": {
+  "1": 1025
+ },
+ "steps_mean": 1.0,
+ "cis": {
+  "loop_minus_cheat": {
+   "mean": -0.20721015648193156,
+   "items": [
+    -0.21850804933351228,
+    -0.19643071211933905
+   ],
+   "stories": [
+    -0.2242557388806181,
+    -0.19063124442179555
+   ]
+  }
+ },
+ "bands": {
+  "<=10": {
+   "n": 38,
+   "loop": 0.0,
+   "cheat": 0.15835983146405885,
+   "steps": 1.0,
+   "nodes": 0.0,
+   "short": null
+  },
+  "11-20": {
+   "n": 209,
+   "loop": 0.0,
+   "cheat": 0.20590920561491408,
+   "steps": 1.0,
+   "nodes": 0.0,
+   "short": null
+  },
+  "21+": {
+   "n": 708,
+   "loop": 0.0,
+   "cheat": 0.22940472565598702,
+   "steps": 1.0,
+   "nodes": 0.0,
+   "short": null
+  },
+  "none": {
+   "n": 70,
+   "loop": 0.0,
+   "cheat": 0.01313095800556835,
+   "steps": 1.0,
+   "nodes": 0.0,
+   "short": null
+  }
+ }
+}

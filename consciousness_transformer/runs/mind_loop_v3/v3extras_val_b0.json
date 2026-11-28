@@ -1,0 +1,153 @@
+{
+ "thr": 0.05,
+ "tau": 0.3,
+ "n": 1025,
+ "coverage": 0.0,
+ "rouge_all": 0.0,
+ "rouge_answered": null,
+ "cheat_on_answered": null,
+ "tree_all_300": 0.0,
+ "tree_answered_only": null,
+ "n_tree": 300,
+ "n_tree_answered": 0,
+ "risk_coverage": [
+  {
+   "thr": 1e-05,
+   "coverage": 1.0,
+   "rouge_all": 0.0756520250911844,
+   "rouge_answered": 0.0756520250911844,
+   "mean_nodes": 23.60682926829268
+  },
+  {
+   "thr": 0.0001,
+   "coverage": 1.0,
+   "rouge_all": 0.10747496943386728,
+   "rouge_answered": 0.10747496943386728,
+   "mean_nodes": 5.136585365853659
+  },
+  {
+   "thr": 0.001,
+   "coverage": 0.06146341463414634,
+   "rouge_all": 0.0029043119482143873,
+   "rouge_answered": 0.04725269439555155,
+   "mean_nodes": 0.06146341463414634
+  },
+  {
+   "thr": 0.01,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.02,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.05,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.1,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.15,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.2,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.3,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.4,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.5,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.6,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.7,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.8,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.9,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  }
+ ],
+ "bands": {
+  "<=10": {
+   "n": 38,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null
+  },
+  "11-20": {
+   "n": 209,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null
+  },
+  "21+": {
+   "n": 708,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null
+  },
+  "none": {
+   "n": 70,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null
+  }
+ }
+}
