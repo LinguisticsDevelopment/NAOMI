@@ -27,6 +27,7 @@ import eval_mind_v5 as E5  # noqa: E402
 import train_mind_loop as TL  # noqa: E402
 
 OUT = TL.OUT
+THR_GRID = (0.2, 0.3, 0.4, 0.5, 0.6, 0.7)          # existence thresholds tried on val (v3 overrides)
 BANDS = ["<=10", "11-20", "21+", "none"]
 STATS = ("vec", "has", "idc", "rel", "pos", "par", "ex")
 V5_TEST = {"cheat": 0.200, "v3_s2": 0.346, "v5_all": 0.298}          # MIND_V5.md test table, full-sentence ROUGE-L (a), same 1007 items
@@ -117,7 +118,7 @@ def main():
     recs = forward_mode(model, D, items, "normal")
     if args.split == "val":
         grid = []
-        for thr in (0.2, 0.3, 0.4, 0.5, 0.6, 0.7):
+        for thr in THR_GRID:
             for tau in (0.3, 0.5, 0.7):
                 r = float(np.mean(rouge_of(decode_recs(dc, recs, thr, tau))))
                 grid.append({"thr": thr, "tau": tau, "rouge": r})
