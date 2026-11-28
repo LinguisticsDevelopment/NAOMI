@@ -56,6 +56,8 @@ ALLOWED = {
     'has', 'idc', 'idm', 'key', 'pos_logit', 'rel_logit', 'tix',
     # naomi.mind_loop_v2: counterfactual-memory result-dict keys (non-linguistic identifiers)
     'keys', 'mem', 'ref', 'swaps',
+    # naomi.mind_loop_v3: candidate-pool tensor keys and grade-statistic names (non-linguistic identifiers)
+    'code', 'pt', 'unreach', 'reward_matched', 's_corr', 'ex_mean', 'ex_matched', 'ex_unmatched', 'n_slots_reach',
     'amax', 'anode', 'gs', 'maxd', 'n_per', 'rank', 'sent_item', 'sl_pad', 'ssz', 'start', 'within',
 }
 _WORDISH = re.compile(r"^[a-z][a-z_]+$")

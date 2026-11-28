@@ -267,3 +267,8 @@ Report: `dev/reports/MIND_LOOP.md`. Code: `src/naomi/mind_loop.py`, `scripts/{tr
 Report: `dev/reports/MIND_LOOP_V2.md`. Code: `src/naomi/mind_loop_v2.py`, `scripts/{train,eval}_mind_loop_v2.py`, `tests/test_mind_loop_v2.py`. Reads prep from `runs/mind_loop/` (rebuild with `train_mind_loop.py prep`).
 - `runs/mind_loop_v2/v2_s1_best.pt` (chosen; test 0.180), `v2_s0_best.pt`. Curves, logs, eval/extras json, tables, hand-reads, val_choice.
 - NOT committed: eval_rows, `*_last.pt`, read_cache.
+
+### Looped thinker v3 (asymmetric contrastive grade), 2026-11-28
+Report: `dev/reports/MIND_LOOP_V3.md`. Code: `src/naomi/mind_loop_v3.py`, `scripts/{train,eval,diag}_mind_loop_v3.py`, `tests/test_mind_loop_v3.py`.
+- `runs/mind_loop_v3/v3b_s0_best.pt` (evaluated; silent, test 0.000), `v3_s0_best.pt` (pure, collapsed). Logs, curves, eval/extras/diag json, tables, threshold-grid files.
+- NOT committed: `*_last.pt`, smoke, eval_rows, read_cache, working val_choice.json.

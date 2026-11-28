@@ -70,3 +70,17 @@ step are trees, and the memory is the project's graph.
 3. Training only on the final tree vs the reference tree, nothing on the steps in between?
 4. Output words chosen by the decoder from the node's meaning (setting (b)), so the thinker never
    picks words directly?
+
+## Amendment (owner, 2026-11-28): the grade punishes averaging
+
+Loop v2 showed the regressed node meaning settles on the average of plausible answers. The
+training grade becomes:
+- Each output node's meaning is scored against the meanings of all words in the story and the
+  question, plus "no node": a probability over those choices (softmax on similarity). Nothing
+  about the thinker, the tree or the loop changes.
+- Asymmetric reward on that probability, fixed before training: correct meaning +1, no answer
+  (no node / empty tree) +0.25, wrong meaning -1. Expected reward is maximised by committing when
+  sure and staying silent when not, never by a blurred average. Answering beats silence only when
+  P(correct) > 0.625.
+- Reported: ROUGE-L as before (silence scores 0), plus coverage (share answered) and accuracy on
+  answered items. Fix 2 (building node meanings from attention reads) is rejected by the owner.

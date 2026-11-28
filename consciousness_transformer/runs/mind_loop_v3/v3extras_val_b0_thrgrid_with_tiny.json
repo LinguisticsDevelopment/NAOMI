@@ -1,0 +1,153 @@
+{
+ "thr": 0.0001,
+ "tau": 0.7,
+ "n": 1025,
+ "coverage": 0.9980487804878049,
+ "rouge_all": 0.13756859699765633,
+ "rouge_answered": 0.13783754831143472,
+ "cheat_on_answered": 0.20708460728359993,
+ "tree_all_300": 19.765423257115355,
+ "tree_answered_only": 19.765423257115355,
+ "n_tree": 300,
+ "n_tree_answered": 300,
+ "risk_coverage": [
+  {
+   "thr": 1e-05,
+   "coverage": 1.0,
+   "rouge_all": 0.06610947969128231,
+   "rouge_answered": 0.06610947969128231,
+   "mean_nodes": 23.946341463414633
+  },
+  {
+   "thr": 0.0001,
+   "coverage": 0.9980487804878049,
+   "rouge_all": 0.13756859699765633,
+   "rouge_answered": 0.13783754831143472,
+   "mean_nodes": 5.479024390243903
+  },
+  {
+   "thr": 0.001,
+   "coverage": 0.11317073170731708,
+   "rouge_all": 0.005824432860300866,
+   "rouge_answered": 0.051465893808693,
+   "mean_nodes": 0.11317073170731708
+  },
+  {
+   "thr": 0.01,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.02,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.05,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.1,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.15,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.2,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.3,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.4,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.5,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.6,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.7,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.8,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  },
+  {
+   "thr": 0.9,
+   "coverage": 0.0,
+   "rouge_all": 0.0,
+   "rouge_answered": null,
+   "mean_nodes": 0.0
+  }
+ ],
+ "bands": {
+  "<=10": {
+   "n": 38,
+   "coverage": 1.0,
+   "rouge_all": 0.1420116189853032,
+   "rouge_answered": 0.1420116189853032
+  },
+  "11-20": {
+   "n": 209,
+   "coverage": 1.0,
+   "rouge_all": 0.13616076689542822,
+   "rouge_answered": 0.13616076689542822
+  },
+  "21+": {
+   "n": 708,
+   "coverage": 0.998587570621469,
+   "rouge_all": 0.14990017750786336,
+   "rouge_answered": 0.1501122003897698
+  },
+  "none": {
+   "n": 70,
+   "coverage": 0.9857142857142858,
+   "rouge_all": 0.014634920634920636,
+   "rouge_answered": 0.014847020933977457
+  }
+ }
+}
